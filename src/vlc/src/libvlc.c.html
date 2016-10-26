@@ -1,0 +1,666 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>libvlc.c source code [vlc/src/libvlc.c] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'vlc/src/libvlc.c'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>vlc</a>/<a href='./'>src</a>/<a href='libvlc.c.html'>libvlc.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*****************************************************************************</i></td></tr>
+<tr><th id="2">2</th><td><i> * libvlc.c: libvlc instances creation and deletion, interfaces handling</i></td></tr>
+<tr><th id="3">3</th><td><i> *****************************************************************************</i></td></tr>
+<tr><th id="4">4</th><td><i> * Copyright (C) 1998-2008 VLC authors and VideoLAN</i></td></tr>
+<tr><th id="5">5</th><td><i> * $Id: 946ce2e3f199ffa89bd0a746e07dcf249dbb2b71 $</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * Authors: Vincent Seguin &lt;seguin@via.ecp.fr&gt;</i></td></tr>
+<tr><th id="8">8</th><td><i> *          Samuel Hocevar &lt;sam@zoy.org&gt;</i></td></tr>
+<tr><th id="9">9</th><td><i> *          Gildas Bazin &lt;gbazin@videolan.org&gt;</i></td></tr>
+<tr><th id="10">10</th><td><i> *          Derk-Jan Hartman &lt;hartman at videolan dot org&gt;</i></td></tr>
+<tr><th id="11">11</th><td><i> *          Rémi Denis-Courmont &lt;rem # videolan : org&gt;</i></td></tr>
+<tr><th id="12">12</th><td><i> *</i></td></tr>
+<tr><th id="13">13</th><td><i> * This program is free software; you can redistribute it and/or modify it</i></td></tr>
+<tr><th id="14">14</th><td><i> * under the terms of the GNU Lesser General Public License as published by</i></td></tr>
+<tr><th id="15">15</th><td><i> * the Free Software Foundation; either version 2.1 of the License, or</i></td></tr>
+<tr><th id="16">16</th><td><i> * (at your option) any later version.</i></td></tr>
+<tr><th id="17">17</th><td><i> *</i></td></tr>
+<tr><th id="18">18</th><td><i> * This program is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="19">19</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="20">20</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</i></td></tr>
+<tr><th id="21">21</th><td><i> * GNU Lesser General Public License for more details.</i></td></tr>
+<tr><th id="22">22</th><td><i> *</i></td></tr>
+<tr><th id="23">23</th><td><i> * You should have received a copy of the GNU Lesser General Public License</i></td></tr>
+<tr><th id="24">24</th><td><i> * along with this program; if not, write to the Free Software Foundation,</i></td></tr>
+<tr><th id="25">25</th><td><i> * Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.</i></td></tr>
+<tr><th id="26">26</th><td><i> *****************************************************************************/</i></td></tr>
+<tr><th id="27">27</th><td></td></tr>
+<tr><th id="28">28</th><td><i class="doc">/**<span class="command"> \file</span></i></td></tr>
+<tr><th id="29">29</th><td><i class="doc"> * This file contains functions to create and destroy libvlc instances</i></td></tr>
+<tr><th id="30">30</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="31">31</th><td></td></tr>
+<tr><th id="32">32</th><td><i>/*****************************************************************************</i></td></tr>
+<tr><th id="33">33</th><td><i> * Preamble</i></td></tr>
+<tr><th id="34">34</th><td><i> *****************************************************************************/</i></td></tr>
+<tr><th id="35">35</th><td><u>#<span data-ppcond="35">ifdef</span> <span class="macro" data-ref="_M/HAVE_CONFIG_H">HAVE_CONFIG_H</span></u></td></tr>
+<tr><th id="36">36</th><td><u># include <a href="../config.h.html">"config.h"</a></u></td></tr>
+<tr><th id="37">37</th><td><u>#<span data-ppcond="35">endif</span></u></td></tr>
+<tr><th id="38">38</th><td></td></tr>
+<tr><th id="39">39</th><td><u>#include <a href="../include/vlc_common.h.html">&lt;vlc_common.h&gt;</a></u></td></tr>
+<tr><th id="40">40</th><td><u>#include <a href="../lib/libvlc_internal.h.html">"../lib/libvlc_internal.h"</a></u></td></tr>
+<tr><th id="41">41</th><td><u>#include <a href="../include/vlc_input.h.html">&lt;vlc_input.h&gt;</a></u></td></tr>
+<tr><th id="42">42</th><td></td></tr>
+<tr><th id="43">43</th><td><u>#include <a href="modules/modules.h.html">"modules/modules.h"</a></u></td></tr>
+<tr><th id="44">44</th><td><u>#include <a href="config/configuration.h.html">"config/configuration.h"</a></u></td></tr>
+<tr><th id="45">45</th><td><u>#include <a href="playlist/preparser.h.html">"playlist/preparser.h"</a></u></td></tr>
+<tr><th id="46">46</th><td></td></tr>
+<tr><th id="47">47</th><td><u>#include <a href="../../include/stdio.h.html">&lt;stdio.h&gt;</a>                                              /* sprintf() */</u></td></tr>
+<tr><th id="48">48</th><td><u>#include <a href="../../include/string.h.html">&lt;string.h&gt;</a></u></td></tr>
+<tr><th id="49">49</th><td><u>#include <a href="../../include/stdlib.h.html">&lt;stdlib.h&gt;</a>                                                /* free() */</u></td></tr>
+<tr><th id="50">50</th><td><u>#include <a href="../../include/errno.h.html">&lt;errno.h&gt;</a></u></td></tr>
+<tr><th id="51">51</th><td></td></tr>
+<tr><th id="52">52</th><td><u>#include <a href="config/vlc_getopt.h.html">"config/vlc_getopt.h"</a></u></td></tr>
+<tr><th id="53">53</th><td></td></tr>
+<tr><th id="54">54</th><td><u>#<span data-ppcond="54">ifdef</span> <span class="macro" data-ref="_M/HAVE_DBUS">HAVE_DBUS</span></u></td></tr>
+<tr><th id="55">55</th><td><i>/* used for one-instance mode */</i></td></tr>
+<tr><th id="56">56</th><td><u>#   include <a href="../../include/dbus-1.0/dbus/dbus.h.html">&lt;dbus/dbus.h&gt;</a></u></td></tr>
+<tr><th id="57">57</th><td><u>#<span data-ppcond="54">endif</span></u></td></tr>
+<tr><th id="58">58</th><td></td></tr>
+<tr><th id="59">59</th><td></td></tr>
+<tr><th id="60">60</th><td><u>#include <a href="../include/vlc_playlist.h.html">&lt;vlc_playlist.h&gt;</a></u></td></tr>
+<tr><th id="61">61</th><td><u>#include <a href="../include/vlc_interface.h.html">&lt;vlc_interface.h&gt;</a></u></td></tr>
+<tr><th id="62">62</th><td></td></tr>
+<tr><th id="63">63</th><td><u>#include <a href="../include/vlc_charset.h.html">&lt;vlc_charset.h&gt;</a></u></td></tr>
+<tr><th id="64">64</th><td><u>#include <a href="../include/vlc_fs.h.html">&lt;vlc_fs.h&gt;</a></u></td></tr>
+<tr><th id="65">65</th><td><u>#include <a href="../include/vlc_cpu.h.html">&lt;vlc_cpu.h&gt;</a></u></td></tr>
+<tr><th id="66">66</th><td><u>#include <a href="../include/vlc_url.h.html">&lt;vlc_url.h&gt;</a></u></td></tr>
+<tr><th id="67">67</th><td><u>#include <a href="../include/vlc_modules.h.html">&lt;vlc_modules.h&gt;</a></u></td></tr>
+<tr><th id="68">68</th><td></td></tr>
+<tr><th id="69">69</th><td><u>#include <a href="libvlc.h.html">"libvlc.h"</a></u></td></tr>
+<tr><th id="70">70</th><td><u>#include <a href="playlist/playlist_internal.h.html">"playlist/playlist_internal.h"</a></u></td></tr>
+<tr><th id="71">71</th><td><u>#include <a href="misc/variables.h.html">"misc/variables.h"</a></u></td></tr>
+<tr><th id="72">72</th><td></td></tr>
+<tr><th id="73">73</th><td><u>#include <a href="../include/vlc_vlm.h.html">&lt;vlc_vlm.h&gt;</a></u></td></tr>
+<tr><th id="74">74</th><td></td></tr>
+<tr><th id="75">75</th><td><u>#<span data-ppcond="75">ifdef</span> <span class="macro" data-ref="_M/__APPLE__">__APPLE__</span></u></td></tr>
+<tr><th id="76">76</th><td><u># include &lt;libkern/OSAtomic.h&gt;</u></td></tr>
+<tr><th id="77">77</th><td><u>#<span data-ppcond="75">endif</span></u></td></tr>
+<tr><th id="78">78</th><td></td></tr>
+<tr><th id="79">79</th><td><u>#include <a href="../../include/assert.h.html">&lt;assert.h&gt;</a></u></td></tr>
+<tr><th id="80">80</th><td></td></tr>
+<tr><th id="81">81</th><td><i  data-doc="GetFilenames">/*****************************************************************************</i></td></tr>
+<tr><th id="82">82</th><td><i  data-doc="GetFilenames"> * Local prototypes</i></td></tr>
+<tr><th id="83">83</th><td><i  data-doc="GetFilenames"> *****************************************************************************/</i></td></tr>
+<tr><th id="84">84</th><td><em>static</em> <em>void</em> <a class="tu decl" href="#GetFilenames" title='GetFilenames' data-type='void GetFilenames(libvlc_int_t * , unsigned int , const char *const * )' data-ref="GetFilenames">GetFilenames</a>  ( <a class="typedef" href="../include/vlc_common.h.html#libvlc_int_t" title='libvlc_int_t' data-type='struct libvlc_int_t' data-ref="libvlc_int_t">libvlc_int_t</a> *, <em>unsigned</em>, <em>const</em> <em>char</em> *<em>const</em> [] );</td></tr>
+<tr><th id="85">85</th><td></td></tr>
+<tr><th id="86">86</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="87">87</th><td><i class="doc"> * Allocate a blank libvlc instance, also setting the exit handler.</i></td></tr>
+<tr><th id="88">88</th><td><i class="doc"> * Vlc's threading system must have been initialized first</i></td></tr>
+<tr><th id="89">89</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="90">90</th><td><a class="typedef" href="../include/vlc_common.h.html#libvlc_int_t" title='libvlc_int_t' data-type='struct libvlc_int_t' data-ref="libvlc_int_t">libvlc_int_t</a> * <dfn class="decl def" id="libvlc_InternalCreate" title='libvlc_InternalCreate' data-ref="libvlc_InternalCreate">libvlc_InternalCreate</dfn>( <em>void</em> )</td></tr>
+<tr><th id="91">91</th><td>{</td></tr>
+<tr><th id="92">92</th><td>    <a class="typedef" href="../include/vlc_common.h.html#libvlc_int_t" title='libvlc_int_t' data-type='struct libvlc_int_t' data-ref="libvlc_int_t">libvlc_int_t</a> *<dfn class="local col1 decl" id="1p_libvlc" title='p_libvlc' data-type='libvlc_int_t *' data-ref="1p_libvlc">p_libvlc</dfn>;</td></tr>
+<tr><th id="93">93</th><td>    <a class="typedef" href="libvlc.h.html#libvlc_priv_t" title='libvlc_priv_t' data-type='struct libvlc_priv_t' data-ref="libvlc_priv_t">libvlc_priv_t</a> *<dfn class="local col2 decl" id="2priv" title='priv' data-type='libvlc_priv_t *' data-ref="2priv">priv</dfn>;</td></tr>
+<tr><th id="94">94</th><td></td></tr>
+<tr><th id="95">95</th><td>    <i>/* Allocate a libvlc instance object */</i></td></tr>
+<tr><th id="96">96</th><td>    <a class="local col1 ref" href="#1p_libvlc" title='p_libvlc' data-ref="1p_libvlc">p_libvlc</a> = <a class="macro" href="libvlc.h.html#114" title="vlc_custom_create(__builtin_choose_expr( __builtin_offsetof(__typeof__(*((vlc_object_t *)((void*)0))), psz_object_type), (void)0 , (vlc_object_t *)((vlc_object_t *)((void*)0))), sizeof (*priv), &quot;libvlc&quot;)" data-ref="_M/vlc_custom_create">vlc_custom_create</a>( (<a class="typedef" href="../include/vlc_common.h.html#vlc_object_t" title='vlc_object_t' data-type='struct vlc_object_t' data-ref="vlc_object_t">vlc_object_t</a> *)<span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>, <b>sizeof</b> (*<a class="local col2 ref" href="#2priv" title='priv' data-ref="2priv">priv</a>),</td></tr>
+<tr><th id="97">97</th><td>                                  <q>"libvlc"</q> );</td></tr>
+<tr><th id="98">98</th><td>    <b>if</b>( <a class="local col1 ref" href="#1p_libvlc" title='p_libvlc' data-ref="1p_libvlc">p_libvlc</a> == <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span> )</td></tr>
+<tr><th id="99">99</th><td>        <b>return</b> <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="100">100</th><td></td></tr>
+<tr><th id="101">101</th><td>    <a class="local col2 ref" href="#2priv" title='priv' data-ref="2priv">priv</a> = <a class="ref" href="libvlc.h.html#libvlc_priv" title='libvlc_priv' data-ref="libvlc_priv">libvlc_priv</a> (<a class="local col1 ref" href="#1p_libvlc" title='p_libvlc' data-ref="1p_libvlc">p_libvlc</a>);</td></tr>
+<tr><th id="102">102</th><td>    <a class="local col2 ref" href="#2priv" title='priv' data-ref="2priv">priv</a>-&gt;<a class="ref" href="libvlc.h.html#libvlc_priv_t::playlist" title='libvlc_priv_t::playlist' data-ref="libvlc_priv_t::playlist">playlist</a> = <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="103">103</th><td>    <a class="local col2 ref" href="#2priv" title='priv' data-ref="2priv">priv</a>-&gt;<a class="ref" href="libvlc.h.html#libvlc_priv_t::p_dialog_provider" title='libvlc_priv_t::p_dialog_provider' data-ref="libvlc_priv_t::p_dialog_provider">p_dialog_provider</a> = <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="104">104</th><td>    <a class="local col2 ref" href="#2priv" title='priv' data-ref="2priv">priv</a>-&gt;<a class="ref" href="libvlc.h.html#libvlc_priv_t::p_vlm" title='libvlc_priv_t::p_vlm' data-ref="libvlc_priv_t::p_vlm">p_vlm</a> = <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="105">105</th><td></td></tr>
+<tr><th id="106">106</th><td>    <a class="ref" href="libvlc.h.html#vlc_ExitInit" title='vlc_ExitInit' data-ref="vlc_ExitInit">vlc_ExitInit</a>( &amp;<a class="local col2 ref" href="#2priv" title='priv' data-ref="2priv">priv</a>-&gt;<a class="ref" href="libvlc.h.html#libvlc_priv_t::exit" title='libvlc_priv_t::exit' data-ref="libvlc_priv_t::exit">exit</a> );</td></tr>
+<tr><th id="107">107</th><td></td></tr>
+<tr><th id="108">108</th><td>    <b>return</b> <a class="local col1 ref" href="#1p_libvlc" title='p_libvlc' data-ref="1p_libvlc">p_libvlc</a>;</td></tr>
+<tr><th id="109">109</th><td>}</td></tr>
+<tr><th id="110">110</th><td></td></tr>
+<tr><th id="111">111</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="112">112</th><td><i class="doc"> * Initialize a libvlc instance</i></td></tr>
+<tr><th id="113">113</th><td><i class="doc"> * This function initializes a previously allocated libvlc instance:</i></td></tr>
+<tr><th id="114">114</th><td><i class="doc"> *  - CPU detection</i></td></tr>
+<tr><th id="115">115</th><td><i class="doc"> *  - gettext initialization</i></td></tr>
+<tr><th id="116">116</th><td><i class="doc"> *  - message queue, module bank and playlist initialization</i></td></tr>
+<tr><th id="117">117</th><td><i class="doc"> *  - configuration and commandline parsing</i></td></tr>
+<tr><th id="118">118</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="119">119</th><td><em>int</em> <dfn class="decl def" id="libvlc_InternalInit" title='libvlc_InternalInit' data-ref="libvlc_InternalInit">libvlc_InternalInit</dfn>( <a class="typedef" href="../include/vlc_common.h.html#libvlc_int_t" title='libvlc_int_t' data-type='struct libvlc_int_t' data-ref="libvlc_int_t">libvlc_int_t</a> *<dfn class="local col3 decl" id="3p_libvlc" title='p_libvlc' data-type='libvlc_int_t *' data-ref="3p_libvlc">p_libvlc</dfn>, <em>int</em> <dfn class="local col4 decl" id="4i_argc" title='i_argc' data-type='int' data-ref="4i_argc">i_argc</dfn>,</td></tr>
+<tr><th id="120">120</th><td>                         <em>const</em> <em>char</em> *<dfn class="local col5 decl" id="5ppsz_argv" title='ppsz_argv' data-type='const char **' data-ref="5ppsz_argv">ppsz_argv</dfn>[] )</td></tr>
+<tr><th id="121">121</th><td>{</td></tr>
+<tr><th id="122">122</th><td>    <a class="typedef" href="libvlc.h.html#libvlc_priv_t" title='libvlc_priv_t' data-type='struct libvlc_priv_t' data-ref="libvlc_priv_t">libvlc_priv_t</a> *<dfn class="local col6 decl" id="6priv" title='priv' data-type='libvlc_priv_t *' data-ref="6priv">priv</dfn> = <a class="ref" href="libvlc.h.html#libvlc_priv" title='libvlc_priv' data-ref="libvlc_priv">libvlc_priv</a> (<a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>);</td></tr>
+<tr><th id="123">123</th><td>    <em>char</em> *       <dfn class="local col7 decl" id="7psz_modules" title='psz_modules' data-type='char *' data-ref="7psz_modules">psz_modules</dfn> = <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="124">124</th><td>    <em>char</em> *       <dfn class="local col8 decl" id="8psz_parser" title='psz_parser' data-type='char *' data-ref="8psz_parser">psz_parser</dfn> = <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="125">125</th><td>    <em>char</em> *       <dfn class="local col9 decl" id="9psz_control" title='psz_control' data-type='char *' data-ref="9psz_control">psz_control</dfn> = <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="126">126</th><td>    <em>char</em>        *<dfn class="local col0 decl" id="10psz_val" title='psz_val' data-type='char *' data-ref="10psz_val">psz_val</dfn>;</td></tr>
+<tr><th id="127">127</th><td></td></tr>
+<tr><th id="128">128</th><td>    <i>/* System specific initialization code */</i></td></tr>
+<tr><th id="129">129</th><td>    <a class="ref" href="libvlc.h.html#system_Init" title='system_Init' data-ref="system_Init">system_Init</a>();</td></tr>
+<tr><th id="130">130</th><td></td></tr>
+<tr><th id="131">131</th><td>    <i>/* Initialize the module bank and load the configuration of the</i></td></tr>
+<tr><th id="132">132</th><td><i>     * core module. We need to do this at this stage to be able to display</i></td></tr>
+<tr><th id="133">133</th><td><i>     * a short help if required by the user. (short help == core module</i></td></tr>
+<tr><th id="134">134</th><td><i>     * options) */</i></td></tr>
+<tr><th id="135">135</th><td>    <a class="ref" href="modules/modules.h.html#module_InitBank" title='module_InitBank' data-ref="module_InitBank">module_InitBank</a> ();</td></tr>
+<tr><th id="136">136</th><td></td></tr>
+<tr><th id="137">137</th><td>    <i>/* Get command line options that affect module loading. */</i></td></tr>
+<tr><th id="138">138</th><td>    <b>if</b>( <a class="macro" href="config/configuration.h.html#37" title="config_LoadCmdLine(__builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)),i_argc,ppsz_argv,((void*)0))" data-ref="_M/config_LoadCmdLine">config_LoadCmdLine</a>( <a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>, <a class="local col4 ref" href="#4i_argc" title='i_argc' data-ref="4i_argc">i_argc</a>, <a class="local col5 ref" href="#5ppsz_argv" title='ppsz_argv' data-ref="5ppsz_argv">ppsz_argv</a>, <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span> ) )</td></tr>
+<tr><th id="139">139</th><td>    {</td></tr>
+<tr><th id="140">140</th><td>        <a class="ref" href="modules/modules.h.html#module_EndBank" title='module_EndBank' data-ref="module_EndBank">module_EndBank</a> (<span class="macro" title="0" data-ref="_M/false">false</span>);</td></tr>
+<tr><th id="141">141</th><td>        <b>return</b> <a class="macro" href="../include/vlc_common.h.html#375" title="(-1)" data-ref="_M/VLC_EGENERIC">VLC_EGENERIC</a>;</td></tr>
+<tr><th id="142">142</th><td>    }</td></tr>
+<tr><th id="143">143</th><td></td></tr>
+<tr><th id="144">144</th><td>    <a class="ref" href="libvlc.h.html#vlc_LogInit" title='vlc_LogInit' data-ref="vlc_LogInit">vlc_LogInit</a> (<a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>);</td></tr>
+<tr><th id="145">145</th><td>    <a class="ref" href="libvlc.h.html#vlc_threads_setup" title='vlc_threads_setup' data-ref="vlc_threads_setup">vlc_threads_setup</a> (<a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>);</td></tr>
+<tr><th id="146">146</th><td></td></tr>
+<tr><th id="147">147</th><td>    <i>/* Load the builtins and plugins into the module_bank.</i></td></tr>
+<tr><th id="148">148</th><td><i>     * We have to do it before config_Load*() because this also gets the</i></td></tr>
+<tr><th id="149">149</th><td><i>     * list of configuration options exported by each module and loads their</i></td></tr>
+<tr><th id="150">150</th><td><i>     * default values. */</i></td></tr>
+<tr><th id="151">151</th><td>    <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="local col1 decl" id="11module_count" title='module_count' data-type='size_t' data-ref="11module_count">module_count</dfn> = <a class="macro" href="modules/modules.h.html#109" title="module_LoadPlugins(__builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)))" data-ref="_M/module_LoadPlugins">module_LoadPlugins</a> (<a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>);</td></tr>
+<tr><th id="152">152</th><td></td></tr>
+<tr><th id="153">153</th><td>    <i>/*</i></td></tr>
+<tr><th id="154">154</th><td><i>     * Override default configuration with config file settings</i></td></tr>
+<tr><th id="155">155</th><td><i>     */</i></td></tr>
+<tr><th id="156">156</th><td>    <b>if</b>( !<a class="macro" href="../include/vlc_variables.h.html#676" title="var_InheritBool(__builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)), &quot;ignore-config&quot;)" data-ref="_M/var_InheritBool">var_InheritBool</a>( <a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>, <q>"ignore-config"</q> ) )</td></tr>
+<tr><th id="157">157</th><td>    {</td></tr>
+<tr><th id="158">158</th><td>        <b>if</b>( <a class="macro" href="../include/vlc_variables.h.html#676" title="var_InheritBool(__builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)), &quot;reset-config&quot;)" data-ref="_M/var_InheritBool">var_InheritBool</a>( <a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>, <q>"reset-config"</q> ) )</td></tr>
+<tr><th id="159">159</th><td>            <a class="macro" href="../include/vlc_configuration.h.html#109" title="config_SaveConfigFile(__builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)))" data-ref="_M/config_SaveConfigFile">config_SaveConfigFile</a>( <a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a> ); <i>/* Save default config */</i></td></tr>
+<tr><th id="160">160</th><td>        <b>else</b></td></tr>
+<tr><th id="161">161</th><td>            <a class="macro" href="config/configuration.h.html#38" title="config_LoadConfigFile(__builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)))" data-ref="_M/config_LoadConfigFile">config_LoadConfigFile</a>( <a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a> );</td></tr>
+<tr><th id="162">162</th><td>    }</td></tr>
+<tr><th id="163">163</th><td></td></tr>
+<tr><th id="164">164</th><td>    <i>/*</i></td></tr>
+<tr><th id="165">165</th><td><i>     * Override configuration with command line settings</i></td></tr>
+<tr><th id="166">166</th><td><i>     */</i></td></tr>
+<tr><th id="167">167</th><td>    <em>int</em> <dfn class="local col2 decl" id="12vlc_optind" title='vlc_optind' data-type='int' data-ref="12vlc_optind">vlc_optind</dfn>;</td></tr>
+<tr><th id="168">168</th><td>    <b>if</b>( <a class="macro" href="config/configuration.h.html#37" title="config_LoadCmdLine(__builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)),i_argc,ppsz_argv,&amp;vlc_optind)" data-ref="_M/config_LoadCmdLine">config_LoadCmdLine</a>( <a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>, <a class="local col4 ref" href="#4i_argc" title='i_argc' data-ref="4i_argc">i_argc</a>, <a class="local col5 ref" href="#5ppsz_argv" title='ppsz_argv' data-ref="5ppsz_argv">ppsz_argv</a>, &amp;<a class="local col2 ref" href="#12vlc_optind" title='vlc_optind' data-ref="12vlc_optind">vlc_optind</a> ) )</td></tr>
+<tr><th id="169">169</th><td>    {</td></tr>
+<tr><th id="170">170</th><td>        <a class="ref" href="modules/modules.h.html#module_EndBank" title='module_EndBank' data-ref="module_EndBank">module_EndBank</a> (<span class="macro" title="1" data-ref="_M/true">true</span>);</td></tr>
+<tr><th id="171">171</th><td>        <a class="ref" href="libvlc.h.html#vlc_LogDeinit" title='vlc_LogDeinit' data-ref="vlc_LogDeinit">vlc_LogDeinit</a> (<a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>);</td></tr>
+<tr><th id="172">172</th><td>        <b>return</b> <a class="macro" href="../include/vlc_common.h.html#375" title="(-1)" data-ref="_M/VLC_EGENERIC">VLC_EGENERIC</a>;</td></tr>
+<tr><th id="173">173</th><td>    }</td></tr>
+<tr><th id="174">174</th><td></td></tr>
+<tr><th id="175">175</th><td>    <i>/*</i></td></tr>
+<tr><th id="176">176</th><td><i>     * Support for gettext</i></td></tr>
+<tr><th id="177">177</th><td><i>     */</i></td></tr>
+<tr><th id="178">178</th><td><u>#<span data-ppcond="178">if</span> defined( <a class="macro" href="../config.h.html#87" data-ref="_M/ENABLE_NLS">ENABLE_NLS</a> ) \</u></td></tr>
+<tr><th id="179">179</th><td><u>     &amp;&amp; ( defined( <a class="macro" href="../config.h.html#224" data-ref="_M/HAVE_GETTEXT">HAVE_GETTEXT</a> ) || defined( <span class="macro" data-ref="_M/HAVE_INCLUDED_GETTEXT">HAVE_INCLUDED_GETTEXT</span> ) )</u></td></tr>
+<tr><th id="180">180</th><td>    <a class="ref" href="modules/modules.h.html#vlc_bindtextdomain" title='vlc_bindtextdomain' data-ref="vlc_bindtextdomain">vlc_bindtextdomain</a> (<a class="macro" href="../config.h.html#620" title="&quot;vlc&quot;" data-ref="_M/PACKAGE_NAME">PACKAGE_NAME</a>);</td></tr>
+<tr><th id="181">181</th><td><u>#<span data-ppcond="178">endif</span></u></td></tr>
+<tr><th id="182">182</th><td>    <i>/*xgettext: Translate "C" to the language code: "fr", "en_GB", "nl", "ru"... */</i></td></tr>
+<tr><th id="183">183</th><td>    <a class="macro" href="../include/vlc_messages.h.html#77" title="vlc_Log( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)), VLC_MSG_DBG, core, &quot;translation test: code is \&quot;%s\&quot;&quot;, vlc_gettext (&quot;C&quot;) )" data-ref="_M/msg_Dbg">msg_Dbg</a>( p_libvlc, <q>"translation test: code is \"%s\""</q>, <a class="macro" href="../include/vlc_fixups.h.html#255" title="vlc_gettext (&quot;C&quot;)" data-ref="_M/_">_</a>(<q>"C"</q>) );</td></tr>
+<tr><th id="184">184</th><td></td></tr>
+<tr><th id="185">185</th><td>    <b>if</b> (<a class="ref" href="config/configuration.h.html#config_PrintHelp" title='config_PrintHelp' data-ref="config_PrintHelp">config_PrintHelp</a> (<a class="macro" href="../include/vlc_common.h.html#448" title="__builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc))" data-ref="_M/VLC_OBJECT">VLC_OBJECT</a>(<a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>)))</td></tr>
+<tr><th id="186">186</th><td>    {</td></tr>
+<tr><th id="187">187</th><td>        <a class="ref" href="modules/modules.h.html#module_EndBank" title='module_EndBank' data-ref="module_EndBank">module_EndBank</a> (<span class="macro" title="1" data-ref="_M/true">true</span>);</td></tr>
+<tr><th id="188">188</th><td>        <a class="ref" href="../../include/stdlib.h.html#exit" title='exit' data-ref="exit">exit</a>(<var>0</var>);</td></tr>
+<tr><th id="189">189</th><td>    }</td></tr>
+<tr><th id="190">190</th><td></td></tr>
+<tr><th id="191">191</th><td>    <b>if</b>( <a class="local col1 ref" href="#11module_count" title='module_count' data-ref="11module_count">module_count</a> &lt;= <var>1</var> )</td></tr>
+<tr><th id="192">192</th><td>    {</td></tr>
+<tr><th id="193">193</th><td>        <a class="macro" href="../include/vlc_messages.h.html#73" title="vlc_Log( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)), VLC_MSG_ERR, core, &quot;No plugins found! Check your VLC installation.&quot; )" data-ref="_M/msg_Err">msg_Err</a>( p_libvlc, <q>"No plugins found! Check your VLC installation."</q>);</td></tr>
+<tr><th id="194">194</th><td>        <a class="ref" href="modules/modules.h.html#module_EndBank" title='module_EndBank' data-ref="module_EndBank">module_EndBank</a> (<span class="macro" title="1" data-ref="_M/true">true</span>);</td></tr>
+<tr><th id="195">195</th><td>        <a class="ref" href="libvlc.h.html#vlc_LogDeinit" title='vlc_LogDeinit' data-ref="vlc_LogDeinit">vlc_LogDeinit</a> (<a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>);</td></tr>
+<tr><th id="196">196</th><td>        <b>return</b> <a class="macro" href="../include/vlc_common.h.html#378" title="(-4)" data-ref="_M/VLC_ENOMOD">VLC_ENOMOD</a>;</td></tr>
+<tr><th id="197">197</th><td>    }</td></tr>
+<tr><th id="198">198</th><td></td></tr>
+<tr><th id="199">199</th><td><u>#<span data-ppcond="199">ifdef</span> <a class="macro" href="../config.h.html#147" data-ref="_M/HAVE_DAEMON">HAVE_DAEMON</a></u></td></tr>
+<tr><th id="200">200</th><td>    <i>/* Check for daemon mode */</i></td></tr>
+<tr><th id="201">201</th><td>    <b>if</b>( <a class="macro" href="../include/vlc_variables.h.html#676" title="var_InheritBool(__builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)), &quot;daemon&quot;)" data-ref="_M/var_InheritBool">var_InheritBool</a>( <a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>, <q>"daemon"</q> ) )</td></tr>
+<tr><th id="202">202</th><td>    {</td></tr>
+<tr><th id="203">203</th><td>        <b>if</b>( <a class="ref" href="../../include/unistd.h.html#daemon" title='daemon' data-ref="daemon">daemon</a>( <var>1</var>, <var>0</var>) != <var>0</var> )</td></tr>
+<tr><th id="204">204</th><td>        {</td></tr>
+<tr><th id="205">205</th><td>            <a class="macro" href="../include/vlc_messages.h.html#73" title="vlc_Log( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)), VLC_MSG_ERR, core, &quot;Unable to fork vlc to daemon mode&quot; )" data-ref="_M/msg_Err">msg_Err</a>( p_libvlc, <q>"Unable to fork vlc to daemon mode"</q> );</td></tr>
+<tr><th id="206">206</th><td>            <a class="ref" href="modules/modules.h.html#module_EndBank" title='module_EndBank' data-ref="module_EndBank">module_EndBank</a> (<span class="macro" title="1" data-ref="_M/true">true</span>);</td></tr>
+<tr><th id="207">207</th><td>            <a class="ref" href="libvlc.h.html#vlc_LogDeinit" title='vlc_LogDeinit' data-ref="vlc_LogDeinit">vlc_LogDeinit</a> (<a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>);</td></tr>
+<tr><th id="208">208</th><td>            <b>return</b> <a class="macro" href="../include/vlc_common.h.html#376" title="(-2)" data-ref="_M/VLC_ENOMEM">VLC_ENOMEM</a>;</td></tr>
+<tr><th id="209">209</th><td>        }</td></tr>
+<tr><th id="210">210</th><td></td></tr>
+<tr><th id="211">211</th><td>        <i>/* lets check if we need to write the pidfile */</i></td></tr>
+<tr><th id="212">212</th><td>        <em>char</em> *<dfn class="local col3 decl" id="13pidfile" title='pidfile' data-type='char *' data-ref="13pidfile">pidfile</dfn> = <a class="macro" href="../include/vlc_variables.h.html#714" title="var_InheritString(__builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)), &quot;pidfile&quot;)" data-ref="_M/var_InheritString">var_InheritString</a>( <a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>, <q>"pidfile"</q> );</td></tr>
+<tr><th id="213">213</th><td>        <b>if</b>( <a class="local col3 ref" href="#13pidfile" title='pidfile' data-ref="13pidfile">pidfile</a> != <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span> )</td></tr>
+<tr><th id="214">214</th><td>        {</td></tr>
+<tr><th id="215">215</th><td>            <a class="typedef" href="../../include/stdio.h.html#FILE" title='FILE' data-type='struct _IO_FILE' data-ref="FILE">FILE</a> *<dfn class="local col4 decl" id="14stream" title='stream' data-type='FILE *' data-ref="14stream">stream</dfn> = <a class="ref" href="../include/vlc_fs.h.html#vlc_fopen" title='vlc_fopen' data-ref="vlc_fopen">vlc_fopen</a>( <a class="local col3 ref" href="#13pidfile" title='pidfile' data-ref="13pidfile">pidfile</a>, <q>"w"</q> );</td></tr>
+<tr><th id="216">216</th><td>            <b>if</b>( <a class="local col4 ref" href="#14stream" title='stream' data-ref="14stream">stream</a> != <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span> )</td></tr>
+<tr><th id="217">217</th><td>            {</td></tr>
+<tr><th id="218">218</th><td>                <a class="macro" href="../../include/x86_64-linux-gnu/bits/stdio2.h.html#109" title="__fprintf_chk (stream, 2 - 1, &quot;%d&quot;, (int)getpid())" data-ref="_M/fprintf">fprintf</a>( <a class="local col4 ref" href="#14stream" title='stream' data-ref="14stream">stream</a>, <q>"%d"</q>, (<em>int</em>)<a class="ref" href="../../include/unistd.h.html#getpid" title='getpid' data-ref="getpid">getpid</a>() );</td></tr>
+<tr><th id="219">219</th><td>                <a class="ref" href="../../include/stdio.h.html#fclose" title='fclose' data-ref="fclose">fclose</a>( <a class="local col4 ref" href="#14stream" title='stream' data-ref="14stream">stream</a> );</td></tr>
+<tr><th id="220">220</th><td>                <a class="macro" href="../include/vlc_messages.h.html#77" title="vlc_Log( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)), VLC_MSG_DBG, core, &quot;written PID file %s&quot;, pidfile )" data-ref="_M/msg_Dbg">msg_Dbg</a>( p_libvlc, <q>"written PID file %s"</q>, pidfile );</td></tr>
+<tr><th id="221">221</th><td>            }</td></tr>
+<tr><th id="222">222</th><td>            <b>else</b></td></tr>
+<tr><th id="223">223</th><td>                <a class="macro" href="../include/vlc_messages.h.html#73" title="vlc_Log( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)), VLC_MSG_ERR, core, &quot;cannot write PID file %s: %s&quot;, pidfile, vlc_strerror_c((*__errno_location ())) )" data-ref="_M/msg_Err">msg_Err</a>( p_libvlc, <q>"cannot write PID file %s: %s"</q>,</td></tr>
+<tr><th id="224">224</th><td>                         pidfile, vlc_strerror_c(<a class="macro" href="../../include/x86_64-linux-gnu/bits/errno.h.html#54" title="(*__errno_location ())" data-ref="_M/errno">errno</a>) );</td></tr>
+<tr><th id="225">225</th><td>            <a class="ref" href="../../include/stdlib.h.html#free" title='free' data-ref="free">free</a>( <a class="local col3 ref" href="#13pidfile" title='pidfile' data-ref="13pidfile">pidfile</a> );</td></tr>
+<tr><th id="226">226</th><td>        }</td></tr>
+<tr><th id="227">227</th><td>    }</td></tr>
+<tr><th id="228">228</th><td>    <b>else</b></td></tr>
+<tr><th id="229">229</th><td>    {</td></tr>
+<tr><th id="230">230</th><td>        <a class="macro" href="../include/vlc_variables.h.html#145" title="var_Create( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)), &quot;pidfile&quot;, 0x0040 )" data-ref="_M/var_Create">var_Create</a>( <a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>, <q>"pidfile"</q>, <a class="macro" href="../include/vlc_variables.h.html#57" title="0x0040" data-ref="_M/VLC_VAR_STRING">VLC_VAR_STRING</a> );</td></tr>
+<tr><th id="231">231</th><td>        <a class="macro" href="../include/vlc_variables.h.html#294" title="var_SetString( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)),&quot;pidfile&quot;,&quot;&quot;)" data-ref="_M/var_SetString">var_SetString</a>( <a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>, <q>"pidfile"</q>, <q>""</q> );</td></tr>
+<tr><th id="232">232</th><td>    }</td></tr>
+<tr><th id="233">233</th><td><u>#<span data-ppcond="199">endif</span></u></td></tr>
+<tr><th id="234">234</th><td></td></tr>
+<tr><th id="235">235</th><td><i>/* FIXME: could be replaced by using Unix sockets */</i></td></tr>
+<tr><th id="236">236</th><td><u>#<span data-ppcond="236">ifdef</span> <span class="macro" data-ref="_M/HAVE_DBUS">HAVE_DBUS</span></u></td></tr>
+<tr><th id="237">237</th><td></td></tr>
+<tr><th id="238">238</th><td><u>#define <dfn class="macro" id="_M/MPRIS_APPEND" data-ref="_M/MPRIS_APPEND">MPRIS_APPEND</dfn> "/org/mpris/MediaPlayer2/TrackList/Append"</u></td></tr>
+<tr><th id="239">239</th><td><u>#define <dfn class="macro" id="_M/MPRIS_BUS_NAME" data-ref="_M/MPRIS_BUS_NAME">MPRIS_BUS_NAME</dfn> "org.mpris.MediaPlayer2.vlc"</u></td></tr>
+<tr><th id="240">240</th><td><u>#define <dfn class="macro" id="_M/MPRIS_OBJECT_PATH" data-ref="_M/MPRIS_OBJECT_PATH">MPRIS_OBJECT_PATH</dfn> "/org/mpris/MediaPlayer2"</u></td></tr>
+<tr><th id="241">241</th><td><u>#define <dfn class="macro" id="_M/MPRIS_TRACKLIST_INTERFACE" data-ref="_M/MPRIS_TRACKLIST_INTERFACE">MPRIS_TRACKLIST_INTERFACE</dfn> "org.mpris.MediaPlayer2.TrackList"</u></td></tr>
+<tr><th id="242">242</th><td></td></tr>
+<tr><th id="243">243</th><td>    <b>if</b>( <a class="macro" href="../include/vlc_variables.h.html#676" title="var_InheritBool(__builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)), &quot;one-instance&quot;)" data-ref="_M/var_InheritBool">var_InheritBool</a>( <a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>, <q>"one-instance"</q> )</td></tr>
+<tr><th id="244">244</th><td>    || ( <a class="macro" href="../include/vlc_variables.h.html#676" title="var_InheritBool(__builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)), &quot;one-instance-when-started-from-file&quot;)" data-ref="_M/var_InheritBool">var_InheritBool</a>( <a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>, <q>"one-instance-when-started-from-file"</q> )</td></tr>
+<tr><th id="245">245</th><td>      &amp;&amp; <a class="macro" href="../include/vlc_variables.h.html#676" title="var_InheritBool(__builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)), &quot;started-from-file&quot;)" data-ref="_M/var_InheritBool">var_InheritBool</a>( <a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>, <q>"started-from-file"</q> ) ) )</td></tr>
+<tr><th id="246">246</th><td>    {</td></tr>
+<tr><th id="247">247</th><td>        <b>for</b>( <em>int</em> <dfn class="local col5 decl" id="15i" title='i' data-type='int' data-ref="15i">i</dfn> = <a class="local col2 ref" href="#12vlc_optind" title='vlc_optind' data-ref="12vlc_optind">vlc_optind</a>; <a class="local col5 ref" href="#15i" title='i' data-ref="15i">i</a> &lt; <a class="local col4 ref" href="#4i_argc" title='i_argc' data-ref="4i_argc">i_argc</a>; <a class="local col5 ref" href="#15i" title='i' data-ref="15i">i</a>++ )</td></tr>
+<tr><th id="248">248</th><td>            <b>if</b>( <a class="local col5 ref" href="#5ppsz_argv" title='ppsz_argv' data-ref="5ppsz_argv">ppsz_argv</a>[<a class="local col5 ref" href="#15i" title='i' data-ref="15i">i</a>][<var>0</var>] == <kbd>':'</kbd> )</td></tr>
+<tr><th id="249">249</th><td>            {</td></tr>
+<tr><th id="250">250</th><td>                <a class="macro" href="../include/vlc_messages.h.html#73" title="vlc_Log( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)), VLC_MSG_ERR, core, &quot;item option %s incompatible with single instance&quot;, ppsz_argv[i] )" data-ref="_M/msg_Err">msg_Err</a>( p_libvlc, <q>"item option %s incompatible with single instance"</q>,</td></tr>
+<tr><th id="251">251</th><td>                         ppsz_argv[i] );</td></tr>
+<tr><th id="252">252</th><td>                <b>goto</b> <a class="lbl" href="#16dbus_out" data-ref="16dbus_out">dbus_out</a>;</td></tr>
+<tr><th id="253">253</th><td>            }</td></tr>
+<tr><th id="254">254</th><td></td></tr>
+<tr><th id="255">255</th><td>        <i>/* Initialise D-Bus interface, check for other instances */</i></td></tr>
+<tr><th id="256">256</th><td>        <a class="ref" href="../../include/dbus-1.0/dbus/dbus-threads.h.html#dbus_threads_init_default" title='dbus_threads_init_default' data-ref="dbus_threads_init_default">dbus_threads_init_default</a>();</td></tr>
+<tr><th id="257">257</th><td></td></tr>
+<tr><th id="258">258</th><td>        <a class="typedef" href="../../include/dbus-1.0/dbus/dbus-errors.h.html#DBusError" title='DBusError' data-type='struct DBusError' data-ref="DBusError">DBusError</a> <dfn class="local col7 decl" id="17err" title='err' data-type='DBusError' data-ref="17err">err</dfn>;</td></tr>
+<tr><th id="259">259</th><td>        <a class="ref" href="../../include/dbus-1.0/dbus/dbus-errors.h.html#dbus_error_init" title='dbus_error_init' data-ref="dbus_error_init">dbus_error_init</a>( &amp;<a class="local col7 ref" href="#17err" title='err' data-ref="17err">err</a> );</td></tr>
+<tr><th id="260">260</th><td></td></tr>
+<tr><th id="261">261</th><td>        <i>/* connect to the session bus */</i></td></tr>
+<tr><th id="262">262</th><td>        <a class="typedef" href="../../include/dbus-1.0/dbus/dbus-connection.h.html#DBusConnection" title='DBusConnection' data-type='struct DBusConnection' data-ref="DBusConnection">DBusConnection</a>  *<dfn class="local col8 decl" id="18conn" title='conn' data-type='DBusConnection *' data-ref="18conn">conn</dfn> = <a class="ref" href="../../include/dbus-1.0/dbus/dbus-bus.h.html#dbus_bus_get" title='dbus_bus_get' data-ref="dbus_bus_get">dbus_bus_get</a>( <a class="enum" href="../../include/dbus-1.0/dbus/dbus-shared.h.html#::DBUS_BUS_SESSION" title='::DBUS_BUS_SESSION' data-ref="::DBUS_BUS_SESSION">DBUS_BUS_SESSION</a>, &amp;<a class="local col7 ref" href="#17err" title='err' data-ref="17err">err</a> );</td></tr>
+<tr><th id="263">263</th><td>        <b>if</b>( <a class="local col8 ref" href="#18conn" title='conn' data-ref="18conn">conn</a> == <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span> )</td></tr>
+<tr><th id="264">264</th><td>        {</td></tr>
+<tr><th id="265">265</th><td>            <a class="macro" href="../include/vlc_messages.h.html#73" title="vlc_Log( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)), VLC_MSG_ERR, core, &quot;Failed to connect to D-Bus session daemon: %s&quot;, err.message )" data-ref="_M/msg_Err">msg_Err</a>( p_libvlc, <q>"Failed to connect to D-Bus session daemon: %s"</q>,</td></tr>
+<tr><th id="266">266</th><td>                    err.message );</td></tr>
+<tr><th id="267">267</th><td>            <a class="ref" href="../../include/dbus-1.0/dbus/dbus-errors.h.html#dbus_error_free" title='dbus_error_free' data-ref="dbus_error_free">dbus_error_free</a>( &amp;<a class="local col7 ref" href="#17err" title='err' data-ref="17err">err</a> );</td></tr>
+<tr><th id="268">268</th><td>            <b>goto</b> <a class="lbl" href="#16dbus_out" data-ref="16dbus_out">dbus_out</a>;</td></tr>
+<tr><th id="269">269</th><td>        }</td></tr>
+<tr><th id="270">270</th><td></td></tr>
+<tr><th id="271">271</th><td>        <i>/* check if VLC is available on the bus</i></td></tr>
+<tr><th id="272">272</th><td><i>         * if not: D-Bus control is not enabled on the other</i></td></tr>
+<tr><th id="273">273</th><td><i>         * instance and we can't pass MRLs to it */</i></td></tr>
+<tr><th id="274">274</th><td>        <i>/* FIXME: This check is totally brain-dead and buggy. */</i></td></tr>
+<tr><th id="275">275</th><td>        <b>if</b>( !<a class="ref" href="../../include/dbus-1.0/dbus/dbus-bus.h.html#dbus_bus_name_has_owner" title='dbus_bus_name_has_owner' data-ref="dbus_bus_name_has_owner">dbus_bus_name_has_owner</a>( <a class="local col8 ref" href="#18conn" title='conn' data-ref="18conn">conn</a>, <a class="macro" href="#239" title="&quot;org.mpris.MediaPlayer2.vlc&quot;" data-ref="_M/MPRIS_BUS_NAME">MPRIS_BUS_NAME</a>, &amp;<a class="local col7 ref" href="#17err" title='err' data-ref="17err">err</a> ) )</td></tr>
+<tr><th id="276">276</th><td>        {</td></tr>
+<tr><th id="277">277</th><td>            <a class="ref" href="../../include/dbus-1.0/dbus/dbus-connection.h.html#dbus_connection_unref" title='dbus_connection_unref' data-ref="dbus_connection_unref">dbus_connection_unref</a>( <a class="local col8 ref" href="#18conn" title='conn' data-ref="18conn">conn</a> );</td></tr>
+<tr><th id="278">278</th><td>            <b>if</b>( <a class="ref" href="../../include/dbus-1.0/dbus/dbus-errors.h.html#dbus_error_is_set" title='dbus_error_is_set' data-ref="dbus_error_is_set">dbus_error_is_set</a>( &amp;<a class="local col7 ref" href="#17err" title='err' data-ref="17err">err</a> ) )</td></tr>
+<tr><th id="279">279</th><td>            {</td></tr>
+<tr><th id="280">280</th><td>                <a class="macro" href="../include/vlc_messages.h.html#73" title="vlc_Log( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)), VLC_MSG_ERR, core, &quot;D-Bus error: %s&quot;, err.message )" data-ref="_M/msg_Err">msg_Err</a>( p_libvlc, <q>"D-Bus error: %s"</q>, err.message );</td></tr>
+<tr><th id="281">281</th><td>            }</td></tr>
+<tr><th id="282">282</th><td>            <b>else</b></td></tr>
+<tr><th id="283">283</th><td>                <a class="macro" href="../include/vlc_messages.h.html#77" title="vlc_Log( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)), VLC_MSG_DBG, core, &quot;No media player running. Continuing normally.&quot; )" data-ref="_M/msg_Dbg">msg_Dbg</a>( p_libvlc, <q>"No media player running. Continuing normally."</q> );</td></tr>
+<tr><th id="284">284</th><td>            <a class="ref" href="../../include/dbus-1.0/dbus/dbus-errors.h.html#dbus_error_free" title='dbus_error_free' data-ref="dbus_error_free">dbus_error_free</a>( &amp;<a class="local col7 ref" href="#17err" title='err' data-ref="17err">err</a> );</td></tr>
+<tr><th id="285">285</th><td>            <b>goto</b> <a class="lbl" href="#16dbus_out" data-ref="16dbus_out">dbus_out</a>;</td></tr>
+<tr><th id="286">286</th><td>        }</td></tr>
+<tr><th id="287">287</th><td></td></tr>
+<tr><th id="288">288</th><td>        <em>const</em> <a class="typedef" href="../../include/dbus-1.0/dbus/dbus-types.h.html#dbus_bool_t" title='dbus_bool_t' data-type='dbus_uint32_t' data-ref="dbus_bool_t">dbus_bool_t</a> <dfn class="local col9 decl" id="19play" title='play' data-type='const dbus_bool_t' data-ref="19play">play</dfn> = !<a class="macro" href="../include/vlc_variables.h.html#676" title="var_InheritBool(__builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)), &quot;playlist-enqueue&quot;)" data-ref="_M/var_InheritBool">var_InheritBool</a>( <a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>, <q>"playlist-enqueue"</q> );</td></tr>
+<tr><th id="289">289</th><td></td></tr>
+<tr><th id="290">290</th><td>        <a class="macro" href="../include/vlc_messages.h.html#75" title="vlc_Log( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)), VLC_MSG_WARN, core, &quot;media player running. Exiting...&quot; )" data-ref="_M/msg_Warn">msg_Warn</a>( p_libvlc, <q>"media player running. Exiting..."</q>);</td></tr>
+<tr><th id="291">291</th><td>        <b>for</b>( <em>int</em> <dfn class="local col0 decl" id="20i" title='i' data-type='int' data-ref="20i">i</dfn> = <a class="local col2 ref" href="#12vlc_optind" title='vlc_optind' data-ref="12vlc_optind">vlc_optind</a>; <a class="local col0 ref" href="#20i" title='i' data-ref="20i">i</a> &lt; <a class="local col4 ref" href="#4i_argc" title='i_argc' data-ref="4i_argc">i_argc</a>; <a class="local col0 ref" href="#20i" title='i' data-ref="20i">i</a>++ )</td></tr>
+<tr><th id="292">292</th><td>        {</td></tr>
+<tr><th id="293">293</th><td>            <a class="typedef" href="../../include/dbus-1.0/dbus/dbus-message.h.html#DBusMessage" title='DBusMessage' data-type='struct DBusMessage' data-ref="DBusMessage">DBusMessage</a> *<dfn class="local col1 decl" id="21msg" title='msg' data-type='DBusMessage *' data-ref="21msg">msg</dfn> = <a class="ref" href="../../include/dbus-1.0/dbus/dbus-message.h.html#dbus_message_new_method_call" title='dbus_message_new_method_call' data-ref="dbus_message_new_method_call">dbus_message_new_method_call</a>(</td></tr>
+<tr><th id="294">294</th><td>               <a class="macro" href="#239" title="&quot;org.mpris.MediaPlayer2.vlc&quot;" data-ref="_M/MPRIS_BUS_NAME">MPRIS_BUS_NAME</a>, <a class="macro" href="#240" title="&quot;/org/mpris/MediaPlayer2&quot;" data-ref="_M/MPRIS_OBJECT_PATH">MPRIS_OBJECT_PATH</a>, <a class="macro" href="#241" title="&quot;org.mpris.MediaPlayer2.TrackList&quot;" data-ref="_M/MPRIS_TRACKLIST_INTERFACE">MPRIS_TRACKLIST_INTERFACE</a>, <q>"AddTrack"</q> );</td></tr>
+<tr><th id="295">295</th><td>            <b>if</b>( <a class="macro" href="../include/vlc_common.h.html#116" title="__builtin_expect(!!(msg == ((void*)0)), 0)" data-ref="_M/unlikely">unlikely</a>(<a class="local col1 ref" href="#21msg" title='msg' data-ref="21msg">msg</a> == <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>) )</td></tr>
+<tr><th id="296">296</th><td>                <b>continue</b>;</td></tr>
+<tr><th id="297">297</th><td></td></tr>
+<tr><th id="298">298</th><td>            <i>/* We need to resolve relative paths in this instance */</i></td></tr>
+<tr><th id="299">299</th><td>            <em>char</em> *<dfn class="local col2 decl" id="22mrl" title='mrl' data-type='char *' data-ref="22mrl">mrl</dfn>;</td></tr>
+<tr><th id="300">300</th><td>            <b>if</b>( <a class="ref" href="../../include/string.h.html#strstr" title='strstr' data-ref="strstr">strstr</a>( <a class="local col5 ref" href="#5ppsz_argv" title='ppsz_argv' data-ref="5ppsz_argv">ppsz_argv</a>[<a class="local col0 ref" href="#20i" title='i' data-ref="20i">i</a>], <q>"://"</q> ) )</td></tr>
+<tr><th id="301">301</th><td>                <a class="local col2 ref" href="#22mrl" title='mrl' data-ref="22mrl">mrl</a> = <a class="macro" href="../../include/x86_64-linux-gnu/bits/string2.h.html#1291" title="(__extension__ (__builtin_constant_p (ppsz_argv[i]) &amp;&amp; ((size_t)(const void *)((ppsz_argv[i]) + 1) - (size_t)(const void *)(ppsz_argv[i]) == 1) ? (((const char *) (ppsz_argv[i]))[0] == &apos;\0&apos; ? (char *) calloc ((size_t) 1, (size_t) 1) : ({ size_t __len = strlen (ppsz_argv[i]) + 1; char *__retval = (char *) malloc (__len); if (__retval != ((void*)0)) __retval = (char *) memcpy (__retval, ppsz_argv[i], __len); __retval; })) : __strdup (ppsz_argv[i])))" data-ref="_M/strdup">strdup</a>( <a class="local col5 ref" href="#5ppsz_argv" title='ppsz_argv' data-ref="5ppsz_argv">ppsz_argv</a>[<a class="local col0 ref" href="#20i" title='i' data-ref="20i">i</a>] );</td></tr>
+<tr><th id="302">302</th><td>            <b>else</b></td></tr>
+<tr><th id="303">303</th><td>                <a class="local col2 ref" href="#22mrl" title='mrl' data-ref="22mrl">mrl</a> = <a class="ref" href="../include/vlc_url.h.html#vlc_path2uri" title='vlc_path2uri' data-ref="vlc_path2uri">vlc_path2uri</a>( <a class="local col5 ref" href="#5ppsz_argv" title='ppsz_argv' data-ref="5ppsz_argv">ppsz_argv</a>[<a class="local col0 ref" href="#20i" title='i' data-ref="20i">i</a>], <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span> );</td></tr>
+<tr><th id="304">304</th><td>            <b>if</b>( <a class="local col2 ref" href="#22mrl" title='mrl' data-ref="22mrl">mrl</a> == <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span> )</td></tr>
+<tr><th id="305">305</th><td>            {</td></tr>
+<tr><th id="306">306</th><td>                <a class="ref" href="../../include/dbus-1.0/dbus/dbus-message.h.html#dbus_message_unref" title='dbus_message_unref' data-ref="dbus_message_unref">dbus_message_unref</a>( <a class="local col1 ref" href="#21msg" title='msg' data-ref="21msg">msg</a> );</td></tr>
+<tr><th id="307">307</th><td>                <b>continue</b>;</td></tr>
+<tr><th id="308">308</th><td>            }</td></tr>
+<tr><th id="309">309</th><td></td></tr>
+<tr><th id="310">310</th><td>            <em>const</em> <em>char</em> *<dfn class="local col3 decl" id="23after_track" title='after_track' data-type='const char *' data-ref="23after_track">after_track</dfn> = <a class="macro" href="#238" title="&quot;/org/mpris/MediaPlayer2/TrackList/Append&quot;" data-ref="_M/MPRIS_APPEND">MPRIS_APPEND</a>;</td></tr>
+<tr><th id="311">311</th><td></td></tr>
+<tr><th id="312">312</th><td>            <i>/* append MRLs */</i></td></tr>
+<tr><th id="313">313</th><td>            <b>if</b>( !<a class="ref" href="../../include/dbus-1.0/dbus/dbus-message.h.html#dbus_message_append_args" title='dbus_message_append_args' data-ref="dbus_message_append_args">dbus_message_append_args</a>( <a class="local col1 ref" href="#21msg" title='msg' data-ref="21msg">msg</a>, <a class="macro" href="../../include/dbus-1.0/dbus/dbus-protocol.h.html#102" title="((int) &apos;s&apos;)" data-ref="_M/DBUS_TYPE_STRING">DBUS_TYPE_STRING</a>, &amp;<a class="local col2 ref" href="#22mrl" title='mrl' data-ref="22mrl">mrl</a>,</td></tr>
+<tr><th id="314">314</th><td>                                                <a class="macro" href="../../include/dbus-1.0/dbus/dbus-protocol.h.html#106" title="((int) &apos;o&apos;)" data-ref="_M/DBUS_TYPE_OBJECT_PATH">DBUS_TYPE_OBJECT_PATH</a>, &amp;<a class="local col3 ref" href="#23after_track" title='after_track' data-ref="23after_track">after_track</a>,</td></tr>
+<tr><th id="315">315</th><td>                                                <a class="macro" href="../../include/dbus-1.0/dbus/dbus-protocol.h.html#70" title="((int) &apos;b&apos;)" data-ref="_M/DBUS_TYPE_BOOLEAN">DBUS_TYPE_BOOLEAN</a>, &amp;<a class="local col9 ref" href="#19play" title='play' data-ref="19play">play</a>,</td></tr>
+<tr><th id="316">316</th><td>                                                <a class="macro" href="../../include/dbus-1.0/dbus/dbus-protocol.h.html#60" title="((int) &apos;\0&apos;)" data-ref="_M/DBUS_TYPE_INVALID">DBUS_TYPE_INVALID</a> ) )</td></tr>
+<tr><th id="317">317</th><td>            {</td></tr>
+<tr><th id="318">318</th><td>                 <a class="ref" href="../../include/dbus-1.0/dbus/dbus-message.h.html#dbus_message_unref" title='dbus_message_unref' data-ref="dbus_message_unref">dbus_message_unref</a>( <a class="local col1 ref" href="#21msg" title='msg' data-ref="21msg">msg</a> );</td></tr>
+<tr><th id="319">319</th><td>                 <a class="local col1 ref" href="#21msg" title='msg' data-ref="21msg">msg</a> = <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="320">320</th><td>                 <a class="ref" href="../../include/stdlib.h.html#free" title='free' data-ref="free">free</a>( <a class="local col2 ref" href="#22mrl" title='mrl' data-ref="22mrl">mrl</a> );</td></tr>
+<tr><th id="321">321</th><td>                 <b>continue</b>;</td></tr>
+<tr><th id="322">322</th><td>            }</td></tr>
+<tr><th id="323">323</th><td></td></tr>
+<tr><th id="324">324</th><td>            <a class="macro" href="../include/vlc_messages.h.html#77" title="vlc_Log( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)), VLC_MSG_DBG, core, &quot;Adds %s to the running media player&quot;, mrl )" data-ref="_M/msg_Dbg">msg_Dbg</a>( p_libvlc, <q>"Adds %s to the running media player"</q>, mrl );</td></tr>
+<tr><th id="325">325</th><td>            <a class="ref" href="../../include/stdlib.h.html#free" title='free' data-ref="free">free</a>( <a class="local col2 ref" href="#22mrl" title='mrl' data-ref="22mrl">mrl</a> );</td></tr>
+<tr><th id="326">326</th><td></td></tr>
+<tr><th id="327">327</th><td>            <i>/* send message and get a handle for a reply */</i></td></tr>
+<tr><th id="328">328</th><td>            <a class="typedef" href="../../include/dbus-1.0/dbus/dbus-message.h.html#DBusMessage" title='DBusMessage' data-type='struct DBusMessage' data-ref="DBusMessage">DBusMessage</a> *<dfn class="local col4 decl" id="24reply" title='reply' data-type='DBusMessage *' data-ref="24reply">reply</dfn> = <a class="ref" href="../../include/dbus-1.0/dbus/dbus-connection.h.html#dbus_connection_send_with_reply_and_block" title='dbus_connection_send_with_reply_and_block' data-ref="dbus_connection_send_with_reply_and_block">dbus_connection_send_with_reply_and_block</a>( <a class="local col8 ref" href="#18conn" title='conn' data-ref="18conn">conn</a>, <a class="local col1 ref" href="#21msg" title='msg' data-ref="21msg">msg</a>, -<var>1</var>,</td></tr>
+<tr><th id="329">329</th><td>                                                                            &amp;<a class="local col7 ref" href="#17err" title='err' data-ref="17err">err</a> );</td></tr>
+<tr><th id="330">330</th><td>            <a class="ref" href="../../include/dbus-1.0/dbus/dbus-message.h.html#dbus_message_unref" title='dbus_message_unref' data-ref="dbus_message_unref">dbus_message_unref</a>( <a class="local col1 ref" href="#21msg" title='msg' data-ref="21msg">msg</a> );</td></tr>
+<tr><th id="331">331</th><td>            <b>if</b>( <a class="local col4 ref" href="#24reply" title='reply' data-ref="24reply">reply</a> == <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span> )</td></tr>
+<tr><th id="332">332</th><td>            {</td></tr>
+<tr><th id="333">333</th><td>                <a class="macro" href="../include/vlc_messages.h.html#73" title="vlc_Log( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)), VLC_MSG_ERR, core, &quot;D-Bus error: %s&quot;, err.message )" data-ref="_M/msg_Err">msg_Err</a>( p_libvlc, <q>"D-Bus error: %s"</q>, err.message );</td></tr>
+<tr><th id="334">334</th><td>                <b>continue</b>;</td></tr>
+<tr><th id="335">335</th><td>            }</td></tr>
+<tr><th id="336">336</th><td>            <a class="ref" href="../../include/dbus-1.0/dbus/dbus-message.h.html#dbus_message_unref" title='dbus_message_unref' data-ref="dbus_message_unref">dbus_message_unref</a>( <a class="local col4 ref" href="#24reply" title='reply' data-ref="24reply">reply</a> );</td></tr>
+<tr><th id="337">337</th><td>        }</td></tr>
+<tr><th id="338">338</th><td>        <i>/* we unreference the connection when we've finished with it */</i></td></tr>
+<tr><th id="339">339</th><td>        <a class="ref" href="../../include/dbus-1.0/dbus/dbus-connection.h.html#dbus_connection_unref" title='dbus_connection_unref' data-ref="dbus_connection_unref">dbus_connection_unref</a>( <a class="local col8 ref" href="#18conn" title='conn' data-ref="18conn">conn</a> );</td></tr>
+<tr><th id="340">340</th><td>        <a class="ref" href="../../include/stdlib.h.html#exit" title='exit' data-ref="exit">exit</a>( <var>1</var> );</td></tr>
+<tr><th id="341">341</th><td>    }</td></tr>
+<tr><th id="342">342</th><td><u>#undef <a class="macro" href="#238" data-ref="_M/MPRIS_APPEND">MPRIS_APPEND</a></u></td></tr>
+<tr><th id="343">343</th><td><u>#undef <a class="macro" href="#239" data-ref="_M/MPRIS_BUS_NAME">MPRIS_BUS_NAME</a></u></td></tr>
+<tr><th id="344">344</th><td><u>#undef <a class="macro" href="#240" data-ref="_M/MPRIS_OBJECT_PATH">MPRIS_OBJECT_PATH</a></u></td></tr>
+<tr><th id="345">345</th><td><u>#undef <a class="macro" href="#241" data-ref="_M/MPRIS_TRACKLIST_INTERFACE">MPRIS_TRACKLIST_INTERFACE</a></u></td></tr>
+<tr><th id="346">346</th><td><dfn class="lbl" id="16dbus_out" data-ref="16dbus_out">dbus_out</dfn>:</td></tr>
+<tr><th id="347">347</th><td><u>#<span data-ppcond="236">endif</span> // HAVE_DBUS</u></td></tr>
+<tr><th id="348">348</th><td></td></tr>
+<tr><th id="349">349</th><td>    <a class="ref" href="libvlc.h.html#vlc_CPU_dump" title='vlc_CPU_dump' data-ref="vlc_CPU_dump">vlc_CPU_dump</a>( <a class="macro" href="../include/vlc_common.h.html#448" title="__builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc))" data-ref="_M/VLC_OBJECT">VLC_OBJECT</a>(<a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>) );</td></tr>
+<tr><th id="350">350</th><td></td></tr>
+<tr><th id="351">351</th><td>    <a class="local col6 ref" href="#6priv" title='priv' data-ref="6priv">priv</a>-&gt;<a class="ref" href="libvlc.h.html#libvlc_priv_t::b_stats" title='libvlc_priv_t::b_stats' data-ref="libvlc_priv_t::b_stats">b_stats</a> = <a class="macro" href="../include/vlc_variables.h.html#676" title="var_InheritBool(__builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)), &quot;stats&quot;)" data-ref="_M/var_InheritBool">var_InheritBool</a>( <a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>, <q>"stats"</q> );</td></tr>
+<tr><th id="352">352</th><td></td></tr>
+<tr><th id="353">353</th><td>    <i>/*</i></td></tr>
+<tr><th id="354">354</th><td><i>     * Initialize hotkey handling</i></td></tr>
+<tr><th id="355">355</th><td><i>     */</i></td></tr>
+<tr><th id="356">356</th><td>    <a class="local col6 ref" href="#6priv" title='priv' data-ref="6priv">priv</a>-&gt;<a class="ref" href="libvlc.h.html#libvlc_priv_t::actions" title='libvlc_priv_t::actions' data-ref="libvlc_priv_t::actions">actions</a> = <a class="ref" href="libvlc.h.html#vlc_InitActions" title='vlc_InitActions' data-ref="vlc_InitActions">vlc_InitActions</a>( <a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a> );</td></tr>
+<tr><th id="357">357</th><td></td></tr>
+<tr><th id="358">358</th><td>    <i>/*</i></td></tr>
+<tr><th id="359">359</th><td><i>     * Meta data handling</i></td></tr>
+<tr><th id="360">360</th><td><i>     */</i></td></tr>
+<tr><th id="361">361</th><td>    <a class="local col6 ref" href="#6priv" title='priv' data-ref="6priv">priv</a>-&gt;<a class="ref" href="libvlc.h.html#libvlc_priv_t::parser" title='libvlc_priv_t::parser' data-ref="libvlc_priv_t::parser">parser</a> = <a class="ref" href="playlist/preparser.h.html#playlist_preparser_New" title='playlist_preparser_New' data-ref="playlist_preparser_New">playlist_preparser_New</a>(<a class="macro" href="../include/vlc_common.h.html#448" title="__builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc))" data-ref="_M/VLC_OBJECT">VLC_OBJECT</a>(<a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>));</td></tr>
+<tr><th id="362">362</th><td></td></tr>
+<tr><th id="363">363</th><td>    <i>/* Create a variable for showing the fullscreen interface */</i></td></tr>
+<tr><th id="364">364</th><td>    <a class="macro" href="../include/vlc_variables.h.html#145" title="var_Create( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)), &quot;intf-toggle-fscontrol&quot;, 0x0020 )" data-ref="_M/var_Create">var_Create</a>( <a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>, <q>"intf-toggle-fscontrol"</q>, <a class="macro" href="../include/vlc_variables.h.html#54" title="0x0020" data-ref="_M/VLC_VAR_BOOL">VLC_VAR_BOOL</a> );</td></tr>
+<tr><th id="365">365</th><td>    <a class="macro" href="../include/vlc_variables.h.html#291" title="var_SetBool( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)),&quot;intf-toggle-fscontrol&quot;,1)" data-ref="_M/var_SetBool">var_SetBool</a>( <a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>, <q>"intf-toggle-fscontrol"</q>, <span class="macro" title="1" data-ref="_M/true">true</span> );</td></tr>
+<tr><th id="366">366</th><td></td></tr>
+<tr><th id="367">367</th><td>    <i>/* Create a variable for the Boss Key */</i></td></tr>
+<tr><th id="368">368</th><td>    <a class="macro" href="../include/vlc_variables.h.html#145" title="var_Create( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)), &quot;intf-boss&quot;, 0x0010 )" data-ref="_M/var_Create">var_Create</a>( <a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>, <q>"intf-boss"</q>, <a class="macro" href="../include/vlc_variables.h.html#53" title="0x0010" data-ref="_M/VLC_VAR_VOID">VLC_VAR_VOID</a> );</td></tr>
+<tr><th id="369">369</th><td></td></tr>
+<tr><th id="370">370</th><td>    <i>/* Create a variable for showing the main interface */</i></td></tr>
+<tr><th id="371">371</th><td>    <a class="macro" href="../include/vlc_variables.h.html#145" title="var_Create( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)), &quot;intf-show&quot;, 0x0020 )" data-ref="_M/var_Create">var_Create</a>( <a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>, <q>"intf-show"</q>, <a class="macro" href="../include/vlc_variables.h.html#54" title="0x0020" data-ref="_M/VLC_VAR_BOOL">VLC_VAR_BOOL</a> );</td></tr>
+<tr><th id="372">372</th><td></td></tr>
+<tr><th id="373">373</th><td>    <i>/* Create a variable for showing the right click menu */</i></td></tr>
+<tr><th id="374">374</th><td>    <a class="macro" href="../include/vlc_variables.h.html#145" title="var_Create( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)), &quot;intf-popupmenu&quot;, 0x0020 )" data-ref="_M/var_Create">var_Create</a>( <a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>, <q>"intf-popupmenu"</q>, <a class="macro" href="../include/vlc_variables.h.html#54" title="0x0020" data-ref="_M/VLC_VAR_BOOL">VLC_VAR_BOOL</a> );</td></tr>
+<tr><th id="375">375</th><td></td></tr>
+<tr><th id="376">376</th><td>    <i>/* variables for signalling creation of new files */</i></td></tr>
+<tr><th id="377">377</th><td>    <a class="macro" href="../include/vlc_variables.h.html#145" title="var_Create( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)), &quot;snapshot-file&quot;, 0x0040 )" data-ref="_M/var_Create">var_Create</a>( <a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>, <q>"snapshot-file"</q>, <a class="macro" href="../include/vlc_variables.h.html#57" title="0x0040" data-ref="_M/VLC_VAR_STRING">VLC_VAR_STRING</a> );</td></tr>
+<tr><th id="378">378</th><td>    <a class="macro" href="../include/vlc_variables.h.html#145" title="var_Create( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)), &quot;record-file&quot;, 0x0040 )" data-ref="_M/var_Create">var_Create</a>( <a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>, <q>"record-file"</q>, <a class="macro" href="../include/vlc_variables.h.html#57" title="0x0040" data-ref="_M/VLC_VAR_STRING">VLC_VAR_STRING</a> );</td></tr>
+<tr><th id="379">379</th><td></td></tr>
+<tr><th id="380">380</th><td>    <i>/* some default internal settings */</i></td></tr>
+<tr><th id="381">381</th><td>    <a class="macro" href="../include/vlc_variables.h.html#145" title="var_Create( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)), &quot;window&quot;, 0x0040 )" data-ref="_M/var_Create">var_Create</a>( <a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>, <q>"window"</q>, <a class="macro" href="../include/vlc_variables.h.html#57" title="0x0040" data-ref="_M/VLC_VAR_STRING">VLC_VAR_STRING</a> );</td></tr>
+<tr><th id="382">382</th><td>    <i>/* NOTE: Because the playlist and interfaces start before this function</i></td></tr>
+<tr><th id="383">383</th><td><i>     * returns control to the application (DESIGN BUG!), all these variables</i></td></tr>
+<tr><th id="384">384</th><td><i>     * must be created (in place of libvlc_new()) and set to VLC defaults</i></td></tr>
+<tr><th id="385">385</th><td><i>     * (in place of VLC main()) *here*. */</i></td></tr>
+<tr><th id="386">386</th><td>    <a class="macro" href="../include/vlc_variables.h.html#145" title="var_Create( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)), &quot;user-agent&quot;, 0x0040 )" data-ref="_M/var_Create">var_Create</a>( <a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>, <q>"user-agent"</q>, <a class="macro" href="../include/vlc_variables.h.html#57" title="0x0040" data-ref="_M/VLC_VAR_STRING">VLC_VAR_STRING</a> );</td></tr>
+<tr><th id="387">387</th><td>    <a class="macro" href="../include/vlc_variables.h.html#294" title="var_SetString( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)),&quot;user-agent&quot;,&quot;VLC media player (LibVLC &quot;&quot;2.2.0-git&quot;&quot;)&quot;)" data-ref="_M/var_SetString">var_SetString</a>( <a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>, <q>"user-agent"</q>,</td></tr>
+<tr><th id="388">388</th><td>                   <q>"VLC media player (LibVLC "</q><a class="macro" href="../config.h.html#681" title="&quot;2.2.0-git&quot;" data-ref="_M/VERSION">VERSION</a><q>")"</q> );</td></tr>
+<tr><th id="389">389</th><td>    <a class="macro" href="../include/vlc_variables.h.html#145" title="var_Create( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)), &quot;http-user-agent&quot;, 0x0040 )" data-ref="_M/var_Create">var_Create</a>( <a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>, <q>"http-user-agent"</q>, <a class="macro" href="../include/vlc_variables.h.html#57" title="0x0040" data-ref="_M/VLC_VAR_STRING">VLC_VAR_STRING</a> );</td></tr>
+<tr><th id="390">390</th><td>    <a class="macro" href="../include/vlc_variables.h.html#294" title="var_SetString( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)),&quot;http-user-agent&quot;,&quot;VLC/&quot;&quot;2.2.0-git&quot;&quot; LibVLC/&quot;&quot;2.2.0-git&quot;)" data-ref="_M/var_SetString">var_SetString</a>( <a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>, <q>"http-user-agent"</q>,</td></tr>
+<tr><th id="391">391</th><td>                   <q>"VLC/"</q><a class="macro" href="../config.h.html#632" title="&quot;2.2.0-git&quot;" data-ref="_M/PACKAGE_VERSION">PACKAGE_VERSION</a><q>" LibVLC/"</q><a class="macro" href="../config.h.html#632" title="&quot;2.2.0-git&quot;" data-ref="_M/PACKAGE_VERSION">PACKAGE_VERSION</a> );</td></tr>
+<tr><th id="392">392</th><td>    <a class="macro" href="../include/vlc_variables.h.html#145" title="var_Create( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)), &quot;app-icon-name&quot;, 0x0040 )" data-ref="_M/var_Create">var_Create</a>( <a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>, <q>"app-icon-name"</q>, <a class="macro" href="../include/vlc_variables.h.html#57" title="0x0040" data-ref="_M/VLC_VAR_STRING">VLC_VAR_STRING</a> );</td></tr>
+<tr><th id="393">393</th><td>    <a class="macro" href="../include/vlc_variables.h.html#294" title="var_SetString( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)),&quot;app-icon-name&quot;,&quot;vlc&quot;)" data-ref="_M/var_SetString">var_SetString</a>( <a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>, <q>"app-icon-name"</q>, <a class="macro" href="../config.h.html#620" title="&quot;vlc&quot;" data-ref="_M/PACKAGE_NAME">PACKAGE_NAME</a> );</td></tr>
+<tr><th id="394">394</th><td>    <a class="macro" href="../include/vlc_variables.h.html#145" title="var_Create( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)), &quot;app-id&quot;, 0x0040 )" data-ref="_M/var_Create">var_Create</a>( <a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>, <q>"app-id"</q>, <a class="macro" href="../include/vlc_variables.h.html#57" title="0x0040" data-ref="_M/VLC_VAR_STRING">VLC_VAR_STRING</a> );</td></tr>
+<tr><th id="395">395</th><td>    <a class="macro" href="../include/vlc_variables.h.html#294" title="var_SetString( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)),&quot;app-id&quot;,&quot;org.VideoLAN.VLC&quot;)" data-ref="_M/var_SetString">var_SetString</a>( <a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>, <q>"app-id"</q>, <q>"org.VideoLAN.VLC"</q> );</td></tr>
+<tr><th id="396">396</th><td>    <a class="macro" href="../include/vlc_variables.h.html#145" title="var_Create( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)), &quot;app-version&quot;, 0x0040 )" data-ref="_M/var_Create">var_Create</a>( <a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>, <q>"app-version"</q>, <a class="macro" href="../include/vlc_variables.h.html#57" title="0x0040" data-ref="_M/VLC_VAR_STRING">VLC_VAR_STRING</a> );</td></tr>
+<tr><th id="397">397</th><td>    <a class="macro" href="../include/vlc_variables.h.html#294" title="var_SetString( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)),&quot;app-version&quot;,&quot;2.2.0-git&quot;)" data-ref="_M/var_SetString">var_SetString</a>( <a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>, <q>"app-version"</q>, <a class="macro" href="../config.h.html#632" title="&quot;2.2.0-git&quot;" data-ref="_M/PACKAGE_VERSION">PACKAGE_VERSION</a> );</td></tr>
+<tr><th id="398">398</th><td></td></tr>
+<tr><th id="399">399</th><td>    <i>/* System specific configuration */</i></td></tr>
+<tr><th id="400">400</th><td>    <a class="ref" href="libvlc.h.html#system_Configure" title='system_Configure' data-ref="system_Configure">system_Configure</a>( <a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>, <a class="local col4 ref" href="#4i_argc" title='i_argc' data-ref="4i_argc">i_argc</a> - <a class="local col2 ref" href="#12vlc_optind" title='vlc_optind' data-ref="12vlc_optind">vlc_optind</a>, <a class="local col5 ref" href="#5ppsz_argv" title='ppsz_argv' data-ref="5ppsz_argv">ppsz_argv</a> + <a class="local col2 ref" href="#12vlc_optind" title='vlc_optind' data-ref="12vlc_optind">vlc_optind</a> );</td></tr>
+<tr><th id="401">401</th><td></td></tr>
+<tr><th id="402">402</th><td><u>#<span data-ppcond="402">ifdef</span> <a class="macro" href="../config.h.html#93" data-ref="_M/ENABLE_VLM">ENABLE_VLM</a></u></td></tr>
+<tr><th id="403">403</th><td>    <i>/* Initialize VLM if vlm-conf is specified */</i></td></tr>
+<tr><th id="404">404</th><td>    <a class="local col8 ref" href="#8psz_parser" title='psz_parser' data-ref="8psz_parser">psz_parser</a> = <a class="macro" href="../include/vlc_variables.h.html#557" title="var_CreateGetNonEmptyString( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)),&quot;vlm-conf&quot;)" data-ref="_M/var_CreateGetNonEmptyString">var_CreateGetNonEmptyString</a>( <a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>, <q>"vlm-conf"</q> );</td></tr>
+<tr><th id="405">405</th><td>    <b>if</b>( <a class="local col8 ref" href="#8psz_parser" title='psz_parser' data-ref="8psz_parser">psz_parser</a> )</td></tr>
+<tr><th id="406">406</th><td>    {</td></tr>
+<tr><th id="407">407</th><td>        <a class="local col6 ref" href="#6priv" title='priv' data-ref="6priv">priv</a>-&gt;<a class="ref" href="libvlc.h.html#libvlc_priv_t::p_vlm" title='libvlc_priv_t::p_vlm' data-ref="libvlc_priv_t::p_vlm">p_vlm</a> = <a class="macro" href="../include/vlc_vlm.h.html#188" title="vlm_New( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)) )" data-ref="_M/vlm_New">vlm_New</a>( <a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a> );</td></tr>
+<tr><th id="408">408</th><td>        <b>if</b>( !priv-&gt;p_vlm )</td></tr>
+<tr><th id="409">409</th><td>            <a class="macro" href="../include/vlc_messages.h.html#73" title="vlc_Log( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)), VLC_MSG_ERR, core, &quot;VLM initialization failed&quot; )" data-ref="_M/msg_Err">msg_Err</a>( p_libvlc, <q>"VLM initialization failed"</q> );</td></tr>
+<tr><th id="410">410</th><td>    }</td></tr>
+<tr><th id="411">411</th><td>    <a class="ref" href="../../include/stdlib.h.html#free" title='free' data-ref="free">free</a>( <a class="local col8 ref" href="#8psz_parser" title='psz_parser' data-ref="8psz_parser">psz_parser</a> );</td></tr>
+<tr><th id="412">412</th><td><u>#<span data-ppcond="402">endif</span></u></td></tr>
+<tr><th id="413">413</th><td></td></tr>
+<tr><th id="414">414</th><td>    <i>/*</i></td></tr>
+<tr><th id="415">415</th><td><i>     * Load background interfaces</i></td></tr>
+<tr><th id="416">416</th><td><i>     */</i></td></tr>
+<tr><th id="417">417</th><td>    <a class="local col7 ref" href="#7psz_modules" title='psz_modules' data-ref="7psz_modules">psz_modules</a> = <a class="macro" href="../include/vlc_variables.h.html#557" title="var_CreateGetNonEmptyString( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)),&quot;extraintf&quot;)" data-ref="_M/var_CreateGetNonEmptyString">var_CreateGetNonEmptyString</a>( <a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>, <q>"extraintf"</q> );</td></tr>
+<tr><th id="418">418</th><td>    <a class="local col9 ref" href="#9psz_control" title='psz_control' data-ref="9psz_control">psz_control</a> = <a class="macro" href="../include/vlc_variables.h.html#557" title="var_CreateGetNonEmptyString( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)),&quot;control&quot;)" data-ref="_M/var_CreateGetNonEmptyString">var_CreateGetNonEmptyString</a>( <a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>, <q>"control"</q> );</td></tr>
+<tr><th id="419">419</th><td></td></tr>
+<tr><th id="420">420</th><td>    <b>if</b>( <a class="local col7 ref" href="#7psz_modules" title='psz_modules' data-ref="7psz_modules">psz_modules</a> &amp;&amp; <a class="local col9 ref" href="#9psz_control" title='psz_control' data-ref="9psz_control">psz_control</a> )</td></tr>
+<tr><th id="421">421</th><td>    {</td></tr>
+<tr><th id="422">422</th><td>        <em>char</em>* <dfn class="local col5 decl" id="25psz_tmp" title='psz_tmp' data-type='char *' data-ref="25psz_tmp">psz_tmp</dfn>;</td></tr>
+<tr><th id="423">423</th><td>        <b>if</b>( <a class="macro" href="../../include/x86_64-linux-gnu/bits/stdio2.h.html#198" title="__asprintf_chk (&amp;psz_tmp, 2 - 1, &quot;%s:%s&quot;, psz_modules, psz_control)" data-ref="_M/asprintf">asprintf</a>( &amp;<a class="local col5 ref" href="#25psz_tmp" title='psz_tmp' data-ref="25psz_tmp">psz_tmp</a>, <q>"%s:%s"</q>, <a class="local col7 ref" href="#7psz_modules" title='psz_modules' data-ref="7psz_modules">psz_modules</a>, <a class="local col9 ref" href="#9psz_control" title='psz_control' data-ref="9psz_control">psz_control</a> ) != -<var>1</var> )</td></tr>
+<tr><th id="424">424</th><td>        {</td></tr>
+<tr><th id="425">425</th><td>            <a class="ref" href="../../include/stdlib.h.html#free" title='free' data-ref="free">free</a>( <a class="local col7 ref" href="#7psz_modules" title='psz_modules' data-ref="7psz_modules">psz_modules</a> );</td></tr>
+<tr><th id="426">426</th><td>            <a class="local col7 ref" href="#7psz_modules" title='psz_modules' data-ref="7psz_modules">psz_modules</a> = <a class="local col5 ref" href="#25psz_tmp" title='psz_tmp' data-ref="25psz_tmp">psz_tmp</a>;</td></tr>
+<tr><th id="427">427</th><td>        }</td></tr>
+<tr><th id="428">428</th><td>    }</td></tr>
+<tr><th id="429">429</th><td>    <b>else</b> <b>if</b>( <a class="local col9 ref" href="#9psz_control" title='psz_control' data-ref="9psz_control">psz_control</a> )</td></tr>
+<tr><th id="430">430</th><td>    {</td></tr>
+<tr><th id="431">431</th><td>        <a class="ref" href="../../include/stdlib.h.html#free" title='free' data-ref="free">free</a>( <a class="local col7 ref" href="#7psz_modules" title='psz_modules' data-ref="7psz_modules">psz_modules</a> );</td></tr>
+<tr><th id="432">432</th><td>        <a class="local col7 ref" href="#7psz_modules" title='psz_modules' data-ref="7psz_modules">psz_modules</a> = <a class="macro" href="../../include/x86_64-linux-gnu/bits/string2.h.html#1291" title="(__extension__ (__builtin_constant_p (psz_control) &amp;&amp; ((size_t)(const void *)((psz_control) + 1) - (size_t)(const void *)(psz_control) == 1) ? (((const char *) (psz_control))[0] == &apos;\0&apos; ? (char *) calloc ((size_t) 1, (size_t) 1) : ({ size_t __len = strlen (psz_control) + 1; char *__retval = (char *) malloc (__len); if (__retval != ((void*)0)) __retval = (char *) memcpy (__retval, psz_control, __len); __retval; })) : __strdup (psz_control)))" data-ref="_M/strdup">strdup</a>( <a class="local col9 ref" href="#9psz_control" title='psz_control' data-ref="9psz_control">psz_control</a> );</td></tr>
+<tr><th id="433">433</th><td>    }</td></tr>
+<tr><th id="434">434</th><td></td></tr>
+<tr><th id="435">435</th><td>    <a class="local col8 ref" href="#8psz_parser" title='psz_parser' data-ref="8psz_parser">psz_parser</a> = <a class="local col7 ref" href="#7psz_modules" title='psz_modules' data-ref="7psz_modules">psz_modules</a>;</td></tr>
+<tr><th id="436">436</th><td>    <b>while</b> ( <a class="local col8 ref" href="#8psz_parser" title='psz_parser' data-ref="8psz_parser">psz_parser</a> &amp;&amp; *<a class="local col8 ref" href="#8psz_parser" title='psz_parser' data-ref="8psz_parser">psz_parser</a> )</td></tr>
+<tr><th id="437">437</th><td>    {</td></tr>
+<tr><th id="438">438</th><td>        <em>char</em> *<dfn class="local col6 decl" id="26psz_module" title='psz_module' data-type='char *' data-ref="26psz_module">psz_module</dfn>, *<dfn class="local col7 decl" id="27psz_temp" title='psz_temp' data-type='char *' data-ref="27psz_temp">psz_temp</dfn>;</td></tr>
+<tr><th id="439">439</th><td>        <a class="local col6 ref" href="#26psz_module" title='psz_module' data-ref="26psz_module">psz_module</a> = <a class="local col8 ref" href="#8psz_parser" title='psz_parser' data-ref="8psz_parser">psz_parser</a>;</td></tr>
+<tr><th id="440">440</th><td>        <a class="local col8 ref" href="#8psz_parser" title='psz_parser' data-ref="8psz_parser">psz_parser</a> = <a class="macro" href="../../include/x86_64-linux-gnu/bits/string2.h.html#395" title="(__extension__ (__builtin_constant_p (&apos;:&apos;) &amp;&amp; !__builtin_constant_p (psz_module) &amp;&amp; (&apos;:&apos;) == &apos;\0&apos; ? (char *) __rawmemchr (psz_module, &apos;:&apos;) : __builtin_strchr (psz_module, &apos;:&apos;)))" data-ref="_M/strchr">strchr</a>( <a class="local col6 ref" href="#26psz_module" title='psz_module' data-ref="26psz_module">psz_module</a>, <kbd>':'</kbd> );</td></tr>
+<tr><th id="441">441</th><td>        <b>if</b> ( <a class="local col8 ref" href="#8psz_parser" title='psz_parser' data-ref="8psz_parser">psz_parser</a> )</td></tr>
+<tr><th id="442">442</th><td>        {</td></tr>
+<tr><th id="443">443</th><td>            *<a class="local col8 ref" href="#8psz_parser" title='psz_parser' data-ref="8psz_parser">psz_parser</a> = <kbd>'\0'</kbd>;</td></tr>
+<tr><th id="444">444</th><td>            <a class="local col8 ref" href="#8psz_parser" title='psz_parser' data-ref="8psz_parser">psz_parser</a>++;</td></tr>
+<tr><th id="445">445</th><td>        }</td></tr>
+<tr><th id="446">446</th><td>        <b>if</b>( <a class="macro" href="../../include/x86_64-linux-gnu/bits/stdio2.h.html#198" title="__asprintf_chk (&amp;psz_temp, 2 - 1, &quot;%s,none&quot;, psz_module)" data-ref="_M/asprintf">asprintf</a>( &amp;<a class="local col7 ref" href="#27psz_temp" title='psz_temp' data-ref="27psz_temp">psz_temp</a>, <q>"%s,none"</q>, <a class="local col6 ref" href="#26psz_module" title='psz_module' data-ref="26psz_module">psz_module</a> ) != -<var>1</var>)</td></tr>
+<tr><th id="447">447</th><td>        {</td></tr>
+<tr><th id="448">448</th><td>            <a class="ref" href="../lib/libvlc_internal.h.html#libvlc_InternalAddIntf" title='libvlc_InternalAddIntf' data-ref="libvlc_InternalAddIntf">libvlc_InternalAddIntf</a>( <a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>, <a class="local col7 ref" href="#27psz_temp" title='psz_temp' data-ref="27psz_temp">psz_temp</a> );</td></tr>
+<tr><th id="449">449</th><td>            <a class="ref" href="../../include/stdlib.h.html#free" title='free' data-ref="free">free</a>( <a class="local col7 ref" href="#27psz_temp" title='psz_temp' data-ref="27psz_temp">psz_temp</a> );</td></tr>
+<tr><th id="450">450</th><td>        }</td></tr>
+<tr><th id="451">451</th><td>    }</td></tr>
+<tr><th id="452">452</th><td>    <a class="ref" href="../../include/stdlib.h.html#free" title='free' data-ref="free">free</a>( <a class="local col7 ref" href="#7psz_modules" title='psz_modules' data-ref="7psz_modules">psz_modules</a> );</td></tr>
+<tr><th id="453">453</th><td>    <a class="ref" href="../../include/stdlib.h.html#free" title='free' data-ref="free">free</a>( <a class="local col9 ref" href="#9psz_control" title='psz_control' data-ref="9psz_control">psz_control</a> );</td></tr>
+<tr><th id="454">454</th><td></td></tr>
+<tr><th id="455">455</th><td><u>#<span data-ppcond="455">ifdef</span> <a class="macro" href="../config.h.html#522" data-ref="_M/HAVE_SYSLOG_H">HAVE_SYSLOG_H</a></u></td></tr>
+<tr><th id="456">456</th><td>    <b>if</b>( <a class="macro" href="../include/vlc_variables.h.html#676" title="var_InheritBool(__builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)), &quot;syslog&quot;)" data-ref="_M/var_InheritBool">var_InheritBool</a>( <a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>, <q>"syslog"</q> ) )</td></tr>
+<tr><th id="457">457</th><td>    {</td></tr>
+<tr><th id="458">458</th><td>        <em>char</em> *<dfn class="local col8 decl" id="28logmode" title='logmode' data-type='char *' data-ref="28logmode">logmode</dfn> = <a class="macro" href="../include/vlc_variables.h.html#557" title="var_CreateGetNonEmptyString( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)),&quot;logmode&quot;)" data-ref="_M/var_CreateGetNonEmptyString">var_CreateGetNonEmptyString</a>( <a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>, <q>"logmode"</q> );</td></tr>
+<tr><th id="459">459</th><td>        <a class="macro" href="../include/vlc_variables.h.html#294" title="var_SetString( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)),&quot;logmode&quot;,&quot;syslog&quot;)" data-ref="_M/var_SetString">var_SetString</a>( <a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>, <q>"logmode"</q>, <q>"syslog"</q> );</td></tr>
+<tr><th id="460">460</th><td>        <a class="ref" href="../lib/libvlc_internal.h.html#libvlc_InternalAddIntf" title='libvlc_InternalAddIntf' data-ref="libvlc_InternalAddIntf">libvlc_InternalAddIntf</a>( <a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>, <q>"logger,none"</q> );</td></tr>
+<tr><th id="461">461</th><td></td></tr>
+<tr><th id="462">462</th><td>        <b>if</b>( <a class="local col8 ref" href="#28logmode" title='logmode' data-ref="28logmode">logmode</a> )</td></tr>
+<tr><th id="463">463</th><td>        {</td></tr>
+<tr><th id="464">464</th><td>            <a class="macro" href="../include/vlc_variables.h.html#294" title="var_SetString( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)),&quot;logmode&quot;,logmode)" data-ref="_M/var_SetString">var_SetString</a>( <a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>, <q>"logmode"</q>, <a class="local col8 ref" href="#28logmode" title='logmode' data-ref="28logmode">logmode</a> );</td></tr>
+<tr><th id="465">465</th><td>            <a class="ref" href="../../include/stdlib.h.html#free" title='free' data-ref="free">free</a>( <a class="local col8 ref" href="#28logmode" title='logmode' data-ref="28logmode">logmode</a> );</td></tr>
+<tr><th id="466">466</th><td>        }</td></tr>
+<tr><th id="467">467</th><td>        <a class="macro" href="../include/vlc_variables.h.html#148" title="var_Destroy( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)), &quot;logmode&quot; )" data-ref="_M/var_Destroy">var_Destroy</a>( <a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>, <q>"logmode"</q> );</td></tr>
+<tr><th id="468">468</th><td>    }</td></tr>
+<tr><th id="469">469</th><td>    <b>else</b></td></tr>
+<tr><th id="470">470</th><td><u>#<span data-ppcond="455">endif</span></u></td></tr>
+<tr><th id="471">471</th><td>    <b>if</b>( <a class="macro" href="../include/vlc_variables.h.html#676" title="var_InheritBool(__builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)), &quot;file-logging&quot;)" data-ref="_M/var_InheritBool">var_InheritBool</a>( <a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>, <q>"file-logging"</q> ) )</td></tr>
+<tr><th id="472">472</th><td>        <a class="ref" href="../lib/libvlc_internal.h.html#libvlc_InternalAddIntf" title='libvlc_InternalAddIntf' data-ref="libvlc_InternalAddIntf">libvlc_InternalAddIntf</a>( <a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>, <q>"logger,none"</q> );</td></tr>
+<tr><th id="473">473</th><td></td></tr>
+<tr><th id="474">474</th><td>    <b>if</b>( <a class="macro" href="../include/vlc_variables.h.html#676" title="var_InheritBool(__builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)), &quot;network-synchronisation&quot;)" data-ref="_M/var_InheritBool">var_InheritBool</a>( <a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>, <q>"network-synchronisation"</q>) )</td></tr>
+<tr><th id="475">475</th><td>        <a class="ref" href="../lib/libvlc_internal.h.html#libvlc_InternalAddIntf" title='libvlc_InternalAddIntf' data-ref="libvlc_InternalAddIntf">libvlc_InternalAddIntf</a>( <a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>, <q>"netsync,none"</q> );</td></tr>
+<tr><th id="476">476</th><td></td></tr>
+<tr><th id="477">477</th><td><u>#<span data-ppcond="477">ifdef</span> <span class="macro" data-ref="_M/__APPLE__">__APPLE__</span></u></td></tr>
+<tr><th id="478">478</th><td>    var_Create( p_libvlc, <q>"drawable-view-top"</q>, VLC_VAR_INTEGER );</td></tr>
+<tr><th id="479">479</th><td>    var_Create( p_libvlc, <q>"drawable-view-left"</q>, VLC_VAR_INTEGER );</td></tr>
+<tr><th id="480">480</th><td>    var_Create( p_libvlc, <q>"drawable-view-bottom"</q>, VLC_VAR_INTEGER );</td></tr>
+<tr><th id="481">481</th><td>    var_Create( p_libvlc, <q>"drawable-view-right"</q>, VLC_VAR_INTEGER );</td></tr>
+<tr><th id="482">482</th><td>    var_Create( p_libvlc, <q>"drawable-clip-top"</q>, VLC_VAR_INTEGER );</td></tr>
+<tr><th id="483">483</th><td>    var_Create( p_libvlc, <q>"drawable-clip-left"</q>, VLC_VAR_INTEGER );</td></tr>
+<tr><th id="484">484</th><td>    var_Create( p_libvlc, <q>"drawable-clip-bottom"</q>, VLC_VAR_INTEGER );</td></tr>
+<tr><th id="485">485</th><td>    var_Create( p_libvlc, <q>"drawable-clip-right"</q>, VLC_VAR_INTEGER );</td></tr>
+<tr><th id="486">486</th><td>    var_Create( p_libvlc, <q>"drawable-nsobject"</q>, VLC_VAR_ADDRESS );</td></tr>
+<tr><th id="487">487</th><td><u>#<span data-ppcond="477">endif</span></u></td></tr>
+<tr><th id="488">488</th><td><u>#<span data-ppcond="488">if</span> defined (<span class="macro" data-ref="_M/_WIN32">_WIN32</span>) || defined (<span class="macro" data-ref="_M/__OS2__">__OS2__</span>)</u></td></tr>
+<tr><th id="489">489</th><td>    var_Create( p_libvlc, <q>"drawable-hwnd"</q>, VLC_VAR_INTEGER );</td></tr>
+<tr><th id="490">490</th><td><u>#<span data-ppcond="488">endif</span></u></td></tr>
+<tr><th id="491">491</th><td></td></tr>
+<tr><th id="492">492</th><td>    <i>/*</i></td></tr>
+<tr><th id="493">493</th><td><i>     * Get input filenames given as commandline arguments.</i></td></tr>
+<tr><th id="494">494</th><td><i>     * We assume that the remaining parameters are filenames</i></td></tr>
+<tr><th id="495">495</th><td><i>     * and their input options.</i></td></tr>
+<tr><th id="496">496</th><td><i>     */</i></td></tr>
+<tr><th id="497">497</th><td>    <a class="tu ref" href="#GetFilenames" title='GetFilenames' data-use='c' data-ref="GetFilenames">GetFilenames</a>( <a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>, <a class="local col4 ref" href="#4i_argc" title='i_argc' data-ref="4i_argc">i_argc</a> - <a class="local col2 ref" href="#12vlc_optind" title='vlc_optind' data-ref="12vlc_optind">vlc_optind</a>, <a class="local col5 ref" href="#5ppsz_argv" title='ppsz_argv' data-ref="5ppsz_argv">ppsz_argv</a> + <a class="local col2 ref" href="#12vlc_optind" title='vlc_optind' data-ref="12vlc_optind">vlc_optind</a> );</td></tr>
+<tr><th id="498">498</th><td></td></tr>
+<tr><th id="499">499</th><td>    <i>/*</i></td></tr>
+<tr><th id="500">500</th><td><i>     * Get --open argument</i></td></tr>
+<tr><th id="501">501</th><td><i>     */</i></td></tr>
+<tr><th id="502">502</th><td>    <a class="local col0 ref" href="#10psz_val" title='psz_val' data-ref="10psz_val">psz_val</a> = <a class="macro" href="../include/vlc_variables.h.html#714" title="var_InheritString(__builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)), &quot;open&quot;)" data-ref="_M/var_InheritString">var_InheritString</a>( <a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>, <q>"open"</q> );</td></tr>
+<tr><th id="503">503</th><td>    <b>if</b> ( <a class="local col0 ref" href="#10psz_val" title='psz_val' data-ref="10psz_val">psz_val</a> != <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span> )</td></tr>
+<tr><th id="504">504</th><td>    {</td></tr>
+<tr><th id="505">505</th><td>        <a class="ref" href="libvlc.h.html#intf_InsertItem" title='intf_InsertItem' data-ref="intf_InsertItem">intf_InsertItem</a>( <a class="local col3 ref" href="#3p_libvlc" title='p_libvlc' data-ref="3p_libvlc">p_libvlc</a>, <a class="local col0 ref" href="#10psz_val" title='psz_val' data-ref="10psz_val">psz_val</a>, <var>0</var>, <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>, <var>0</var> );</td></tr>
+<tr><th id="506">506</th><td>        <a class="ref" href="../../include/stdlib.h.html#free" title='free' data-ref="free">free</a>( <a class="local col0 ref" href="#10psz_val" title='psz_val' data-ref="10psz_val">psz_val</a> );</td></tr>
+<tr><th id="507">507</th><td>    }</td></tr>
+<tr><th id="508">508</th><td></td></tr>
+<tr><th id="509">509</th><td>    <b>return</b> <a class="macro" href="../include/vlc_common.h.html#374" title="(-0)" data-ref="_M/VLC_SUCCESS">VLC_SUCCESS</a>;</td></tr>
+<tr><th id="510">510</th><td>}</td></tr>
+<tr><th id="511">511</th><td></td></tr>
+<tr><th id="512">512</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="513">513</th><td><i class="doc"> * Cleanup a libvlc instance. The instance is not completely deallocated</i></td></tr>
+<tr><th id="514">514</th><td><i class="doc"> * <span class="command">\param</span> <span class="arg">p_libvlc</span> the instance to clean</i></td></tr>
+<tr><th id="515">515</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="516">516</th><td><em>void</em> <dfn class="decl def" id="libvlc_InternalCleanup" title='libvlc_InternalCleanup' data-ref="libvlc_InternalCleanup">libvlc_InternalCleanup</dfn>( <a class="typedef" href="../include/vlc_common.h.html#libvlc_int_t" title='libvlc_int_t' data-type='struct libvlc_int_t' data-ref="libvlc_int_t">libvlc_int_t</a> *<dfn class="local col9 decl" id="29p_libvlc" title='p_libvlc' data-type='libvlc_int_t *' data-ref="29p_libvlc">p_libvlc</dfn> )</td></tr>
+<tr><th id="517">517</th><td>{</td></tr>
+<tr><th id="518">518</th><td>    <a class="typedef" href="libvlc.h.html#libvlc_priv_t" title='libvlc_priv_t' data-type='struct libvlc_priv_t' data-ref="libvlc_priv_t">libvlc_priv_t</a> *<dfn class="local col0 decl" id="30priv" title='priv' data-type='libvlc_priv_t *' data-ref="30priv">priv</dfn> = <a class="ref" href="libvlc.h.html#libvlc_priv" title='libvlc_priv' data-ref="libvlc_priv">libvlc_priv</a> (<a class="local col9 ref" href="#29p_libvlc" title='p_libvlc' data-ref="29p_libvlc">p_libvlc</a>);</td></tr>
+<tr><th id="519">519</th><td></td></tr>
+<tr><th id="520">520</th><td>    <i>/* Ask the interfaces to stop and destroy them */</i></td></tr>
+<tr><th id="521">521</th><td>    <a class="macro" href="../include/vlc_messages.h.html#77" title="vlc_Log( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)), VLC_MSG_DBG, core, &quot;removing all interfaces&quot; )" data-ref="_M/msg_Dbg">msg_Dbg</a>( p_libvlc, <q>"removing all interfaces"</q> );</td></tr>
+<tr><th id="522">522</th><td>    <a class="ref" href="../include/vlc_interface.h.html#libvlc_Quit" title='libvlc_Quit' data-ref="libvlc_Quit">libvlc_Quit</a>( <a class="local col9 ref" href="#29p_libvlc" title='p_libvlc' data-ref="29p_libvlc">p_libvlc</a> );</td></tr>
+<tr><th id="523">523</th><td>    <a class="ref" href="libvlc.h.html#intf_DestroyAll" title='intf_DestroyAll' data-ref="intf_DestroyAll">intf_DestroyAll</a>( <a class="local col9 ref" href="#29p_libvlc" title='p_libvlc' data-ref="29p_libvlc">p_libvlc</a> );</td></tr>
+<tr><th id="524">524</th><td></td></tr>
+<tr><th id="525">525</th><td><u>#<span data-ppcond="525">ifdef</span> <a class="macro" href="../config.h.html#93" data-ref="_M/ENABLE_VLM">ENABLE_VLM</a></u></td></tr>
+<tr><th id="526">526</th><td>    <i>/* Destroy VLM if created in libvlc_InternalInit */</i></td></tr>
+<tr><th id="527">527</th><td>    <b>if</b>( <a class="local col0 ref" href="#30priv" title='priv' data-ref="30priv">priv</a>-&gt;<a class="ref" href="libvlc.h.html#libvlc_priv_t::p_vlm" title='libvlc_priv_t::p_vlm' data-ref="libvlc_priv_t::p_vlm">p_vlm</a> )</td></tr>
+<tr><th id="528">528</th><td>    {</td></tr>
+<tr><th id="529">529</th><td>        <a class="ref" href="../include/vlc_vlm.h.html#vlm_Delete" title='vlm_Delete' data-ref="vlm_Delete">vlm_Delete</a>( <a class="local col0 ref" href="#30priv" title='priv' data-ref="30priv">priv</a>-&gt;<a class="ref" href="libvlc.h.html#libvlc_priv_t::p_vlm" title='libvlc_priv_t::p_vlm' data-ref="libvlc_priv_t::p_vlm">p_vlm</a> );</td></tr>
+<tr><th id="530">530</th><td>    }</td></tr>
+<tr><th id="531">531</th><td><u>#<span data-ppcond="525">endif</span></u></td></tr>
+<tr><th id="532">532</th><td></td></tr>
+<tr><th id="533">533</th><td><u>#<span data-ppcond="533">if</span> !defined( <span class="macro" data-ref="_M/_WIN32">_WIN32</span> ) &amp;&amp; !defined( <span class="macro" data-ref="_M/__OS2__">__OS2__</span> )</u></td></tr>
+<tr><th id="534">534</th><td>    <em>char</em> *<dfn class="local col1 decl" id="31pidfile" title='pidfile' data-type='char *' data-ref="31pidfile">pidfile</dfn> = <a class="macro" href="../include/vlc_variables.h.html#714" title="var_InheritString(__builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)), &quot;pidfile&quot;)" data-ref="_M/var_InheritString">var_InheritString</a>( <a class="local col9 ref" href="#29p_libvlc" title='p_libvlc' data-ref="29p_libvlc">p_libvlc</a>, <q>"pidfile"</q> );</td></tr>
+<tr><th id="535">535</th><td>    <b>if</b>( <a class="local col1 ref" href="#31pidfile" title='pidfile' data-ref="31pidfile">pidfile</a> != <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span> )</td></tr>
+<tr><th id="536">536</th><td>    {</td></tr>
+<tr><th id="537">537</th><td>        <a class="macro" href="../include/vlc_messages.h.html#77" title="vlc_Log( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)), VLC_MSG_DBG, core, &quot;removing PID file %s&quot;, pidfile )" data-ref="_M/msg_Dbg">msg_Dbg</a>( p_libvlc, <q>"removing PID file %s"</q>, pidfile );</td></tr>
+<tr><th id="538">538</th><td>        <b>if</b>( unlink( pidfile ) )</td></tr>
+<tr><th id="539">539</th><td>            <a class="macro" href="../include/vlc_messages.h.html#75" title="vlc_Log( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)), VLC_MSG_WARN, core, &quot;cannot remove PID file %s: %s&quot;, pidfile, vlc_strerror_c((*__errno_location ())) )" data-ref="_M/msg_Warn">msg_Warn</a>( p_libvlc, <q>"cannot remove PID file %s: %s"</q>,</td></tr>
+<tr><th id="540">540</th><td>                      pidfile, vlc_strerror_c(<a class="macro" href="../../include/x86_64-linux-gnu/bits/errno.h.html#54" title="(*__errno_location ())" data-ref="_M/errno">errno</a>) );</td></tr>
+<tr><th id="541">541</th><td>        <a class="ref" href="../../include/stdlib.h.html#free" title='free' data-ref="free">free</a>( <a class="local col1 ref" href="#31pidfile" title='pidfile' data-ref="31pidfile">pidfile</a> );</td></tr>
+<tr><th id="542">542</th><td>    }</td></tr>
+<tr><th id="543">543</th><td><u>#<span data-ppcond="533">endif</span></u></td></tr>
+<tr><th id="544">544</th><td></td></tr>
+<tr><th id="545">545</th><td>    <b>if</b> (<a class="local col0 ref" href="#30priv" title='priv' data-ref="30priv">priv</a>-&gt;<a class="ref" href="libvlc.h.html#libvlc_priv_t::parser" title='libvlc_priv_t::parser' data-ref="libvlc_priv_t::parser">parser</a> != <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>)</td></tr>
+<tr><th id="546">546</th><td>        <a class="ref" href="playlist/preparser.h.html#playlist_preparser_Delete" title='playlist_preparser_Delete' data-ref="playlist_preparser_Delete">playlist_preparser_Delete</a>(<a class="local col0 ref" href="#30priv" title='priv' data-ref="30priv">priv</a>-&gt;<a class="ref" href="libvlc.h.html#libvlc_priv_t::parser" title='libvlc_priv_t::parser' data-ref="libvlc_priv_t::parser">parser</a>);</td></tr>
+<tr><th id="547">547</th><td></td></tr>
+<tr><th id="548">548</th><td>    <a class="ref" href="libvlc.h.html#vlc_DeinitActions" title='vlc_DeinitActions' data-ref="vlc_DeinitActions">vlc_DeinitActions</a>( <a class="local col9 ref" href="#29p_libvlc" title='p_libvlc' data-ref="29p_libvlc">p_libvlc</a>, <a class="local col0 ref" href="#30priv" title='priv' data-ref="30priv">priv</a>-&gt;<a class="ref" href="libvlc.h.html#libvlc_priv_t::actions" title='libvlc_priv_t::actions' data-ref="libvlc_priv_t::actions">actions</a> );</td></tr>
+<tr><th id="549">549</th><td></td></tr>
+<tr><th id="550">550</th><td>    <i>/* Save the configuration */</i></td></tr>
+<tr><th id="551">551</th><td>    <b>if</b>( !<a class="macro" href="../include/vlc_variables.h.html#676" title="var_InheritBool(__builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)), &quot;ignore-config&quot;)" data-ref="_M/var_InheritBool">var_InheritBool</a>( <a class="local col9 ref" href="#29p_libvlc" title='p_libvlc' data-ref="29p_libvlc">p_libvlc</a>, <q>"ignore-config"</q> ) )</td></tr>
+<tr><th id="552">552</th><td>        <a class="ref" href="config/configuration.h.html#config_AutoSaveConfigFile" title='config_AutoSaveConfigFile' data-ref="config_AutoSaveConfigFile">config_AutoSaveConfigFile</a>( <a class="macro" href="../include/vlc_common.h.html#448" title="__builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc))" data-ref="_M/VLC_OBJECT">VLC_OBJECT</a>(<a class="local col9 ref" href="#29p_libvlc" title='p_libvlc' data-ref="29p_libvlc">p_libvlc</a>) );</td></tr>
+<tr><th id="553">553</th><td></td></tr>
+<tr><th id="554">554</th><td>    <i>/* Free module bank. It is refcounted, so we call this each time  */</i></td></tr>
+<tr><th id="555">555</th><td>    <a class="ref" href="modules/modules.h.html#module_EndBank" title='module_EndBank' data-ref="module_EndBank">module_EndBank</a> (<span class="macro" title="1" data-ref="_M/true">true</span>);</td></tr>
+<tr><th id="556">556</th><td>    <a class="ref" href="libvlc.h.html#vlc_LogDeinit" title='vlc_LogDeinit' data-ref="vlc_LogDeinit">vlc_LogDeinit</a> (<a class="local col9 ref" href="#29p_libvlc" title='p_libvlc' data-ref="29p_libvlc">p_libvlc</a>);</td></tr>
+<tr><th id="557">557</th><td><u>#<span data-ppcond="557">if</span> defined(<span class="macro" data-ref="_M/_WIN32">_WIN32</span>) || defined(<span class="macro" data-ref="_M/__OS2__">__OS2__</span>)</u></td></tr>
+<tr><th id="558">558</th><td>    system_End( );</td></tr>
+<tr><th id="559">559</th><td><u>#<span data-ppcond="557">endif</span></u></td></tr>
+<tr><th id="560">560</th><td>}</td></tr>
+<tr><th id="561">561</th><td></td></tr>
+<tr><th id="562">562</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="563">563</th><td><i class="doc"> * Destroy everything.</i></td></tr>
+<tr><th id="564">564</th><td><i class="doc"> * This function requests the running threads to finish, waits for their</i></td></tr>
+<tr><th id="565">565</th><td><i class="doc"> * termination, and destroys their structure.</i></td></tr>
+<tr><th id="566">566</th><td><i class="doc"> * It stops the thread systems: no instance can run after this has run</i></td></tr>
+<tr><th id="567">567</th><td><i class="doc"> * <span class="command">\param</span> <span class="arg">p_libvlc</span> the instance to destroy</i></td></tr>
+<tr><th id="568">568</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="569">569</th><td><em>void</em> <dfn class="decl def" id="libvlc_InternalDestroy" title='libvlc_InternalDestroy' data-ref="libvlc_InternalDestroy">libvlc_InternalDestroy</dfn>( <a class="typedef" href="../include/vlc_common.h.html#libvlc_int_t" title='libvlc_int_t' data-type='struct libvlc_int_t' data-ref="libvlc_int_t">libvlc_int_t</a> *<dfn class="local col2 decl" id="32p_libvlc" title='p_libvlc' data-type='libvlc_int_t *' data-ref="32p_libvlc">p_libvlc</dfn> )</td></tr>
+<tr><th id="570">570</th><td>{</td></tr>
+<tr><th id="571">571</th><td>    <a class="typedef" href="libvlc.h.html#libvlc_priv_t" title='libvlc_priv_t' data-type='struct libvlc_priv_t' data-ref="libvlc_priv_t">libvlc_priv_t</a> *<dfn class="local col3 decl" id="33priv" title='priv' data-type='libvlc_priv_t *' data-ref="33priv">priv</dfn> = <a class="ref" href="libvlc.h.html#libvlc_priv" title='libvlc_priv' data-ref="libvlc_priv">libvlc_priv</a>( <a class="local col2 ref" href="#32p_libvlc" title='p_libvlc' data-ref="32p_libvlc">p_libvlc</a> );</td></tr>
+<tr><th id="572">572</th><td></td></tr>
+<tr><th id="573">573</th><td>    <a class="ref" href="libvlc.h.html#vlc_ExitDestroy" title='vlc_ExitDestroy' data-ref="vlc_ExitDestroy">vlc_ExitDestroy</a>( &amp;<a class="local col3 ref" href="#33priv" title='priv' data-ref="33priv">priv</a>-&gt;<a class="ref" href="libvlc.h.html#libvlc_priv_t::exit" title='libvlc_priv_t::exit' data-ref="libvlc_priv_t::exit">exit</a> );</td></tr>
+<tr><th id="574">574</th><td></td></tr>
+<tr><th id="575">575</th><td>    <a class="macro" href="../../include/assert.h.html#88" title="(((__sync_synchronize(), *(&amp;((((vlc_object_internals_t*)(__builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc))))-1)-&gt;refs))) == 1) ? (void) (0) : __assert_fail (&quot;(__sync_synchronize(), *(&amp;((((vlc_object_internals_t*)(__builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc))))-1)-&gt;refs))) == 1&quot;, &quot;/usr/local/google/home/robertshih/git/vlc/src/libvlc.c&quot;, 575, __PRETTY_FUNCTION__))" data-ref="_M/assert">assert</a>( <a class="macro" href="../include/vlc_atomic.h.html#125" title="(__sync_synchronize(), *(&amp;((((vlc_object_internals_t*)(__builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc))))-1)-&gt;refs)))" data-ref="_M/atomic_load">atomic_load</a>(&amp;(<a class="macro" href="misc/variables.h.html#56" title="(((vlc_object_internals_t*)(__builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc))))-1)" data-ref="_M/vlc_internals">vlc_internals</a>(<a class="local col2 ref" href="#32p_libvlc" title='p_libvlc' data-ref="32p_libvlc">p_libvlc</a>)-&gt;<a class="ref" href="misc/variables.h.html#vlc_object_internals::refs" title='vlc_object_internals::refs' data-ref="vlc_object_internals::refs">refs</a>)) == <var>1</var> );</td></tr>
+<tr><th id="576">576</th><td>    <a class="macro" href="../include/vlc_objects.h.html#69" title="vlc_object_release( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)) )" data-ref="_M/vlc_object_release">vlc_object_release</a>( <a class="local col2 ref" href="#32p_libvlc" title='p_libvlc' data-ref="32p_libvlc">p_libvlc</a> );</td></tr>
+<tr><th id="577">577</th><td>}</td></tr>
+<tr><th id="578">578</th><td></td></tr>
+<tr><th id="579">579</th><td><i  data-doc="GetFilenames">/*****************************************************************************</i></td></tr>
+<tr><th id="580">580</th><td><i  data-doc="GetFilenames"> * GetFilenames: parse command line options which are not flags</i></td></tr>
+<tr><th id="581">581</th><td><i  data-doc="GetFilenames"> *****************************************************************************</i></td></tr>
+<tr><th id="582">582</th><td><i  data-doc="GetFilenames"> * Parse command line for input files as well as their associated options.</i></td></tr>
+<tr><th id="583">583</th><td><i  data-doc="GetFilenames"> * An option always follows its associated input and begins with a ":".</i></td></tr>
+<tr><th id="584">584</th><td><i  data-doc="GetFilenames"> *****************************************************************************/</i></td></tr>
+<tr><th id="585">585</th><td><em>static</em> <em>void</em> <dfn class="tu decl def" id="GetFilenames" title='GetFilenames' data-type='void GetFilenames(libvlc_int_t * p_vlc, unsigned int n, const char *const * args)' data-ref="GetFilenames">GetFilenames</dfn>( <a class="typedef" href="../include/vlc_common.h.html#libvlc_int_t" title='libvlc_int_t' data-type='struct libvlc_int_t' data-ref="libvlc_int_t">libvlc_int_t</a> *<dfn class="local col4 decl" id="34p_vlc" title='p_vlc' data-type='libvlc_int_t *' data-ref="34p_vlc">p_vlc</dfn>, <em>unsigned</em> <dfn class="local col5 decl" id="35n" title='n' data-type='unsigned int' data-ref="35n">n</dfn>,</td></tr>
+<tr><th id="586">586</th><td>                          <em>const</em> <em>char</em> *<em>const</em> <dfn class="local col6 decl" id="36args" title='args' data-type='const char *const *' data-ref="36args">args</dfn>[] )</td></tr>
+<tr><th id="587">587</th><td>{</td></tr>
+<tr><th id="588">588</th><td>    <b>while</b>( <a class="local col5 ref" href="#35n" title='n' data-ref="35n">n</a> &gt; <var>0</var> )</td></tr>
+<tr><th id="589">589</th><td>    {</td></tr>
+<tr><th id="590">590</th><td>        <i>/* Count the input options */</i></td></tr>
+<tr><th id="591">591</th><td>        <em>unsigned</em> <dfn class="local col7 decl" id="37i_options" title='i_options' data-type='unsigned int' data-ref="37i_options">i_options</dfn> = <var>0</var>;</td></tr>
+<tr><th id="592">592</th><td></td></tr>
+<tr><th id="593">593</th><td>        <b>while</b>( <a class="local col6 ref" href="#36args" title='args' data-ref="36args">args</a>[--<a class="local col5 ref" href="#35n" title='n' data-ref="35n">n</a>][<var>0</var>] == <kbd>':'</kbd> )</td></tr>
+<tr><th id="594">594</th><td>        {</td></tr>
+<tr><th id="595">595</th><td>            <a class="local col7 ref" href="#37i_options" title='i_options' data-ref="37i_options">i_options</a>++;</td></tr>
+<tr><th id="596">596</th><td>            <b>if</b>( <a class="local col5 ref" href="#35n" title='n' data-ref="35n">n</a> == <var>0</var> )</td></tr>
+<tr><th id="597">597</th><td>            {</td></tr>
+<tr><th id="598">598</th><td>                <a class="macro" href="../include/vlc_messages.h.html#75" title="vlc_Log( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_vlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_vlc)), VLC_MSG_WARN, core, &quot;options %s without item&quot;, args[n] )" data-ref="_M/msg_Warn">msg_Warn</a>( p_vlc, <q>"options %s without item"</q>, args[n] );</td></tr>
+<tr><th id="599">599</th><td>                <b>return</b>; <i>/* syntax!? */</i></td></tr>
+<tr><th id="600">600</th><td>            }</td></tr>
+<tr><th id="601">601</th><td>        }</td></tr>
+<tr><th id="602">602</th><td></td></tr>
+<tr><th id="603">603</th><td>        <em>char</em> *<dfn class="local col8 decl" id="38mrl" title='mrl' data-type='char *' data-ref="38mrl">mrl</dfn> = <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="604">604</th><td>        <b>if</b>( <a class="ref" href="../../include/string.h.html#strstr" title='strstr' data-ref="strstr">strstr</a>( <a class="local col6 ref" href="#36args" title='args' data-ref="36args">args</a>[<a class="local col5 ref" href="#35n" title='n' data-ref="35n">n</a>], <q>"://"</q> ) == <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span> )</td></tr>
+<tr><th id="605">605</th><td>        {</td></tr>
+<tr><th id="606">606</th><td>            <a class="local col8 ref" href="#38mrl" title='mrl' data-ref="38mrl">mrl</a> = <a class="ref" href="../include/vlc_url.h.html#vlc_path2uri" title='vlc_path2uri' data-ref="vlc_path2uri">vlc_path2uri</a>( <a class="local col6 ref" href="#36args" title='args' data-ref="36args">args</a>[<a class="local col5 ref" href="#35n" title='n' data-ref="35n">n</a>], <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span> );</td></tr>
+<tr><th id="607">607</th><td>            <b>if</b>( !<a class="local col8 ref" href="#38mrl" title='mrl' data-ref="38mrl">mrl</a> )</td></tr>
+<tr><th id="608">608</th><td>                <b>continue</b>;</td></tr>
+<tr><th id="609">609</th><td>        }</td></tr>
+<tr><th id="610">610</th><td></td></tr>
+<tr><th id="611">611</th><td>        <a class="ref" href="libvlc.h.html#intf_InsertItem" title='intf_InsertItem' data-ref="intf_InsertItem">intf_InsertItem</a>( <a class="local col4 ref" href="#34p_vlc" title='p_vlc' data-ref="34p_vlc">p_vlc</a>, (<a class="local col8 ref" href="#38mrl" title='mrl' data-ref="38mrl">mrl</a> != <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>) ? <a class="local col8 ref" href="#38mrl" title='mrl' data-ref="38mrl">mrl</a> : <a class="local col6 ref" href="#36args" title='args' data-ref="36args">args</a>[<a class="local col5 ref" href="#35n" title='n' data-ref="35n">n</a>], <a class="local col7 ref" href="#37i_options" title='i_options' data-ref="37i_options">i_options</a>,</td></tr>
+<tr><th id="612">612</th><td>                         ( <a class="local col7 ref" href="#37i_options" title='i_options' data-ref="37i_options">i_options</a> ? &amp;<a class="local col6 ref" href="#36args" title='args' data-ref="36args">args</a>[<a class="local col5 ref" href="#35n" title='n' data-ref="35n">n</a> + <var>1</var>] : <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span> ),</td></tr>
+<tr><th id="613">613</th><td>                         <a class="enum" href="../include/vlc_input_item.h.html#input_item_option_e::VLC_INPUT_OPTION_TRUSTED" title='input_item_option_e::VLC_INPUT_OPTION_TRUSTED' data-ref="input_item_option_e::VLC_INPUT_OPTION_TRUSTED">VLC_INPUT_OPTION_TRUSTED</a> );</td></tr>
+<tr><th id="614">614</th><td>        <a class="ref" href="../../include/stdlib.h.html#free" title='free' data-ref="free">free</a>( <a class="local col8 ref" href="#38mrl" title='mrl' data-ref="38mrl">mrl</a> );</td></tr>
+<tr><th id="615">615</th><td>    }</td></tr>
+<tr><th id="616">616</th><td>}</td></tr>
+<tr><th id="617">617</th><td></td></tr>
+<tr><th id="618">618</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="619">619</th><td><i class="doc"> * Requests extraction of the meta data for an input item (a.k.a. preparsing).</i></td></tr>
+<tr><th id="620">620</th><td><i class="doc"> * The actual extraction is asynchronous.</i></td></tr>
+<tr><th id="621">621</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="622">622</th><td><em>int</em> <dfn class="decl def" id="libvlc_MetaRequest" title='libvlc_MetaRequest' data-ref="libvlc_MetaRequest">libvlc_MetaRequest</dfn>(<a class="typedef" href="../include/vlc_common.h.html#libvlc_int_t" title='libvlc_int_t' data-type='struct libvlc_int_t' data-ref="libvlc_int_t">libvlc_int_t</a> *<dfn class="local col9 decl" id="39libvlc" title='libvlc' data-type='libvlc_int_t *' data-ref="39libvlc">libvlc</dfn>, <a class="typedef" href="../include/vlc_common.h.html#input_item_t" title='input_item_t' data-type='struct input_item_t' data-ref="input_item_t">input_item_t</a> *<dfn class="local col0 decl" id="40item" title='item' data-type='input_item_t *' data-ref="40item">item</dfn>,</td></tr>
+<tr><th id="623">623</th><td>                       <a class="typedef" href="../include/vlc_input_item.h.html#input_item_meta_request_option_t" title='input_item_meta_request_option_t' data-type='enum input_item_meta_request_option_t' data-ref="input_item_meta_request_option_t">input_item_meta_request_option_t</a> <dfn class="local col1 decl" id="41i_options" title='i_options' data-type='input_item_meta_request_option_t' data-ref="41i_options">i_options</dfn>)</td></tr>
+<tr><th id="624">624</th><td>{</td></tr>
+<tr><th id="625">625</th><td>    <a class="typedef" href="libvlc.h.html#libvlc_priv_t" title='libvlc_priv_t' data-type='struct libvlc_priv_t' data-ref="libvlc_priv_t">libvlc_priv_t</a> *<dfn class="local col2 decl" id="42priv" title='priv' data-type='libvlc_priv_t *' data-ref="42priv">priv</dfn> = <a class="ref" href="libvlc.h.html#libvlc_priv" title='libvlc_priv' data-ref="libvlc_priv">libvlc_priv</a>(<a class="local col9 ref" href="#39libvlc" title='libvlc' data-ref="39libvlc">libvlc</a>);</td></tr>
+<tr><th id="626">626</th><td></td></tr>
+<tr><th id="627">627</th><td>    <b>if</b> (<a class="macro" href="../include/vlc_common.h.html#116" title="__builtin_expect(!!(priv-&gt;parser == ((void*)0)), 0)" data-ref="_M/unlikely">unlikely</a>(<a class="local col2 ref" href="#42priv" title='priv' data-ref="42priv">priv</a>-&gt;<a class="ref" href="libvlc.h.html#libvlc_priv_t::parser" title='libvlc_priv_t::parser' data-ref="libvlc_priv_t::parser">parser</a> == <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>))</td></tr>
+<tr><th id="628">628</th><td>        <b>return</b> <a class="macro" href="../include/vlc_common.h.html#376" title="(-2)" data-ref="_M/VLC_ENOMEM">VLC_ENOMEM</a>;</td></tr>
+<tr><th id="629">629</th><td></td></tr>
+<tr><th id="630">630</th><td>    <a class="ref" href="playlist/preparser.h.html#playlist_preparser_Push" title='playlist_preparser_Push' data-ref="playlist_preparser_Push">playlist_preparser_Push</a>(<a class="local col2 ref" href="#42priv" title='priv' data-ref="42priv">priv</a>-&gt;<a class="ref" href="libvlc.h.html#libvlc_priv_t::parser" title='libvlc_priv_t::parser' data-ref="libvlc_priv_t::parser">parser</a>, <a class="local col0 ref" href="#40item" title='item' data-ref="40item">item</a>, <a class="local col1 ref" href="#41i_options" title='i_options' data-ref="41i_options">i_options</a>);</td></tr>
+<tr><th id="631">631</th><td>    <b>return</b> <a class="macro" href="../include/vlc_common.h.html#374" title="(-0)" data-ref="_M/VLC_SUCCESS">VLC_SUCCESS</a>;</td></tr>
+<tr><th id="632">632</th><td>}</td></tr>
+<tr><th id="633">633</th><td></td></tr>
+<tr><th id="634">634</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="635">635</th><td><i class="doc"> * Requests retrieving/downloading art for an input item.</i></td></tr>
+<tr><th id="636">636</th><td><i class="doc"> * The retrieval is performed asynchronously.</i></td></tr>
+<tr><th id="637">637</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="638">638</th><td><em>int</em> <dfn class="decl def" id="libvlc_ArtRequest" title='libvlc_ArtRequest' data-ref="libvlc_ArtRequest">libvlc_ArtRequest</dfn>(<a class="typedef" href="../include/vlc_common.h.html#libvlc_int_t" title='libvlc_int_t' data-type='struct libvlc_int_t' data-ref="libvlc_int_t">libvlc_int_t</a> *<dfn class="local col3 decl" id="43libvlc" title='libvlc' data-type='libvlc_int_t *' data-ref="43libvlc">libvlc</dfn>, <a class="typedef" href="../include/vlc_common.h.html#input_item_t" title='input_item_t' data-type='struct input_item_t' data-ref="input_item_t">input_item_t</a> *<dfn class="local col4 decl" id="44item" title='item' data-type='input_item_t *' data-ref="44item">item</dfn>,</td></tr>
+<tr><th id="639">639</th><td>                      <a class="typedef" href="../include/vlc_input_item.h.html#input_item_meta_request_option_t" title='input_item_meta_request_option_t' data-type='enum input_item_meta_request_option_t' data-ref="input_item_meta_request_option_t">input_item_meta_request_option_t</a> <dfn class="local col5 decl" id="45i_options" title='i_options' data-type='input_item_meta_request_option_t' data-ref="45i_options">i_options</dfn>)</td></tr>
+<tr><th id="640">640</th><td>{</td></tr>
+<tr><th id="641">641</th><td>    <a class="typedef" href="libvlc.h.html#libvlc_priv_t" title='libvlc_priv_t' data-type='struct libvlc_priv_t' data-ref="libvlc_priv_t">libvlc_priv_t</a> *<dfn class="local col6 decl" id="46priv" title='priv' data-type='libvlc_priv_t *' data-ref="46priv">priv</dfn> = <a class="ref" href="libvlc.h.html#libvlc_priv" title='libvlc_priv' data-ref="libvlc_priv">libvlc_priv</a>(<a class="local col3 ref" href="#43libvlc" title='libvlc' data-ref="43libvlc">libvlc</a>);</td></tr>
+<tr><th id="642">642</th><td></td></tr>
+<tr><th id="643">643</th><td>    <b>if</b> (<a class="macro" href="../include/vlc_common.h.html#116" title="__builtin_expect(!!(priv-&gt;parser == ((void*)0)), 0)" data-ref="_M/unlikely">unlikely</a>(<a class="local col6 ref" href="#46priv" title='priv' data-ref="46priv">priv</a>-&gt;<a class="ref" href="libvlc.h.html#libvlc_priv_t::parser" title='libvlc_priv_t::parser' data-ref="libvlc_priv_t::parser">parser</a> == <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>))</td></tr>
+<tr><th id="644">644</th><td>        <b>return</b> <a class="macro" href="../include/vlc_common.h.html#376" title="(-2)" data-ref="_M/VLC_ENOMEM">VLC_ENOMEM</a>;</td></tr>
+<tr><th id="645">645</th><td></td></tr>
+<tr><th id="646">646</th><td>    <a class="ref" href="playlist/preparser.h.html#playlist_preparser_fetcher_Push" title='playlist_preparser_fetcher_Push' data-ref="playlist_preparser_fetcher_Push">playlist_preparser_fetcher_Push</a>(<a class="local col6 ref" href="#46priv" title='priv' data-ref="46priv">priv</a>-&gt;<a class="ref" href="libvlc.h.html#libvlc_priv_t::parser" title='libvlc_priv_t::parser' data-ref="libvlc_priv_t::parser">parser</a>, <a class="local col4 ref" href="#44item" title='item' data-ref="44item">item</a>, <a class="local col5 ref" href="#45i_options" title='i_options' data-ref="45i_options">i_options</a>);</td></tr>
+<tr><th id="647">647</th><td>    <b>return</b> <a class="macro" href="../include/vlc_common.h.html#374" title="(-0)" data-ref="_M/VLC_SUCCESS">VLC_SUCCESS</a>;</td></tr>
+<tr><th id="648">648</th><td>}</td></tr>
+<tr><th id="649">649</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project vlc revision <em>2.2.0-git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

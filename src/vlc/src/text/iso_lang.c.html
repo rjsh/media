@@ -1,0 +1,97 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>iso_lang.c source code [vlc/src/text/iso_lang.c] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'vlc/src/text/iso_lang.c'; var root_path = '../../..'; var data_path = '../../../../data';</script>
+<script src='../../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='../..'>vlc</a>/<a href='..'>src</a>/<a href='./'>text</a>/<a href='iso_lang.c.html'>iso_lang.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*****************************************************************************</i></td></tr>
+<tr><th id="2">2</th><td><i> * iso_lang.c: function to decode language code (in dvd or a52 for instance).</i></td></tr>
+<tr><th id="3">3</th><td><i> *****************************************************************************</i></td></tr>
+<tr><th id="4">4</th><td><i> * Copyright (C) 1998-2004 VLC authors and VideoLAN</i></td></tr>
+<tr><th id="5">5</th><td><i> * $Id: 8c6d2eccb8470de496f230adf773cd62ac995e6d $</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * Author: Stéphane Borel &lt;stef@via.ecp.fr&gt;</i></td></tr>
+<tr><th id="8">8</th><td><i> *         Arnaud de Bossoreille de Ribou &lt;bozo@via.ecp.fr&gt;</i></td></tr>
+<tr><th id="9">9</th><td><i> *</i></td></tr>
+<tr><th id="10">10</th><td><i> * This program is free software; you can redistribute it and/or modify it</i></td></tr>
+<tr><th id="11">11</th><td><i> * under the terms of the GNU Lesser General Public License as published by</i></td></tr>
+<tr><th id="12">12</th><td><i> * the Free Software Foundation; either version 2.1 of the License, or</i></td></tr>
+<tr><th id="13">13</th><td><i> * (at your option) any later version.</i></td></tr>
+<tr><th id="14">14</th><td><i> *</i></td></tr>
+<tr><th id="15">15</th><td><i> * This program is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="16">16</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="17">17</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</i></td></tr>
+<tr><th id="18">18</th><td><i> * GNU Lesser General Public License for more details.</i></td></tr>
+<tr><th id="19">19</th><td><i> *</i></td></tr>
+<tr><th id="20">20</th><td><i> * You should have received a copy of the GNU Lesser General Public License</i></td></tr>
+<tr><th id="21">21</th><td><i> * along with this program; if not, write to the Free Software Foundation,</i></td></tr>
+<tr><th id="22">22</th><td><i> * Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.</i></td></tr>
+<tr><th id="23">23</th><td><i> *****************************************************************************/</i></td></tr>
+<tr><th id="24">24</th><td></td></tr>
+<tr><th id="25">25</th><td><i>/*****************************************************************************</i></td></tr>
+<tr><th id="26">26</th><td><i> * Preamble</i></td></tr>
+<tr><th id="27">27</th><td><i> *****************************************************************************/</i></td></tr>
+<tr><th id="28">28</th><td></td></tr>
+<tr><th id="29">29</th><td><u>#<span data-ppcond="29">ifdef</span> <span class="macro" data-ref="_M/HAVE_CONFIG_H">HAVE_CONFIG_H</span></u></td></tr>
+<tr><th id="30">30</th><td><u># include <a href="../../config.h.html">"config.h"</a></u></td></tr>
+<tr><th id="31">31</th><td><u>#<span data-ppcond="29">endif</span></u></td></tr>
+<tr><th id="32">32</th><td></td></tr>
+<tr><th id="33">33</th><td><u>#include <a href="../../../include/stdio.h.html">&lt;stdio.h&gt;</a></u></td></tr>
+<tr><th id="34">34</th><td></td></tr>
+<tr><th id="35">35</th><td><u>#include <a href="../../include/vlc_common.h.html">&lt;vlc_common.h&gt;</a></u></td></tr>
+<tr><th id="36">36</th><td></td></tr>
+<tr><th id="37">37</th><td><u>#include <a href="../../include/vlc_iso_lang.h.html">"vlc_iso_lang.h"</a></u></td></tr>
+<tr><th id="38">38</th><td></td></tr>
+<tr><th id="39">39</th><td><i>/*****************************************************************************</i></td></tr>
+<tr><th id="40">40</th><td><i> * Local tables</i></td></tr>
+<tr><th id="41">41</th><td><i> *****************************************************************************/</i></td></tr>
+<tr><th id="42">42</th><td><u>#include <a href="iso-639_def.h.html">"iso-639_def.h"</a></u></td></tr>
+<tr><th id="43">43</th><td></td></tr>
+<tr><th id="44">44</th><td><em>static</em> <em>const</em> <a class="typedef" href="../../include/vlc_common.h.html#iso639_lang_t" title='iso639_lang_t' data-type='struct iso639_lang_t' data-ref="iso639_lang_t">iso639_lang_t</a> <dfn class="tu decl def" id="unknown_language" title='unknown_language' data-type='const iso639_lang_t' data-ref="unknown_language">unknown_language</dfn> =</td></tr>
+<tr><th id="45">45</th><td>    { <q>"Unknown"</q>, <q>"??"</q>, <q>"???"</q>, <q>"???"</q> };</td></tr>
+<tr><th id="46">46</th><td></td></tr>
+<tr><th id="47">47</th><td><em>const</em> <a class="typedef" href="../../include/vlc_common.h.html#iso639_lang_t" title='iso639_lang_t' data-type='struct iso639_lang_t' data-ref="iso639_lang_t">iso639_lang_t</a> * <dfn class="decl def" id="GetLang_1" title='GetLang_1' data-ref="GetLang_1">GetLang_1</dfn>( <em>const</em> <em>char</em> * <dfn class="local col1 decl" id="1psz_code" title='psz_code' data-type='const char *' data-ref="1psz_code">psz_code</dfn> )</td></tr>
+<tr><th id="48">48</th><td>{</td></tr>
+<tr><th id="49">49</th><td>    <em>const</em> <a class="typedef" href="../../include/vlc_common.h.html#iso639_lang_t" title='iso639_lang_t' data-type='struct iso639_lang_t' data-ref="iso639_lang_t">iso639_lang_t</a> *<dfn class="local col2 decl" id="2p_lang" title='p_lang' data-type='const iso639_lang_t *' data-ref="2p_lang">p_lang</dfn>;</td></tr>
+<tr><th id="50">50</th><td></td></tr>
+<tr><th id="51">51</th><td>    <b>for</b>( <a class="local col2 ref" href="#2p_lang" title='p_lang' data-ref="2p_lang">p_lang</a> = <a class="ref" href="iso-639_def.h.html#p_languages" title='p_languages' data-ref="p_languages">p_languages</a>; <a class="local col2 ref" href="#2p_lang" title='p_lang' data-ref="2p_lang">p_lang</a>-&gt;<a class="ref" href="../../include/vlc_iso_lang.h.html#iso639_lang_t::psz_eng_name" title='iso639_lang_t::psz_eng_name' data-ref="iso639_lang_t::psz_eng_name">psz_eng_name</a>; <a class="local col2 ref" href="#2p_lang" title='p_lang' data-ref="2p_lang">p_lang</a>++ )</td></tr>
+<tr><th id="52">52</th><td>        <b>if</b>( !<a class="ref" href="../../../include/string.h.html#strncasecmp" title='strncasecmp' data-ref="strncasecmp">strncasecmp</a>( <a class="local col2 ref" href="#2p_lang" title='p_lang' data-ref="2p_lang">p_lang</a>-&gt;<a class="ref" href="../../include/vlc_iso_lang.h.html#iso639_lang_t::psz_iso639_1" title='iso639_lang_t::psz_iso639_1' data-ref="iso639_lang_t::psz_iso639_1">psz_iso639_1</a>, <a class="local col1 ref" href="#1psz_code" title='psz_code' data-ref="1psz_code">psz_code</a>, <var>2</var> ) )</td></tr>
+<tr><th id="53">53</th><td>            <b>return</b> <a class="local col2 ref" href="#2p_lang" title='p_lang' data-ref="2p_lang">p_lang</a>;</td></tr>
+<tr><th id="54">54</th><td></td></tr>
+<tr><th id="55">55</th><td>    <b>return</b> &amp;<a class="tu ref" href="#unknown_language" title='unknown_language' data-use='a' data-ref="unknown_language">unknown_language</a>;</td></tr>
+<tr><th id="56">56</th><td>}</td></tr>
+<tr><th id="57">57</th><td></td></tr>
+<tr><th id="58">58</th><td><em>const</em> <a class="typedef" href="../../include/vlc_common.h.html#iso639_lang_t" title='iso639_lang_t' data-type='struct iso639_lang_t' data-ref="iso639_lang_t">iso639_lang_t</a> * <dfn class="decl def" id="GetLang_2T" title='GetLang_2T' data-ref="GetLang_2T">GetLang_2T</dfn>( <em>const</em> <em>char</em> * <dfn class="local col3 decl" id="3psz_code" title='psz_code' data-type='const char *' data-ref="3psz_code">psz_code</dfn> )</td></tr>
+<tr><th id="59">59</th><td>{</td></tr>
+<tr><th id="60">60</th><td>    <em>const</em> <a class="typedef" href="../../include/vlc_common.h.html#iso639_lang_t" title='iso639_lang_t' data-type='struct iso639_lang_t' data-ref="iso639_lang_t">iso639_lang_t</a> *<dfn class="local col4 decl" id="4p_lang" title='p_lang' data-type='const iso639_lang_t *' data-ref="4p_lang">p_lang</dfn>;</td></tr>
+<tr><th id="61">61</th><td></td></tr>
+<tr><th id="62">62</th><td>    <b>for</b>( <a class="local col4 ref" href="#4p_lang" title='p_lang' data-ref="4p_lang">p_lang</a> = <a class="ref" href="iso-639_def.h.html#p_languages" title='p_languages' data-ref="p_languages">p_languages</a>; <a class="local col4 ref" href="#4p_lang" title='p_lang' data-ref="4p_lang">p_lang</a>-&gt;<a class="ref" href="../../include/vlc_iso_lang.h.html#iso639_lang_t::psz_eng_name" title='iso639_lang_t::psz_eng_name' data-ref="iso639_lang_t::psz_eng_name">psz_eng_name</a>; <a class="local col4 ref" href="#4p_lang" title='p_lang' data-ref="4p_lang">p_lang</a>++ )</td></tr>
+<tr><th id="63">63</th><td>        <b>if</b>( !<a class="ref" href="../../../include/string.h.html#strncasecmp" title='strncasecmp' data-ref="strncasecmp">strncasecmp</a>( <a class="local col4 ref" href="#4p_lang" title='p_lang' data-ref="4p_lang">p_lang</a>-&gt;<a class="ref" href="../../include/vlc_iso_lang.h.html#iso639_lang_t::psz_iso639_2T" title='iso639_lang_t::psz_iso639_2T' data-ref="iso639_lang_t::psz_iso639_2T">psz_iso639_2T</a>, <a class="local col3 ref" href="#3psz_code" title='psz_code' data-ref="3psz_code">psz_code</a>, <var>3</var> ) )</td></tr>
+<tr><th id="64">64</th><td>            <b>return</b> <a class="local col4 ref" href="#4p_lang" title='p_lang' data-ref="4p_lang">p_lang</a>;</td></tr>
+<tr><th id="65">65</th><td></td></tr>
+<tr><th id="66">66</th><td>    <b>return</b> &amp;<a class="tu ref" href="#unknown_language" title='unknown_language' data-use='a' data-ref="unknown_language">unknown_language</a>;</td></tr>
+<tr><th id="67">67</th><td>}</td></tr>
+<tr><th id="68">68</th><td></td></tr>
+<tr><th id="69">69</th><td><em>const</em> <a class="typedef" href="../../include/vlc_common.h.html#iso639_lang_t" title='iso639_lang_t' data-type='struct iso639_lang_t' data-ref="iso639_lang_t">iso639_lang_t</a> * <dfn class="decl def" id="GetLang_2B" title='GetLang_2B' data-ref="GetLang_2B">GetLang_2B</dfn>( <em>const</em> <em>char</em> * <dfn class="local col5 decl" id="5psz_code" title='psz_code' data-type='const char *' data-ref="5psz_code">psz_code</dfn> )</td></tr>
+<tr><th id="70">70</th><td>{</td></tr>
+<tr><th id="71">71</th><td>    <em>const</em> <a class="typedef" href="../../include/vlc_common.h.html#iso639_lang_t" title='iso639_lang_t' data-type='struct iso639_lang_t' data-ref="iso639_lang_t">iso639_lang_t</a> *<dfn class="local col6 decl" id="6p_lang" title='p_lang' data-type='const iso639_lang_t *' data-ref="6p_lang">p_lang</dfn>;</td></tr>
+<tr><th id="72">72</th><td></td></tr>
+<tr><th id="73">73</th><td>    <b>for</b>( <a class="local col6 ref" href="#6p_lang" title='p_lang' data-ref="6p_lang">p_lang</a> = <a class="ref" href="iso-639_def.h.html#p_languages" title='p_languages' data-ref="p_languages">p_languages</a>; <a class="local col6 ref" href="#6p_lang" title='p_lang' data-ref="6p_lang">p_lang</a>-&gt;<a class="ref" href="../../include/vlc_iso_lang.h.html#iso639_lang_t::psz_eng_name" title='iso639_lang_t::psz_eng_name' data-ref="iso639_lang_t::psz_eng_name">psz_eng_name</a>; <a class="local col6 ref" href="#6p_lang" title='p_lang' data-ref="6p_lang">p_lang</a>++ )</td></tr>
+<tr><th id="74">74</th><td>        <b>if</b>( !<a class="ref" href="../../../include/string.h.html#strncasecmp" title='strncasecmp' data-ref="strncasecmp">strncasecmp</a>( <a class="local col6 ref" href="#6p_lang" title='p_lang' data-ref="6p_lang">p_lang</a>-&gt;<a class="ref" href="../../include/vlc_iso_lang.h.html#iso639_lang_t::psz_iso639_2B" title='iso639_lang_t::psz_iso639_2B' data-ref="iso639_lang_t::psz_iso639_2B">psz_iso639_2B</a>, <a class="local col5 ref" href="#5psz_code" title='psz_code' data-ref="5psz_code">psz_code</a>, <var>3</var> ) )</td></tr>
+<tr><th id="75">75</th><td>            <b>return</b> <a class="local col6 ref" href="#6p_lang" title='p_lang' data-ref="6p_lang">p_lang</a>;</td></tr>
+<tr><th id="76">76</th><td></td></tr>
+<tr><th id="77">77</th><td>    <b>return</b> &amp;<a class="tu ref" href="#unknown_language" title='unknown_language' data-use='a' data-ref="unknown_language">unknown_language</a>;</td></tr>
+<tr><th id="78">78</th><td>}</td></tr>
+<tr><th id="79">79</th><td></td></tr>
+<tr><th id="80">80</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project vlc revision <em>2.2.0-git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

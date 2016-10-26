@@ -1,0 +1,104 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>filmstripenc.c source code [ffmpeg/libavformat/filmstripenc.c] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="FilmstripMuxContext "/>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavformat/filmstripenc.c'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavformat</a>/<a href='filmstripenc.c.html'>filmstripenc.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * Adobe Filmstrip muxer</i></td></tr>
+<tr><th id="3">3</th><td><i> * Copyright (c) 2010 Peter Ross</i></td></tr>
+<tr><th id="4">4</th><td><i> *</i></td></tr>
+<tr><th id="5">5</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="8">8</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="9">9</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="10">10</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="11">11</th><td><i> *</i></td></tr>
+<tr><th id="12">12</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="13">13</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="14">14</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="15">15</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="16">16</th><td><i> *</i></td></tr>
+<tr><th id="17">17</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="18">18</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="19">19</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="20">20</th><td><i> */</i></td></tr>
+<tr><th id="21">21</th><td></td></tr>
+<tr><th id="22">22</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="23">23</th><td><i class="doc"> *<span class="command"> @file</span></i></td></tr>
+<tr><th id="24">24</th><td><i class="doc"> * Adobe Filmstrip muxer</i></td></tr>
+<tr><th id="25">25</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="26">26</th><td></td></tr>
+<tr><th id="27">27</th><td><u>#include <a href="../libavutil/intreadwrite.h.html">"libavutil/intreadwrite.h"</a></u></td></tr>
+<tr><th id="28">28</th><td><u>#include <a href="avformat.h.html">"avformat.h"</a></u></td></tr>
+<tr><th id="29">29</th><td></td></tr>
+<tr><th id="30">30</th><td><u>#define <dfn class="macro" id="_M/RAND_TAG" data-ref="_M/RAND_TAG">RAND_TAG</dfn> MKBETAG('R','a','n','d')</u></td></tr>
+<tr><th id="31">31</th><td></td></tr>
+<tr><th id="32">32</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="FilmstripMuxContext" title='FilmstripMuxContext' data-ref="FilmstripMuxContext"><a class="type" href="#FilmstripMuxContext" title='FilmstripMuxContext' data-ref="FilmstripMuxContext">FilmstripMuxContext</a></dfn> {</td></tr>
+<tr><th id="33">33</th><td>    <em>int</em> <dfn class="tu decl" id="FilmstripMuxContext::nb_frames" title='FilmstripMuxContext::nb_frames' data-type='int' data-ref="FilmstripMuxContext::nb_frames">nb_frames</dfn>;</td></tr>
+<tr><th id="34">34</th><td>} <dfn class="typedef" id="FilmstripMuxContext" title='FilmstripMuxContext' data-type='struct FilmstripMuxContext' data-ref="FilmstripMuxContext">FilmstripMuxContext</dfn>;</td></tr>
+<tr><th id="35">35</th><td></td></tr>
+<tr><th id="36">36</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="write_header" title='write_header' data-type='int write_header(AVFormatContext * s)' data-ref="write_header">write_header</dfn>(<a class="typedef" href="avformat.h.html#AVFormatContext" title='AVFormatContext' data-type='struct AVFormatContext' data-ref="AVFormatContext">AVFormatContext</a> *<dfn class="local col1 decl" id="1s" title='s' data-type='AVFormatContext *' data-ref="1s">s</dfn>)</td></tr>
+<tr><th id="37">37</th><td>{</td></tr>
+<tr><th id="38">38</th><td>    <b>if</b> (<a class="local col1 ref" href="#1s" title='s' data-ref="1s">s</a>-&gt;<a class="ref" href="avformat.h.html#AVFormatContext::streams" title='AVFormatContext::streams' data-ref="AVFormatContext::streams">streams</a>[<var>0</var>]-&gt;<a class="ref" href="avformat.h.html#AVStream::codecpar" title='AVStream::codecpar' data-ref="AVStream::codecpar">codecpar</a>-&gt;<a class="ref" href="../libavcodec/avcodec.h.html#AVCodecParameters::format" title='AVCodecParameters::format' data-ref="AVCodecParameters::format">format</a> != <a class="enum" href="../libavutil/pixfmt.h.html#AVPixelFormat::AV_PIX_FMT_RGBA" title='AVPixelFormat::AV_PIX_FMT_RGBA' data-ref="AVPixelFormat::AV_PIX_FMT_RGBA">AV_PIX_FMT_RGBA</a>) {</td></tr>
+<tr><th id="39">39</th><td>        <a class="ref" href="../libavutil/log.h.html#av_log" title='av_log' data-ref="av_log">av_log</a>(<a class="local col1 ref" href="#1s" title='s' data-ref="1s">s</a>, <a class="macro" href="../libavutil/log.h.html#176" title="16" data-ref="_M/AV_LOG_ERROR">AV_LOG_ERROR</a>, <q>"only AV_PIX_FMT_RGBA is supported\n"</q>);</td></tr>
+<tr><th id="40">40</th><td>        <b>return</b> <a class="macro" href="../libavutil/error.h.html#59" title="(-(int)((&apos;I&apos;) | ((&apos;N&apos;) &lt;&lt; 8) | ((&apos;D&apos;) &lt;&lt; 16) | ((unsigned)(&apos;A&apos;) &lt;&lt; 24)))" data-ref="_M/AVERROR_INVALIDDATA">AVERROR_INVALIDDATA</a>;</td></tr>
+<tr><th id="41">41</th><td>    }</td></tr>
+<tr><th id="42">42</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="43">43</th><td>}</td></tr>
+<tr><th id="44">44</th><td></td></tr>
+<tr><th id="45">45</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="write_packet" title='write_packet' data-type='int write_packet(AVFormatContext * s, AVPacket * pkt)' data-ref="write_packet">write_packet</dfn>(<a class="typedef" href="avformat.h.html#AVFormatContext" title='AVFormatContext' data-type='struct AVFormatContext' data-ref="AVFormatContext">AVFormatContext</a> *<dfn class="local col2 decl" id="2s" title='s' data-type='AVFormatContext *' data-ref="2s">s</dfn>, <a class="typedef" href="../libavcodec/avcodec.h.html#AVPacket" title='AVPacket' data-type='struct AVPacket' data-ref="AVPacket">AVPacket</a> *<dfn class="local col3 decl" id="3pkt" title='pkt' data-type='AVPacket *' data-ref="3pkt">pkt</dfn>)</td></tr>
+<tr><th id="46">46</th><td>{</td></tr>
+<tr><th id="47">47</th><td>    <a class="typedef" href="#FilmstripMuxContext" title='FilmstripMuxContext' data-type='struct FilmstripMuxContext' data-ref="FilmstripMuxContext">FilmstripMuxContext</a> *<dfn class="local col4 decl" id="4film" title='film' data-type='FilmstripMuxContext *' data-ref="4film">film</dfn> = <a class="local col2 ref" href="#2s" title='s' data-ref="2s">s</a>-&gt;<a class="ref" href="avformat.h.html#AVFormatContext::priv_data" title='AVFormatContext::priv_data' data-ref="AVFormatContext::priv_data">priv_data</a>;</td></tr>
+<tr><th id="48">48</th><td>    <a class="ref" href="avio.h.html#avio_write" title='avio_write' data-ref="avio_write">avio_write</a>(<a class="local col2 ref" href="#2s" title='s' data-ref="2s">s</a>-&gt;<a class="ref" href="avformat.h.html#AVFormatContext::pb" title='AVFormatContext::pb' data-ref="AVFormatContext::pb">pb</a>, <a class="local col3 ref" href="#3pkt" title='pkt' data-ref="3pkt">pkt</a>-&gt;<a class="ref" href="../libavcodec/avcodec.h.html#AVPacket::data" title='AVPacket::data' data-ref="AVPacket::data">data</a>, <a class="local col3 ref" href="#3pkt" title='pkt' data-ref="3pkt">pkt</a>-&gt;<a class="ref" href="../libavcodec/avcodec.h.html#AVPacket::size" title='AVPacket::size' data-ref="AVPacket::size">size</a>);</td></tr>
+<tr><th id="49">49</th><td>    <a class="local col4 ref" href="#4film" title='film' data-ref="4film">film</a>-&gt;<a class="tu ref" href="#FilmstripMuxContext::nb_frames" title='FilmstripMuxContext::nb_frames' data-use='w' data-ref="FilmstripMuxContext::nb_frames">nb_frames</a>++;</td></tr>
+<tr><th id="50">50</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="51">51</th><td>}</td></tr>
+<tr><th id="52">52</th><td></td></tr>
+<tr><th id="53">53</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="write_trailer" title='write_trailer' data-type='int write_trailer(AVFormatContext * s)' data-ref="write_trailer">write_trailer</dfn>(<a class="typedef" href="avformat.h.html#AVFormatContext" title='AVFormatContext' data-type='struct AVFormatContext' data-ref="AVFormatContext">AVFormatContext</a> *<dfn class="local col5 decl" id="5s" title='s' data-type='AVFormatContext *' data-ref="5s">s</dfn>)</td></tr>
+<tr><th id="54">54</th><td>{</td></tr>
+<tr><th id="55">55</th><td>    <a class="typedef" href="#FilmstripMuxContext" title='FilmstripMuxContext' data-type='struct FilmstripMuxContext' data-ref="FilmstripMuxContext">FilmstripMuxContext</a> *<dfn class="local col6 decl" id="6film" title='film' data-type='FilmstripMuxContext *' data-ref="6film">film</dfn> = <a class="local col5 ref" href="#5s" title='s' data-ref="5s">s</a>-&gt;<a class="ref" href="avformat.h.html#AVFormatContext::priv_data" title='AVFormatContext::priv_data' data-ref="AVFormatContext::priv_data">priv_data</a>;</td></tr>
+<tr><th id="56">56</th><td>    <a class="typedef" href="avio.h.html#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> *<dfn class="local col7 decl" id="7pb" title='pb' data-type='AVIOContext *' data-ref="7pb">pb</dfn> = <a class="local col5 ref" href="#5s" title='s' data-ref="5s">s</a>-&gt;<a class="ref" href="avformat.h.html#AVFormatContext::pb" title='AVFormatContext::pb' data-ref="AVFormatContext::pb">pb</a>;</td></tr>
+<tr><th id="57">57</th><td>    <a class="typedef" href="avformat.h.html#AVStream" title='AVStream' data-type='struct AVStream' data-ref="AVStream">AVStream</a> *<dfn class="local col8 decl" id="8st" title='st' data-type='AVStream *' data-ref="8st">st</dfn> = <a class="local col5 ref" href="#5s" title='s' data-ref="5s">s</a>-&gt;<a class="ref" href="avformat.h.html#AVFormatContext::streams" title='AVFormatContext::streams' data-ref="AVFormatContext::streams">streams</a>[<var>0</var>];</td></tr>
+<tr><th id="58">58</th><td>    <em>int</em> <dfn class="local col9 decl" id="9i" title='i' data-type='int' data-ref="9i">i</dfn>;</td></tr>
+<tr><th id="59">59</th><td></td></tr>
+<tr><th id="60">60</th><td>    <a class="ref" href="avio.h.html#avio_wb32" title='avio_wb32' data-ref="avio_wb32">avio_wb32</a>(<a class="local col7 ref" href="#7pb" title='pb' data-ref="7pb">pb</a>, <a class="macro" href="#30" title="((&apos;d&apos;) | ((&apos;n&apos;) &lt;&lt; 8) | ((&apos;a&apos;) &lt;&lt; 16) | ((unsigned)(&apos;R&apos;) &lt;&lt; 24))" data-ref="_M/RAND_TAG">RAND_TAG</a>);</td></tr>
+<tr><th id="61">61</th><td>    <a class="ref" href="avio.h.html#avio_wb32" title='avio_wb32' data-ref="avio_wb32">avio_wb32</a>(<a class="local col7 ref" href="#7pb" title='pb' data-ref="7pb">pb</a>, <a class="local col6 ref" href="#6film" title='film' data-ref="6film">film</a>-&gt;<a class="tu ref" href="#FilmstripMuxContext::nb_frames" title='FilmstripMuxContext::nb_frames' data-use='r' data-ref="FilmstripMuxContext::nb_frames">nb_frames</a>);</td></tr>
+<tr><th id="62">62</th><td>    <a class="ref" href="avio.h.html#avio_wb16" title='avio_wb16' data-ref="avio_wb16">avio_wb16</a>(<a class="local col7 ref" href="#7pb" title='pb' data-ref="7pb">pb</a>, <var>0</var>);  <i>// packing method</i></td></tr>
+<tr><th id="63">63</th><td>    <a class="ref" href="avio.h.html#avio_wb16" title='avio_wb16' data-ref="avio_wb16">avio_wb16</a>(<a class="local col7 ref" href="#7pb" title='pb' data-ref="7pb">pb</a>, <var>0</var>);  <i>// reserved</i></td></tr>
+<tr><th id="64">64</th><td>    <a class="ref" href="avio.h.html#avio_wb16" title='avio_wb16' data-ref="avio_wb16">avio_wb16</a>(<a class="local col7 ref" href="#7pb" title='pb' data-ref="7pb">pb</a>, <a class="local col8 ref" href="#8st" title='st' data-ref="8st">st</a>-&gt;<a class="ref" href="avformat.h.html#AVStream::codecpar" title='AVStream::codecpar' data-ref="AVStream::codecpar">codecpar</a>-&gt;<a class="ref" href="../libavcodec/avcodec.h.html#AVCodecParameters::width" title='AVCodecParameters::width' data-ref="AVCodecParameters::width">width</a>);</td></tr>
+<tr><th id="65">65</th><td>    <a class="ref" href="avio.h.html#avio_wb16" title='avio_wb16' data-ref="avio_wb16">avio_wb16</a>(<a class="local col7 ref" href="#7pb" title='pb' data-ref="7pb">pb</a>, <a class="local col8 ref" href="#8st" title='st' data-ref="8st">st</a>-&gt;<a class="ref" href="avformat.h.html#AVStream::codecpar" title='AVStream::codecpar' data-ref="AVStream::codecpar">codecpar</a>-&gt;<a class="ref" href="../libavcodec/avcodec.h.html#AVCodecParameters::height" title='AVCodecParameters::height' data-ref="AVCodecParameters::height">height</a>);</td></tr>
+<tr><th id="66">66</th><td>    <a class="ref" href="avio.h.html#avio_wb16" title='avio_wb16' data-ref="avio_wb16">avio_wb16</a>(<a class="local col7 ref" href="#7pb" title='pb' data-ref="7pb">pb</a>, <var>0</var>);  <i>// leading</i></td></tr>
+<tr><th id="67">67</th><td>    <i>// TODO: should be avg_frame_rate</i></td></tr>
+<tr><th id="68">68</th><td>    <a class="ref" href="avio.h.html#avio_wb16" title='avio_wb16' data-ref="avio_wb16">avio_wb16</a>(<a class="local col7 ref" href="#7pb" title='pb' data-ref="7pb">pb</a>, <a class="local col8 ref" href="#8st" title='st' data-ref="8st">st</a>-&gt;<a class="ref" href="avformat.h.html#AVStream::time_base" title='AVStream::time_base' data-ref="AVStream::time_base">time_base</a>.<a class="ref" href="../libavutil/rational.h.html#AVRational::den" title='AVRational::den' data-ref="AVRational::den">den</a> / <a class="local col8 ref" href="#8st" title='st' data-ref="8st">st</a>-&gt;<a class="ref" href="avformat.h.html#AVStream::time_base" title='AVStream::time_base' data-ref="AVStream::time_base">time_base</a>.<a class="ref" href="../libavutil/rational.h.html#AVRational::num" title='AVRational::num' data-ref="AVRational::num">num</a>);</td></tr>
+<tr><th id="69">69</th><td>    <b>for</b> (<a class="local col9 ref" href="#9i" title='i' data-ref="9i">i</a> = <var>0</var>; <a class="local col9 ref" href="#9i" title='i' data-ref="9i">i</a> &lt; <var>16</var>; <a class="local col9 ref" href="#9i" title='i' data-ref="9i">i</a>++)</td></tr>
+<tr><th id="70">70</th><td>        <a class="ref" href="avio.h.html#avio_w8" title='avio_w8' data-ref="avio_w8">avio_w8</a>(<a class="local col7 ref" href="#7pb" title='pb' data-ref="7pb">pb</a>, <var>0x00</var>);  <i>// reserved</i></td></tr>
+<tr><th id="71">71</th><td></td></tr>
+<tr><th id="72">72</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="73">73</th><td>}</td></tr>
+<tr><th id="74">74</th><td></td></tr>
+<tr><th id="75">75</th><td><a class="typedef" href="avformat.h.html#AVOutputFormat" title='AVOutputFormat' data-type='struct AVOutputFormat' data-ref="AVOutputFormat">AVOutputFormat</a> <dfn class="decl def" id="ff_filmstrip_muxer" title='ff_filmstrip_muxer' data-ref="ff_filmstrip_muxer">ff_filmstrip_muxer</dfn> = {</td></tr>
+<tr><th id="76">76</th><td>    .<a class="ref" href="avformat.h.html#AVOutputFormat::name" title='AVOutputFormat::name' data-ref="AVOutputFormat::name">name</a>              = <q>"filmstrip"</q>,</td></tr>
+<tr><th id="77">77</th><td>    .<a class="ref" href="avformat.h.html#AVOutputFormat::long_name" title='AVOutputFormat::long_name' data-ref="AVOutputFormat::long_name">long_name</a>         = <a class="macro" href="../libavutil/internal.h.html#176" title="&quot;Adobe Filmstrip&quot;" data-ref="_M/NULL_IF_CONFIG_SMALL">NULL_IF_CONFIG_SMALL</a>(<q>"Adobe Filmstrip"</q>),</td></tr>
+<tr><th id="78">78</th><td>    .<a class="ref" href="avformat.h.html#AVOutputFormat::extensions" title='AVOutputFormat::extensions' data-ref="AVOutputFormat::extensions">extensions</a>        = <q>"flm"</q>,</td></tr>
+<tr><th id="79">79</th><td>    .<a class="ref" href="avformat.h.html#AVOutputFormat::priv_data_size" title='AVOutputFormat::priv_data_size' data-ref="AVOutputFormat::priv_data_size">priv_data_size</a>    = <b>sizeof</b>(<a class="typedef" href="#FilmstripMuxContext" title='FilmstripMuxContext' data-type='struct FilmstripMuxContext' data-ref="FilmstripMuxContext">FilmstripMuxContext</a>),</td></tr>
+<tr><th id="80">80</th><td>    .<a class="ref" href="avformat.h.html#AVOutputFormat::audio_codec" title='AVOutputFormat::audio_codec' data-ref="AVOutputFormat::audio_codec">audio_codec</a>       = <a class="enum" href="../libavcodec/avcodec.h.html#AVCodecID::AV_CODEC_ID_NONE" title='AVCodecID::AV_CODEC_ID_NONE' data-ref="AVCodecID::AV_CODEC_ID_NONE">AV_CODEC_ID_NONE</a>,</td></tr>
+<tr><th id="81">81</th><td>    .<a class="ref" href="avformat.h.html#AVOutputFormat::video_codec" title='AVOutputFormat::video_codec' data-ref="AVOutputFormat::video_codec">video_codec</a>       = <a class="enum" href="../libavcodec/avcodec.h.html#AVCodecID::AV_CODEC_ID_RAWVIDEO" title='AVCodecID::AV_CODEC_ID_RAWVIDEO' data-ref="AVCodecID::AV_CODEC_ID_RAWVIDEO">AV_CODEC_ID_RAWVIDEO</a>,</td></tr>
+<tr><th id="82">82</th><td>    .<a class="ref" href="avformat.h.html#AVOutputFormat::write_header" title='AVOutputFormat::write_header' data-ref="AVOutputFormat::write_header">write_header</a>      = <a class="tu ref" href="#write_header" title='write_header' data-use='r' data-ref="write_header">write_header</a>,</td></tr>
+<tr><th id="83">83</th><td>    .<a class="ref" href="avformat.h.html#AVOutputFormat::write_packet" title='AVOutputFormat::write_packet' data-ref="AVOutputFormat::write_packet">write_packet</a>      = <a class="tu ref" href="#write_packet" title='write_packet' data-use='r' data-ref="write_packet">write_packet</a>,</td></tr>
+<tr><th id="84">84</th><td>    .<a class="ref" href="avformat.h.html#AVOutputFormat::write_trailer" title='AVOutputFormat::write_trailer' data-ref="AVOutputFormat::write_trailer">write_trailer</a>     = <a class="tu ref" href="#write_trailer" title='write_trailer' data-use='r' data-ref="write_trailer">write_trailer</a>,</td></tr>
+<tr><th id="85">85</th><td>};</td></tr>
+<tr><th id="86">86</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

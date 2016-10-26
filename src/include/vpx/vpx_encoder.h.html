@@ -1,0 +1,1062 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>vpx_encoder.h source code [include/vpx/vpx_encoder.h] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="vpx_codec_cx_pkt,vpx_codec_cx_pkt_kind,vpx_codec_enc_cfg,vpx_codec_enc_output_cx_cb_pair,vpx_enc_pass,vpx_fixed_buf,vpx_kf_mode,vpx_psnr_pkt,vpx_rational,vpx_rc_mode,vpx_svc_parameters "/>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'include/vpx/vpx_encoder.h'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>include</a>/<a href='./'>vpx</a>/<a href='vpx_encoder.h.html'>vpx_encoder.h</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> *  Copyright (c) 2010 The WebM project authors. All Rights Reserved.</i></td></tr>
+<tr><th id="3">3</th><td><i> *</i></td></tr>
+<tr><th id="4">4</th><td><i> *  Use of this source code is governed by a BSD-style license</i></td></tr>
+<tr><th id="5">5</th><td><i> *  that can be found in the LICENSE file in the root of the source</i></td></tr>
+<tr><th id="6">6</th><td><i> *  tree. An additional intellectual property rights grant can be found</i></td></tr>
+<tr><th id="7">7</th><td><i> *  in the file PATENTS.  All contributing project authors may</i></td></tr>
+<tr><th id="8">8</th><td><i> *  be found in the AUTHORS file in the root of the source tree.</i></td></tr>
+<tr><th id="9">9</th><td><i> */</i></td></tr>
+<tr><th id="10">10</th><td><u>#<span data-ppcond="10">ifndef</span> <span class="macro" data-ref="_M/VPX_VPX_ENCODER_H_">VPX_VPX_ENCODER_H_</span></u></td></tr>
+<tr><th id="11">11</th><td><u>#define <dfn class="macro" id="_M/VPX_VPX_ENCODER_H_" data-ref="_M/VPX_VPX_ENCODER_H_">VPX_VPX_ENCODER_H_</dfn></u></td></tr>
+<tr><th id="12">12</th><td></td></tr>
+<tr><th id="13">13</th><td><i class="doc">/*!<span class="command">\defgroup</span> <span class="verb">encoder Encoder Algorithm Interface</span></i></td></tr>
+<tr><th id="14">14</th><td><i class="doc"> * <span class="command">\ingroup</span> <span class="verb">codec</span></i></td></tr>
+<tr><th id="15">15</th><td><i class="doc"> * This abstraction allows applications using this encoder to easily support</i></td></tr>
+<tr><th id="16">16</th><td><i class="doc"> * multiple video formats with minimal code duplication. This section describes</i></td></tr>
+<tr><th id="17">17</th><td><i class="doc"> * the interface common to all encoders.</i></td></tr>
+<tr><th id="18">18</th><td><i class="doc"> * @{</i></td></tr>
+<tr><th id="19">19</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="20">20</th><td></td></tr>
+<tr><th id="21">21</th><td><i class="doc">/*<span class="command">!\file</span></i></td></tr>
+<tr><th id="22">22</th><td><i class="doc"> * <span class="command">\brief</span> Describes the encoder algorithm interface to applications.</i></td></tr>
+<tr><th id="23">23</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="24">24</th><td><i class="doc"> * This file describes the interface between an application and a</i></td></tr>
+<tr><th id="25">25</th><td><i class="doc"> * video encoder algorithm.</i></td></tr>
+<tr><th id="26">26</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="27">27</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="28">28</th><td><u>#<span data-ppcond="28">ifdef</span> <span class="macro" data-ref="_M/__cplusplus">__cplusplus</span></u></td></tr>
+<tr><th id="29">29</th><td><b>extern</b> <q>"C"</q> {</td></tr>
+<tr><th id="30">30</th><td><u>#<span data-ppcond="28">endif</span></u></td></tr>
+<tr><th id="31">31</th><td></td></tr>
+<tr><th id="32">32</th><td><u>#include <a href="vpx_codec.h.html">"./vpx_codec.h"</a></u></td></tr>
+<tr><th id="33">33</th><td></td></tr>
+<tr><th id="34">34</th><td>  <i class="doc">/*! Temporal Scalability: Maximum length of the sequence defining frame</i></td></tr>
+<tr><th id="35">35</th><td><i class="doc">   * layer membership</i></td></tr>
+<tr><th id="36">36</th><td><i class="doc">   */</i></td></tr>
+<tr><th id="37">37</th><td><u>#define <dfn class="macro" id="_M/VPX_TS_MAX_PERIODICITY" data-ref="_M/VPX_TS_MAX_PERIODICITY">VPX_TS_MAX_PERIODICITY</dfn> 16</u></td></tr>
+<tr><th id="38">38</th><td></td></tr>
+<tr><th id="39">39</th><td>  <i class="doc">/*! Temporal Scalability: Maximum number of coding layers */</i></td></tr>
+<tr><th id="40">40</th><td><u>#define <dfn class="macro" id="_M/VPX_TS_MAX_LAYERS" data-ref="_M/VPX_TS_MAX_LAYERS">VPX_TS_MAX_LAYERS</dfn>       5</u></td></tr>
+<tr><th id="41">41</th><td></td></tr>
+<tr><th id="42">42</th><td>  <i>/*!\deprecated Use #VPX_TS_MAX_PERIODICITY instead. */</i></td></tr>
+<tr><th id="43">43</th><td><u>#define <dfn class="macro" id="_M/MAX_PERIODICITY" data-ref="_M/MAX_PERIODICITY">MAX_PERIODICITY</dfn> VPX_TS_MAX_PERIODICITY</u></td></tr>
+<tr><th id="44">44</th><td></td></tr>
+<tr><th id="45">45</th><td><i class="doc">/*! Temporal+Spatial Scalability: Maximum number of coding layers */</i></td></tr>
+<tr><th id="46">46</th><td><u>#define <dfn class="macro" id="_M/VPX_MAX_LAYERS" data-ref="_M/VPX_MAX_LAYERS">VPX_MAX_LAYERS</dfn>  12  // 3 temporal + 4 spatial layers are allowed.</u></td></tr>
+<tr><th id="47">47</th><td></td></tr>
+<tr><th id="48">48</th><td><i>/*!\deprecated Use #VPX_MAX_LAYERS instead. */</i></td></tr>
+<tr><th id="49">49</th><td><u>#define <dfn class="macro" id="_M/MAX_LAYERS" data-ref="_M/MAX_LAYERS">MAX_LAYERS</dfn>    VPX_MAX_LAYERS  // 3 temporal + 4 spatial layers allowed.</u></td></tr>
+<tr><th id="50">50</th><td></td></tr>
+<tr><th id="51">51</th><td><i class="doc">/*! Spatial Scalability: Maximum number of coding layers */</i></td></tr>
+<tr><th id="52">52</th><td><u>#define <dfn class="macro" id="_M/VPX_SS_MAX_LAYERS" data-ref="_M/VPX_SS_MAX_LAYERS">VPX_SS_MAX_LAYERS</dfn>       5</u></td></tr>
+<tr><th id="53">53</th><td></td></tr>
+<tr><th id="54">54</th><td><i class="doc">/*! Spatial Scalability: Default number of coding layers */</i></td></tr>
+<tr><th id="55">55</th><td><u>#define <dfn class="macro" id="_M/VPX_SS_DEFAULT_LAYERS" data-ref="_M/VPX_SS_DEFAULT_LAYERS">VPX_SS_DEFAULT_LAYERS</dfn>       1</u></td></tr>
+<tr><th id="56">56</th><td></td></tr>
+<tr><th id="57">57</th><td>  <i class="doc">/*!<span class="command">\brief</span> Current ABI version number</i></td></tr>
+<tr><th id="58">58</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="59">59</th><td><i class="doc">   *<span class="command"> \internal</span></i></td></tr>
+<tr><th id="60">60</th><td><i class="doc">   * If this file is altered in any way that changes the ABI, this value</i></td></tr>
+<tr><th id="61">61</th><td><i class="doc">   * must be bumped.  Examples include, but are not limited to, changing</i></td></tr>
+<tr><th id="62">62</th><td><i class="doc">   * types, removing or reassigning enums, adding/removing/rearranging</i></td></tr>
+<tr><th id="63">63</th><td><i class="doc">   * fields to structures</i></td></tr>
+<tr><th id="64">64</th><td><i class="doc">   */</i></td></tr>
+<tr><th id="65">65</th><td><u>#define <dfn class="macro" id="_M/VPX_ENCODER_ABI_VERSION" data-ref="_M/VPX_ENCODER_ABI_VERSION">VPX_ENCODER_ABI_VERSION</dfn> (5 + VPX_CODEC_ABI_VERSION) /**&lt;\hideinitializer*/</u></td></tr>
+<tr><th id="66">66</th><td></td></tr>
+<tr><th id="67">67</th><td></td></tr>
+<tr><th id="68">68</th><td>  <i class="doc">/*! <span class="command">\brief</span> Encoder capabilities bitfield</i></td></tr>
+<tr><th id="69">69</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="70">70</th><td><i class="doc">   *  Each encoder advertises the capabilities it supports as part of its</i></td></tr>
+<tr><th id="71">71</th><td><i class="doc">   *  ::vpx_codec_iface_t interface structure. Capabilities are extra</i></td></tr>
+<tr><th id="72">72</th><td><i class="doc">   *  interfaces or functionality, and are not required to be supported</i></td></tr>
+<tr><th id="73">73</th><td><i class="doc">   *  by an encoder.</i></td></tr>
+<tr><th id="74">74</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="75">75</th><td><i class="doc">   *  The available flags are specified by VPX_CODEC_CAP_* defines.</i></td></tr>
+<tr><th id="76">76</th><td><i class="doc">   */</i></td></tr>
+<tr><th id="77">77</th><td><u>#define <dfn class="macro" id="_M/VPX_CODEC_CAP_PSNR" data-ref="_M/VPX_CODEC_CAP_PSNR">VPX_CODEC_CAP_PSNR</dfn>  0x10000 /**&lt; Can issue PSNR packets */</u></td></tr>
+<tr><th id="78">78</th><td></td></tr>
+<tr><th id="79">79</th><td>  <i class="doc">/*! Can output one partition at a time. Each partition is returned in its</i></td></tr>
+<tr><th id="80">80</th><td><i class="doc">   *  own VPX_CODEC_CX_FRAME_PKT, with the FRAME_IS_FRAGMENT flag set for</i></td></tr>
+<tr><th id="81">81</th><td><i class="doc">   *  every partition but the last. In this mode all frames are always</i></td></tr>
+<tr><th id="82">82</th><td><i class="doc">   *  returned partition by partition.</i></td></tr>
+<tr><th id="83">83</th><td><i class="doc">   */</i></td></tr>
+<tr><th id="84">84</th><td><u>#define <dfn class="macro" id="_M/VPX_CODEC_CAP_OUTPUT_PARTITION" data-ref="_M/VPX_CODEC_CAP_OUTPUT_PARTITION">VPX_CODEC_CAP_OUTPUT_PARTITION</dfn>  0x20000</u></td></tr>
+<tr><th id="85">85</th><td></td></tr>
+<tr><th id="86">86</th><td><i class="doc">/*! Can support input images at greater than 8 bitdepth.</i></td></tr>
+<tr><th id="87">87</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="88">88</th><td><u>#define <dfn class="macro" id="_M/VPX_CODEC_CAP_HIGHBITDEPTH" data-ref="_M/VPX_CODEC_CAP_HIGHBITDEPTH">VPX_CODEC_CAP_HIGHBITDEPTH</dfn>  0x40000</u></td></tr>
+<tr><th id="89">89</th><td></td></tr>
+<tr><th id="90">90</th><td>  <i class="doc">/*! <span class="command">\brief</span> Initialization-time Feature Enabling</i></td></tr>
+<tr><th id="91">91</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="92">92</th><td><i class="doc">   *  Certain codec features must be known at initialization time, to allow</i></td></tr>
+<tr><th id="93">93</th><td><i class="doc">   *  for proper memory allocation.</i></td></tr>
+<tr><th id="94">94</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="95">95</th><td><i class="doc">   *  The available flags are specified by VPX_CODEC_USE_* defines.</i></td></tr>
+<tr><th id="96">96</th><td><i class="doc">   */</i></td></tr>
+<tr><th id="97">97</th><td><u>#define <dfn class="macro" id="_M/VPX_CODEC_USE_PSNR" data-ref="_M/VPX_CODEC_USE_PSNR">VPX_CODEC_USE_PSNR</dfn>  0x10000 /**&lt; Calculate PSNR on each frame */</u></td></tr>
+<tr><th id="98">98</th><td><u>#define <dfn class="macro" id="_M/VPX_CODEC_USE_OUTPUT_PARTITION" data-ref="_M/VPX_CODEC_USE_OUTPUT_PARTITION">VPX_CODEC_USE_OUTPUT_PARTITION</dfn>  0x20000 /**&lt; Make the encoder output one</u></td></tr>
+<tr><th id="99">99</th><td><u>  partition at a time. */</u></td></tr>
+<tr><th id="100">100</th><td><u>#define <dfn class="macro" id="_M/VPX_CODEC_USE_HIGHBITDEPTH" data-ref="_M/VPX_CODEC_USE_HIGHBITDEPTH">VPX_CODEC_USE_HIGHBITDEPTH</dfn> 0x40000 /**&lt; Use high bitdepth */</u></td></tr>
+<tr><th id="101">101</th><td></td></tr>
+<tr><th id="102">102</th><td></td></tr>
+<tr><th id="103">103</th><td>  <i class="doc">/*!<span class="command">\brief</span> Generic fixed size buffer structure</i></td></tr>
+<tr><th id="104">104</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="105">105</th><td><i class="doc">   * This structure is able to hold a reference to any fixed size buffer.</i></td></tr>
+<tr><th id="106">106</th><td><i class="doc">   */</i></td></tr>
+<tr><th id="107">107</th><td>  <b>typedef</b> <b>struct</b> <dfn class="type def" id="vpx_fixed_buf" title='vpx_fixed_buf' data-ref="vpx_fixed_buf"><a class="type" href="#vpx_fixed_buf" title='vpx_fixed_buf' data-ref="vpx_fixed_buf">vpx_fixed_buf</a></dfn> {</td></tr>
+<tr><th id="108">108</th><td>    <em>void</em>          *<dfn class="decl" id="vpx_fixed_buf::buf" title='vpx_fixed_buf::buf' data-ref="vpx_fixed_buf::buf">buf</dfn>; <i class="doc">/**&lt; Pointer to the data */</i></td></tr>
+<tr><th id="109">109</th><td>    <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span>         <dfn class="decl" id="vpx_fixed_buf::sz" title='vpx_fixed_buf::sz' data-ref="vpx_fixed_buf::sz">sz</dfn>;  <i class="doc">/**&lt; Length of the buffer, in chars */</i></td></tr>
+<tr><th id="110">110</th><td>  } <dfn class="typedef" id="vpx_fixed_buf_t" title='vpx_fixed_buf_t' data-type='struct vpx_fixed_buf' data-ref="vpx_fixed_buf_t">vpx_fixed_buf_t</dfn>; <i class="doc">/**&lt; alias for struct vpx_fixed_buf */</i></td></tr>
+<tr><th id="111">111</th><td></td></tr>
+<tr><th id="112">112</th><td></td></tr>
+<tr><th id="113">113</th><td>  <i class="doc">/*!<span class="command">\brief</span> Time Stamp Type</i></td></tr>
+<tr><th id="114">114</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="115">115</th><td><i class="doc">   * An integer, which when multiplied by the stream's time base, provides</i></td></tr>
+<tr><th id="116">116</th><td><i class="doc">   * the absolute time of a sample.</i></td></tr>
+<tr><th id="117">117</th><td><i class="doc">   */</i></td></tr>
+<tr><th id="118">118</th><td>  <b>typedef</b> <a class="typedef" href="../stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="typedef" id="vpx_codec_pts_t" title='vpx_codec_pts_t' data-type='int64_t' data-ref="vpx_codec_pts_t">vpx_codec_pts_t</dfn>;</td></tr>
+<tr><th id="119">119</th><td></td></tr>
+<tr><th id="120">120</th><td></td></tr>
+<tr><th id="121">121</th><td>  <i class="doc">/*!<span class="command">\brief</span> Compressed Frame Flags</i></td></tr>
+<tr><th id="122">122</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="123">123</th><td><i class="doc">   * This type represents a bitfield containing information about a compressed</i></td></tr>
+<tr><th id="124">124</th><td><i class="doc">   * frame that may be useful to an application. The most significant 16 bits</i></td></tr>
+<tr><th id="125">125</th><td><i class="doc">   * can be used by an algorithm to provide additional detail, for example to</i></td></tr>
+<tr><th id="126">126</th><td><i class="doc">   * support frame types that are codec specific (MPEG-1 D-frames for example)</i></td></tr>
+<tr><th id="127">127</th><td><i class="doc">   */</i></td></tr>
+<tr><th id="128">128</th><td>  <b>typedef</b> <a class="typedef" href="../stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a> <dfn class="typedef" id="vpx_codec_frame_flags_t" title='vpx_codec_frame_flags_t' data-type='uint32_t' data-ref="vpx_codec_frame_flags_t">vpx_codec_frame_flags_t</dfn>;</td></tr>
+<tr><th id="129">129</th><td><u>#define <dfn class="macro" id="_M/VPX_FRAME_IS_KEY" data-ref="_M/VPX_FRAME_IS_KEY">VPX_FRAME_IS_KEY</dfn>       0x1 /**&lt; frame is the start of a GOP */</u></td></tr>
+<tr><th id="130">130</th><td><u>#define <dfn class="macro" id="_M/VPX_FRAME_IS_DROPPABLE" data-ref="_M/VPX_FRAME_IS_DROPPABLE">VPX_FRAME_IS_DROPPABLE</dfn> 0x2 /**&lt; frame can be dropped without affecting</u></td></tr>
+<tr><th id="131">131</th><td><u>  the stream (no future frame depends on</u></td></tr>
+<tr><th id="132">132</th><td><u>              this one) */</u></td></tr>
+<tr><th id="133">133</th><td><u>#define <dfn class="macro" id="_M/VPX_FRAME_IS_INVISIBLE" data-ref="_M/VPX_FRAME_IS_INVISIBLE">VPX_FRAME_IS_INVISIBLE</dfn> 0x4 /**&lt; frame should be decoded but will not</u></td></tr>
+<tr><th id="134">134</th><td><u>  be shown */</u></td></tr>
+<tr><th id="135">135</th><td><u>#define <dfn class="macro" id="_M/VPX_FRAME_IS_FRAGMENT" data-ref="_M/VPX_FRAME_IS_FRAGMENT">VPX_FRAME_IS_FRAGMENT</dfn>  0x8 /**&lt; this is a fragment of the encoded</u></td></tr>
+<tr><th id="136">136</th><td><u>  frame */</u></td></tr>
+<tr><th id="137">137</th><td></td></tr>
+<tr><th id="138">138</th><td>  <i class="doc">/*!<span class="command">\brief</span> Error Resilient flags</i></td></tr>
+<tr><th id="139">139</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="140">140</th><td><i class="doc">   * These flags define which error resilient features to enable in the</i></td></tr>
+<tr><th id="141">141</th><td><i class="doc">   * encoder. The flags are specified through the</i></td></tr>
+<tr><th id="142">142</th><td><i class="doc">   * vpx_codec_enc_cfg::g_error_resilient variable.</i></td></tr>
+<tr><th id="143">143</th><td><i class="doc">   */</i></td></tr>
+<tr><th id="144">144</th><td>  <b>typedef</b> <a class="typedef" href="../stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a> <dfn class="typedef" id="vpx_codec_er_flags_t" title='vpx_codec_er_flags_t' data-type='uint32_t' data-ref="vpx_codec_er_flags_t">vpx_codec_er_flags_t</dfn>;</td></tr>
+<tr><th id="145">145</th><td><u>#define <dfn class="macro" id="_M/VPX_ERROR_RESILIENT_DEFAULT" data-ref="_M/VPX_ERROR_RESILIENT_DEFAULT">VPX_ERROR_RESILIENT_DEFAULT</dfn>     0x1 /**&lt; Improve resiliency against</u></td></tr>
+<tr><th id="146">146</th><td><u>  losses of whole frames */</u></td></tr>
+<tr><th id="147">147</th><td><u>#define <dfn class="macro" id="_M/VPX_ERROR_RESILIENT_PARTITIONS" data-ref="_M/VPX_ERROR_RESILIENT_PARTITIONS">VPX_ERROR_RESILIENT_PARTITIONS</dfn>  0x2 /**&lt; The frame partitions are</u></td></tr>
+<tr><th id="148">148</th><td><u>  independently decodable by the</u></td></tr>
+<tr><th id="149">149</th><td><u>  bool decoder, meaning that</u></td></tr>
+<tr><th id="150">150</th><td><u>  partitions can be decoded even</u></td></tr>
+<tr><th id="151">151</th><td><u>  though earlier partitions have</u></td></tr>
+<tr><th id="152">152</th><td><u>  been lost. Note that intra</u></td></tr>
+<tr><th id="153">153</th><td><u>  prediction is still done over</u></td></tr>
+<tr><th id="154">154</th><td><u>  the partition boundary. */</u></td></tr>
+<tr><th id="155">155</th><td></td></tr>
+<tr><th id="156">156</th><td>  <i class="doc">/*!<span class="command">\brief</span> Encoder output packet variants</i></td></tr>
+<tr><th id="157">157</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="158">158</th><td><i class="doc">   * This enumeration lists the different kinds of data packets that can be</i></td></tr>
+<tr><th id="159">159</th><td><i class="doc">   * returned by calls to vpx_codec_get_cx_data(). Algorithms <span class="command">\ref</span> <span class="verb">MAY</span></i></td></tr>
+<tr><th id="160">160</th><td><i class="doc">   * extend this list to provide additional functionality.</i></td></tr>
+<tr><th id="161">161</th><td><i class="doc">   */</i></td></tr>
+<tr><th id="162">162</th><td>  <b>enum</b> <dfn class="type def" id="vpx_codec_cx_pkt_kind" title='vpx_codec_cx_pkt_kind' data-ref="vpx_codec_cx_pkt_kind">vpx_codec_cx_pkt_kind</dfn> {</td></tr>
+<tr><th id="163">163</th><td>    <dfn class="enum" id="vpx_codec_cx_pkt_kind::VPX_CODEC_CX_FRAME_PKT" title='vpx_codec_cx_pkt_kind::VPX_CODEC_CX_FRAME_PKT' data-ref="vpx_codec_cx_pkt_kind::VPX_CODEC_CX_FRAME_PKT">VPX_CODEC_CX_FRAME_PKT</dfn>,    <i class="doc">/**&lt; Compressed video frame */</i></td></tr>
+<tr><th id="164">164</th><td>    <dfn class="enum" id="vpx_codec_cx_pkt_kind::VPX_CODEC_STATS_PKT" title='vpx_codec_cx_pkt_kind::VPX_CODEC_STATS_PKT' data-ref="vpx_codec_cx_pkt_kind::VPX_CODEC_STATS_PKT">VPX_CODEC_STATS_PKT</dfn>,       <i class="doc">/**&lt; Two-pass statistics for this frame */</i></td></tr>
+<tr><th id="165">165</th><td>    <dfn class="enum" id="vpx_codec_cx_pkt_kind::VPX_CODEC_FPMB_STATS_PKT" title='vpx_codec_cx_pkt_kind::VPX_CODEC_FPMB_STATS_PKT' data-ref="vpx_codec_cx_pkt_kind::VPX_CODEC_FPMB_STATS_PKT">VPX_CODEC_FPMB_STATS_PKT</dfn>,  <i class="doc">/**&lt; first pass mb statistics for this frame */</i></td></tr>
+<tr><th id="166">166</th><td>    <dfn class="enum" id="vpx_codec_cx_pkt_kind::VPX_CODEC_PSNR_PKT" title='vpx_codec_cx_pkt_kind::VPX_CODEC_PSNR_PKT' data-ref="vpx_codec_cx_pkt_kind::VPX_CODEC_PSNR_PKT">VPX_CODEC_PSNR_PKT</dfn>,        <i class="doc">/**&lt; PSNR statistics for this frame */</i></td></tr>
+<tr><th id="167">167</th><td>    <i>// Spatial SVC is still experimental and may be removed before the next ABI</i></td></tr>
+<tr><th id="168">168</th><td><i>    // bump.</i></td></tr>
+<tr><th id="169">169</th><td><u>#<span data-ppcond="169">if</span> <a class="macro" href="#65" title="(5 + (3 + (3)))" data-ref="_M/VPX_ENCODER_ABI_VERSION">VPX_ENCODER_ABI_VERSION</a> &gt; (5 + <a class="macro" href="vpx_codec.h.html#86" title="(3 + (3))" data-ref="_M/VPX_CODEC_ABI_VERSION">VPX_CODEC_ABI_VERSION</a>)</u></td></tr>
+<tr><th id="170">170</th><td>    VPX_CODEC_SPATIAL_SVC_LAYER_SIZES, <i class="doc">/**&lt; Sizes for each layer in this frame*/</i></td></tr>
+<tr><th id="171">171</th><td>    VPX_CODEC_SPATIAL_SVC_LAYER_PSNR, <i class="doc">/**&lt; PSNR for each layer in this frame*/</i></td></tr>
+<tr><th id="172">172</th><td><u>#<span data-ppcond="169">endif</span></u></td></tr>
+<tr><th id="173">173</th><td>    <dfn class="enum" id="vpx_codec_cx_pkt_kind::VPX_CODEC_CUSTOM_PKT" title='vpx_codec_cx_pkt_kind::VPX_CODEC_CUSTOM_PKT' data-ref="vpx_codec_cx_pkt_kind::VPX_CODEC_CUSTOM_PKT">VPX_CODEC_CUSTOM_PKT</dfn> = <var>256</var> <i class="doc">/**&lt; Algorithm extensions  */</i></td></tr>
+<tr><th id="174">174</th><td>  };</td></tr>
+<tr><th id="175">175</th><td></td></tr>
+<tr><th id="176">176</th><td></td></tr>
+<tr><th id="177">177</th><td>  <i class="doc">/*!<span class="command">\brief</span> Encoder output packet</i></td></tr>
+<tr><th id="178">178</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="179">179</th><td><i class="doc">   * This structure contains the different kinds of output data the encoder</i></td></tr>
+<tr><th id="180">180</th><td><i class="doc">   * may produce while compressing a frame.</i></td></tr>
+<tr><th id="181">181</th><td><i class="doc">   */</i></td></tr>
+<tr><th id="182">182</th><td>  <b>typedef</b> <b>struct</b> <dfn class="type def" id="vpx_codec_cx_pkt" title='vpx_codec_cx_pkt' data-ref="vpx_codec_cx_pkt"><a class="type" href="#vpx_codec_cx_pkt" title='vpx_codec_cx_pkt' data-ref="vpx_codec_cx_pkt">vpx_codec_cx_pkt</a></dfn> {</td></tr>
+<tr><th id="183">183</th><td>    <b>enum</b> <a class="type" href="#vpx_codec_cx_pkt_kind" title='vpx_codec_cx_pkt_kind' data-ref="vpx_codec_cx_pkt_kind">vpx_codec_cx_pkt_kind</a>  <dfn class="decl" id="vpx_codec_cx_pkt::kind" title='vpx_codec_cx_pkt::kind' data-ref="vpx_codec_cx_pkt::kind">kind</dfn>; <i class="doc">/**&lt; packet variant */</i></td></tr>
+<tr><th id="184">184</th><td>    <b>union</b> {</td></tr>
+<tr><th id="185">185</th><td>      <b>struct</b> {</td></tr>
+<tr><th id="186">186</th><td>        <em>void</em>                    *<dfn class="decl" id="vpx_codec_cx_pkt::{anonymousunion}::{anonymous}::buf" title='vpx_codec_cx_pkt::&lt;anonymous union&gt;::&lt;anonymous struct&gt;::buf' data-ref="vpx_codec_cx_pkt::{anonymousunion}::{anonymous}::buf">buf</dfn>;      <i class="doc">/**&lt; compressed data buffer */</i></td></tr>
+<tr><th id="187">187</th><td>        <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span>                   <dfn class="decl" id="vpx_codec_cx_pkt::{anonymousunion}::{anonymous}::sz" title='vpx_codec_cx_pkt::&lt;anonymous union&gt;::&lt;anonymous struct&gt;::sz' data-ref="vpx_codec_cx_pkt::{anonymousunion}::{anonymous}::sz">sz</dfn>;       <i class="doc">/**&lt; length of compressed data */</i></td></tr>
+<tr><th id="188">188</th><td>        <a class="typedef" href="#vpx_codec_pts_t" title='vpx_codec_pts_t' data-type='int64_t' data-ref="vpx_codec_pts_t">vpx_codec_pts_t</a>          <dfn class="decl" id="vpx_codec_cx_pkt::{anonymousunion}::{anonymous}::pts" title='vpx_codec_cx_pkt::&lt;anonymous union&gt;::&lt;anonymous struct&gt;::pts' data-ref="vpx_codec_cx_pkt::{anonymousunion}::{anonymous}::pts">pts</dfn>;      <i class="doc">/**&lt; time stamp to show frame</i></td></tr>
+<tr><th id="189">189</th><td><i class="doc">                                                    (in timebase units) */</i></td></tr>
+<tr><th id="190">190</th><td>        <em>unsigned</em> <em>long</em>            <dfn class="decl" id="vpx_codec_cx_pkt::{anonymousunion}::{anonymous}::duration" title='vpx_codec_cx_pkt::&lt;anonymous union&gt;::&lt;anonymous struct&gt;::duration' data-ref="vpx_codec_cx_pkt::{anonymousunion}::{anonymous}::duration">duration</dfn>; <i class="doc">/**&lt; duration to show frame</i></td></tr>
+<tr><th id="191">191</th><td><i class="doc">                                                    (in timebase units) */</i></td></tr>
+<tr><th id="192">192</th><td>        <a class="typedef" href="#vpx_codec_frame_flags_t" title='vpx_codec_frame_flags_t' data-type='uint32_t' data-ref="vpx_codec_frame_flags_t">vpx_codec_frame_flags_t</a>  <dfn class="decl" id="vpx_codec_cx_pkt::{anonymousunion}::{anonymous}::flags" title='vpx_codec_cx_pkt::&lt;anonymous union&gt;::&lt;anonymous struct&gt;::flags' data-ref="vpx_codec_cx_pkt::{anonymousunion}::{anonymous}::flags">flags</dfn>;    <i class="doc">/**&lt; flags for this frame */</i></td></tr>
+<tr><th id="193">193</th><td>        <em>int</em>                      <dfn class="decl" id="vpx_codec_cx_pkt::{anonymousunion}::{anonymous}::partition_id" title='vpx_codec_cx_pkt::&lt;anonymous union&gt;::&lt;anonymous struct&gt;::partition_id' data-ref="vpx_codec_cx_pkt::{anonymousunion}::{anonymous}::partition_id">partition_id</dfn>; <i class="doc">/**&lt; the partition id</i></td></tr>
+<tr><th id="194">194</th><td><i class="doc">                                              defines the decoding order</i></td></tr>
+<tr><th id="195">195</th><td><i class="doc">                                              of the partitions. Only</i></td></tr>
+<tr><th id="196">196</th><td><i class="doc">                                              applicable when "output partition"</i></td></tr>
+<tr><th id="197">197</th><td><i class="doc">                                              mode is enabled. First partition</i></td></tr>
+<tr><th id="198">198</th><td><i class="doc">                                              has id 0.*/</i></td></tr>
+<tr><th id="199">199</th><td></td></tr>
+<tr><th id="200">200</th><td>      } <dfn class="decl" id="vpx_codec_cx_pkt::{anonymous}::frame" title='vpx_codec_cx_pkt::&lt;anonymous union&gt;::frame' data-ref="vpx_codec_cx_pkt::{anonymous}::frame">frame</dfn>;  <i class="doc">/**&lt; data for compressed frame packet */</i></td></tr>
+<tr><th id="201">201</th><td>      <a class="typedef" href="#vpx_fixed_buf_t" title='vpx_fixed_buf_t' data-type='struct vpx_fixed_buf' data-ref="vpx_fixed_buf_t">vpx_fixed_buf_t</a> <dfn class="decl" id="vpx_codec_cx_pkt::{anonymous}::twopass_stats" title='vpx_codec_cx_pkt::&lt;anonymous union&gt;::twopass_stats' data-ref="vpx_codec_cx_pkt::{anonymous}::twopass_stats">twopass_stats</dfn>;  <i class="doc">/**&lt; data for two-pass packet */</i></td></tr>
+<tr><th id="202">202</th><td>      <a class="typedef" href="#vpx_fixed_buf_t" title='vpx_fixed_buf_t' data-type='struct vpx_fixed_buf' data-ref="vpx_fixed_buf_t">vpx_fixed_buf_t</a> <dfn class="decl" id="vpx_codec_cx_pkt::{anonymous}::firstpass_mb_stats" title='vpx_codec_cx_pkt::&lt;anonymous union&gt;::firstpass_mb_stats' data-ref="vpx_codec_cx_pkt::{anonymous}::firstpass_mb_stats">firstpass_mb_stats</dfn>; <i class="doc">/**&lt; first pass mb packet */</i></td></tr>
+<tr><th id="203">203</th><td>      <b>struct</b> <dfn class="type def" id="vpx_psnr_pkt" title='vpx_psnr_pkt' data-ref="vpx_psnr_pkt"><a class="type" href="#vpx_psnr_pkt" title='vpx_psnr_pkt' data-ref="vpx_psnr_pkt">vpx_psnr_pkt</a></dfn> {</td></tr>
+<tr><th id="204">204</th><td>        <em>unsigned</em> <em>int</em> <dfn class="decl" id="vpx_psnr_pkt::samples" title='vpx_psnr_pkt::samples' data-ref="vpx_psnr_pkt::samples">samples</dfn>[<var>4</var>];  <i class="doc">/**&lt; Number of samples, total/y/u/v */</i></td></tr>
+<tr><th id="205">205</th><td>        <a class="typedef" href="../stdint.h.html#uint64_t" title='uint64_t' data-type='unsigned long' data-ref="uint64_t">uint64_t</a>     <dfn class="decl" id="vpx_psnr_pkt::sse" title='vpx_psnr_pkt::sse' data-ref="vpx_psnr_pkt::sse">sse</dfn>[<var>4</var>];      <i class="doc">/**&lt; sum squared error, total/y/u/v */</i></td></tr>
+<tr><th id="206">206</th><td>        <em>double</em>       <dfn class="decl" id="vpx_psnr_pkt::psnr" title='vpx_psnr_pkt::psnr' data-ref="vpx_psnr_pkt::psnr">psnr</dfn>[<var>4</var>];     <i class="doc">/**&lt; PSNR, total/y/u/v */</i></td></tr>
+<tr><th id="207">207</th><td>      } <dfn class="decl" id="vpx_codec_cx_pkt::{anonymous}::psnr" title='vpx_codec_cx_pkt::&lt;anonymous union&gt;::psnr' data-ref="vpx_codec_cx_pkt::{anonymous}::psnr">psnr</dfn>;                       <i class="doc">/**&lt; data for PSNR packet */</i></td></tr>
+<tr><th id="208">208</th><td>      <a class="typedef" href="#vpx_fixed_buf_t" title='vpx_fixed_buf_t' data-type='struct vpx_fixed_buf' data-ref="vpx_fixed_buf_t">vpx_fixed_buf_t</a> <dfn class="decl" id="vpx_codec_cx_pkt::{anonymous}::raw" title='vpx_codec_cx_pkt::&lt;anonymous union&gt;::raw' data-ref="vpx_codec_cx_pkt::{anonymous}::raw">raw</dfn>;     <i class="doc">/**&lt; data for arbitrary packets */</i></td></tr>
+<tr><th id="209">209</th><td>      <i>// Spatial SVC is still experimental and may be removed before the next</i></td></tr>
+<tr><th id="210">210</th><td><i>      // ABI bump.</i></td></tr>
+<tr><th id="211">211</th><td><u>#<span data-ppcond="211">if</span> <a class="macro" href="#65" title="(5 + (3 + (3)))" data-ref="_M/VPX_ENCODER_ABI_VERSION">VPX_ENCODER_ABI_VERSION</a> &gt; (5 + <a class="macro" href="vpx_codec.h.html#86" title="(3 + (3))" data-ref="_M/VPX_CODEC_ABI_VERSION">VPX_CODEC_ABI_VERSION</a>)</u></td></tr>
+<tr><th id="212">212</th><td>      size_t layer_sizes[VPX_SS_MAX_LAYERS];</td></tr>
+<tr><th id="213">213</th><td>      <b>struct</b> vpx_psnr_pkt layer_psnr[VPX_SS_MAX_LAYERS];</td></tr>
+<tr><th id="214">214</th><td><u>#<span data-ppcond="211">endif</span></u></td></tr>
+<tr><th id="215">215</th><td></td></tr>
+<tr><th id="216">216</th><td>      <i>/* This packet size is fixed to allow codecs to extend this</i></td></tr>
+<tr><th id="217">217</th><td><i>       * interface without having to manage storage for raw packets,</i></td></tr>
+<tr><th id="218">218</th><td><i>       * i.e., if it's smaller than 128 bytes, you can store in the</i></td></tr>
+<tr><th id="219">219</th><td><i>       * packet list directly.</i></td></tr>
+<tr><th id="220">220</th><td><i>       */</i></td></tr>
+<tr><th id="221">221</th><td>      <em>char</em> <dfn class="decl" id="vpx_codec_cx_pkt::{anonymous}::pad" title='vpx_codec_cx_pkt::&lt;anonymous union&gt;::pad' data-ref="vpx_codec_cx_pkt::{anonymous}::pad">pad</dfn>[<var>128</var> - <b>sizeof</b>(<b>enum</b> <a class="type" href="#vpx_codec_cx_pkt_kind" title='vpx_codec_cx_pkt_kind' data-ref="vpx_codec_cx_pkt_kind">vpx_codec_cx_pkt_kind</a>)]; <i class="doc">/**&lt; fixed sz */</i></td></tr>
+<tr><th id="222">222</th><td>    } <dfn class="decl" id="vpx_codec_cx_pkt::data" title='vpx_codec_cx_pkt::data' data-ref="vpx_codec_cx_pkt::data">data</dfn>; <i class="doc">/**&lt; packet data */</i></td></tr>
+<tr><th id="223">223</th><td>  } <dfn class="typedef" id="vpx_codec_cx_pkt_t" title='vpx_codec_cx_pkt_t' data-type='struct vpx_codec_cx_pkt' data-ref="vpx_codec_cx_pkt_t">vpx_codec_cx_pkt_t</dfn>; <i class="doc">/**&lt; alias for struct vpx_codec_cx_pkt */</i></td></tr>
+<tr><th id="224">224</th><td></td></tr>
+<tr><th id="225">225</th><td></td></tr>
+<tr><th id="226">226</th><td>  <i class="doc">/*!<span class="command">\brief</span> Encoder return output buffer callback</i></td></tr>
+<tr><th id="227">227</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="228">228</th><td><i class="doc">   * This callback function, when registered, returns with packets when each</i></td></tr>
+<tr><th id="229">229</th><td><i class="doc">   * spatial layer is encoded.</i></td></tr>
+<tr><th id="230">230</th><td><i class="doc">   */</i></td></tr>
+<tr><th id="231">231</th><td><i class="doc">  // putting the definitions here for now. (agrange: find if there</i></td></tr>
+<tr><th id="232">232</th><td><i class="doc">  // is a better place for this)</i></td></tr>
+<tr><th id="233">233</th><td>  <b>typedef</b> <em>void</em> (* <dfn class="typedef" id="vpx_codec_enc_output_cx_pkt_cb_fn_t" title='vpx_codec_enc_output_cx_pkt_cb_fn_t' data-type='void (*)(vpx_codec_cx_pkt_t *, void *)' data-ref="vpx_codec_enc_output_cx_pkt_cb_fn_t">vpx_codec_enc_output_cx_pkt_cb_fn_t</dfn>)(<a class="typedef" href="#vpx_codec_cx_pkt_t" title='vpx_codec_cx_pkt_t' data-type='struct vpx_codec_cx_pkt' data-ref="vpx_codec_cx_pkt_t">vpx_codec_cx_pkt_t</a> *<dfn class="local col8 decl" id="28pkt" title='pkt' data-type='vpx_codec_cx_pkt_t *' data-ref="28pkt">pkt</dfn>,</td></tr>
+<tr><th id="234">234</th><td>                                                       <em>void</em> *<dfn class="local col9 decl" id="29user_data" title='user_data' data-type='void *' data-ref="29user_data">user_data</dfn>);</td></tr>
+<tr><th id="235">235</th><td></td></tr>
+<tr><th id="236">236</th><td>  <i class="doc">/*!<span class="command">\brief</span> Callback function pointer / user data pair storage */</i></td></tr>
+<tr><th id="237">237</th><td>  <b>typedef</b> <b>struct</b> <dfn class="type def" id="vpx_codec_enc_output_cx_cb_pair" title='vpx_codec_enc_output_cx_cb_pair' data-ref="vpx_codec_enc_output_cx_cb_pair"><a class="type" href="#vpx_codec_enc_output_cx_cb_pair" title='vpx_codec_enc_output_cx_cb_pair' data-ref="vpx_codec_enc_output_cx_cb_pair">vpx_codec_enc_output_cx_cb_pair</a></dfn> {</td></tr>
+<tr><th id="238">238</th><td>    <a class="typedef" href="#vpx_codec_enc_output_cx_pkt_cb_fn_t" title='vpx_codec_enc_output_cx_pkt_cb_fn_t' data-type='void (*)(vpx_codec_cx_pkt_t *, void *)' data-ref="vpx_codec_enc_output_cx_pkt_cb_fn_t">vpx_codec_enc_output_cx_pkt_cb_fn_t</a> <dfn class="decl" id="vpx_codec_enc_output_cx_cb_pair::output_cx_pkt" title='vpx_codec_enc_output_cx_cb_pair::output_cx_pkt' data-ref="vpx_codec_enc_output_cx_cb_pair::output_cx_pkt">output_cx_pkt</dfn>; <i class="doc">/**&lt; Callback function */</i></td></tr>
+<tr><th id="239">239</th><td>    <em>void</em>                            *<dfn class="decl" id="vpx_codec_enc_output_cx_cb_pair::user_priv" title='vpx_codec_enc_output_cx_cb_pair::user_priv' data-ref="vpx_codec_enc_output_cx_cb_pair::user_priv">user_priv</dfn>; <i class="doc">/**&lt; Pointer to private data */</i></td></tr>
+<tr><th id="240">240</th><td>  } <dfn class="typedef" id="vpx_codec_priv_output_cx_pkt_cb_pair_t" title='vpx_codec_priv_output_cx_pkt_cb_pair_t' data-type='struct vpx_codec_enc_output_cx_cb_pair' data-ref="vpx_codec_priv_output_cx_pkt_cb_pair_t">vpx_codec_priv_output_cx_pkt_cb_pair_t</dfn>;</td></tr>
+<tr><th id="241">241</th><td></td></tr>
+<tr><th id="242">242</th><td>  <i class="doc">/*!<span class="command">\brief</span> Rational Number</i></td></tr>
+<tr><th id="243">243</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="244">244</th><td><i class="doc">   * This structure holds a fractional value.</i></td></tr>
+<tr><th id="245">245</th><td><i class="doc">   */</i></td></tr>
+<tr><th id="246">246</th><td>  <b>typedef</b> <b>struct</b> <dfn class="type def" id="vpx_rational" title='vpx_rational' data-ref="vpx_rational"><a class="type" href="#vpx_rational" title='vpx_rational' data-ref="vpx_rational">vpx_rational</a></dfn> {</td></tr>
+<tr><th id="247">247</th><td>    <em>int</em> <dfn class="decl" id="vpx_rational::num" title='vpx_rational::num' data-ref="vpx_rational::num">num</dfn>; <i class="doc">/**&lt; fraction numerator */</i></td></tr>
+<tr><th id="248">248</th><td>    <em>int</em> <dfn class="decl" id="vpx_rational::den" title='vpx_rational::den' data-ref="vpx_rational::den">den</dfn>; <i class="doc">/**&lt; fraction denominator */</i></td></tr>
+<tr><th id="249">249</th><td>  } <dfn class="typedef" id="vpx_rational_t" title='vpx_rational_t' data-type='struct vpx_rational' data-ref="vpx_rational_t">vpx_rational_t</dfn>; <i class="doc">/**&lt; alias for struct vpx_rational */</i></td></tr>
+<tr><th id="250">250</th><td></td></tr>
+<tr><th id="251">251</th><td></td></tr>
+<tr><th id="252">252</th><td>  <i class="doc">/*!<span class="command">\brief</span> Multi-pass Encoding Pass */</i></td></tr>
+<tr><th id="253">253</th><td>  <b>enum</b> <dfn class="type def" id="vpx_enc_pass" title='vpx_enc_pass' data-ref="vpx_enc_pass">vpx_enc_pass</dfn> {</td></tr>
+<tr><th id="254">254</th><td>    <dfn class="enum" id="vpx_enc_pass::VPX_RC_ONE_PASS" title='vpx_enc_pass::VPX_RC_ONE_PASS' data-ref="vpx_enc_pass::VPX_RC_ONE_PASS">VPX_RC_ONE_PASS</dfn>,   <i class="doc">/**&lt; Single pass mode */</i></td></tr>
+<tr><th id="255">255</th><td>    <dfn class="enum" id="vpx_enc_pass::VPX_RC_FIRST_PASS" title='vpx_enc_pass::VPX_RC_FIRST_PASS' data-ref="vpx_enc_pass::VPX_RC_FIRST_PASS">VPX_RC_FIRST_PASS</dfn>, <i class="doc">/**&lt; First pass of multi-pass mode */</i></td></tr>
+<tr><th id="256">256</th><td>    <dfn class="enum" id="vpx_enc_pass::VPX_RC_LAST_PASS" title='vpx_enc_pass::VPX_RC_LAST_PASS' data-ref="vpx_enc_pass::VPX_RC_LAST_PASS">VPX_RC_LAST_PASS</dfn>   <i class="doc">/**&lt; Final pass of multi-pass mode */</i></td></tr>
+<tr><th id="257">257</th><td>  };</td></tr>
+<tr><th id="258">258</th><td></td></tr>
+<tr><th id="259">259</th><td></td></tr>
+<tr><th id="260">260</th><td>  <i class="doc">/*!<span class="command">\brief</span> Rate control mode */</i></td></tr>
+<tr><th id="261">261</th><td>  <b>enum</b> <dfn class="type def" id="vpx_rc_mode" title='vpx_rc_mode' data-ref="vpx_rc_mode">vpx_rc_mode</dfn> {</td></tr>
+<tr><th id="262">262</th><td>    <dfn class="enum" id="vpx_rc_mode::VPX_VBR" title='vpx_rc_mode::VPX_VBR' data-ref="vpx_rc_mode::VPX_VBR">VPX_VBR</dfn>,  <i class="doc">/**&lt; Variable Bit Rate (VBR) mode */</i></td></tr>
+<tr><th id="263">263</th><td>    <dfn class="enum" id="vpx_rc_mode::VPX_CBR" title='vpx_rc_mode::VPX_CBR' data-ref="vpx_rc_mode::VPX_CBR">VPX_CBR</dfn>,  <i class="doc">/**&lt; Constant Bit Rate (CBR) mode */</i></td></tr>
+<tr><th id="264">264</th><td>    <dfn class="enum" id="vpx_rc_mode::VPX_CQ" title='vpx_rc_mode::VPX_CQ' data-ref="vpx_rc_mode::VPX_CQ">VPX_CQ</dfn>,   <i class="doc">/**&lt; Constrained Quality (CQ)  mode */</i></td></tr>
+<tr><th id="265">265</th><td>    <dfn class="enum" id="vpx_rc_mode::VPX_Q" title='vpx_rc_mode::VPX_Q' data-ref="vpx_rc_mode::VPX_Q">VPX_Q</dfn>,    <i class="doc">/**&lt; Constant Quality (Q) mode */</i></td></tr>
+<tr><th id="266">266</th><td>  };</td></tr>
+<tr><th id="267">267</th><td></td></tr>
+<tr><th id="268">268</th><td></td></tr>
+<tr><th id="269">269</th><td>  <i class="doc">/*!<span class="command">\brief</span> Keyframe placement mode.</i></td></tr>
+<tr><th id="270">270</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="271">271</th><td><i class="doc">   * This enumeration determines whether keyframes are placed automatically by</i></td></tr>
+<tr><th id="272">272</th><td><i class="doc">   * the encoder or whether this behavior is disabled. Older releases of this</i></td></tr>
+<tr><th id="273">273</th><td><i class="doc">   * SDK were implemented such that VPX_KF_FIXED meant keyframes were disabled.</i></td></tr>
+<tr><th id="274">274</th><td><i class="doc">   * This name is confusing for this behavior, so the new symbols to be used</i></td></tr>
+<tr><th id="275">275</th><td><i class="doc">   * are VPX_KF_AUTO and VPX_KF_DISABLED.</i></td></tr>
+<tr><th id="276">276</th><td><i class="doc">   */</i></td></tr>
+<tr><th id="277">277</th><td>  <b>enum</b> <dfn class="type def" id="vpx_kf_mode" title='vpx_kf_mode' data-ref="vpx_kf_mode">vpx_kf_mode</dfn> {</td></tr>
+<tr><th id="278">278</th><td>    <dfn class="enum" id="vpx_kf_mode::VPX_KF_FIXED" title='vpx_kf_mode::VPX_KF_FIXED' data-ref="vpx_kf_mode::VPX_KF_FIXED">VPX_KF_FIXED</dfn>, <i>/**&lt; deprecated, implies VPX_KF_DISABLED */</i></td></tr>
+<tr><th id="279">279</th><td>    <dfn class="enum" id="vpx_kf_mode::VPX_KF_AUTO" title='vpx_kf_mode::VPX_KF_AUTO' data-ref="vpx_kf_mode::VPX_KF_AUTO">VPX_KF_AUTO</dfn>,  <i class="doc">/**&lt; Encoder determines optimal placement automatically */</i></td></tr>
+<tr><th id="280">280</th><td>    <dfn class="enum" id="vpx_kf_mode::VPX_KF_DISABLED" title='vpx_kf_mode::VPX_KF_DISABLED' data-ref="vpx_kf_mode::VPX_KF_DISABLED">VPX_KF_DISABLED</dfn> = <var>0</var> <i class="doc">/**&lt; Encoder does not place keyframes. */</i></td></tr>
+<tr><th id="281">281</th><td>  };</td></tr>
+<tr><th id="282">282</th><td></td></tr>
+<tr><th id="283">283</th><td></td></tr>
+<tr><th id="284">284</th><td>  <i class="doc">/*!<span class="command">\brief</span> Encoded Frame Flags</i></td></tr>
+<tr><th id="285">285</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="286">286</th><td><i class="doc">   * This type indicates a bitfield to be passed to vpx_codec_encode(), defining</i></td></tr>
+<tr><th id="287">287</th><td><i class="doc">   * per-frame boolean values. By convention, bits common to all codecs will be</i></td></tr>
+<tr><th id="288">288</th><td><i class="doc">   * named VPX_EFLAG_*, and bits specific to an algorithm will be named</i></td></tr>
+<tr><th id="289">289</th><td><i class="doc">   * /algo/_eflag_*. The lower order 16 bits are reserved for common use.</i></td></tr>
+<tr><th id="290">290</th><td><i class="doc">   */</i></td></tr>
+<tr><th id="291">291</th><td>  <b>typedef</b> <em>long</em> <dfn class="typedef" id="vpx_enc_frame_flags_t" title='vpx_enc_frame_flags_t' data-type='long' data-ref="vpx_enc_frame_flags_t">vpx_enc_frame_flags_t</dfn>;</td></tr>
+<tr><th id="292">292</th><td><u>#define <dfn class="macro" id="_M/VPX_EFLAG_FORCE_KF" data-ref="_M/VPX_EFLAG_FORCE_KF">VPX_EFLAG_FORCE_KF</dfn> (1&lt;&lt;0)  /**&lt; Force this frame to be a keyframe */</u></td></tr>
+<tr><th id="293">293</th><td></td></tr>
+<tr><th id="294">294</th><td></td></tr>
+<tr><th id="295">295</th><td>  <i class="doc">/*!<span class="command">\brief</span> Encoder configuration structure</i></td></tr>
+<tr><th id="296">296</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="297">297</th><td><i class="doc">   * This structure contains the encoder settings that have common representations</i></td></tr>
+<tr><th id="298">298</th><td><i class="doc">   * across all codecs. This doesn't imply that all codecs support all features,</i></td></tr>
+<tr><th id="299">299</th><td><i class="doc">   * however.</i></td></tr>
+<tr><th id="300">300</th><td><i class="doc">   */</i></td></tr>
+<tr><th id="301">301</th><td>  <b>typedef</b> <b>struct</b> <dfn class="type def" id="vpx_codec_enc_cfg" title='vpx_codec_enc_cfg' data-ref="vpx_codec_enc_cfg"><a class="type" href="#vpx_codec_enc_cfg" title='vpx_codec_enc_cfg' data-ref="vpx_codec_enc_cfg">vpx_codec_enc_cfg</a></dfn> {</td></tr>
+<tr><th id="302">302</th><td>    <i>/*</i></td></tr>
+<tr><th id="303">303</th><td><i>     * generic settings (g)</i></td></tr>
+<tr><th id="304">304</th><td><i>     */</i></td></tr>
+<tr><th id="305">305</th><td></td></tr>
+<tr><th id="306">306</th><td>    <i class="doc">/*!<span class="command">\brief</span> Algorithm specific "usage" value</i></td></tr>
+<tr><th id="307">307</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="308">308</th><td><i class="doc">     * Algorithms may define multiple values for usage, which may convey the</i></td></tr>
+<tr><th id="309">309</th><td><i class="doc">     * intent of how the application intends to use the stream. If this value</i></td></tr>
+<tr><th id="310">310</th><td><i class="doc">     * is non-zero, consult the documentation for the codec to determine its</i></td></tr>
+<tr><th id="311">311</th><td><i class="doc">     * meaning.</i></td></tr>
+<tr><th id="312">312</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="313">313</th><td>    <em>unsigned</em> <em>int</em>           <dfn class="decl" id="vpx_codec_enc_cfg::g_usage" title='vpx_codec_enc_cfg::g_usage' data-ref="vpx_codec_enc_cfg::g_usage">g_usage</dfn>;</td></tr>
+<tr><th id="314">314</th><td></td></tr>
+<tr><th id="315">315</th><td></td></tr>
+<tr><th id="316">316</th><td>    <i class="doc">/*!<span class="command">\brief</span> Maximum number of threads to use</i></td></tr>
+<tr><th id="317">317</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="318">318</th><td><i class="doc">     * For multi-threaded implementations, use no more than this number of</i></td></tr>
+<tr><th id="319">319</th><td><i class="doc">     * threads. The codec may use fewer threads than allowed. The value</i></td></tr>
+<tr><th id="320">320</th><td><i class="doc">     * 0 is equivalent to the value 1.</i></td></tr>
+<tr><th id="321">321</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="322">322</th><td>    <em>unsigned</em> <em>int</em>           <dfn class="decl" id="vpx_codec_enc_cfg::g_threads" title='vpx_codec_enc_cfg::g_threads' data-ref="vpx_codec_enc_cfg::g_threads">g_threads</dfn>;</td></tr>
+<tr><th id="323">323</th><td></td></tr>
+<tr><th id="324">324</th><td></td></tr>
+<tr><th id="325">325</th><td>    <i class="doc">/*!<span class="command">\brief</span> Bitstream profile to use</i></td></tr>
+<tr><th id="326">326</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="327">327</th><td><i class="doc">     * Some codecs support a notion of multiple bitstream profiles. Typically</i></td></tr>
+<tr><th id="328">328</th><td><i class="doc">     * this maps to a set of features that are turned on or off. Often the</i></td></tr>
+<tr><th id="329">329</th><td><i class="doc">     * profile to use is determined by the features of the intended decoder.</i></td></tr>
+<tr><th id="330">330</th><td><i class="doc">     * Consult the documentation for the codec to determine the valid values</i></td></tr>
+<tr><th id="331">331</th><td><i class="doc">     * for this parameter, or set to zero for a sane default.</i></td></tr>
+<tr><th id="332">332</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="333">333</th><td>    <em>unsigned</em> <em>int</em>           <dfn class="decl" id="vpx_codec_enc_cfg::g_profile" title='vpx_codec_enc_cfg::g_profile' data-ref="vpx_codec_enc_cfg::g_profile">g_profile</dfn>;  <i class="doc">/**&lt; profile of bitstream to use */</i></td></tr>
+<tr><th id="334">334</th><td></td></tr>
+<tr><th id="335">335</th><td></td></tr>
+<tr><th id="336">336</th><td></td></tr>
+<tr><th id="337">337</th><td>    <i class="doc">/*!<span class="command">\brief</span> Width of the frame</i></td></tr>
+<tr><th id="338">338</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="339">339</th><td><i class="doc">     * This value identifies the presentation resolution of the frame,</i></td></tr>
+<tr><th id="340">340</th><td><i class="doc">     * in pixels. Note that the frames passed as input to the encoder must</i></td></tr>
+<tr><th id="341">341</th><td><i class="doc">     * have this resolution. Frames will be presented by the decoder in this</i></td></tr>
+<tr><th id="342">342</th><td><i class="doc">     * resolution, independent of any spatial resampling the encoder may do.</i></td></tr>
+<tr><th id="343">343</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="344">344</th><td>    <em>unsigned</em> <em>int</em>           <dfn class="decl" id="vpx_codec_enc_cfg::g_w" title='vpx_codec_enc_cfg::g_w' data-ref="vpx_codec_enc_cfg::g_w">g_w</dfn>;</td></tr>
+<tr><th id="345">345</th><td></td></tr>
+<tr><th id="346">346</th><td></td></tr>
+<tr><th id="347">347</th><td>    <i class="doc">/*!<span class="command">\brief</span> Height of the frame</i></td></tr>
+<tr><th id="348">348</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="349">349</th><td><i class="doc">     * This value identifies the presentation resolution of the frame,</i></td></tr>
+<tr><th id="350">350</th><td><i class="doc">     * in pixels. Note that the frames passed as input to the encoder must</i></td></tr>
+<tr><th id="351">351</th><td><i class="doc">     * have this resolution. Frames will be presented by the decoder in this</i></td></tr>
+<tr><th id="352">352</th><td><i class="doc">     * resolution, independent of any spatial resampling the encoder may do.</i></td></tr>
+<tr><th id="353">353</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="354">354</th><td>    <em>unsigned</em> <em>int</em>           <dfn class="decl" id="vpx_codec_enc_cfg::g_h" title='vpx_codec_enc_cfg::g_h' data-ref="vpx_codec_enc_cfg::g_h">g_h</dfn>;</td></tr>
+<tr><th id="355">355</th><td></td></tr>
+<tr><th id="356">356</th><td>    <i class="doc">/*!<span class="command">\brief</span> Bit-depth of the codec</i></td></tr>
+<tr><th id="357">357</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="358">358</th><td><i class="doc">     * This value identifies the bit_depth of the codec,</i></td></tr>
+<tr><th id="359">359</th><td><i class="doc">     * Only certain bit-depths are supported as identified in the</i></td></tr>
+<tr><th id="360">360</th><td><i class="doc">     * vpx_bit_depth_t enum.</i></td></tr>
+<tr><th id="361">361</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="362">362</th><td>    <a class="typedef" href="vpx_codec.h.html#vpx_bit_depth_t" title='vpx_bit_depth_t' data-type='enum vpx_bit_depth' data-ref="vpx_bit_depth_t">vpx_bit_depth_t</a>        <dfn class="decl" id="vpx_codec_enc_cfg::g_bit_depth" title='vpx_codec_enc_cfg::g_bit_depth' data-ref="vpx_codec_enc_cfg::g_bit_depth">g_bit_depth</dfn>;</td></tr>
+<tr><th id="363">363</th><td></td></tr>
+<tr><th id="364">364</th><td>    <i class="doc">/*!<span class="command">\brief</span> Bit-depth of the input frames</i></td></tr>
+<tr><th id="365">365</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="366">366</th><td><i class="doc">     * This value identifies the bit_depth of the input frames in bits.</i></td></tr>
+<tr><th id="367">367</th><td><i class="doc">     * Note that the frames passed as input to the encoder must have</i></td></tr>
+<tr><th id="368">368</th><td><i class="doc">     * this bit-depth.</i></td></tr>
+<tr><th id="369">369</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="370">370</th><td>    <em>unsigned</em> <em>int</em>           <dfn class="decl" id="vpx_codec_enc_cfg::g_input_bit_depth" title='vpx_codec_enc_cfg::g_input_bit_depth' data-ref="vpx_codec_enc_cfg::g_input_bit_depth">g_input_bit_depth</dfn>;</td></tr>
+<tr><th id="371">371</th><td></td></tr>
+<tr><th id="372">372</th><td>    <i class="doc">/*!<span class="command">\brief</span> Stream timebase units</i></td></tr>
+<tr><th id="373">373</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="374">374</th><td><i class="doc">     * Indicates the smallest interval of time, in seconds, used by the stream.</i></td></tr>
+<tr><th id="375">375</th><td><i class="doc">     * For fixed frame rate material, or variable frame rate material where</i></td></tr>
+<tr><th id="376">376</th><td><i class="doc">     * frames are timed at a multiple of a given clock (ex: video capture),</i></td></tr>
+<tr><th id="377">377</th><td><i class="doc">     * the <span class="command">\ref</span> <span class="verb">RECOMMENDED method is to set the timebase to the reciprocal</span></i></td></tr>
+<tr><th id="378">378</th><td><i class="doc">     * of the frame rate (ex: 1001/30000 for 29.970 Hz NTSC). This allows the</i></td></tr>
+<tr><th id="379">379</th><td><i class="doc">     * pts to correspond to the frame number, which can be handy. For</i></td></tr>
+<tr><th id="380">380</th><td><i class="doc">     * re-encoding video from containers with absolute time timestamps, the</i></td></tr>
+<tr><th id="381">381</th><td><i class="doc">     * <span class="command">\ref</span> <span class="verb">RECOMMENDED method is to set the timebase to that of the parent</span></i></td></tr>
+<tr><th id="382">382</th><td><i class="doc">     * container or multimedia framework (ex: 1/1000 for ms, as in FLV).</i></td></tr>
+<tr><th id="383">383</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="384">384</th><td>    <b>struct</b> <a class="type" href="#vpx_rational" title='vpx_rational' data-ref="vpx_rational">vpx_rational</a>    <dfn class="decl" id="vpx_codec_enc_cfg::g_timebase" title='vpx_codec_enc_cfg::g_timebase' data-ref="vpx_codec_enc_cfg::g_timebase">g_timebase</dfn>;</td></tr>
+<tr><th id="385">385</th><td></td></tr>
+<tr><th id="386">386</th><td></td></tr>
+<tr><th id="387">387</th><td>    <i class="doc">/*!<span class="command">\brief</span> Enable error resilient modes.</i></td></tr>
+<tr><th id="388">388</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="389">389</th><td><i class="doc">     * The error resilient bitfield indicates to the encoder which features</i></td></tr>
+<tr><th id="390">390</th><td><i class="doc">     * it should enable to take measures for streaming over lossy or noisy</i></td></tr>
+<tr><th id="391">391</th><td><i class="doc">     * links.</i></td></tr>
+<tr><th id="392">392</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="393">393</th><td>    <a class="typedef" href="#vpx_codec_er_flags_t" title='vpx_codec_er_flags_t' data-type='uint32_t' data-ref="vpx_codec_er_flags_t">vpx_codec_er_flags_t</a>   <dfn class="decl" id="vpx_codec_enc_cfg::g_error_resilient" title='vpx_codec_enc_cfg::g_error_resilient' data-ref="vpx_codec_enc_cfg::g_error_resilient">g_error_resilient</dfn>;</td></tr>
+<tr><th id="394">394</th><td></td></tr>
+<tr><th id="395">395</th><td></td></tr>
+<tr><th id="396">396</th><td>    <i class="doc">/*!<span class="command">\brief</span> Multi-pass Encoding Mode</i></td></tr>
+<tr><th id="397">397</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="398">398</th><td><i class="doc">     * This value should be set to the current phase for multi-pass encoding.</i></td></tr>
+<tr><th id="399">399</th><td><i class="doc">     * For single pass, set to #VPX_RC_ONE_PASS.</i></td></tr>
+<tr><th id="400">400</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="401">401</th><td>    <b>enum</b> <a class="type" href="#vpx_enc_pass" title='vpx_enc_pass' data-ref="vpx_enc_pass">vpx_enc_pass</a>      <dfn class="decl" id="vpx_codec_enc_cfg::g_pass" title='vpx_codec_enc_cfg::g_pass' data-ref="vpx_codec_enc_cfg::g_pass">g_pass</dfn>;</td></tr>
+<tr><th id="402">402</th><td></td></tr>
+<tr><th id="403">403</th><td></td></tr>
+<tr><th id="404">404</th><td>    <i class="doc">/*!<span class="command">\brief</span> Allow lagged encoding</i></td></tr>
+<tr><th id="405">405</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="406">406</th><td><i class="doc">     * If set, this value allows the encoder to consume a number of input</i></td></tr>
+<tr><th id="407">407</th><td><i class="doc">     * frames before producing output frames. This allows the encoder to</i></td></tr>
+<tr><th id="408">408</th><td><i class="doc">     * base decisions for the current frame on future frames. This does</i></td></tr>
+<tr><th id="409">409</th><td><i class="doc">     * increase the latency of the encoding pipeline, so it is not appropriate</i></td></tr>
+<tr><th id="410">410</th><td><i class="doc">     * in all situations (ex: realtime encoding).</i></td></tr>
+<tr><th id="411">411</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="412">412</th><td><i class="doc">     * Note that this is a maximum value -- the encoder may produce frames</i></td></tr>
+<tr><th id="413">413</th><td><i class="doc">     * sooner than the given limit. Set this value to 0 to disable this</i></td></tr>
+<tr><th id="414">414</th><td><i class="doc">     * feature.</i></td></tr>
+<tr><th id="415">415</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="416">416</th><td>    <em>unsigned</em> <em>int</em>           <dfn class="decl" id="vpx_codec_enc_cfg::g_lag_in_frames" title='vpx_codec_enc_cfg::g_lag_in_frames' data-ref="vpx_codec_enc_cfg::g_lag_in_frames">g_lag_in_frames</dfn>;</td></tr>
+<tr><th id="417">417</th><td></td></tr>
+<tr><th id="418">418</th><td></td></tr>
+<tr><th id="419">419</th><td>    <i>/*</i></td></tr>
+<tr><th id="420">420</th><td><i>     * rate control settings (rc)</i></td></tr>
+<tr><th id="421">421</th><td><i>     */</i></td></tr>
+<tr><th id="422">422</th><td></td></tr>
+<tr><th id="423">423</th><td>    <i class="doc">/*!<span class="command">\brief</span> Temporal resampling configuration, if supported by the codec.</i></td></tr>
+<tr><th id="424">424</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="425">425</th><td><i class="doc">     * Temporal resampling allows the codec to "drop" frames as a strategy to</i></td></tr>
+<tr><th id="426">426</th><td><i class="doc">     * meet its target data rate. This can cause temporal discontinuities in</i></td></tr>
+<tr><th id="427">427</th><td><i class="doc">     * the encoded video, which may appear as stuttering during playback. This</i></td></tr>
+<tr><th id="428">428</th><td><i class="doc">     * trade-off is often acceptable, but for many applications is not. It can</i></td></tr>
+<tr><th id="429">429</th><td><i class="doc">     * be disabled in these cases.</i></td></tr>
+<tr><th id="430">430</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="431">431</th><td><i class="doc">     * Note that not all codecs support this feature. All vpx VPx codecs do.</i></td></tr>
+<tr><th id="432">432</th><td><i class="doc">     * For other codecs, consult the documentation for that algorithm.</i></td></tr>
+<tr><th id="433">433</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="434">434</th><td><i class="doc">     * This threshold is described as a percentage of the target data buffer.</i></td></tr>
+<tr><th id="435">435</th><td><i class="doc">     * When the data buffer falls below this percentage of fullness, a</i></td></tr>
+<tr><th id="436">436</th><td><i class="doc">     * dropped frame is indicated. Set the threshold to zero (0) to disable</i></td></tr>
+<tr><th id="437">437</th><td><i class="doc">     * this feature.</i></td></tr>
+<tr><th id="438">438</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="439">439</th><td>    <em>unsigned</em> <em>int</em>           <dfn class="decl" id="vpx_codec_enc_cfg::rc_dropframe_thresh" title='vpx_codec_enc_cfg::rc_dropframe_thresh' data-ref="vpx_codec_enc_cfg::rc_dropframe_thresh">rc_dropframe_thresh</dfn>;</td></tr>
+<tr><th id="440">440</th><td></td></tr>
+<tr><th id="441">441</th><td></td></tr>
+<tr><th id="442">442</th><td>    <i class="doc">/*!<span class="command">\brief</span> Enable/disable spatial resampling, if supported by the codec.</i></td></tr>
+<tr><th id="443">443</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="444">444</th><td><i class="doc">     * Spatial resampling allows the codec to compress a lower resolution</i></td></tr>
+<tr><th id="445">445</th><td><i class="doc">     * version of the frame, which is then upscaled by the encoder to the</i></td></tr>
+<tr><th id="446">446</th><td><i class="doc">     * correct presentation resolution. This increases visual quality at</i></td></tr>
+<tr><th id="447">447</th><td><i class="doc">     * low data rates, at the expense of CPU time on the encoder/decoder.</i></td></tr>
+<tr><th id="448">448</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="449">449</th><td>    <em>unsigned</em> <em>int</em>           <dfn class="decl" id="vpx_codec_enc_cfg::rc_resize_allowed" title='vpx_codec_enc_cfg::rc_resize_allowed' data-ref="vpx_codec_enc_cfg::rc_resize_allowed">rc_resize_allowed</dfn>;</td></tr>
+<tr><th id="450">450</th><td></td></tr>
+<tr><th id="451">451</th><td>    <i class="doc">/*!<span class="command">\brief</span> Internal coded frame width.</i></td></tr>
+<tr><th id="452">452</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="453">453</th><td><i class="doc">     * If spatial resampling is enabled this specifies the width of the</i></td></tr>
+<tr><th id="454">454</th><td><i class="doc">     * encoded frame.</i></td></tr>
+<tr><th id="455">455</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="456">456</th><td>    <em>unsigned</em> <em>int</em>           <dfn class="decl" id="vpx_codec_enc_cfg::rc_scaled_width" title='vpx_codec_enc_cfg::rc_scaled_width' data-ref="vpx_codec_enc_cfg::rc_scaled_width">rc_scaled_width</dfn>;</td></tr>
+<tr><th id="457">457</th><td></td></tr>
+<tr><th id="458">458</th><td>    <i class="doc">/*!<span class="command">\brief</span> Internal coded frame height.</i></td></tr>
+<tr><th id="459">459</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="460">460</th><td><i class="doc">     * If spatial resampling is enabled this specifies the height of the</i></td></tr>
+<tr><th id="461">461</th><td><i class="doc">     * encoded frame.</i></td></tr>
+<tr><th id="462">462</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="463">463</th><td>    <em>unsigned</em> <em>int</em>           <dfn class="decl" id="vpx_codec_enc_cfg::rc_scaled_height" title='vpx_codec_enc_cfg::rc_scaled_height' data-ref="vpx_codec_enc_cfg::rc_scaled_height">rc_scaled_height</dfn>;</td></tr>
+<tr><th id="464">464</th><td></td></tr>
+<tr><th id="465">465</th><td>    <i class="doc">/*!<span class="command">\brief</span> Spatial resampling up watermark.</i></td></tr>
+<tr><th id="466">466</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="467">467</th><td><i class="doc">     * This threshold is described as a percentage of the target data buffer.</i></td></tr>
+<tr><th id="468">468</th><td><i class="doc">     * When the data buffer rises above this percentage of fullness, the</i></td></tr>
+<tr><th id="469">469</th><td><i class="doc">     * encoder will step up to a higher resolution version of the frame.</i></td></tr>
+<tr><th id="470">470</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="471">471</th><td>    <em>unsigned</em> <em>int</em>           <dfn class="decl" id="vpx_codec_enc_cfg::rc_resize_up_thresh" title='vpx_codec_enc_cfg::rc_resize_up_thresh' data-ref="vpx_codec_enc_cfg::rc_resize_up_thresh">rc_resize_up_thresh</dfn>;</td></tr>
+<tr><th id="472">472</th><td></td></tr>
+<tr><th id="473">473</th><td></td></tr>
+<tr><th id="474">474</th><td>    <i class="doc">/*!<span class="command">\brief</span> Spatial resampling down watermark.</i></td></tr>
+<tr><th id="475">475</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="476">476</th><td><i class="doc">     * This threshold is described as a percentage of the target data buffer.</i></td></tr>
+<tr><th id="477">477</th><td><i class="doc">     * When the data buffer falls below this percentage of fullness, the</i></td></tr>
+<tr><th id="478">478</th><td><i class="doc">     * encoder will step down to a lower resolution version of the frame.</i></td></tr>
+<tr><th id="479">479</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="480">480</th><td>    <em>unsigned</em> <em>int</em>           <dfn class="decl" id="vpx_codec_enc_cfg::rc_resize_down_thresh" title='vpx_codec_enc_cfg::rc_resize_down_thresh' data-ref="vpx_codec_enc_cfg::rc_resize_down_thresh">rc_resize_down_thresh</dfn>;</td></tr>
+<tr><th id="481">481</th><td></td></tr>
+<tr><th id="482">482</th><td></td></tr>
+<tr><th id="483">483</th><td>    <i class="doc">/*!<span class="command">\brief</span> Rate control algorithm to use.</i></td></tr>
+<tr><th id="484">484</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="485">485</th><td><i class="doc">     * Indicates whether the end usage of this stream is to be streamed over</i></td></tr>
+<tr><th id="486">486</th><td><i class="doc">     * a bandwidth constrained link, indicating that Constant Bit Rate (CBR)</i></td></tr>
+<tr><th id="487">487</th><td><i class="doc">     * mode should be used, or whether it will be played back on a high</i></td></tr>
+<tr><th id="488">488</th><td><i class="doc">     * bandwidth link, as from a local disk, where higher variations in</i></td></tr>
+<tr><th id="489">489</th><td><i class="doc">     * bitrate are acceptable.</i></td></tr>
+<tr><th id="490">490</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="491">491</th><td>    <b>enum</b> <a class="type" href="#vpx_rc_mode" title='vpx_rc_mode' data-ref="vpx_rc_mode">vpx_rc_mode</a>       <dfn class="decl" id="vpx_codec_enc_cfg::rc_end_usage" title='vpx_codec_enc_cfg::rc_end_usage' data-ref="vpx_codec_enc_cfg::rc_end_usage">rc_end_usage</dfn>;</td></tr>
+<tr><th id="492">492</th><td></td></tr>
+<tr><th id="493">493</th><td></td></tr>
+<tr><th id="494">494</th><td>    <i class="doc">/*!<span class="command">\brief</span> Two-pass stats buffer.</i></td></tr>
+<tr><th id="495">495</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="496">496</th><td><i class="doc">     * A buffer containing all of the stats packets produced in the first</i></td></tr>
+<tr><th id="497">497</th><td><i class="doc">     * pass, concatenated.</i></td></tr>
+<tr><th id="498">498</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="499">499</th><td>    <a class="typedef" href="#vpx_fixed_buf_t" title='vpx_fixed_buf_t' data-type='struct vpx_fixed_buf' data-ref="vpx_fixed_buf_t">vpx_fixed_buf_t</a>   <dfn class="decl" id="vpx_codec_enc_cfg::rc_twopass_stats_in" title='vpx_codec_enc_cfg::rc_twopass_stats_in' data-ref="vpx_codec_enc_cfg::rc_twopass_stats_in">rc_twopass_stats_in</dfn>;</td></tr>
+<tr><th id="500">500</th><td></td></tr>
+<tr><th id="501">501</th><td>    <i class="doc">/*!<span class="command">\brief</span> first pass mb stats buffer.</i></td></tr>
+<tr><th id="502">502</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="503">503</th><td><i class="doc">     * A buffer containing all of the first pass mb stats packets produced</i></td></tr>
+<tr><th id="504">504</th><td><i class="doc">     * in the first pass, concatenated.</i></td></tr>
+<tr><th id="505">505</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="506">506</th><td>    <a class="typedef" href="#vpx_fixed_buf_t" title='vpx_fixed_buf_t' data-type='struct vpx_fixed_buf' data-ref="vpx_fixed_buf_t">vpx_fixed_buf_t</a>   <dfn class="decl" id="vpx_codec_enc_cfg::rc_firstpass_mb_stats_in" title='vpx_codec_enc_cfg::rc_firstpass_mb_stats_in' data-ref="vpx_codec_enc_cfg::rc_firstpass_mb_stats_in">rc_firstpass_mb_stats_in</dfn>;</td></tr>
+<tr><th id="507">507</th><td></td></tr>
+<tr><th id="508">508</th><td>    <i class="doc">/*!<span class="command">\brief</span> Target data rate</i></td></tr>
+<tr><th id="509">509</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="510">510</th><td><i class="doc">     * Target bandwidth to use for this stream, in kilobits per second.</i></td></tr>
+<tr><th id="511">511</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="512">512</th><td>    <em>unsigned</em> <em>int</em>           <dfn class="decl" id="vpx_codec_enc_cfg::rc_target_bitrate" title='vpx_codec_enc_cfg::rc_target_bitrate' data-ref="vpx_codec_enc_cfg::rc_target_bitrate">rc_target_bitrate</dfn>;</td></tr>
+<tr><th id="513">513</th><td></td></tr>
+<tr><th id="514">514</th><td></td></tr>
+<tr><th id="515">515</th><td>    <i>/*</i></td></tr>
+<tr><th id="516">516</th><td><i>     * quantizer settings</i></td></tr>
+<tr><th id="517">517</th><td><i>     */</i></td></tr>
+<tr><th id="518">518</th><td></td></tr>
+<tr><th id="519">519</th><td></td></tr>
+<tr><th id="520">520</th><td>    <i class="doc">/*!<span class="command">\brief</span> Minimum (Best Quality) Quantizer</i></td></tr>
+<tr><th id="521">521</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="522">522</th><td><i class="doc">     * The quantizer is the most direct control over the quality of the</i></td></tr>
+<tr><th id="523">523</th><td><i class="doc">     * encoded image. The range of valid values for the quantizer is codec</i></td></tr>
+<tr><th id="524">524</th><td><i class="doc">     * specific. Consult the documentation for the codec to determine the</i></td></tr>
+<tr><th id="525">525</th><td><i class="doc">     * values to use. To determine the range programmatically, call</i></td></tr>
+<tr><th id="526">526</th><td><i class="doc">     * vpx_codec_enc_config_default() with a usage value of 0.</i></td></tr>
+<tr><th id="527">527</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="528">528</th><td>    <em>unsigned</em> <em>int</em>           <dfn class="decl" id="vpx_codec_enc_cfg::rc_min_quantizer" title='vpx_codec_enc_cfg::rc_min_quantizer' data-ref="vpx_codec_enc_cfg::rc_min_quantizer">rc_min_quantizer</dfn>;</td></tr>
+<tr><th id="529">529</th><td></td></tr>
+<tr><th id="530">530</th><td></td></tr>
+<tr><th id="531">531</th><td>    <i class="doc">/*!<span class="command">\brief</span> Maximum (Worst Quality) Quantizer</i></td></tr>
+<tr><th id="532">532</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="533">533</th><td><i class="doc">     * The quantizer is the most direct control over the quality of the</i></td></tr>
+<tr><th id="534">534</th><td><i class="doc">     * encoded image. The range of valid values for the quantizer is codec</i></td></tr>
+<tr><th id="535">535</th><td><i class="doc">     * specific. Consult the documentation for the codec to determine the</i></td></tr>
+<tr><th id="536">536</th><td><i class="doc">     * values to use. To determine the range programmatically, call</i></td></tr>
+<tr><th id="537">537</th><td><i class="doc">     * vpx_codec_enc_config_default() with a usage value of 0.</i></td></tr>
+<tr><th id="538">538</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="539">539</th><td>    <em>unsigned</em> <em>int</em>           <dfn class="decl" id="vpx_codec_enc_cfg::rc_max_quantizer" title='vpx_codec_enc_cfg::rc_max_quantizer' data-ref="vpx_codec_enc_cfg::rc_max_quantizer">rc_max_quantizer</dfn>;</td></tr>
+<tr><th id="540">540</th><td></td></tr>
+<tr><th id="541">541</th><td></td></tr>
+<tr><th id="542">542</th><td>    <i>/*</i></td></tr>
+<tr><th id="543">543</th><td><i>     * bitrate tolerance</i></td></tr>
+<tr><th id="544">544</th><td><i>     */</i></td></tr>
+<tr><th id="545">545</th><td></td></tr>
+<tr><th id="546">546</th><td></td></tr>
+<tr><th id="547">547</th><td>    <i class="doc">/*!<span class="command">\brief</span> Rate control adaptation undershoot control</i></td></tr>
+<tr><th id="548">548</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="549">549</th><td><i class="doc">     * This value, expressed as a percentage of the target bitrate,</i></td></tr>
+<tr><th id="550">550</th><td><i class="doc">     * controls the maximum allowed adaptation speed of the codec.</i></td></tr>
+<tr><th id="551">551</th><td><i class="doc">     * This factor controls the maximum amount of bits that can</i></td></tr>
+<tr><th id="552">552</th><td><i class="doc">     * be subtracted from the target bitrate in order to compensate</i></td></tr>
+<tr><th id="553">553</th><td><i class="doc">     * for prior overshoot.</i></td></tr>
+<tr><th id="554">554</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="555">555</th><td><i class="doc">     * Valid values in the range 0-1000.</i></td></tr>
+<tr><th id="556">556</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="557">557</th><td>    <em>unsigned</em> <em>int</em>           <dfn class="decl" id="vpx_codec_enc_cfg::rc_undershoot_pct" title='vpx_codec_enc_cfg::rc_undershoot_pct' data-ref="vpx_codec_enc_cfg::rc_undershoot_pct">rc_undershoot_pct</dfn>;</td></tr>
+<tr><th id="558">558</th><td></td></tr>
+<tr><th id="559">559</th><td></td></tr>
+<tr><th id="560">560</th><td>    <i class="doc">/*!<span class="command">\brief</span> Rate control adaptation overshoot control</i></td></tr>
+<tr><th id="561">561</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="562">562</th><td><i class="doc">     * This value, expressed as a percentage of the target bitrate,</i></td></tr>
+<tr><th id="563">563</th><td><i class="doc">     * controls the maximum allowed adaptation speed of the codec.</i></td></tr>
+<tr><th id="564">564</th><td><i class="doc">     * This factor controls the maximum amount of bits that can</i></td></tr>
+<tr><th id="565">565</th><td><i class="doc">     * be added to the target bitrate in order to compensate for</i></td></tr>
+<tr><th id="566">566</th><td><i class="doc">     * prior undershoot.</i></td></tr>
+<tr><th id="567">567</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="568">568</th><td><i class="doc">     * Valid values in the range 0-1000.</i></td></tr>
+<tr><th id="569">569</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="570">570</th><td>    <em>unsigned</em> <em>int</em>           <dfn class="decl" id="vpx_codec_enc_cfg::rc_overshoot_pct" title='vpx_codec_enc_cfg::rc_overshoot_pct' data-ref="vpx_codec_enc_cfg::rc_overshoot_pct">rc_overshoot_pct</dfn>;</td></tr>
+<tr><th id="571">571</th><td></td></tr>
+<tr><th id="572">572</th><td></td></tr>
+<tr><th id="573">573</th><td>    <i>/*</i></td></tr>
+<tr><th id="574">574</th><td><i>     * decoder buffer model parameters</i></td></tr>
+<tr><th id="575">575</th><td><i>     */</i></td></tr>
+<tr><th id="576">576</th><td></td></tr>
+<tr><th id="577">577</th><td></td></tr>
+<tr><th id="578">578</th><td>    <i class="doc">/*!<span class="command">\brief</span> Decoder Buffer Size</i></td></tr>
+<tr><th id="579">579</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="580">580</th><td><i class="doc">     * This value indicates the amount of data that may be buffered by the</i></td></tr>
+<tr><th id="581">581</th><td><i class="doc">     * decoding application. Note that this value is expressed in units of</i></td></tr>
+<tr><th id="582">582</th><td><i class="doc">     * time (milliseconds). For example, a value of 5000 indicates that the</i></td></tr>
+<tr><th id="583">583</th><td><i class="doc">     * client will buffer (at least) 5000ms worth of encoded data. Use the</i></td></tr>
+<tr><th id="584">584</th><td><i class="doc">     * target bitrate (#rc_target_bitrate) to convert to bits/bytes, if</i></td></tr>
+<tr><th id="585">585</th><td><i class="doc">     * necessary.</i></td></tr>
+<tr><th id="586">586</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="587">587</th><td>    <em>unsigned</em> <em>int</em>           <dfn class="decl" id="vpx_codec_enc_cfg::rc_buf_sz" title='vpx_codec_enc_cfg::rc_buf_sz' data-ref="vpx_codec_enc_cfg::rc_buf_sz">rc_buf_sz</dfn>;</td></tr>
+<tr><th id="588">588</th><td></td></tr>
+<tr><th id="589">589</th><td></td></tr>
+<tr><th id="590">590</th><td>    <i class="doc">/*!<span class="command">\brief</span> Decoder Buffer Initial Size</i></td></tr>
+<tr><th id="591">591</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="592">592</th><td><i class="doc">     * This value indicates the amount of data that will be buffered by the</i></td></tr>
+<tr><th id="593">593</th><td><i class="doc">     * decoding application prior to beginning playback. This value is</i></td></tr>
+<tr><th id="594">594</th><td><i class="doc">     * expressed in units of time (milliseconds). Use the target bitrate</i></td></tr>
+<tr><th id="595">595</th><td><i class="doc">     * (#rc_target_bitrate) to convert to bits/bytes, if necessary.</i></td></tr>
+<tr><th id="596">596</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="597">597</th><td>    <em>unsigned</em> <em>int</em>           <dfn class="decl" id="vpx_codec_enc_cfg::rc_buf_initial_sz" title='vpx_codec_enc_cfg::rc_buf_initial_sz' data-ref="vpx_codec_enc_cfg::rc_buf_initial_sz">rc_buf_initial_sz</dfn>;</td></tr>
+<tr><th id="598">598</th><td></td></tr>
+<tr><th id="599">599</th><td></td></tr>
+<tr><th id="600">600</th><td>    <i class="doc">/*!<span class="command">\brief</span> Decoder Buffer Optimal Size</i></td></tr>
+<tr><th id="601">601</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="602">602</th><td><i class="doc">     * This value indicates the amount of data that the encoder should try</i></td></tr>
+<tr><th id="603">603</th><td><i class="doc">     * to maintain in the decoder's buffer. This value is expressed in units</i></td></tr>
+<tr><th id="604">604</th><td><i class="doc">     * of time (milliseconds). Use the target bitrate (#rc_target_bitrate)</i></td></tr>
+<tr><th id="605">605</th><td><i class="doc">     * to convert to bits/bytes, if necessary.</i></td></tr>
+<tr><th id="606">606</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="607">607</th><td>    <em>unsigned</em> <em>int</em>           <dfn class="decl" id="vpx_codec_enc_cfg::rc_buf_optimal_sz" title='vpx_codec_enc_cfg::rc_buf_optimal_sz' data-ref="vpx_codec_enc_cfg::rc_buf_optimal_sz">rc_buf_optimal_sz</dfn>;</td></tr>
+<tr><th id="608">608</th><td></td></tr>
+<tr><th id="609">609</th><td></td></tr>
+<tr><th id="610">610</th><td>    <i>/*</i></td></tr>
+<tr><th id="611">611</th><td><i>     * 2 pass rate control parameters</i></td></tr>
+<tr><th id="612">612</th><td><i>     */</i></td></tr>
+<tr><th id="613">613</th><td></td></tr>
+<tr><th id="614">614</th><td></td></tr>
+<tr><th id="615">615</th><td>    <i class="doc">/*!<span class="command">\brief</span> Two-pass mode CBR/VBR bias</i></td></tr>
+<tr><th id="616">616</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="617">617</th><td><i class="doc">     * Bias, expressed on a scale of 0 to 100, for determining target size</i></td></tr>
+<tr><th id="618">618</th><td><i class="doc">     * for the current frame. The value 0 indicates the optimal CBR mode</i></td></tr>
+<tr><th id="619">619</th><td><i class="doc">     * value should be used. The value 100 indicates the optimal VBR mode</i></td></tr>
+<tr><th id="620">620</th><td><i class="doc">     * value should be used. Values in between indicate which way the</i></td></tr>
+<tr><th id="621">621</th><td><i class="doc">     * encoder should "lean."</i></td></tr>
+<tr><th id="622">622</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="623">623</th><td>    <em>unsigned</em> <em>int</em>           <dfn class="decl" id="vpx_codec_enc_cfg::rc_2pass_vbr_bias_pct" title='vpx_codec_enc_cfg::rc_2pass_vbr_bias_pct' data-ref="vpx_codec_enc_cfg::rc_2pass_vbr_bias_pct">rc_2pass_vbr_bias_pct</dfn>;       <i class="doc">/**&lt; RC mode bias between CBR and VBR(0-100: 0-&gt;CBR, 100-&gt;VBR)   */</i></td></tr>
+<tr><th id="624">624</th><td></td></tr>
+<tr><th id="625">625</th><td></td></tr>
+<tr><th id="626">626</th><td>    <i class="doc">/*!<span class="command">\brief</span> Two-pass mode per-GOP minimum bitrate</i></td></tr>
+<tr><th id="627">627</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="628">628</th><td><i class="doc">     * This value, expressed as a percentage of the target bitrate, indicates</i></td></tr>
+<tr><th id="629">629</th><td><i class="doc">     * the minimum bitrate to be used for a single GOP (aka "section")</i></td></tr>
+<tr><th id="630">630</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="631">631</th><td>    <em>unsigned</em> <em>int</em>           <dfn class="decl" id="vpx_codec_enc_cfg::rc_2pass_vbr_minsection_pct" title='vpx_codec_enc_cfg::rc_2pass_vbr_minsection_pct' data-ref="vpx_codec_enc_cfg::rc_2pass_vbr_minsection_pct">rc_2pass_vbr_minsection_pct</dfn>;</td></tr>
+<tr><th id="632">632</th><td></td></tr>
+<tr><th id="633">633</th><td></td></tr>
+<tr><th id="634">634</th><td>    <i class="doc">/*!<span class="command">\brief</span> Two-pass mode per-GOP maximum bitrate</i></td></tr>
+<tr><th id="635">635</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="636">636</th><td><i class="doc">     * This value, expressed as a percentage of the target bitrate, indicates</i></td></tr>
+<tr><th id="637">637</th><td><i class="doc">     * the maximum bitrate to be used for a single GOP (aka "section")</i></td></tr>
+<tr><th id="638">638</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="639">639</th><td>    <em>unsigned</em> <em>int</em>           <dfn class="decl" id="vpx_codec_enc_cfg::rc_2pass_vbr_maxsection_pct" title='vpx_codec_enc_cfg::rc_2pass_vbr_maxsection_pct' data-ref="vpx_codec_enc_cfg::rc_2pass_vbr_maxsection_pct">rc_2pass_vbr_maxsection_pct</dfn>;</td></tr>
+<tr><th id="640">640</th><td></td></tr>
+<tr><th id="641">641</th><td></td></tr>
+<tr><th id="642">642</th><td>    <i>/*</i></td></tr>
+<tr><th id="643">643</th><td><i>     * keyframing settings (kf)</i></td></tr>
+<tr><th id="644">644</th><td><i>     */</i></td></tr>
+<tr><th id="645">645</th><td></td></tr>
+<tr><th id="646">646</th><td>    <i class="doc">/*!<span class="command">\brief</span> Keyframe placement mode</i></td></tr>
+<tr><th id="647">647</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="648">648</th><td><i class="doc">     * This value indicates whether the encoder should place keyframes at a</i></td></tr>
+<tr><th id="649">649</th><td><i class="doc">     * fixed interval, or determine the optimal placement automatically</i></td></tr>
+<tr><th id="650">650</th><td><i class="doc">     * (as governed by the #kf_min_dist and #kf_max_dist parameters)</i></td></tr>
+<tr><th id="651">651</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="652">652</th><td>    <b>enum</b> <a class="type" href="#vpx_kf_mode" title='vpx_kf_mode' data-ref="vpx_kf_mode">vpx_kf_mode</a>       <dfn class="decl" id="vpx_codec_enc_cfg::kf_mode" title='vpx_codec_enc_cfg::kf_mode' data-ref="vpx_codec_enc_cfg::kf_mode">kf_mode</dfn>;</td></tr>
+<tr><th id="653">653</th><td></td></tr>
+<tr><th id="654">654</th><td></td></tr>
+<tr><th id="655">655</th><td>    <i class="doc">/*!<span class="command">\brief</span> Keyframe minimum interval</i></td></tr>
+<tr><th id="656">656</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="657">657</th><td><i class="doc">     * This value, expressed as a number of frames, prevents the encoder from</i></td></tr>
+<tr><th id="658">658</th><td><i class="doc">     * placing a keyframe nearer than kf_min_dist to the previous keyframe. At</i></td></tr>
+<tr><th id="659">659</th><td><i class="doc">     * least kf_min_dist frames non-keyframes will be coded before the next</i></td></tr>
+<tr><th id="660">660</th><td><i class="doc">     * keyframe. Set kf_min_dist equal to kf_max_dist for a fixed interval.</i></td></tr>
+<tr><th id="661">661</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="662">662</th><td>    <em>unsigned</em> <em>int</em>           <dfn class="decl" id="vpx_codec_enc_cfg::kf_min_dist" title='vpx_codec_enc_cfg::kf_min_dist' data-ref="vpx_codec_enc_cfg::kf_min_dist">kf_min_dist</dfn>;</td></tr>
+<tr><th id="663">663</th><td></td></tr>
+<tr><th id="664">664</th><td></td></tr>
+<tr><th id="665">665</th><td>    <i class="doc">/*!<span class="command">\brief</span> Keyframe maximum interval</i></td></tr>
+<tr><th id="666">666</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="667">667</th><td><i class="doc">     * This value, expressed as a number of frames, forces the encoder to code</i></td></tr>
+<tr><th id="668">668</th><td><i class="doc">     * a keyframe if one has not been coded in the last kf_max_dist frames.</i></td></tr>
+<tr><th id="669">669</th><td><i class="doc">     * A value of 0 implies all frames will be keyframes. Set kf_min_dist</i></td></tr>
+<tr><th id="670">670</th><td><i class="doc">     * equal to kf_max_dist for a fixed interval.</i></td></tr>
+<tr><th id="671">671</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="672">672</th><td>    <em>unsigned</em> <em>int</em>           <dfn class="decl" id="vpx_codec_enc_cfg::kf_max_dist" title='vpx_codec_enc_cfg::kf_max_dist' data-ref="vpx_codec_enc_cfg::kf_max_dist">kf_max_dist</dfn>;</td></tr>
+<tr><th id="673">673</th><td></td></tr>
+<tr><th id="674">674</th><td>    <i>/*</i></td></tr>
+<tr><th id="675">675</th><td><i>     * Spatial scalability settings (ss)</i></td></tr>
+<tr><th id="676">676</th><td><i>     */</i></td></tr>
+<tr><th id="677">677</th><td></td></tr>
+<tr><th id="678">678</th><td>    <i class="doc">/*!<span class="command">\brief</span> Number of spatial coding layers.</i></td></tr>
+<tr><th id="679">679</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="680">680</th><td><i class="doc">     * This value specifies the number of spatial coding layers to be used.</i></td></tr>
+<tr><th id="681">681</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="682">682</th><td>    <em>unsigned</em> <em>int</em>           <dfn class="decl" id="vpx_codec_enc_cfg::ss_number_layers" title='vpx_codec_enc_cfg::ss_number_layers' data-ref="vpx_codec_enc_cfg::ss_number_layers">ss_number_layers</dfn>;</td></tr>
+<tr><th id="683">683</th><td></td></tr>
+<tr><th id="684">684</th><td>    <i class="doc">/*!<span class="command">\brief</span> Enable auto alt reference flags for each spatial layer.</i></td></tr>
+<tr><th id="685">685</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="686">686</th><td><i class="doc">     * These values specify if auto alt reference frame is enabled for each</i></td></tr>
+<tr><th id="687">687</th><td><i class="doc">     * spatial layer.</i></td></tr>
+<tr><th id="688">688</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="689">689</th><td>    <em>int</em>                    <dfn class="decl" id="vpx_codec_enc_cfg::ss_enable_auto_alt_ref" title='vpx_codec_enc_cfg::ss_enable_auto_alt_ref' data-ref="vpx_codec_enc_cfg::ss_enable_auto_alt_ref">ss_enable_auto_alt_ref</dfn>[<a class="macro" href="#52" title="5" data-ref="_M/VPX_SS_MAX_LAYERS">VPX_SS_MAX_LAYERS</a>];</td></tr>
+<tr><th id="690">690</th><td></td></tr>
+<tr><th id="691">691</th><td>    <i class="doc">/*!<span class="command">\brief</span> Target bitrate for each spatial layer.</i></td></tr>
+<tr><th id="692">692</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="693">693</th><td><i class="doc">     * These values specify the target coding bitrate to be used for each</i></td></tr>
+<tr><th id="694">694</th><td><i class="doc">     * spatial layer.</i></td></tr>
+<tr><th id="695">695</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="696">696</th><td>    <em>unsigned</em> <em>int</em>           <dfn class="decl" id="vpx_codec_enc_cfg::ss_target_bitrate" title='vpx_codec_enc_cfg::ss_target_bitrate' data-ref="vpx_codec_enc_cfg::ss_target_bitrate">ss_target_bitrate</dfn>[<a class="macro" href="#52" title="5" data-ref="_M/VPX_SS_MAX_LAYERS">VPX_SS_MAX_LAYERS</a>];</td></tr>
+<tr><th id="697">697</th><td></td></tr>
+<tr><th id="698">698</th><td>    <i class="doc">/*!<span class="command">\brief</span> Number of temporal coding layers.</i></td></tr>
+<tr><th id="699">699</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="700">700</th><td><i class="doc">     * This value specifies the number of temporal layers to be used.</i></td></tr>
+<tr><th id="701">701</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="702">702</th><td>    <em>unsigned</em> <em>int</em>           <dfn class="decl" id="vpx_codec_enc_cfg::ts_number_layers" title='vpx_codec_enc_cfg::ts_number_layers' data-ref="vpx_codec_enc_cfg::ts_number_layers">ts_number_layers</dfn>;</td></tr>
+<tr><th id="703">703</th><td></td></tr>
+<tr><th id="704">704</th><td>    <i class="doc">/*!<span class="command">\brief</span> Target bitrate for each temporal layer.</i></td></tr>
+<tr><th id="705">705</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="706">706</th><td><i class="doc">     * These values specify the target coding bitrate to be used for each</i></td></tr>
+<tr><th id="707">707</th><td><i class="doc">     * temporal layer.</i></td></tr>
+<tr><th id="708">708</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="709">709</th><td>    <em>unsigned</em> <em>int</em>           <dfn class="decl" id="vpx_codec_enc_cfg::ts_target_bitrate" title='vpx_codec_enc_cfg::ts_target_bitrate' data-ref="vpx_codec_enc_cfg::ts_target_bitrate">ts_target_bitrate</dfn>[<a class="macro" href="#40" title="5" data-ref="_M/VPX_TS_MAX_LAYERS">VPX_TS_MAX_LAYERS</a>];</td></tr>
+<tr><th id="710">710</th><td></td></tr>
+<tr><th id="711">711</th><td>    <i class="doc">/*!<span class="command">\brief</span> Frame rate decimation factor for each temporal layer.</i></td></tr>
+<tr><th id="712">712</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="713">713</th><td><i class="doc">     * These values specify the frame rate decimation factors to apply</i></td></tr>
+<tr><th id="714">714</th><td><i class="doc">     * to each temporal layer.</i></td></tr>
+<tr><th id="715">715</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="716">716</th><td>    <em>unsigned</em> <em>int</em>           <dfn class="decl" id="vpx_codec_enc_cfg::ts_rate_decimator" title='vpx_codec_enc_cfg::ts_rate_decimator' data-ref="vpx_codec_enc_cfg::ts_rate_decimator">ts_rate_decimator</dfn>[<a class="macro" href="#40" title="5" data-ref="_M/VPX_TS_MAX_LAYERS">VPX_TS_MAX_LAYERS</a>];</td></tr>
+<tr><th id="717">717</th><td></td></tr>
+<tr><th id="718">718</th><td>    <i class="doc">/*!<span class="command">\brief</span> Length of the sequence defining frame temporal layer membership.</i></td></tr>
+<tr><th id="719">719</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="720">720</th><td><i class="doc">     * This value specifies the length of the sequence that defines the</i></td></tr>
+<tr><th id="721">721</th><td><i class="doc">     * membership of frames to temporal layers. For example, if the</i></td></tr>
+<tr><th id="722">722</th><td><i class="doc">     * ts_periodicity = 8, then the frames are assigned to coding layers with a</i></td></tr>
+<tr><th id="723">723</th><td><i class="doc">     * repeated sequence of length 8.</i></td></tr>
+<tr><th id="724">724</th><td><i class="doc">    */</i></td></tr>
+<tr><th id="725">725</th><td>    <em>unsigned</em> <em>int</em>           <dfn class="decl" id="vpx_codec_enc_cfg::ts_periodicity" title='vpx_codec_enc_cfg::ts_periodicity' data-ref="vpx_codec_enc_cfg::ts_periodicity">ts_periodicity</dfn>;</td></tr>
+<tr><th id="726">726</th><td></td></tr>
+<tr><th id="727">727</th><td>    <i class="doc">/*!<span class="command">\brief</span> Template defining the membership of frames to temporal layers.</i></td></tr>
+<tr><th id="728">728</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="729">729</th><td><i class="doc">     * This array defines the membership of frames to temporal coding layers.</i></td></tr>
+<tr><th id="730">730</th><td><i class="doc">     * For a 2-layer encoding that assigns even numbered frames to one temporal</i></td></tr>
+<tr><th id="731">731</th><td><i class="doc">     * layer (0) and odd numbered frames to a second temporal layer (1) with</i></td></tr>
+<tr><th id="732">732</th><td><i class="doc">     * ts_periodicity=8, then ts_layer_id = (0,1,0,1,0,1,0,1).</i></td></tr>
+<tr><th id="733">733</th><td><i class="doc">    */</i></td></tr>
+<tr><th id="734">734</th><td>    <em>unsigned</em> <em>int</em>           <dfn class="decl" id="vpx_codec_enc_cfg::ts_layer_id" title='vpx_codec_enc_cfg::ts_layer_id' data-ref="vpx_codec_enc_cfg::ts_layer_id">ts_layer_id</dfn>[<a class="macro" href="#37" title="16" data-ref="_M/VPX_TS_MAX_PERIODICITY">VPX_TS_MAX_PERIODICITY</a>];</td></tr>
+<tr><th id="735">735</th><td></td></tr>
+<tr><th id="736">736</th><td>    <i class="doc">/*!<span class="command">\brief</span> Target bitrate for each spatial/temporal layer.</i></td></tr>
+<tr><th id="737">737</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="738">738</th><td><i class="doc">     * These values specify the target coding bitrate to be used for each</i></td></tr>
+<tr><th id="739">739</th><td><i class="doc">     * spatial/temporal layer.</i></td></tr>
+<tr><th id="740">740</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="741">741</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="742">742</th><td>    <em>unsigned</em> <em>int</em>           <dfn class="decl" id="vpx_codec_enc_cfg::layer_target_bitrate" title='vpx_codec_enc_cfg::layer_target_bitrate' data-ref="vpx_codec_enc_cfg::layer_target_bitrate">layer_target_bitrate</dfn>[<a class="macro" href="#46" title="12" data-ref="_M/VPX_MAX_LAYERS">VPX_MAX_LAYERS</a>];</td></tr>
+<tr><th id="743">743</th><td></td></tr>
+<tr><th id="744">744</th><td>    <i class="doc">/*!<span class="command">\brief</span> Temporal layering mode indicating which temporal layering scheme to use.</i></td></tr>
+<tr><th id="745">745</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="746">746</th><td><i class="doc">     * The value (refer to VP9E_TEMPORAL_LAYERING_MODE) specifies the</i></td></tr>
+<tr><th id="747">747</th><td><i class="doc">     * temporal layering mode to use.</i></td></tr>
+<tr><th id="748">748</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="749">749</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="750">750</th><td>    <em>int</em>                    <dfn class="decl" id="vpx_codec_enc_cfg::temporal_layering_mode" title='vpx_codec_enc_cfg::temporal_layering_mode' data-ref="vpx_codec_enc_cfg::temporal_layering_mode">temporal_layering_mode</dfn>;</td></tr>
+<tr><th id="751">751</th><td>  } <dfn class="typedef" id="vpx_codec_enc_cfg_t" title='vpx_codec_enc_cfg_t' data-type='struct vpx_codec_enc_cfg' data-ref="vpx_codec_enc_cfg_t">vpx_codec_enc_cfg_t</dfn>; <i class="doc">/**&lt; alias for struct vpx_codec_enc_cfg */</i></td></tr>
+<tr><th id="752">752</th><td></td></tr>
+<tr><th id="753">753</th><td>  <i class="doc">/*!<span class="command">\brief</span>  vp9 svc extra configure parameters</i></td></tr>
+<tr><th id="754">754</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="755">755</th><td><i class="doc">   * This defines max/min quantizers and scale factors for each layer</i></td></tr>
+<tr><th id="756">756</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="757">757</th><td><i class="doc">   */</i></td></tr>
+<tr><th id="758">758</th><td>  <b>typedef</b> <b>struct</b> <dfn class="type def" id="vpx_svc_parameters" title='vpx_svc_parameters' data-ref="vpx_svc_parameters"><a class="type" href="#vpx_svc_parameters" title='vpx_svc_parameters' data-ref="vpx_svc_parameters">vpx_svc_parameters</a></dfn> {</td></tr>
+<tr><th id="759">759</th><td>    <em>int</em> <dfn class="decl" id="vpx_svc_parameters::max_quantizers" title='vpx_svc_parameters::max_quantizers' data-ref="vpx_svc_parameters::max_quantizers">max_quantizers</dfn>[<a class="macro" href="#46" title="12" data-ref="_M/VPX_MAX_LAYERS">VPX_MAX_LAYERS</a>]; <i class="doc">/**&lt; Max Q for each layer */</i></td></tr>
+<tr><th id="760">760</th><td>    <em>int</em> <dfn class="decl" id="vpx_svc_parameters::min_quantizers" title='vpx_svc_parameters::min_quantizers' data-ref="vpx_svc_parameters::min_quantizers">min_quantizers</dfn>[<a class="macro" href="#46" title="12" data-ref="_M/VPX_MAX_LAYERS">VPX_MAX_LAYERS</a>]; <i class="doc">/**&lt; Min Q for each layer */</i></td></tr>
+<tr><th id="761">761</th><td>    <em>int</em> <dfn class="decl" id="vpx_svc_parameters::scaling_factor_num" title='vpx_svc_parameters::scaling_factor_num' data-ref="vpx_svc_parameters::scaling_factor_num">scaling_factor_num</dfn>[<a class="macro" href="#46" title="12" data-ref="_M/VPX_MAX_LAYERS">VPX_MAX_LAYERS</a>]; <i class="doc">/**&lt; Scaling factor-numerator */</i></td></tr>
+<tr><th id="762">762</th><td>    <em>int</em> <dfn class="decl" id="vpx_svc_parameters::scaling_factor_den" title='vpx_svc_parameters::scaling_factor_den' data-ref="vpx_svc_parameters::scaling_factor_den">scaling_factor_den</dfn>[<a class="macro" href="#46" title="12" data-ref="_M/VPX_MAX_LAYERS">VPX_MAX_LAYERS</a>]; <i class="doc">/**&lt; Scaling factor-denominator */</i></td></tr>
+<tr><th id="763">763</th><td>    <em>int</em> <dfn class="decl" id="vpx_svc_parameters::temporal_layering_mode" title='vpx_svc_parameters::temporal_layering_mode' data-ref="vpx_svc_parameters::temporal_layering_mode">temporal_layering_mode</dfn>; <i class="doc">/**&lt; Temporal layering mode */</i></td></tr>
+<tr><th id="764">764</th><td>  } <dfn class="typedef" id="vpx_svc_extra_cfg_t" title='vpx_svc_extra_cfg_t' data-type='struct vpx_svc_parameters' data-ref="vpx_svc_extra_cfg_t">vpx_svc_extra_cfg_t</dfn>;</td></tr>
+<tr><th id="765">765</th><td></td></tr>
+<tr><th id="766">766</th><td></td></tr>
+<tr><th id="767">767</th><td>  <i class="doc">/*!<span class="command">\brief</span> Initialize an encoder instance</i></td></tr>
+<tr><th id="768">768</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="769">769</th><td><i class="doc">   * Initializes a encoder context using the given interface. Applications</i></td></tr>
+<tr><th id="770">770</th><td><i class="doc">   * should call the vpx_codec_enc_init convenience macro instead of this</i></td></tr>
+<tr><th id="771">771</th><td><i class="doc">   * function directly, to ensure that the ABI version number parameter</i></td></tr>
+<tr><th id="772">772</th><td><i class="doc">   * is properly initialized.</i></td></tr>
+<tr><th id="773">773</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="774">774</th><td><i class="doc">   * If the library was configured with --disable-multithread, this call</i></td></tr>
+<tr><th id="775">775</th><td><i class="doc">   * is not thread safe and should be guarded with a lock if being used</i></td></tr>
+<tr><th id="776">776</th><td><i class="doc">   * in a multithreaded context.</i></td></tr>
+<tr><th id="777">777</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="778">778</th><td><i class="doc">   * <span class="command">\param</span>[in]    <span class="arg">ctx</span>     Pointer to this instance's context.</i></td></tr>
+<tr><th id="779">779</th><td><i class="doc">   * <span class="command">\param</span>[in]    <span class="arg">iface</span>   Pointer to the algorithm interface to use.</i></td></tr>
+<tr><th id="780">780</th><td><i class="doc">   * <span class="command">\param</span>[in]    <span class="arg">cfg</span>     Configuration to use, if known. May be NULL.</i></td></tr>
+<tr><th id="781">781</th><td><i class="doc">   * <span class="command">\param</span>[in]    <span class="arg">flags</span>   Bitfield of VPX_CODEC_USE_* flags</i></td></tr>
+<tr><th id="782">782</th><td><i class="doc">   * <span class="command">\param</span>[in]    <span class="arg">ver</span>     ABI version number. Must be set to</i></td></tr>
+<tr><th id="783">783</th><td><i class="doc">   *                       VPX_ENCODER_ABI_VERSION</i></td></tr>
+<tr><th id="784">784</th><td><i class="doc">   *<span class="command"> \retval</span> #VPX_CODEC_OK</i></td></tr>
+<tr><th id="785">785</th><td><i class="doc">   *     The decoder algorithm initialized.</i></td></tr>
+<tr><th id="786">786</th><td><i class="doc">   *<span class="command"> \retval</span> #VPX_CODEC_MEM_ERROR</i></td></tr>
+<tr><th id="787">787</th><td><i class="doc">   *     Memory allocation failed.</i></td></tr>
+<tr><th id="788">788</th><td><i class="doc">   */</i></td></tr>
+<tr><th id="789">789</th><td>  <a class="typedef" href="vpx_codec.h.html#vpx_codec_err_t" title='vpx_codec_err_t' data-type='enum vpx_codec_err_t' data-ref="vpx_codec_err_t">vpx_codec_err_t</a> <dfn class="decl" id="vpx_codec_enc_init_ver" title='vpx_codec_enc_init_ver' data-ref="vpx_codec_enc_init_ver">vpx_codec_enc_init_ver</dfn>(<a class="typedef" href="vpx_codec.h.html#vpx_codec_ctx_t" title='vpx_codec_ctx_t' data-type='struct vpx_codec_ctx' data-ref="vpx_codec_ctx_t">vpx_codec_ctx_t</a>      *<dfn class="local col0 decl" id="30ctx" title='ctx' data-type='vpx_codec_ctx_t *' data-ref="30ctx">ctx</dfn>,</td></tr>
+<tr><th id="790">790</th><td>                                         <a class="typedef" href="vpx_codec.h.html#vpx_codec_iface_t" title='vpx_codec_iface_t' data-type='const struct vpx_codec_iface' data-ref="vpx_codec_iface_t">vpx_codec_iface_t</a>    *<dfn class="local col1 decl" id="31iface" title='iface' data-type='vpx_codec_iface_t *' data-ref="31iface">iface</dfn>,</td></tr>
+<tr><th id="791">791</th><td>                                         <em>const</em> <a class="typedef" href="#vpx_codec_enc_cfg_t" title='vpx_codec_enc_cfg_t' data-type='struct vpx_codec_enc_cfg' data-ref="vpx_codec_enc_cfg_t">vpx_codec_enc_cfg_t</a> *<dfn class="local col2 decl" id="32cfg" title='cfg' data-type='const vpx_codec_enc_cfg_t *' data-ref="32cfg">cfg</dfn>,</td></tr>
+<tr><th id="792">792</th><td>                                         <a class="typedef" href="vpx_codec.h.html#vpx_codec_flags_t" title='vpx_codec_flags_t' data-type='long' data-ref="vpx_codec_flags_t">vpx_codec_flags_t</a>     <dfn class="local col3 decl" id="33flags" title='flags' data-type='vpx_codec_flags_t' data-ref="33flags">flags</dfn>,</td></tr>
+<tr><th id="793">793</th><td>                                         <em>int</em>                   <dfn class="local col4 decl" id="34ver" title='ver' data-type='int' data-ref="34ver">ver</dfn>);</td></tr>
+<tr><th id="794">794</th><td></td></tr>
+<tr><th id="795">795</th><td></td></tr>
+<tr><th id="796">796</th><td>  <i class="doc">/*!<span class="command">\brief</span> Convenience macro for vpx_codec_enc_init_ver()</i></td></tr>
+<tr><th id="797">797</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="798">798</th><td><i class="doc">   * Ensures the ABI version parameter is properly set.</i></td></tr>
+<tr><th id="799">799</th><td><i class="doc">   */</i></td></tr>
+<tr><th id="800">800</th><td><u>#define <dfn class="macro" id="_M/vpx_codec_enc_init" data-ref="_M/vpx_codec_enc_init">vpx_codec_enc_init</dfn>(ctx, iface, cfg, flags) \</u></td></tr>
+<tr><th id="801">801</th><td><u>  vpx_codec_enc_init_ver(ctx, iface, cfg, flags, VPX_ENCODER_ABI_VERSION)</u></td></tr>
+<tr><th id="802">802</th><td></td></tr>
+<tr><th id="803">803</th><td></td></tr>
+<tr><th id="804">804</th><td>  <i class="doc">/*!<span class="command">\brief</span> Initialize multi-encoder instance</i></td></tr>
+<tr><th id="805">805</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="806">806</th><td><i class="doc">   * Initializes multi-encoder context using the given interface.</i></td></tr>
+<tr><th id="807">807</th><td><i class="doc">   * Applications should call the vpx_codec_enc_init_multi convenience macro</i></td></tr>
+<tr><th id="808">808</th><td><i class="doc">   * instead of this function directly, to ensure that the ABI version number</i></td></tr>
+<tr><th id="809">809</th><td><i class="doc">   * parameter is properly initialized.</i></td></tr>
+<tr><th id="810">810</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="811">811</th><td><i class="doc">   * <span class="command">\param</span>[in]    <span class="arg">ctx</span>     Pointer to this instance's context.</i></td></tr>
+<tr><th id="812">812</th><td><i class="doc">   * <span class="command">\param</span>[in]    <span class="arg">iface</span>   Pointer to the algorithm interface to use.</i></td></tr>
+<tr><th id="813">813</th><td><i class="doc">   * <span class="command">\param</span>[in]    <span class="arg">cfg</span>     Configuration to use, if known. May be NULL.</i></td></tr>
+<tr><th id="814">814</th><td><i class="doc">   * <span class="command">\param</span>[in]    <span class="arg">num_enc</span> Total number of encoders.</i></td></tr>
+<tr><th id="815">815</th><td><i class="doc">   * <span class="command">\param</span>[in]    <span class="arg">flags</span>   Bitfield of VPX_CODEC_USE_* flags</i></td></tr>
+<tr><th id="816">816</th><td><i class="doc">   * <span class="command">\param</span>[in]    <span class="arg">dsf</span>     Pointer to down-sampling factors.</i></td></tr>
+<tr><th id="817">817</th><td><i class="doc">   * <span class="command">\param</span>[in]    <span class="arg">ver</span>     ABI version number. Must be set to</i></td></tr>
+<tr><th id="818">818</th><td><i class="doc">   *                       VPX_ENCODER_ABI_VERSION</i></td></tr>
+<tr><th id="819">819</th><td><i class="doc">   *<span class="command"> \retval</span> #VPX_CODEC_OK</i></td></tr>
+<tr><th id="820">820</th><td><i class="doc">   *     The decoder algorithm initialized.</i></td></tr>
+<tr><th id="821">821</th><td><i class="doc">   *<span class="command"> \retval</span> #VPX_CODEC_MEM_ERROR</i></td></tr>
+<tr><th id="822">822</th><td><i class="doc">   *     Memory allocation failed.</i></td></tr>
+<tr><th id="823">823</th><td><i class="doc">   */</i></td></tr>
+<tr><th id="824">824</th><td>  <a class="typedef" href="vpx_codec.h.html#vpx_codec_err_t" title='vpx_codec_err_t' data-type='enum vpx_codec_err_t' data-ref="vpx_codec_err_t">vpx_codec_err_t</a> <dfn class="decl" id="vpx_codec_enc_init_multi_ver" title='vpx_codec_enc_init_multi_ver' data-ref="vpx_codec_enc_init_multi_ver">vpx_codec_enc_init_multi_ver</dfn>(<a class="typedef" href="vpx_codec.h.html#vpx_codec_ctx_t" title='vpx_codec_ctx_t' data-type='struct vpx_codec_ctx' data-ref="vpx_codec_ctx_t">vpx_codec_ctx_t</a>      *<dfn class="local col5 decl" id="35ctx" title='ctx' data-type='vpx_codec_ctx_t *' data-ref="35ctx">ctx</dfn>,</td></tr>
+<tr><th id="825">825</th><td>                                               <a class="typedef" href="vpx_codec.h.html#vpx_codec_iface_t" title='vpx_codec_iface_t' data-type='const struct vpx_codec_iface' data-ref="vpx_codec_iface_t">vpx_codec_iface_t</a>    *<dfn class="local col6 decl" id="36iface" title='iface' data-type='vpx_codec_iface_t *' data-ref="36iface">iface</dfn>,</td></tr>
+<tr><th id="826">826</th><td>                                               <a class="typedef" href="#vpx_codec_enc_cfg_t" title='vpx_codec_enc_cfg_t' data-type='struct vpx_codec_enc_cfg' data-ref="vpx_codec_enc_cfg_t">vpx_codec_enc_cfg_t</a>  *<dfn class="local col7 decl" id="37cfg" title='cfg' data-type='vpx_codec_enc_cfg_t *' data-ref="37cfg">cfg</dfn>,</td></tr>
+<tr><th id="827">827</th><td>                                               <em>int</em>                   <dfn class="local col8 decl" id="38num_enc" title='num_enc' data-type='int' data-ref="38num_enc">num_enc</dfn>,</td></tr>
+<tr><th id="828">828</th><td>                                               <a class="typedef" href="vpx_codec.h.html#vpx_codec_flags_t" title='vpx_codec_flags_t' data-type='long' data-ref="vpx_codec_flags_t">vpx_codec_flags_t</a>     <dfn class="local col9 decl" id="39flags" title='flags' data-type='vpx_codec_flags_t' data-ref="39flags">flags</dfn>,</td></tr>
+<tr><th id="829">829</th><td>                                               <a class="typedef" href="#vpx_rational_t" title='vpx_rational_t' data-type='struct vpx_rational' data-ref="vpx_rational_t">vpx_rational_t</a>       *<dfn class="local col0 decl" id="40dsf" title='dsf' data-type='vpx_rational_t *' data-ref="40dsf">dsf</dfn>,</td></tr>
+<tr><th id="830">830</th><td>                                               <em>int</em>                   <dfn class="local col1 decl" id="41ver" title='ver' data-type='int' data-ref="41ver">ver</dfn>);</td></tr>
+<tr><th id="831">831</th><td></td></tr>
+<tr><th id="832">832</th><td></td></tr>
+<tr><th id="833">833</th><td>  <i class="doc">/*!<span class="command">\brief</span> Convenience macro for vpx_codec_enc_init_multi_ver()</i></td></tr>
+<tr><th id="834">834</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="835">835</th><td><i class="doc">   * Ensures the ABI version parameter is properly set.</i></td></tr>
+<tr><th id="836">836</th><td><i class="doc">   */</i></td></tr>
+<tr><th id="837">837</th><td><u>#define <dfn class="macro" id="_M/vpx_codec_enc_init_multi" data-ref="_M/vpx_codec_enc_init_multi">vpx_codec_enc_init_multi</dfn>(ctx, iface, cfg, num_enc, flags, dsf) \</u></td></tr>
+<tr><th id="838">838</th><td><u>  vpx_codec_enc_init_multi_ver(ctx, iface, cfg, num_enc, flags, dsf, \</u></td></tr>
+<tr><th id="839">839</th><td><u>                               VPX_ENCODER_ABI_VERSION)</u></td></tr>
+<tr><th id="840">840</th><td></td></tr>
+<tr><th id="841">841</th><td></td></tr>
+<tr><th id="842">842</th><td>  <i class="doc">/*!<span class="command">\brief</span> Get a default configuration</i></td></tr>
+<tr><th id="843">843</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="844">844</th><td><i class="doc">   * Initializes a encoder configuration structure with default values. Supports</i></td></tr>
+<tr><th id="845">845</th><td><i class="doc">   * the notion of "usages" so that an algorithm may offer different default</i></td></tr>
+<tr><th id="846">846</th><td><i class="doc">   * settings depending on the user's intended goal. This function <span class="command">\ref</span> <span class="verb">SHOULD</span></i></td></tr>
+<tr><th id="847">847</th><td><i class="doc">   * be called by all applications to initialize the configuration structure</i></td></tr>
+<tr><th id="848">848</th><td><i class="doc">   * before specializing the configuration with application specific values.</i></td></tr>
+<tr><th id="849">849</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="850">850</th><td><i class="doc">   * <span class="command">\param</span>[in]    <span class="arg">iface</span>     Pointer to the algorithm interface to use.</i></td></tr>
+<tr><th id="851">851</th><td><i class="doc">   * <span class="command">\param</span>[out]   <span class="arg">cfg</span>       Configuration buffer to populate.</i></td></tr>
+<tr><th id="852">852</th><td><i class="doc">   * <span class="command">\param</span>[in]    <span class="arg">reserved</span>  Must set to 0 for VP8 and VP9.</i></td></tr>
+<tr><th id="853">853</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="854">854</th><td><i class="doc">   *<span class="command"> \retval</span> #VPX_CODEC_OK</i></td></tr>
+<tr><th id="855">855</th><td><i class="doc">   *     The configuration was populated.</i></td></tr>
+<tr><th id="856">856</th><td><i class="doc">   *<span class="command"> \retval</span> #VPX_CODEC_INCAPABLE</i></td></tr>
+<tr><th id="857">857</th><td><i class="doc">   *     Interface is not an encoder interface.</i></td></tr>
+<tr><th id="858">858</th><td><i class="doc">   *<span class="command"> \retval</span> #VPX_CODEC_INVALID_PARAM</i></td></tr>
+<tr><th id="859">859</th><td><i class="doc">   *     A parameter was NULL, or the usage value was not recognized.</i></td></tr>
+<tr><th id="860">860</th><td><i class="doc">   */</i></td></tr>
+<tr><th id="861">861</th><td>  <a class="typedef" href="vpx_codec.h.html#vpx_codec_err_t" title='vpx_codec_err_t' data-type='enum vpx_codec_err_t' data-ref="vpx_codec_err_t">vpx_codec_err_t</a>  <dfn class="decl" id="vpx_codec_enc_config_default" title='vpx_codec_enc_config_default' data-ref="vpx_codec_enc_config_default">vpx_codec_enc_config_default</dfn>(<a class="typedef" href="vpx_codec.h.html#vpx_codec_iface_t" title='vpx_codec_iface_t' data-type='const struct vpx_codec_iface' data-ref="vpx_codec_iface_t">vpx_codec_iface_t</a>    *<dfn class="local col2 decl" id="42iface" title='iface' data-type='vpx_codec_iface_t *' data-ref="42iface">iface</dfn>,</td></tr>
+<tr><th id="862">862</th><td>                                                <a class="typedef" href="#vpx_codec_enc_cfg_t" title='vpx_codec_enc_cfg_t' data-type='struct vpx_codec_enc_cfg' data-ref="vpx_codec_enc_cfg_t">vpx_codec_enc_cfg_t</a>  *<dfn class="local col3 decl" id="43cfg" title='cfg' data-type='vpx_codec_enc_cfg_t *' data-ref="43cfg">cfg</dfn>,</td></tr>
+<tr><th id="863">863</th><td>                                                <em>unsigned</em> <em>int</em>          <dfn class="local col4 decl" id="44reserved" title='reserved' data-type='unsigned int' data-ref="44reserved">reserved</dfn>);</td></tr>
+<tr><th id="864">864</th><td></td></tr>
+<tr><th id="865">865</th><td></td></tr>
+<tr><th id="866">866</th><td>  <i class="doc">/*!<span class="command">\brief</span> Set or change configuration</i></td></tr>
+<tr><th id="867">867</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="868">868</th><td><i class="doc">   * Reconfigures an encoder instance according to the given configuration.</i></td></tr>
+<tr><th id="869">869</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="870">870</th><td><i class="doc">   * <span class="command">\param</span>[in]    <span class="arg">ctx</span>     Pointer to this instance's context</i></td></tr>
+<tr><th id="871">871</th><td><i class="doc">   * <span class="command">\param</span>[in]    <span class="arg">cfg</span>     Configuration buffer to use</i></td></tr>
+<tr><th id="872">872</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="873">873</th><td><i class="doc">   *<span class="command"> \retval</span> #VPX_CODEC_OK</i></td></tr>
+<tr><th id="874">874</th><td><i class="doc">   *     The configuration was populated.</i></td></tr>
+<tr><th id="875">875</th><td><i class="doc">   *<span class="command"> \retval</span> #VPX_CODEC_INCAPABLE</i></td></tr>
+<tr><th id="876">876</th><td><i class="doc">   *     Interface is not an encoder interface.</i></td></tr>
+<tr><th id="877">877</th><td><i class="doc">   *<span class="command"> \retval</span> #VPX_CODEC_INVALID_PARAM</i></td></tr>
+<tr><th id="878">878</th><td><i class="doc">   *     A parameter was NULL, or the usage value was not recognized.</i></td></tr>
+<tr><th id="879">879</th><td><i class="doc">   */</i></td></tr>
+<tr><th id="880">880</th><td>  <a class="typedef" href="vpx_codec.h.html#vpx_codec_err_t" title='vpx_codec_err_t' data-type='enum vpx_codec_err_t' data-ref="vpx_codec_err_t">vpx_codec_err_t</a>  <dfn class="decl" id="vpx_codec_enc_config_set" title='vpx_codec_enc_config_set' data-ref="vpx_codec_enc_config_set">vpx_codec_enc_config_set</dfn>(<a class="typedef" href="vpx_codec.h.html#vpx_codec_ctx_t" title='vpx_codec_ctx_t' data-type='struct vpx_codec_ctx' data-ref="vpx_codec_ctx_t">vpx_codec_ctx_t</a>            *<dfn class="local col5 decl" id="45ctx" title='ctx' data-type='vpx_codec_ctx_t *' data-ref="45ctx">ctx</dfn>,</td></tr>
+<tr><th id="881">881</th><td>                                            <em>const</em> <a class="typedef" href="#vpx_codec_enc_cfg_t" title='vpx_codec_enc_cfg_t' data-type='struct vpx_codec_enc_cfg' data-ref="vpx_codec_enc_cfg_t">vpx_codec_enc_cfg_t</a>  *<dfn class="local col6 decl" id="46cfg" title='cfg' data-type='const vpx_codec_enc_cfg_t *' data-ref="46cfg">cfg</dfn>);</td></tr>
+<tr><th id="882">882</th><td></td></tr>
+<tr><th id="883">883</th><td></td></tr>
+<tr><th id="884">884</th><td>  <i class="doc">/*!<span class="command">\brief</span> Get global stream headers</i></td></tr>
+<tr><th id="885">885</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="886">886</th><td><i class="doc">   * Retrieves a stream level global header packet, if supported by the codec.</i></td></tr>
+<tr><th id="887">887</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="888">888</th><td><i class="doc">   * <span class="command">\param</span>[in]    <span class="arg">ctx</span>     Pointer to this instance's context</i></td></tr>
+<tr><th id="889">889</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="890">890</th><td><i class="doc">   *<span class="command"> \retval</span> NULL</i></td></tr>
+<tr><th id="891">891</th><td><i class="doc">   *     Encoder does not support global header</i></td></tr>
+<tr><th id="892">892</th><td><i class="doc">   *<span class="command"> \retval</span> Non-NULL</i></td></tr>
+<tr><th id="893">893</th><td><i class="doc">   *     Pointer to buffer containing global header packet</i></td></tr>
+<tr><th id="894">894</th><td><i class="doc">   */</i></td></tr>
+<tr><th id="895">895</th><td>  <a class="typedef" href="#vpx_fixed_buf_t" title='vpx_fixed_buf_t' data-type='struct vpx_fixed_buf' data-ref="vpx_fixed_buf_t">vpx_fixed_buf_t</a> *<dfn class="decl" id="vpx_codec_get_global_headers" title='vpx_codec_get_global_headers' data-ref="vpx_codec_get_global_headers">vpx_codec_get_global_headers</dfn>(<a class="typedef" href="vpx_codec.h.html#vpx_codec_ctx_t" title='vpx_codec_ctx_t' data-type='struct vpx_codec_ctx' data-ref="vpx_codec_ctx_t">vpx_codec_ctx_t</a>   *<dfn class="local col7 decl" id="47ctx" title='ctx' data-type='vpx_codec_ctx_t *' data-ref="47ctx">ctx</dfn>);</td></tr>
+<tr><th id="896">896</th><td></td></tr>
+<tr><th id="897">897</th><td></td></tr>
+<tr><th id="898">898</th><td><u>#define <dfn class="macro" id="_M/VPX_DL_REALTIME" data-ref="_M/VPX_DL_REALTIME">VPX_DL_REALTIME</dfn>     (1)        /**&lt; deadline parameter analogous to</u></td></tr>
+<tr><th id="899">899</th><td><u>  *   VPx REALTIME mode. */</u></td></tr>
+<tr><th id="900">900</th><td><u>#define <dfn class="macro" id="_M/VPX_DL_GOOD_QUALITY" data-ref="_M/VPX_DL_GOOD_QUALITY">VPX_DL_GOOD_QUALITY</dfn> (1000000)  /**&lt; deadline parameter analogous to</u></td></tr>
+<tr><th id="901">901</th><td><u>  *   VPx GOOD QUALITY mode. */</u></td></tr>
+<tr><th id="902">902</th><td><u>#define <dfn class="macro" id="_M/VPX_DL_BEST_QUALITY" data-ref="_M/VPX_DL_BEST_QUALITY">VPX_DL_BEST_QUALITY</dfn> (0)        /**&lt; deadline parameter analogous to</u></td></tr>
+<tr><th id="903">903</th><td><u>  *   VPx BEST QUALITY mode. */</u></td></tr>
+<tr><th id="904">904</th><td>  <i class="doc">/*!<span class="command">\brief</span> Encode a frame</i></td></tr>
+<tr><th id="905">905</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="906">906</th><td><i class="doc">   * Encodes a video frame at the given "presentation time." The presentation</i></td></tr>
+<tr><th id="907">907</th><td><i class="doc">   * time stamp (PTS) <span class="command">\ref</span> <span class="verb">MUST be strictly increasing.</span></i></td></tr>
+<tr><th id="908">908</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="909">909</th><td><i class="doc">   * The encoder supports the notion of a soft real-time deadline. Given a</i></td></tr>
+<tr><th id="910">910</th><td><i class="doc">   * non-zero value to the deadline parameter, the encoder will make a "best</i></td></tr>
+<tr><th id="911">911</th><td><i class="doc">   * effort" guarantee to  return before the given time slice expires. It is</i></td></tr>
+<tr><th id="912">912</th><td><i class="doc">   * implicit that limiting the available time to encode will degrade the</i></td></tr>
+<tr><th id="913">913</th><td><i class="doc">   * output quality. The encoder can be given an unlimited time to produce the</i></td></tr>
+<tr><th id="914">914</th><td><i class="doc">   * best possible frame by specifying a deadline of '0'. This deadline</i></td></tr>
+<tr><th id="915">915</th><td><i class="doc">   * supercedes the VPx notion of "best quality, good quality, realtime".</i></td></tr>
+<tr><th id="916">916</th><td><i class="doc">   * Applications that wish to map these former settings to the new deadline</i></td></tr>
+<tr><th id="917">917</th><td><i class="doc">   * based system can use the symbols #VPX_DL_REALTIME, #VPX_DL_GOOD_QUALITY,</i></td></tr>
+<tr><th id="918">918</th><td><i class="doc">   * and #VPX_DL_BEST_QUALITY.</i></td></tr>
+<tr><th id="919">919</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="920">920</th><td><i class="doc">   * When the last frame has been passed to the encoder, this function should</i></td></tr>
+<tr><th id="921">921</th><td><i class="doc">   * continue to be called, with the img parameter set to NULL. This will</i></td></tr>
+<tr><th id="922">922</th><td><i class="doc">   * signal the end-of-stream condition to the encoder and allow it to encode</i></td></tr>
+<tr><th id="923">923</th><td><i class="doc">   * any held buffers. Encoding is complete when vpx_codec_encode() is called</i></td></tr>
+<tr><th id="924">924</th><td><i class="doc">   * and vpx_codec_get_cx_data() returns no data.</i></td></tr>
+<tr><th id="925">925</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="926">926</th><td><i class="doc">   * <span class="command">\param</span>[in]    <span class="arg">ctx</span>       Pointer to this instance's context</i></td></tr>
+<tr><th id="927">927</th><td><i class="doc">   * <span class="command">\param</span>[in]    <span class="arg">img</span>       Image data to encode, NULL to flush.</i></td></tr>
+<tr><th id="928">928</th><td><i class="doc">   * <span class="command">\param</span>[in]    <span class="arg">pts</span>       Presentation time stamp, in timebase units.</i></td></tr>
+<tr><th id="929">929</th><td><i class="doc">   * <span class="command">\param</span>[in]    <span class="arg">duration</span>  Duration to show frame, in timebase units.</i></td></tr>
+<tr><th id="930">930</th><td><i class="doc">   * <span class="command">\param</span>[in]    <span class="arg">flags</span>     Flags to use for encoding this frame.</i></td></tr>
+<tr><th id="931">931</th><td><i class="doc">   * <span class="command">\param</span>[in]    <span class="arg">deadline</span>  Time to spend encoding, in microseconds. (0=infinite)</i></td></tr>
+<tr><th id="932">932</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="933">933</th><td><i class="doc">   *<span class="command"> \retval</span> #VPX_CODEC_OK</i></td></tr>
+<tr><th id="934">934</th><td><i class="doc">   *     The configuration was populated.</i></td></tr>
+<tr><th id="935">935</th><td><i class="doc">   *<span class="command"> \retval</span> #VPX_CODEC_INCAPABLE</i></td></tr>
+<tr><th id="936">936</th><td><i class="doc">   *     Interface is not an encoder interface.</i></td></tr>
+<tr><th id="937">937</th><td><i class="doc">   *<span class="command"> \retval</span> #VPX_CODEC_INVALID_PARAM</i></td></tr>
+<tr><th id="938">938</th><td><i class="doc">   *     A parameter was NULL, the image format is unsupported, etc.</i></td></tr>
+<tr><th id="939">939</th><td><i class="doc">   */</i></td></tr>
+<tr><th id="940">940</th><td>  <a class="typedef" href="vpx_codec.h.html#vpx_codec_err_t" title='vpx_codec_err_t' data-type='enum vpx_codec_err_t' data-ref="vpx_codec_err_t">vpx_codec_err_t</a>  <dfn class="decl" id="vpx_codec_encode" title='vpx_codec_encode' data-ref="vpx_codec_encode">vpx_codec_encode</dfn>(<a class="typedef" href="vpx_codec.h.html#vpx_codec_ctx_t" title='vpx_codec_ctx_t' data-type='struct vpx_codec_ctx' data-ref="vpx_codec_ctx_t">vpx_codec_ctx_t</a>            *<dfn class="local col8 decl" id="48ctx" title='ctx' data-type='vpx_codec_ctx_t *' data-ref="48ctx">ctx</dfn>,</td></tr>
+<tr><th id="941">941</th><td>                                    <em>const</em> <a class="typedef" href="vpx_image.h.html#vpx_image_t" title='vpx_image_t' data-type='struct vpx_image' data-ref="vpx_image_t">vpx_image_t</a>          *<dfn class="local col9 decl" id="49img" title='img' data-type='const vpx_image_t *' data-ref="49img">img</dfn>,</td></tr>
+<tr><th id="942">942</th><td>                                    <a class="typedef" href="#vpx_codec_pts_t" title='vpx_codec_pts_t' data-type='int64_t' data-ref="vpx_codec_pts_t">vpx_codec_pts_t</a>             <dfn class="local col0 decl" id="50pts" title='pts' data-type='vpx_codec_pts_t' data-ref="50pts">pts</dfn>,</td></tr>
+<tr><th id="943">943</th><td>                                    <em>unsigned</em> <em>long</em>               <dfn class="local col1 decl" id="51duration" title='duration' data-type='unsigned long' data-ref="51duration">duration</dfn>,</td></tr>
+<tr><th id="944">944</th><td>                                    <a class="typedef" href="#vpx_enc_frame_flags_t" title='vpx_enc_frame_flags_t' data-type='long' data-ref="vpx_enc_frame_flags_t">vpx_enc_frame_flags_t</a>       <dfn class="local col2 decl" id="52flags" title='flags' data-type='vpx_enc_frame_flags_t' data-ref="52flags">flags</dfn>,</td></tr>
+<tr><th id="945">945</th><td>                                    <em>unsigned</em> <em>long</em>               <dfn class="local col3 decl" id="53deadline" title='deadline' data-type='unsigned long' data-ref="53deadline">deadline</dfn>);</td></tr>
+<tr><th id="946">946</th><td></td></tr>
+<tr><th id="947">947</th><td>  <i class="doc">/*!<span class="command">\brief</span> Set compressed data output buffer</i></td></tr>
+<tr><th id="948">948</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="949">949</th><td><i class="doc">   * Sets the buffer that the codec should output the compressed data</i></td></tr>
+<tr><th id="950">950</th><td><i class="doc">   * into. This call effectively sets the buffer pointer returned in the</i></td></tr>
+<tr><th id="951">951</th><td><i class="doc">   * next VPX_CODEC_CX_FRAME_PKT packet. Subsequent packets will be</i></td></tr>
+<tr><th id="952">952</th><td><i class="doc">   * appended into this buffer. The buffer is preserved across frames,</i></td></tr>
+<tr><th id="953">953</th><td><i class="doc">   * so applications must periodically call this function after flushing</i></td></tr>
+<tr><th id="954">954</th><td><i class="doc">   * the accumulated compressed data to disk or to the network to reset</i></td></tr>
+<tr><th id="955">955</th><td><i class="doc">   * the pointer to the buffer's head.</i></td></tr>
+<tr><th id="956">956</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="957">957</th><td><i class="doc">   * `pad_before` bytes will be skipped before writing the compressed</i></td></tr>
+<tr><th id="958">958</th><td><i class="doc">   * data, and `pad_after` bytes will be appended to the packet. The size</i></td></tr>
+<tr><th id="959">959</th><td><i class="doc">   * of the packet will be the sum of the size of the actual compressed</i></td></tr>
+<tr><th id="960">960</th><td><i class="doc">   * data, pad_before, and pad_after. The padding bytes will be preserved</i></td></tr>
+<tr><th id="961">961</th><td><i class="doc">   * (not overwritten).</i></td></tr>
+<tr><th id="962">962</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="963">963</th><td><i class="doc">   * Note that calling this function does not guarantee that the returned</i></td></tr>
+<tr><th id="964">964</th><td><i class="doc">   * compressed data will be placed into the specified buffer. In the</i></td></tr>
+<tr><th id="965">965</th><td><i class="doc">   * event that the encoded data will not fit into the buffer provided,</i></td></tr>
+<tr><th id="966">966</th><td><i class="doc">   * the returned packet <span class="command">\ref</span> <span class="verb">MAY point to an internal buffer, as it would</span></i></td></tr>
+<tr><th id="967">967</th><td><i class="doc">   * if this call were never used. In this event, the output packet will</i></td></tr>
+<tr><th id="968">968</th><td><i class="doc">   * NOT have any padding, and the application must free space and copy it</i></td></tr>
+<tr><th id="969">969</th><td><i class="doc">   * to the proper place. This is of particular note in configurations</i></td></tr>
+<tr><th id="970">970</th><td><i class="doc">   * that may output multiple packets for a single encoded frame (e.g., lagged</i></td></tr>
+<tr><th id="971">971</th><td><i class="doc">   * encoding) or if the application does not reset the buffer periodically.</i></td></tr>
+<tr><th id="972">972</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="973">973</th><td><i class="doc">   * Applications may restore the default behavior of the codec providing</i></td></tr>
+<tr><th id="974">974</th><td><i class="doc">   * the compressed data buffer by calling this function with a NULL</i></td></tr>
+<tr><th id="975">975</th><td><i class="doc">   * buffer.</i></td></tr>
+<tr><th id="976">976</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="977">977</th><td><i class="doc">   * Applications <span class="command">\ref</span> <span class="verb">MUSTNOT call this function during iteration of</span></i></td></tr>
+<tr><th id="978">978</th><td><i class="doc">   * vpx_codec_get_cx_data().</i></td></tr>
+<tr><th id="979">979</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="980">980</th><td><i class="doc">   * <span class="command">\param</span>[in]    <span class="arg">ctx</span>         Pointer to this instance's context</i></td></tr>
+<tr><th id="981">981</th><td><i class="doc">   * <span class="command">\param</span>[in]    <span class="arg">buf</span>         Buffer to store compressed data into</i></td></tr>
+<tr><th id="982">982</th><td><i class="doc">   * <span class="command">\param</span>[in]    <span class="arg">pad_before</span>  Bytes to skip before writing compressed data</i></td></tr>
+<tr><th id="983">983</th><td><i class="doc">   * <span class="command">\param</span>[in]    <span class="arg">pad_after</span>   Bytes to skip after writing compressed data</i></td></tr>
+<tr><th id="984">984</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="985">985</th><td><i class="doc">   *<span class="command"> \retval</span> #VPX_CODEC_OK</i></td></tr>
+<tr><th id="986">986</th><td><i class="doc">   *     The buffer was set successfully.</i></td></tr>
+<tr><th id="987">987</th><td><i class="doc">   *<span class="command"> \retval</span> #VPX_CODEC_INVALID_PARAM</i></td></tr>
+<tr><th id="988">988</th><td><i class="doc">   *     A parameter was NULL, the image format is unsupported, etc.</i></td></tr>
+<tr><th id="989">989</th><td><i class="doc">   */</i></td></tr>
+<tr><th id="990">990</th><td>  <a class="typedef" href="vpx_codec.h.html#vpx_codec_err_t" title='vpx_codec_err_t' data-type='enum vpx_codec_err_t' data-ref="vpx_codec_err_t">vpx_codec_err_t</a> <dfn class="decl" id="vpx_codec_set_cx_data_buf" title='vpx_codec_set_cx_data_buf' data-ref="vpx_codec_set_cx_data_buf">vpx_codec_set_cx_data_buf</dfn>(<a class="typedef" href="vpx_codec.h.html#vpx_codec_ctx_t" title='vpx_codec_ctx_t' data-type='struct vpx_codec_ctx' data-ref="vpx_codec_ctx_t">vpx_codec_ctx_t</a>       *<dfn class="local col4 decl" id="54ctx" title='ctx' data-type='vpx_codec_ctx_t *' data-ref="54ctx">ctx</dfn>,</td></tr>
+<tr><th id="991">991</th><td>                                            <em>const</em> <a class="typedef" href="#vpx_fixed_buf_t" title='vpx_fixed_buf_t' data-type='struct vpx_fixed_buf' data-ref="vpx_fixed_buf_t">vpx_fixed_buf_t</a> *<dfn class="local col5 decl" id="55buf" title='buf' data-type='const vpx_fixed_buf_t *' data-ref="55buf">buf</dfn>,</td></tr>
+<tr><th id="992">992</th><td>                                            <em>unsigned</em> <em>int</em>           <dfn class="local col6 decl" id="56pad_before" title='pad_before' data-type='unsigned int' data-ref="56pad_before">pad_before</dfn>,</td></tr>
+<tr><th id="993">993</th><td>                                            <em>unsigned</em> <em>int</em>           <dfn class="local col7 decl" id="57pad_after" title='pad_after' data-type='unsigned int' data-ref="57pad_after">pad_after</dfn>);</td></tr>
+<tr><th id="994">994</th><td></td></tr>
+<tr><th id="995">995</th><td></td></tr>
+<tr><th id="996">996</th><td>  <i class="doc">/*!<span class="command">\brief</span> Encoded data iterator</i></td></tr>
+<tr><th id="997">997</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="998">998</th><td><i class="doc">   * Iterates over a list of data packets to be passed from the encoder to the</i></td></tr>
+<tr><th id="999">999</th><td><i class="doc">   * application. The different kinds of packets available are enumerated in</i></td></tr>
+<tr><th id="1000">1000</th><td><i class="doc">   * #vpx_codec_cx_pkt_kind.</i></td></tr>
+<tr><th id="1001">1001</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="1002">1002</th><td><i class="doc">   * #VPX_CODEC_CX_FRAME_PKT packets should be passed to the application's</i></td></tr>
+<tr><th id="1003">1003</th><td><i class="doc">   * muxer. Multiple compressed frames may be in the list.</i></td></tr>
+<tr><th id="1004">1004</th><td><i class="doc">   * #VPX_CODEC_STATS_PKT packets should be appended to a global buffer.</i></td></tr>
+<tr><th id="1005">1005</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="1006">1006</th><td><i class="doc">   * The application <span class="command">\ref</span> <span class="verb">MUST silently ignore any packet kinds that it does</span></i></td></tr>
+<tr><th id="1007">1007</th><td><i class="doc">   * not recognize or support.</i></td></tr>
+<tr><th id="1008">1008</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="1009">1009</th><td><i class="doc">   * The data buffers returned from this function are only guaranteed to be</i></td></tr>
+<tr><th id="1010">1010</th><td><i class="doc">   * valid until the application makes another call to any vpx_codec_* function.</i></td></tr>
+<tr><th id="1011">1011</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="1012">1012</th><td><i class="doc">   * <span class="command">\param</span>[in]     <span class="arg">ctx</span>      Pointer to this instance's context</i></td></tr>
+<tr><th id="1013">1013</th><td><i class="doc">   * <span class="command">\param</span>[in,out] <span class="arg">iter</span>     Iterator storage, initialized to NULL</i></td></tr>
+<tr><th id="1014">1014</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="1015">1015</th><td><i class="doc">   * <span class="command">\return</span> Returns a pointer to an output data packet (compressed frame data,</i></td></tr>
+<tr><th id="1016">1016</th><td><i class="doc">   *         two-pass statistics, etc.) or NULL to signal end-of-list.</i></td></tr>
+<tr><th id="1017">1017</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="1018">1018</th><td><i class="doc">   */</i></td></tr>
+<tr><th id="1019">1019</th><td>  <em>const</em> <a class="typedef" href="#vpx_codec_cx_pkt_t" title='vpx_codec_cx_pkt_t' data-type='struct vpx_codec_cx_pkt' data-ref="vpx_codec_cx_pkt_t">vpx_codec_cx_pkt_t</a> *<dfn class="decl" id="vpx_codec_get_cx_data" title='vpx_codec_get_cx_data' data-ref="vpx_codec_get_cx_data">vpx_codec_get_cx_data</dfn>(<a class="typedef" href="vpx_codec.h.html#vpx_codec_ctx_t" title='vpx_codec_ctx_t' data-type='struct vpx_codec_ctx' data-ref="vpx_codec_ctx_t">vpx_codec_ctx_t</a>   *<dfn class="local col8 decl" id="58ctx" title='ctx' data-type='vpx_codec_ctx_t *' data-ref="58ctx">ctx</dfn>,</td></tr>
+<tr><th id="1020">1020</th><td>                                                  <a class="typedef" href="vpx_codec.h.html#vpx_codec_iter_t" title='vpx_codec_iter_t' data-type='const void *' data-ref="vpx_codec_iter_t">vpx_codec_iter_t</a>  *<dfn class="local col9 decl" id="59iter" title='iter' data-type='vpx_codec_iter_t *' data-ref="59iter">iter</dfn>);</td></tr>
+<tr><th id="1021">1021</th><td></td></tr>
+<tr><th id="1022">1022</th><td></td></tr>
+<tr><th id="1023">1023</th><td>  <i class="doc">/*!<span class="command">\brief</span> Get Preview Frame</i></td></tr>
+<tr><th id="1024">1024</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="1025">1025</th><td><i class="doc">   * Returns an image that can be used as a preview. Shows the image as it would</i></td></tr>
+<tr><th id="1026">1026</th><td><i class="doc">   * exist at the decompressor. The application <span class="command">\ref</span> <span class="verb">MUST NOT write into this</span></i></td></tr>
+<tr><th id="1027">1027</th><td><i class="doc">   * image buffer.</i></td></tr>
+<tr><th id="1028">1028</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="1029">1029</th><td><i class="doc">   * <span class="command">\param</span>[in]     <span class="arg">ctx</span>      Pointer to this instance's context</i></td></tr>
+<tr><th id="1030">1030</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="1031">1031</th><td><i class="doc">   * <span class="command">\return</span> Returns a pointer to a preview image, or NULL if no image is</i></td></tr>
+<tr><th id="1032">1032</th><td><i class="doc">   *         available.</i></td></tr>
+<tr><th id="1033">1033</th><td><i class="doc">   *</i></td></tr>
+<tr><th id="1034">1034</th><td><i class="doc">   */</i></td></tr>
+<tr><th id="1035">1035</th><td>  <em>const</em> <a class="typedef" href="vpx_image.h.html#vpx_image_t" title='vpx_image_t' data-type='struct vpx_image' data-ref="vpx_image_t">vpx_image_t</a> *<dfn class="decl" id="vpx_codec_get_preview_frame" title='vpx_codec_get_preview_frame' data-ref="vpx_codec_get_preview_frame">vpx_codec_get_preview_frame</dfn>(<a class="typedef" href="vpx_codec.h.html#vpx_codec_ctx_t" title='vpx_codec_ctx_t' data-type='struct vpx_codec_ctx' data-ref="vpx_codec_ctx_t">vpx_codec_ctx_t</a>   *<dfn class="local col0 decl" id="60ctx" title='ctx' data-type='vpx_codec_ctx_t *' data-ref="60ctx">ctx</dfn>);</td></tr>
+<tr><th id="1036">1036</th><td></td></tr>
+<tr><th id="1037">1037</th><td></td></tr>
+<tr><th id="1038">1038</th><td>  <i class="doc">/*!@} - end defgroup encoder*/</i></td></tr>
+<tr><th id="1039">1039</th><td><u>#<span data-ppcond="1039">ifdef</span> <span class="macro" data-ref="_M/__cplusplus">__cplusplus</span></u></td></tr>
+<tr><th id="1040">1040</th><td>}</td></tr>
+<tr><th id="1041">1041</th><td><u>#<span data-ppcond="1039">endif</span></u></td></tr>
+<tr><th id="1042">1042</th><td><u>#<span data-ppcond="10">endif</span>  // VPX_VPX_ENCODER_H_</u></td></tr>
+<tr><th id="1043">1043</th><td></td></tr>
+<tr><th id="1044">1044</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated while processing <a href='../../ffmpeg/libavcodec/libvpx.c.html'>ffmpeg/libavcodec/libvpx.c</a><br/>Generated on <em>2016-Oct-25</em> from project include<br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

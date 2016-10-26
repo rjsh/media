@@ -1,0 +1,820 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>avio.h source code [ffmpeg/libavformat/avio.h] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="AVIOContext,AVIODataMarkerType,AVIODirContext,AVIODirEntry,AVIODirEntryType,AVIOInterruptCB "/>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavformat/avio.h'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavformat</a>/<a href='avio.h.html'>avio.h</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * copyright (c) 2001 Fabrice Bellard</i></td></tr>
+<tr><th id="3">3</th><td><i> *</i></td></tr>
+<tr><th id="4">4</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="5">5</th><td><i> *</i></td></tr>
+<tr><th id="6">6</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="7">7</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="8">8</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="9">9</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="10">10</th><td><i> *</i></td></tr>
+<tr><th id="11">11</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="12">12</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="13">13</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="14">14</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="15">15</th><td><i> *</i></td></tr>
+<tr><th id="16">16</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="17">17</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="18">18</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="19">19</th><td><i> */</i></td></tr>
+<tr><th id="20">20</th><td><u>#<span data-ppcond="20">ifndef</span> <span class="macro" data-ref="_M/AVFORMAT_AVIO_H">AVFORMAT_AVIO_H</span></u></td></tr>
+<tr><th id="21">21</th><td><u>#define <dfn class="macro" id="_M/AVFORMAT_AVIO_H" data-ref="_M/AVFORMAT_AVIO_H">AVFORMAT_AVIO_H</dfn></u></td></tr>
+<tr><th id="22">22</th><td></td></tr>
+<tr><th id="23">23</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="24">24</th><td><i class="doc"> *<span class="command"> @file</span></i></td></tr>
+<tr><th id="25">25</th><td><i class="doc"> * <span class="command">@ingroup</span> <span class="verb">lavf_io</span></i></td></tr>
+<tr><th id="26">26</th><td><i class="doc"> * Buffered I/O operations</i></td></tr>
+<tr><th id="27">27</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="28">28</th><td></td></tr>
+<tr><th id="29">29</th><td><u>#include &lt;stdint.h&gt;</u></td></tr>
+<tr><th id="30">30</th><td></td></tr>
+<tr><th id="31">31</th><td><u>#include <a href="../libavutil/common.h.html">"libavutil/common.h"</a></u></td></tr>
+<tr><th id="32">32</th><td><u>#include <a href="../libavutil/dict.h.html">"libavutil/dict.h"</a></u></td></tr>
+<tr><th id="33">33</th><td><u>#include <a href="../libavutil/log.h.html">"libavutil/log.h"</a></u></td></tr>
+<tr><th id="34">34</th><td></td></tr>
+<tr><th id="35">35</th><td><u>#include <a href="version.h.html">"libavformat/version.h"</a></u></td></tr>
+<tr><th id="36">36</th><td></td></tr>
+<tr><th id="37">37</th><td><u>#define <dfn class="macro" id="_M/AVIO_SEEKABLE_NORMAL" data-ref="_M/AVIO_SEEKABLE_NORMAL">AVIO_SEEKABLE_NORMAL</dfn> 0x0001 /**&lt; Seeking works like for a local file */</u></td></tr>
+<tr><th id="38">38</th><td></td></tr>
+<tr><th id="39">39</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="40">40</th><td><i class="doc"> * Callback for checking whether to abort blocking functions.</i></td></tr>
+<tr><th id="41">41</th><td><i class="doc"> * AVERROR_EXIT is returned in this case by the interrupted</i></td></tr>
+<tr><th id="42">42</th><td><i class="doc"> * function. During blocking operations, callback is called with</i></td></tr>
+<tr><th id="43">43</th><td><i class="doc"> * opaque as parameter. If the callback returns 1, the</i></td></tr>
+<tr><th id="44">44</th><td><i class="doc"> * blocking operation will be aborted.</i></td></tr>
+<tr><th id="45">45</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="46">46</th><td><i class="doc"> * No members can be added to this struct without a major bump, if</i></td></tr>
+<tr><th id="47">47</th><td><i class="doc"> * new elements have been added after this struct in AVFormatContext</i></td></tr>
+<tr><th id="48">48</th><td><i class="doc"> * or AVIOContext.</i></td></tr>
+<tr><th id="49">49</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="50">50</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="AVIOInterruptCB" title='AVIOInterruptCB' data-ref="AVIOInterruptCB"><a class="type" href="#AVIOInterruptCB" title='AVIOInterruptCB' data-ref="AVIOInterruptCB">AVIOInterruptCB</a></dfn> {</td></tr>
+<tr><th id="51">51</th><td>    <em>int</em> (*<dfn class="decl" id="AVIOInterruptCB::callback" title='AVIOInterruptCB::callback' data-ref="AVIOInterruptCB::callback">callback</dfn>)(<em>void</em>*);</td></tr>
+<tr><th id="52">52</th><td>    <em>void</em> *<dfn class="decl" id="AVIOInterruptCB::opaque" title='AVIOInterruptCB::opaque' data-ref="AVIOInterruptCB::opaque">opaque</dfn>;</td></tr>
+<tr><th id="53">53</th><td>} <dfn class="typedef" id="AVIOInterruptCB" title='AVIOInterruptCB' data-type='struct AVIOInterruptCB' data-ref="AVIOInterruptCB">AVIOInterruptCB</dfn>;</td></tr>
+<tr><th id="54">54</th><td></td></tr>
+<tr><th id="55">55</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="56">56</th><td><i class="doc"> * Directory entry types.</i></td></tr>
+<tr><th id="57">57</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="58">58</th><td><b>enum</b> <dfn class="type def" id="AVIODirEntryType" title='AVIODirEntryType' data-ref="AVIODirEntryType">AVIODirEntryType</dfn> {</td></tr>
+<tr><th id="59">59</th><td>    <dfn class="enum" id="AVIODirEntryType::AVIO_ENTRY_UNKNOWN" title='AVIODirEntryType::AVIO_ENTRY_UNKNOWN' data-ref="AVIODirEntryType::AVIO_ENTRY_UNKNOWN">AVIO_ENTRY_UNKNOWN</dfn>,</td></tr>
+<tr><th id="60">60</th><td>    <dfn class="enum" id="AVIODirEntryType::AVIO_ENTRY_BLOCK_DEVICE" title='AVIODirEntryType::AVIO_ENTRY_BLOCK_DEVICE' data-ref="AVIODirEntryType::AVIO_ENTRY_BLOCK_DEVICE">AVIO_ENTRY_BLOCK_DEVICE</dfn>,</td></tr>
+<tr><th id="61">61</th><td>    <dfn class="enum" id="AVIODirEntryType::AVIO_ENTRY_CHARACTER_DEVICE" title='AVIODirEntryType::AVIO_ENTRY_CHARACTER_DEVICE' data-ref="AVIODirEntryType::AVIO_ENTRY_CHARACTER_DEVICE">AVIO_ENTRY_CHARACTER_DEVICE</dfn>,</td></tr>
+<tr><th id="62">62</th><td>    <dfn class="enum" id="AVIODirEntryType::AVIO_ENTRY_DIRECTORY" title='AVIODirEntryType::AVIO_ENTRY_DIRECTORY' data-ref="AVIODirEntryType::AVIO_ENTRY_DIRECTORY">AVIO_ENTRY_DIRECTORY</dfn>,</td></tr>
+<tr><th id="63">63</th><td>    <dfn class="enum" id="AVIODirEntryType::AVIO_ENTRY_NAMED_PIPE" title='AVIODirEntryType::AVIO_ENTRY_NAMED_PIPE' data-ref="AVIODirEntryType::AVIO_ENTRY_NAMED_PIPE">AVIO_ENTRY_NAMED_PIPE</dfn>,</td></tr>
+<tr><th id="64">64</th><td>    <dfn class="enum" id="AVIODirEntryType::AVIO_ENTRY_SYMBOLIC_LINK" title='AVIODirEntryType::AVIO_ENTRY_SYMBOLIC_LINK' data-ref="AVIODirEntryType::AVIO_ENTRY_SYMBOLIC_LINK">AVIO_ENTRY_SYMBOLIC_LINK</dfn>,</td></tr>
+<tr><th id="65">65</th><td>    <dfn class="enum" id="AVIODirEntryType::AVIO_ENTRY_SOCKET" title='AVIODirEntryType::AVIO_ENTRY_SOCKET' data-ref="AVIODirEntryType::AVIO_ENTRY_SOCKET">AVIO_ENTRY_SOCKET</dfn>,</td></tr>
+<tr><th id="66">66</th><td>    <dfn class="enum" id="AVIODirEntryType::AVIO_ENTRY_FILE" title='AVIODirEntryType::AVIO_ENTRY_FILE' data-ref="AVIODirEntryType::AVIO_ENTRY_FILE">AVIO_ENTRY_FILE</dfn>,</td></tr>
+<tr><th id="67">67</th><td>    <dfn class="enum" id="AVIODirEntryType::AVIO_ENTRY_SERVER" title='AVIODirEntryType::AVIO_ENTRY_SERVER' data-ref="AVIODirEntryType::AVIO_ENTRY_SERVER">AVIO_ENTRY_SERVER</dfn>,</td></tr>
+<tr><th id="68">68</th><td>    <dfn class="enum" id="AVIODirEntryType::AVIO_ENTRY_SHARE" title='AVIODirEntryType::AVIO_ENTRY_SHARE' data-ref="AVIODirEntryType::AVIO_ENTRY_SHARE">AVIO_ENTRY_SHARE</dfn>,</td></tr>
+<tr><th id="69">69</th><td>    <dfn class="enum" id="AVIODirEntryType::AVIO_ENTRY_WORKGROUP" title='AVIODirEntryType::AVIO_ENTRY_WORKGROUP' data-ref="AVIODirEntryType::AVIO_ENTRY_WORKGROUP">AVIO_ENTRY_WORKGROUP</dfn>,</td></tr>
+<tr><th id="70">70</th><td>};</td></tr>
+<tr><th id="71">71</th><td></td></tr>
+<tr><th id="72">72</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="73">73</th><td><i class="doc"> * Describes single entry of the directory.</i></td></tr>
+<tr><th id="74">74</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="75">75</th><td><i class="doc"> * Only name and type fields are guaranteed be set.</i></td></tr>
+<tr><th id="76">76</th><td><i class="doc"> * Rest of fields are protocol or/and platform dependent and might be unknown.</i></td></tr>
+<tr><th id="77">77</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="78">78</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="AVIODirEntry" title='AVIODirEntry' data-ref="AVIODirEntry"><a class="type" href="#AVIODirEntry" title='AVIODirEntry' data-ref="AVIODirEntry">AVIODirEntry</a></dfn> {</td></tr>
+<tr><th id="79">79</th><td>    <em>char</em> *<dfn class="decl" id="AVIODirEntry::name" title='AVIODirEntry::name' data-ref="AVIODirEntry::name">name</dfn>;                           <i class="doc">/**&lt; Filename */</i></td></tr>
+<tr><th id="80">80</th><td>    <em>int</em> <dfn class="decl" id="AVIODirEntry::type" title='AVIODirEntry::type' data-ref="AVIODirEntry::type">type</dfn>;                             <i class="doc">/**&lt; Type of the entry */</i></td></tr>
+<tr><th id="81">81</th><td>    <em>int</em> <dfn class="decl" id="AVIODirEntry::utf8" title='AVIODirEntry::utf8' data-ref="AVIODirEntry::utf8">utf8</dfn>;                             <i class="doc">/**&lt; Set to 1 when name is encoded with UTF-8, 0 otherwise.</i></td></tr>
+<tr><th id="82">82</th><td><i class="doc">                                               Name can be encoded with UTF-8 even though 0 is set. */</i></td></tr>
+<tr><th id="83">83</th><td>    <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="decl" id="AVIODirEntry::size" title='AVIODirEntry::size' data-ref="AVIODirEntry::size">size</dfn>;                         <i class="doc">/**&lt; File size in bytes, -1 if unknown. */</i></td></tr>
+<tr><th id="84">84</th><td>    <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="decl" id="AVIODirEntry::modification_timestamp" title='AVIODirEntry::modification_timestamp' data-ref="AVIODirEntry::modification_timestamp">modification_timestamp</dfn>;       <i class="doc">/**&lt; Time of last modification in microseconds since unix</i></td></tr>
+<tr><th id="85">85</th><td><i class="doc">                                               epoch, -1 if unknown. */</i></td></tr>
+<tr><th id="86">86</th><td>    <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="decl" id="AVIODirEntry::access_timestamp" title='AVIODirEntry::access_timestamp' data-ref="AVIODirEntry::access_timestamp">access_timestamp</dfn>;             <i class="doc">/**&lt; Time of last access in microseconds since unix epoch,</i></td></tr>
+<tr><th id="87">87</th><td><i class="doc">                                               -1 if unknown. */</i></td></tr>
+<tr><th id="88">88</th><td>    <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="decl" id="AVIODirEntry::status_change_timestamp" title='AVIODirEntry::status_change_timestamp' data-ref="AVIODirEntry::status_change_timestamp">status_change_timestamp</dfn>;      <i class="doc">/**&lt; Time of last status change in microseconds since unix</i></td></tr>
+<tr><th id="89">89</th><td><i class="doc">                                               epoch, -1 if unknown. */</i></td></tr>
+<tr><th id="90">90</th><td>    <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="decl" id="AVIODirEntry::user_id" title='AVIODirEntry::user_id' data-ref="AVIODirEntry::user_id">user_id</dfn>;                      <i class="doc">/**&lt; User ID of owner, -1 if unknown. */</i></td></tr>
+<tr><th id="91">91</th><td>    <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="decl" id="AVIODirEntry::group_id" title='AVIODirEntry::group_id' data-ref="AVIODirEntry::group_id">group_id</dfn>;                     <i class="doc">/**&lt; Group ID of owner, -1 if unknown. */</i></td></tr>
+<tr><th id="92">92</th><td>    <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="decl" id="AVIODirEntry::filemode" title='AVIODirEntry::filemode' data-ref="AVIODirEntry::filemode">filemode</dfn>;                     <i class="doc">/**&lt; Unix file mode, -1 if unknown. */</i></td></tr>
+<tr><th id="93">93</th><td>} <dfn class="typedef" id="AVIODirEntry" title='AVIODirEntry' data-type='struct AVIODirEntry' data-ref="AVIODirEntry">AVIODirEntry</dfn>;</td></tr>
+<tr><th id="94">94</th><td></td></tr>
+<tr><th id="95">95</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="AVIODirContext" title='AVIODirContext' data-ref="AVIODirContext"><a class="type" href="#AVIODirContext" title='AVIODirContext' data-ref="AVIODirContext">AVIODirContext</a></dfn> {</td></tr>
+<tr><th id="96">96</th><td>    <b>struct</b> <dfn class="type" id="URLContext" title='URLContext' data-ref="URLContext"><a class="type" href="#URLContext" title='URLContext' data-ref="URLContext">URLContext</a></dfn> *<dfn class="decl" id="AVIODirContext::url_context" title='AVIODirContext::url_context' data-ref="AVIODirContext::url_context">url_context</dfn>;</td></tr>
+<tr><th id="97">97</th><td>} <dfn class="typedef" id="AVIODirContext" title='AVIODirContext' data-type='struct AVIODirContext' data-ref="AVIODirContext">AVIODirContext</dfn>;</td></tr>
+<tr><th id="98">98</th><td></td></tr>
+<tr><th id="99">99</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="100">100</th><td><i class="doc"> * Different data types that can be returned via the AVIO</i></td></tr>
+<tr><th id="101">101</th><td><i class="doc"> * write_data_type callback.</i></td></tr>
+<tr><th id="102">102</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="103">103</th><td><b>enum</b> <dfn class="type def" id="AVIODataMarkerType" title='AVIODataMarkerType' data-ref="AVIODataMarkerType">AVIODataMarkerType</dfn> {</td></tr>
+<tr><th id="104">104</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="105">105</th><td><i class="doc">     * Header data; this needs to be present for the stream to be decodeable.</i></td></tr>
+<tr><th id="106">106</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="107">107</th><td>    <dfn class="enum" id="AVIODataMarkerType::AVIO_DATA_MARKER_HEADER" title='AVIODataMarkerType::AVIO_DATA_MARKER_HEADER' data-ref="AVIODataMarkerType::AVIO_DATA_MARKER_HEADER">AVIO_DATA_MARKER_HEADER</dfn>,</td></tr>
+<tr><th id="108">108</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="109">109</th><td><i class="doc">     * A point in the output bytestream where a decoder can start decoding</i></td></tr>
+<tr><th id="110">110</th><td><i class="doc">     * (i.e. a keyframe). A demuxer/decoder given the data flagged with</i></td></tr>
+<tr><th id="111">111</th><td><i class="doc">     * AVIO_DATA_MARKER_HEADER, followed by any AVIO_DATA_MARKER_SYNC_POINT,</i></td></tr>
+<tr><th id="112">112</th><td><i class="doc">     * should give decodeable results.</i></td></tr>
+<tr><th id="113">113</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="114">114</th><td>    <dfn class="enum" id="AVIODataMarkerType::AVIO_DATA_MARKER_SYNC_POINT" title='AVIODataMarkerType::AVIO_DATA_MARKER_SYNC_POINT' data-ref="AVIODataMarkerType::AVIO_DATA_MARKER_SYNC_POINT">AVIO_DATA_MARKER_SYNC_POINT</dfn>,</td></tr>
+<tr><th id="115">115</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="116">116</th><td><i class="doc">     * A point in the output bytestream where a demuxer can start parsing</i></td></tr>
+<tr><th id="117">117</th><td><i class="doc">     * (for non self synchronizing bytestream formats). That is, any</i></td></tr>
+<tr><th id="118">118</th><td><i class="doc">     * non-keyframe packet start point.</i></td></tr>
+<tr><th id="119">119</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="120">120</th><td>    <dfn class="enum" id="AVIODataMarkerType::AVIO_DATA_MARKER_BOUNDARY_POINT" title='AVIODataMarkerType::AVIO_DATA_MARKER_BOUNDARY_POINT' data-ref="AVIODataMarkerType::AVIO_DATA_MARKER_BOUNDARY_POINT">AVIO_DATA_MARKER_BOUNDARY_POINT</dfn>,</td></tr>
+<tr><th id="121">121</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="122">122</th><td><i class="doc">     * This is any, unlabelled data. It can either be a muxer not marking</i></td></tr>
+<tr><th id="123">123</th><td><i class="doc">     * any positions at all, it can be an actual boundary/sync point</i></td></tr>
+<tr><th id="124">124</th><td><i class="doc">     * that the muxer chooses not to mark, or a later part of a packet/fragment</i></td></tr>
+<tr><th id="125">125</th><td><i class="doc">     * that is cut into multiple write callbacks due to limited IO buffer size.</i></td></tr>
+<tr><th id="126">126</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="127">127</th><td>    <dfn class="enum" id="AVIODataMarkerType::AVIO_DATA_MARKER_UNKNOWN" title='AVIODataMarkerType::AVIO_DATA_MARKER_UNKNOWN' data-ref="AVIODataMarkerType::AVIO_DATA_MARKER_UNKNOWN">AVIO_DATA_MARKER_UNKNOWN</dfn>,</td></tr>
+<tr><th id="128">128</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="129">129</th><td><i class="doc">     * Trailer data, which doesn't contain actual content, but only for</i></td></tr>
+<tr><th id="130">130</th><td><i class="doc">     * finalizing the output file.</i></td></tr>
+<tr><th id="131">131</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="132">132</th><td>    <dfn class="enum" id="AVIODataMarkerType::AVIO_DATA_MARKER_TRAILER" title='AVIODataMarkerType::AVIO_DATA_MARKER_TRAILER' data-ref="AVIODataMarkerType::AVIO_DATA_MARKER_TRAILER">AVIO_DATA_MARKER_TRAILER</dfn></td></tr>
+<tr><th id="133">133</th><td>};</td></tr>
+<tr><th id="134">134</th><td></td></tr>
+<tr><th id="135">135</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="136">136</th><td><i class="doc"> * Bytestream IO Context.</i></td></tr>
+<tr><th id="137">137</th><td><i class="doc"> * New fields can be added to the end with minor version bumps.</i></td></tr>
+<tr><th id="138">138</th><td><i class="doc"> * Removal, reordering and changes to existing fields require a major</i></td></tr>
+<tr><th id="139">139</th><td><i class="doc"> * version bump.</i></td></tr>
+<tr><th id="140">140</th><td><i class="doc"> * sizeof(AVIOContext) must not be used outside libav*.</i></td></tr>
+<tr><th id="141">141</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="142">142</th><td><i class="doc"> * <span class="command">@note</span> None of the function pointers in AVIOContext should be called</i></td></tr>
+<tr><th id="143">143</th><td><i class="doc"> *       directly, they should only be set by the client application</i></td></tr>
+<tr><th id="144">144</th><td><i class="doc"> *       when implementing custom I/O. Normally these are set to the</i></td></tr>
+<tr><th id="145">145</th><td><i class="doc"> *       function pointers specified in avio_alloc_context()</i></td></tr>
+<tr><th id="146">146</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="147">147</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="AVIOContext" title='AVIOContext' data-ref="AVIOContext"><a class="type" href="#AVIOContext" title='AVIOContext' data-ref="AVIOContext">AVIOContext</a></dfn> {</td></tr>
+<tr><th id="148">148</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="149">149</th><td><i class="doc">     * A class for private options.</i></td></tr>
+<tr><th id="150">150</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="151">151</th><td><i class="doc">     * If this AVIOContext is created by avio_open2(), av_class is set and</i></td></tr>
+<tr><th id="152">152</th><td><i class="doc">     * passes the options down to protocols.</i></td></tr>
+<tr><th id="153">153</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="154">154</th><td><i class="doc">     * If this AVIOContext is manually allocated, then av_class may be set by</i></td></tr>
+<tr><th id="155">155</th><td><i class="doc">     * the caller.</i></td></tr>
+<tr><th id="156">156</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="157">157</th><td><i class="doc">     * warning -- this field can be NULL, be sure to not pass this AVIOContext</i></td></tr>
+<tr><th id="158">158</th><td><i class="doc">     * to any av_opt_* functions in that case.</i></td></tr>
+<tr><th id="159">159</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="160">160</th><td>    <em>const</em> <a class="typedef" href="../libavutil/log.h.html#AVClass" title='AVClass' data-type='struct AVClass' data-ref="AVClass">AVClass</a> *<dfn class="decl" id="AVIOContext::av_class" title='AVIOContext::av_class' data-ref="AVIOContext::av_class">av_class</dfn>;</td></tr>
+<tr><th id="161">161</th><td></td></tr>
+<tr><th id="162">162</th><td>    <i>/*</i></td></tr>
+<tr><th id="163">163</th><td><i>     * The following shows the relationship between buffer, buf_ptr, buf_end, buf_size,</i></td></tr>
+<tr><th id="164">164</th><td><i>     * and pos, when reading and when writing (since AVIOContext is used for both):</i></td></tr>
+<tr><th id="165">165</th><td><i>     *</i></td></tr>
+<tr><th id="166">166</th><td><i>     **********************************************************************************</i></td></tr>
+<tr><th id="167">167</th><td><i>     *                                   READING</i></td></tr>
+<tr><th id="168">168</th><td><i>     **********************************************************************************</i></td></tr>
+<tr><th id="169">169</th><td><i>     *</i></td></tr>
+<tr><th id="170">170</th><td><i>     *                            |              buffer_size              |</i></td></tr>
+<tr><th id="171">171</th><td><i>     *                            |---------------------------------------|</i></td></tr>
+<tr><th id="172">172</th><td><i>     *                            |                                       |</i></td></tr>
+<tr><th id="173">173</th><td><i>     *</i></td></tr>
+<tr><th id="174">174</th><td><i>     *                         buffer          buf_ptr       buf_end</i></td></tr>
+<tr><th id="175">175</th><td><i>     *                            +---------------+-----------------------+</i></td></tr>
+<tr><th id="176">176</th><td><i>     *                            |/ / / / / / / /|/ / / / / / /|         |</i></td></tr>
+<tr><th id="177">177</th><td><i>     *  read buffer:              |/ / consumed / | to be read /|         |</i></td></tr>
+<tr><th id="178">178</th><td><i>     *                            |/ / / / / / / /|/ / / / / / /|         |</i></td></tr>
+<tr><th id="179">179</th><td><i>     *                            +---------------+-----------------------+</i></td></tr>
+<tr><th id="180">180</th><td><i>     *</i></td></tr>
+<tr><th id="181">181</th><td><i>     *                                                         pos</i></td></tr>
+<tr><th id="182">182</th><td><i>     *              +-------------------------------------------+-----------------+</i></td></tr>
+<tr><th id="183">183</th><td><i>     *  input file: |                                           |                 |</i></td></tr>
+<tr><th id="184">184</th><td><i>     *              +-------------------------------------------+-----------------+</i></td></tr>
+<tr><th id="185">185</th><td><i>     *</i></td></tr>
+<tr><th id="186">186</th><td><i>     *</i></td></tr>
+<tr><th id="187">187</th><td><i>     **********************************************************************************</i></td></tr>
+<tr><th id="188">188</th><td><i>     *                                   WRITING</i></td></tr>
+<tr><th id="189">189</th><td><i>     **********************************************************************************</i></td></tr>
+<tr><th id="190">190</th><td><i>     *</i></td></tr>
+<tr><th id="191">191</th><td><i>     *                                          |          buffer_size          |</i></td></tr>
+<tr><th id="192">192</th><td><i>     *                                          |-------------------------------|</i></td></tr>
+<tr><th id="193">193</th><td><i>     *                                          |                               |</i></td></tr>
+<tr><th id="194">194</th><td><i>     *</i></td></tr>
+<tr><th id="195">195</th><td><i>     *                                       buffer              buf_ptr     buf_end</i></td></tr>
+<tr><th id="196">196</th><td><i>     *                                          +-------------------+-----------+</i></td></tr>
+<tr><th id="197">197</th><td><i>     *                                          |/ / / / / / / / / /|           |</i></td></tr>
+<tr><th id="198">198</th><td><i>     *  write buffer:                           | / to be flushed / |           |</i></td></tr>
+<tr><th id="199">199</th><td><i>     *                                          |/ / / / / / / / / /|           |</i></td></tr>
+<tr><th id="200">200</th><td><i>     *                                          +-------------------+-----------+</i></td></tr>
+<tr><th id="201">201</th><td><i>     *</i></td></tr>
+<tr><th id="202">202</th><td><i>     *                                         pos</i></td></tr>
+<tr><th id="203">203</th><td><i>     *               +--------------------------+-----------------------------------+</i></td></tr>
+<tr><th id="204">204</th><td><i>     *  output file: |                          |                                   |</i></td></tr>
+<tr><th id="205">205</th><td><i>     *               +--------------------------+-----------------------------------+</i></td></tr>
+<tr><th id="206">206</th><td><i>     *</i></td></tr>
+<tr><th id="207">207</th><td><i>     */</i></td></tr>
+<tr><th id="208">208</th><td>    <em>unsigned</em> <em>char</em> *<dfn class="decl" id="AVIOContext::buffer" title='AVIOContext::buffer' data-ref="AVIOContext::buffer">buffer</dfn>;  <i class="doc">/**&lt; Start of the buffer. */</i></td></tr>
+<tr><th id="209">209</th><td>    <em>int</em> <dfn class="decl" id="AVIOContext::buffer_size" title='AVIOContext::buffer_size' data-ref="AVIOContext::buffer_size">buffer_size</dfn>;        <i class="doc">/**&lt; Maximum buffer size */</i></td></tr>
+<tr><th id="210">210</th><td>    <em>unsigned</em> <em>char</em> *<dfn class="decl" id="AVIOContext::buf_ptr" title='AVIOContext::buf_ptr' data-ref="AVIOContext::buf_ptr">buf_ptr</dfn>; <i class="doc">/**&lt; Current position in the buffer */</i></td></tr>
+<tr><th id="211">211</th><td>    <em>unsigned</em> <em>char</em> *<dfn class="decl" id="AVIOContext::buf_end" title='AVIOContext::buf_end' data-ref="AVIOContext::buf_end">buf_end</dfn>; <i class="doc">/**&lt; End of the data, may be less than</i></td></tr>
+<tr><th id="212">212</th><td><i class="doc">                                 buffer+buffer_size if the read function returned</i></td></tr>
+<tr><th id="213">213</th><td><i class="doc">                                 less data than requested, e.g. for streams where</i></td></tr>
+<tr><th id="214">214</th><td><i class="doc">                                 no more data has been received yet. */</i></td></tr>
+<tr><th id="215">215</th><td>    <em>void</em> *<dfn class="decl" id="AVIOContext::opaque" title='AVIOContext::opaque' data-ref="AVIOContext::opaque">opaque</dfn>;           <i class="doc">/**&lt; A private pointer, passed to the read/write/seek/...</i></td></tr>
+<tr><th id="216">216</th><td><i class="doc">                                 functions. */</i></td></tr>
+<tr><th id="217">217</th><td>    <em>int</em> (*<dfn class="decl" id="AVIOContext::read_packet" title='AVIOContext::read_packet' data-ref="AVIOContext::read_packet">read_packet</dfn>)(<em>void</em> *<dfn class="local col0 decl" id="1900opaque" title='opaque' data-type='void *' data-ref="1900opaque">opaque</dfn>, <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col1 decl" id="1901buf" title='buf' data-type='uint8_t *' data-ref="1901buf">buf</dfn>, <em>int</em> <dfn class="local col2 decl" id="1902buf_size" title='buf_size' data-type='int' data-ref="1902buf_size">buf_size</dfn>);</td></tr>
+<tr><th id="218">218</th><td>    <em>int</em> (*<dfn class="decl" id="AVIOContext::write_packet" title='AVIOContext::write_packet' data-ref="AVIOContext::write_packet">write_packet</dfn>)(<em>void</em> *<dfn class="local col3 decl" id="1903opaque" title='opaque' data-type='void *' data-ref="1903opaque">opaque</dfn>, <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col4 decl" id="1904buf" title='buf' data-type='uint8_t *' data-ref="1904buf">buf</dfn>, <em>int</em> <dfn class="local col5 decl" id="1905buf_size" title='buf_size' data-type='int' data-ref="1905buf_size">buf_size</dfn>);</td></tr>
+<tr><th id="219">219</th><td>    <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> (*<dfn class="decl" id="AVIOContext::seek" title='AVIOContext::seek' data-ref="AVIOContext::seek">seek</dfn>)(<em>void</em> *<dfn class="local col6 decl" id="1906opaque" title='opaque' data-type='void *' data-ref="1906opaque">opaque</dfn>, <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="local col7 decl" id="1907offset" title='offset' data-type='int64_t' data-ref="1907offset">offset</dfn>, <em>int</em> <dfn class="local col8 decl" id="1908whence" title='whence' data-type='int' data-ref="1908whence">whence</dfn>);</td></tr>
+<tr><th id="220">220</th><td>    <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="decl" id="AVIOContext::pos" title='AVIOContext::pos' data-ref="AVIOContext::pos">pos</dfn>;            <i class="doc">/**&lt; position in the file of the current buffer */</i></td></tr>
+<tr><th id="221">221</th><td>    <em>int</em> <dfn class="decl" id="AVIOContext::must_flush" title='AVIOContext::must_flush' data-ref="AVIOContext::must_flush">must_flush</dfn>;         <i class="doc">/**&lt; true if the next seek should flush */</i></td></tr>
+<tr><th id="222">222</th><td>    <em>int</em> <dfn class="decl" id="AVIOContext::eof_reached" title='AVIOContext::eof_reached' data-ref="AVIOContext::eof_reached">eof_reached</dfn>;        <i class="doc">/**&lt; true if eof reached */</i></td></tr>
+<tr><th id="223">223</th><td>    <em>int</em> <dfn class="decl" id="AVIOContext::write_flag" title='AVIOContext::write_flag' data-ref="AVIOContext::write_flag">write_flag</dfn>;         <i class="doc">/**&lt; true if open for writing */</i></td></tr>
+<tr><th id="224">224</th><td>    <em>int</em> <dfn class="decl" id="AVIOContext::max_packet_size" title='AVIOContext::max_packet_size' data-ref="AVIOContext::max_packet_size">max_packet_size</dfn>;</td></tr>
+<tr><th id="225">225</th><td>    <em>unsigned</em> <em>long</em> <dfn class="decl" id="AVIOContext::checksum" title='AVIOContext::checksum' data-ref="AVIOContext::checksum">checksum</dfn>;</td></tr>
+<tr><th id="226">226</th><td>    <em>unsigned</em> <em>char</em> *<dfn class="decl" id="AVIOContext::checksum_ptr" title='AVIOContext::checksum_ptr' data-ref="AVIOContext::checksum_ptr">checksum_ptr</dfn>;</td></tr>
+<tr><th id="227">227</th><td>    <em>unsigned</em> <em>long</em> (*<dfn class="decl" id="AVIOContext::update_checksum" title='AVIOContext::update_checksum' data-ref="AVIOContext::update_checksum">update_checksum</dfn>)(<em>unsigned</em> <em>long</em> <dfn class="local col9 decl" id="1909checksum" title='checksum' data-type='unsigned long' data-ref="1909checksum">checksum</dfn>, <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col0 decl" id="1910buf" title='buf' data-type='const uint8_t *' data-ref="1910buf">buf</dfn>, <em>unsigned</em> <em>int</em> <dfn class="local col1 decl" id="1911size" title='size' data-type='unsigned int' data-ref="1911size">size</dfn>);</td></tr>
+<tr><th id="228">228</th><td>    <em>int</em> <dfn class="decl" id="AVIOContext::error" title='AVIOContext::error' data-ref="AVIOContext::error">error</dfn>;              <i class="doc">/**&lt; contains the error code or 0 if no error happened */</i></td></tr>
+<tr><th id="229">229</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="230">230</th><td><i class="doc">     * Pause or resume playback for network streaming protocols - e.g. MMS.</i></td></tr>
+<tr><th id="231">231</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="232">232</th><td>    <em>int</em> (*<dfn class="decl" id="AVIOContext::read_pause" title='AVIOContext::read_pause' data-ref="AVIOContext::read_pause">read_pause</dfn>)(<em>void</em> *<dfn class="local col2 decl" id="1912opaque" title='opaque' data-type='void *' data-ref="1912opaque">opaque</dfn>, <em>int</em> <dfn class="local col3 decl" id="1913pause" title='pause' data-type='int' data-ref="1913pause">pause</dfn>);</td></tr>
+<tr><th id="233">233</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="234">234</th><td><i class="doc">     * Seek to a given timestamp in stream with the specified stream_index.</i></td></tr>
+<tr><th id="235">235</th><td><i class="doc">     * Needed for some network streaming protocols which don't support seeking</i></td></tr>
+<tr><th id="236">236</th><td><i class="doc">     * to byte position.</i></td></tr>
+<tr><th id="237">237</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="238">238</th><td>    <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> (*<dfn class="decl" id="AVIOContext::read_seek" title='AVIOContext::read_seek' data-ref="AVIOContext::read_seek">read_seek</dfn>)(<em>void</em> *<dfn class="local col4 decl" id="1914opaque" title='opaque' data-type='void *' data-ref="1914opaque">opaque</dfn>, <em>int</em> <dfn class="local col5 decl" id="1915stream_index" title='stream_index' data-type='int' data-ref="1915stream_index">stream_index</dfn>,</td></tr>
+<tr><th id="239">239</th><td>                         <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="local col6 decl" id="1916timestamp" title='timestamp' data-type='int64_t' data-ref="1916timestamp">timestamp</dfn>, <em>int</em> <dfn class="local col7 decl" id="1917flags" title='flags' data-type='int' data-ref="1917flags">flags</dfn>);</td></tr>
+<tr><th id="240">240</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="241">241</th><td><i class="doc">     * A combination of AVIO_SEEKABLE_ flags or 0 when the stream is not seekable.</i></td></tr>
+<tr><th id="242">242</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="243">243</th><td>    <em>int</em> <dfn class="decl" id="AVIOContext::seekable" title='AVIOContext::seekable' data-ref="AVIOContext::seekable">seekable</dfn>;</td></tr>
+<tr><th id="244">244</th><td></td></tr>
+<tr><th id="245">245</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="246">246</th><td><i class="doc">     * max filesize, used to limit allocations</i></td></tr>
+<tr><th id="247">247</th><td><i class="doc">     * This field is internal to libavformat and access from outside is not allowed.</i></td></tr>
+<tr><th id="248">248</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="249">249</th><td>    <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="decl" id="AVIOContext::maxsize" title='AVIOContext::maxsize' data-ref="AVIOContext::maxsize">maxsize</dfn>;</td></tr>
+<tr><th id="250">250</th><td></td></tr>
+<tr><th id="251">251</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="252">252</th><td><i class="doc">     * avio_read and avio_write should if possible be satisfied directly</i></td></tr>
+<tr><th id="253">253</th><td><i class="doc">     * instead of going through a buffer, and avio_seek will always</i></td></tr>
+<tr><th id="254">254</th><td><i class="doc">     * call the underlying seek function directly.</i></td></tr>
+<tr><th id="255">255</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="256">256</th><td>    <em>int</em> <dfn class="decl" id="AVIOContext::direct" title='AVIOContext::direct' data-ref="AVIOContext::direct">direct</dfn>;</td></tr>
+<tr><th id="257">257</th><td></td></tr>
+<tr><th id="258">258</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="259">259</th><td><i class="doc">     * Bytes read statistic</i></td></tr>
+<tr><th id="260">260</th><td><i class="doc">     * This field is internal to libavformat and access from outside is not allowed.</i></td></tr>
+<tr><th id="261">261</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="262">262</th><td>    <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="decl" id="AVIOContext::bytes_read" title='AVIOContext::bytes_read' data-ref="AVIOContext::bytes_read">bytes_read</dfn>;</td></tr>
+<tr><th id="263">263</th><td></td></tr>
+<tr><th id="264">264</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="265">265</th><td><i class="doc">     * seek statistic</i></td></tr>
+<tr><th id="266">266</th><td><i class="doc">     * This field is internal to libavformat and access from outside is not allowed.</i></td></tr>
+<tr><th id="267">267</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="268">268</th><td>    <em>int</em> <dfn class="decl" id="AVIOContext::seek_count" title='AVIOContext::seek_count' data-ref="AVIOContext::seek_count">seek_count</dfn>;</td></tr>
+<tr><th id="269">269</th><td></td></tr>
+<tr><th id="270">270</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="271">271</th><td><i class="doc">     * writeout statistic</i></td></tr>
+<tr><th id="272">272</th><td><i class="doc">     * This field is internal to libavformat and access from outside is not allowed.</i></td></tr>
+<tr><th id="273">273</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="274">274</th><td>    <em>int</em> <dfn class="decl" id="AVIOContext::writeout_count" title='AVIOContext::writeout_count' data-ref="AVIOContext::writeout_count">writeout_count</dfn>;</td></tr>
+<tr><th id="275">275</th><td></td></tr>
+<tr><th id="276">276</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="277">277</th><td><i class="doc">     * Original buffer size</i></td></tr>
+<tr><th id="278">278</th><td><i class="doc">     * used internally after probing and ensure seekback to reset the buffer size</i></td></tr>
+<tr><th id="279">279</th><td><i class="doc">     * This field is internal to libavformat and access from outside is not allowed.</i></td></tr>
+<tr><th id="280">280</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="281">281</th><td>    <em>int</em> <dfn class="decl" id="AVIOContext::orig_buffer_size" title='AVIOContext::orig_buffer_size' data-ref="AVIOContext::orig_buffer_size">orig_buffer_size</dfn>;</td></tr>
+<tr><th id="282">282</th><td></td></tr>
+<tr><th id="283">283</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="284">284</th><td><i class="doc">     * Threshold to favor readahead over seek.</i></td></tr>
+<tr><th id="285">285</th><td><i class="doc">     * This is current internal only, do not use from outside.</i></td></tr>
+<tr><th id="286">286</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="287">287</th><td>    <em>int</em> <dfn class="decl" id="AVIOContext::short_seek_threshold" title='AVIOContext::short_seek_threshold' data-ref="AVIOContext::short_seek_threshold">short_seek_threshold</dfn>;</td></tr>
+<tr><th id="288">288</th><td></td></tr>
+<tr><th id="289">289</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="290">290</th><td><i class="doc">     * ',' separated list of allowed protocols.</i></td></tr>
+<tr><th id="291">291</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="292">292</th><td>    <em>const</em> <em>char</em> *<dfn class="decl" id="AVIOContext::protocol_whitelist" title='AVIOContext::protocol_whitelist' data-ref="AVIOContext::protocol_whitelist">protocol_whitelist</dfn>;</td></tr>
+<tr><th id="293">293</th><td></td></tr>
+<tr><th id="294">294</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="295">295</th><td><i class="doc">     * ',' separated list of disallowed protocols.</i></td></tr>
+<tr><th id="296">296</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="297">297</th><td>    <em>const</em> <em>char</em> *<dfn class="decl" id="AVIOContext::protocol_blacklist" title='AVIOContext::protocol_blacklist' data-ref="AVIOContext::protocol_blacklist">protocol_blacklist</dfn>;</td></tr>
+<tr><th id="298">298</th><td></td></tr>
+<tr><th id="299">299</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="300">300</th><td><i class="doc">     * A callback that is used instead of write_packet.</i></td></tr>
+<tr><th id="301">301</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="302">302</th><td>    <em>int</em> (*<dfn class="decl" id="AVIOContext::write_data_type" title='AVIOContext::write_data_type' data-ref="AVIOContext::write_data_type">write_data_type</dfn>)(<em>void</em> *<dfn class="local col8 decl" id="1918opaque" title='opaque' data-type='void *' data-ref="1918opaque">opaque</dfn>, <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col9 decl" id="1919buf" title='buf' data-type='uint8_t *' data-ref="1919buf">buf</dfn>, <em>int</em> <dfn class="local col0 decl" id="1920buf_size" title='buf_size' data-type='int' data-ref="1920buf_size">buf_size</dfn>,</td></tr>
+<tr><th id="303">303</th><td>                           <b>enum</b> <a class="type" href="#AVIODataMarkerType" title='AVIODataMarkerType' data-ref="AVIODataMarkerType">AVIODataMarkerType</a> <dfn class="local col1 decl" id="1921type" title='type' data-type='enum AVIODataMarkerType' data-ref="1921type">type</dfn>, <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="local col2 decl" id="1922time" title='time' data-type='int64_t' data-ref="1922time">time</dfn>);</td></tr>
+<tr><th id="304">304</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="305">305</th><td><i class="doc">     * If set, don't call write_data_type separately for AVIO_DATA_MARKER_BOUNDARY_POINT,</i></td></tr>
+<tr><th id="306">306</th><td><i class="doc">     * but ignore them and treat them as AVIO_DATA_MARKER_UNKNOWN (to avoid needlessly</i></td></tr>
+<tr><th id="307">307</th><td><i class="doc">     * small chunks of data returned from the callback).</i></td></tr>
+<tr><th id="308">308</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="309">309</th><td>    <em>int</em> <dfn class="decl" id="AVIOContext::ignore_boundary_point" title='AVIOContext::ignore_boundary_point' data-ref="AVIOContext::ignore_boundary_point">ignore_boundary_point</dfn>;</td></tr>
+<tr><th id="310">310</th><td></td></tr>
+<tr><th id="311">311</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="312">312</th><td><i class="doc">     * Internal, not meant to be used from outside of AVIOContext.</i></td></tr>
+<tr><th id="313">313</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="314">314</th><td>    <b>enum</b> <a class="type" href="#AVIODataMarkerType" title='AVIODataMarkerType' data-ref="AVIODataMarkerType">AVIODataMarkerType</a> <dfn class="decl" id="AVIOContext::current_type" title='AVIOContext::current_type' data-ref="AVIOContext::current_type">current_type</dfn>;</td></tr>
+<tr><th id="315">315</th><td>    <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="decl" id="AVIOContext::last_time" title='AVIOContext::last_time' data-ref="AVIOContext::last_time">last_time</dfn>;</td></tr>
+<tr><th id="316">316</th><td>} <dfn class="typedef" id="AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</dfn>;</td></tr>
+<tr><th id="317">317</th><td></td></tr>
+<tr><th id="318">318</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="319">319</th><td><i class="doc"> * Return the name of the protocol that will handle the passed URL.</i></td></tr>
+<tr><th id="320">320</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="321">321</th><td><i class="doc"> * NULL is returned if no protocol could be found for the given URL.</i></td></tr>
+<tr><th id="322">322</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="323">323</th><td><i class="doc"> * <span class="command">@return</span> Name of the protocol or NULL.</i></td></tr>
+<tr><th id="324">324</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="325">325</th><td><em>const</em> <em>char</em> *<dfn class="decl" id="avio_find_protocol_name" title='avio_find_protocol_name' data-ref="avio_find_protocol_name">avio_find_protocol_name</dfn>(<em>const</em> <em>char</em> *<dfn class="local col3 decl" id="1923url" title='url' data-type='const char *' data-ref="1923url">url</dfn>);</td></tr>
+<tr><th id="326">326</th><td></td></tr>
+<tr><th id="327">327</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="328">328</th><td><i class="doc"> * Return AVIO_FLAG_* access flags corresponding to the access permissions</i></td></tr>
+<tr><th id="329">329</th><td><i class="doc"> * of the resource in url, or a negative value corresponding to an</i></td></tr>
+<tr><th id="330">330</th><td><i class="doc"> * AVERROR code in case of failure. The returned access flags are</i></td></tr>
+<tr><th id="331">331</th><td><i class="doc"> * masked by the value in flags.</i></td></tr>
+<tr><th id="332">332</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="333">333</th><td><i class="doc"> * <span class="command">@note</span> This function is intrinsically unsafe, in the sense that the</i></td></tr>
+<tr><th id="334">334</th><td><i class="doc"> * checked resource may change its existence or permission status from</i></td></tr>
+<tr><th id="335">335</th><td><i class="doc"> * one call to another. Thus you should not trust the returned value,</i></td></tr>
+<tr><th id="336">336</th><td><i class="doc"> * unless you are sure that no other processes are accessing the</i></td></tr>
+<tr><th id="337">337</th><td><i class="doc"> * checked resource.</i></td></tr>
+<tr><th id="338">338</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="339">339</th><td><em>int</em> <dfn class="decl" id="avio_check" title='avio_check' data-ref="avio_check">avio_check</dfn>(<em>const</em> <em>char</em> *<dfn class="local col4 decl" id="1924url" title='url' data-type='const char *' data-ref="1924url">url</dfn>, <em>int</em> <dfn class="local col5 decl" id="1925flags" title='flags' data-type='int' data-ref="1925flags">flags</dfn>);</td></tr>
+<tr><th id="340">340</th><td></td></tr>
+<tr><th id="341">341</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="342">342</th><td><i class="doc"> * Move or rename a resource.</i></td></tr>
+<tr><th id="343">343</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="344">344</th><td><i class="doc"> * <span class="command">@note</span> url_src and url_dst should share the same protocol and authority.</i></td></tr>
+<tr><th id="345">345</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="346">346</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">url_src</span> url to resource to be moved</i></td></tr>
+<tr><th id="347">347</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">url_dst</span> new url to resource if the operation succeeded</i></td></tr>
+<tr><th id="348">348</th><td><i class="doc"> * <span class="command">@return</span> &gt;=0 on success or negative on error.</i></td></tr>
+<tr><th id="349">349</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="350">350</th><td><em>int</em> <dfn class="decl" id="avpriv_io_move" title='avpriv_io_move' data-ref="avpriv_io_move">avpriv_io_move</dfn>(<em>const</em> <em>char</em> *<dfn class="local col6 decl" id="1926url_src" title='url_src' data-type='const char *' data-ref="1926url_src">url_src</dfn>, <em>const</em> <em>char</em> *<dfn class="local col7 decl" id="1927url_dst" title='url_dst' data-type='const char *' data-ref="1927url_dst">url_dst</dfn>);</td></tr>
+<tr><th id="351">351</th><td></td></tr>
+<tr><th id="352">352</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="353">353</th><td><i class="doc"> * Delete a resource.</i></td></tr>
+<tr><th id="354">354</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="355">355</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">url</span> resource to be deleted.</i></td></tr>
+<tr><th id="356">356</th><td><i class="doc"> * <span class="command">@return</span> &gt;=0 on success or negative on error.</i></td></tr>
+<tr><th id="357">357</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="358">358</th><td><em>int</em> <dfn class="decl" id="avpriv_io_delete" title='avpriv_io_delete' data-ref="avpriv_io_delete">avpriv_io_delete</dfn>(<em>const</em> <em>char</em> *<dfn class="local col8 decl" id="1928url" title='url' data-type='const char *' data-ref="1928url">url</dfn>);</td></tr>
+<tr><th id="359">359</th><td></td></tr>
+<tr><th id="360">360</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="361">361</th><td><i class="doc"> * Open directory for reading.</i></td></tr>
+<tr><th id="362">362</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="363">363</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">s</span>       directory read context. Pointer to a NULL pointer must be passed.</i></td></tr>
+<tr><th id="364">364</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">url</span>     directory to be listed.</i></td></tr>
+<tr><th id="365">365</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">options</span> A dictionary filled with protocol-private options. On return</i></td></tr>
+<tr><th id="366">366</th><td><i class="doc"> *                this parameter will be destroyed and replaced with a dictionary</i></td></tr>
+<tr><th id="367">367</th><td><i class="doc"> *                containing options that were not found. May be NULL.</i></td></tr>
+<tr><th id="368">368</th><td><i class="doc"> * <span class="command">@return</span> &gt;=0 on success or negative on error.</i></td></tr>
+<tr><th id="369">369</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="370">370</th><td><em>int</em> <dfn class="decl" id="avio_open_dir" title='avio_open_dir' data-ref="avio_open_dir">avio_open_dir</dfn>(<a class="typedef" href="#AVIODirContext" title='AVIODirContext' data-type='struct AVIODirContext' data-ref="AVIODirContext">AVIODirContext</a> **<dfn class="local col9 decl" id="1929s" title='s' data-type='AVIODirContext **' data-ref="1929s">s</dfn>, <em>const</em> <em>char</em> *<dfn class="local col0 decl" id="1930url" title='url' data-type='const char *' data-ref="1930url">url</dfn>, <a class="typedef" href="../libavutil/dict.h.html#AVDictionary" title='AVDictionary' data-type='struct AVDictionary' data-ref="AVDictionary">AVDictionary</a> **<dfn class="local col1 decl" id="1931options" title='options' data-type='AVDictionary **' data-ref="1931options">options</dfn>);</td></tr>
+<tr><th id="371">371</th><td></td></tr>
+<tr><th id="372">372</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="373">373</th><td><i class="doc"> * Get next directory entry.</i></td></tr>
+<tr><th id="374">374</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="375">375</th><td><i class="doc"> * Returned entry must be freed with avio_free_directory_entry(). In particular</i></td></tr>
+<tr><th id="376">376</th><td><i class="doc"> * it may outlive AVIODirContext.</i></td></tr>
+<tr><th id="377">377</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="378">378</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">s</span>         directory read context.</i></td></tr>
+<tr><th id="379">379</th><td><i class="doc"> * <span class="command">@param</span>[out] <span class="arg">next</span> next entry or NULL when no more entries.</i></td></tr>
+<tr><th id="380">380</th><td><i class="doc"> * <span class="command">@return</span> &gt;=0 on success or negative on error. End of list is not considered an</i></td></tr>
+<tr><th id="381">381</th><td><i class="doc"> *             error.</i></td></tr>
+<tr><th id="382">382</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="383">383</th><td><em>int</em> <dfn class="decl" id="avio_read_dir" title='avio_read_dir' data-ref="avio_read_dir">avio_read_dir</dfn>(<a class="typedef" href="#AVIODirContext" title='AVIODirContext' data-type='struct AVIODirContext' data-ref="AVIODirContext">AVIODirContext</a> *<dfn class="local col2 decl" id="1932s" title='s' data-type='AVIODirContext *' data-ref="1932s">s</dfn>, <a class="typedef" href="#AVIODirEntry" title='AVIODirEntry' data-type='struct AVIODirEntry' data-ref="AVIODirEntry">AVIODirEntry</a> **<dfn class="local col3 decl" id="1933next" title='next' data-type='AVIODirEntry **' data-ref="1933next">next</dfn>);</td></tr>
+<tr><th id="384">384</th><td></td></tr>
+<tr><th id="385">385</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="386">386</th><td><i class="doc"> * Close directory.</i></td></tr>
+<tr><th id="387">387</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="388">388</th><td><i class="doc"> * <span class="command">@note</span> Entries created using avio_read_dir() are not deleted and must be</i></td></tr>
+<tr><th id="389">389</th><td><i class="doc"> * freeded with avio_free_directory_entry().</i></td></tr>
+<tr><th id="390">390</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="391">391</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">s</span>         directory read context.</i></td></tr>
+<tr><th id="392">392</th><td><i class="doc"> * <span class="command">@return</span> &gt;=0 on success or negative on error.</i></td></tr>
+<tr><th id="393">393</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="394">394</th><td><em>int</em> <dfn class="decl" id="avio_close_dir" title='avio_close_dir' data-ref="avio_close_dir">avio_close_dir</dfn>(<a class="typedef" href="#AVIODirContext" title='AVIODirContext' data-type='struct AVIODirContext' data-ref="AVIODirContext">AVIODirContext</a> **<dfn class="local col4 decl" id="1934s" title='s' data-type='AVIODirContext **' data-ref="1934s">s</dfn>);</td></tr>
+<tr><th id="395">395</th><td></td></tr>
+<tr><th id="396">396</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="397">397</th><td><i class="doc"> * Free entry allocated by avio_read_dir().</i></td></tr>
+<tr><th id="398">398</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="399">399</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">entry</span> entry to be freed.</i></td></tr>
+<tr><th id="400">400</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="401">401</th><td><em>void</em> <dfn class="decl" id="avio_free_directory_entry" title='avio_free_directory_entry' data-ref="avio_free_directory_entry">avio_free_directory_entry</dfn>(<a class="typedef" href="#AVIODirEntry" title='AVIODirEntry' data-type='struct AVIODirEntry' data-ref="AVIODirEntry">AVIODirEntry</a> **<dfn class="local col5 decl" id="1935entry" title='entry' data-type='AVIODirEntry **' data-ref="1935entry">entry</dfn>);</td></tr>
+<tr><th id="402">402</th><td></td></tr>
+<tr><th id="403">403</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="404">404</th><td><i class="doc"> * Allocate and initialize an AVIOContext for buffered I/O. It must be later</i></td></tr>
+<tr><th id="405">405</th><td><i class="doc"> * freed with av_free().</i></td></tr>
+<tr><th id="406">406</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="407">407</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">buffer</span> Memory block for input/output operations via AVIOContext.</i></td></tr>
+<tr><th id="408">408</th><td><i class="doc"> *        The buffer must be allocated with av_malloc() and friends.</i></td></tr>
+<tr><th id="409">409</th><td><i class="doc"> *        It may be freed and replaced with a new buffer by libavformat.</i></td></tr>
+<tr><th id="410">410</th><td><i class="doc"> *        AVIOContext.buffer holds the buffer currently in use,</i></td></tr>
+<tr><th id="411">411</th><td><i class="doc"> *        which must be later freed with av_free().</i></td></tr>
+<tr><th id="412">412</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">buffer_size</span> The buffer size is very important for performance.</i></td></tr>
+<tr><th id="413">413</th><td><i class="doc"> *        For protocols with fixed blocksize it should be set to this blocksize.</i></td></tr>
+<tr><th id="414">414</th><td><i class="doc"> *        For others a typical size is a cache page, e.g. 4kb.</i></td></tr>
+<tr><th id="415">415</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">write_flag</span> Set to 1 if the buffer should be writable, 0 otherwise.</i></td></tr>
+<tr><th id="416">416</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">opaque</span> An opaque pointer to user-specific data.</i></td></tr>
+<tr><th id="417">417</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">read_packet</span>  A function for refilling the buffer, may be NULL.</i></td></tr>
+<tr><th id="418">418</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">write_packet</span> A function for writing the buffer contents, may be NULL.</i></td></tr>
+<tr><th id="419">419</th><td><i class="doc"> *        The function may not change the input buffers content.</i></td></tr>
+<tr><th id="420">420</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">seek</span> A function for seeking to specified byte position, may be NULL.</i></td></tr>
+<tr><th id="421">421</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="422">422</th><td><i class="doc"> * <span class="command">@return</span> Allocated AVIOContext or NULL on failure.</i></td></tr>
+<tr><th id="423">423</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="424">424</th><td><a class="typedef" href="#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> *<dfn class="decl" id="avio_alloc_context" title='avio_alloc_context' data-ref="avio_alloc_context">avio_alloc_context</dfn>(</td></tr>
+<tr><th id="425">425</th><td>                  <em>unsigned</em> <em>char</em> *<dfn class="local col6 decl" id="1936buffer" title='buffer' data-type='unsigned char *' data-ref="1936buffer">buffer</dfn>,</td></tr>
+<tr><th id="426">426</th><td>                  <em>int</em> <dfn class="local col7 decl" id="1937buffer_size" title='buffer_size' data-type='int' data-ref="1937buffer_size">buffer_size</dfn>,</td></tr>
+<tr><th id="427">427</th><td>                  <em>int</em> <dfn class="local col8 decl" id="1938write_flag" title='write_flag' data-type='int' data-ref="1938write_flag">write_flag</dfn>,</td></tr>
+<tr><th id="428">428</th><td>                  <em>void</em> *<dfn class="local col9 decl" id="1939opaque" title='opaque' data-type='void *' data-ref="1939opaque">opaque</dfn>,</td></tr>
+<tr><th id="429">429</th><td>                  <em>int</em> (*<dfn class="local col0 decl" id="1940read_packet" title='read_packet' data-type='int (*)(void *, uint8_t *, int)' data-ref="1940read_packet">read_packet</dfn>)(<em>void</em> *<dfn class="local col1 decl" id="1941opaque" title='opaque' data-type='void *' data-ref="1941opaque">opaque</dfn>, <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col2 decl" id="1942buf" title='buf' data-type='uint8_t *' data-ref="1942buf">buf</dfn>, <em>int</em> <dfn class="local col3 decl" id="1943buf_size" title='buf_size' data-type='int' data-ref="1943buf_size">buf_size</dfn>),</td></tr>
+<tr><th id="430">430</th><td>                  <em>int</em> (*<dfn class="local col4 decl" id="1944write_packet" title='write_packet' data-type='int (*)(void *, uint8_t *, int)' data-ref="1944write_packet">write_packet</dfn>)(<em>void</em> *<dfn class="local col5 decl" id="1945opaque" title='opaque' data-type='void *' data-ref="1945opaque">opaque</dfn>, <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col6 decl" id="1946buf" title='buf' data-type='uint8_t *' data-ref="1946buf">buf</dfn>, <em>int</em> <dfn class="local col7 decl" id="1947buf_size" title='buf_size' data-type='int' data-ref="1947buf_size">buf_size</dfn>),</td></tr>
+<tr><th id="431">431</th><td>                  <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> (*<dfn class="local col8 decl" id="1948seek" title='seek' data-type='int64_t (*)(void *, int64_t, int)' data-ref="1948seek">seek</dfn>)(<em>void</em> *<dfn class="local col9 decl" id="1949opaque" title='opaque' data-type='void *' data-ref="1949opaque">opaque</dfn>, <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="local col0 decl" id="1950offset" title='offset' data-type='int64_t' data-ref="1950offset">offset</dfn>, <em>int</em> <dfn class="local col1 decl" id="1951whence" title='whence' data-type='int' data-ref="1951whence">whence</dfn>));</td></tr>
+<tr><th id="432">432</th><td></td></tr>
+<tr><th id="433">433</th><td><em>void</em> <dfn class="decl" id="avio_w8" title='avio_w8' data-ref="avio_w8">avio_w8</dfn>(<a class="typedef" href="#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> *<dfn class="local col2 decl" id="1952s" title='s' data-type='AVIOContext *' data-ref="1952s">s</dfn>, <em>int</em> <dfn class="local col3 decl" id="1953b" title='b' data-type='int' data-ref="1953b">b</dfn>);</td></tr>
+<tr><th id="434">434</th><td><em>void</em> <dfn class="decl" id="avio_write" title='avio_write' data-ref="avio_write">avio_write</dfn>(<a class="typedef" href="#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> *<dfn class="local col4 decl" id="1954s" title='s' data-type='AVIOContext *' data-ref="1954s">s</dfn>, <em>const</em> <em>unsigned</em> <em>char</em> *<dfn class="local col5 decl" id="1955buf" title='buf' data-type='const unsigned char *' data-ref="1955buf">buf</dfn>, <em>int</em> <dfn class="local col6 decl" id="1956size" title='size' data-type='int' data-ref="1956size">size</dfn>);</td></tr>
+<tr><th id="435">435</th><td><em>void</em> <dfn class="decl" id="avio_wl64" title='avio_wl64' data-ref="avio_wl64">avio_wl64</dfn>(<a class="typedef" href="#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> *<dfn class="local col7 decl" id="1957s" title='s' data-type='AVIOContext *' data-ref="1957s">s</dfn>, <a class="typedef" href="../../include/stdint.h.html#uint64_t" title='uint64_t' data-type='unsigned long' data-ref="uint64_t">uint64_t</a> <dfn class="local col8 decl" id="1958val" title='val' data-type='uint64_t' data-ref="1958val">val</dfn>);</td></tr>
+<tr><th id="436">436</th><td><em>void</em> <dfn class="decl" id="avio_wb64" title='avio_wb64' data-ref="avio_wb64">avio_wb64</dfn>(<a class="typedef" href="#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> *<dfn class="local col9 decl" id="1959s" title='s' data-type='AVIOContext *' data-ref="1959s">s</dfn>, <a class="typedef" href="../../include/stdint.h.html#uint64_t" title='uint64_t' data-type='unsigned long' data-ref="uint64_t">uint64_t</a> <dfn class="local col0 decl" id="1960val" title='val' data-type='uint64_t' data-ref="1960val">val</dfn>);</td></tr>
+<tr><th id="437">437</th><td><em>void</em> <dfn class="decl" id="avio_wl32" title='avio_wl32' data-ref="avio_wl32">avio_wl32</dfn>(<a class="typedef" href="#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> *<dfn class="local col1 decl" id="1961s" title='s' data-type='AVIOContext *' data-ref="1961s">s</dfn>, <em>unsigned</em> <em>int</em> <dfn class="local col2 decl" id="1962val" title='val' data-type='unsigned int' data-ref="1962val">val</dfn>);</td></tr>
+<tr><th id="438">438</th><td><em>void</em> <dfn class="decl" id="avio_wb32" title='avio_wb32' data-ref="avio_wb32">avio_wb32</dfn>(<a class="typedef" href="#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> *<dfn class="local col3 decl" id="1963s" title='s' data-type='AVIOContext *' data-ref="1963s">s</dfn>, <em>unsigned</em> <em>int</em> <dfn class="local col4 decl" id="1964val" title='val' data-type='unsigned int' data-ref="1964val">val</dfn>);</td></tr>
+<tr><th id="439">439</th><td><em>void</em> <dfn class="decl" id="avio_wl24" title='avio_wl24' data-ref="avio_wl24">avio_wl24</dfn>(<a class="typedef" href="#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> *<dfn class="local col5 decl" id="1965s" title='s' data-type='AVIOContext *' data-ref="1965s">s</dfn>, <em>unsigned</em> <em>int</em> <dfn class="local col6 decl" id="1966val" title='val' data-type='unsigned int' data-ref="1966val">val</dfn>);</td></tr>
+<tr><th id="440">440</th><td><em>void</em> <dfn class="decl" id="avio_wb24" title='avio_wb24' data-ref="avio_wb24">avio_wb24</dfn>(<a class="typedef" href="#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> *<dfn class="local col7 decl" id="1967s" title='s' data-type='AVIOContext *' data-ref="1967s">s</dfn>, <em>unsigned</em> <em>int</em> <dfn class="local col8 decl" id="1968val" title='val' data-type='unsigned int' data-ref="1968val">val</dfn>);</td></tr>
+<tr><th id="441">441</th><td><em>void</em> <dfn class="decl" id="avio_wl16" title='avio_wl16' data-ref="avio_wl16">avio_wl16</dfn>(<a class="typedef" href="#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> *<dfn class="local col9 decl" id="1969s" title='s' data-type='AVIOContext *' data-ref="1969s">s</dfn>, <em>unsigned</em> <em>int</em> <dfn class="local col0 decl" id="1970val" title='val' data-type='unsigned int' data-ref="1970val">val</dfn>);</td></tr>
+<tr><th id="442">442</th><td><em>void</em> <dfn class="decl" id="avio_wb16" title='avio_wb16' data-ref="avio_wb16">avio_wb16</dfn>(<a class="typedef" href="#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> *<dfn class="local col1 decl" id="1971s" title='s' data-type='AVIOContext *' data-ref="1971s">s</dfn>, <em>unsigned</em> <em>int</em> <dfn class="local col2 decl" id="1972val" title='val' data-type='unsigned int' data-ref="1972val">val</dfn>);</td></tr>
+<tr><th id="443">443</th><td></td></tr>
+<tr><th id="444">444</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="445">445</th><td><i class="doc"> * Write a NULL-terminated string.</i></td></tr>
+<tr><th id="446">446</th><td><i class="doc"> * <span class="command">@return</span> number of bytes written.</i></td></tr>
+<tr><th id="447">447</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="448">448</th><td><em>int</em> <dfn class="decl" id="avio_put_str" title='avio_put_str' data-ref="avio_put_str">avio_put_str</dfn>(<a class="typedef" href="#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> *<dfn class="local col3 decl" id="1973s" title='s' data-type='AVIOContext *' data-ref="1973s">s</dfn>, <em>const</em> <em>char</em> *<dfn class="local col4 decl" id="1974str" title='str' data-type='const char *' data-ref="1974str">str</dfn>);</td></tr>
+<tr><th id="449">449</th><td></td></tr>
+<tr><th id="450">450</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="451">451</th><td><i class="doc"> * Convert an UTF-8 string to UTF-16LE and write it.</i></td></tr>
+<tr><th id="452">452</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">s</span> the AVIOContext</i></td></tr>
+<tr><th id="453">453</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">str</span> NULL-terminated UTF-8 string</i></td></tr>
+<tr><th id="454">454</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="455">455</th><td><i class="doc"> * <span class="command">@return</span> number of bytes written.</i></td></tr>
+<tr><th id="456">456</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="457">457</th><td><em>int</em> <dfn class="decl" id="avio_put_str16le" title='avio_put_str16le' data-ref="avio_put_str16le">avio_put_str16le</dfn>(<a class="typedef" href="#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> *<dfn class="local col5 decl" id="1975s" title='s' data-type='AVIOContext *' data-ref="1975s">s</dfn>, <em>const</em> <em>char</em> *<dfn class="local col6 decl" id="1976str" title='str' data-type='const char *' data-ref="1976str">str</dfn>);</td></tr>
+<tr><th id="458">458</th><td></td></tr>
+<tr><th id="459">459</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="460">460</th><td><i class="doc"> * Convert an UTF-8 string to UTF-16BE and write it.</i></td></tr>
+<tr><th id="461">461</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">s</span> the AVIOContext</i></td></tr>
+<tr><th id="462">462</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">str</span> NULL-terminated UTF-8 string</i></td></tr>
+<tr><th id="463">463</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="464">464</th><td><i class="doc"> * <span class="command">@return</span> number of bytes written.</i></td></tr>
+<tr><th id="465">465</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="466">466</th><td><em>int</em> <dfn class="decl" id="avio_put_str16be" title='avio_put_str16be' data-ref="avio_put_str16be">avio_put_str16be</dfn>(<a class="typedef" href="#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> *<dfn class="local col7 decl" id="1977s" title='s' data-type='AVIOContext *' data-ref="1977s">s</dfn>, <em>const</em> <em>char</em> *<dfn class="local col8 decl" id="1978str" title='str' data-type='const char *' data-ref="1978str">str</dfn>);</td></tr>
+<tr><th id="467">467</th><td></td></tr>
+<tr><th id="468">468</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="469">469</th><td><i class="doc"> * Mark the written bytestream as a specific type.</i></td></tr>
+<tr><th id="470">470</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="471">471</th><td><i class="doc"> * Zero-length ranges are omitted from the output.</i></td></tr>
+<tr><th id="472">472</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="473">473</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">time</span> the stream time the current bytestream pos corresponds to</i></td></tr>
+<tr><th id="474">474</th><td><i class="doc"> *             (in AV_TIME_BASE units), or AV_NOPTS_VALUE if unknown or not</i></td></tr>
+<tr><th id="475">475</th><td><i class="doc"> *             applicable</i></td></tr>
+<tr><th id="476">476</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">type</span> the kind of data written starting at the current pos</i></td></tr>
+<tr><th id="477">477</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="478">478</th><td><em>void</em> <dfn class="decl" id="avio_write_marker" title='avio_write_marker' data-ref="avio_write_marker">avio_write_marker</dfn>(<a class="typedef" href="#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> *<dfn class="local col9 decl" id="1979s" title='s' data-type='AVIOContext *' data-ref="1979s">s</dfn>, <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="local col0 decl" id="1980time" title='time' data-type='int64_t' data-ref="1980time">time</dfn>, <b>enum</b> <a class="type" href="#AVIODataMarkerType" title='AVIODataMarkerType' data-ref="AVIODataMarkerType">AVIODataMarkerType</a> <dfn class="local col1 decl" id="1981type" title='type' data-type='enum AVIODataMarkerType' data-ref="1981type">type</dfn>);</td></tr>
+<tr><th id="479">479</th><td></td></tr>
+<tr><th id="480">480</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="481">481</th><td><i class="doc"> * ORing this as the "whence" parameter to a seek function causes it to</i></td></tr>
+<tr><th id="482">482</th><td><i class="doc"> * return the filesize without seeking anywhere. Supporting this is optional.</i></td></tr>
+<tr><th id="483">483</th><td><i class="doc"> * If it is not supported then the seek function will return &lt;0.</i></td></tr>
+<tr><th id="484">484</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="485">485</th><td><u>#define <dfn class="macro" id="_M/AVSEEK_SIZE" data-ref="_M/AVSEEK_SIZE">AVSEEK_SIZE</dfn> 0x10000</u></td></tr>
+<tr><th id="486">486</th><td></td></tr>
+<tr><th id="487">487</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="488">488</th><td><i class="doc"> * Passing this flag as the "whence" parameter to a seek function causes it to</i></td></tr>
+<tr><th id="489">489</th><td><i class="doc"> * seek by any means (like reopening and linear reading) or other normally unreasonable</i></td></tr>
+<tr><th id="490">490</th><td><i class="doc"> * means that can be extremely slow.</i></td></tr>
+<tr><th id="491">491</th><td><i class="doc"> * This may be ignored by the seek code.</i></td></tr>
+<tr><th id="492">492</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="493">493</th><td><u>#define <dfn class="macro" id="_M/AVSEEK_FORCE" data-ref="_M/AVSEEK_FORCE">AVSEEK_FORCE</dfn> 0x20000</u></td></tr>
+<tr><th id="494">494</th><td></td></tr>
+<tr><th id="495">495</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="496">496</th><td><i class="doc"> * fseek() equivalent for AVIOContext.</i></td></tr>
+<tr><th id="497">497</th><td><i class="doc"> * <span class="command">@return</span> new position or AVERROR.</i></td></tr>
+<tr><th id="498">498</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="499">499</th><td><a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="decl" id="avio_seek" title='avio_seek' data-ref="avio_seek">avio_seek</dfn>(<a class="typedef" href="#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> *<dfn class="local col2 decl" id="1982s" title='s' data-type='AVIOContext *' data-ref="1982s">s</dfn>, <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="local col3 decl" id="1983offset" title='offset' data-type='int64_t' data-ref="1983offset">offset</dfn>, <em>int</em> <dfn class="local col4 decl" id="1984whence" title='whence' data-type='int' data-ref="1984whence">whence</dfn>);</td></tr>
+<tr><th id="500">500</th><td></td></tr>
+<tr><th id="501">501</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="502">502</th><td><i class="doc"> * Skip given number of bytes forward</i></td></tr>
+<tr><th id="503">503</th><td><i class="doc"> * <span class="command">@return</span> new position or AVERROR.</i></td></tr>
+<tr><th id="504">504</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="505">505</th><td><a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="decl" id="avio_skip" title='avio_skip' data-ref="avio_skip">avio_skip</dfn>(<a class="typedef" href="#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> *<dfn class="local col5 decl" id="1985s" title='s' data-type='AVIOContext *' data-ref="1985s">s</dfn>, <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="local col6 decl" id="1986offset" title='offset' data-type='int64_t' data-ref="1986offset">offset</dfn>);</td></tr>
+<tr><th id="506">506</th><td></td></tr>
+<tr><th id="507">507</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="508">508</th><td><i class="doc"> * ftell() equivalent for AVIOContext.</i></td></tr>
+<tr><th id="509">509</th><td><i class="doc"> * <span class="command">@return</span> position or AVERROR.</i></td></tr>
+<tr><th id="510">510</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="511">511</th><td><em>static</em> <a class="macro" href="../libavutil/attributes.h.html#39" title="__attribute__((always_inline)) inline" data-ref="_M/av_always_inline">av_always_inline</a> <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="decl def" id="avio_tell" title='avio_tell' data-ref="avio_tell">avio_tell</dfn>(<a class="typedef" href="#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> *<dfn class="local col7 decl" id="1987s" title='s' data-type='AVIOContext *' data-ref="1987s">s</dfn>)</td></tr>
+<tr><th id="512">512</th><td>{</td></tr>
+<tr><th id="513">513</th><td>    <b>return</b> <a class="ref" href="#avio_seek" title='avio_seek' data-ref="avio_seek">avio_seek</a>(<a class="local col7 ref" href="#1987s" title='s' data-ref="1987s">s</a>, <var>0</var>, <a class="macro" href="../../include/stdio.h.html#141" title="1" data-ref="_M/SEEK_CUR">SEEK_CUR</a>);</td></tr>
+<tr><th id="514">514</th><td>}</td></tr>
+<tr><th id="515">515</th><td></td></tr>
+<tr><th id="516">516</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="517">517</th><td><i class="doc"> * Get the filesize.</i></td></tr>
+<tr><th id="518">518</th><td><i class="doc"> * <span class="command">@return</span> filesize or AVERROR</i></td></tr>
+<tr><th id="519">519</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="520">520</th><td><a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="decl" id="avio_size" title='avio_size' data-ref="avio_size">avio_size</dfn>(<a class="typedef" href="#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> *<dfn class="local col8 decl" id="1988s" title='s' data-type='AVIOContext *' data-ref="1988s">s</dfn>);</td></tr>
+<tr><th id="521">521</th><td></td></tr>
+<tr><th id="522">522</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="523">523</th><td><i class="doc"> * feof() equivalent for AVIOContext.</i></td></tr>
+<tr><th id="524">524</th><td><i class="doc"> * <span class="command">@return</span> non zero if and only if end of file</i></td></tr>
+<tr><th id="525">525</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="526">526</th><td><em>int</em> <dfn class="decl" id="avio_feof" title='avio_feof' data-ref="avio_feof">avio_feof</dfn>(<a class="typedef" href="#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> *<dfn class="local col9 decl" id="1989s" title='s' data-type='AVIOContext *' data-ref="1989s">s</dfn>);</td></tr>
+<tr><th id="527">527</th><td><u>#<span data-ppcond="527">if</span> <a class="macro" href="version.h.html#68" title="(57 &lt; 58)" data-ref="_M/FF_API_URL_FEOF">FF_API_URL_FEOF</a></u></td></tr>
+<tr><th id="528">528</th><td><i>/**</i></td></tr>
+<tr><th id="529">529</th><td><i> * @deprecated use avio_feof()</i></td></tr>
+<tr><th id="530">530</th><td><i> */</i></td></tr>
+<tr><th id="531">531</th><td><a class="macro" href="../libavutil/attributes.h.html#94" title="__attribute__((deprecated))" data-ref="_M/attribute_deprecated">attribute_deprecated</a></td></tr>
+<tr><th id="532">532</th><td><em>int</em> <dfn class="decl" id="url_feof" title='url_feof' data-ref="url_feof">url_feof</dfn>(<a class="typedef" href="#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> *<dfn class="local col0 decl" id="1990s" title='s' data-type='AVIOContext *' data-ref="1990s">s</dfn>);</td></tr>
+<tr><th id="533">533</th><td><u>#<span data-ppcond="527">endif</span></u></td></tr>
+<tr><th id="534">534</th><td></td></tr>
+<tr><th id="535">535</th><td><i class="doc">/** <span class="command">@warning</span> Writes up to 4 KiB per call */</i></td></tr>
+<tr><th id="536">536</th><td><em>int</em> <dfn class="decl" id="avio_printf" title='avio_printf' data-ref="avio_printf">avio_printf</dfn>(<a class="typedef" href="#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> *<dfn class="local col1 decl" id="1991s" title='s' data-type='AVIOContext *' data-ref="1991s">s</dfn>, <em>const</em> <em>char</em> *<dfn class="local col2 decl" id="1992fmt" title='fmt' data-type='const char *' data-ref="1992fmt">fmt</dfn>, ...) <a class="macro" href="../libavutil/attributes.h.html#156" title="__attribute__((__format__(__printf__, 2, 3)))" data-ref="_M/av_printf_format">av_printf_format</a>(<var>2</var>, <var>3</var>);</td></tr>
+<tr><th id="537">537</th><td></td></tr>
+<tr><th id="538">538</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="539">539</th><td><i class="doc"> * Force flushing of buffered data.</i></td></tr>
+<tr><th id="540">540</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="541">541</th><td><i class="doc"> * For write streams, force the buffered data to be immediately written to the output,</i></td></tr>
+<tr><th id="542">542</th><td><i class="doc"> * without to wait to fill the internal buffer.</i></td></tr>
+<tr><th id="543">543</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="544">544</th><td><i class="doc"> * For read streams, discard all currently buffered data, and advance the</i></td></tr>
+<tr><th id="545">545</th><td><i class="doc"> * reported file position to that of the underlying stream. This does not</i></td></tr>
+<tr><th id="546">546</th><td><i class="doc"> * read new data, and does not perform any seeks.</i></td></tr>
+<tr><th id="547">547</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="548">548</th><td><em>void</em> <dfn class="decl" id="avio_flush" title='avio_flush' data-ref="avio_flush">avio_flush</dfn>(<a class="typedef" href="#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> *<dfn class="local col3 decl" id="1993s" title='s' data-type='AVIOContext *' data-ref="1993s">s</dfn>);</td></tr>
+<tr><th id="549">549</th><td></td></tr>
+<tr><th id="550">550</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="551">551</th><td><i class="doc"> * Read size bytes from AVIOContext into buf.</i></td></tr>
+<tr><th id="552">552</th><td><i class="doc"> * <span class="command">@return</span> number of bytes read or AVERROR</i></td></tr>
+<tr><th id="553">553</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="554">554</th><td><em>int</em> <dfn class="decl" id="avio_read" title='avio_read' data-ref="avio_read">avio_read</dfn>(<a class="typedef" href="#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> *<dfn class="local col4 decl" id="1994s" title='s' data-type='AVIOContext *' data-ref="1994s">s</dfn>, <em>unsigned</em> <em>char</em> *<dfn class="local col5 decl" id="1995buf" title='buf' data-type='unsigned char *' data-ref="1995buf">buf</dfn>, <em>int</em> <dfn class="local col6 decl" id="1996size" title='size' data-type='int' data-ref="1996size">size</dfn>);</td></tr>
+<tr><th id="555">555</th><td></td></tr>
+<tr><th id="556">556</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="557">557</th><td><i class="doc"> * <span class="command">@name</span> <span class="verb">Functions for reading from AVIOContext</span></i></td></tr>
+<tr><th id="558">558</th><td><i class="doc"> * @{</i></td></tr>
+<tr><th id="559">559</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="560">560</th><td><i class="doc"> * <span class="command">@note</span> return 0 if EOF, so you cannot use it if EOF handling is</i></td></tr>
+<tr><th id="561">561</th><td><i class="doc"> *       necessary</i></td></tr>
+<tr><th id="562">562</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="563">563</th><td><em>int</em>          <dfn class="decl" id="avio_r8" title='avio_r8' data-ref="avio_r8">avio_r8</dfn>  (<a class="typedef" href="#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> *<dfn class="local col7 decl" id="1997s" title='s' data-type='AVIOContext *' data-ref="1997s">s</dfn>);</td></tr>
+<tr><th id="564">564</th><td><em>unsigned</em> <em>int</em> <dfn class="decl" id="avio_rl16" title='avio_rl16' data-ref="avio_rl16">avio_rl16</dfn>(<a class="typedef" href="#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> *<dfn class="local col8 decl" id="1998s" title='s' data-type='AVIOContext *' data-ref="1998s">s</dfn>);</td></tr>
+<tr><th id="565">565</th><td><em>unsigned</em> <em>int</em> <dfn class="decl" id="avio_rl24" title='avio_rl24' data-ref="avio_rl24">avio_rl24</dfn>(<a class="typedef" href="#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> *<dfn class="local col9 decl" id="1999s" title='s' data-type='AVIOContext *' data-ref="1999s">s</dfn>);</td></tr>
+<tr><th id="566">566</th><td><em>unsigned</em> <em>int</em> <dfn class="decl" id="avio_rl32" title='avio_rl32' data-ref="avio_rl32">avio_rl32</dfn>(<a class="typedef" href="#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> *<dfn class="local col0 decl" id="2000s" title='s' data-type='AVIOContext *' data-ref="2000s">s</dfn>);</td></tr>
+<tr><th id="567">567</th><td><a class="typedef" href="../../include/stdint.h.html#uint64_t" title='uint64_t' data-type='unsigned long' data-ref="uint64_t">uint64_t</a>     <dfn class="decl" id="avio_rl64" title='avio_rl64' data-ref="avio_rl64">avio_rl64</dfn>(<a class="typedef" href="#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> *<dfn class="local col1 decl" id="2001s" title='s' data-type='AVIOContext *' data-ref="2001s">s</dfn>);</td></tr>
+<tr><th id="568">568</th><td><em>unsigned</em> <em>int</em> <dfn class="decl" id="avio_rb16" title='avio_rb16' data-ref="avio_rb16">avio_rb16</dfn>(<a class="typedef" href="#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> *<dfn class="local col2 decl" id="2002s" title='s' data-type='AVIOContext *' data-ref="2002s">s</dfn>);</td></tr>
+<tr><th id="569">569</th><td><em>unsigned</em> <em>int</em> <dfn class="decl" id="avio_rb24" title='avio_rb24' data-ref="avio_rb24">avio_rb24</dfn>(<a class="typedef" href="#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> *<dfn class="local col3 decl" id="2003s" title='s' data-type='AVIOContext *' data-ref="2003s">s</dfn>);</td></tr>
+<tr><th id="570">570</th><td><em>unsigned</em> <em>int</em> <dfn class="decl" id="avio_rb32" title='avio_rb32' data-ref="avio_rb32">avio_rb32</dfn>(<a class="typedef" href="#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> *<dfn class="local col4 decl" id="2004s" title='s' data-type='AVIOContext *' data-ref="2004s">s</dfn>);</td></tr>
+<tr><th id="571">571</th><td><a class="typedef" href="../../include/stdint.h.html#uint64_t" title='uint64_t' data-type='unsigned long' data-ref="uint64_t">uint64_t</a>     <dfn class="decl" id="avio_rb64" title='avio_rb64' data-ref="avio_rb64">avio_rb64</dfn>(<a class="typedef" href="#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> *<dfn class="local col5 decl" id="2005s" title='s' data-type='AVIOContext *' data-ref="2005s">s</dfn>);</td></tr>
+<tr><th id="572">572</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="573">573</th><td><i class="doc"> * @}</i></td></tr>
+<tr><th id="574">574</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="575">575</th><td></td></tr>
+<tr><th id="576">576</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="577">577</th><td><i class="doc"> * Read a string from pb into buf. The reading will terminate when either</i></td></tr>
+<tr><th id="578">578</th><td><i class="doc"> * a NULL character was encountered, maxlen bytes have been read, or nothing</i></td></tr>
+<tr><th id="579">579</th><td><i class="doc"> * more can be read from pb. The result is guaranteed to be NULL-terminated, it</i></td></tr>
+<tr><th id="580">580</th><td><i class="doc"> * will be truncated if buf is too small.</i></td></tr>
+<tr><th id="581">581</th><td><i class="doc"> * Note that the string is not interpreted or validated in any way, it</i></td></tr>
+<tr><th id="582">582</th><td><i class="doc"> * might get truncated in the middle of a sequence for multi-byte encodings.</i></td></tr>
+<tr><th id="583">583</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="584">584</th><td><i class="doc"> * <span class="command">@return</span> number of bytes read (is always &lt;= maxlen).</i></td></tr>
+<tr><th id="585">585</th><td><i class="doc"> * If reading ends on EOF or error, the return value will be one more than</i></td></tr>
+<tr><th id="586">586</th><td><i class="doc"> * bytes actually read.</i></td></tr>
+<tr><th id="587">587</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="588">588</th><td><em>int</em> <dfn class="decl" id="avio_get_str" title='avio_get_str' data-ref="avio_get_str">avio_get_str</dfn>(<a class="typedef" href="#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> *<dfn class="local col6 decl" id="2006pb" title='pb' data-type='AVIOContext *' data-ref="2006pb">pb</dfn>, <em>int</em> <dfn class="local col7 decl" id="2007maxlen" title='maxlen' data-type='int' data-ref="2007maxlen">maxlen</dfn>, <em>char</em> *<dfn class="local col8 decl" id="2008buf" title='buf' data-type='char *' data-ref="2008buf">buf</dfn>, <em>int</em> <dfn class="local col9 decl" id="2009buflen" title='buflen' data-type='int' data-ref="2009buflen">buflen</dfn>);</td></tr>
+<tr><th id="589">589</th><td></td></tr>
+<tr><th id="590">590</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="591">591</th><td><i class="doc"> * Read a UTF-16 string from pb and convert it to UTF-8.</i></td></tr>
+<tr><th id="592">592</th><td><i class="doc"> * The reading will terminate when either a null or invalid character was</i></td></tr>
+<tr><th id="593">593</th><td><i class="doc"> * encountered or maxlen bytes have been read.</i></td></tr>
+<tr><th id="594">594</th><td><i class="doc"> * <span class="command">@return</span> number of bytes read (is always &lt;= maxlen)</i></td></tr>
+<tr><th id="595">595</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="596">596</th><td><em>int</em> <dfn class="decl" id="avio_get_str16le" title='avio_get_str16le' data-ref="avio_get_str16le">avio_get_str16le</dfn>(<a class="typedef" href="#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> *<dfn class="local col0 decl" id="2010pb" title='pb' data-type='AVIOContext *' data-ref="2010pb">pb</dfn>, <em>int</em> <dfn class="local col1 decl" id="2011maxlen" title='maxlen' data-type='int' data-ref="2011maxlen">maxlen</dfn>, <em>char</em> *<dfn class="local col2 decl" id="2012buf" title='buf' data-type='char *' data-ref="2012buf">buf</dfn>, <em>int</em> <dfn class="local col3 decl" id="2013buflen" title='buflen' data-type='int' data-ref="2013buflen">buflen</dfn>);</td></tr>
+<tr><th id="597">597</th><td><em>int</em> <dfn class="decl" id="avio_get_str16be" title='avio_get_str16be' data-ref="avio_get_str16be">avio_get_str16be</dfn>(<a class="typedef" href="#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> *<dfn class="local col4 decl" id="2014pb" title='pb' data-type='AVIOContext *' data-ref="2014pb">pb</dfn>, <em>int</em> <dfn class="local col5 decl" id="2015maxlen" title='maxlen' data-type='int' data-ref="2015maxlen">maxlen</dfn>, <em>char</em> *<dfn class="local col6 decl" id="2016buf" title='buf' data-type='char *' data-ref="2016buf">buf</dfn>, <em>int</em> <dfn class="local col7 decl" id="2017buflen" title='buflen' data-type='int' data-ref="2017buflen">buflen</dfn>);</td></tr>
+<tr><th id="598">598</th><td></td></tr>
+<tr><th id="599">599</th><td></td></tr>
+<tr><th id="600">600</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="601">601</th><td><i class="doc"> * <span class="command">@name</span> <span class="verb">URL open modes</span></i></td></tr>
+<tr><th id="602">602</th><td><i class="doc"> * The flags argument to avio_open must be one of the following</i></td></tr>
+<tr><th id="603">603</th><td><i class="doc"> * constants, optionally ORed with other flags.</i></td></tr>
+<tr><th id="604">604</th><td><i class="doc"> * @{</i></td></tr>
+<tr><th id="605">605</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="606">606</th><td><u>#define <dfn class="macro" id="_M/AVIO_FLAG_READ" data-ref="_M/AVIO_FLAG_READ">AVIO_FLAG_READ</dfn>  1                                      /**&lt; read-only */</u></td></tr>
+<tr><th id="607">607</th><td><u>#define <dfn class="macro" id="_M/AVIO_FLAG_WRITE" data-ref="_M/AVIO_FLAG_WRITE">AVIO_FLAG_WRITE</dfn> 2                                      /**&lt; write-only */</u></td></tr>
+<tr><th id="608">608</th><td><u>#define <dfn class="macro" id="_M/AVIO_FLAG_READ_WRITE" data-ref="_M/AVIO_FLAG_READ_WRITE">AVIO_FLAG_READ_WRITE</dfn> (AVIO_FLAG_READ|AVIO_FLAG_WRITE)  /**&lt; read-write pseudo flag */</u></td></tr>
+<tr><th id="609">609</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="610">610</th><td><i class="doc"> * @}</i></td></tr>
+<tr><th id="611">611</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="612">612</th><td></td></tr>
+<tr><th id="613">613</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="614">614</th><td><i class="doc"> * Use non-blocking mode.</i></td></tr>
+<tr><th id="615">615</th><td><i class="doc"> * If this flag is set, operations on the context will return</i></td></tr>
+<tr><th id="616">616</th><td><i class="doc"> * AVERROR(EAGAIN) if they can not be performed immediately.</i></td></tr>
+<tr><th id="617">617</th><td><i class="doc"> * If this flag is not set, operations on the context will never return</i></td></tr>
+<tr><th id="618">618</th><td><i class="doc"> * AVERROR(EAGAIN).</i></td></tr>
+<tr><th id="619">619</th><td><i class="doc"> * Note that this flag does not affect the opening/connecting of the</i></td></tr>
+<tr><th id="620">620</th><td><i class="doc"> * context. Connecting a protocol will always block if necessary (e.g. on</i></td></tr>
+<tr><th id="621">621</th><td><i class="doc"> * network protocols) but never hang (e.g. on busy devices).</i></td></tr>
+<tr><th id="622">622</th><td><i class="doc"> * Warning: non-blocking protocols is work-in-progress; this flag may be</i></td></tr>
+<tr><th id="623">623</th><td><i class="doc"> * silently ignored.</i></td></tr>
+<tr><th id="624">624</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="625">625</th><td><u>#define <dfn class="macro" id="_M/AVIO_FLAG_NONBLOCK" data-ref="_M/AVIO_FLAG_NONBLOCK">AVIO_FLAG_NONBLOCK</dfn> 8</u></td></tr>
+<tr><th id="626">626</th><td></td></tr>
+<tr><th id="627">627</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="628">628</th><td><i class="doc"> * Use direct mode.</i></td></tr>
+<tr><th id="629">629</th><td><i class="doc"> * avio_read and avio_write should if possible be satisfied directly</i></td></tr>
+<tr><th id="630">630</th><td><i class="doc"> * instead of going through a buffer, and avio_seek will always</i></td></tr>
+<tr><th id="631">631</th><td><i class="doc"> * call the underlying seek function directly.</i></td></tr>
+<tr><th id="632">632</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="633">633</th><td><u>#define <dfn class="macro" id="_M/AVIO_FLAG_DIRECT" data-ref="_M/AVIO_FLAG_DIRECT">AVIO_FLAG_DIRECT</dfn> 0x8000</u></td></tr>
+<tr><th id="634">634</th><td></td></tr>
+<tr><th id="635">635</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="636">636</th><td><i class="doc"> * Create and initialize a AVIOContext for accessing the</i></td></tr>
+<tr><th id="637">637</th><td><i class="doc"> * resource indicated by url.</i></td></tr>
+<tr><th id="638">638</th><td><i class="doc"> * <span class="command">@note</span> When the resource indicated by url has been opened in</i></td></tr>
+<tr><th id="639">639</th><td><i class="doc"> * read+write mode, the AVIOContext can be used only for writing.</i></td></tr>
+<tr><th id="640">640</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="641">641</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">s</span> Used to return the pointer to the created AVIOContext.</i></td></tr>
+<tr><th id="642">642</th><td><i class="doc"> * In case of failure the pointed to value is set to NULL.</i></td></tr>
+<tr><th id="643">643</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">url</span> resource to access</i></td></tr>
+<tr><th id="644">644</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">flags</span> flags which control how the resource indicated by url</i></td></tr>
+<tr><th id="645">645</th><td><i class="doc"> * is to be opened</i></td></tr>
+<tr><th id="646">646</th><td><i class="doc"> * <span class="command">@return</span> &gt;= 0 in case of success, a negative value corresponding to an</i></td></tr>
+<tr><th id="647">647</th><td><i class="doc"> * AVERROR code in case of failure</i></td></tr>
+<tr><th id="648">648</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="649">649</th><td><em>int</em> <dfn class="decl" id="avio_open" title='avio_open' data-ref="avio_open">avio_open</dfn>(<a class="typedef" href="#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> **<dfn class="local col8 decl" id="2018s" title='s' data-type='AVIOContext **' data-ref="2018s">s</dfn>, <em>const</em> <em>char</em> *<dfn class="local col9 decl" id="2019url" title='url' data-type='const char *' data-ref="2019url">url</dfn>, <em>int</em> <dfn class="local col0 decl" id="2020flags" title='flags' data-type='int' data-ref="2020flags">flags</dfn>);</td></tr>
+<tr><th id="650">650</th><td></td></tr>
+<tr><th id="651">651</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="652">652</th><td><i class="doc"> * Create and initialize a AVIOContext for accessing the</i></td></tr>
+<tr><th id="653">653</th><td><i class="doc"> * resource indicated by url.</i></td></tr>
+<tr><th id="654">654</th><td><i class="doc"> * <span class="command">@note</span> When the resource indicated by url has been opened in</i></td></tr>
+<tr><th id="655">655</th><td><i class="doc"> * read+write mode, the AVIOContext can be used only for writing.</i></td></tr>
+<tr><th id="656">656</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="657">657</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">s</span> Used to return the pointer to the created AVIOContext.</i></td></tr>
+<tr><th id="658">658</th><td><i class="doc"> * In case of failure the pointed to value is set to NULL.</i></td></tr>
+<tr><th id="659">659</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">url</span> resource to access</i></td></tr>
+<tr><th id="660">660</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">flags</span> flags which control how the resource indicated by url</i></td></tr>
+<tr><th id="661">661</th><td><i class="doc"> * is to be opened</i></td></tr>
+<tr><th id="662">662</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">int_cb</span> an interrupt callback to be used at the protocols level</i></td></tr>
+<tr><th id="663">663</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">options</span>  A dictionary filled with protocol-private options. On return</i></td></tr>
+<tr><th id="664">664</th><td><i class="doc"> * this parameter will be destroyed and replaced with a dict containing options</i></td></tr>
+<tr><th id="665">665</th><td><i class="doc"> * that were not found. May be NULL.</i></td></tr>
+<tr><th id="666">666</th><td><i class="doc"> * <span class="command">@return</span> &gt;= 0 in case of success, a negative value corresponding to an</i></td></tr>
+<tr><th id="667">667</th><td><i class="doc"> * AVERROR code in case of failure</i></td></tr>
+<tr><th id="668">668</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="669">669</th><td><em>int</em> <dfn class="decl" id="avio_open2" title='avio_open2' data-ref="avio_open2">avio_open2</dfn>(<a class="typedef" href="#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> **<dfn class="local col1 decl" id="2021s" title='s' data-type='AVIOContext **' data-ref="2021s">s</dfn>, <em>const</em> <em>char</em> *<dfn class="local col2 decl" id="2022url" title='url' data-type='const char *' data-ref="2022url">url</dfn>, <em>int</em> <dfn class="local col3 decl" id="2023flags" title='flags' data-type='int' data-ref="2023flags">flags</dfn>,</td></tr>
+<tr><th id="670">670</th><td>               <em>const</em> <a class="typedef" href="#AVIOInterruptCB" title='AVIOInterruptCB' data-type='struct AVIOInterruptCB' data-ref="AVIOInterruptCB">AVIOInterruptCB</a> *<dfn class="local col4 decl" id="2024int_cb" title='int_cb' data-type='const AVIOInterruptCB *' data-ref="2024int_cb">int_cb</dfn>, <a class="typedef" href="../libavutil/dict.h.html#AVDictionary" title='AVDictionary' data-type='struct AVDictionary' data-ref="AVDictionary">AVDictionary</a> **<dfn class="local col5 decl" id="2025options" title='options' data-type='AVDictionary **' data-ref="2025options">options</dfn>);</td></tr>
+<tr><th id="671">671</th><td></td></tr>
+<tr><th id="672">672</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="673">673</th><td><i class="doc"> * Close the resource accessed by the AVIOContext s and free it.</i></td></tr>
+<tr><th id="674">674</th><td><i class="doc"> * This function can only be used if s was opened by avio_open().</i></td></tr>
+<tr><th id="675">675</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="676">676</th><td><i class="doc"> * The internal buffer is automatically flushed before closing the</i></td></tr>
+<tr><th id="677">677</th><td><i class="doc"> * resource.</i></td></tr>
+<tr><th id="678">678</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="679">679</th><td><i class="doc"> * <span class="command">@return</span> 0 on success, an AVERROR &lt; 0 on error.</i></td></tr>
+<tr><th id="680">680</th><td><i class="doc"> * <span class="command">@see</span> avio_closep</i></td></tr>
+<tr><th id="681">681</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="682">682</th><td><em>int</em> <dfn class="decl" id="avio_close" title='avio_close' data-ref="avio_close">avio_close</dfn>(<a class="typedef" href="#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> *<dfn class="local col6 decl" id="2026s" title='s' data-type='AVIOContext *' data-ref="2026s">s</dfn>);</td></tr>
+<tr><th id="683">683</th><td></td></tr>
+<tr><th id="684">684</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="685">685</th><td><i class="doc"> * Close the resource accessed by the AVIOContext *s, free it</i></td></tr>
+<tr><th id="686">686</th><td><i class="doc"> * and set the pointer pointing to it to NULL.</i></td></tr>
+<tr><th id="687">687</th><td><i class="doc"> * This function can only be used if s was opened by avio_open().</i></td></tr>
+<tr><th id="688">688</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="689">689</th><td><i class="doc"> * The internal buffer is automatically flushed before closing the</i></td></tr>
+<tr><th id="690">690</th><td><i class="doc"> * resource.</i></td></tr>
+<tr><th id="691">691</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="692">692</th><td><i class="doc"> * <span class="command">@return</span> 0 on success, an AVERROR &lt; 0 on error.</i></td></tr>
+<tr><th id="693">693</th><td><i class="doc"> * <span class="command">@see</span> avio_close</i></td></tr>
+<tr><th id="694">694</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="695">695</th><td><em>int</em> <dfn class="decl" id="avio_closep" title='avio_closep' data-ref="avio_closep">avio_closep</dfn>(<a class="typedef" href="#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> **<dfn class="local col7 decl" id="2027s" title='s' data-type='AVIOContext **' data-ref="2027s">s</dfn>);</td></tr>
+<tr><th id="696">696</th><td></td></tr>
+<tr><th id="697">697</th><td></td></tr>
+<tr><th id="698">698</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="699">699</th><td><i class="doc"> * Open a write only memory stream.</i></td></tr>
+<tr><th id="700">700</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="701">701</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">s</span> new IO context</i></td></tr>
+<tr><th id="702">702</th><td><i class="doc"> * <span class="command">@return</span> zero if no error.</i></td></tr>
+<tr><th id="703">703</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="704">704</th><td><em>int</em> <dfn class="decl" id="avio_open_dyn_buf" title='avio_open_dyn_buf' data-ref="avio_open_dyn_buf">avio_open_dyn_buf</dfn>(<a class="typedef" href="#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> **<dfn class="local col8 decl" id="2028s" title='s' data-type='AVIOContext **' data-ref="2028s">s</dfn>);</td></tr>
+<tr><th id="705">705</th><td></td></tr>
+<tr><th id="706">706</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="707">707</th><td><i class="doc"> * Return the written size and a pointer to the buffer. The buffer</i></td></tr>
+<tr><th id="708">708</th><td><i class="doc"> * must be freed with av_free().</i></td></tr>
+<tr><th id="709">709</th><td><i class="doc"> * Padding of AV_INPUT_BUFFER_PADDING_SIZE is added to the buffer.</i></td></tr>
+<tr><th id="710">710</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="711">711</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">s</span> IO context</i></td></tr>
+<tr><th id="712">712</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">pbuffer</span> pointer to a byte buffer</i></td></tr>
+<tr><th id="713">713</th><td><i class="doc"> * <span class="command">@return</span> the length of the byte buffer</i></td></tr>
+<tr><th id="714">714</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="715">715</th><td><em>int</em> <dfn class="decl" id="avio_close_dyn_buf" title='avio_close_dyn_buf' data-ref="avio_close_dyn_buf">avio_close_dyn_buf</dfn>(<a class="typedef" href="#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> *<dfn class="local col9 decl" id="2029s" title='s' data-type='AVIOContext *' data-ref="2029s">s</dfn>, <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> **<dfn class="local col0 decl" id="2030pbuffer" title='pbuffer' data-type='uint8_t **' data-ref="2030pbuffer">pbuffer</dfn>);</td></tr>
+<tr><th id="716">716</th><td></td></tr>
+<tr><th id="717">717</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="718">718</th><td><i class="doc"> * Iterate through names of available protocols.</i></td></tr>
+<tr><th id="719">719</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="720">720</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">opaque</span> A private pointer representing current protocol.</i></td></tr>
+<tr><th id="721">721</th><td><i class="doc"> *        It must be a pointer to NULL on first iteration and will</i></td></tr>
+<tr><th id="722">722</th><td><i class="doc"> *        be updated by successive calls to avio_enum_protocols.</i></td></tr>
+<tr><th id="723">723</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">output</span> If set to 1, iterate over output protocols,</i></td></tr>
+<tr><th id="724">724</th><td><i class="doc"> *               otherwise over input protocols.</i></td></tr>
+<tr><th id="725">725</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="726">726</th><td><i class="doc"> * <span class="command">@return</span> A static string containing the name of current protocol or NULL</i></td></tr>
+<tr><th id="727">727</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="728">728</th><td><em>const</em> <em>char</em> *<dfn class="decl" id="avio_enum_protocols" title='avio_enum_protocols' data-ref="avio_enum_protocols">avio_enum_protocols</dfn>(<em>void</em> **<dfn class="local col1 decl" id="2031opaque" title='opaque' data-type='void **' data-ref="2031opaque">opaque</dfn>, <em>int</em> <dfn class="local col2 decl" id="2032output" title='output' data-type='int' data-ref="2032output">output</dfn>);</td></tr>
+<tr><th id="729">729</th><td></td></tr>
+<tr><th id="730">730</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="731">731</th><td><i class="doc"> * Pause and resume playing - only meaningful if using a network streaming</i></td></tr>
+<tr><th id="732">732</th><td><i class="doc"> * protocol (e.g. MMS).</i></td></tr>
+<tr><th id="733">733</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="734">734</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">h</span>     IO context from which to call the read_pause function pointer</i></td></tr>
+<tr><th id="735">735</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">pause</span> 1 for pause, 0 for resume</i></td></tr>
+<tr><th id="736">736</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="737">737</th><td><em>int</em>     <dfn class="decl" id="avio_pause" title='avio_pause' data-ref="avio_pause">avio_pause</dfn>(<a class="typedef" href="#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> *<dfn class="local col3 decl" id="2033h" title='h' data-type='AVIOContext *' data-ref="2033h">h</dfn>, <em>int</em> <dfn class="local col4 decl" id="2034pause" title='pause' data-type='int' data-ref="2034pause">pause</dfn>);</td></tr>
+<tr><th id="738">738</th><td></td></tr>
+<tr><th id="739">739</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="740">740</th><td><i class="doc"> * Seek to a given timestamp relative to some component stream.</i></td></tr>
+<tr><th id="741">741</th><td><i class="doc"> * Only meaningful if using a network streaming protocol (e.g. MMS.).</i></td></tr>
+<tr><th id="742">742</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="743">743</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">h</span> IO context from which to call the seek function pointers</i></td></tr>
+<tr><th id="744">744</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">stream_index</span> The stream index that the timestamp is relative to.</i></td></tr>
+<tr><th id="745">745</th><td><i class="doc"> *        If stream_index is (-1) the timestamp should be in AV_TIME_BASE</i></td></tr>
+<tr><th id="746">746</th><td><i class="doc"> *        units from the beginning of the presentation.</i></td></tr>
+<tr><th id="747">747</th><td><i class="doc"> *        If a stream_index &gt;= 0 is used and the protocol does not support</i></td></tr>
+<tr><th id="748">748</th><td><i class="doc"> *        seeking based on component streams, the call will fail.</i></td></tr>
+<tr><th id="749">749</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">timestamp</span> timestamp in AVStream.time_base units</i></td></tr>
+<tr><th id="750">750</th><td><i class="doc"> *        or if there is no stream specified then in AV_TIME_BASE units.</i></td></tr>
+<tr><th id="751">751</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">flags</span> Optional combination of AVSEEK_FLAG_BACKWARD, AVSEEK_FLAG_BYTE</i></td></tr>
+<tr><th id="752">752</th><td><i class="doc"> *        and AVSEEK_FLAG_ANY. The protocol may silently ignore</i></td></tr>
+<tr><th id="753">753</th><td><i class="doc"> *        AVSEEK_FLAG_BACKWARD and AVSEEK_FLAG_ANY, but AVSEEK_FLAG_BYTE will</i></td></tr>
+<tr><th id="754">754</th><td><i class="doc"> *        fail if used and not supported.</i></td></tr>
+<tr><th id="755">755</th><td><i class="doc"> * <span class="command">@return</span> &gt;= 0 on success</i></td></tr>
+<tr><th id="756">756</th><td><i class="doc"> * <span class="command">@see</span> AVInputFormat::read_seek</i></td></tr>
+<tr><th id="757">757</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="758">758</th><td><a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="decl" id="avio_seek_time" title='avio_seek_time' data-ref="avio_seek_time">avio_seek_time</dfn>(<a class="typedef" href="#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> *<dfn class="local col5 decl" id="2035h" title='h' data-type='AVIOContext *' data-ref="2035h">h</dfn>, <em>int</em> <dfn class="local col6 decl" id="2036stream_index" title='stream_index' data-type='int' data-ref="2036stream_index">stream_index</dfn>,</td></tr>
+<tr><th id="759">759</th><td>                       <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="local col7 decl" id="2037timestamp" title='timestamp' data-type='int64_t' data-ref="2037timestamp">timestamp</dfn>, <em>int</em> <dfn class="local col8 decl" id="2038flags" title='flags' data-type='int' data-ref="2038flags">flags</dfn>);</td></tr>
+<tr><th id="760">760</th><td></td></tr>
+<tr><th id="761">761</th><td><i>/* Avoid a warning. The header can not be included because it breaks c++. */</i></td></tr>
+<tr><th id="762">762</th><td><b>struct</b> <a class="type" href="../libavutil/channel_layout.h.html#AVBPrint" title='AVBPrint' data-ref="AVBPrint" id="AVBPrint">AVBPrint</a>;</td></tr>
+<tr><th id="763">763</th><td></td></tr>
+<tr><th id="764">764</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="765">765</th><td><i class="doc"> * Read contents of h into print buffer, up to max_size bytes, or up to EOF.</i></td></tr>
+<tr><th id="766">766</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="767">767</th><td><i class="doc"> * <span class="command">@return</span> 0 for success (max_size bytes read or EOF reached), negative error</i></td></tr>
+<tr><th id="768">768</th><td><i class="doc"> * code otherwise</i></td></tr>
+<tr><th id="769">769</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="770">770</th><td><em>int</em> <dfn class="decl" id="avio_read_to_bprint" title='avio_read_to_bprint' data-ref="avio_read_to_bprint">avio_read_to_bprint</dfn>(<a class="typedef" href="#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> *<dfn class="local col9 decl" id="2039h" title='h' data-type='AVIOContext *' data-ref="2039h">h</dfn>, <b>struct</b> <a class="type" href="../libavutil/channel_layout.h.html#AVBPrint" title='AVBPrint' data-ref="AVBPrint">AVBPrint</a> *<dfn class="local col0 decl" id="2040pb" title='pb' data-type='struct AVBPrint *' data-ref="2040pb">pb</dfn>, <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="local col1 decl" id="2041max_size" title='max_size' data-type='size_t' data-ref="2041max_size">max_size</dfn>);</td></tr>
+<tr><th id="771">771</th><td></td></tr>
+<tr><th id="772">772</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="773">773</th><td><i class="doc"> * Accept and allocate a client context on a server context.</i></td></tr>
+<tr><th id="774">774</th><td><i class="doc"> * <span class="command">@param</span>  <span class="arg">s</span> the server context</i></td></tr>
+<tr><th id="775">775</th><td><i class="doc"> * <span class="command">@param</span>  <span class="arg">c</span> the client context, must be unallocated</i></td></tr>
+<tr><th id="776">776</th><td><i class="doc"> * <span class="command">@return</span>   &gt;= 0 on success or a negative value corresponding</i></td></tr>
+<tr><th id="777">777</th><td><i class="doc"> *           to an AVERROR on failure</i></td></tr>
+<tr><th id="778">778</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="779">779</th><td><em>int</em> <dfn class="decl" id="avio_accept" title='avio_accept' data-ref="avio_accept">avio_accept</dfn>(<a class="typedef" href="#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> *<dfn class="local col2 decl" id="2042s" title='s' data-type='AVIOContext *' data-ref="2042s">s</dfn>, <a class="typedef" href="#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> **<dfn class="local col3 decl" id="2043c" title='c' data-type='AVIOContext **' data-ref="2043c">c</dfn>);</td></tr>
+<tr><th id="780">780</th><td></td></tr>
+<tr><th id="781">781</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="782">782</th><td><i class="doc"> * Perform one step of the protocol handshake to accept a new client.</i></td></tr>
+<tr><th id="783">783</th><td><i class="doc"> * This function must be called on a client returned by avio_accept() before</i></td></tr>
+<tr><th id="784">784</th><td><i class="doc"> * using it as a read/write context.</i></td></tr>
+<tr><th id="785">785</th><td><i class="doc"> * It is separate from avio_accept() because it may block.</i></td></tr>
+<tr><th id="786">786</th><td><i class="doc"> * A step of the handshake is defined by places where the application may</i></td></tr>
+<tr><th id="787">787</th><td><i class="doc"> * decide to change the proceedings.</i></td></tr>
+<tr><th id="788">788</th><td><i class="doc"> * For example, on a protocol with a request header and a reply header, each</i></td></tr>
+<tr><th id="789">789</th><td><i class="doc"> * one can constitute a step because the application may use the parameters</i></td></tr>
+<tr><th id="790">790</th><td><i class="doc"> * from the request to change parameters in the reply; or each individual</i></td></tr>
+<tr><th id="791">791</th><td><i class="doc"> * chunk of the request can constitute a step.</i></td></tr>
+<tr><th id="792">792</th><td><i class="doc"> * If the handshake is already finished, avio_handshake() does nothing and</i></td></tr>
+<tr><th id="793">793</th><td><i class="doc"> * returns 0 immediately.</i></td></tr>
+<tr><th id="794">794</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="795">795</th><td><i class="doc"> * <span class="command">@param</span>  <span class="arg">c</span> the client context to perform the handshake on</i></td></tr>
+<tr><th id="796">796</th><td><i class="doc"> * <span class="command">@return</span>   0   on a complete and successful handshake</i></td></tr>
+<tr><th id="797">797</th><td><i class="doc"> *           &gt; 0 if the handshake progressed, but is not complete</i></td></tr>
+<tr><th id="798">798</th><td><i class="doc"> *           &lt; 0 for an AVERROR code</i></td></tr>
+<tr><th id="799">799</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="800">800</th><td><em>int</em> <dfn class="decl" id="avio_handshake" title='avio_handshake' data-ref="avio_handshake">avio_handshake</dfn>(<a class="typedef" href="#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> *<dfn class="local col4 decl" id="2044c" title='c' data-type='AVIOContext *' data-ref="2044c">c</dfn>);</td></tr>
+<tr><th id="801">801</th><td><u>#<span data-ppcond="20">endif</span> /* AVFORMAT_AVIO_H */</u></td></tr>
+<tr><th id="802">802</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated while processing <a href='../libavdevice/alldevices.c.html'>ffmpeg/libavdevice/alldevices.c</a><br/>Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

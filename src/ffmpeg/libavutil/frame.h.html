@@ -1,0 +1,774 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>frame.h source code [ffmpeg/libavutil/frame.h] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="AVActiveFormatDescription,AVFrame,AVFrameSideData,AVFrameSideDataType "/>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavutil/frame.h'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavutil</a>/<a href='frame.h.html'>frame.h</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="3">3</th><td><i> *</i></td></tr>
+<tr><th id="4">4</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="5">5</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="6">6</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="7">7</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="8">8</th><td><i> *</i></td></tr>
+<tr><th id="9">9</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="10">10</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="11">11</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="12">12</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="13">13</th><td><i> *</i></td></tr>
+<tr><th id="14">14</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="15">15</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="16">16</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="17">17</th><td><i> */</i></td></tr>
+<tr><th id="18">18</th><td></td></tr>
+<tr><th id="19">19</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="20">20</th><td><i class="doc"> *<span class="command"> @file</span></i></td></tr>
+<tr><th id="21">21</th><td><i class="doc"> * <span class="command">@ingroup</span> <span class="verb">lavu_frame</span></i></td></tr>
+<tr><th id="22">22</th><td><i class="doc"> * reference-counted frame API</i></td></tr>
+<tr><th id="23">23</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="24">24</th><td></td></tr>
+<tr><th id="25">25</th><td><u>#<span data-ppcond="25">ifndef</span> <span class="macro" data-ref="_M/AVUTIL_FRAME_H">AVUTIL_FRAME_H</span></u></td></tr>
+<tr><th id="26">26</th><td><u>#define <dfn class="macro" id="_M/AVUTIL_FRAME_H" data-ref="_M/AVUTIL_FRAME_H">AVUTIL_FRAME_H</dfn></u></td></tr>
+<tr><th id="27">27</th><td></td></tr>
+<tr><th id="28">28</th><td><u>#include &lt;stdint.h&gt;</u></td></tr>
+<tr><th id="29">29</th><td></td></tr>
+<tr><th id="30">30</th><td><u>#include <a href="avutil.h.html">"avutil.h"</a></u></td></tr>
+<tr><th id="31">31</th><td><u>#include <a href="buffer.h.html">"buffer.h"</a></u></td></tr>
+<tr><th id="32">32</th><td><u>#include <a href="dict.h.html">"dict.h"</a></u></td></tr>
+<tr><th id="33">33</th><td><u>#include <a href="rational.h.html">"rational.h"</a></u></td></tr>
+<tr><th id="34">34</th><td><u>#include <a href="samplefmt.h.html">"samplefmt.h"</a></u></td></tr>
+<tr><th id="35">35</th><td><u>#include <a href="pixfmt.h.html">"pixfmt.h"</a></u></td></tr>
+<tr><th id="36">36</th><td><u>#include <a href="version.h.html">"version.h"</a></u></td></tr>
+<tr><th id="37">37</th><td></td></tr>
+<tr><th id="38">38</th><td></td></tr>
+<tr><th id="39">39</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="40">40</th><td><i class="doc"> * <span class="command">@defgroup</span> <span class="verb">lavu_frame AVFrame</span></i></td></tr>
+<tr><th id="41">41</th><td><i class="doc"> * <span class="command">@ingroup</span> <span class="verb">lavu_data</span></i></td></tr>
+<tr><th id="42">42</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="43">43</th><td><i class="doc"> * @{</i></td></tr>
+<tr><th id="44">44</th><td><i class="doc"> * AVFrame is an abstraction for reference-counted raw multimedia data.</i></td></tr>
+<tr><th id="45">45</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="46">46</th><td></td></tr>
+<tr><th id="47">47</th><td><b>enum</b> <dfn class="type def" id="AVFrameSideDataType" title='AVFrameSideDataType' data-ref="AVFrameSideDataType">AVFrameSideDataType</dfn> {</td></tr>
+<tr><th id="48">48</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="49">49</th><td><i class="doc">     * The data is the AVPanScan struct defined in libavcodec.</i></td></tr>
+<tr><th id="50">50</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="51">51</th><td>    <dfn class="enum" id="AVFrameSideDataType::AV_FRAME_DATA_PANSCAN" title='AVFrameSideDataType::AV_FRAME_DATA_PANSCAN' data-ref="AVFrameSideDataType::AV_FRAME_DATA_PANSCAN">AV_FRAME_DATA_PANSCAN</dfn>,</td></tr>
+<tr><th id="52">52</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="53">53</th><td><i class="doc">     * ATSC A53 Part 4 Closed Captions.</i></td></tr>
+<tr><th id="54">54</th><td><i class="doc">     * A53 CC bitstream is stored as uint8_t in AVFrameSideData.data.</i></td></tr>
+<tr><th id="55">55</th><td><i class="doc">     * The number of bytes of CC data is AVFrameSideData.size.</i></td></tr>
+<tr><th id="56">56</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="57">57</th><td>    <dfn class="enum" id="AVFrameSideDataType::AV_FRAME_DATA_A53_CC" title='AVFrameSideDataType::AV_FRAME_DATA_A53_CC' data-ref="AVFrameSideDataType::AV_FRAME_DATA_A53_CC">AV_FRAME_DATA_A53_CC</dfn>,</td></tr>
+<tr><th id="58">58</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="59">59</th><td><i class="doc">     * Stereoscopic 3d metadata.</i></td></tr>
+<tr><th id="60">60</th><td><i class="doc">     * The data is the AVStereo3D struct defined in libavutil/stereo3d.h.</i></td></tr>
+<tr><th id="61">61</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="62">62</th><td>    <dfn class="enum" id="AVFrameSideDataType::AV_FRAME_DATA_STEREO3D" title='AVFrameSideDataType::AV_FRAME_DATA_STEREO3D' data-ref="AVFrameSideDataType::AV_FRAME_DATA_STEREO3D">AV_FRAME_DATA_STEREO3D</dfn>,</td></tr>
+<tr><th id="63">63</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="64">64</th><td><i class="doc">     * The data is the AVMatrixEncoding enum defined in libavutil/channel_layout.h.</i></td></tr>
+<tr><th id="65">65</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="66">66</th><td>    <dfn class="enum" id="AVFrameSideDataType::AV_FRAME_DATA_MATRIXENCODING" title='AVFrameSideDataType::AV_FRAME_DATA_MATRIXENCODING' data-ref="AVFrameSideDataType::AV_FRAME_DATA_MATRIXENCODING">AV_FRAME_DATA_MATRIXENCODING</dfn>,</td></tr>
+<tr><th id="67">67</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="68">68</th><td><i class="doc">     * Metadata relevant to a downmix procedure.</i></td></tr>
+<tr><th id="69">69</th><td><i class="doc">     * The data is the AVDownmixInfo struct defined in libavutil/downmix_info.h.</i></td></tr>
+<tr><th id="70">70</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="71">71</th><td>    <dfn class="enum" id="AVFrameSideDataType::AV_FRAME_DATA_DOWNMIX_INFO" title='AVFrameSideDataType::AV_FRAME_DATA_DOWNMIX_INFO' data-ref="AVFrameSideDataType::AV_FRAME_DATA_DOWNMIX_INFO">AV_FRAME_DATA_DOWNMIX_INFO</dfn>,</td></tr>
+<tr><th id="72">72</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="73">73</th><td><i class="doc">     * ReplayGain information in the form of the AVReplayGain struct.</i></td></tr>
+<tr><th id="74">74</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="75">75</th><td>    <dfn class="enum" id="AVFrameSideDataType::AV_FRAME_DATA_REPLAYGAIN" title='AVFrameSideDataType::AV_FRAME_DATA_REPLAYGAIN' data-ref="AVFrameSideDataType::AV_FRAME_DATA_REPLAYGAIN">AV_FRAME_DATA_REPLAYGAIN</dfn>,</td></tr>
+<tr><th id="76">76</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="77">77</th><td><i class="doc">     * This side data contains a 3x3 transformation matrix describing an affine</i></td></tr>
+<tr><th id="78">78</th><td><i class="doc">     * transformation that needs to be applied to the frame for correct</i></td></tr>
+<tr><th id="79">79</th><td><i class="doc">     * presentation.</i></td></tr>
+<tr><th id="80">80</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="81">81</th><td><i class="doc">     * See libavutil/display.h for a detailed description of the data.</i></td></tr>
+<tr><th id="82">82</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="83">83</th><td>    <dfn class="enum" id="AVFrameSideDataType::AV_FRAME_DATA_DISPLAYMATRIX" title='AVFrameSideDataType::AV_FRAME_DATA_DISPLAYMATRIX' data-ref="AVFrameSideDataType::AV_FRAME_DATA_DISPLAYMATRIX">AV_FRAME_DATA_DISPLAYMATRIX</dfn>,</td></tr>
+<tr><th id="84">84</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="85">85</th><td><i class="doc">     * Active Format Description data consisting of a single byte as specified</i></td></tr>
+<tr><th id="86">86</th><td><i class="doc">     * in ETSI TS 101 154 using AVActiveFormatDescription enum.</i></td></tr>
+<tr><th id="87">87</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="88">88</th><td>    <dfn class="enum" id="AVFrameSideDataType::AV_FRAME_DATA_AFD" title='AVFrameSideDataType::AV_FRAME_DATA_AFD' data-ref="AVFrameSideDataType::AV_FRAME_DATA_AFD">AV_FRAME_DATA_AFD</dfn>,</td></tr>
+<tr><th id="89">89</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="90">90</th><td><i class="doc">     * Motion vectors exported by some codecs (on demand through the export_mvs</i></td></tr>
+<tr><th id="91">91</th><td><i class="doc">     * flag set in the libavcodec AVCodecContext flags2 option).</i></td></tr>
+<tr><th id="92">92</th><td><i class="doc">     * The data is the AVMotionVector struct defined in</i></td></tr>
+<tr><th id="93">93</th><td><i class="doc">     * libavutil/motion_vector.h.</i></td></tr>
+<tr><th id="94">94</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="95">95</th><td>    <dfn class="enum" id="AVFrameSideDataType::AV_FRAME_DATA_MOTION_VECTORS" title='AVFrameSideDataType::AV_FRAME_DATA_MOTION_VECTORS' data-ref="AVFrameSideDataType::AV_FRAME_DATA_MOTION_VECTORS">AV_FRAME_DATA_MOTION_VECTORS</dfn>,</td></tr>
+<tr><th id="96">96</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="97">97</th><td><i class="doc">     * Recommmends skipping the specified number of samples. This is exported</i></td></tr>
+<tr><th id="98">98</th><td><i class="doc">     * only if the "skip_manual" AVOption is set in libavcodec.</i></td></tr>
+<tr><th id="99">99</th><td><i class="doc">     * This has the same format as AV_PKT_DATA_SKIP_SAMPLES.</i></td></tr>
+<tr><th id="100">100</th><td><i class="doc">     * <span class="command">@code</span></i></td></tr>
+<tr><th id="101">101</th><td><i class="doc">     *<span class="verb"> u32le number of samples to skip from start of this packet</span></i></td></tr>
+<tr><th id="102">102</th><td><i class="doc"><span class="verb"></span>     *<span class="verb"> u32le number of samples to skip from end of this packet</span></i></td></tr>
+<tr><th id="103">103</th><td><i class="doc"><span class="verb"></span>     *<span class="verb"> u8    reason for start skip</span></i></td></tr>
+<tr><th id="104">104</th><td><i class="doc"><span class="verb"></span>     *<span class="verb"> u8    reason for end   skip (0=padding silence, 1=convergence)</span></i></td></tr>
+<tr><th id="105">105</th><td><i class="doc"><span class="verb"></span>     * @endcode</i></td></tr>
+<tr><th id="106">106</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="107">107</th><td>    <dfn class="enum" id="AVFrameSideDataType::AV_FRAME_DATA_SKIP_SAMPLES" title='AVFrameSideDataType::AV_FRAME_DATA_SKIP_SAMPLES' data-ref="AVFrameSideDataType::AV_FRAME_DATA_SKIP_SAMPLES">AV_FRAME_DATA_SKIP_SAMPLES</dfn>,</td></tr>
+<tr><th id="108">108</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="109">109</th><td><i class="doc">     * This side data must be associated with an audio frame and corresponds to</i></td></tr>
+<tr><th id="110">110</th><td><i class="doc">     * enum AVAudioServiceType defined in avcodec.h.</i></td></tr>
+<tr><th id="111">111</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="112">112</th><td>    <dfn class="enum" id="AVFrameSideDataType::AV_FRAME_DATA_AUDIO_SERVICE_TYPE" title='AVFrameSideDataType::AV_FRAME_DATA_AUDIO_SERVICE_TYPE' data-ref="AVFrameSideDataType::AV_FRAME_DATA_AUDIO_SERVICE_TYPE">AV_FRAME_DATA_AUDIO_SERVICE_TYPE</dfn>,</td></tr>
+<tr><th id="113">113</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="114">114</th><td><i class="doc">     * Mastering display metadata associated with a video frame. The payload is</i></td></tr>
+<tr><th id="115">115</th><td><i class="doc">     * an AVMasteringDisplayMetadata type and contains information about the</i></td></tr>
+<tr><th id="116">116</th><td><i class="doc">     * mastering display color volume.</i></td></tr>
+<tr><th id="117">117</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="118">118</th><td>    <dfn class="enum" id="AVFrameSideDataType::AV_FRAME_DATA_MASTERING_DISPLAY_METADATA" title='AVFrameSideDataType::AV_FRAME_DATA_MASTERING_DISPLAY_METADATA' data-ref="AVFrameSideDataType::AV_FRAME_DATA_MASTERING_DISPLAY_METADATA">AV_FRAME_DATA_MASTERING_DISPLAY_METADATA</dfn>,</td></tr>
+<tr><th id="119">119</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="120">120</th><td><i class="doc">     * The GOP timecode in 25 bit timecode format. Data format is 64-bit integer.</i></td></tr>
+<tr><th id="121">121</th><td><i class="doc">     * This is set on the first frame of a GOP that has a temporal reference of 0.</i></td></tr>
+<tr><th id="122">122</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="123">123</th><td>    <dfn class="enum" id="AVFrameSideDataType::AV_FRAME_DATA_GOP_TIMECODE" title='AVFrameSideDataType::AV_FRAME_DATA_GOP_TIMECODE' data-ref="AVFrameSideDataType::AV_FRAME_DATA_GOP_TIMECODE">AV_FRAME_DATA_GOP_TIMECODE</dfn></td></tr>
+<tr><th id="124">124</th><td>};</td></tr>
+<tr><th id="125">125</th><td></td></tr>
+<tr><th id="126">126</th><td><b>enum</b> <dfn class="type def" id="AVActiveFormatDescription" title='AVActiveFormatDescription' data-ref="AVActiveFormatDescription">AVActiveFormatDescription</dfn> {</td></tr>
+<tr><th id="127">127</th><td>    <dfn class="enum" id="AVActiveFormatDescription::AV_AFD_SAME" title='AVActiveFormatDescription::AV_AFD_SAME' data-ref="AVActiveFormatDescription::AV_AFD_SAME">AV_AFD_SAME</dfn>         = <var>8</var>,</td></tr>
+<tr><th id="128">128</th><td>    <dfn class="enum" id="AVActiveFormatDescription::AV_AFD_4_3" title='AVActiveFormatDescription::AV_AFD_4_3' data-ref="AVActiveFormatDescription::AV_AFD_4_3">AV_AFD_4_3</dfn>          = <var>9</var>,</td></tr>
+<tr><th id="129">129</th><td>    <dfn class="enum" id="AVActiveFormatDescription::AV_AFD_16_9" title='AVActiveFormatDescription::AV_AFD_16_9' data-ref="AVActiveFormatDescription::AV_AFD_16_9">AV_AFD_16_9</dfn>         = <var>10</var>,</td></tr>
+<tr><th id="130">130</th><td>    <dfn class="enum" id="AVActiveFormatDescription::AV_AFD_14_9" title='AVActiveFormatDescription::AV_AFD_14_9' data-ref="AVActiveFormatDescription::AV_AFD_14_9">AV_AFD_14_9</dfn>         = <var>11</var>,</td></tr>
+<tr><th id="131">131</th><td>    <dfn class="enum" id="AVActiveFormatDescription::AV_AFD_4_3_SP_14_9" title='AVActiveFormatDescription::AV_AFD_4_3_SP_14_9' data-ref="AVActiveFormatDescription::AV_AFD_4_3_SP_14_9">AV_AFD_4_3_SP_14_9</dfn>  = <var>13</var>,</td></tr>
+<tr><th id="132">132</th><td>    <dfn class="enum" id="AVActiveFormatDescription::AV_AFD_16_9_SP_14_9" title='AVActiveFormatDescription::AV_AFD_16_9_SP_14_9' data-ref="AVActiveFormatDescription::AV_AFD_16_9_SP_14_9">AV_AFD_16_9_SP_14_9</dfn> = <var>14</var>,</td></tr>
+<tr><th id="133">133</th><td>    <dfn class="enum" id="AVActiveFormatDescription::AV_AFD_SP_4_3" title='AVActiveFormatDescription::AV_AFD_SP_4_3' data-ref="AVActiveFormatDescription::AV_AFD_SP_4_3">AV_AFD_SP_4_3</dfn>       = <var>15</var>,</td></tr>
+<tr><th id="134">134</th><td>};</td></tr>
+<tr><th id="135">135</th><td></td></tr>
+<tr><th id="136">136</th><td></td></tr>
+<tr><th id="137">137</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="138">138</th><td><i class="doc"> * Structure to hold side data for an AVFrame.</i></td></tr>
+<tr><th id="139">139</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="140">140</th><td><i class="doc"> * sizeof(AVFrameSideData) is not a part of the public ABI, so new fields may be added</i></td></tr>
+<tr><th id="141">141</th><td><i class="doc"> * to the end with a minor bump.</i></td></tr>
+<tr><th id="142">142</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="143">143</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="AVFrameSideData" title='AVFrameSideData' data-ref="AVFrameSideData"><a class="type" href="#AVFrameSideData" title='AVFrameSideData' data-ref="AVFrameSideData">AVFrameSideData</a></dfn> {</td></tr>
+<tr><th id="144">144</th><td>    <b>enum</b> <a class="type" href="#AVFrameSideDataType" title='AVFrameSideDataType' data-ref="AVFrameSideDataType">AVFrameSideDataType</a> <dfn class="decl" id="AVFrameSideData::type" title='AVFrameSideData::type' data-ref="AVFrameSideData::type">type</dfn>;</td></tr>
+<tr><th id="145">145</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="decl" id="AVFrameSideData::data" title='AVFrameSideData::data' data-ref="AVFrameSideData::data">data</dfn>;</td></tr>
+<tr><th id="146">146</th><td>    <em>int</em>      <dfn class="decl" id="AVFrameSideData::size" title='AVFrameSideData::size' data-ref="AVFrameSideData::size">size</dfn>;</td></tr>
+<tr><th id="147">147</th><td>    <a class="typedef" href="dict.h.html#AVDictionary" title='AVDictionary' data-type='struct AVDictionary' data-ref="AVDictionary">AVDictionary</a> *<dfn class="decl" id="AVFrameSideData::metadata" title='AVFrameSideData::metadata' data-ref="AVFrameSideData::metadata">metadata</dfn>;</td></tr>
+<tr><th id="148">148</th><td>    <a class="typedef" href="buffer.h.html#AVBufferRef" title='AVBufferRef' data-type='struct AVBufferRef' data-ref="AVBufferRef">AVBufferRef</a> *<dfn class="decl" id="AVFrameSideData::buf" title='AVFrameSideData::buf' data-ref="AVFrameSideData::buf">buf</dfn>;</td></tr>
+<tr><th id="149">149</th><td>} <dfn class="typedef" id="AVFrameSideData" title='AVFrameSideData' data-type='struct AVFrameSideData' data-ref="AVFrameSideData">AVFrameSideData</dfn>;</td></tr>
+<tr><th id="150">150</th><td></td></tr>
+<tr><th id="151">151</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="152">152</th><td><i class="doc"> * This structure describes decoded (raw) audio or video data.</i></td></tr>
+<tr><th id="153">153</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="154">154</th><td><i class="doc"> * AVFrame must be allocated using av_frame_alloc(). Note that this only</i></td></tr>
+<tr><th id="155">155</th><td><i class="doc"> * allocates the AVFrame itself, the buffers for the data must be managed</i></td></tr>
+<tr><th id="156">156</th><td><i class="doc"> * through other means (see below).</i></td></tr>
+<tr><th id="157">157</th><td><i class="doc"> * AVFrame must be freed with av_frame_free().</i></td></tr>
+<tr><th id="158">158</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="159">159</th><td><i class="doc"> * AVFrame is typically allocated once and then reused multiple times to hold</i></td></tr>
+<tr><th id="160">160</th><td><i class="doc"> * different data (e.g. a single AVFrame to hold frames received from a</i></td></tr>
+<tr><th id="161">161</th><td><i class="doc"> * decoder). In such a case, av_frame_unref() will free any references held by</i></td></tr>
+<tr><th id="162">162</th><td><i class="doc"> * the frame and reset it to its original clean state before it</i></td></tr>
+<tr><th id="163">163</th><td><i class="doc"> * is reused again.</i></td></tr>
+<tr><th id="164">164</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="165">165</th><td><i class="doc"> * The data described by an AVFrame is usually reference counted through the</i></td></tr>
+<tr><th id="166">166</th><td><i class="doc"> * AVBuffer API. The underlying buffer references are stored in AVFrame.buf /</i></td></tr>
+<tr><th id="167">167</th><td><i class="doc"> * AVFrame.extended_buf. An AVFrame is considered to be reference counted if at</i></td></tr>
+<tr><th id="168">168</th><td><i class="doc"> * least one reference is set, i.e. if AVFrame.buf[0] != NULL. In such a case,</i></td></tr>
+<tr><th id="169">169</th><td><i class="doc"> * every single data plane must be contained in one of the buffers in</i></td></tr>
+<tr><th id="170">170</th><td><i class="doc"> * AVFrame.buf or AVFrame.extended_buf.</i></td></tr>
+<tr><th id="171">171</th><td><i class="doc"> * There may be a single buffer for all the data, or one separate buffer for</i></td></tr>
+<tr><th id="172">172</th><td><i class="doc"> * each plane, or anything in between.</i></td></tr>
+<tr><th id="173">173</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="174">174</th><td><i class="doc"> * sizeof(AVFrame) is not a part of the public ABI, so new fields may be added</i></td></tr>
+<tr><th id="175">175</th><td><i class="doc"> * to the end with a minor bump.</i></td></tr>
+<tr><th id="176">176</th><td><i class="doc"> * Similarly fields that are marked as to be only accessed by</i></td></tr>
+<tr><th id="177">177</th><td><i class="doc"> * av_opt_ptr() can be reordered. This allows 2 forks to add fields</i></td></tr>
+<tr><th id="178">178</th><td><i class="doc"> * without breaking compatibility with each other.</i></td></tr>
+<tr><th id="179">179</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="180">180</th><td><i class="doc"> * Fields can be accessed through AVOptions, the name string used, matches the</i></td></tr>
+<tr><th id="181">181</th><td><i class="doc"> * C structure field name for fields accessible through AVOptions. The AVClass</i></td></tr>
+<tr><th id="182">182</th><td><i class="doc"> * for AVFrame can be obtained from avcodec_get_frame_class()</i></td></tr>
+<tr><th id="183">183</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="184">184</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="AVFrame" title='AVFrame' data-ref="AVFrame"><a class="type" href="#AVFrame" title='AVFrame' data-ref="AVFrame">AVFrame</a></dfn> {</td></tr>
+<tr><th id="185">185</th><td><u>#define <dfn class="macro" id="_M/AV_NUM_DATA_POINTERS" data-ref="_M/AV_NUM_DATA_POINTERS">AV_NUM_DATA_POINTERS</dfn> 8</u></td></tr>
+<tr><th id="186">186</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="187">187</th><td><i class="doc">     * pointer to the picture/channel planes.</i></td></tr>
+<tr><th id="188">188</th><td><i class="doc">     * This might be different from the first allocated byte</i></td></tr>
+<tr><th id="189">189</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="190">190</th><td><i class="doc">     * Some decoders access areas outside 0,0 - width,height, please</i></td></tr>
+<tr><th id="191">191</th><td><i class="doc">     * see avcodec_align_dimensions2(). Some filters and swscale can read</i></td></tr>
+<tr><th id="192">192</th><td><i class="doc">     * up to 16 bytes beyond the planes, if these filters are to be used,</i></td></tr>
+<tr><th id="193">193</th><td><i class="doc">     * then 16 extra bytes must be allocated.</i></td></tr>
+<tr><th id="194">194</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="195">195</th><td><i class="doc">     * NOTE: Except for hwaccel formats, pointers not needed by the format</i></td></tr>
+<tr><th id="196">196</th><td><i class="doc">     * MUST be set to NULL.</i></td></tr>
+<tr><th id="197">197</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="198">198</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="decl" id="AVFrame::data" title='AVFrame::data' data-ref="AVFrame::data">data</dfn>[<a class="macro" href="#185" title="8" data-ref="_M/AV_NUM_DATA_POINTERS">AV_NUM_DATA_POINTERS</a>];</td></tr>
+<tr><th id="199">199</th><td></td></tr>
+<tr><th id="200">200</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="201">201</th><td><i class="doc">     * For video, size in bytes of each picture line.</i></td></tr>
+<tr><th id="202">202</th><td><i class="doc">     * For audio, size in bytes of each plane.</i></td></tr>
+<tr><th id="203">203</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="204">204</th><td><i class="doc">     * For audio, only linesize[0] may be set. For planar audio, each channel</i></td></tr>
+<tr><th id="205">205</th><td><i class="doc">     * plane must be the same size.</i></td></tr>
+<tr><th id="206">206</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="207">207</th><td><i class="doc">     * For video the linesizes should be multiples of the CPUs alignment</i></td></tr>
+<tr><th id="208">208</th><td><i class="doc">     * preference, this is 16 or 32 for modern desktop CPUs.</i></td></tr>
+<tr><th id="209">209</th><td><i class="doc">     * Some code requires such alignment other code can be slower without</i></td></tr>
+<tr><th id="210">210</th><td><i class="doc">     * correct alignment, for yet other it makes no difference.</i></td></tr>
+<tr><th id="211">211</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="212">212</th><td><i class="doc">     * <span class="command">@note</span> The linesize may be larger than the size of usable data -- there</i></td></tr>
+<tr><th id="213">213</th><td><i class="doc">     * may be extra padding present for performance reasons.</i></td></tr>
+<tr><th id="214">214</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="215">215</th><td>    <em>int</em> <dfn class="decl" id="AVFrame::linesize" title='AVFrame::linesize' data-ref="AVFrame::linesize">linesize</dfn>[<a class="macro" href="#185" title="8" data-ref="_M/AV_NUM_DATA_POINTERS">AV_NUM_DATA_POINTERS</a>];</td></tr>
+<tr><th id="216">216</th><td></td></tr>
+<tr><th id="217">217</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="218">218</th><td><i class="doc">     * pointers to the data planes/channels.</i></td></tr>
+<tr><th id="219">219</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="220">220</th><td><i class="doc">     * For video, this should simply point to data[].</i></td></tr>
+<tr><th id="221">221</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="222">222</th><td><i class="doc">     * For planar audio, each channel has a separate data pointer, and</i></td></tr>
+<tr><th id="223">223</th><td><i class="doc">     * linesize[0] contains the size of each channel buffer.</i></td></tr>
+<tr><th id="224">224</th><td><i class="doc">     * For packed audio, there is just one data pointer, and linesize[0]</i></td></tr>
+<tr><th id="225">225</th><td><i class="doc">     * contains the total size of the buffer for all channels.</i></td></tr>
+<tr><th id="226">226</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="227">227</th><td><i class="doc">     * Note: Both data and extended_data should always be set in a valid frame,</i></td></tr>
+<tr><th id="228">228</th><td><i class="doc">     * but for planar audio with more channels that can fit in data,</i></td></tr>
+<tr><th id="229">229</th><td><i class="doc">     * extended_data must be used in order to access all channels.</i></td></tr>
+<tr><th id="230">230</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="231">231</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> **<dfn class="decl" id="AVFrame::extended_data" title='AVFrame::extended_data' data-ref="AVFrame::extended_data">extended_data</dfn>;</td></tr>
+<tr><th id="232">232</th><td></td></tr>
+<tr><th id="233">233</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="234">234</th><td><i class="doc">     * width and height of the video frame</i></td></tr>
+<tr><th id="235">235</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="236">236</th><td>    <em>int</em> <dfn class="decl" id="AVFrame::width" title='AVFrame::width' data-ref="AVFrame::width">width</dfn>, <dfn class="decl" id="AVFrame::height" title='AVFrame::height' data-ref="AVFrame::height">height</dfn>;</td></tr>
+<tr><th id="237">237</th><td></td></tr>
+<tr><th id="238">238</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="239">239</th><td><i class="doc">     * number of audio samples (per channel) described by this frame</i></td></tr>
+<tr><th id="240">240</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="241">241</th><td>    <em>int</em> <dfn class="decl" id="AVFrame::nb_samples" title='AVFrame::nb_samples' data-ref="AVFrame::nb_samples">nb_samples</dfn>;</td></tr>
+<tr><th id="242">242</th><td></td></tr>
+<tr><th id="243">243</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="244">244</th><td><i class="doc">     * format of the frame, -1 if unknown or unset</i></td></tr>
+<tr><th id="245">245</th><td><i class="doc">     * Values correspond to enum AVPixelFormat for video frames,</i></td></tr>
+<tr><th id="246">246</th><td><i class="doc">     * enum AVSampleFormat for audio)</i></td></tr>
+<tr><th id="247">247</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="248">248</th><td>    <em>int</em> <dfn class="decl" id="AVFrame::format" title='AVFrame::format' data-ref="AVFrame::format">format</dfn>;</td></tr>
+<tr><th id="249">249</th><td></td></tr>
+<tr><th id="250">250</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="251">251</th><td><i class="doc">     * 1 -&gt; keyframe, 0-&gt; not</i></td></tr>
+<tr><th id="252">252</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="253">253</th><td>    <em>int</em> <dfn class="decl" id="AVFrame::key_frame" title='AVFrame::key_frame' data-ref="AVFrame::key_frame">key_frame</dfn>;</td></tr>
+<tr><th id="254">254</th><td></td></tr>
+<tr><th id="255">255</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="256">256</th><td><i class="doc">     * Picture type of the frame.</i></td></tr>
+<tr><th id="257">257</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="258">258</th><td>    <b>enum</b> <a class="type" href="avutil.h.html#AVPictureType" title='AVPictureType' data-ref="AVPictureType">AVPictureType</a> <dfn class="decl" id="AVFrame::pict_type" title='AVFrame::pict_type' data-ref="AVFrame::pict_type">pict_type</dfn>;</td></tr>
+<tr><th id="259">259</th><td></td></tr>
+<tr><th id="260">260</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="261">261</th><td><i class="doc">     * Sample aspect ratio for the video frame, 0/1 if unknown/unspecified.</i></td></tr>
+<tr><th id="262">262</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="263">263</th><td>    <a class="typedef" href="rational.h.html#AVRational" title='AVRational' data-type='struct AVRational' data-ref="AVRational">AVRational</a> <dfn class="decl" id="AVFrame::sample_aspect_ratio" title='AVFrame::sample_aspect_ratio' data-ref="AVFrame::sample_aspect_ratio">sample_aspect_ratio</dfn>;</td></tr>
+<tr><th id="264">264</th><td></td></tr>
+<tr><th id="265">265</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="266">266</th><td><i class="doc">     * Presentation timestamp in time_base units (time when frame should be shown to user).</i></td></tr>
+<tr><th id="267">267</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="268">268</th><td>    <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="decl" id="AVFrame::pts" title='AVFrame::pts' data-ref="AVFrame::pts">pts</dfn>;</td></tr>
+<tr><th id="269">269</th><td></td></tr>
+<tr><th id="270">270</th><td><u>#<span data-ppcond="270">if</span> <a class="macro" href="version.h.html#136" title="(55 &lt; 56)" data-ref="_M/FF_API_PKT_PTS">FF_API_PKT_PTS</a></u></td></tr>
+<tr><th id="271">271</th><td>    <i>/**</i></td></tr>
+<tr><th id="272">272</th><td><i>     * PTS copied from the AVPacket that was decoded to produce this frame.</i></td></tr>
+<tr><th id="273">273</th><td><i>     * @deprecated use the pts field instead</i></td></tr>
+<tr><th id="274">274</th><td><i>     */</i></td></tr>
+<tr><th id="275">275</th><td>    <a class="macro" href="attributes.h.html#94" title="__attribute__((deprecated))" data-ref="_M/attribute_deprecated">attribute_deprecated</a></td></tr>
+<tr><th id="276">276</th><td>    <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="decl" id="AVFrame::pkt_pts" title='AVFrame::pkt_pts' data-ref="AVFrame::pkt_pts">pkt_pts</dfn>;</td></tr>
+<tr><th id="277">277</th><td><u>#<span data-ppcond="270">endif</span></u></td></tr>
+<tr><th id="278">278</th><td></td></tr>
+<tr><th id="279">279</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="280">280</th><td><i class="doc">     * DTS copied from the AVPacket that triggered returning this frame. (if frame threading isn't used)</i></td></tr>
+<tr><th id="281">281</th><td><i class="doc">     * This is also the Presentation time of this AVFrame calculated from</i></td></tr>
+<tr><th id="282">282</th><td><i class="doc">     * only AVPacket.dts values without pts values.</i></td></tr>
+<tr><th id="283">283</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="284">284</th><td>    <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="decl" id="AVFrame::pkt_dts" title='AVFrame::pkt_dts' data-ref="AVFrame::pkt_dts">pkt_dts</dfn>;</td></tr>
+<tr><th id="285">285</th><td></td></tr>
+<tr><th id="286">286</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="287">287</th><td><i class="doc">     * picture number in bitstream order</i></td></tr>
+<tr><th id="288">288</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="289">289</th><td>    <em>int</em> <dfn class="decl" id="AVFrame::coded_picture_number" title='AVFrame::coded_picture_number' data-ref="AVFrame::coded_picture_number">coded_picture_number</dfn>;</td></tr>
+<tr><th id="290">290</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="291">291</th><td><i class="doc">     * picture number in display order</i></td></tr>
+<tr><th id="292">292</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="293">293</th><td>    <em>int</em> <dfn class="decl" id="AVFrame::display_picture_number" title='AVFrame::display_picture_number' data-ref="AVFrame::display_picture_number">display_picture_number</dfn>;</td></tr>
+<tr><th id="294">294</th><td></td></tr>
+<tr><th id="295">295</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="296">296</th><td><i class="doc">     * quality (between 1 (good) and FF_LAMBDA_MAX (bad))</i></td></tr>
+<tr><th id="297">297</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="298">298</th><td>    <em>int</em> <dfn class="decl" id="AVFrame::quality" title='AVFrame::quality' data-ref="AVFrame::quality">quality</dfn>;</td></tr>
+<tr><th id="299">299</th><td></td></tr>
+<tr><th id="300">300</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="301">301</th><td><i class="doc">     * for some private data of the user</i></td></tr>
+<tr><th id="302">302</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="303">303</th><td>    <em>void</em> *<dfn class="decl" id="AVFrame::opaque" title='AVFrame::opaque' data-ref="AVFrame::opaque">opaque</dfn>;</td></tr>
+<tr><th id="304">304</th><td></td></tr>
+<tr><th id="305">305</th><td><u>#<span data-ppcond="305">if</span> <a class="macro" href="version.h.html#130" title="(55 &lt; 56)" data-ref="_M/FF_API_ERROR_FRAME">FF_API_ERROR_FRAME</a></u></td></tr>
+<tr><th id="306">306</th><td>    <i>/**</i></td></tr>
+<tr><th id="307">307</th><td><i>     * @deprecated unused</i></td></tr>
+<tr><th id="308">308</th><td><i>     */</i></td></tr>
+<tr><th id="309">309</th><td>    <a class="macro" href="attributes.h.html#94" title="__attribute__((deprecated))" data-ref="_M/attribute_deprecated">attribute_deprecated</a></td></tr>
+<tr><th id="310">310</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint64_t" title='uint64_t' data-type='unsigned long' data-ref="uint64_t">uint64_t</a> <dfn class="decl" id="AVFrame::error" title='AVFrame::error' data-ref="AVFrame::error">error</dfn>[<a class="macro" href="#185" title="8" data-ref="_M/AV_NUM_DATA_POINTERS">AV_NUM_DATA_POINTERS</a>];</td></tr>
+<tr><th id="311">311</th><td><u>#<span data-ppcond="305">endif</span></u></td></tr>
+<tr><th id="312">312</th><td></td></tr>
+<tr><th id="313">313</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="314">314</th><td><i class="doc">     * When decoding, this signals how much the picture must be delayed.</i></td></tr>
+<tr><th id="315">315</th><td><i class="doc">     * extra_delay = repeat_pict / (2*fps)</i></td></tr>
+<tr><th id="316">316</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="317">317</th><td>    <em>int</em> <dfn class="decl" id="AVFrame::repeat_pict" title='AVFrame::repeat_pict' data-ref="AVFrame::repeat_pict">repeat_pict</dfn>;</td></tr>
+<tr><th id="318">318</th><td></td></tr>
+<tr><th id="319">319</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="320">320</th><td><i class="doc">     * The content of the picture is interlaced.</i></td></tr>
+<tr><th id="321">321</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="322">322</th><td>    <em>int</em> <dfn class="decl" id="AVFrame::interlaced_frame" title='AVFrame::interlaced_frame' data-ref="AVFrame::interlaced_frame">interlaced_frame</dfn>;</td></tr>
+<tr><th id="323">323</th><td></td></tr>
+<tr><th id="324">324</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="325">325</th><td><i class="doc">     * If the content is interlaced, is top field displayed first.</i></td></tr>
+<tr><th id="326">326</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="327">327</th><td>    <em>int</em> <dfn class="decl" id="AVFrame::top_field_first" title='AVFrame::top_field_first' data-ref="AVFrame::top_field_first">top_field_first</dfn>;</td></tr>
+<tr><th id="328">328</th><td></td></tr>
+<tr><th id="329">329</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="330">330</th><td><i class="doc">     * Tell user application that palette has changed from previous frame.</i></td></tr>
+<tr><th id="331">331</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="332">332</th><td>    <em>int</em> <dfn class="decl" id="AVFrame::palette_has_changed" title='AVFrame::palette_has_changed' data-ref="AVFrame::palette_has_changed">palette_has_changed</dfn>;</td></tr>
+<tr><th id="333">333</th><td></td></tr>
+<tr><th id="334">334</th><td>    <i>/**</i></td></tr>
+<tr><th id="335">335</th><td><i>     * reordered opaque 64 bits (generally an integer or a double precision float</i></td></tr>
+<tr><th id="336">336</th><td><i>     * PTS but can be anything).</i></td></tr>
+<tr><th id="337">337</th><td><i>     * The user sets AVCodecContext.reordered_opaque to represent the input at</i></td></tr>
+<tr><th id="338">338</th><td><i>     * that time,</i></td></tr>
+<tr><th id="339">339</th><td><i>     * the decoder reorders values as needed and sets AVFrame.reordered_opaque</i></td></tr>
+<tr><th id="340">340</th><td><i>     * to exactly one of the values provided by the user through AVCodecContext.reordered_opaque</i></td></tr>
+<tr><th id="341">341</th><td><i>     * @deprecated in favor of pkt_pts</i></td></tr>
+<tr><th id="342">342</th><td><i>     */</i></td></tr>
+<tr><th id="343">343</th><td>    <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="decl" id="AVFrame::reordered_opaque" title='AVFrame::reordered_opaque' data-ref="AVFrame::reordered_opaque">reordered_opaque</dfn>;</td></tr>
+<tr><th id="344">344</th><td></td></tr>
+<tr><th id="345">345</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="346">346</th><td><i class="doc">     * Sample rate of the audio data.</i></td></tr>
+<tr><th id="347">347</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="348">348</th><td>    <em>int</em> <dfn class="decl" id="AVFrame::sample_rate" title='AVFrame::sample_rate' data-ref="AVFrame::sample_rate">sample_rate</dfn>;</td></tr>
+<tr><th id="349">349</th><td></td></tr>
+<tr><th id="350">350</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="351">351</th><td><i class="doc">     * Channel layout of the audio data.</i></td></tr>
+<tr><th id="352">352</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="353">353</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint64_t" title='uint64_t' data-type='unsigned long' data-ref="uint64_t">uint64_t</a> <dfn class="decl" id="AVFrame::channel_layout" title='AVFrame::channel_layout' data-ref="AVFrame::channel_layout">channel_layout</dfn>;</td></tr>
+<tr><th id="354">354</th><td></td></tr>
+<tr><th id="355">355</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="356">356</th><td><i class="doc">     * AVBuffer references backing the data for this frame. If all elements of</i></td></tr>
+<tr><th id="357">357</th><td><i class="doc">     * this array are NULL, then this frame is not reference counted. This array</i></td></tr>
+<tr><th id="358">358</th><td><i class="doc">     * must be filled contiguously -- if buf[i] is non-NULL then buf[j] must</i></td></tr>
+<tr><th id="359">359</th><td><i class="doc">     * also be non-NULL for all j &lt; i.</i></td></tr>
+<tr><th id="360">360</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="361">361</th><td><i class="doc">     * There may be at most one AVBuffer per data plane, so for video this array</i></td></tr>
+<tr><th id="362">362</th><td><i class="doc">     * always contains all the references. For planar audio with more than</i></td></tr>
+<tr><th id="363">363</th><td><i class="doc">     * AV_NUM_DATA_POINTERS channels, there may be more buffers than can fit in</i></td></tr>
+<tr><th id="364">364</th><td><i class="doc">     * this array. Then the extra AVBufferRef pointers are stored in the</i></td></tr>
+<tr><th id="365">365</th><td><i class="doc">     * extended_buf array.</i></td></tr>
+<tr><th id="366">366</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="367">367</th><td>    <a class="typedef" href="buffer.h.html#AVBufferRef" title='AVBufferRef' data-type='struct AVBufferRef' data-ref="AVBufferRef">AVBufferRef</a> *<dfn class="decl" id="AVFrame::buf" title='AVFrame::buf' data-ref="AVFrame::buf">buf</dfn>[<a class="macro" href="#185" title="8" data-ref="_M/AV_NUM_DATA_POINTERS">AV_NUM_DATA_POINTERS</a>];</td></tr>
+<tr><th id="368">368</th><td></td></tr>
+<tr><th id="369">369</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="370">370</th><td><i class="doc">     * For planar audio which requires more than AV_NUM_DATA_POINTERS</i></td></tr>
+<tr><th id="371">371</th><td><i class="doc">     * AVBufferRef pointers, this array will hold all the references which</i></td></tr>
+<tr><th id="372">372</th><td><i class="doc">     * cannot fit into AVFrame.buf.</i></td></tr>
+<tr><th id="373">373</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="374">374</th><td><i class="doc">     * Note that this is different from AVFrame.extended_data, which always</i></td></tr>
+<tr><th id="375">375</th><td><i class="doc">     * contains all the pointers. This array only contains the extra pointers,</i></td></tr>
+<tr><th id="376">376</th><td><i class="doc">     * which cannot fit into AVFrame.buf.</i></td></tr>
+<tr><th id="377">377</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="378">378</th><td><i class="doc">     * This array is always allocated using av_malloc() by whoever constructs</i></td></tr>
+<tr><th id="379">379</th><td><i class="doc">     * the frame. It is freed in av_frame_unref().</i></td></tr>
+<tr><th id="380">380</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="381">381</th><td>    <a class="typedef" href="buffer.h.html#AVBufferRef" title='AVBufferRef' data-type='struct AVBufferRef' data-ref="AVBufferRef">AVBufferRef</a> **<dfn class="decl" id="AVFrame::extended_buf" title='AVFrame::extended_buf' data-ref="AVFrame::extended_buf">extended_buf</dfn>;</td></tr>
+<tr><th id="382">382</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="383">383</th><td><i class="doc">     * Number of elements in extended_buf.</i></td></tr>
+<tr><th id="384">384</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="385">385</th><td>    <em>int</em>        <dfn class="decl" id="AVFrame::nb_extended_buf" title='AVFrame::nb_extended_buf' data-ref="AVFrame::nb_extended_buf">nb_extended_buf</dfn>;</td></tr>
+<tr><th id="386">386</th><td></td></tr>
+<tr><th id="387">387</th><td>    <a class="typedef" href="#AVFrameSideData" title='AVFrameSideData' data-type='struct AVFrameSideData' data-ref="AVFrameSideData">AVFrameSideData</a> **<dfn class="decl" id="AVFrame::side_data" title='AVFrame::side_data' data-ref="AVFrame::side_data">side_data</dfn>;</td></tr>
+<tr><th id="388">388</th><td>    <em>int</em>            <dfn class="decl" id="AVFrame::nb_side_data" title='AVFrame::nb_side_data' data-ref="AVFrame::nb_side_data">nb_side_data</dfn>;</td></tr>
+<tr><th id="389">389</th><td></td></tr>
+<tr><th id="390">390</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="391">391</th><td><i class="doc"> * <span class="command">@defgroup</span> <span class="verb">lavu_frame_flags AV_FRAME_FLAGS</span></i></td></tr>
+<tr><th id="392">392</th><td><i class="doc"> * <span class="command">@ingroup</span> <span class="verb">lavu_frame</span></i></td></tr>
+<tr><th id="393">393</th><td><i class="doc"> * Flags describing additional frame properties.</i></td></tr>
+<tr><th id="394">394</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="395">395</th><td><i class="doc"> * @{</i></td></tr>
+<tr><th id="396">396</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="397">397</th><td></td></tr>
+<tr><th id="398">398</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="399">399</th><td><i class="doc"> * The frame data may be corrupted, e.g. due to decoding errors.</i></td></tr>
+<tr><th id="400">400</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="401">401</th><td><u>#define <dfn class="macro" id="_M/AV_FRAME_FLAG_CORRUPT" data-ref="_M/AV_FRAME_FLAG_CORRUPT">AV_FRAME_FLAG_CORRUPT</dfn>       (1 &lt;&lt; 0)</u></td></tr>
+<tr><th id="402">402</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="403">403</th><td><i class="doc"> * A flag to mark the frames which need to be decoded, but shouldn't be output.</i></td></tr>
+<tr><th id="404">404</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="405">405</th><td><u>#define <dfn class="macro" id="_M/AV_FRAME_FLAG_DISCARD" data-ref="_M/AV_FRAME_FLAG_DISCARD">AV_FRAME_FLAG_DISCARD</dfn>   (1 &lt;&lt; 2)</u></td></tr>
+<tr><th id="406">406</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="407">407</th><td><i class="doc"> * @}</i></td></tr>
+<tr><th id="408">408</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="409">409</th><td></td></tr>
+<tr><th id="410">410</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="411">411</th><td><i class="doc">     * Frame flags, a combination of <span class="command">@ref</span> <span class="verb">lavu_frame_flags</span></i></td></tr>
+<tr><th id="412">412</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="413">413</th><td>    <em>int</em> <dfn class="decl" id="AVFrame::flags" title='AVFrame::flags' data-ref="AVFrame::flags">flags</dfn>;</td></tr>
+<tr><th id="414">414</th><td></td></tr>
+<tr><th id="415">415</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="416">416</th><td><i class="doc">     * MPEG vs JPEG YUV range.</i></td></tr>
+<tr><th id="417">417</th><td><i class="doc">     * It must be accessed using av_frame_get_color_range() and</i></td></tr>
+<tr><th id="418">418</th><td><i class="doc">     * av_frame_set_color_range().</i></td></tr>
+<tr><th id="419">419</th><td><i class="doc">     * - encoding: Set by user</i></td></tr>
+<tr><th id="420">420</th><td><i class="doc">     * - decoding: Set by libavcodec</i></td></tr>
+<tr><th id="421">421</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="422">422</th><td>    <b>enum</b> <a class="type" href="pixfmt.h.html#AVColorRange" title='AVColorRange' data-ref="AVColorRange">AVColorRange</a> <dfn class="decl" id="AVFrame::color_range" title='AVFrame::color_range' data-ref="AVFrame::color_range">color_range</dfn>;</td></tr>
+<tr><th id="423">423</th><td></td></tr>
+<tr><th id="424">424</th><td>    <b>enum</b> <a class="type" href="pixfmt.h.html#AVColorPrimaries" title='AVColorPrimaries' data-ref="AVColorPrimaries">AVColorPrimaries</a> <dfn class="decl" id="AVFrame::color_primaries" title='AVFrame::color_primaries' data-ref="AVFrame::color_primaries">color_primaries</dfn>;</td></tr>
+<tr><th id="425">425</th><td></td></tr>
+<tr><th id="426">426</th><td>    <b>enum</b> <a class="type" href="pixfmt.h.html#AVColorTransferCharacteristic" title='AVColorTransferCharacteristic' data-ref="AVColorTransferCharacteristic">AVColorTransferCharacteristic</a> <dfn class="decl" id="AVFrame::color_trc" title='AVFrame::color_trc' data-ref="AVFrame::color_trc">color_trc</dfn>;</td></tr>
+<tr><th id="427">427</th><td></td></tr>
+<tr><th id="428">428</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="429">429</th><td><i class="doc">     * YUV colorspace type.</i></td></tr>
+<tr><th id="430">430</th><td><i class="doc">     * It must be accessed using av_frame_get_colorspace() and</i></td></tr>
+<tr><th id="431">431</th><td><i class="doc">     * av_frame_set_colorspace().</i></td></tr>
+<tr><th id="432">432</th><td><i class="doc">     * - encoding: Set by user</i></td></tr>
+<tr><th id="433">433</th><td><i class="doc">     * - decoding: Set by libavcodec</i></td></tr>
+<tr><th id="434">434</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="435">435</th><td>    <b>enum</b> <a class="type" href="pixfmt.h.html#AVColorSpace" title='AVColorSpace' data-ref="AVColorSpace">AVColorSpace</a> <dfn class="decl" id="AVFrame::colorspace" title='AVFrame::colorspace' data-ref="AVFrame::colorspace">colorspace</dfn>;</td></tr>
+<tr><th id="436">436</th><td></td></tr>
+<tr><th id="437">437</th><td>    <b>enum</b> <a class="type" href="pixfmt.h.html#AVChromaLocation" title='AVChromaLocation' data-ref="AVChromaLocation">AVChromaLocation</a> <dfn class="decl" id="AVFrame::chroma_location" title='AVFrame::chroma_location' data-ref="AVFrame::chroma_location">chroma_location</dfn>;</td></tr>
+<tr><th id="438">438</th><td></td></tr>
+<tr><th id="439">439</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="440">440</th><td><i class="doc">     * frame timestamp estimated using various heuristics, in stream time base</i></td></tr>
+<tr><th id="441">441</th><td><i class="doc">     * Code outside libavutil should access this field using:</i></td></tr>
+<tr><th id="442">442</th><td><i class="doc">     * av_frame_get_best_effort_timestamp(frame)</i></td></tr>
+<tr><th id="443">443</th><td><i class="doc">     * - encoding: unused</i></td></tr>
+<tr><th id="444">444</th><td><i class="doc">     * - decoding: set by libavcodec, read by user.</i></td></tr>
+<tr><th id="445">445</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="446">446</th><td>    <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="decl" id="AVFrame::best_effort_timestamp" title='AVFrame::best_effort_timestamp' data-ref="AVFrame::best_effort_timestamp">best_effort_timestamp</dfn>;</td></tr>
+<tr><th id="447">447</th><td></td></tr>
+<tr><th id="448">448</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="449">449</th><td><i class="doc">     * reordered pos from the last AVPacket that has been input into the decoder</i></td></tr>
+<tr><th id="450">450</th><td><i class="doc">     * Code outside libavutil should access this field using:</i></td></tr>
+<tr><th id="451">451</th><td><i class="doc">     * av_frame_get_pkt_pos(frame)</i></td></tr>
+<tr><th id="452">452</th><td><i class="doc">     * - encoding: unused</i></td></tr>
+<tr><th id="453">453</th><td><i class="doc">     * - decoding: Read by user.</i></td></tr>
+<tr><th id="454">454</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="455">455</th><td>    <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="decl" id="AVFrame::pkt_pos" title='AVFrame::pkt_pos' data-ref="AVFrame::pkt_pos">pkt_pos</dfn>;</td></tr>
+<tr><th id="456">456</th><td></td></tr>
+<tr><th id="457">457</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="458">458</th><td><i class="doc">     * duration of the corresponding packet, expressed in</i></td></tr>
+<tr><th id="459">459</th><td><i class="doc">     * AVStream-&gt;time_base units, 0 if unknown.</i></td></tr>
+<tr><th id="460">460</th><td><i class="doc">     * Code outside libavutil should access this field using:</i></td></tr>
+<tr><th id="461">461</th><td><i class="doc">     * av_frame_get_pkt_duration(frame)</i></td></tr>
+<tr><th id="462">462</th><td><i class="doc">     * - encoding: unused</i></td></tr>
+<tr><th id="463">463</th><td><i class="doc">     * - decoding: Read by user.</i></td></tr>
+<tr><th id="464">464</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="465">465</th><td>    <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="decl" id="AVFrame::pkt_duration" title='AVFrame::pkt_duration' data-ref="AVFrame::pkt_duration">pkt_duration</dfn>;</td></tr>
+<tr><th id="466">466</th><td></td></tr>
+<tr><th id="467">467</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="468">468</th><td><i class="doc">     * metadata.</i></td></tr>
+<tr><th id="469">469</th><td><i class="doc">     * Code outside libavutil should access this field using:</i></td></tr>
+<tr><th id="470">470</th><td><i class="doc">     * av_frame_get_metadata(frame)</i></td></tr>
+<tr><th id="471">471</th><td><i class="doc">     * - encoding: Set by user.</i></td></tr>
+<tr><th id="472">472</th><td><i class="doc">     * - decoding: Set by libavcodec.</i></td></tr>
+<tr><th id="473">473</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="474">474</th><td>    <a class="typedef" href="dict.h.html#AVDictionary" title='AVDictionary' data-type='struct AVDictionary' data-ref="AVDictionary">AVDictionary</a> *<dfn class="decl" id="AVFrame::metadata" title='AVFrame::metadata' data-ref="AVFrame::metadata">metadata</dfn>;</td></tr>
+<tr><th id="475">475</th><td></td></tr>
+<tr><th id="476">476</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="477">477</th><td><i class="doc">     * decode error flags of the frame, set to a combination of</i></td></tr>
+<tr><th id="478">478</th><td><i class="doc">     * FF_DECODE_ERROR_xxx flags if the decoder produced a frame, but there</i></td></tr>
+<tr><th id="479">479</th><td><i class="doc">     * were errors during the decoding.</i></td></tr>
+<tr><th id="480">480</th><td><i class="doc">     * Code outside libavutil should access this field using:</i></td></tr>
+<tr><th id="481">481</th><td><i class="doc">     * av_frame_get_decode_error_flags(frame)</i></td></tr>
+<tr><th id="482">482</th><td><i class="doc">     * - encoding: unused</i></td></tr>
+<tr><th id="483">483</th><td><i class="doc">     * - decoding: set by libavcodec, read by user.</i></td></tr>
+<tr><th id="484">484</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="485">485</th><td>    <em>int</em> <dfn class="decl" id="AVFrame::decode_error_flags" title='AVFrame::decode_error_flags' data-ref="AVFrame::decode_error_flags">decode_error_flags</dfn>;</td></tr>
+<tr><th id="486">486</th><td><u>#define <dfn class="macro" id="_M/FF_DECODE_ERROR_INVALID_BITSTREAM" data-ref="_M/FF_DECODE_ERROR_INVALID_BITSTREAM">FF_DECODE_ERROR_INVALID_BITSTREAM</dfn>   1</u></td></tr>
+<tr><th id="487">487</th><td><u>#define <dfn class="macro" id="_M/FF_DECODE_ERROR_MISSING_REFERENCE" data-ref="_M/FF_DECODE_ERROR_MISSING_REFERENCE">FF_DECODE_ERROR_MISSING_REFERENCE</dfn>   2</u></td></tr>
+<tr><th id="488">488</th><td></td></tr>
+<tr><th id="489">489</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="490">490</th><td><i class="doc">     * number of audio channels, only used for audio.</i></td></tr>
+<tr><th id="491">491</th><td><i class="doc">     * Code outside libavutil should access this field using:</i></td></tr>
+<tr><th id="492">492</th><td><i class="doc">     * av_frame_get_channels(frame)</i></td></tr>
+<tr><th id="493">493</th><td><i class="doc">     * - encoding: unused</i></td></tr>
+<tr><th id="494">494</th><td><i class="doc">     * - decoding: Read by user.</i></td></tr>
+<tr><th id="495">495</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="496">496</th><td>    <em>int</em> <dfn class="decl" id="AVFrame::channels" title='AVFrame::channels' data-ref="AVFrame::channels">channels</dfn>;</td></tr>
+<tr><th id="497">497</th><td></td></tr>
+<tr><th id="498">498</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="499">499</th><td><i class="doc">     * size of the corresponding packet containing the compressed</i></td></tr>
+<tr><th id="500">500</th><td><i class="doc">     * frame. It must be accessed using av_frame_get_pkt_size() and</i></td></tr>
+<tr><th id="501">501</th><td><i class="doc">     * av_frame_set_pkt_size().</i></td></tr>
+<tr><th id="502">502</th><td><i class="doc">     * It is set to a negative value if unknown.</i></td></tr>
+<tr><th id="503">503</th><td><i class="doc">     * - encoding: unused</i></td></tr>
+<tr><th id="504">504</th><td><i class="doc">     * - decoding: set by libavcodec, read by user.</i></td></tr>
+<tr><th id="505">505</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="506">506</th><td>    <em>int</em> <dfn class="decl" id="AVFrame::pkt_size" title='AVFrame::pkt_size' data-ref="AVFrame::pkt_size">pkt_size</dfn>;</td></tr>
+<tr><th id="507">507</th><td></td></tr>
+<tr><th id="508">508</th><td><u>#<span data-ppcond="508">if</span> <a class="macro" href="version.h.html#124" title="(55 &lt; 56)" data-ref="_M/FF_API_FRAME_QP">FF_API_FRAME_QP</a></u></td></tr>
+<tr><th id="509">509</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="510">510</th><td><i class="doc">     * QP table</i></td></tr>
+<tr><th id="511">511</th><td><i class="doc">     * Not to be accessed directly from outside libavutil</i></td></tr>
+<tr><th id="512">512</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="513">513</th><td>    <a class="macro" href="attributes.h.html#94" title="__attribute__((deprecated))" data-ref="_M/attribute_deprecated">attribute_deprecated</a></td></tr>
+<tr><th id="514">514</th><td>    <a class="typedef" href="../../include/stdint.h.html#int8_t" title='int8_t' data-type='signed char' data-ref="int8_t">int8_t</a> *<dfn class="decl" id="AVFrame::qscale_table" title='AVFrame::qscale_table' data-ref="AVFrame::qscale_table">qscale_table</dfn>;</td></tr>
+<tr><th id="515">515</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="516">516</th><td><i class="doc">     * QP store stride</i></td></tr>
+<tr><th id="517">517</th><td><i class="doc">     * Not to be accessed directly from outside libavutil</i></td></tr>
+<tr><th id="518">518</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="519">519</th><td>    <a class="macro" href="attributes.h.html#94" title="__attribute__((deprecated))" data-ref="_M/attribute_deprecated">attribute_deprecated</a></td></tr>
+<tr><th id="520">520</th><td>    <em>int</em> <dfn class="decl" id="AVFrame::qstride" title='AVFrame::qstride' data-ref="AVFrame::qstride">qstride</dfn>;</td></tr>
+<tr><th id="521">521</th><td></td></tr>
+<tr><th id="522">522</th><td>    <a class="macro" href="attributes.h.html#94" title="__attribute__((deprecated))" data-ref="_M/attribute_deprecated">attribute_deprecated</a></td></tr>
+<tr><th id="523">523</th><td>    <em>int</em> <dfn class="decl" id="AVFrame::qscale_type" title='AVFrame::qscale_type' data-ref="AVFrame::qscale_type">qscale_type</dfn>;</td></tr>
+<tr><th id="524">524</th><td></td></tr>
+<tr><th id="525">525</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="526">526</th><td><i class="doc">     * Not to be accessed directly from outside libavutil</i></td></tr>
+<tr><th id="527">527</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="528">528</th><td>    <a class="typedef" href="buffer.h.html#AVBufferRef" title='AVBufferRef' data-type='struct AVBufferRef' data-ref="AVBufferRef">AVBufferRef</a> *<dfn class="decl" id="AVFrame::qp_table_buf" title='AVFrame::qp_table_buf' data-ref="AVFrame::qp_table_buf">qp_table_buf</dfn>;</td></tr>
+<tr><th id="529">529</th><td><u>#<span data-ppcond="508">endif</span></u></td></tr>
+<tr><th id="530">530</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="531">531</th><td><i class="doc">     * For hwaccel-format frames, this should be a reference to the</i></td></tr>
+<tr><th id="532">532</th><td><i class="doc">     * AVHWFramesContext describing the frame.</i></td></tr>
+<tr><th id="533">533</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="534">534</th><td>    <a class="typedef" href="buffer.h.html#AVBufferRef" title='AVBufferRef' data-type='struct AVBufferRef' data-ref="AVBufferRef">AVBufferRef</a> *<dfn class="decl" id="AVFrame::hw_frames_ctx" title='AVFrame::hw_frames_ctx' data-ref="AVFrame::hw_frames_ctx">hw_frames_ctx</dfn>;</td></tr>
+<tr><th id="535">535</th><td>} <dfn class="typedef" id="AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</dfn>;</td></tr>
+<tr><th id="536">536</th><td></td></tr>
+<tr><th id="537">537</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="538">538</th><td><i class="doc"> * Accessors for some AVFrame fields.</i></td></tr>
+<tr><th id="539">539</th><td><i class="doc"> * The position of these field in the structure is not part of the ABI,</i></td></tr>
+<tr><th id="540">540</th><td><i class="doc"> * they should not be accessed directly outside libavutil.</i></td></tr>
+<tr><th id="541">541</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="542">542</th><td><a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="decl" id="av_frame_get_best_effort_timestamp" title='av_frame_get_best_effort_timestamp' data-ref="av_frame_get_best_effort_timestamp">av_frame_get_best_effort_timestamp</dfn>(<em>const</em> <a class="typedef" href="#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col7 decl" id="1397frame" title='frame' data-type='const AVFrame *' data-ref="1397frame">frame</dfn>);</td></tr>
+<tr><th id="543">543</th><td><em>void</em>    <dfn class="decl" id="av_frame_set_best_effort_timestamp" title='av_frame_set_best_effort_timestamp' data-ref="av_frame_set_best_effort_timestamp">av_frame_set_best_effort_timestamp</dfn>(<a class="typedef" href="#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col8 decl" id="1398frame" title='frame' data-type='AVFrame *' data-ref="1398frame">frame</dfn>, <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="local col9 decl" id="1399val" title='val' data-type='int64_t' data-ref="1399val">val</dfn>);</td></tr>
+<tr><th id="544">544</th><td><a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="decl" id="av_frame_get_pkt_duration" title='av_frame_get_pkt_duration' data-ref="av_frame_get_pkt_duration">av_frame_get_pkt_duration</dfn>         (<em>const</em> <a class="typedef" href="#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col0 decl" id="1400frame" title='frame' data-type='const AVFrame *' data-ref="1400frame">frame</dfn>);</td></tr>
+<tr><th id="545">545</th><td><em>void</em>    <dfn class="decl" id="av_frame_set_pkt_duration" title='av_frame_set_pkt_duration' data-ref="av_frame_set_pkt_duration">av_frame_set_pkt_duration</dfn>         (<a class="typedef" href="#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col1 decl" id="1401frame" title='frame' data-type='AVFrame *' data-ref="1401frame">frame</dfn>, <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="local col2 decl" id="1402val" title='val' data-type='int64_t' data-ref="1402val">val</dfn>);</td></tr>
+<tr><th id="546">546</th><td><a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="decl" id="av_frame_get_pkt_pos" title='av_frame_get_pkt_pos' data-ref="av_frame_get_pkt_pos">av_frame_get_pkt_pos</dfn>              (<em>const</em> <a class="typedef" href="#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col3 decl" id="1403frame" title='frame' data-type='const AVFrame *' data-ref="1403frame">frame</dfn>);</td></tr>
+<tr><th id="547">547</th><td><em>void</em>    <dfn class="decl" id="av_frame_set_pkt_pos" title='av_frame_set_pkt_pos' data-ref="av_frame_set_pkt_pos">av_frame_set_pkt_pos</dfn>              (<a class="typedef" href="#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col4 decl" id="1404frame" title='frame' data-type='AVFrame *' data-ref="1404frame">frame</dfn>, <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="local col5 decl" id="1405val" title='val' data-type='int64_t' data-ref="1405val">val</dfn>);</td></tr>
+<tr><th id="548">548</th><td><a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="decl" id="av_frame_get_channel_layout" title='av_frame_get_channel_layout' data-ref="av_frame_get_channel_layout">av_frame_get_channel_layout</dfn>       (<em>const</em> <a class="typedef" href="#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col6 decl" id="1406frame" title='frame' data-type='const AVFrame *' data-ref="1406frame">frame</dfn>);</td></tr>
+<tr><th id="549">549</th><td><em>void</em>    <dfn class="decl" id="av_frame_set_channel_layout" title='av_frame_set_channel_layout' data-ref="av_frame_set_channel_layout">av_frame_set_channel_layout</dfn>       (<a class="typedef" href="#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col7 decl" id="1407frame" title='frame' data-type='AVFrame *' data-ref="1407frame">frame</dfn>, <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="local col8 decl" id="1408val" title='val' data-type='int64_t' data-ref="1408val">val</dfn>);</td></tr>
+<tr><th id="550">550</th><td><em>int</em>     <dfn class="decl" id="av_frame_get_channels" title='av_frame_get_channels' data-ref="av_frame_get_channels">av_frame_get_channels</dfn>             (<em>const</em> <a class="typedef" href="#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col9 decl" id="1409frame" title='frame' data-type='const AVFrame *' data-ref="1409frame">frame</dfn>);</td></tr>
+<tr><th id="551">551</th><td><em>void</em>    <dfn class="decl" id="av_frame_set_channels" title='av_frame_set_channels' data-ref="av_frame_set_channels">av_frame_set_channels</dfn>             (<a class="typedef" href="#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col0 decl" id="1410frame" title='frame' data-type='AVFrame *' data-ref="1410frame">frame</dfn>, <em>int</em>     <dfn class="local col1 decl" id="1411val" title='val' data-type='int' data-ref="1411val">val</dfn>);</td></tr>
+<tr><th id="552">552</th><td><em>int</em>     <dfn class="decl" id="av_frame_get_sample_rate" title='av_frame_get_sample_rate' data-ref="av_frame_get_sample_rate">av_frame_get_sample_rate</dfn>          (<em>const</em> <a class="typedef" href="#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col2 decl" id="1412frame" title='frame' data-type='const AVFrame *' data-ref="1412frame">frame</dfn>);</td></tr>
+<tr><th id="553">553</th><td><em>void</em>    <dfn class="decl" id="av_frame_set_sample_rate" title='av_frame_set_sample_rate' data-ref="av_frame_set_sample_rate">av_frame_set_sample_rate</dfn>          (<a class="typedef" href="#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col3 decl" id="1413frame" title='frame' data-type='AVFrame *' data-ref="1413frame">frame</dfn>, <em>int</em>     <dfn class="local col4 decl" id="1414val" title='val' data-type='int' data-ref="1414val">val</dfn>);</td></tr>
+<tr><th id="554">554</th><td><a class="typedef" href="dict.h.html#AVDictionary" title='AVDictionary' data-type='struct AVDictionary' data-ref="AVDictionary">AVDictionary</a> *<dfn class="decl" id="av_frame_get_metadata" title='av_frame_get_metadata' data-ref="av_frame_get_metadata">av_frame_get_metadata</dfn>       (<em>const</em> <a class="typedef" href="#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col5 decl" id="1415frame" title='frame' data-type='const AVFrame *' data-ref="1415frame">frame</dfn>);</td></tr>
+<tr><th id="555">555</th><td><em>void</em>          <dfn class="decl" id="av_frame_set_metadata" title='av_frame_set_metadata' data-ref="av_frame_set_metadata">av_frame_set_metadata</dfn>       (<a class="typedef" href="#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col6 decl" id="1416frame" title='frame' data-type='AVFrame *' data-ref="1416frame">frame</dfn>, <a class="typedef" href="dict.h.html#AVDictionary" title='AVDictionary' data-type='struct AVDictionary' data-ref="AVDictionary">AVDictionary</a> *<dfn class="local col7 decl" id="1417val" title='val' data-type='AVDictionary *' data-ref="1417val">val</dfn>);</td></tr>
+<tr><th id="556">556</th><td><em>int</em>     <dfn class="decl" id="av_frame_get_decode_error_flags" title='av_frame_get_decode_error_flags' data-ref="av_frame_get_decode_error_flags">av_frame_get_decode_error_flags</dfn>   (<em>const</em> <a class="typedef" href="#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col8 decl" id="1418frame" title='frame' data-type='const AVFrame *' data-ref="1418frame">frame</dfn>);</td></tr>
+<tr><th id="557">557</th><td><em>void</em>    <dfn class="decl" id="av_frame_set_decode_error_flags" title='av_frame_set_decode_error_flags' data-ref="av_frame_set_decode_error_flags">av_frame_set_decode_error_flags</dfn>   (<a class="typedef" href="#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col9 decl" id="1419frame" title='frame' data-type='AVFrame *' data-ref="1419frame">frame</dfn>, <em>int</em>     <dfn class="local col0 decl" id="1420val" title='val' data-type='int' data-ref="1420val">val</dfn>);</td></tr>
+<tr><th id="558">558</th><td><em>int</em>     <dfn class="decl" id="av_frame_get_pkt_size" title='av_frame_get_pkt_size' data-ref="av_frame_get_pkt_size">av_frame_get_pkt_size</dfn>(<em>const</em> <a class="typedef" href="#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col1 decl" id="1421frame" title='frame' data-type='const AVFrame *' data-ref="1421frame">frame</dfn>);</td></tr>
+<tr><th id="559">559</th><td><em>void</em>    <dfn class="decl" id="av_frame_set_pkt_size" title='av_frame_set_pkt_size' data-ref="av_frame_set_pkt_size">av_frame_set_pkt_size</dfn>(<a class="typedef" href="#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col2 decl" id="1422frame" title='frame' data-type='AVFrame *' data-ref="1422frame">frame</dfn>, <em>int</em> <dfn class="local col3 decl" id="1423val" title='val' data-type='int' data-ref="1423val">val</dfn>);</td></tr>
+<tr><th id="560">560</th><td><a class="typedef" href="dict.h.html#AVDictionary" title='AVDictionary' data-type='struct AVDictionary' data-ref="AVDictionary">AVDictionary</a> **<dfn class="decl" id="avpriv_frame_get_metadatap" title='avpriv_frame_get_metadatap' data-ref="avpriv_frame_get_metadatap">avpriv_frame_get_metadatap</dfn>(<a class="typedef" href="#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col4 decl" id="1424frame" title='frame' data-type='AVFrame *' data-ref="1424frame">frame</dfn>);</td></tr>
+<tr><th id="561">561</th><td><u>#<span data-ppcond="561">if</span> <a class="macro" href="version.h.html#124" title="(55 &lt; 56)" data-ref="_M/FF_API_FRAME_QP">FF_API_FRAME_QP</a></u></td></tr>
+<tr><th id="562">562</th><td><a class="typedef" href="../../include/stdint.h.html#int8_t" title='int8_t' data-type='signed char' data-ref="int8_t">int8_t</a> *<dfn class="decl" id="av_frame_get_qp_table" title='av_frame_get_qp_table' data-ref="av_frame_get_qp_table">av_frame_get_qp_table</dfn>(<a class="typedef" href="#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col5 decl" id="1425f" title='f' data-type='AVFrame *' data-ref="1425f">f</dfn>, <em>int</em> *<dfn class="local col6 decl" id="1426stride" title='stride' data-type='int *' data-ref="1426stride">stride</dfn>, <em>int</em> *<dfn class="local col7 decl" id="1427type" title='type' data-type='int *' data-ref="1427type">type</dfn>);</td></tr>
+<tr><th id="563">563</th><td><em>int</em> <dfn class="decl" id="av_frame_set_qp_table" title='av_frame_set_qp_table' data-ref="av_frame_set_qp_table">av_frame_set_qp_table</dfn>(<a class="typedef" href="#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col8 decl" id="1428f" title='f' data-type='AVFrame *' data-ref="1428f">f</dfn>, <a class="typedef" href="buffer.h.html#AVBufferRef" title='AVBufferRef' data-type='struct AVBufferRef' data-ref="AVBufferRef">AVBufferRef</a> *<dfn class="local col9 decl" id="1429buf" title='buf' data-type='AVBufferRef *' data-ref="1429buf">buf</dfn>, <em>int</em> <dfn class="local col0 decl" id="1430stride" title='stride' data-type='int' data-ref="1430stride">stride</dfn>, <em>int</em> <dfn class="local col1 decl" id="1431type" title='type' data-type='int' data-ref="1431type">type</dfn>);</td></tr>
+<tr><th id="564">564</th><td><u>#<span data-ppcond="561">endif</span></u></td></tr>
+<tr><th id="565">565</th><td><b>enum</b> <a class="type" href="pixfmt.h.html#AVColorSpace" title='AVColorSpace' data-ref="AVColorSpace">AVColorSpace</a> <dfn class="decl" id="av_frame_get_colorspace" title='av_frame_get_colorspace' data-ref="av_frame_get_colorspace">av_frame_get_colorspace</dfn>(<em>const</em> <a class="typedef" href="#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col2 decl" id="1432frame" title='frame' data-type='const AVFrame *' data-ref="1432frame">frame</dfn>);</td></tr>
+<tr><th id="566">566</th><td><em>void</em>    <dfn class="decl" id="av_frame_set_colorspace" title='av_frame_set_colorspace' data-ref="av_frame_set_colorspace">av_frame_set_colorspace</dfn>(<a class="typedef" href="#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col3 decl" id="1433frame" title='frame' data-type='AVFrame *' data-ref="1433frame">frame</dfn>, <b>enum</b> <a class="type" href="pixfmt.h.html#AVColorSpace" title='AVColorSpace' data-ref="AVColorSpace">AVColorSpace</a> <dfn class="local col4 decl" id="1434val" title='val' data-type='enum AVColorSpace' data-ref="1434val">val</dfn>);</td></tr>
+<tr><th id="567">567</th><td><b>enum</b> <a class="type" href="pixfmt.h.html#AVColorRange" title='AVColorRange' data-ref="AVColorRange">AVColorRange</a> <dfn class="decl" id="av_frame_get_color_range" title='av_frame_get_color_range' data-ref="av_frame_get_color_range">av_frame_get_color_range</dfn>(<em>const</em> <a class="typedef" href="#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col5 decl" id="1435frame" title='frame' data-type='const AVFrame *' data-ref="1435frame">frame</dfn>);</td></tr>
+<tr><th id="568">568</th><td><em>void</em>    <dfn class="decl" id="av_frame_set_color_range" title='av_frame_set_color_range' data-ref="av_frame_set_color_range">av_frame_set_color_range</dfn>(<a class="typedef" href="#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col6 decl" id="1436frame" title='frame' data-type='AVFrame *' data-ref="1436frame">frame</dfn>, <b>enum</b> <a class="type" href="pixfmt.h.html#AVColorRange" title='AVColorRange' data-ref="AVColorRange">AVColorRange</a> <dfn class="local col7 decl" id="1437val" title='val' data-type='enum AVColorRange' data-ref="1437val">val</dfn>);</td></tr>
+<tr><th id="569">569</th><td></td></tr>
+<tr><th id="570">570</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="571">571</th><td><i class="doc"> * Get the name of a colorspace.</i></td></tr>
+<tr><th id="572">572</th><td><i class="doc"> * <span class="command">@return</span> a static string identifying the colorspace; can be NULL.</i></td></tr>
+<tr><th id="573">573</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="574">574</th><td><em>const</em> <em>char</em> *<dfn class="decl" id="av_get_colorspace_name" title='av_get_colorspace_name' data-ref="av_get_colorspace_name">av_get_colorspace_name</dfn>(<b>enum</b> <a class="type" href="pixfmt.h.html#AVColorSpace" title='AVColorSpace' data-ref="AVColorSpace">AVColorSpace</a> <dfn class="local col8 decl" id="1438val" title='val' data-type='enum AVColorSpace' data-ref="1438val">val</dfn>);</td></tr>
+<tr><th id="575">575</th><td></td></tr>
+<tr><th id="576">576</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="577">577</th><td><i class="doc"> * Allocate an AVFrame and set its fields to default values.  The resulting</i></td></tr>
+<tr><th id="578">578</th><td><i class="doc"> * struct must be freed using av_frame_free().</i></td></tr>
+<tr><th id="579">579</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="580">580</th><td><i class="doc"> * <span class="command">@return</span> An AVFrame filled with default values or NULL on failure.</i></td></tr>
+<tr><th id="581">581</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="582">582</th><td><i class="doc"> * <span class="command">@note</span> this only allocates the AVFrame itself, not the data buffers. Those</i></td></tr>
+<tr><th id="583">583</th><td><i class="doc"> * must be allocated through other means, e.g. with av_frame_get_buffer() or</i></td></tr>
+<tr><th id="584">584</th><td><i class="doc"> * manually.</i></td></tr>
+<tr><th id="585">585</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="586">586</th><td><a class="typedef" href="#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="decl" id="av_frame_alloc" title='av_frame_alloc' data-ref="av_frame_alloc">av_frame_alloc</dfn>(<em>void</em>);</td></tr>
+<tr><th id="587">587</th><td></td></tr>
+<tr><th id="588">588</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="589">589</th><td><i class="doc"> * Free the frame and any dynamically allocated objects in it,</i></td></tr>
+<tr><th id="590">590</th><td><i class="doc"> * e.g. extended_data. If the frame is reference counted, it will be</i></td></tr>
+<tr><th id="591">591</th><td><i class="doc"> * unreferenced first.</i></td></tr>
+<tr><th id="592">592</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="593">593</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">frame</span> frame to be freed. The pointer will be set to NULL.</i></td></tr>
+<tr><th id="594">594</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="595">595</th><td><em>void</em> <dfn class="decl" id="av_frame_free" title='av_frame_free' data-ref="av_frame_free">av_frame_free</dfn>(<a class="typedef" href="#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> **<dfn class="local col9 decl" id="1439frame" title='frame' data-type='AVFrame **' data-ref="1439frame">frame</dfn>);</td></tr>
+<tr><th id="596">596</th><td></td></tr>
+<tr><th id="597">597</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="598">598</th><td><i class="doc"> * Set up a new reference to the data described by the source frame.</i></td></tr>
+<tr><th id="599">599</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="600">600</th><td><i class="doc"> * Copy frame properties from src to dst and create a new reference for each</i></td></tr>
+<tr><th id="601">601</th><td><i class="doc"> * AVBufferRef from src.</i></td></tr>
+<tr><th id="602">602</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="603">603</th><td><i class="doc"> * If src is not reference counted, new buffers are allocated and the data is</i></td></tr>
+<tr><th id="604">604</th><td><i class="doc"> * copied.</i></td></tr>
+<tr><th id="605">605</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="606">606</th><td><i class="doc"> * <span class="command">@warning</span>: dst MUST have been either unreferenced with av_frame_unref(dst),</i></td></tr>
+<tr><th id="607">607</th><td><i class="doc"> *           or newly allocated with av_frame_alloc() before calling this</i></td></tr>
+<tr><th id="608">608</th><td><i class="doc"> *           function, or undefined behavior will occur.</i></td></tr>
+<tr><th id="609">609</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="610">610</th><td><i class="doc"> * <span class="command">@return</span> 0 on success, a negative AVERROR on error</i></td></tr>
+<tr><th id="611">611</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="612">612</th><td><em>int</em> <dfn class="decl" id="av_frame_ref" title='av_frame_ref' data-ref="av_frame_ref">av_frame_ref</dfn>(<a class="typedef" href="#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col0 decl" id="1440dst" title='dst' data-type='AVFrame *' data-ref="1440dst">dst</dfn>, <em>const</em> <a class="typedef" href="#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col1 decl" id="1441src" title='src' data-type='const AVFrame *' data-ref="1441src">src</dfn>);</td></tr>
+<tr><th id="613">613</th><td></td></tr>
+<tr><th id="614">614</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="615">615</th><td><i class="doc"> * Create a new frame that references the same data as src.</i></td></tr>
+<tr><th id="616">616</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="617">617</th><td><i class="doc"> * This is a shortcut for av_frame_alloc()+av_frame_ref().</i></td></tr>
+<tr><th id="618">618</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="619">619</th><td><i class="doc"> * <span class="command">@return</span> newly created AVFrame on success, NULL on error.</i></td></tr>
+<tr><th id="620">620</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="621">621</th><td><a class="typedef" href="#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="decl" id="av_frame_clone" title='av_frame_clone' data-ref="av_frame_clone">av_frame_clone</dfn>(<em>const</em> <a class="typedef" href="#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col2 decl" id="1442src" title='src' data-type='const AVFrame *' data-ref="1442src">src</dfn>);</td></tr>
+<tr><th id="622">622</th><td></td></tr>
+<tr><th id="623">623</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="624">624</th><td><i class="doc"> * Unreference all the buffers referenced by frame and reset the frame fields.</i></td></tr>
+<tr><th id="625">625</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="626">626</th><td><em>void</em> <dfn class="decl" id="av_frame_unref" title='av_frame_unref' data-ref="av_frame_unref">av_frame_unref</dfn>(<a class="typedef" href="#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col3 decl" id="1443frame" title='frame' data-type='AVFrame *' data-ref="1443frame">frame</dfn>);</td></tr>
+<tr><th id="627">627</th><td></td></tr>
+<tr><th id="628">628</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="629">629</th><td><i class="doc"> * Move everything contained in src to dst and reset src.</i></td></tr>
+<tr><th id="630">630</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="631">631</th><td><i class="doc"> * <span class="command">@warning</span>: dst is not unreferenced, but directly overwritten without reading</i></td></tr>
+<tr><th id="632">632</th><td><i class="doc"> *           or deallocating its contents. Call av_frame_unref(dst) manually</i></td></tr>
+<tr><th id="633">633</th><td><i class="doc"> *           before calling this function to ensure that no memory is leaked.</i></td></tr>
+<tr><th id="634">634</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="635">635</th><td><em>void</em> <dfn class="decl" id="av_frame_move_ref" title='av_frame_move_ref' data-ref="av_frame_move_ref">av_frame_move_ref</dfn>(<a class="typedef" href="#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col4 decl" id="1444dst" title='dst' data-type='AVFrame *' data-ref="1444dst">dst</dfn>, <a class="typedef" href="#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col5 decl" id="1445src" title='src' data-type='AVFrame *' data-ref="1445src">src</dfn>);</td></tr>
+<tr><th id="636">636</th><td></td></tr>
+<tr><th id="637">637</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="638">638</th><td><i class="doc"> * Allocate new buffer(s) for audio or video data.</i></td></tr>
+<tr><th id="639">639</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="640">640</th><td><i class="doc"> * The following fields must be set on frame before calling this function:</i></td></tr>
+<tr><th id="641">641</th><td><i class="doc"> * - format (pixel format for video, sample format for audio)</i></td></tr>
+<tr><th id="642">642</th><td><i class="doc"> * - width and height for video</i></td></tr>
+<tr><th id="643">643</th><td><i class="doc"> * - nb_samples and channel_layout for audio</i></td></tr>
+<tr><th id="644">644</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="645">645</th><td><i class="doc"> * This function will fill AVFrame.data and AVFrame.buf arrays and, if</i></td></tr>
+<tr><th id="646">646</th><td><i class="doc"> * necessary, allocate and fill AVFrame.extended_data and AVFrame.extended_buf.</i></td></tr>
+<tr><th id="647">647</th><td><i class="doc"> * For planar formats, one buffer will be allocated for each plane.</i></td></tr>
+<tr><th id="648">648</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="649">649</th><td><i class="doc"> * <span class="command">@warning</span>: if frame already has been allocated, calling this function will</i></td></tr>
+<tr><th id="650">650</th><td><i class="doc"> *           leak memory. In addition, undefined behavior can occur in certain</i></td></tr>
+<tr><th id="651">651</th><td><i class="doc"> *           cases.</i></td></tr>
+<tr><th id="652">652</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="653">653</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">frame</span> frame in which to store the new buffers.</i></td></tr>
+<tr><th id="654">654</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">align</span> required buffer size alignment</i></td></tr>
+<tr><th id="655">655</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="656">656</th><td><i class="doc"> * <span class="command">@return</span> 0 on success, a negative AVERROR on error.</i></td></tr>
+<tr><th id="657">657</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="658">658</th><td><em>int</em> <dfn class="decl" id="av_frame_get_buffer" title='av_frame_get_buffer' data-ref="av_frame_get_buffer">av_frame_get_buffer</dfn>(<a class="typedef" href="#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col6 decl" id="1446frame" title='frame' data-type='AVFrame *' data-ref="1446frame">frame</dfn>, <em>int</em> <dfn class="local col7 decl" id="1447align" title='align' data-type='int' data-ref="1447align">align</dfn>);</td></tr>
+<tr><th id="659">659</th><td></td></tr>
+<tr><th id="660">660</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="661">661</th><td><i class="doc"> * Check if the frame data is writable.</i></td></tr>
+<tr><th id="662">662</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="663">663</th><td><i class="doc"> * <span class="command">@return</span> A positive value if the frame data is writable (which is true if and</i></td></tr>
+<tr><th id="664">664</th><td><i class="doc"> * only if each of the underlying buffers has only one reference, namely the one</i></td></tr>
+<tr><th id="665">665</th><td><i class="doc"> * stored in this frame). Return 0 otherwise.</i></td></tr>
+<tr><th id="666">666</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="667">667</th><td><i class="doc"> * If 1 is returned the answer is valid until av_buffer_ref() is called on any</i></td></tr>
+<tr><th id="668">668</th><td><i class="doc"> * of the underlying AVBufferRefs (e.g. through av_frame_ref() or directly).</i></td></tr>
+<tr><th id="669">669</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="670">670</th><td><i class="doc"> * <span class="command">@see</span> av_frame_make_writable(), av_buffer_is_writable()</i></td></tr>
+<tr><th id="671">671</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="672">672</th><td><em>int</em> <dfn class="decl" id="av_frame_is_writable" title='av_frame_is_writable' data-ref="av_frame_is_writable">av_frame_is_writable</dfn>(<a class="typedef" href="#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col8 decl" id="1448frame" title='frame' data-type='AVFrame *' data-ref="1448frame">frame</dfn>);</td></tr>
+<tr><th id="673">673</th><td></td></tr>
+<tr><th id="674">674</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="675">675</th><td><i class="doc"> * Ensure that the frame data is writable, avoiding data copy if possible.</i></td></tr>
+<tr><th id="676">676</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="677">677</th><td><i class="doc"> * Do nothing if the frame is writable, allocate new buffers and copy the data</i></td></tr>
+<tr><th id="678">678</th><td><i class="doc"> * if it is not.</i></td></tr>
+<tr><th id="679">679</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="680">680</th><td><i class="doc"> * <span class="command">@return</span> 0 on success, a negative AVERROR on error.</i></td></tr>
+<tr><th id="681">681</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="682">682</th><td><i class="doc"> * <span class="command">@see</span> av_frame_is_writable(), av_buffer_is_writable(),</i></td></tr>
+<tr><th id="683">683</th><td><i class="doc"> * av_buffer_make_writable()</i></td></tr>
+<tr><th id="684">684</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="685">685</th><td><em>int</em> <dfn class="decl" id="av_frame_make_writable" title='av_frame_make_writable' data-ref="av_frame_make_writable">av_frame_make_writable</dfn>(<a class="typedef" href="#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col9 decl" id="1449frame" title='frame' data-type='AVFrame *' data-ref="1449frame">frame</dfn>);</td></tr>
+<tr><th id="686">686</th><td></td></tr>
+<tr><th id="687">687</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="688">688</th><td><i class="doc"> * Copy the frame data from src to dst.</i></td></tr>
+<tr><th id="689">689</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="690">690</th><td><i class="doc"> * This function does not allocate anything, dst must be already initialized and</i></td></tr>
+<tr><th id="691">691</th><td><i class="doc"> * allocated with the same parameters as src.</i></td></tr>
+<tr><th id="692">692</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="693">693</th><td><i class="doc"> * This function only copies the frame data (i.e. the contents of the data /</i></td></tr>
+<tr><th id="694">694</th><td><i class="doc"> * extended data arrays), not any other properties.</i></td></tr>
+<tr><th id="695">695</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="696">696</th><td><i class="doc"> * <span class="command">@return</span> &gt;= 0 on success, a negative AVERROR on error.</i></td></tr>
+<tr><th id="697">697</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="698">698</th><td><em>int</em> <dfn class="decl" id="av_frame_copy" title='av_frame_copy' data-ref="av_frame_copy">av_frame_copy</dfn>(<a class="typedef" href="#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col0 decl" id="1450dst" title='dst' data-type='AVFrame *' data-ref="1450dst">dst</dfn>, <em>const</em> <a class="typedef" href="#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col1 decl" id="1451src" title='src' data-type='const AVFrame *' data-ref="1451src">src</dfn>);</td></tr>
+<tr><th id="699">699</th><td></td></tr>
+<tr><th id="700">700</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="701">701</th><td><i class="doc"> * Copy only "metadata" fields from src to dst.</i></td></tr>
+<tr><th id="702">702</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="703">703</th><td><i class="doc"> * Metadata for the purpose of this function are those fields that do not affect</i></td></tr>
+<tr><th id="704">704</th><td><i class="doc"> * the data layout in the buffers.  E.g. pts, sample rate (for audio) or sample</i></td></tr>
+<tr><th id="705">705</th><td><i class="doc"> * aspect ratio (for video), but not width/height or channel layout.</i></td></tr>
+<tr><th id="706">706</th><td><i class="doc"> * Side data is also copied.</i></td></tr>
+<tr><th id="707">707</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="708">708</th><td><em>int</em> <dfn class="decl" id="av_frame_copy_props" title='av_frame_copy_props' data-ref="av_frame_copy_props">av_frame_copy_props</dfn>(<a class="typedef" href="#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col2 decl" id="1452dst" title='dst' data-type='AVFrame *' data-ref="1452dst">dst</dfn>, <em>const</em> <a class="typedef" href="#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col3 decl" id="1453src" title='src' data-type='const AVFrame *' data-ref="1453src">src</dfn>);</td></tr>
+<tr><th id="709">709</th><td></td></tr>
+<tr><th id="710">710</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="711">711</th><td><i class="doc"> * Get the buffer reference a given data plane is stored in.</i></td></tr>
+<tr><th id="712">712</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="713">713</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">plane</span> index of the data plane of interest in frame-&gt;extended_data.</i></td></tr>
+<tr><th id="714">714</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="715">715</th><td><i class="doc"> * <span class="command">@return</span> the buffer reference that contains the plane or NULL if the input</i></td></tr>
+<tr><th id="716">716</th><td><i class="doc"> * frame is not valid.</i></td></tr>
+<tr><th id="717">717</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="718">718</th><td><a class="typedef" href="buffer.h.html#AVBufferRef" title='AVBufferRef' data-type='struct AVBufferRef' data-ref="AVBufferRef">AVBufferRef</a> *<dfn class="decl" id="av_frame_get_plane_buffer" title='av_frame_get_plane_buffer' data-ref="av_frame_get_plane_buffer">av_frame_get_plane_buffer</dfn>(<a class="typedef" href="#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col4 decl" id="1454frame" title='frame' data-type='AVFrame *' data-ref="1454frame">frame</dfn>, <em>int</em> <dfn class="local col5 decl" id="1455plane" title='plane' data-type='int' data-ref="1455plane">plane</dfn>);</td></tr>
+<tr><th id="719">719</th><td></td></tr>
+<tr><th id="720">720</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="721">721</th><td><i class="doc"> * Add a new side data to a frame.</i></td></tr>
+<tr><th id="722">722</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="723">723</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">frame</span> a frame to which the side data should be added</i></td></tr>
+<tr><th id="724">724</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">type</span> type of the added side data</i></td></tr>
+<tr><th id="725">725</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">size</span> size of the side data</i></td></tr>
+<tr><th id="726">726</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="727">727</th><td><i class="doc"> * <span class="command">@return</span> newly added side data on success, NULL on error</i></td></tr>
+<tr><th id="728">728</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="729">729</th><td><a class="typedef" href="#AVFrameSideData" title='AVFrameSideData' data-type='struct AVFrameSideData' data-ref="AVFrameSideData">AVFrameSideData</a> *<dfn class="decl" id="av_frame_new_side_data" title='av_frame_new_side_data' data-ref="av_frame_new_side_data">av_frame_new_side_data</dfn>(<a class="typedef" href="#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col6 decl" id="1456frame" title='frame' data-type='AVFrame *' data-ref="1456frame">frame</dfn>,</td></tr>
+<tr><th id="730">730</th><td>                                        <b>enum</b> <a class="type" href="#AVFrameSideDataType" title='AVFrameSideDataType' data-ref="AVFrameSideDataType">AVFrameSideDataType</a> <dfn class="local col7 decl" id="1457type" title='type' data-type='enum AVFrameSideDataType' data-ref="1457type">type</dfn>,</td></tr>
+<tr><th id="731">731</th><td>                                        <em>int</em> <dfn class="local col8 decl" id="1458size" title='size' data-type='int' data-ref="1458size">size</dfn>);</td></tr>
+<tr><th id="732">732</th><td></td></tr>
+<tr><th id="733">733</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="734">734</th><td><i class="doc"> * <span class="command">@return</span> a pointer to the side data of a given type on success, NULL if there</i></td></tr>
+<tr><th id="735">735</th><td><i class="doc"> * is no side data with such type in this frame.</i></td></tr>
+<tr><th id="736">736</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="737">737</th><td><a class="typedef" href="#AVFrameSideData" title='AVFrameSideData' data-type='struct AVFrameSideData' data-ref="AVFrameSideData">AVFrameSideData</a> *<dfn class="decl" id="av_frame_get_side_data" title='av_frame_get_side_data' data-ref="av_frame_get_side_data">av_frame_get_side_data</dfn>(<em>const</em> <a class="typedef" href="#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col9 decl" id="1459frame" title='frame' data-type='const AVFrame *' data-ref="1459frame">frame</dfn>,</td></tr>
+<tr><th id="738">738</th><td>                                        <b>enum</b> <a class="type" href="#AVFrameSideDataType" title='AVFrameSideDataType' data-ref="AVFrameSideDataType">AVFrameSideDataType</a> <dfn class="local col0 decl" id="1460type" title='type' data-type='enum AVFrameSideDataType' data-ref="1460type">type</dfn>);</td></tr>
+<tr><th id="739">739</th><td></td></tr>
+<tr><th id="740">740</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="741">741</th><td><i class="doc"> * If side data of the supplied type exists in the frame, free it and remove it</i></td></tr>
+<tr><th id="742">742</th><td><i class="doc"> * from the frame.</i></td></tr>
+<tr><th id="743">743</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="744">744</th><td><em>void</em> <dfn class="decl" id="av_frame_remove_side_data" title='av_frame_remove_side_data' data-ref="av_frame_remove_side_data">av_frame_remove_side_data</dfn>(<a class="typedef" href="#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col1 decl" id="1461frame" title='frame' data-type='AVFrame *' data-ref="1461frame">frame</dfn>, <b>enum</b> <a class="type" href="#AVFrameSideDataType" title='AVFrameSideDataType' data-ref="AVFrameSideDataType">AVFrameSideDataType</a> <dfn class="local col2 decl" id="1462type" title='type' data-type='enum AVFrameSideDataType' data-ref="1462type">type</dfn>);</td></tr>
+<tr><th id="745">745</th><td></td></tr>
+<tr><th id="746">746</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="747">747</th><td><i class="doc"> * <span class="command">@return</span> a string identifying the side data type</i></td></tr>
+<tr><th id="748">748</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="749">749</th><td><em>const</em> <em>char</em> *<dfn class="decl" id="av_frame_side_data_name" title='av_frame_side_data_name' data-ref="av_frame_side_data_name">av_frame_side_data_name</dfn>(<b>enum</b> <a class="type" href="#AVFrameSideDataType" title='AVFrameSideDataType' data-ref="AVFrameSideDataType">AVFrameSideDataType</a> <dfn class="local col3 decl" id="1463type" title='type' data-type='enum AVFrameSideDataType' data-ref="1463type">type</dfn>);</td></tr>
+<tr><th id="750">750</th><td></td></tr>
+<tr><th id="751">751</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="752">752</th><td><i class="doc"> * @}</i></td></tr>
+<tr><th id="753">753</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="754">754</th><td></td></tr>
+<tr><th id="755">755</th><td><u>#<span data-ppcond="25">endif</span> /* AVUTIL_FRAME_H */</u></td></tr>
+<tr><th id="756">756</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated while processing <a href='../libavdevice/alldevices.c.html'>ffmpeg/libavdevice/alldevices.c</a><br/>Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

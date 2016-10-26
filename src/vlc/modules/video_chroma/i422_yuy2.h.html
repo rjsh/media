@@ -1,0 +1,360 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>i422_yuy2.h source code [vlc/modules/video_chroma/i422_yuy2.h] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'vlc/modules/video_chroma/i422_yuy2.h'; var root_path = '../../..'; var data_path = '../../../../data';</script>
+<script src='../../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='../..'>vlc</a>/<a href='..'>modules</a>/<a href='./'>video_chroma</a>/<a href='i422_yuy2.h.html'>i422_yuy2.h</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*****************************************************************************</i></td></tr>
+<tr><th id="2">2</th><td><i> * i422_yuy2.h : YUV to YUV conversion module for vlc</i></td></tr>
+<tr><th id="3">3</th><td><i> *****************************************************************************</i></td></tr>
+<tr><th id="4">4</th><td><i> * Copyright (C) 2002 VLC authors and VideoLAN</i></td></tr>
+<tr><th id="5">5</th><td><i> * $Id: 7d2c469128180e8a7721c90f6cb8bf6044da96f6 $</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * Authors: Samuel Hocevar &lt;sam@zoy.org&gt;</i></td></tr>
+<tr><th id="8">8</th><td><i> *          Damien Fouilleul &lt;damienf@videolan.org&gt;</i></td></tr>
+<tr><th id="9">9</th><td><i> *</i></td></tr>
+<tr><th id="10">10</th><td><i> * This program is free software; you can redistribute it and/or modify it</i></td></tr>
+<tr><th id="11">11</th><td><i> * under the terms of the GNU Lesser General Public License as published by</i></td></tr>
+<tr><th id="12">12</th><td><i> * the Free Software Foundation; either version 2.1 of the License, or</i></td></tr>
+<tr><th id="13">13</th><td><i> * (at your option) any later version.</i></td></tr>
+<tr><th id="14">14</th><td><i> *</i></td></tr>
+<tr><th id="15">15</th><td><i> * This program is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="16">16</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="17">17</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</i></td></tr>
+<tr><th id="18">18</th><td><i> * GNU Lesser General Public License for more details.</i></td></tr>
+<tr><th id="19">19</th><td><i> *</i></td></tr>
+<tr><th id="20">20</th><td><i> * You should have received a copy of the GNU Lesser General Public License</i></td></tr>
+<tr><th id="21">21</th><td><i> * along with this program; if not, write to the Free Software Foundation,</i></td></tr>
+<tr><th id="22">22</th><td><i> * Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.</i></td></tr>
+<tr><th id="23">23</th><td><i> *****************************************************************************/</i></td></tr>
+<tr><th id="24">24</th><td></td></tr>
+<tr><th id="25">25</th><td><u>#<span data-ppcond="25">ifdef</span> <span class="macro" data-ref="_M/MODULE_NAME_IS_i422_yuy2_mmx">MODULE_NAME_IS_i422_yuy2_mmx</span></u></td></tr>
+<tr><th id="26">26</th><td></td></tr>
+<tr><th id="27">27</th><td><u>#if defined(CAN_COMPILE_MMX)</u></td></tr>
+<tr><th id="28">28</th><td></td></tr>
+<tr><th id="29">29</th><td><i>/* MMX assembly */</i></td></tr>
+<tr><th id="30">30</th><td> </td></tr>
+<tr><th id="31">31</th><td><u>#define MMX_CALL(MMX_INSTRUCTIONS)          \</u></td></tr>
+<tr><th id="32">32</th><td><u>    do {                                    \</u></td></tr>
+<tr><th id="33">33</th><td><u>    __asm__ __volatile__(                   \</u></td></tr>
+<tr><th id="34">34</th><td><u>        ".p2align 3 \n\t"                   \</u></td></tr>
+<tr><th id="35">35</th><td><u>        MMX_INSTRUCTIONS                    \</u></td></tr>
+<tr><th id="36">36</th><td><u>        :                                   \</u></td></tr>
+<tr><th id="37">37</th><td><u>        : "r" (p_line), "r" (p_y),          \</u></td></tr>
+<tr><th id="38">38</th><td><u>          "r" (p_u), "r" (p_v)              \</u></td></tr>
+<tr><th id="39">39</th><td><u>        : "mm0", "mm1", "mm2" );            \</u></td></tr>
+<tr><th id="40">40</th><td><u>        p_line += 16; p_y += 8;             \</u></td></tr>
+<tr><th id="41">41</th><td><u>        p_u += 4; p_v += 4;                 \</u></td></tr>
+<tr><th id="42">42</th><td><u>    } while(0)</u></td></tr>
+<tr><th id="43">43</th><td></td></tr>
+<tr><th id="44">44</th><td><u>#define MMX_END __asm__ __volatile__ ( "emms" )</u></td></tr>
+<tr><th id="45">45</th><td></td></tr>
+<tr><th id="46">46</th><td><u>#define MMX_YUV422_YUYV "                                                 \n\</u></td></tr>
+<tr><th id="47">47</th><td><u>movq       (%1), %%mm0  # Load 8 Y            y7 y6 y5 y4 y3 y2 y1 y0     \n\</u></td></tr>
+<tr><th id="48">48</th><td><u>movd       (%2), %%mm1  # Load 4 Cb           00 00 00 00 u3 u2 u1 u0     \n\</u></td></tr>
+<tr><th id="49">49</th><td><u>movd       (%3), %%mm2  # Load 4 Cr           00 00 00 00 v3 v2 v1 v0     \n\</u></td></tr>
+<tr><th id="50">50</th><td><u>punpcklbw %%mm2, %%mm1  #                     v3 u3 v2 u2 v1 u1 v0 u0     \n\</u></td></tr>
+<tr><th id="51">51</th><td><u>movq      %%mm0, %%mm2  #                     y7 y6 y5 y4 y3 y2 y1 y0     \n\</u></td></tr>
+<tr><th id="52">52</th><td><u>punpcklbw %%mm1, %%mm2  #                     v1 y3 u1 y2 v0 y1 u0 y0     \n\</u></td></tr>
+<tr><th id="53">53</th><td><u>movq      %%mm2, (%0)   # Store low YUYV                                  \n\</u></td></tr>
+<tr><th id="54">54</th><td><u>punpckhbw %%mm1, %%mm0  #                     v3 y7 u3 y6 v2 y5 u2 y4     \n\</u></td></tr>
+<tr><th id="55">55</th><td><u>movq      %%mm0, 8(%0)  # Store high YUYV                                 \n\</u></td></tr>
+<tr><th id="56">56</th><td><u>"</u></td></tr>
+<tr><th id="57">57</th><td></td></tr>
+<tr><th id="58">58</th><td><u>#define MMX_YUV422_YVYU "                                                 \n\</u></td></tr>
+<tr><th id="59">59</th><td><u>movq       (%1), %%mm0  # Load 8 Y            y7 y6 y5 y4 y3 y2 y1 y0     \n\</u></td></tr>
+<tr><th id="60">60</th><td><u>movd       (%2), %%mm2  # Load 4 Cb           00 00 00 00 u3 u2 u1 u0     \n\</u></td></tr>
+<tr><th id="61">61</th><td><u>movd       (%3), %%mm1  # Load 4 Cr           00 00 00 00 v3 v2 v1 v0     \n\</u></td></tr>
+<tr><th id="62">62</th><td><u>punpcklbw %%mm2, %%mm1  #                     u3 v3 u2 v2 u1 v1 u0 v0     \n\</u></td></tr>
+<tr><th id="63">63</th><td><u>movq      %%mm0, %%mm2  #                     y7 y6 y5 y4 y3 y2 y1 y0     \n\</u></td></tr>
+<tr><th id="64">64</th><td><u>punpcklbw %%mm1, %%mm2  #                     u1 y3 v1 y2 u0 y1 v0 y0     \n\</u></td></tr>
+<tr><th id="65">65</th><td><u>movq      %%mm2, (%0)   # Store low YUYV                                  \n\</u></td></tr>
+<tr><th id="66">66</th><td><u>punpckhbw %%mm1, %%mm0  #                     u3 y7 v3 y6 u2 y5 v2 y4     \n\</u></td></tr>
+<tr><th id="67">67</th><td><u>movq      %%mm0, 8(%0)  # Store high YUYV                                 \n\</u></td></tr>
+<tr><th id="68">68</th><td><u>"</u></td></tr>
+<tr><th id="69">69</th><td></td></tr>
+<tr><th id="70">70</th><td><u>#define MMX_YUV422_UYVY "                                                 \n\</u></td></tr>
+<tr><th id="71">71</th><td><u>movq       (%1), %%mm0  # Load 8 Y            y7 y6 y5 y4 y3 y2 y1 y0     \n\</u></td></tr>
+<tr><th id="72">72</th><td><u>movd       (%2), %%mm1  # Load 4 Cb           00 00 00 00 u3 u2 u1 u0     \n\</u></td></tr>
+<tr><th id="73">73</th><td><u>movd       (%3), %%mm2  # Load 4 Cr           00 00 00 00 v3 v2 v1 v0     \n\</u></td></tr>
+<tr><th id="74">74</th><td><u>punpcklbw %%mm2, %%mm1  #                     v3 u3 v2 u2 v1 u1 v0 u0     \n\</u></td></tr>
+<tr><th id="75">75</th><td><u>movq      %%mm1, %%mm2  #                     v3 u3 v2 u2 v1 u1 v0 u0     \n\</u></td></tr>
+<tr><th id="76">76</th><td><u>punpcklbw %%mm0, %%mm2  #                     y3 v1 y2 u1 y1 v0 y0 u0     \n\</u></td></tr>
+<tr><th id="77">77</th><td><u>movq      %%mm2, (%0)   # Store low UYVY                                  \n\</u></td></tr>
+<tr><th id="78">78</th><td><u>punpckhbw %%mm0, %%mm1  #                     y7 v3 y6 u3 y5 v2 y4 u2     \n\</u></td></tr>
+<tr><th id="79">79</th><td><u>movq      %%mm1, 8(%0)  # Store high UYVY                                 \n\</u></td></tr>
+<tr><th id="80">80</th><td><u>"</u></td></tr>
+<tr><th id="81">81</th><td></td></tr>
+<tr><th id="82">82</th><td><u>#define MMX_YUV422_Y211 "                                                 \n\</u></td></tr>
+<tr><th id="83">83</th><td><u>"</u></td></tr>
+<tr><th id="84">84</th><td></td></tr>
+<tr><th id="85">85</th><td><u>#elif defined(HAVE_MMX_INTRINSICS)</u></td></tr>
+<tr><th id="86">86</th><td></td></tr>
+<tr><th id="87">87</th><td><i>/* MMX intrinsics */</i></td></tr>
+<tr><th id="88">88</th><td></td></tr>
+<tr><th id="89">89</th><td><u>#include &lt;mmintrin.h&gt;</u></td></tr>
+<tr><th id="90">90</th><td></td></tr>
+<tr><th id="91">91</th><td><u>#define MMX_CALL(MMX_INSTRUCTIONS)  \</u></td></tr>
+<tr><th id="92">92</th><td><u>    do {                            \</u></td></tr>
+<tr><th id="93">93</th><td><u>        __m64 mm0, mm1, mm2;        \</u></td></tr>
+<tr><th id="94">94</th><td><u>        MMX_INSTRUCTIONS            \</u></td></tr>
+<tr><th id="95">95</th><td><u>        p_line += 16; p_y += 8;     \</u></td></tr>
+<tr><th id="96">96</th><td><u>        p_u += 4; p_v += 4;         \</u></td></tr>
+<tr><th id="97">97</th><td><u>    } while(0)</u></td></tr>
+<tr><th id="98">98</th><td></td></tr>
+<tr><th id="99">99</th><td><u>#define MMX_END _mm_empty()</u></td></tr>
+<tr><th id="100">100</th><td></td></tr>
+<tr><th id="101">101</th><td><u>#define MMX_YUV422_YUYV                     \</u></td></tr>
+<tr><th id="102">102</th><td><u>    mm0 = (__m64)*(uint64_t*)p_y;           \</u></td></tr>
+<tr><th id="103">103</th><td><u>    mm1 = _mm_cvtsi32_si64(*(int*)p_u);     \</u></td></tr>
+<tr><th id="104">104</th><td><u>    mm2 = _mm_cvtsi32_si64(*(int*)p_v);     \</u></td></tr>
+<tr><th id="105">105</th><td><u>    mm1 = _mm_unpacklo_pi8(mm1, mm2);       \</u></td></tr>
+<tr><th id="106">106</th><td><u>    mm2 = mm0;                              \</u></td></tr>
+<tr><th id="107">107</th><td><u>    mm2 = _mm_unpacklo_pi8(mm2, mm1);       \</u></td></tr>
+<tr><th id="108">108</th><td><u>    *(uint64_t*)p_line = (uint64_t)mm2;     \</u></td></tr>
+<tr><th id="109">109</th><td><u>    mm0 = _mm_unpackhi_pi8(mm0, mm1);       \</u></td></tr>
+<tr><th id="110">110</th><td><u>    *(uint64_t*)(p_line+8) = (uint64_t)mm0;</u></td></tr>
+<tr><th id="111">111</th><td> </td></tr>
+<tr><th id="112">112</th><td><u>#define MMX_YUV422_YVYU                     \</u></td></tr>
+<tr><th id="113">113</th><td><u>    mm0 = (__m64)*(uint64_t*)p_y;           \</u></td></tr>
+<tr><th id="114">114</th><td><u>    mm2 = _mm_cvtsi32_si64(*(int*)p_u);     \</u></td></tr>
+<tr><th id="115">115</th><td><u>    mm1 = _mm_cvtsi32_si64(*(int*)p_v);     \</u></td></tr>
+<tr><th id="116">116</th><td><u>    mm1 = _mm_unpacklo_pi8(mm1, mm2);       \</u></td></tr>
+<tr><th id="117">117</th><td><u>    mm2 = mm0;                              \</u></td></tr>
+<tr><th id="118">118</th><td><u>    mm2 = _mm_unpacklo_pi8(mm2, mm1);       \</u></td></tr>
+<tr><th id="119">119</th><td><u>    *(uint64_t*)p_line = (uint64_t)mm2;     \</u></td></tr>
+<tr><th id="120">120</th><td><u>    mm0 = _mm_unpackhi_pi8(mm0, mm1);       \</u></td></tr>
+<tr><th id="121">121</th><td><u>    *(uint64_t*)(p_line+8) = (uint64_t)mm0;</u></td></tr>
+<tr><th id="122">122</th><td></td></tr>
+<tr><th id="123">123</th><td><u>#define MMX_YUV422_UYVY                     \</u></td></tr>
+<tr><th id="124">124</th><td><u>    mm0 = (__m64)*(uint64_t*)p_y;           \</u></td></tr>
+<tr><th id="125">125</th><td><u>    mm1 = _mm_cvtsi32_si64(*(int*)p_u);     \</u></td></tr>
+<tr><th id="126">126</th><td><u>    mm2 = _mm_cvtsi32_si64(*(int*)p_v);     \</u></td></tr>
+<tr><th id="127">127</th><td><u>    mm1 = _mm_unpacklo_pi8(mm1, mm2);       \</u></td></tr>
+<tr><th id="128">128</th><td><u>    mm2 = mm1;                              \</u></td></tr>
+<tr><th id="129">129</th><td><u>    mm2 = _mm_unpacklo_pi8(mm2, mm0);       \</u></td></tr>
+<tr><th id="130">130</th><td><u>    *(uint64_t*)p_line = (uint64_t)mm2;     \</u></td></tr>
+<tr><th id="131">131</th><td><u>    mm1 = _mm_unpackhi_pi8(mm1, mm0);       \</u></td></tr>
+<tr><th id="132">132</th><td><u>    *(uint64_t*)(p_line+8) = (uint64_t)mm1;</u></td></tr>
+<tr><th id="133">133</th><td></td></tr>
+<tr><th id="134">134</th><td><u>#endif</u></td></tr>
+<tr><th id="135">135</th><td> </td></tr>
+<tr><th id="136">136</th><td><u>#<span data-ppcond="25">elif</span> defined( <span class="macro" data-ref="_M/MODULE_NAME_IS_i422_yuy2_sse2">MODULE_NAME_IS_i422_yuy2_sse2</span> )</u></td></tr>
+<tr><th id="137">137</th><td></td></tr>
+<tr><th id="138">138</th><td><u>#<span data-ppcond="138">if</span> defined(<a class="macro" href="../../config.h.html#38" data-ref="_M/CAN_COMPILE_SSE2">CAN_COMPILE_SSE2</a>)</u></td></tr>
+<tr><th id="139">139</th><td></td></tr>
+<tr><th id="140">140</th><td><i>/* SSE2 assembly */</i></td></tr>
+<tr><th id="141">141</th><td></td></tr>
+<tr><th id="142">142</th><td><u>#define <dfn class="macro" id="_M/SSE2_CALL" data-ref="_M/SSE2_CALL">SSE2_CALL</dfn>(MMX_INSTRUCTIONS)         \</u></td></tr>
+<tr><th id="143">143</th><td><u>    do {                                    \</u></td></tr>
+<tr><th id="144">144</th><td><u>    __asm__ __volatile__(                   \</u></td></tr>
+<tr><th id="145">145</th><td><u>        ".p2align 3 \n\t"                   \</u></td></tr>
+<tr><th id="146">146</th><td><u>        MMX_INSTRUCTIONS                    \</u></td></tr>
+<tr><th id="147">147</th><td><u>        :                                   \</u></td></tr>
+<tr><th id="148">148</th><td><u>        : "r" (p_line), "r" (p_y),          \</u></td></tr>
+<tr><th id="149">149</th><td><u>          "r" (p_u), "r" (p_v)              \</u></td></tr>
+<tr><th id="150">150</th><td><u>        : "xmm0", "xmm1", "xmm2" );         \</u></td></tr>
+<tr><th id="151">151</th><td><u>        p_line += 32; p_y += 16;            \</u></td></tr>
+<tr><th id="152">152</th><td><u>        p_u += 8; p_v += 8;                 \</u></td></tr>
+<tr><th id="153">153</th><td><u>    } while(0)</u></td></tr>
+<tr><th id="154">154</th><td></td></tr>
+<tr><th id="155">155</th><td><u>#define <dfn class="macro" id="_M/SSE2_END" data-ref="_M/SSE2_END">SSE2_END</dfn>  __asm__ __volatile__ ( "sfence" ::: "memory" )</u></td></tr>
+<tr><th id="156">156</th><td></td></tr>
+<tr><th id="157">157</th><td><u>#define <dfn class="macro" id="_M/SSE2_YUV422_YUYV_ALIGNED" data-ref="_M/SSE2_YUV422_YUYV_ALIGNED">SSE2_YUV422_YUYV_ALIGNED</dfn> "                                        \n\</u></td></tr>
+<tr><th id="158">158</th><td><u>movdqa      (%1), %%xmm0  # Load 8 Y            y7 y6 y5 y4 y3 y2 y1 y0   \n\</u></td></tr>
+<tr><th id="159">159</th><td><u>movq        (%2), %%xmm1  # Load 4 Cb           00 00 00 00 u3 u2 u1 u0   \n\</u></td></tr>
+<tr><th id="160">160</th><td><u>movq        (%3), %%xmm2  # Load 4 Cr           00 00 00 00 v3 v2 v1 v0   \n\</u></td></tr>
+<tr><th id="161">161</th><td><u>punpcklbw %%xmm2, %%xmm1  #                     v3 u3 v2 u2 v1 u1 v0 u0   \n\</u></td></tr>
+<tr><th id="162">162</th><td><u>movdqa    %%xmm0, %%xmm2  #                     y7 y6 y5 y4 y3 y2 y1 y0   \n\</u></td></tr>
+<tr><th id="163">163</th><td><u>punpcklbw %%xmm1, %%xmm2  #                     v1 y3 u1 y2 v0 y1 u0 y0   \n\</u></td></tr>
+<tr><th id="164">164</th><td><u>movntdq   %%xmm2, (%0)    # Store low YUYV                                \n\</u></td></tr>
+<tr><th id="165">165</th><td><u>punpckhbw %%xmm1, %%xmm0  #                     v3 y7 u3 y6 v2 y5 u2 y4   \n\</u></td></tr>
+<tr><th id="166">166</th><td><u>movntdq   %%xmm0, 16(%0)  # Store high YUYV                               \n\</u></td></tr>
+<tr><th id="167">167</th><td><u>"</u></td></tr>
+<tr><th id="168">168</th><td></td></tr>
+<tr><th id="169">169</th><td><u>#define <dfn class="macro" id="_M/SSE2_YUV422_YUYV_UNALIGNED" data-ref="_M/SSE2_YUV422_YUYV_UNALIGNED">SSE2_YUV422_YUYV_UNALIGNED</dfn> "                                      \n\</u></td></tr>
+<tr><th id="170">170</th><td><u>movdqu      (%1), %%xmm0  # Load 8 Y            y7 y6 y5 y4 y3 y2 y1 y0   \n\</u></td></tr>
+<tr><th id="171">171</th><td><u>movq        (%2), %%xmm1  # Load 4 Cb           00 00 00 00 u3 u2 u1 u0   \n\</u></td></tr>
+<tr><th id="172">172</th><td><u>movq        (%3), %%xmm2  # Load 4 Cr           00 00 00 00 v3 v2 v1 v0   \n\</u></td></tr>
+<tr><th id="173">173</th><td><u>prefetchnta (%0)          # Tell CPU not to cache output YUYV data        \n\</u></td></tr>
+<tr><th id="174">174</th><td><u>punpcklbw %%xmm2, %%xmm1  #                     v3 u3 v2 u2 v1 u1 v0 u0   \n\</u></td></tr>
+<tr><th id="175">175</th><td><u>movdqa    %%xmm0, %%xmm2  #                     y7 y6 y5 y4 y3 y2 y1 y0   \n\</u></td></tr>
+<tr><th id="176">176</th><td><u>punpcklbw %%xmm1, %%xmm2  #                     v1 y3 u1 y2 v0 y1 u0 y0   \n\</u></td></tr>
+<tr><th id="177">177</th><td><u>movdqu    %%xmm2, (%0)    # Store low YUYV                                \n\</u></td></tr>
+<tr><th id="178">178</th><td><u>punpckhbw %%xmm1, %%xmm0  #                     v3 y7 u3 y6 v2 y5 u2 y4   \n\</u></td></tr>
+<tr><th id="179">179</th><td><u>movdqu    %%xmm0, 16(%0)  # Store high YUYV                               \n\</u></td></tr>
+<tr><th id="180">180</th><td><u>"</u></td></tr>
+<tr><th id="181">181</th><td></td></tr>
+<tr><th id="182">182</th><td><u>#define <dfn class="macro" id="_M/SSE2_YUV422_YVYU_ALIGNED" data-ref="_M/SSE2_YUV422_YVYU_ALIGNED">SSE2_YUV422_YVYU_ALIGNED</dfn> "                                        \n\</u></td></tr>
+<tr><th id="183">183</th><td><u>movdqa      (%1), %%xmm0  # Load 8 Y            y7 y6 y5 y4 y3 y2 y1 y0   \n\</u></td></tr>
+<tr><th id="184">184</th><td><u>movq        (%2), %%xmm2  # Load 4 Cb           00 00 00 00 u3 u2 u1 u0   \n\</u></td></tr>
+<tr><th id="185">185</th><td><u>movq        (%3), %%xmm1  # Load 4 Cr           00 00 00 00 v3 v2 v1 v0   \n\</u></td></tr>
+<tr><th id="186">186</th><td><u>punpcklbw %%xmm2, %%xmm1  #                     u3 v3 u2 v2 u1 v1 u0 v0   \n\</u></td></tr>
+<tr><th id="187">187</th><td><u>movdqa    %%xmm0, %%xmm2  #                     y7 y6 y5 y4 y3 y2 y1 y0   \n\</u></td></tr>
+<tr><th id="188">188</th><td><u>punpcklbw %%xmm1, %%xmm2  #                     u1 y3 v1 y2 u0 y1 v0 y0   \n\</u></td></tr>
+<tr><th id="189">189</th><td><u>movntdq   %%xmm2, (%0)    # Store low YUYV                                \n\</u></td></tr>
+<tr><th id="190">190</th><td><u>punpckhbw %%xmm1, %%xmm0  #                     u3 y7 v3 y6 u2 y5 v2 y4   \n\</u></td></tr>
+<tr><th id="191">191</th><td><u>movntdq   %%xmm0, 16(%0)  # Store high YUYV                               \n\</u></td></tr>
+<tr><th id="192">192</th><td><u>"</u></td></tr>
+<tr><th id="193">193</th><td></td></tr>
+<tr><th id="194">194</th><td><u>#define <dfn class="macro" id="_M/SSE2_YUV422_YVYU_UNALIGNED" data-ref="_M/SSE2_YUV422_YVYU_UNALIGNED">SSE2_YUV422_YVYU_UNALIGNED</dfn> "                                      \n\</u></td></tr>
+<tr><th id="195">195</th><td><u>movdqu      (%1), %%xmm0  # Load 8 Y            y7 y6 y5 y4 y3 y2 y1 y0   \n\</u></td></tr>
+<tr><th id="196">196</th><td><u>movq        (%2), %%xmm2  # Load 4 Cb           00 00 00 00 u3 u2 u1 u0   \n\</u></td></tr>
+<tr><th id="197">197</th><td><u>movq        (%3), %%xmm1  # Load 4 Cr           00 00 00 00 v3 v2 v1 v0   \n\</u></td></tr>
+<tr><th id="198">198</th><td><u>prefetchnta (%0)          # Tell CPU not to cache output YUYV data        \n\</u></td></tr>
+<tr><th id="199">199</th><td><u>punpcklbw %%xmm2, %%xmm1  #                     u3 v3 u2 v2 u1 v1 u0 v0   \n\</u></td></tr>
+<tr><th id="200">200</th><td><u>movdqa    %%xmm0, %%xmm2  #                     y7 y6 y5 y4 y3 y2 y1 y0   \n\</u></td></tr>
+<tr><th id="201">201</th><td><u>punpcklbw %%xmm1, %%xmm2  #                     u1 y3 v1 y2 u0 y1 v0 y0   \n\</u></td></tr>
+<tr><th id="202">202</th><td><u>movdqu    %%xmm2, (%0)    # Store low YUYV                                \n\</u></td></tr>
+<tr><th id="203">203</th><td><u>punpckhbw %%xmm1, %%xmm0  #                     u3 y7 v3 y6 u2 y5 v2 y4   \n\</u></td></tr>
+<tr><th id="204">204</th><td><u>movdqu    %%xmm0, 16(%0)  # Store high YUYV                               \n\</u></td></tr>
+<tr><th id="205">205</th><td><u>"</u></td></tr>
+<tr><th id="206">206</th><td></td></tr>
+<tr><th id="207">207</th><td><u>#define <dfn class="macro" id="_M/SSE2_YUV422_UYVY_ALIGNED" data-ref="_M/SSE2_YUV422_UYVY_ALIGNED">SSE2_YUV422_UYVY_ALIGNED</dfn> "                                        \n\</u></td></tr>
+<tr><th id="208">208</th><td><u>movdqa      (%1), %%xmm0  # Load 8 Y            y7 y6 y5 y4 y3 y2 y1 y0   \n\</u></td></tr>
+<tr><th id="209">209</th><td><u>movq        (%2), %%xmm1  # Load 4 Cb           00 00 00 00 u3 u2 u1 u0   \n\</u></td></tr>
+<tr><th id="210">210</th><td><u>movq        (%3), %%xmm2  # Load 4 Cr           00 00 00 00 v3 v2 v1 v0   \n\</u></td></tr>
+<tr><th id="211">211</th><td><u>punpcklbw %%xmm2, %%xmm1  #                     v3 u3 v2 u2 v1 u1 v0 u0   \n\</u></td></tr>
+<tr><th id="212">212</th><td><u>movdqa    %%xmm1, %%xmm2  #                     v3 u3 v2 u2 v1 u1 v0 u0   \n\</u></td></tr>
+<tr><th id="213">213</th><td><u>punpcklbw %%xmm0, %%xmm2  #                     y3 v1 y2 u1 y1 v0 y0 u0   \n\</u></td></tr>
+<tr><th id="214">214</th><td><u>movntdq   %%xmm2, (%0)    # Store low UYVY                                \n\</u></td></tr>
+<tr><th id="215">215</th><td><u>punpckhbw %%xmm0, %%xmm1  #                     y7 v3 y6 u3 y5 v2 y4 u2   \n\</u></td></tr>
+<tr><th id="216">216</th><td><u>movntdq   %%xmm1, 16(%0)  # Store high UYVY                               \n\</u></td></tr>
+<tr><th id="217">217</th><td><u>"</u></td></tr>
+<tr><th id="218">218</th><td></td></tr>
+<tr><th id="219">219</th><td><u>#define <dfn class="macro" id="_M/SSE2_YUV422_UYVY_UNALIGNED" data-ref="_M/SSE2_YUV422_UYVY_UNALIGNED">SSE2_YUV422_UYVY_UNALIGNED</dfn> "                                      \n\</u></td></tr>
+<tr><th id="220">220</th><td><u>movdqu      (%1), %%xmm0  # Load 8 Y            y7 y6 y5 y4 y3 y2 y1 y0   \n\</u></td></tr>
+<tr><th id="221">221</th><td><u>movq        (%2), %%xmm1  # Load 4 Cb           00 00 00 00 u3 u2 u1 u0   \n\</u></td></tr>
+<tr><th id="222">222</th><td><u>movq        (%3), %%xmm2  # Load 4 Cr           00 00 00 00 v3 v2 v1 v0   \n\</u></td></tr>
+<tr><th id="223">223</th><td><u>prefetchnta (%0)          # Tell CPU not to cache output YUYV data        \n\</u></td></tr>
+<tr><th id="224">224</th><td><u>punpcklbw %%xmm2, %%xmm1  #                     v3 u3 v2 u2 v1 u1 v0 u0   \n\</u></td></tr>
+<tr><th id="225">225</th><td><u>movdqa    %%xmm1, %%xmm2  #                     v3 u3 v2 u2 v1 u1 v0 u0   \n\</u></td></tr>
+<tr><th id="226">226</th><td><u>punpcklbw %%xmm0, %%xmm2  #                     y3 v1 y2 u1 y1 v0 y0 u0   \n\</u></td></tr>
+<tr><th id="227">227</th><td><u>movdqu    %%xmm2, (%0)    # Store low UYVY                                \n\</u></td></tr>
+<tr><th id="228">228</th><td><u>punpckhbw %%xmm0, %%xmm1  #                     y7 v3 y6 u3 y5 v2 y4 u2   \n\</u></td></tr>
+<tr><th id="229">229</th><td><u>movdqu    %%xmm1, 16(%0)  # Store high UYVY                               \n\</u></td></tr>
+<tr><th id="230">230</th><td><u>"</u></td></tr>
+<tr><th id="231">231</th><td></td></tr>
+<tr><th id="232">232</th><td><u>#<span data-ppcond="138">elif</span> defined(HAVE_SSE2_INTRINSICS)</u></td></tr>
+<tr><th id="233">233</th><td></td></tr>
+<tr><th id="234">234</th><td><i>/* SSE2 intrinsics */</i></td></tr>
+<tr><th id="235">235</th><td></td></tr>
+<tr><th id="236">236</th><td><u>#include &lt;emmintrin.h&gt;</u></td></tr>
+<tr><th id="237">237</th><td></td></tr>
+<tr><th id="238">238</th><td><u>#define SSE2_CALL(SSE2_INSTRUCTIONS)    \</u></td></tr>
+<tr><th id="239">239</th><td><u>    do {                                \</u></td></tr>
+<tr><th id="240">240</th><td><u>        __m128i xmm0, xmm1, xmm2;        \</u></td></tr>
+<tr><th id="241">241</th><td><u>        SSE2_INSTRUCTIONS               \</u></td></tr>
+<tr><th id="242">242</th><td><u>        p_line += 32; p_y += 16;        \</u></td></tr>
+<tr><th id="243">243</th><td><u>        p_u += 8; p_v += 8;             \</u></td></tr>
+<tr><th id="244">244</th><td><u>    } while(0)</u></td></tr>
+<tr><th id="245">245</th><td></td></tr>
+<tr><th id="246">246</th><td><u>#define SSE2_END  _mm_sfence()</u></td></tr>
+<tr><th id="247">247</th><td></td></tr>
+<tr><th id="248">248</th><td><u>#define SSE2_YUV422_YUYV_ALIGNED                \</u></td></tr>
+<tr><th id="249">249</th><td><u>    xmm0 = _mm_load_si128((__m128i *)p_y);      \</u></td></tr>
+<tr><th id="250">250</th><td><u>    xmm1 = _mm_loadl_epi64((__m128i *)p_u);     \</u></td></tr>
+<tr><th id="251">251</th><td><u>    xmm2 = _mm_loadl_epi64((__m128i *)p_v);     \</u></td></tr>
+<tr><th id="252">252</th><td><u>    xmm1 = _mm_unpacklo_epi8(xmm1, xmm2);       \</u></td></tr>
+<tr><th id="253">253</th><td><u>    xmm2 = xmm0;                                \</u></td></tr>
+<tr><th id="254">254</th><td><u>    xmm2 = _mm_unpacklo_epi8(xmm2, xmm1);       \</u></td></tr>
+<tr><th id="255">255</th><td><u>    _mm_stream_si128((__m128i*)(p_line), xmm2); \</u></td></tr>
+<tr><th id="256">256</th><td><u>    xmm0 = _mm_unpackhi_epi8(xmm0, xmm1);       \</u></td></tr>
+<tr><th id="257">257</th><td><u>    _mm_stream_si128((__m128i*)(p_line+16), xmm0);</u></td></tr>
+<tr><th id="258">258</th><td> </td></tr>
+<tr><th id="259">259</th><td><u>#define SSE2_YUV422_YUYV_UNALIGNED              \</u></td></tr>
+<tr><th id="260">260</th><td><u>    xmm0 = _mm_loadu_si128((__m128i *)p_y);     \</u></td></tr>
+<tr><th id="261">261</th><td><u>    xmm1 = _mm_loadl_epi64((__m128i *)p_u);     \</u></td></tr>
+<tr><th id="262">262</th><td><u>    xmm2 = _mm_loadl_epi64((__m128i *)p_v);     \</u></td></tr>
+<tr><th id="263">263</th><td><u>    xmm1 = _mm_unpacklo_epi8(xmm1, xmm2);       \</u></td></tr>
+<tr><th id="264">264</th><td><u>    xmm2 = xmm0;                                \</u></td></tr>
+<tr><th id="265">265</th><td><u>    xmm2 = _mm_unpacklo_epi8(xmm2, xmm1);       \</u></td></tr>
+<tr><th id="266">266</th><td><u>    _mm_storeu_si128((__m128i*)(p_line), xmm2); \</u></td></tr>
+<tr><th id="267">267</th><td><u>    xmm0 = _mm_unpackhi_epi8(xmm0, xmm1);       \</u></td></tr>
+<tr><th id="268">268</th><td><u>    _mm_storeu_si128((__m128i*)(p_line+16), xmm0);</u></td></tr>
+<tr><th id="269">269</th><td> </td></tr>
+<tr><th id="270">270</th><td><u>#define SSE2_YUV422_YVYU_ALIGNED                \</u></td></tr>
+<tr><th id="271">271</th><td><u>    xmm0 = _mm_load_si128((__m128i *)p_y);      \</u></td></tr>
+<tr><th id="272">272</th><td><u>    xmm2 = _mm_loadl_epi64((__m128i *)p_u);     \</u></td></tr>
+<tr><th id="273">273</th><td><u>    xmm1 = _mm_loadl_epi64((__m128i *)p_v);     \</u></td></tr>
+<tr><th id="274">274</th><td><u>    xmm1 = _mm_unpacklo_epi8(xmm1, xmm2);       \</u></td></tr>
+<tr><th id="275">275</th><td><u>    xmm2 = xmm0;                                \</u></td></tr>
+<tr><th id="276">276</th><td><u>    xmm2 = _mm_unpacklo_epi8(xmm2, xmm1);       \</u></td></tr>
+<tr><th id="277">277</th><td><u>    _mm_stream_si128((__m128i*)(p_line), xmm2); \</u></td></tr>
+<tr><th id="278">278</th><td><u>    xmm0 = _mm_unpackhi_epi8(xmm0, xmm1);       \</u></td></tr>
+<tr><th id="279">279</th><td><u>    _mm_stream_si128((__m128i*)(p_line+16), xmm0);</u></td></tr>
+<tr><th id="280">280</th><td></td></tr>
+<tr><th id="281">281</th><td><u>#define SSE2_YUV422_YVYU_UNALIGNED              \</u></td></tr>
+<tr><th id="282">282</th><td><u>    xmm0 = _mm_loadu_si128((__m128i *)p_y);     \</u></td></tr>
+<tr><th id="283">283</th><td><u>    xmm2 = _mm_loadl_epi64((__m128i *)p_u);     \</u></td></tr>
+<tr><th id="284">284</th><td><u>    xmm1 = _mm_loadl_epi64((__m128i *)p_v);     \</u></td></tr>
+<tr><th id="285">285</th><td><u>    xmm1 = _mm_unpacklo_epi8(xmm1, xmm2);       \</u></td></tr>
+<tr><th id="286">286</th><td><u>    xmm2 = xmm0;                                \</u></td></tr>
+<tr><th id="287">287</th><td><u>    xmm2 = _mm_unpacklo_epi8(xmm2, xmm1);       \</u></td></tr>
+<tr><th id="288">288</th><td><u>    _mm_storeu_si128((__m128i*)(p_line), xmm2); \</u></td></tr>
+<tr><th id="289">289</th><td><u>    xmm0 = _mm_unpackhi_epi8(xmm0, xmm1);       \</u></td></tr>
+<tr><th id="290">290</th><td><u>    _mm_storeu_si128((__m128i*)(p_line+16), xmm0);</u></td></tr>
+<tr><th id="291">291</th><td></td></tr>
+<tr><th id="292">292</th><td><u>#define SSE2_YUV422_UYVY_ALIGNED                \</u></td></tr>
+<tr><th id="293">293</th><td><u>    xmm0 = _mm_load_si128((__m128i *)p_y);      \</u></td></tr>
+<tr><th id="294">294</th><td><u>    xmm1 = _mm_loadl_epi64((__m128i *)p_u);     \</u></td></tr>
+<tr><th id="295">295</th><td><u>    xmm2 = _mm_loadl_epi64((__m128i *)p_v);     \</u></td></tr>
+<tr><th id="296">296</th><td><u>    xmm1 = _mm_unpacklo_epi8(xmm1, xmm2);       \</u></td></tr>
+<tr><th id="297">297</th><td><u>    xmm2 = xmm1;                                \</u></td></tr>
+<tr><th id="298">298</th><td><u>    xmm2 = _mm_unpacklo_epi8(xmm2, xmm0);       \</u></td></tr>
+<tr><th id="299">299</th><td><u>    _mm_stream_si128((__m128i*)(p_line), xmm2); \</u></td></tr>
+<tr><th id="300">300</th><td><u>    xmm1 = _mm_unpackhi_epi8(xmm1, xmm0);       \</u></td></tr>
+<tr><th id="301">301</th><td><u>    _mm_stream_si128((__m128i*)(p_line+16), xmm1);</u></td></tr>
+<tr><th id="302">302</th><td></td></tr>
+<tr><th id="303">303</th><td><u>#define SSE2_YUV422_UYVY_UNALIGNED              \</u></td></tr>
+<tr><th id="304">304</th><td><u>    xmm0 = _mm_loadu_si128((__m128i *)p_y);     \</u></td></tr>
+<tr><th id="305">305</th><td><u>    xmm1 = _mm_loadl_epi64((__m128i *)p_u);     \</u></td></tr>
+<tr><th id="306">306</th><td><u>    xmm2 = _mm_loadl_epi64((__m128i *)p_v);     \</u></td></tr>
+<tr><th id="307">307</th><td><u>    xmm1 = _mm_unpacklo_epi8(xmm1, xmm2);       \</u></td></tr>
+<tr><th id="308">308</th><td><u>    xmm2 = xmm1;                                \</u></td></tr>
+<tr><th id="309">309</th><td><u>    xmm2 = _mm_unpacklo_epi8(xmm2, xmm0);       \</u></td></tr>
+<tr><th id="310">310</th><td><u>    _mm_storeu_si128((__m128i*)(p_line), xmm2); \</u></td></tr>
+<tr><th id="311">311</th><td><u>    xmm1 = _mm_unpackhi_epi8(xmm1, xmm0);       \</u></td></tr>
+<tr><th id="312">312</th><td><u>    _mm_storeu_si128((__m128i*)(p_line+16), xmm1);</u></td></tr>
+<tr><th id="313">313</th><td></td></tr>
+<tr><th id="314">314</th><td><u>#<span data-ppcond="138">endif</span></u></td></tr>
+<tr><th id="315">315</th><td></td></tr>
+<tr><th id="316">316</th><td><u>#<span data-ppcond="25">endif</span></u></td></tr>
+<tr><th id="317">317</th><td></td></tr>
+<tr><th id="318">318</th><td><u>#define <dfn class="macro" id="_M/C_YUV422_YUYV" data-ref="_M/C_YUV422_YUYV">C_YUV422_YUYV</dfn>( p_line, p_y, p_u, p_v )                              \</u></td></tr>
+<tr><th id="319">319</th><td><u>    *(p_line)++ = *(p_y)++;                                                 \</u></td></tr>
+<tr><th id="320">320</th><td><u>    *(p_line)++ = *(p_u)++;                                                 \</u></td></tr>
+<tr><th id="321">321</th><td><u>    *(p_line)++ = *(p_y)++;                                                 \</u></td></tr>
+<tr><th id="322">322</th><td><u>    *(p_line)++ = *(p_v)++;</u>                                                 \</td></tr>
+<tr><th id="323">323</th><td></td></tr>
+<tr><th id="324">324</th><td><u>#define <dfn class="macro" id="_M/C_YUV422_YVYU" data-ref="_M/C_YUV422_YVYU">C_YUV422_YVYU</dfn>( p_line, p_y, p_u, p_v )                              \</u></td></tr>
+<tr><th id="325">325</th><td><u>    *(p_line)++ = *(p_y)++;                                                 \</u></td></tr>
+<tr><th id="326">326</th><td><u>    *(p_line)++ = *(p_v)++;                                                 \</u></td></tr>
+<tr><th id="327">327</th><td><u>    *(p_line)++ = *(p_y)++;                                                 \</u></td></tr>
+<tr><th id="328">328</th><td><u>    *(p_line)++ = *(p_u)++;</u>                                                 \</td></tr>
+<tr><th id="329">329</th><td></td></tr>
+<tr><th id="330">330</th><td><u>#define <dfn class="macro" id="_M/C_YUV422_UYVY" data-ref="_M/C_YUV422_UYVY">C_YUV422_UYVY</dfn>( p_line, p_y, p_u, p_v )                              \</u></td></tr>
+<tr><th id="331">331</th><td><u>    *(p_line)++ = *(p_u)++;                                                 \</u></td></tr>
+<tr><th id="332">332</th><td><u>    *(p_line)++ = *(p_y)++;                                                 \</u></td></tr>
+<tr><th id="333">333</th><td><u>    *(p_line)++ = *(p_v)++;                                                 \</u></td></tr>
+<tr><th id="334">334</th><td><u>    *(p_line)++ = *(p_y)++;</u>                                                 \</td></tr>
+<tr><th id="335">335</th><td></td></tr>
+<tr><th id="336">336</th><td><u>#define <dfn class="macro" id="_M/C_YUV422_Y211" data-ref="_M/C_YUV422_Y211">C_YUV422_Y211</dfn>( p_line, p_y, p_u, p_v )                              \</u></td></tr>
+<tr><th id="337">337</th><td><u>    *(p_line)++ = *(p_y); p_y += 2;                                         \</u></td></tr>
+<tr><th id="338">338</th><td><u>    *(p_line)++ = *(p_u) - 0x80; p_u += 2;                                  \</u></td></tr>
+<tr><th id="339">339</th><td><u>    *(p_line)++ = *(p_y); p_y += 2;                                         \</u></td></tr>
+<tr><th id="340">340</th><td><u>    *(p_line)++ = *(p_v) - 0x80; p_v += 2;</u>                                  \</td></tr>
+<tr><th id="341">341</th><td></td></tr>
+<tr><th id="342">342</th><td></td></tr>
+<tr><th id="343">343</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated while processing <a href='i422_yuy2.c.html'>vlc/modules/video_chroma/i422_yuy2.c</a><br/>Generated on <em>2016-Oct-25</em> from project vlc revision <em>2.2.0-git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

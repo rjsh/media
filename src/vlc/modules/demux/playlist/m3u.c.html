@@ -1,0 +1,386 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>m3u.c source code [vlc/modules/demux/playlist/m3u.c] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="demux_sys_t "/>
+<link rel="stylesheet" href="../../../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'vlc/modules/demux/playlist/m3u.c'; var root_path = '../../../..'; var data_path = '../../../../../data';</script>
+<script src='../../../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='../../..'>vlc</a>/<a href='../..'>modules</a>/<a href='..'>demux</a>/<a href='./'>playlist</a>/<a href='m3u.c.html'>m3u.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*****************************************************************************</i></td></tr>
+<tr><th id="2">2</th><td><i> * m3u.c : M3U playlist format import</i></td></tr>
+<tr><th id="3">3</th><td><i> *****************************************************************************</i></td></tr>
+<tr><th id="4">4</th><td><i> * Copyright (C) 2004 VLC authors and VideoLAN</i></td></tr>
+<tr><th id="5">5</th><td><i> * $Id: 02a95984d5fe1968163cb435268a9874f0c65eb9 $</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * Authors: Clément Stenac &lt;zorglub@videolan.org&gt;</i></td></tr>
+<tr><th id="8">8</th><td><i> *          Sigmund Augdal Helberg &lt;dnumgis@videolan.org&gt;</i></td></tr>
+<tr><th id="9">9</th><td><i> *</i></td></tr>
+<tr><th id="10">10</th><td><i> * This program is free software; you can redistribute it and/or modify it</i></td></tr>
+<tr><th id="11">11</th><td><i> * under the terms of the GNU Lesser General Public License as published by</i></td></tr>
+<tr><th id="12">12</th><td><i> * the Free Software Foundation; either version 2.1 of the License, or</i></td></tr>
+<tr><th id="13">13</th><td><i> * (at your option) any later version.</i></td></tr>
+<tr><th id="14">14</th><td><i> *</i></td></tr>
+<tr><th id="15">15</th><td><i> * This program is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="16">16</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="17">17</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</i></td></tr>
+<tr><th id="18">18</th><td><i> * GNU Lesser General Public License for more details.</i></td></tr>
+<tr><th id="19">19</th><td><i> *</i></td></tr>
+<tr><th id="20">20</th><td><i> * You should have received a copy of the GNU Lesser General Public License</i></td></tr>
+<tr><th id="21">21</th><td><i> * along with this program; if not, write to the Free Software Foundation,</i></td></tr>
+<tr><th id="22">22</th><td><i> * Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.</i></td></tr>
+<tr><th id="23">23</th><td><i> *****************************************************************************/</i></td></tr>
+<tr><th id="24">24</th><td></td></tr>
+<tr><th id="25">25</th><td><i>/*****************************************************************************</i></td></tr>
+<tr><th id="26">26</th><td><i> * Preamble</i></td></tr>
+<tr><th id="27">27</th><td><i> *****************************************************************************/</i></td></tr>
+<tr><th id="28">28</th><td></td></tr>
+<tr><th id="29">29</th><td><u>#<span data-ppcond="29">ifdef</span> <span class="macro" data-ref="_M/HAVE_CONFIG_H">HAVE_CONFIG_H</span></u></td></tr>
+<tr><th id="30">30</th><td><u># include <a href="../../../config.h.html">"config.h"</a></u></td></tr>
+<tr><th id="31">31</th><td><u>#<span data-ppcond="29">endif</span></u></td></tr>
+<tr><th id="32">32</th><td></td></tr>
+<tr><th id="33">33</th><td><u>#include <a href="../../../include/vlc_common.h.html">&lt;vlc_common.h&gt;</a></u></td></tr>
+<tr><th id="34">34</th><td><u>#include <a href="../../../include/vlc_demux.h.html">&lt;vlc_demux.h&gt;</a></u></td></tr>
+<tr><th id="35">35</th><td><u>#include <a href="../../../include/vlc_charset.h.html">&lt;vlc_charset.h&gt;</a></u></td></tr>
+<tr><th id="36">36</th><td></td></tr>
+<tr><th id="37">37</th><td><u>#include <a href="playlist.h.html">"playlist.h"</a></u></td></tr>
+<tr><th id="38">38</th><td></td></tr>
+<tr><th id="39">39</th><td><b>struct</b> <dfn class="type def" id="demux_sys_t" title='demux_sys_t' data-ref="demux_sys_t">demux_sys_t</dfn></td></tr>
+<tr><th id="40">40</th><td>{</td></tr>
+<tr><th id="41">41</th><td>    <em>char</em> *<dfn class="decl" id="demux_sys_t::psz_prefix" title='demux_sys_t::psz_prefix' data-ref="demux_sys_t::psz_prefix">psz_prefix</dfn>;</td></tr>
+<tr><th id="42">42</th><td>    <em>char</em> *(*<dfn class="decl" id="demux_sys_t::pf_dup" title='demux_sys_t::pf_dup' data-ref="demux_sys_t::pf_dup">pf_dup</dfn>) (<em>const</em> <em>char</em> *);</td></tr>
+<tr><th id="43">43</th><td>};</td></tr>
+<tr><th id="44">44</th><td></td></tr>
+<tr><th id="45">45</th><td><i  data-doc="Demux">/*****************************************************************************</i></td></tr>
+<tr><th id="46">46</th><td><i  data-doc="Demux"> * Local prototypes</i></td></tr>
+<tr><th id="47">47</th><td><i  data-doc="Demux"> *****************************************************************************/</i></td></tr>
+<tr><th id="48">48</th><td><em>static</em> <em>int</em> <a class="tu decl" href="#Demux" title='Demux' data-type='int Demux(demux_t * p_demux)' data-ref="Demux">Demux</a>( <a class="typedef" href="../../../include/vlc_common.h.html#demux_t" title='demux_t' data-type='struct demux_t' data-ref="demux_t">demux_t</a> *<dfn class="local col1 decl" id="1p_demux" title='p_demux' data-type='demux_t *' data-ref="1p_demux">p_demux</dfn>);</td></tr>
+<tr><th id="49">49</th><td><em>static</em> <em>void</em> <a class="tu decl" href="#parseEXTINF" title='parseEXTINF' data-type='void parseEXTINF(char * psz_string, char ** ppsz_artist, char ** ppsz_name, int * pi_duration)' data-ref="parseEXTINF">parseEXTINF</a>( <em>char</em> *<dfn class="local col2 decl" id="2psz_string" title='psz_string' data-type='char *' data-ref="2psz_string">psz_string</dfn>, <em>char</em> **<dfn class="local col3 decl" id="3ppsz_artist" title='ppsz_artist' data-type='char **' data-ref="3ppsz_artist">ppsz_artist</dfn>, <em>char</em> **<dfn class="local col4 decl" id="4ppsz_name" title='ppsz_name' data-type='char **' data-ref="4ppsz_name">ppsz_name</dfn>, <em>int</em> *<dfn class="local col5 decl" id="5pi_duration" title='pi_duration' data-type='int *' data-ref="5pi_duration">pi_duration</dfn> );</td></tr>
+<tr><th id="50">50</th><td><em>static</em> <span class="macro" title="_Bool" data-ref="_M/bool">bool</span> <a class="tu decl" href="#ContainsURL" title='ContainsURL' data-type='_Bool ContainsURL(demux_t * p_demux)' data-ref="ContainsURL">ContainsURL</a>( <a class="typedef" href="../../../include/vlc_common.h.html#demux_t" title='demux_t' data-type='struct demux_t' data-ref="demux_t">demux_t</a> *<dfn class="local col6 decl" id="6p_demux" title='p_demux' data-type='demux_t *' data-ref="6p_demux">p_demux</dfn> );</td></tr>
+<tr><th id="51">51</th><td></td></tr>
+<tr><th id="52">52</th><td><em>static</em> <em>char</em> *<dfn class="tu decl def" id="GuessEncoding" title='GuessEncoding' data-type='char * GuessEncoding(const char * str)' data-ref="GuessEncoding">GuessEncoding</dfn> (<em>const</em> <em>char</em> *<dfn class="local col7 decl" id="7str" title='str' data-type='const char *' data-ref="7str">str</dfn>)</td></tr>
+<tr><th id="53">53</th><td>{</td></tr>
+<tr><th id="54">54</th><td>    <b>return</b> <a class="ref" href="../../../include/vlc_charset.h.html#IsUTF8" title='IsUTF8' data-ref="IsUTF8">IsUTF8</a> (<a class="local col7 ref" href="#7str" title='str' data-ref="7str">str</a>) ? <a class="macro" href="../../../../include/x86_64-linux-gnu/bits/string2.h.html#1291" title="(__extension__ (__builtin_constant_p (str) &amp;&amp; ((size_t)(const void *)((str) + 1) - (size_t)(const void *)(str) == 1) ? (((const char *) (str))[0] == &apos;\0&apos; ? (char *) calloc ((size_t) 1, (size_t) 1) : ({ size_t __len = strlen (str) + 1; char *__retval = (char *) malloc (__len); if (__retval != ((void*)0)) __retval = (char *) memcpy (__retval, str, __len); __retval; })) : __strdup (str)))" data-ref="_M/strdup">strdup</a> (<a class="local col7 ref" href="#7str" title='str' data-ref="7str">str</a>) : <a class="ref" href="../../../include/vlc_charset.h.html#FromLatin1" title='FromLatin1' data-ref="FromLatin1">FromLatin1</a> (<a class="local col7 ref" href="#7str" title='str' data-ref="7str">str</a>);</td></tr>
+<tr><th id="55">55</th><td>}</td></tr>
+<tr><th id="56">56</th><td></td></tr>
+<tr><th id="57">57</th><td><em>static</em> <em>char</em> *<dfn class="tu decl def" id="CheckUnicode" title='CheckUnicode' data-type='char * CheckUnicode(const char * str)' data-ref="CheckUnicode">CheckUnicode</dfn> (<em>const</em> <em>char</em> *<dfn class="local col8 decl" id="8str" title='str' data-type='const char *' data-ref="8str">str</dfn>)</td></tr>
+<tr><th id="58">58</th><td>{</td></tr>
+<tr><th id="59">59</th><td>    <b>return</b> <a class="ref" href="../../../include/vlc_charset.h.html#IsUTF8" title='IsUTF8' data-ref="IsUTF8">IsUTF8</a> (<a class="local col8 ref" href="#8str" title='str' data-ref="8str">str</a>) ? <a class="macro" href="../../../../include/x86_64-linux-gnu/bits/string2.h.html#1291" title="(__extension__ (__builtin_constant_p (str) &amp;&amp; ((size_t)(const void *)((str) + 1) - (size_t)(const void *)(str) == 1) ? (((const char *) (str))[0] == &apos;\0&apos; ? (char *) calloc ((size_t) 1, (size_t) 1) : ({ size_t __len = strlen (str) + 1; char *__retval = (char *) malloc (__len); if (__retval != ((void*)0)) __retval = (char *) memcpy (__retval, str, __len); __retval; })) : __strdup (str)))" data-ref="_M/strdup">strdup</a> (<a class="local col8 ref" href="#8str" title='str' data-ref="8str">str</a>): <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="60">60</th><td>}</td></tr>
+<tr><th id="61">61</th><td></td></tr>
+<tr><th id="62">62</th><td><i>/*****************************************************************************</i></td></tr>
+<tr><th id="63">63</th><td><i> * Import_M3U: main import function</i></td></tr>
+<tr><th id="64">64</th><td><i> *****************************************************************************/</i></td></tr>
+<tr><th id="65">65</th><td><em>int</em> <dfn class="decl def" id="Import_M3U" title='Import_M3U' data-ref="Import_M3U">Import_M3U</dfn>( <a class="typedef" href="../../../include/vlc_common.h.html#vlc_object_t" title='vlc_object_t' data-type='struct vlc_object_t' data-ref="vlc_object_t">vlc_object_t</a> *<dfn class="local col9 decl" id="9p_this" title='p_this' data-type='vlc_object_t *' data-ref="9p_this">p_this</dfn> )</td></tr>
+<tr><th id="66">66</th><td>{</td></tr>
+<tr><th id="67">67</th><td>    <a class="typedef" href="../../../include/vlc_common.h.html#demux_t" title='demux_t' data-type='struct demux_t' data-ref="demux_t">demux_t</a> *<dfn class="local col0 decl" id="10p_demux" title='p_demux' data-type='demux_t *' data-ref="10p_demux">p_demux</dfn> = (<a class="typedef" href="../../../include/vlc_common.h.html#demux_t" title='demux_t' data-type='struct demux_t' data-ref="demux_t">demux_t</a> *)<a class="local col9 ref" href="#9p_this" title='p_this' data-ref="9p_this">p_this</a>;</td></tr>
+<tr><th id="68">68</th><td>    <em>const</em> <a class="typedef" href="../../../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col1 decl" id="11p_peek" title='p_peek' data-type='const uint8_t *' data-ref="11p_peek">p_peek</dfn>;</td></tr>
+<tr><th id="69">69</th><td>    <em>char</em> *(*<dfn class="local col2 decl" id="12pf_dup" title='pf_dup' data-type='char *(*)(const char *)' data-ref="12pf_dup">pf_dup</dfn>) (<em>const</em> <em>char</em> *) = <a class="tu ref" href="#GuessEncoding" title='GuessEncoding' data-use='r' data-ref="GuessEncoding">GuessEncoding</a>;</td></tr>
+<tr><th id="70">70</th><td>    <em>int</em> <dfn class="local col3 decl" id="13offset" title='offset' data-type='int' data-ref="13offset">offset</dfn> = <var>0</var>;</td></tr>
+<tr><th id="71">71</th><td></td></tr>
+<tr><th id="72">72</th><td>    <b>if</b>( <a class="ref" href="../../../include/vlc_stream.h.html#stream_Peek" title='stream_Peek' data-ref="stream_Peek">stream_Peek</a>( <a class="local col0 ref" href="#10p_demux" title='p_demux' data-ref="10p_demux">p_demux</a>-&gt;<a class="ref" href="../../../include/vlc_demux.h.html#demux_t::s" title='demux_t::s' data-ref="demux_t::s">s</a>, &amp;<a class="local col1 ref" href="#11p_peek" title='p_peek' data-ref="11p_peek">p_peek</a>, <var>3</var> ) == <var>3</var></td></tr>
+<tr><th id="73">73</th><td>     &amp;&amp; !<a class="ref" href="../../../../include/string.h.html#memcmp" title='memcmp' data-ref="memcmp">memcmp</a>( <a class="local col1 ref" href="#11p_peek" title='p_peek' data-ref="11p_peek">p_peek</a>, <q>"\xef\xbb\xbf"</q>, <var>3</var>) )</td></tr>
+<tr><th id="74">74</th><td>    {</td></tr>
+<tr><th id="75">75</th><td>        <a class="local col2 ref" href="#12pf_dup" title='pf_dup' data-ref="12pf_dup">pf_dup</a> = <a class="tu ref" href="#CheckUnicode" title='CheckUnicode' data-use='r' data-ref="CheckUnicode">CheckUnicode</a>; <i>/* UTF-8 Byte Order Mark */</i></td></tr>
+<tr><th id="76">76</th><td>        <a class="local col3 ref" href="#13offset" title='offset' data-ref="13offset">offset</a> = <var>3</var>;</td></tr>
+<tr><th id="77">77</th><td>    }</td></tr>
+<tr><th id="78">78</th><td></td></tr>
+<tr><th id="79">79</th><td>    <b>if</b>( <a class="ref" href="../../../include/vlc_demux.h.html#demux_IsPathExtension" title='demux_IsPathExtension' data-ref="demux_IsPathExtension">demux_IsPathExtension</a>( <a class="local col0 ref" href="#10p_demux" title='p_demux' data-ref="10p_demux">p_demux</a>, <q>".m3u8"</q> )</td></tr>
+<tr><th id="80">80</th><td>     || <a class="ref" href="../../../include/vlc_demux.h.html#demux_IsForced" title='demux_IsForced' data-ref="demux_IsForced">demux_IsForced</a>( <a class="local col0 ref" href="#10p_demux" title='p_demux' data-ref="10p_demux">p_demux</a>, <q>"m3u8"</q> )</td></tr>
+<tr><th id="81">81</th><td>     || <a class="ref" href="playlist.h.html#CheckContentType" title='CheckContentType' data-ref="CheckContentType">CheckContentType</a>( <a class="local col0 ref" href="#10p_demux" title='p_demux' data-ref="10p_demux">p_demux</a>-&gt;<a class="ref" href="../../../include/vlc_demux.h.html#demux_t::s" title='demux_t::s' data-ref="demux_t::s">s</a>, <q>"application/vnd.apple.mpegurl"</q> ) )</td></tr>
+<tr><th id="82">82</th><td>        <a class="local col2 ref" href="#12pf_dup" title='pf_dup' data-ref="12pf_dup">pf_dup</a> = <a class="tu ref" href="#CheckUnicode" title='CheckUnicode' data-use='r' data-ref="CheckUnicode">CheckUnicode</a>; <i>/* UTF-8 file type */</i></td></tr>
+<tr><th id="83">83</th><td>    <b>else</b></td></tr>
+<tr><th id="84">84</th><td>    <b>if</b>( <a class="ref" href="../../../include/vlc_demux.h.html#demux_IsPathExtension" title='demux_IsPathExtension' data-ref="demux_IsPathExtension">demux_IsPathExtension</a>( <a class="local col0 ref" href="#10p_demux" title='p_demux' data-ref="10p_demux">p_demux</a>, <q>".m3u"</q> )</td></tr>
+<tr><th id="85">85</th><td>     || <a class="ref" href="../../../include/vlc_demux.h.html#demux_IsPathExtension" title='demux_IsPathExtension' data-ref="demux_IsPathExtension">demux_IsPathExtension</a>( <a class="local col0 ref" href="#10p_demux" title='p_demux' data-ref="10p_demux">p_demux</a>, <q>".vlc"</q> )</td></tr>
+<tr><th id="86">86</th><td>     || <a class="ref" href="../../../include/vlc_demux.h.html#demux_IsForced" title='demux_IsForced' data-ref="demux_IsForced">demux_IsForced</a>( <a class="local col0 ref" href="#10p_demux" title='p_demux' data-ref="10p_demux">p_demux</a>, <q>"m3u"</q> )</td></tr>
+<tr><th id="87">87</th><td>     || <a class="tu ref" href="#ContainsURL" title='ContainsURL' data-use='c' data-ref="ContainsURL">ContainsURL</a>( <a class="local col0 ref" href="#10p_demux" title='p_demux' data-ref="10p_demux">p_demux</a> )</td></tr>
+<tr><th id="88">88</th><td>     || <a class="ref" href="playlist.h.html#CheckContentType" title='CheckContentType' data-ref="CheckContentType">CheckContentType</a>( <a class="local col0 ref" href="#10p_demux" title='p_demux' data-ref="10p_demux">p_demux</a>-&gt;<a class="ref" href="../../../include/vlc_demux.h.html#demux_t::s" title='demux_t::s' data-ref="demux_t::s">s</a>, <q>"audio/x-mpegurl"</q>) )</td></tr>
+<tr><th id="89">89</th><td>        ; <i>/* Guess encoding */</i></td></tr>
+<tr><th id="90">90</th><td>    <b>else</b></td></tr>
+<tr><th id="91">91</th><td>    {</td></tr>
+<tr><th id="92">92</th><td>        <b>if</b>( <a class="ref" href="../../../include/vlc_stream.h.html#stream_Peek" title='stream_Peek' data-ref="stream_Peek">stream_Peek</a>( <a class="local col0 ref" href="#10p_demux" title='p_demux' data-ref="10p_demux">p_demux</a>-&gt;<a class="ref" href="../../../include/vlc_demux.h.html#demux_t::s" title='demux_t::s' data-ref="demux_t::s">s</a>, &amp;<a class="local col1 ref" href="#11p_peek" title='p_peek' data-ref="11p_peek">p_peek</a>, <var>8</var> + <a class="local col3 ref" href="#13offset" title='offset' data-ref="13offset">offset</a> ) &lt; (<var>8</var> + <a class="local col3 ref" href="#13offset" title='offset' data-ref="13offset">offset</a>) )</td></tr>
+<tr><th id="93">93</th><td>            <b>return</b> <a class="macro" href="../../../include/vlc_common.h.html#375" title="(-1)" data-ref="_M/VLC_EGENERIC">VLC_EGENERIC</a>;</td></tr>
+<tr><th id="94">94</th><td></td></tr>
+<tr><th id="95">95</th><td>        <a class="local col1 ref" href="#11p_peek" title='p_peek' data-ref="11p_peek">p_peek</a> += <a class="local col3 ref" href="#13offset" title='offset' data-ref="13offset">offset</a>;</td></tr>
+<tr><th id="96">96</th><td></td></tr>
+<tr><th id="97">97</th><td>        <b>if</b>( !<a class="ref" href="../../../../include/string.h.html#strncasecmp" title='strncasecmp' data-ref="strncasecmp">strncasecmp</a>( (<em>const</em> <em>char</em> *)<a class="local col1 ref" href="#11p_peek" title='p_peek' data-ref="11p_peek">p_peek</a>, <q>"RTSPtext"</q>, <var>8</var> ) ) <i>/* QuickTime */</i></td></tr>
+<tr><th id="98">98</th><td>            <a class="local col2 ref" href="#12pf_dup" title='pf_dup' data-ref="12pf_dup">pf_dup</a> = <a class="tu ref" href="#CheckUnicode" title='CheckUnicode' data-use='r' data-ref="CheckUnicode">CheckUnicode</a>; <i>/* UTF-8 */</i></td></tr>
+<tr><th id="99">99</th><td>        <b>else</b></td></tr>
+<tr><th id="100">100</th><td>        <b>if</b>( !<a class="ref" href="../../../../include/string.h.html#memcmp" title='memcmp' data-ref="memcmp">memcmp</a>( <a class="local col1 ref" href="#11p_peek" title='p_peek' data-ref="11p_peek">p_peek</a>, <q>"#EXTM3U"</q>, <var>7</var> ) )</td></tr>
+<tr><th id="101">101</th><td>            ; <i>/* Guess encoding */</i></td></tr>
+<tr><th id="102">102</th><td>        <b>else</b></td></tr>
+<tr><th id="103">103</th><td>            <b>return</b> <a class="macro" href="../../../include/vlc_common.h.html#375" title="(-1)" data-ref="_M/VLC_EGENERIC">VLC_EGENERIC</a>;</td></tr>
+<tr><th id="104">104</th><td>    }</td></tr>
+<tr><th id="105">105</th><td></td></tr>
+<tr><th id="106">106</th><td>    <a class="ref" href="../../../include/vlc_stream.h.html#stream_Seek" title='stream_Seek' data-ref="stream_Seek">stream_Seek</a>( <a class="local col0 ref" href="#10p_demux" title='p_demux' data-ref="10p_demux">p_demux</a>-&gt;<a class="ref" href="../../../include/vlc_demux.h.html#demux_t::s" title='demux_t::s' data-ref="demux_t::s">s</a>, <a class="local col3 ref" href="#13offset" title='offset' data-ref="13offset">offset</a> );</td></tr>
+<tr><th id="107">107</th><td></td></tr>
+<tr><th id="108">108</th><td>    <a class="macro" href="playlist.h.html#85" title="do { do { p_demux-&gt;pf_control = Control; p_demux-&gt;pf_demux = Demux; p_demux-&gt;p_sys = calloc( 1, sizeof( demux_sys_t ) ); if( !p_demux-&gt;p_sys ) return (-2); } while(0); vlc_Log( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_demux)), psz_object_type), (void)0 , (vlc_object_t *)(p_demux)), VLC_MSG_DBG, m3u, &quot;%s&quot;, &quot;found valid M3U playlist&quot; ); } while(0)" data-ref="_M/STANDARD_DEMUX_INIT_MSG">STANDARD_DEMUX_INIT_MSG</a>( <q>"found valid M3U playlist"</q> );</td></tr>
+<tr><th id="109">109</th><td>    <a class="local col0 ref" href="#10p_demux" title='p_demux' data-ref="10p_demux">p_demux</a>-&gt;<a class="ref" href="../../../include/vlc_demux.h.html#demux_t::p_sys" title='demux_t::p_sys' data-ref="demux_t::p_sys">p_sys</a>-&gt;<a class="ref" href="#demux_sys_t::psz_prefix" title='demux_sys_t::psz_prefix' data-ref="demux_sys_t::psz_prefix">psz_prefix</a> = <a class="ref" href="playlist.h.html#FindPrefix" title='FindPrefix' data-ref="FindPrefix">FindPrefix</a>( <a class="local col0 ref" href="#10p_demux" title='p_demux' data-ref="10p_demux">p_demux</a> );</td></tr>
+<tr><th id="110">110</th><td>    <a class="local col0 ref" href="#10p_demux" title='p_demux' data-ref="10p_demux">p_demux</a>-&gt;<a class="ref" href="../../../include/vlc_demux.h.html#demux_t::p_sys" title='demux_t::p_sys' data-ref="demux_t::p_sys">p_sys</a>-&gt;<a class="ref" href="#demux_sys_t::pf_dup" title='demux_sys_t::pf_dup' data-ref="demux_sys_t::pf_dup">pf_dup</a> = <a class="local col2 ref" href="#12pf_dup" title='pf_dup' data-ref="12pf_dup">pf_dup</a>;</td></tr>
+<tr><th id="111">111</th><td></td></tr>
+<tr><th id="112">112</th><td>    <b>return</b> <a class="macro" href="../../../include/vlc_common.h.html#374" title="(-0)" data-ref="_M/VLC_SUCCESS">VLC_SUCCESS</a>;</td></tr>
+<tr><th id="113">113</th><td>}</td></tr>
+<tr><th id="114">114</th><td></td></tr>
+<tr><th id="115">115</th><td><em>static</em> <span class="macro" title="_Bool" data-ref="_M/bool">bool</span> <dfn class="tu decl def" id="ContainsURL" title='ContainsURL' data-type='_Bool ContainsURL(demux_t * p_demux)' data-ref="ContainsURL">ContainsURL</dfn>( <a class="typedef" href="../../../include/vlc_common.h.html#demux_t" title='demux_t' data-type='struct demux_t' data-ref="demux_t">demux_t</a> *<dfn class="local col4 decl" id="14p_demux" title='p_demux' data-type='demux_t *' data-ref="14p_demux">p_demux</dfn> )</td></tr>
+<tr><th id="116">116</th><td>{</td></tr>
+<tr><th id="117">117</th><td>    <em>const</em> <a class="typedef" href="../../../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col5 decl" id="15p_peek" title='p_peek' data-type='const uint8_t *' data-ref="15p_peek">p_peek</dfn>, *<dfn class="local col6 decl" id="16p_peek_end" title='p_peek_end' data-type='const uint8_t *' data-ref="16p_peek_end">p_peek_end</dfn>;</td></tr>
+<tr><th id="118">118</th><td>    <em>int</em> <dfn class="local col7 decl" id="17i_peek" title='i_peek' data-type='int' data-ref="17i_peek">i_peek</dfn>;</td></tr>
+<tr><th id="119">119</th><td></td></tr>
+<tr><th id="120">120</th><td>    <a class="local col7 ref" href="#17i_peek" title='i_peek' data-ref="17i_peek">i_peek</a> = <a class="ref" href="../../../include/vlc_stream.h.html#stream_Peek" title='stream_Peek' data-ref="stream_Peek">stream_Peek</a>( <a class="local col4 ref" href="#14p_demux" title='p_demux' data-ref="14p_demux">p_demux</a>-&gt;<a class="ref" href="../../../include/vlc_demux.h.html#demux_t::s" title='demux_t::s' data-ref="demux_t::s">s</a>, &amp;<a class="local col5 ref" href="#15p_peek" title='p_peek' data-ref="15p_peek">p_peek</a>, <var>1024</var> );</td></tr>
+<tr><th id="121">121</th><td>    <b>if</b>( <a class="local col7 ref" href="#17i_peek" title='i_peek' data-ref="17i_peek">i_peek</a> &lt;= <var>0</var> ) <b>return</b> <span class="macro" title="0" data-ref="_M/false">false</span>;</td></tr>
+<tr><th id="122">122</th><td>    <a class="local col6 ref" href="#16p_peek_end" title='p_peek_end' data-ref="16p_peek_end">p_peek_end</a> = <a class="local col5 ref" href="#15p_peek" title='p_peek' data-ref="15p_peek">p_peek</a> + <a class="local col7 ref" href="#17i_peek" title='i_peek' data-ref="17i_peek">i_peek</a>;</td></tr>
+<tr><th id="123">123</th><td></td></tr>
+<tr><th id="124">124</th><td>    <b>while</b>( <a class="local col5 ref" href="#15p_peek" title='p_peek' data-ref="15p_peek">p_peek</a> + <b>sizeof</b>( <q>"https://"</q> ) &lt; <a class="local col6 ref" href="#16p_peek_end" title='p_peek_end' data-ref="16p_peek_end">p_peek_end</a> )</td></tr>
+<tr><th id="125">125</th><td>    {</td></tr>
+<tr><th id="126">126</th><td>        <i>/* One line starting with a URL is enough */</i></td></tr>
+<tr><th id="127">127</th><td>        <b>if</b>( !<a class="ref" href="../../../../include/string.h.html#strncasecmp" title='strncasecmp' data-ref="strncasecmp">strncasecmp</a>( (<em>const</em> <em>char</em> *)<a class="local col5 ref" href="#15p_peek" title='p_peek' data-ref="15p_peek">p_peek</a>, <q>"http://"</q>, <var>7</var> ) ||</td></tr>
+<tr><th id="128">128</th><td>            !<a class="ref" href="../../../../include/string.h.html#strncasecmp" title='strncasecmp' data-ref="strncasecmp">strncasecmp</a>( (<em>const</em> <em>char</em> *)<a class="local col5 ref" href="#15p_peek" title='p_peek' data-ref="15p_peek">p_peek</a>, <q>"mms://"</q>, <var>6</var> ) ||</td></tr>
+<tr><th id="129">129</th><td>            !<a class="ref" href="../../../../include/string.h.html#strncasecmp" title='strncasecmp' data-ref="strncasecmp">strncasecmp</a>( (<em>const</em> <em>char</em> *)<a class="local col5 ref" href="#15p_peek" title='p_peek' data-ref="15p_peek">p_peek</a>, <q>"rtsp://"</q>, <var>7</var> ) ||</td></tr>
+<tr><th id="130">130</th><td>            !<a class="ref" href="../../../../include/string.h.html#strncasecmp" title='strncasecmp' data-ref="strncasecmp">strncasecmp</a>( (<em>const</em> <em>char</em> *)<a class="local col5 ref" href="#15p_peek" title='p_peek' data-ref="15p_peek">p_peek</a>, <q>"https://"</q>, <var>8</var> ) ||</td></tr>
+<tr><th id="131">131</th><td>            !<a class="ref" href="../../../../include/string.h.html#strncasecmp" title='strncasecmp' data-ref="strncasecmp">strncasecmp</a>( (<em>const</em> <em>char</em> *)<a class="local col5 ref" href="#15p_peek" title='p_peek' data-ref="15p_peek">p_peek</a>, <q>"ftp://"</q>, <var>6</var> ) ||</td></tr>
+<tr><th id="132">132</th><td>            !<a class="ref" href="../../../../include/string.h.html#strncasecmp" title='strncasecmp' data-ref="strncasecmp">strncasecmp</a>( (<em>const</em> <em>char</em> *)<a class="local col5 ref" href="#15p_peek" title='p_peek' data-ref="15p_peek">p_peek</a>, <q>"ftps://"</q>, <var>7</var> ) ||</td></tr>
+<tr><th id="133">133</th><td>            !<a class="ref" href="../../../../include/string.h.html#strncasecmp" title='strncasecmp' data-ref="strncasecmp">strncasecmp</a>( (<em>const</em> <em>char</em> *)<a class="local col5 ref" href="#15p_peek" title='p_peek' data-ref="15p_peek">p_peek</a>, <q>"ftpes://"</q>, <var>8</var> ) )</td></tr>
+<tr><th id="134">134</th><td>        {</td></tr>
+<tr><th id="135">135</th><td>            <b>return</b> <span class="macro" title="1" data-ref="_M/true">true</span>;</td></tr>
+<tr><th id="136">136</th><td>        }</td></tr>
+<tr><th id="137">137</th><td>        <i>/* Comments and blank lines are ignored */</i></td></tr>
+<tr><th id="138">138</th><td>        <b>else</b> <b>if</b>( *<a class="local col5 ref" href="#15p_peek" title='p_peek' data-ref="15p_peek">p_peek</a> != <kbd>'#'</kbd> &amp;&amp; *<a class="local col5 ref" href="#15p_peek" title='p_peek' data-ref="15p_peek">p_peek</a> != <kbd>'\n'</kbd> &amp;&amp; *<a class="local col5 ref" href="#15p_peek" title='p_peek' data-ref="15p_peek">p_peek</a> != <kbd>'\r'</kbd>)</td></tr>
+<tr><th id="139">139</th><td>        {</td></tr>
+<tr><th id="140">140</th><td>            <b>return</b> <span class="macro" title="0" data-ref="_M/false">false</span>;</td></tr>
+<tr><th id="141">141</th><td>        }</td></tr>
+<tr><th id="142">142</th><td></td></tr>
+<tr><th id="143">143</th><td>        <b>while</b>( <a class="local col5 ref" href="#15p_peek" title='p_peek' data-ref="15p_peek">p_peek</a> &lt; <a class="local col6 ref" href="#16p_peek_end" title='p_peek_end' data-ref="16p_peek_end">p_peek_end</a> &amp;&amp; *<a class="local col5 ref" href="#15p_peek" title='p_peek' data-ref="15p_peek">p_peek</a> != <kbd>'\n'</kbd> )</td></tr>
+<tr><th id="144">144</th><td>            <a class="local col5 ref" href="#15p_peek" title='p_peek' data-ref="15p_peek">p_peek</a>++;</td></tr>
+<tr><th id="145">145</th><td>        <b>if</b> ( *<a class="local col5 ref" href="#15p_peek" title='p_peek' data-ref="15p_peek">p_peek</a> == <kbd>'\n'</kbd> )</td></tr>
+<tr><th id="146">146</th><td>            <a class="local col5 ref" href="#15p_peek" title='p_peek' data-ref="15p_peek">p_peek</a>++;</td></tr>
+<tr><th id="147">147</th><td>    }</td></tr>
+<tr><th id="148">148</th><td>    <b>return</b> <span class="macro" title="0" data-ref="_M/false">false</span>;</td></tr>
+<tr><th id="149">149</th><td>}</td></tr>
+<tr><th id="150">150</th><td></td></tr>
+<tr><th id="151">151</th><td><i>/*****************************************************************************</i></td></tr>
+<tr><th id="152">152</th><td><i> * Deactivate: frees unused data</i></td></tr>
+<tr><th id="153">153</th><td><i> *****************************************************************************/</i></td></tr>
+<tr><th id="154">154</th><td><em>void</em> <dfn class="decl def" id="Close_M3U" title='Close_M3U' data-ref="Close_M3U">Close_M3U</dfn>( <a class="typedef" href="../../../include/vlc_common.h.html#vlc_object_t" title='vlc_object_t' data-type='struct vlc_object_t' data-ref="vlc_object_t">vlc_object_t</a> *<dfn class="local col8 decl" id="18p_this" title='p_this' data-type='vlc_object_t *' data-ref="18p_this">p_this</dfn> )</td></tr>
+<tr><th id="155">155</th><td>{</td></tr>
+<tr><th id="156">156</th><td>    <a class="typedef" href="../../../include/vlc_common.h.html#demux_t" title='demux_t' data-type='struct demux_t' data-ref="demux_t">demux_t</a> *<dfn class="local col9 decl" id="19p_demux" title='p_demux' data-type='demux_t *' data-ref="19p_demux">p_demux</dfn> = (<a class="typedef" href="../../../include/vlc_common.h.html#demux_t" title='demux_t' data-type='struct demux_t' data-ref="demux_t">demux_t</a> *)<a class="local col8 ref" href="#18p_this" title='p_this' data-ref="18p_this">p_this</a>;</td></tr>
+<tr><th id="157">157</th><td>    <a class="ref" href="../../../../include/stdlib.h.html#free" title='free' data-ref="free">free</a>( <a class="local col9 ref" href="#19p_demux" title='p_demux' data-ref="19p_demux">p_demux</a>-&gt;<a class="ref" href="../../../include/vlc_demux.h.html#demux_t::p_sys" title='demux_t::p_sys' data-ref="demux_t::p_sys">p_sys</a>-&gt;<a class="ref" href="#demux_sys_t::psz_prefix" title='demux_sys_t::psz_prefix' data-ref="demux_sys_t::psz_prefix">psz_prefix</a> );</td></tr>
+<tr><th id="158">158</th><td>    <a class="ref" href="../../../../include/stdlib.h.html#free" title='free' data-ref="free">free</a>( <a class="local col9 ref" href="#19p_demux" title='p_demux' data-ref="19p_demux">p_demux</a>-&gt;<a class="ref" href="../../../include/vlc_demux.h.html#demux_t::p_sys" title='demux_t::p_sys' data-ref="demux_t::p_sys">p_sys</a> );</td></tr>
+<tr><th id="159">159</th><td>}</td></tr>
+<tr><th id="160">160</th><td></td></tr>
+<tr><th id="161">161</th><td></td></tr>
+<tr><th id="162">162</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="Demux" title='Demux' data-type='int Demux(demux_t * p_demux)' data-ref="Demux">Demux</dfn>( <a class="typedef" href="../../../include/vlc_common.h.html#demux_t" title='demux_t' data-type='struct demux_t' data-ref="demux_t">demux_t</a> *<dfn class="local col0 decl" id="20p_demux" title='p_demux' data-type='demux_t *' data-ref="20p_demux">p_demux</dfn> )</td></tr>
+<tr><th id="163">163</th><td>{</td></tr>
+<tr><th id="164">164</th><td>    <em>char</em>       *<dfn class="local col1 decl" id="21psz_line" title='psz_line' data-type='char *' data-ref="21psz_line">psz_line</dfn>;</td></tr>
+<tr><th id="165">165</th><td>    <em>char</em>       *<dfn class="local col2 decl" id="22psz_name" title='psz_name' data-type='char *' data-ref="22psz_name">psz_name</dfn> = <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="166">166</th><td>    <em>char</em>       *<dfn class="local col3 decl" id="23psz_artist" title='psz_artist' data-type='char *' data-ref="23psz_artist">psz_artist</dfn> = <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="167">167</th><td>    <em>char</em>       *<dfn class="local col4 decl" id="24psz_album_art" title='psz_album_art' data-type='char *' data-ref="24psz_album_art">psz_album_art</dfn> = <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="168">168</th><td>    <em>int</em>        <dfn class="local col5 decl" id="25i_parsed_duration" title='i_parsed_duration' data-type='int' data-ref="25i_parsed_duration">i_parsed_duration</dfn> = <var>0</var>;</td></tr>
+<tr><th id="169">169</th><td>    <a class="typedef" href="../../../include/vlc_common.h.html#mtime_t" title='mtime_t' data-type='int64_t' data-ref="mtime_t">mtime_t</a>    <dfn class="local col6 decl" id="26i_duration" title='i_duration' data-type='mtime_t' data-ref="26i_duration">i_duration</dfn> = -<var>1</var>;</td></tr>
+<tr><th id="170">170</th><td>    <em>const</em> <em>char</em>**<dfn class="local col7 decl" id="27ppsz_options" title='ppsz_options' data-type='const char **' data-ref="27ppsz_options">ppsz_options</dfn> = <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="171">171</th><td>    <em>char</em> *    (*<dfn class="local col8 decl" id="28pf_dup" title='pf_dup' data-type='char *(*)(const char *)' data-ref="28pf_dup">pf_dup</dfn>) (<em>const</em> <em>char</em> *) = <a class="local col0 ref" href="#20p_demux" title='p_demux' data-ref="20p_demux">p_demux</a>-&gt;<a class="ref" href="../../../include/vlc_demux.h.html#demux_t::p_sys" title='demux_t::p_sys' data-ref="demux_t::p_sys">p_sys</a>-&gt;<a class="ref" href="#demux_sys_t::pf_dup" title='demux_sys_t::pf_dup' data-ref="demux_sys_t::pf_dup">pf_dup</a>;</td></tr>
+<tr><th id="172">172</th><td>    <em>int</em>        <dfn class="local col9 decl" id="29i_options" title='i_options' data-type='int' data-ref="29i_options">i_options</dfn> = <var>0</var>;</td></tr>
+<tr><th id="173">173</th><td>    <span class="macro" title="_Bool" data-ref="_M/bool">bool</span> <dfn class="local col0 decl" id="30b_cleanup" title='b_cleanup' data-type='_Bool' data-ref="30b_cleanup">b_cleanup</dfn> = <span class="macro" title="0" data-ref="_M/false">false</span>;</td></tr>
+<tr><th id="174">174</th><td>    <a class="typedef" href="../../../include/vlc_common.h.html#input_item_t" title='input_item_t' data-type='struct input_item_t' data-ref="input_item_t">input_item_t</a> *<dfn class="local col1 decl" id="31p_input" title='p_input' data-type='input_item_t *' data-ref="31p_input">p_input</dfn>;</td></tr>
+<tr><th id="175">175</th><td></td></tr>
+<tr><th id="176">176</th><td>    <a class="typedef" href="../../../include/vlc_common.h.html#input_item_t" title='input_item_t' data-type='struct input_item_t' data-ref="input_item_t">input_item_t</a> *<dfn class="local col2 decl" id="32p_current_input" title='p_current_input' data-type='input_item_t *' data-ref="32p_current_input">p_current_input</dfn> = <a class="ref" href="playlist.h.html#GetCurrentItem" title='GetCurrentItem' data-ref="GetCurrentItem">GetCurrentItem</a>(<a class="local col0 ref" href="#20p_demux" title='p_demux' data-ref="20p_demux">p_demux</a>);</td></tr>
+<tr><th id="177">177</th><td>    <a class="typedef" href="../../../include/vlc_common.h.html#input_item_node_t" title='input_item_node_t' data-type='struct input_item_node_t' data-ref="input_item_node_t">input_item_node_t</a> *<dfn class="local col3 decl" id="33p_subitems" title='p_subitems' data-type='input_item_node_t *' data-ref="33p_subitems">p_subitems</dfn> = <a class="ref" href="../../../include/vlc_input_item.h.html#input_item_node_Create" title='input_item_node_Create' data-ref="input_item_node_Create">input_item_node_Create</a>( <a class="local col2 ref" href="#32p_current_input" title='p_current_input' data-ref="32p_current_input">p_current_input</a> );</td></tr>
+<tr><th id="178">178</th><td></td></tr>
+<tr><th id="179">179</th><td>    <a class="local col1 ref" href="#21psz_line" title='psz_line' data-ref="21psz_line">psz_line</a> = <a class="ref" href="../../../include/vlc_stream.h.html#stream_ReadLine" title='stream_ReadLine' data-ref="stream_ReadLine">stream_ReadLine</a>( <a class="local col0 ref" href="#20p_demux" title='p_demux' data-ref="20p_demux">p_demux</a>-&gt;<a class="ref" href="../../../include/vlc_demux.h.html#demux_t::s" title='demux_t::s' data-ref="demux_t::s">s</a> );</td></tr>
+<tr><th id="180">180</th><td>    <b>while</b>( <a class="local col1 ref" href="#21psz_line" title='psz_line' data-ref="21psz_line">psz_line</a> )</td></tr>
+<tr><th id="181">181</th><td>    {</td></tr>
+<tr><th id="182">182</th><td>        <em>char</em> *<dfn class="local col4 decl" id="34psz_parse" title='psz_parse' data-type='char *' data-ref="34psz_parse">psz_parse</dfn> = <a class="local col1 ref" href="#21psz_line" title='psz_line' data-ref="21psz_line">psz_line</a>;</td></tr>
+<tr><th id="183">183</th><td></td></tr>
+<tr><th id="184">184</th><td>        <i>/* Skip leading tabs and spaces */</i></td></tr>
+<tr><th id="185">185</th><td>        <b>while</b>( *<a class="local col4 ref" href="#34psz_parse" title='psz_parse' data-ref="34psz_parse">psz_parse</a> == <kbd>' '</kbd> || *<a class="local col4 ref" href="#34psz_parse" title='psz_parse' data-ref="34psz_parse">psz_parse</a> == <kbd>'\t'</kbd> ||</td></tr>
+<tr><th id="186">186</th><td>               *<a class="local col4 ref" href="#34psz_parse" title='psz_parse' data-ref="34psz_parse">psz_parse</a> == <kbd>'\n'</kbd> || *<a class="local col4 ref" href="#34psz_parse" title='psz_parse' data-ref="34psz_parse">psz_parse</a> == <kbd>'\r'</kbd> ) <a class="local col4 ref" href="#34psz_parse" title='psz_parse' data-ref="34psz_parse">psz_parse</a>++;</td></tr>
+<tr><th id="187">187</th><td></td></tr>
+<tr><th id="188">188</th><td>        <b>if</b>( *<a class="local col4 ref" href="#34psz_parse" title='psz_parse' data-ref="34psz_parse">psz_parse</a> == <kbd>'#'</kbd> )</td></tr>
+<tr><th id="189">189</th><td>        {</td></tr>
+<tr><th id="190">190</th><td>            <i>/* Parse extra info */</i></td></tr>
+<tr><th id="191">191</th><td></td></tr>
+<tr><th id="192">192</th><td>            <i>/* Skip leading tabs and spaces */</i></td></tr>
+<tr><th id="193">193</th><td>            <b>while</b>( *<a class="local col4 ref" href="#34psz_parse" title='psz_parse' data-ref="34psz_parse">psz_parse</a> == <kbd>' '</kbd> || *<a class="local col4 ref" href="#34psz_parse" title='psz_parse' data-ref="34psz_parse">psz_parse</a> == <kbd>'\t'</kbd> ||</td></tr>
+<tr><th id="194">194</th><td>                   *<a class="local col4 ref" href="#34psz_parse" title='psz_parse' data-ref="34psz_parse">psz_parse</a> == <kbd>'\n'</kbd> || *<a class="local col4 ref" href="#34psz_parse" title='psz_parse' data-ref="34psz_parse">psz_parse</a> == <kbd>'\r'</kbd> ||</td></tr>
+<tr><th id="195">195</th><td>                   *<a class="local col4 ref" href="#34psz_parse" title='psz_parse' data-ref="34psz_parse">psz_parse</a> == <kbd>'#'</kbd> ) <a class="local col4 ref" href="#34psz_parse" title='psz_parse' data-ref="34psz_parse">psz_parse</a>++;</td></tr>
+<tr><th id="196">196</th><td></td></tr>
+<tr><th id="197">197</th><td>            <b>if</b>( !*<a class="local col4 ref" href="#34psz_parse" title='psz_parse' data-ref="34psz_parse">psz_parse</a> ) <b>goto</b> <a class="lbl" href="#35error" data-ref="35error">error</a>;</td></tr>
+<tr><th id="198">198</th><td></td></tr>
+<tr><th id="199">199</th><td>            <b>if</b>( !<a class="ref" href="../../../../include/string.h.html#strncasecmp" title='strncasecmp' data-ref="strncasecmp">strncasecmp</a>( <a class="local col4 ref" href="#34psz_parse" title='psz_parse' data-ref="34psz_parse">psz_parse</a>, <q>"EXTINF:"</q>, <b>sizeof</b>(<q>"EXTINF:"</q>) -<var>1</var> ) )</td></tr>
+<tr><th id="200">200</th><td>            {</td></tr>
+<tr><th id="201">201</th><td>                <i>/* Extended info */</i></td></tr>
+<tr><th id="202">202</th><td>                <a class="local col4 ref" href="#34psz_parse" title='psz_parse' data-ref="34psz_parse">psz_parse</a> += <b>sizeof</b>(<q>"EXTINF:"</q>) - <var>1</var>;</td></tr>
+<tr><th id="203">203</th><td>                <a class="macro" href="../../../include/vlc_common.h.html#629" title="do { free( psz_name ); psz_name = ((void*)0); } while(0)" data-ref="_M/FREENULL">FREENULL</a>( <a class="local col2 ref" href="#22psz_name" title='psz_name' data-ref="22psz_name">psz_name</a> );</td></tr>
+<tr><th id="204">204</th><td>                <a class="macro" href="../../../include/vlc_common.h.html#629" title="do { free( psz_artist ); psz_artist = ((void*)0); } while(0)" data-ref="_M/FREENULL">FREENULL</a>( <a class="local col3 ref" href="#23psz_artist" title='psz_artist' data-ref="23psz_artist">psz_artist</a> );</td></tr>
+<tr><th id="205">205</th><td>                <a class="tu ref" href="#parseEXTINF" title='parseEXTINF' data-use='c' data-ref="parseEXTINF">parseEXTINF</a>( <a class="local col4 ref" href="#34psz_parse" title='psz_parse' data-ref="34psz_parse">psz_parse</a>, &amp;<a class="local col3 ref" href="#23psz_artist" title='psz_artist' data-ref="23psz_artist">psz_artist</a>, &amp;<a class="local col2 ref" href="#22psz_name" title='psz_name' data-ref="22psz_name">psz_name</a>, &amp;<a class="local col5 ref" href="#25i_parsed_duration" title='i_parsed_duration' data-ref="25i_parsed_duration">i_parsed_duration</a> );</td></tr>
+<tr><th id="206">206</th><td>                <b>if</b>( <a class="local col5 ref" href="#25i_parsed_duration" title='i_parsed_duration' data-ref="25i_parsed_duration">i_parsed_duration</a> &gt;= <var>0</var> )</td></tr>
+<tr><th id="207">207</th><td>                    <a class="local col6 ref" href="#26i_duration" title='i_duration' data-ref="26i_duration">i_duration</a> = <a class="local col5 ref" href="#25i_parsed_duration" title='i_parsed_duration' data-ref="25i_parsed_duration">i_parsed_duration</a> * <a class="macro" href="../../../../include/stdint.h.html#282" title="1000000L" data-ref="_M/INT64_C">INT64_C</a>(<var>1000000</var>);</td></tr>
+<tr><th id="208">208</th><td>                <b>if</b>( <a class="local col2 ref" href="#22psz_name" title='psz_name' data-ref="22psz_name">psz_name</a> )</td></tr>
+<tr><th id="209">209</th><td>                    <a class="local col2 ref" href="#22psz_name" title='psz_name' data-ref="22psz_name">psz_name</a> = <a class="local col8 ref" href="#28pf_dup" title='pf_dup' data-ref="28pf_dup">pf_dup</a>( <a class="local col2 ref" href="#22psz_name" title='psz_name' data-ref="22psz_name">psz_name</a> );</td></tr>
+<tr><th id="210">210</th><td>                <b>if</b>( <a class="local col3 ref" href="#23psz_artist" title='psz_artist' data-ref="23psz_artist">psz_artist</a> )</td></tr>
+<tr><th id="211">211</th><td>                    <a class="local col3 ref" href="#23psz_artist" title='psz_artist' data-ref="23psz_artist">psz_artist</a> = <a class="local col8 ref" href="#28pf_dup" title='pf_dup' data-ref="28pf_dup">pf_dup</a>( <a class="local col3 ref" href="#23psz_artist" title='psz_artist' data-ref="23psz_artist">psz_artist</a> );</td></tr>
+<tr><th id="212">212</th><td>            }</td></tr>
+<tr><th id="213">213</th><td>            <b>else</b> <b>if</b>( !<a class="ref" href="../../../../include/string.h.html#strncasecmp" title='strncasecmp' data-ref="strncasecmp">strncasecmp</a>( <a class="local col4 ref" href="#34psz_parse" title='psz_parse' data-ref="34psz_parse">psz_parse</a>, <q>"EXTVLCOPT:"</q>,</td></tr>
+<tr><th id="214">214</th><td>                                   <b>sizeof</b>(<q>"EXTVLCOPT:"</q>) -<var>1</var> ) )</td></tr>
+<tr><th id="215">215</th><td>            {</td></tr>
+<tr><th id="216">216</th><td>                <i>/* VLC Option */</i></td></tr>
+<tr><th id="217">217</th><td>                <em>char</em> *<dfn class="local col6 decl" id="36psz_option" title='psz_option' data-type='char *' data-ref="36psz_option">psz_option</dfn>;</td></tr>
+<tr><th id="218">218</th><td>                <a class="local col4 ref" href="#34psz_parse" title='psz_parse' data-ref="34psz_parse">psz_parse</a> += <b>sizeof</b>(<q>"EXTVLCOPT:"</q>) -<var>1</var>;</td></tr>
+<tr><th id="219">219</th><td>                <b>if</b>( !*<a class="local col4 ref" href="#34psz_parse" title='psz_parse' data-ref="34psz_parse">psz_parse</a> ) <b>goto</b> <a class="lbl" href="#35error" data-ref="35error">error</a>;</td></tr>
+<tr><th id="220">220</th><td></td></tr>
+<tr><th id="221">221</th><td>                <a class="local col6 ref" href="#36psz_option" title='psz_option' data-ref="36psz_option">psz_option</a> = <a class="local col8 ref" href="#28pf_dup" title='pf_dup' data-ref="28pf_dup">pf_dup</a>( <a class="local col4 ref" href="#34psz_parse" title='psz_parse' data-ref="34psz_parse">psz_parse</a> );</td></tr>
+<tr><th id="222">222</th><td>                <b>if</b>( <a class="local col6 ref" href="#36psz_option" title='psz_option' data-ref="36psz_option">psz_option</a> )</td></tr>
+<tr><th id="223">223</th><td>                    <a class="macro" href="../../../include/vlc_arrays.h.html#43" title="do { if( !(i_options) ) (ppsz_options) = ((void*)0); (ppsz_options) = realloc( ppsz_options, ((i_options) + 1) * sizeof(*(ppsz_options)) ); if( !(ppsz_options) ) abort(); if( (i_options) - (i_options) ) { memmove( (ppsz_options) + (i_options) + 1, (ppsz_options) + (i_options), ((i_options) - (i_options)) * sizeof( *(ppsz_options) ) ); } (ppsz_options)[(i_options)] = psz_option; (i_options)++; } while( 0 )" data-ref="_M/INSERT_ELEM">INSERT_ELEM</a>( <a class="local col7 ref" href="#27ppsz_options" title='ppsz_options' data-ref="27ppsz_options">ppsz_options</a>, <a class="local col9 ref" href="#29i_options" title='i_options' data-ref="29i_options">i_options</a>, <a class="local col9 ref" href="#29i_options" title='i_options' data-ref="29i_options">i_options</a>,</td></tr>
+<tr><th id="224">224</th><td>                                 <a class="local col6 ref" href="#36psz_option" title='psz_option' data-ref="36psz_option">psz_option</a> );</td></tr>
+<tr><th id="225">225</th><td>            }</td></tr>
+<tr><th id="226">226</th><td>            <i>/* Special case for jamendo which provide the albumart */</i></td></tr>
+<tr><th id="227">227</th><td>            <b>else</b> <b>if</b>( !<a class="ref" href="../../../../include/string.h.html#strncasecmp" title='strncasecmp' data-ref="strncasecmp">strncasecmp</a>( <a class="local col4 ref" href="#34psz_parse" title='psz_parse' data-ref="34psz_parse">psz_parse</a>, <q>"EXTALBUMARTURL:"</q>,</td></tr>
+<tr><th id="228">228</th><td>                     <b>sizeof</b>( <q>"EXTALBUMARTURL:"</q> ) -<var>1</var> ) )</td></tr>
+<tr><th id="229">229</th><td>            {</td></tr>
+<tr><th id="230">230</th><td>                <a class="local col4 ref" href="#34psz_parse" title='psz_parse' data-ref="34psz_parse">psz_parse</a> += <b>sizeof</b>( <q>"EXTALBUMARTURL:"</q> ) - <var>1</var>;</td></tr>
+<tr><th id="231">231</th><td>                <a class="ref" href="../../../../include/stdlib.h.html#free" title='free' data-ref="free">free</a>( <a class="local col4 ref" href="#24psz_album_art" title='psz_album_art' data-ref="24psz_album_art">psz_album_art</a> );</td></tr>
+<tr><th id="232">232</th><td>                <a class="local col4 ref" href="#24psz_album_art" title='psz_album_art' data-ref="24psz_album_art">psz_album_art</a> = <a class="local col8 ref" href="#28pf_dup" title='pf_dup' data-ref="28pf_dup">pf_dup</a>( <a class="local col4 ref" href="#34psz_parse" title='psz_parse' data-ref="34psz_parse">psz_parse</a> );</td></tr>
+<tr><th id="233">233</th><td>            }</td></tr>
+<tr><th id="234">234</th><td>        }</td></tr>
+<tr><th id="235">235</th><td>        <b>else</b> <b>if</b>( !<a class="ref" href="../../../../include/string.h.html#strncasecmp" title='strncasecmp' data-ref="strncasecmp">strncasecmp</a>( <a class="local col4 ref" href="#34psz_parse" title='psz_parse' data-ref="34psz_parse">psz_parse</a>, <q>"RTSPtext"</q>, <b>sizeof</b>(<q>"RTSPtext"</q>) -<var>1</var> ) )</td></tr>
+<tr><th id="236">236</th><td>        {</td></tr>
+<tr><th id="237">237</th><td>            ;<i>/* special case to handle QuickTime RTSPtext redirect files */</i></td></tr>
+<tr><th id="238">238</th><td>        }</td></tr>
+<tr><th id="239">239</th><td>        <b>else</b> <b>if</b>( *<a class="local col4 ref" href="#34psz_parse" title='psz_parse' data-ref="34psz_parse">psz_parse</a> )</td></tr>
+<tr><th id="240">240</th><td>        {</td></tr>
+<tr><th id="241">241</th><td>            <em>char</em> *<dfn class="local col7 decl" id="37psz_mrl" title='psz_mrl' data-type='char *' data-ref="37psz_mrl">psz_mrl</dfn>;</td></tr>
+<tr><th id="242">242</th><td></td></tr>
+<tr><th id="243">243</th><td>            <a class="local col4 ref" href="#34psz_parse" title='psz_parse' data-ref="34psz_parse">psz_parse</a> = <a class="local col8 ref" href="#28pf_dup" title='pf_dup' data-ref="28pf_dup">pf_dup</a>( <a class="local col4 ref" href="#34psz_parse" title='psz_parse' data-ref="34psz_parse">psz_parse</a> );</td></tr>
+<tr><th id="244">244</th><td>            <b>if</b>( !<a class="local col2 ref" href="#22psz_name" title='psz_name' data-ref="22psz_name">psz_name</a> &amp;&amp; <a class="local col4 ref" href="#34psz_parse" title='psz_parse' data-ref="34psz_parse">psz_parse</a> )</td></tr>
+<tr><th id="245">245</th><td>                <i>/* Use filename as name for relative entries */</i></td></tr>
+<tr><th id="246">246</th><td>                <a class="local col2 ref" href="#22psz_name" title='psz_name' data-ref="22psz_name">psz_name</a> = <a class="macro" href="../../../../include/x86_64-linux-gnu/bits/string2.h.html#1291" title="(__extension__ (__builtin_constant_p (psz_parse) &amp;&amp; ((size_t)(const void *)((psz_parse) + 1) - (size_t)(const void *)(psz_parse) == 1) ? (((const char *) (psz_parse))[0] == &apos;\0&apos; ? (char *) calloc ((size_t) 1, (size_t) 1) : ({ size_t __len = strlen (psz_parse) + 1; char *__retval = (char *) malloc (__len); if (__retval != ((void*)0)) __retval = (char *) memcpy (__retval, psz_parse, __len); __retval; })) : __strdup (psz_parse)))" data-ref="_M/strdup">strdup</a>( <a class="local col4 ref" href="#34psz_parse" title='psz_parse' data-ref="34psz_parse">psz_parse</a> );</td></tr>
+<tr><th id="247">247</th><td></td></tr>
+<tr><th id="248">248</th><td>            <a class="local col7 ref" href="#37psz_mrl" title='psz_mrl' data-ref="37psz_mrl">psz_mrl</a> = <a class="ref" href="playlist.h.html#ProcessMRL" title='ProcessMRL' data-ref="ProcessMRL">ProcessMRL</a>( <a class="local col4 ref" href="#34psz_parse" title='psz_parse' data-ref="34psz_parse">psz_parse</a>, <a class="local col0 ref" href="#20p_demux" title='p_demux' data-ref="20p_demux">p_demux</a>-&gt;<a class="ref" href="../../../include/vlc_demux.h.html#demux_t::p_sys" title='demux_t::p_sys' data-ref="demux_t::p_sys">p_sys</a>-&gt;<a class="ref" href="#demux_sys_t::psz_prefix" title='demux_sys_t::psz_prefix' data-ref="demux_sys_t::psz_prefix">psz_prefix</a> );</td></tr>
+<tr><th id="249">249</th><td></td></tr>
+<tr><th id="250">250</th><td>            <a class="local col0 ref" href="#30b_cleanup" title='b_cleanup' data-ref="30b_cleanup">b_cleanup</a> = <span class="macro" title="1" data-ref="_M/true">true</span>;</td></tr>
+<tr><th id="251">251</th><td>            <b>if</b>( !<a class="local col7 ref" href="#37psz_mrl" title='psz_mrl' data-ref="37psz_mrl">psz_mrl</a> )</td></tr>
+<tr><th id="252">252</th><td>            {</td></tr>
+<tr><th id="253">253</th><td>                <a class="ref" href="../../../../include/stdlib.h.html#free" title='free' data-ref="free">free</a>( <a class="local col4 ref" href="#34psz_parse" title='psz_parse' data-ref="34psz_parse">psz_parse</a> );</td></tr>
+<tr><th id="254">254</th><td>                <b>goto</b> <a class="lbl" href="#35error" data-ref="35error">error</a>;</td></tr>
+<tr><th id="255">255</th><td>            }</td></tr>
+<tr><th id="256">256</th><td></td></tr>
+<tr><th id="257">257</th><td>            <a class="local col1 ref" href="#31p_input" title='p_input' data-ref="31p_input">p_input</a> = <a class="ref" href="../../../include/vlc_input_item.h.html#input_item_NewExt" title='input_item_NewExt' data-ref="input_item_NewExt">input_item_NewExt</a>( <a class="local col7 ref" href="#37psz_mrl" title='psz_mrl' data-ref="37psz_mrl">psz_mrl</a>, <a class="local col2 ref" href="#22psz_name" title='psz_name' data-ref="22psz_name">psz_name</a>,</td></tr>
+<tr><th id="258">258</th><td>                                        <a class="local col9 ref" href="#29i_options" title='i_options' data-ref="29i_options">i_options</a>, <a class="local col7 ref" href="#27ppsz_options" title='ppsz_options' data-ref="27ppsz_options">ppsz_options</a>, <var>0</var>, <a class="local col6 ref" href="#26i_duration" title='i_duration' data-ref="26i_duration">i_duration</a> );</td></tr>
+<tr><th id="259">259</th><td></td></tr>
+<tr><th id="260">260</th><td>            <a class="ref" href="../../../../include/stdlib.h.html#free" title='free' data-ref="free">free</a>( <a class="local col4 ref" href="#34psz_parse" title='psz_parse' data-ref="34psz_parse">psz_parse</a> );</td></tr>
+<tr><th id="261">261</th><td>            <a class="ref" href="../../../../include/stdlib.h.html#free" title='free' data-ref="free">free</a>( <a class="local col7 ref" href="#37psz_mrl" title='psz_mrl' data-ref="37psz_mrl">psz_mrl</a> );</td></tr>
+<tr><th id="262">262</th><td></td></tr>
+<tr><th id="263">263</th><td>            <b>if</b> ( !<a class="macro" href="../../../include/vlc_common.h.html#631" title="(!psz_artist || !*psz_artist)" data-ref="_M/EMPTY_STR">EMPTY_STR</a>(<a class="local col3 ref" href="#23psz_artist" title='psz_artist' data-ref="23psz_artist">psz_artist</a>) )</td></tr>
+<tr><th id="264">264</th><td>                <a class="ref" href="../../../include/vlc_input_item.h.html#216" title='input_item_SetArtist' data-ref="input_item_SetArtist">input_item_SetArtist</a>( <a class="local col1 ref" href="#31p_input" title='p_input' data-ref="31p_input">p_input</a>, <a class="local col3 ref" href="#23psz_artist" title='psz_artist' data-ref="23psz_artist">psz_artist</a> );</td></tr>
+<tr><th id="265">265</th><td>            <b>if</b>( <a class="local col2 ref" href="#22psz_name" title='psz_name' data-ref="22psz_name">psz_name</a> ) <a class="ref" href="../../../include/vlc_input_item.h.html#215" title='input_item_SetTitle' data-ref="input_item_SetTitle">input_item_SetTitle</a>( <a class="local col1 ref" href="#31p_input" title='p_input' data-ref="31p_input">p_input</a>, <a class="local col2 ref" href="#22psz_name" title='psz_name' data-ref="22psz_name">psz_name</a> );</td></tr>
+<tr><th id="266">266</th><td>            <b>if</b>( !<a class="macro" href="../../../include/vlc_common.h.html#631" title="(!psz_album_art || !*psz_album_art)" data-ref="_M/EMPTY_STR">EMPTY_STR</a>(<a class="local col4 ref" href="#24psz_album_art" title='psz_album_art' data-ref="24psz_album_art">psz_album_art</a>) )</td></tr>
+<tr><th id="267">267</th><td>                <a class="macro" href="../../../include/vlc_input_item.h.html#241" title="input_item_SetArtworkURL" data-ref="_M/input_item_SetArtURL">input_item_SetArtURL</a>( <a class="local col1 ref" href="#31p_input" title='p_input' data-ref="31p_input">p_input</a>, <a class="local col4 ref" href="#24psz_album_art" title='psz_album_art' data-ref="24psz_album_art">psz_album_art</a> );</td></tr>
+<tr><th id="268">268</th><td></td></tr>
+<tr><th id="269">269</th><td>            <a class="ref" href="../../../include/vlc_input_item.h.html#input_item_node_AppendItem" title='input_item_node_AppendItem' data-ref="input_item_node_AppendItem">input_item_node_AppendItem</a>( <a class="local col3 ref" href="#33p_subitems" title='p_subitems' data-ref="33p_subitems">p_subitems</a>, <a class="local col1 ref" href="#31p_input" title='p_input' data-ref="31p_input">p_input</a> );</td></tr>
+<tr><th id="270">270</th><td>            <a class="macro" href="../../../include/vlc_input_item.h.html#285" title="input_item_Release(p_input)" data-ref="_M/vlc_gc_decref">vlc_gc_decref</a>( <a class="local col1 ref" href="#31p_input" title='p_input' data-ref="31p_input">p_input</a> );</td></tr>
+<tr><th id="271">271</th><td>        }</td></tr>
+<tr><th id="272">272</th><td></td></tr>
+<tr><th id="273">273</th><td> <dfn class="lbl" id="35error" data-ref="35error">error</dfn>:</td></tr>
+<tr><th id="274">274</th><td></td></tr>
+<tr><th id="275">275</th><td>        <i>/* Fetch another line */</i></td></tr>
+<tr><th id="276">276</th><td>        <a class="ref" href="../../../../include/stdlib.h.html#free" title='free' data-ref="free">free</a>( <a class="local col1 ref" href="#21psz_line" title='psz_line' data-ref="21psz_line">psz_line</a> );</td></tr>
+<tr><th id="277">277</th><td>        <a class="local col1 ref" href="#21psz_line" title='psz_line' data-ref="21psz_line">psz_line</a> = <a class="ref" href="../../../include/vlc_stream.h.html#stream_ReadLine" title='stream_ReadLine' data-ref="stream_ReadLine">stream_ReadLine</a>( <a class="local col0 ref" href="#20p_demux" title='p_demux' data-ref="20p_demux">p_demux</a>-&gt;<a class="ref" href="../../../include/vlc_demux.h.html#demux_t::s" title='demux_t::s' data-ref="demux_t::s">s</a> );</td></tr>
+<tr><th id="278">278</th><td>        <b>if</b>( !<a class="local col1 ref" href="#21psz_line" title='psz_line' data-ref="21psz_line">psz_line</a> ) <a class="local col0 ref" href="#30b_cleanup" title='b_cleanup' data-ref="30b_cleanup">b_cleanup</a> = <span class="macro" title="1" data-ref="_M/true">true</span>;</td></tr>
+<tr><th id="279">279</th><td></td></tr>
+<tr><th id="280">280</th><td>        <b>if</b>( <a class="local col0 ref" href="#30b_cleanup" title='b_cleanup' data-ref="30b_cleanup">b_cleanup</a> )</td></tr>
+<tr><th id="281">281</th><td>        {</td></tr>
+<tr><th id="282">282</th><td>            <i>/* Cleanup state */</i></td></tr>
+<tr><th id="283">283</th><td>            <b>while</b>( <a class="local col9 ref" href="#29i_options" title='i_options' data-ref="29i_options">i_options</a>-- ) <a class="ref" href="../../../../include/stdlib.h.html#free" title='free' data-ref="free">free</a>( (<em>char</em>*)<a class="local col7 ref" href="#27ppsz_options" title='ppsz_options' data-ref="27ppsz_options">ppsz_options</a>[<a class="local col9 ref" href="#29i_options" title='i_options' data-ref="29i_options">i_options</a>] );</td></tr>
+<tr><th id="284">284</th><td>            <a class="macro" href="../../../include/vlc_common.h.html#629" title="do { free( ppsz_options ); ppsz_options = ((void*)0); } while(0)" data-ref="_M/FREENULL">FREENULL</a>( <a class="local col7 ref" href="#27ppsz_options" title='ppsz_options' data-ref="27ppsz_options">ppsz_options</a> );</td></tr>
+<tr><th id="285">285</th><td>            <a class="local col9 ref" href="#29i_options" title='i_options' data-ref="29i_options">i_options</a> = <var>0</var>;</td></tr>
+<tr><th id="286">286</th><td>            <a class="macro" href="../../../include/vlc_common.h.html#629" title="do { free( psz_name ); psz_name = ((void*)0); } while(0)" data-ref="_M/FREENULL">FREENULL</a>( <a class="local col2 ref" href="#22psz_name" title='psz_name' data-ref="22psz_name">psz_name</a> );</td></tr>
+<tr><th id="287">287</th><td>            <a class="macro" href="../../../include/vlc_common.h.html#629" title="do { free( psz_artist ); psz_artist = ((void*)0); } while(0)" data-ref="_M/FREENULL">FREENULL</a>( <a class="local col3 ref" href="#23psz_artist" title='psz_artist' data-ref="23psz_artist">psz_artist</a> );</td></tr>
+<tr><th id="288">288</th><td>            <a class="macro" href="../../../include/vlc_common.h.html#629" title="do { free( psz_album_art ); psz_album_art = ((void*)0); } while(0)" data-ref="_M/FREENULL">FREENULL</a>( <a class="local col4 ref" href="#24psz_album_art" title='psz_album_art' data-ref="24psz_album_art">psz_album_art</a> );</td></tr>
+<tr><th id="289">289</th><td>            <a class="local col5 ref" href="#25i_parsed_duration" title='i_parsed_duration' data-ref="25i_parsed_duration">i_parsed_duration</a> = <var>0</var>;</td></tr>
+<tr><th id="290">290</th><td>            <a class="local col6 ref" href="#26i_duration" title='i_duration' data-ref="26i_duration">i_duration</a> = -<var>1</var>;</td></tr>
+<tr><th id="291">291</th><td></td></tr>
+<tr><th id="292">292</th><td>            <a class="local col0 ref" href="#30b_cleanup" title='b_cleanup' data-ref="30b_cleanup">b_cleanup</a> = <span class="macro" title="0" data-ref="_M/false">false</span>;</td></tr>
+<tr><th id="293">293</th><td>        }</td></tr>
+<tr><th id="294">294</th><td>    }</td></tr>
+<tr><th id="295">295</th><td>    <a class="ref" href="../../../include/vlc_input_item.h.html#input_item_node_PostAndDelete" title='input_item_node_PostAndDelete' data-ref="input_item_node_PostAndDelete">input_item_node_PostAndDelete</a>( <a class="local col3 ref" href="#33p_subitems" title='p_subitems' data-ref="33p_subitems">p_subitems</a> );</td></tr>
+<tr><th id="296">296</th><td>    <a class="macro" href="../../../include/vlc_input_item.h.html#285" title="input_item_Release(p_current_input)" data-ref="_M/vlc_gc_decref">vlc_gc_decref</a>(<a class="local col2 ref" href="#32p_current_input" title='p_current_input' data-ref="32p_current_input">p_current_input</a>);</td></tr>
+<tr><th id="297">297</th><td>    <a class="macro" href="../../../include/vlc_variables.h.html#148" title="var_Destroy( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_demux)), psz_object_type), (void)0 , (vlc_object_t *)(p_demux)), &quot;m3u-extvlcopt&quot; )" data-ref="_M/var_Destroy">var_Destroy</a>( <a class="local col0 ref" href="#20p_demux" title='p_demux' data-ref="20p_demux">p_demux</a>, <q>"m3u-extvlcopt"</q> );</td></tr>
+<tr><th id="298">298</th><td>    <b>return</b> <var>0</var>; <i>/* Needed for correct operation of go back */</i></td></tr>
+<tr><th id="299">299</th><td>}</td></tr>
+<tr><th id="300">300</th><td></td></tr>
+<tr><th id="301">301</th><td><em>static</em> <em>void</em> <dfn class="tu decl def" id="parseEXTINF" title='parseEXTINF' data-type='void parseEXTINF(char * psz_string, char ** ppsz_artist, char ** ppsz_name, int * pi_duration)' data-ref="parseEXTINF">parseEXTINF</dfn>(<em>char</em> *<dfn class="local col8 decl" id="38psz_string" title='psz_string' data-type='char *' data-ref="38psz_string">psz_string</dfn>, <em>char</em> **<dfn class="local col9 decl" id="39ppsz_artist" title='ppsz_artist' data-type='char **' data-ref="39ppsz_artist">ppsz_artist</dfn>,</td></tr>
+<tr><th id="302">302</th><td>                        <em>char</em> **<dfn class="local col0 decl" id="40ppsz_name" title='ppsz_name' data-type='char **' data-ref="40ppsz_name">ppsz_name</dfn>, <em>int</em> *<dfn class="local col1 decl" id="41pi_duration" title='pi_duration' data-type='int *' data-ref="41pi_duration">pi_duration</dfn>)</td></tr>
+<tr><th id="303">303</th><td>{</td></tr>
+<tr><th id="304">304</th><td>    <em>char</em> *<dfn class="local col2 decl" id="42end" title='end' data-type='char *' data-ref="42end">end</dfn> = <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="305">305</th><td>    <em>char</em> *<dfn class="local col3 decl" id="43psz_item" title='psz_item' data-type='char *' data-ref="43psz_item">psz_item</dfn> = <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="306">306</th><td></td></tr>
+<tr><th id="307">307</th><td>    <a class="local col2 ref" href="#42end" title='end' data-ref="42end">end</a> = <a class="local col8 ref" href="#38psz_string" title='psz_string' data-ref="38psz_string">psz_string</a> + <a class="ref" href="../../../../include/string.h.html#strlen" title='strlen' data-ref="strlen">strlen</a>( <a class="local col8 ref" href="#38psz_string" title='psz_string' data-ref="38psz_string">psz_string</a> );</td></tr>
+<tr><th id="308">308</th><td></td></tr>
+<tr><th id="309">309</th><td>    <i>/* ignore whitespaces */</i></td></tr>
+<tr><th id="310">310</th><td>    <b>for</b> (; <a class="local col8 ref" href="#38psz_string" title='psz_string' data-ref="38psz_string">psz_string</a> &lt; <a class="local col2 ref" href="#42end" title='end' data-ref="42end">end</a> &amp;&amp; ( *<a class="local col8 ref" href="#38psz_string" title='psz_string' data-ref="38psz_string">psz_string</a> == <kbd>'\t'</kbd> || *<a class="local col8 ref" href="#38psz_string" title='psz_string' data-ref="38psz_string">psz_string</a> == <kbd>' '</kbd> );</td></tr>
+<tr><th id="311">311</th><td>         <a class="local col8 ref" href="#38psz_string" title='psz_string' data-ref="38psz_string">psz_string</a>++ );</td></tr>
+<tr><th id="312">312</th><td></td></tr>
+<tr><th id="313">313</th><td>    <i>/* duration: read to next comma */</i></td></tr>
+<tr><th id="314">314</th><td>    <a class="local col3 ref" href="#43psz_item" title='psz_item' data-ref="43psz_item">psz_item</a> = <a class="local col8 ref" href="#38psz_string" title='psz_string' data-ref="38psz_string">psz_string</a>;</td></tr>
+<tr><th id="315">315</th><td>    <a class="local col8 ref" href="#38psz_string" title='psz_string' data-ref="38psz_string">psz_string</a> = <a class="macro" href="../../../../include/x86_64-linux-gnu/bits/string2.h.html#395" title="(__extension__ (__builtin_constant_p (&apos;,&apos;) &amp;&amp; !__builtin_constant_p (psz_string) &amp;&amp; (&apos;,&apos;) == &apos;\0&apos; ? (char *) __rawmemchr (psz_string, &apos;,&apos;) : __builtin_strchr (psz_string, &apos;,&apos;)))" data-ref="_M/strchr">strchr</a>( <a class="local col8 ref" href="#38psz_string" title='psz_string' data-ref="38psz_string">psz_string</a>, <kbd>','</kbd> );</td></tr>
+<tr><th id="316">316</th><td>    <b>if</b> ( <a class="local col8 ref" href="#38psz_string" title='psz_string' data-ref="38psz_string">psz_string</a> )</td></tr>
+<tr><th id="317">317</th><td>    {</td></tr>
+<tr><th id="318">318</th><td>        *<a class="local col8 ref" href="#38psz_string" title='psz_string' data-ref="38psz_string">psz_string</a> = <kbd>'\0'</kbd>;</td></tr>
+<tr><th id="319">319</th><td>        *<a class="local col1 ref" href="#41pi_duration" title='pi_duration' data-ref="41pi_duration">pi_duration</a> = <a class="ref" href="../../../../include/stdlib.h.html#atoi" title='atoi' data-ref="atoi">atoi</a>( <a class="local col3 ref" href="#43psz_item" title='psz_item' data-ref="43psz_item">psz_item</a> );</td></tr>
+<tr><th id="320">320</th><td>    }</td></tr>
+<tr><th id="321">321</th><td>    <b>else</b></td></tr>
+<tr><th id="322">322</th><td>    {</td></tr>
+<tr><th id="323">323</th><td>        <b>return</b>;</td></tr>
+<tr><th id="324">324</th><td>    }</td></tr>
+<tr><th id="325">325</th><td></td></tr>
+<tr><th id="326">326</th><td>    <b>if</b> ( <a class="local col8 ref" href="#38psz_string" title='psz_string' data-ref="38psz_string">psz_string</a> &lt; <a class="local col2 ref" href="#42end" title='end' data-ref="42end">end</a> )               <i>/* continue parsing if possible */</i></td></tr>
+<tr><th id="327">327</th><td>        <a class="local col8 ref" href="#38psz_string" title='psz_string' data-ref="38psz_string">psz_string</a>++;</td></tr>
+<tr><th id="328">328</th><td></td></tr>
+<tr><th id="329">329</th><td>    <i>/* analyse the remaining string */</i></td></tr>
+<tr><th id="330">330</th><td>    <a class="local col3 ref" href="#43psz_item" title='psz_item' data-ref="43psz_item">psz_item</a> = <a class="ref" href="../../../../include/string.h.html#strstr" title='strstr' data-ref="strstr">strstr</a>( <a class="local col8 ref" href="#38psz_string" title='psz_string' data-ref="38psz_string">psz_string</a>, <q>" - "</q> );</td></tr>
+<tr><th id="331">331</th><td></td></tr>
+<tr><th id="332">332</th><td>    <i>/* here we have the 0.8.2+ format with artist */</i></td></tr>
+<tr><th id="333">333</th><td>    <b>if</b> ( <a class="local col3 ref" href="#43psz_item" title='psz_item' data-ref="43psz_item">psz_item</a> )</td></tr>
+<tr><th id="334">334</th><td>    {</td></tr>
+<tr><th id="335">335</th><td>        <i>/* *** "EXTINF:time,artist - name" */</i></td></tr>
+<tr><th id="336">336</th><td>        *<a class="local col3 ref" href="#43psz_item" title='psz_item' data-ref="43psz_item">psz_item</a> = <kbd>'\0'</kbd>;</td></tr>
+<tr><th id="337">337</th><td>        *<a class="local col9 ref" href="#39ppsz_artist" title='ppsz_artist' data-ref="39ppsz_artist">ppsz_artist</a> = <a class="local col8 ref" href="#38psz_string" title='psz_string' data-ref="38psz_string">psz_string</a>;</td></tr>
+<tr><th id="338">338</th><td>        *<a class="local col0 ref" href="#40ppsz_name" title='ppsz_name' data-ref="40ppsz_name">ppsz_name</a> = <a class="local col3 ref" href="#43psz_item" title='psz_item' data-ref="43psz_item">psz_item</a> + <var>3</var>;          <i>/* points directly after ' - ' */</i></td></tr>
+<tr><th id="339">339</th><td>        <b>return</b>;</td></tr>
+<tr><th id="340">340</th><td>    }</td></tr>
+<tr><th id="341">341</th><td></td></tr>
+<tr><th id="342">342</th><td>    <i>/* reaching this point means: 0.8.1- with artist or something without artist */</i></td></tr>
+<tr><th id="343">343</th><td>    <b>if</b> ( *<a class="local col8 ref" href="#38psz_string" title='psz_string' data-ref="38psz_string">psz_string</a> == <kbd>','</kbd> )</td></tr>
+<tr><th id="344">344</th><td>    {</td></tr>
+<tr><th id="345">345</th><td>        <i>/* *** "EXTINF:time,,name" */</i></td></tr>
+<tr><th id="346">346</th><td>        <a class="local col8 ref" href="#38psz_string" title='psz_string' data-ref="38psz_string">psz_string</a>++;</td></tr>
+<tr><th id="347">347</th><td>        *<a class="local col0 ref" href="#40ppsz_name" title='ppsz_name' data-ref="40ppsz_name">ppsz_name</a> = <a class="local col8 ref" href="#38psz_string" title='psz_string' data-ref="38psz_string">psz_string</a>;</td></tr>
+<tr><th id="348">348</th><td>        <b>return</b>;</td></tr>
+<tr><th id="349">349</th><td>    }</td></tr>
+<tr><th id="350">350</th><td></td></tr>
+<tr><th id="351">351</th><td>    <a class="local col3 ref" href="#43psz_item" title='psz_item' data-ref="43psz_item">psz_item</a> = <a class="local col8 ref" href="#38psz_string" title='psz_string' data-ref="38psz_string">psz_string</a>;</td></tr>
+<tr><th id="352">352</th><td>    <a class="local col8 ref" href="#38psz_string" title='psz_string' data-ref="38psz_string">psz_string</a> = <a class="macro" href="../../../../include/x86_64-linux-gnu/bits/string2.h.html#395" title="(__extension__ (__builtin_constant_p (&apos;,&apos;) &amp;&amp; !__builtin_constant_p (psz_string) &amp;&amp; (&apos;,&apos;) == &apos;\0&apos; ? (char *) __rawmemchr (psz_string, &apos;,&apos;) : __builtin_strchr (psz_string, &apos;,&apos;)))" data-ref="_M/strchr">strchr</a>( <a class="local col8 ref" href="#38psz_string" title='psz_string' data-ref="38psz_string">psz_string</a>, <kbd>','</kbd> );</td></tr>
+<tr><th id="353">353</th><td>    <b>if</b> ( <a class="local col8 ref" href="#38psz_string" title='psz_string' data-ref="38psz_string">psz_string</a> )</td></tr>
+<tr><th id="354">354</th><td>    {</td></tr>
+<tr><th id="355">355</th><td>        <i>/* *** "EXTINF:time,artist,name" */</i></td></tr>
+<tr><th id="356">356</th><td>        *<a class="local col8 ref" href="#38psz_string" title='psz_string' data-ref="38psz_string">psz_string</a> = <kbd>'\0'</kbd>;</td></tr>
+<tr><th id="357">357</th><td>        *<a class="local col9 ref" href="#39ppsz_artist" title='ppsz_artist' data-ref="39ppsz_artist">ppsz_artist</a> = <a class="local col3 ref" href="#43psz_item" title='psz_item' data-ref="43psz_item">psz_item</a>;</td></tr>
+<tr><th id="358">358</th><td>        *<a class="local col0 ref" href="#40ppsz_name" title='ppsz_name' data-ref="40ppsz_name">ppsz_name</a> = <a class="local col8 ref" href="#38psz_string" title='psz_string' data-ref="38psz_string">psz_string</a>+<var>1</var>;</td></tr>
+<tr><th id="359">359</th><td>    }</td></tr>
+<tr><th id="360">360</th><td>    <b>else</b></td></tr>
+<tr><th id="361">361</th><td>    {</td></tr>
+<tr><th id="362">362</th><td>        <i>/* *** "EXTINF:time,name" */</i></td></tr>
+<tr><th id="363">363</th><td>        *<a class="local col0 ref" href="#40ppsz_name" title='ppsz_name' data-ref="40ppsz_name">ppsz_name</a> = <a class="local col3 ref" href="#43psz_item" title='psz_item' data-ref="43psz_item">psz_item</a>;</td></tr>
+<tr><th id="364">364</th><td>    }</td></tr>
+<tr><th id="365">365</th><td>    <b>return</b>;</td></tr>
+<tr><th id="366">366</th><td>}</td></tr>
+<tr><th id="367">367</th><td></td></tr>
+<tr><th id="368">368</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project vlc revision <em>2.2.0-git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

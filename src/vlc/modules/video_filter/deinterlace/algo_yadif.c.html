@@ -1,0 +1,212 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>algo_yadif.c source code [vlc/modules/video_filter/deinterlace/algo_yadif.c] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'vlc/modules/video_filter/deinterlace/algo_yadif.c'; var root_path = '../../../..'; var data_path = '../../../../../data';</script>
+<script src='../../../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='../../..'>vlc</a>/<a href='../..'>modules</a>/<a href='..'>video_filter</a>/<a href='./'>deinterlace</a>/<a href='algo_yadif.c.html'>algo_yadif.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*****************************************************************************</i></td></tr>
+<tr><th id="2">2</th><td><i> * algo_yadif.c : Wrapper for FFmpeg's Yadif algorithm</i></td></tr>
+<tr><th id="3">3</th><td><i> *****************************************************************************</i></td></tr>
+<tr><th id="4">4</th><td><i> * Copyright (C) 2000-2011 VLC authors and VideoLAN</i></td></tr>
+<tr><th id="5">5</th><td><i> * $Id: da3470dde63c88aaddf8ed61ad831076ee8fd074 $</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * Author: Laurent Aimar &lt;fenrir@videolan.org&gt;</i></td></tr>
+<tr><th id="8">8</th><td><i> *         Juha Jeronen  &lt;juha.jeronen@jyu.fi&gt; (soft field repeat hack)</i></td></tr>
+<tr><th id="9">9</th><td><i> *</i></td></tr>
+<tr><th id="10">10</th><td><i> * This program is free software; you can redistribute it and/or modify it</i></td></tr>
+<tr><th id="11">11</th><td><i> * under the terms of the GNU Lesser General Public License as published by</i></td></tr>
+<tr><th id="12">12</th><td><i> * the Free Software Foundation; either version 2.1 of the License, or</i></td></tr>
+<tr><th id="13">13</th><td><i> * (at your option) any later version.</i></td></tr>
+<tr><th id="14">14</th><td><i> *</i></td></tr>
+<tr><th id="15">15</th><td><i> * This program is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="16">16</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="17">17</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</i></td></tr>
+<tr><th id="18">18</th><td><i> * GNU Lesser General Public License for more details.</i></td></tr>
+<tr><th id="19">19</th><td><i> *</i></td></tr>
+<tr><th id="20">20</th><td><i> * You should have received a copy of the GNU Lesser General Public License</i></td></tr>
+<tr><th id="21">21</th><td><i> * along with this program; if not, write to the Free Software Foundation,</i></td></tr>
+<tr><th id="22">22</th><td><i> * Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.</i></td></tr>
+<tr><th id="23">23</th><td><i> *****************************************************************************/</i></td></tr>
+<tr><th id="24">24</th><td></td></tr>
+<tr><th id="25">25</th><td><u>#<span data-ppcond="25">ifdef</span> <span class="macro" data-ref="_M/HAVE_CONFIG_H">HAVE_CONFIG_H</span></u></td></tr>
+<tr><th id="26">26</th><td><u>#   include <a href="../../../config.h.html">"config.h"</a></u></td></tr>
+<tr><th id="27">27</th><td><u>#<span data-ppcond="25">endif</span></u></td></tr>
+<tr><th id="28">28</th><td></td></tr>
+<tr><th id="29">29</th><td><u>#include &lt;stdint.h&gt;</u></td></tr>
+<tr><th id="30">30</th><td><u>#include <a href="../../../../include/assert.h.html">&lt;assert.h&gt;</a></u></td></tr>
+<tr><th id="31">31</th><td></td></tr>
+<tr><th id="32">32</th><td><u>#include <a href="../../../include/vlc_common.h.html">&lt;vlc_common.h&gt;</a></u></td></tr>
+<tr><th id="33">33</th><td><u>#include <a href="../../../include/vlc_cpu.h.html">&lt;vlc_cpu.h&gt;</a></u></td></tr>
+<tr><th id="34">34</th><td><u>#include <a href="../../../include/vlc_picture.h.html">&lt;vlc_picture.h&gt;</a></u></td></tr>
+<tr><th id="35">35</th><td><u>#include <a href="../../../include/vlc_filter.h.html">&lt;vlc_filter.h&gt;</a></u></td></tr>
+<tr><th id="36">36</th><td></td></tr>
+<tr><th id="37">37</th><td><u>#include <a href="deinterlace.h.html">"deinterlace.h"</a> /* filter_sys_t  */</u></td></tr>
+<tr><th id="38">38</th><td><u>#include <a href="common.h.html">"common.h"</a>      /* FFMIN3 et al. */</u></td></tr>
+<tr><th id="39">39</th><td></td></tr>
+<tr><th id="40">40</th><td><u>#include <a href="algo_yadif.h.html">"algo_yadif.h"</a></u></td></tr>
+<tr><th id="41">41</th><td></td></tr>
+<tr><th id="42">42</th><td><i>/*****************************************************************************</i></td></tr>
+<tr><th id="43">43</th><td><i> * Yadif (Yet Another DeInterlacing Filter).</i></td></tr>
+<tr><th id="44">44</th><td><i> *****************************************************************************/</i></td></tr>
+<tr><th id="45">45</th><td></td></tr>
+<tr><th id="46">46</th><td><i>/* yadif.h comes from yadif.c of FFmpeg project.</i></td></tr>
+<tr><th id="47">47</th><td><i>   Necessary preprocessor macros are defined in common.h. */</i></td></tr>
+<tr><th id="48">48</th><td><u>#include <a href="yadif.h.html">"yadif.h"</a></u></td></tr>
+<tr><th id="49">49</th><td></td></tr>
+<tr><th id="50">50</th><td><em>int</em> <dfn class="decl def" id="RenderYadif" title='RenderYadif' data-ref="RenderYadif">RenderYadif</dfn>( <a class="typedef" href="../../../include/vlc_common.h.html#filter_t" title='filter_t' data-type='struct filter_t' data-ref="filter_t">filter_t</a> *<dfn class="local col5 decl" id="95p_filter" title='p_filter' data-type='filter_t *' data-ref="95p_filter">p_filter</dfn>, <a class="typedef" href="../../../include/vlc_common.h.html#picture_t" title='picture_t' data-type='struct picture_t' data-ref="picture_t">picture_t</a> *<dfn class="local col6 decl" id="96p_dst" title='p_dst' data-type='picture_t *' data-ref="96p_dst">p_dst</dfn>, <a class="typedef" href="../../../include/vlc_common.h.html#picture_t" title='picture_t' data-type='struct picture_t' data-ref="picture_t">picture_t</a> *<dfn class="local col7 decl" id="97p_src" title='p_src' data-type='picture_t *' data-ref="97p_src">p_src</dfn>,</td></tr>
+<tr><th id="51">51</th><td>                 <em>int</em> <dfn class="local col8 decl" id="98i_order" title='i_order' data-type='int' data-ref="98i_order">i_order</dfn>, <em>int</em> <dfn class="local col9 decl" id="99i_field" title='i_field' data-type='int' data-ref="99i_field">i_field</dfn> )</td></tr>
+<tr><th id="52">52</th><td>{</td></tr>
+<tr><th id="53">53</th><td>    <a class="macro" href="../../../include/vlc_common.h.html#775" title="(void)(p_src)" data-ref="_M/VLC_UNUSED">VLC_UNUSED</a>(<a class="local col7 ref" href="#97p_src" title='p_src' data-ref="97p_src">p_src</a>);</td></tr>
+<tr><th id="54">54</th><td></td></tr>
+<tr><th id="55">55</th><td>    <a class="typedef" href="../../../include/vlc_common.h.html#filter_sys_t" title='filter_sys_t' data-type='struct filter_sys_t' data-ref="filter_sys_t">filter_sys_t</a> *<dfn class="local col0 decl" id="100p_sys" title='p_sys' data-type='filter_sys_t *' data-ref="100p_sys">p_sys</dfn> = <a class="local col5 ref" href="#95p_filter" title='p_filter' data-ref="95p_filter">p_filter</a>-&gt;<a class="ref" href="../../../include/vlc_filter.h.html#filter_t::p_sys" title='filter_t::p_sys' data-ref="filter_t::p_sys">p_sys</a>;</td></tr>
+<tr><th id="56">56</th><td></td></tr>
+<tr><th id="57">57</th><td>    <i>/* */</i></td></tr>
+<tr><th id="58">58</th><td>    <a class="macro" href="../../../../include/assert.h.html#88" title="((i_order &gt;= 0 &amp;&amp; i_order &lt;= 2) ? (void) (0) : __assert_fail (&quot;i_order &gt;= 0 &amp;&amp; i_order &lt;= 2&quot;, &quot;/usr/local/google/home/robertshih/git/vlc/modules/video_filter/deinterlace/algo_yadif.c&quot;, 58, __PRETTY_FUNCTION__))" data-ref="_M/assert">assert</a>( <a class="local col8 ref" href="#98i_order" title='i_order' data-ref="98i_order">i_order</a> &gt;= <var>0</var> &amp;&amp; <a class="local col8 ref" href="#98i_order" title='i_order' data-ref="98i_order">i_order</a> &lt;= <var>2</var> ); <i>/* 2 = soft field repeat */</i></td></tr>
+<tr><th id="59">59</th><td>    <a class="macro" href="../../../../include/assert.h.html#88" title="((i_field == 0 || i_field == 1) ? (void) (0) : __assert_fail (&quot;i_field == 0 || i_field == 1&quot;, &quot;/usr/local/google/home/robertshih/git/vlc/modules/video_filter/deinterlace/algo_yadif.c&quot;, 59, __PRETTY_FUNCTION__))" data-ref="_M/assert">assert</a>( <a class="local col9 ref" href="#99i_field" title='i_field' data-ref="99i_field">i_field</a> == <var>0</var> || <a class="local col9 ref" href="#99i_field" title='i_field' data-ref="99i_field">i_field</a> == <var>1</var> );</td></tr>
+<tr><th id="60">60</th><td></td></tr>
+<tr><th id="61">61</th><td>    <i>/* As the pitches must match, use ONLY pictures coming from picture_New()! */</i></td></tr>
+<tr><th id="62">62</th><td>    <a class="typedef" href="../../../include/vlc_common.h.html#picture_t" title='picture_t' data-type='struct picture_t' data-ref="picture_t">picture_t</a> *<dfn class="local col1 decl" id="101p_prev" title='p_prev' data-type='picture_t *' data-ref="101p_prev">p_prev</dfn> = <a class="local col0 ref" href="#100p_sys" title='p_sys' data-ref="100p_sys">p_sys</a>-&gt;<a class="ref" href="deinterlace.h.html#filter_sys_t::pp_history" title='filter_sys_t::pp_history' data-ref="filter_sys_t::pp_history">pp_history</a>[<var>0</var>];</td></tr>
+<tr><th id="63">63</th><td>    <a class="typedef" href="../../../include/vlc_common.h.html#picture_t" title='picture_t' data-type='struct picture_t' data-ref="picture_t">picture_t</a> *<dfn class="local col2 decl" id="102p_cur" title='p_cur' data-type='picture_t *' data-ref="102p_cur">p_cur</dfn>  = <a class="local col0 ref" href="#100p_sys" title='p_sys' data-ref="100p_sys">p_sys</a>-&gt;<a class="ref" href="deinterlace.h.html#filter_sys_t::pp_history" title='filter_sys_t::pp_history' data-ref="filter_sys_t::pp_history">pp_history</a>[<var>1</var>];</td></tr>
+<tr><th id="64">64</th><td>    <a class="typedef" href="../../../include/vlc_common.h.html#picture_t" title='picture_t' data-type='struct picture_t' data-ref="picture_t">picture_t</a> *<dfn class="local col3 decl" id="103p_next" title='p_next' data-type='picture_t *' data-ref="103p_next">p_next</dfn> = <a class="local col0 ref" href="#100p_sys" title='p_sys' data-ref="100p_sys">p_sys</a>-&gt;<a class="ref" href="deinterlace.h.html#filter_sys_t::pp_history" title='filter_sys_t::pp_history' data-ref="filter_sys_t::pp_history">pp_history</a>[<var>2</var>];</td></tr>
+<tr><th id="65">65</th><td></td></tr>
+<tr><th id="66">66</th><td>    <i>/* Account for soft field repeat.</i></td></tr>
+<tr><th id="67">67</th><td><i></i></td></tr>
+<tr><th id="68">68</th><td><i>       The "parity" parameter affects the algorithm like this (from yadif.h):</i></td></tr>
+<tr><th id="69">69</th><td><i>       uint8_t *prev2= parity ? prev : cur ;</i></td></tr>
+<tr><th id="70">70</th><td><i>       uint8_t *next2= parity ? cur  : next;</i></td></tr>
+<tr><th id="71">71</th><td><i></i></td></tr>
+<tr><th id="72">72</th><td><i>       The original parity expression that was used here is:</i></td></tr>
+<tr><th id="73">73</th><td><i>       (i_field ^ (i_order == i_field)) &amp; 1</i></td></tr>
+<tr><th id="74">74</th><td><i></i></td></tr>
+<tr><th id="75">75</th><td><i>       Truth table:</i></td></tr>
+<tr><th id="76">76</th><td><i>       i_field = 0, i_order = 0  =&gt; 1</i></td></tr>
+<tr><th id="77">77</th><td><i>       i_field = 1, i_order = 1  =&gt; 0</i></td></tr>
+<tr><th id="78">78</th><td><i>       i_field = 1, i_order = 0  =&gt; 1</i></td></tr>
+<tr><th id="79">79</th><td><i>       i_field = 0, i_order = 1  =&gt; 0</i></td></tr>
+<tr><th id="80">80</th><td><i></i></td></tr>
+<tr><th id="81">81</th><td><i>       =&gt; equivalent with e.g.  (1 - i_order)  or  (i_order + 1) % 2</i></td></tr>
+<tr><th id="82">82</th><td><i></i></td></tr>
+<tr><th id="83">83</th><td><i>       Thus, in a normal two-field frame,</i></td></tr>
+<tr><th id="84">84</th><td><i>             parity 1 = first field  (i_order == 0)</i></td></tr>
+<tr><th id="85">85</th><td><i>             parity 0 = second field (i_order == 1)</i></td></tr>
+<tr><th id="86">86</th><td><i></i></td></tr>
+<tr><th id="87">87</th><td><i>       Now, with three fields, where the third is a copy of the first,</i></td></tr>
+<tr><th id="88">88</th><td><i>             i_order = 0  =&gt;  parity 1 (as usual)</i></td></tr>
+<tr><th id="89">89</th><td><i>             i_order = 1  =&gt;  due to the repeat, prev = cur, but also next = cur.</i></td></tr>
+<tr><th id="90">90</th><td><i>                              Because in such a case there is no motion</i></td></tr>
+<tr><th id="91">91</th><td><i>                              (otherwise field repeat makes no sense),</i></td></tr>
+<tr><th id="92">92</th><td><i>                              we don't actually need to invoke Yadif's filter().</i></td></tr>
+<tr><th id="93">93</th><td><i>                              Thus, set "parity" to 2, and use this to bypass</i></td></tr>
+<tr><th id="94">94</th><td><i>                              the filter.</i></td></tr>
+<tr><th id="95">95</th><td><i>             i_order = 2  =&gt;  parity 0 (as usual)</i></td></tr>
+<tr><th id="96">96</th><td><i>    */</i></td></tr>
+<tr><th id="97">97</th><td>    <em>int</em> <dfn class="local col4 decl" id="104yadif_parity" title='yadif_parity' data-type='int' data-ref="104yadif_parity">yadif_parity</dfn>;</td></tr>
+<tr><th id="98">98</th><td>    <b>if</b>( <a class="local col2 ref" href="#102p_cur" title='p_cur' data-ref="102p_cur">p_cur</a>  &amp;&amp;  <a class="local col2 ref" href="#102p_cur" title='p_cur' data-ref="102p_cur">p_cur</a>-&gt;<a class="ref" href="../../../include/vlc_picture.h.html#picture_t::i_nb_fields" title='picture_t::i_nb_fields' data-ref="picture_t::i_nb_fields">i_nb_fields</a> &gt; <var>2</var> )</td></tr>
+<tr><th id="99">99</th><td>        <a class="local col4 ref" href="#104yadif_parity" title='yadif_parity' data-ref="104yadif_parity">yadif_parity</a> = (<a class="local col8 ref" href="#98i_order" title='i_order' data-ref="98i_order">i_order</a> + <var>1</var>) % <var>3</var>; <i>/* 1, *2*, 0; where 2 is a special</i></td></tr>
+<tr><th id="100">100</th><td><i>                                             value meaning "bypass filter". */</i></td></tr>
+<tr><th id="101">101</th><td>    <b>else</b></td></tr>
+<tr><th id="102">102</th><td>        <a class="local col4 ref" href="#104yadif_parity" title='yadif_parity' data-ref="104yadif_parity">yadif_parity</a> = (<a class="local col8 ref" href="#98i_order" title='i_order' data-ref="98i_order">i_order</a> + <var>1</var>) % <var>2</var>; <i>/* 1, 0 */</i></td></tr>
+<tr><th id="103">103</th><td></td></tr>
+<tr><th id="104">104</th><td>    <i>/* Filter if we have all the pictures we need */</i></td></tr>
+<tr><th id="105">105</th><td>    <b>if</b>( <a class="local col1 ref" href="#101p_prev" title='p_prev' data-ref="101p_prev">p_prev</a> &amp;&amp; <a class="local col2 ref" href="#102p_cur" title='p_cur' data-ref="102p_cur">p_cur</a> &amp;&amp; <a class="local col3 ref" href="#103p_next" title='p_next' data-ref="103p_next">p_next</a> )</td></tr>
+<tr><th id="106">106</th><td>    {</td></tr>
+<tr><th id="107">107</th><td>        <i>/* */</i></td></tr>
+<tr><th id="108">108</th><td>        <em>void</em> (*<dfn class="local col5 decl" id="105filter" title='filter' data-type='void (*)(uint8_t *, uint8_t *, uint8_t *, uint8_t *, int, int, int, int, int)' data-ref="105filter">filter</dfn>)(<a class="typedef" href="../../../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col6 decl" id="106dst" title='dst' data-type='uint8_t *' data-ref="106dst">dst</dfn>, <a class="typedef" href="../../../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col7 decl" id="107prev" title='prev' data-type='uint8_t *' data-ref="107prev">prev</dfn>, <a class="typedef" href="../../../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col8 decl" id="108cur" title='cur' data-type='uint8_t *' data-ref="108cur">cur</dfn>, <a class="typedef" href="../../../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col9 decl" id="109next" title='next' data-type='uint8_t *' data-ref="109next">next</dfn>,</td></tr>
+<tr><th id="109">109</th><td>                       <em>int</em> <dfn class="local col0 decl" id="110w" title='w' data-type='int' data-ref="110w">w</dfn>, <em>int</em> <dfn class="local col1 decl" id="111prefs" title='prefs' data-type='int' data-ref="111prefs">prefs</dfn>, <em>int</em> <dfn class="local col2 decl" id="112mrefs" title='mrefs' data-type='int' data-ref="112mrefs">mrefs</dfn>, <em>int</em> <dfn class="local col3 decl" id="113parity" title='parity' data-type='int' data-ref="113parity">parity</dfn>, <em>int</em> <dfn class="local col4 decl" id="114mode" title='mode' data-type='int' data-ref="114mode">mode</dfn>);</td></tr>
+<tr><th id="110">110</th><td></td></tr>
+<tr><th id="111">111</th><td><u>#<span data-ppcond="111">if</span> defined(<a class="macro" href="yadif.h.html#44" data-ref="_M/HAVE_YADIF_SSSE3">HAVE_YADIF_SSSE3</a>)</u></td></tr>
+<tr><th id="112">112</th><td>        <b>if</b>( <a class="macro" href="../../../include/vlc_cpu.h.html#89" title="((vlc_CPU() &amp; 0x00000200) != 0)" data-ref="_M/vlc_CPU_SSSE3">vlc_CPU_SSSE3</a>() )</td></tr>
+<tr><th id="113">113</th><td>            <a class="local col5 ref" href="#105filter" title='filter' data-ref="105filter">filter</a> = <a class="ref" href="yadif_template.h.html#124" title='yadif_filter_line_ssse3' data-ref="yadif_filter_line_ssse3">yadif_filter_line_ssse3</a>;</td></tr>
+<tr><th id="114">114</th><td>        <b>else</b></td></tr>
+<tr><th id="115">115</th><td><u>#<span data-ppcond="111">endif</span></u></td></tr>
+<tr><th id="116">116</th><td><u>#<span data-ppcond="116">if</span> defined(<a class="macro" href="yadif.h.html#60" data-ref="_M/HAVE_YADIF_SSE2">HAVE_YADIF_SSE2</a>)</u></td></tr>
+<tr><th id="117">117</th><td>        <b>if</b>( <a class="macro" href="../../../include/vlc_cpu.h.html#75" title="(1)" data-ref="_M/vlc_CPU_SSE2">vlc_CPU_SSE2</a>() )</td></tr>
+<tr><th id="118">118</th><td>            <a class="local col5 ref" href="#105filter" title='filter' data-ref="105filter">filter</a> = <a class="ref" href="yadif_template.h.html#124" title='yadif_filter_line_sse2' data-ref="yadif_filter_line_sse2">yadif_filter_line_sse2</a>;</td></tr>
+<tr><th id="119">119</th><td>        <b>else</b></td></tr>
+<tr><th id="120">120</th><td><u>#<span data-ppcond="116">endif</span></u></td></tr>
+<tr><th id="121">121</th><td><u>#<span data-ppcond="121">if</span> defined(<a class="macro" href="yadif.h.html#74" data-ref="_M/HAVE_YADIF_MMX">HAVE_YADIF_MMX</a>)</u></td></tr>
+<tr><th id="122">122</th><td>        <b>if</b>( <a class="macro" href="../../../include/vlc_cpu.h.html#49" title="(1)" data-ref="_M/vlc_CPU_MMX">vlc_CPU_MMX</a>() )</td></tr>
+<tr><th id="123">123</th><td>            <a class="local col5 ref" href="#105filter" title='filter' data-ref="105filter">filter</a> = <a class="ref" href="yadif_template.h.html#124" title='yadif_filter_line_mmx' data-ref="yadif_filter_line_mmx">yadif_filter_line_mmx</a>;</td></tr>
+<tr><th id="124">124</th><td>        <b>else</b></td></tr>
+<tr><th id="125">125</th><td><u>#<span data-ppcond="121">endif</span></u></td></tr>
+<tr><th id="126">126</th><td>            <a class="local col5 ref" href="#105filter" title='filter' data-ref="105filter">filter</a> = <a class="ref" href="yadif.h.html#yadif_filter_line_c" title='yadif_filter_line_c' data-ref="yadif_filter_line_c">yadif_filter_line_c</a>;</td></tr>
+<tr><th id="127">127</th><td></td></tr>
+<tr><th id="128">128</th><td>        <b>if</b>( <a class="local col0 ref" href="#100p_sys" title='p_sys' data-ref="100p_sys">p_sys</a>-&gt;<a class="ref" href="deinterlace.h.html#filter_sys_t::chroma" title='filter_sys_t::chroma' data-ref="filter_sys_t::chroma">chroma</a>-&gt;<a class="ref" href="../../../include/vlc_fourcc.h.html#{anonymous}::pixel_size" title='&lt;anonymous struct&gt;::pixel_size' data-ref="{anonymous}::pixel_size">pixel_size</a> == <var>2</var> )</td></tr>
+<tr><th id="129">129</th><td>            <a class="local col5 ref" href="#105filter" title='filter' data-ref="105filter">filter</a> <span class='warning' title="incompatible pointer types assigning to &apos;void (*)(uint8_t *, uint8_t *, uint8_t *, uint8_t *, int, int, int, int, int)&apos; from &apos;void (uint16_t *, uint16_t *, uint16_t *, uint16_t *, int, int, int, int, int)&apos;">=</span> <a class="ref" href="yadif.h.html#yadif_filter_line_c_16bit" title='yadif_filter_line_c_16bit' data-ref="yadif_filter_line_c_16bit">yadif_filter_line_c_16bit</a>;</td></tr>
+<tr><th id="130">130</th><td></td></tr>
+<tr><th id="131">131</th><td>        <b>for</b>( <em>int</em> <dfn class="local col5 decl" id="115n" title='n' data-type='int' data-ref="115n">n</dfn> = <var>0</var>; <a class="local col5 ref" href="#115n" title='n' data-ref="115n">n</a> &lt; <a class="local col6 ref" href="#96p_dst" title='p_dst' data-ref="96p_dst">p_dst</a>-&gt;<a class="ref" href="../../../include/vlc_picture.h.html#picture_t::i_planes" title='picture_t::i_planes' data-ref="picture_t::i_planes">i_planes</a>; <a class="local col5 ref" href="#115n" title='n' data-ref="115n">n</a>++ )</td></tr>
+<tr><th id="132">132</th><td>        {</td></tr>
+<tr><th id="133">133</th><td>            <em>const</em> <a class="typedef" href="../../../include/vlc_picture.h.html#plane_t" title='plane_t' data-type='struct plane_t' data-ref="plane_t">plane_t</a> *<dfn class="local col6 decl" id="116prevp" title='prevp' data-type='const plane_t *' data-ref="116prevp">prevp</dfn> = &amp;<a class="local col1 ref" href="#101p_prev" title='p_prev' data-ref="101p_prev">p_prev</a>-&gt;<a class="ref" href="../../../include/vlc_picture.h.html#picture_t::p" title='picture_t::p' data-ref="picture_t::p">p</a>[<a class="local col5 ref" href="#115n" title='n' data-ref="115n">n</a>];</td></tr>
+<tr><th id="134">134</th><td>            <em>const</em> <a class="typedef" href="../../../include/vlc_picture.h.html#plane_t" title='plane_t' data-type='struct plane_t' data-ref="plane_t">plane_t</a> *<dfn class="local col7 decl" id="117curp" title='curp' data-type='const plane_t *' data-ref="117curp">curp</dfn>  = &amp;<a class="local col2 ref" href="#102p_cur" title='p_cur' data-ref="102p_cur">p_cur</a>-&gt;<a class="ref" href="../../../include/vlc_picture.h.html#picture_t::p" title='picture_t::p' data-ref="picture_t::p">p</a>[<a class="local col5 ref" href="#115n" title='n' data-ref="115n">n</a>];</td></tr>
+<tr><th id="135">135</th><td>            <em>const</em> <a class="typedef" href="../../../include/vlc_picture.h.html#plane_t" title='plane_t' data-type='struct plane_t' data-ref="plane_t">plane_t</a> *<dfn class="local col8 decl" id="118nextp" title='nextp' data-type='const plane_t *' data-ref="118nextp">nextp</dfn> = &amp;<a class="local col3 ref" href="#103p_next" title='p_next' data-ref="103p_next">p_next</a>-&gt;<a class="ref" href="../../../include/vlc_picture.h.html#picture_t::p" title='picture_t::p' data-ref="picture_t::p">p</a>[<a class="local col5 ref" href="#115n" title='n' data-ref="115n">n</a>];</td></tr>
+<tr><th id="136">136</th><td>            <a class="typedef" href="../../../include/vlc_picture.h.html#plane_t" title='plane_t' data-type='struct plane_t' data-ref="plane_t">plane_t</a> *<dfn class="local col9 decl" id="119dstp" title='dstp' data-type='plane_t *' data-ref="119dstp">dstp</dfn>        = &amp;<a class="local col6 ref" href="#96p_dst" title='p_dst' data-ref="96p_dst">p_dst</a>-&gt;<a class="ref" href="../../../include/vlc_picture.h.html#picture_t::p" title='picture_t::p' data-ref="picture_t::p">p</a>[<a class="local col5 ref" href="#115n" title='n' data-ref="115n">n</a>];</td></tr>
+<tr><th id="137">137</th><td></td></tr>
+<tr><th id="138">138</th><td>            <b>for</b>( <em>int</em> <dfn class="local col0 decl" id="120y" title='y' data-type='int' data-ref="120y">y</dfn> = <var>1</var>; <a class="local col0 ref" href="#120y" title='y' data-ref="120y">y</a> &lt; <a class="local col9 ref" href="#119dstp" title='dstp' data-ref="119dstp">dstp</a>-&gt;<a class="ref" href="../../../include/vlc_picture.h.html#plane_t::i_visible_lines" title='plane_t::i_visible_lines' data-ref="plane_t::i_visible_lines">i_visible_lines</a> - <var>1</var>; <a class="local col0 ref" href="#120y" title='y' data-ref="120y">y</a>++ )</td></tr>
+<tr><th id="139">139</th><td>            {</td></tr>
+<tr><th id="140">140</th><td>                <b>if</b>( (<a class="local col0 ref" href="#120y" title='y' data-ref="120y">y</a> % <var>2</var>) == <a class="local col9 ref" href="#99i_field" title='i_field' data-ref="99i_field">i_field</a>  ||  <a class="local col4 ref" href="#104yadif_parity" title='yadif_parity' data-ref="104yadif_parity">yadif_parity</a> == <var>2</var> )</td></tr>
+<tr><th id="141">141</th><td>                {</td></tr>
+<tr><th id="142">142</th><td>                    <a class="ref" href="../../../../include/string.h.html#memcpy" title='memcpy' data-ref="memcpy">memcpy</a>( &amp;<a class="local col9 ref" href="#119dstp" title='dstp' data-ref="119dstp">dstp</a>-&gt;<a class="ref" href="../../../include/vlc_picture.h.html#plane_t::p_pixels" title='plane_t::p_pixels' data-ref="plane_t::p_pixels">p_pixels</a>[<a class="local col0 ref" href="#120y" title='y' data-ref="120y">y</a> * <a class="local col9 ref" href="#119dstp" title='dstp' data-ref="119dstp">dstp</a>-&gt;<a class="ref" href="../../../include/vlc_picture.h.html#plane_t::i_pitch" title='plane_t::i_pitch' data-ref="plane_t::i_pitch">i_pitch</a>],</td></tr>
+<tr><th id="143">143</th><td>                                &amp;<a class="local col7 ref" href="#117curp" title='curp' data-ref="117curp">curp</a>-&gt;<a class="ref" href="../../../include/vlc_picture.h.html#plane_t::p_pixels" title='plane_t::p_pixels' data-ref="plane_t::p_pixels">p_pixels</a>[<a class="local col0 ref" href="#120y" title='y' data-ref="120y">y</a> * <a class="local col7 ref" href="#117curp" title='curp' data-ref="117curp">curp</a>-&gt;<a class="ref" href="../../../include/vlc_picture.h.html#plane_t::i_pitch" title='plane_t::i_pitch' data-ref="plane_t::i_pitch">i_pitch</a>], <a class="local col9 ref" href="#119dstp" title='dstp' data-ref="119dstp">dstp</a>-&gt;<a class="ref" href="../../../include/vlc_picture.h.html#plane_t::i_visible_pitch" title='plane_t::i_visible_pitch' data-ref="plane_t::i_visible_pitch">i_visible_pitch</a> );</td></tr>
+<tr><th id="144">144</th><td>                }</td></tr>
+<tr><th id="145">145</th><td>                <b>else</b></td></tr>
+<tr><th id="146">146</th><td>                {</td></tr>
+<tr><th id="147">147</th><td>                    <em>int</em> <dfn class="local col1 decl" id="121mode" title='mode' data-type='int' data-ref="121mode">mode</dfn>;</td></tr>
+<tr><th id="148">148</th><td>                    <i>/* Spatial checks only when enough data */</i></td></tr>
+<tr><th id="149">149</th><td>                    <a class="local col1 ref" href="#121mode" title='mode' data-ref="121mode">mode</a> = (<a class="local col0 ref" href="#120y" title='y' data-ref="120y">y</a> &gt;= <var>2</var> &amp;&amp; <a class="local col0 ref" href="#120y" title='y' data-ref="120y">y</a> &lt; <a class="local col9 ref" href="#119dstp" title='dstp' data-ref="119dstp">dstp</a>-&gt;<a class="ref" href="../../../include/vlc_picture.h.html#plane_t::i_visible_lines" title='plane_t::i_visible_lines' data-ref="plane_t::i_visible_lines">i_visible_lines</a> - <var>2</var>) ? <var>0</var> : <var>2</var>;</td></tr>
+<tr><th id="150">150</th><td></td></tr>
+<tr><th id="151">151</th><td>                    <a class="macro" href="../../../../include/assert.h.html#88" title="((prevp-&gt;i_pitch == curp-&gt;i_pitch &amp;&amp; curp-&gt;i_pitch == nextp-&gt;i_pitch) ? (void) (0) : __assert_fail (&quot;prevp-&gt;i_pitch == curp-&gt;i_pitch &amp;&amp; curp-&gt;i_pitch == nextp-&gt;i_pitch&quot;, &quot;/usr/local/google/home/robertshih/git/vlc/modules/video_filter/deinterlace/algo_yadif.c&quot;, 151, __PRETTY_FUNCTION__))" data-ref="_M/assert">assert</a>( <a class="local col6 ref" href="#116prevp" title='prevp' data-ref="116prevp">prevp</a>-&gt;<a class="ref" href="../../../include/vlc_picture.h.html#plane_t::i_pitch" title='plane_t::i_pitch' data-ref="plane_t::i_pitch">i_pitch</a> == <a class="local col7 ref" href="#117curp" title='curp' data-ref="117curp">curp</a>-&gt;<a class="ref" href="../../../include/vlc_picture.h.html#plane_t::i_pitch" title='plane_t::i_pitch' data-ref="plane_t::i_pitch">i_pitch</a> &amp;&amp; <a class="local col7 ref" href="#117curp" title='curp' data-ref="117curp">curp</a>-&gt;<a class="ref" href="../../../include/vlc_picture.h.html#plane_t::i_pitch" title='plane_t::i_pitch' data-ref="plane_t::i_pitch">i_pitch</a> == <a class="local col8 ref" href="#118nextp" title='nextp' data-ref="118nextp">nextp</a>-&gt;<a class="ref" href="../../../include/vlc_picture.h.html#plane_t::i_pitch" title='plane_t::i_pitch' data-ref="plane_t::i_pitch">i_pitch</a> );</td></tr>
+<tr><th id="152">152</th><td>                    <a class="local col5 ref" href="#105filter" title='filter' data-ref="105filter">filter</a>( &amp;<a class="local col9 ref" href="#119dstp" title='dstp' data-ref="119dstp">dstp</a>-&gt;<a class="ref" href="../../../include/vlc_picture.h.html#plane_t::p_pixels" title='plane_t::p_pixels' data-ref="plane_t::p_pixels">p_pixels</a>[<a class="local col0 ref" href="#120y" title='y' data-ref="120y">y</a> * <a class="local col9 ref" href="#119dstp" title='dstp' data-ref="119dstp">dstp</a>-&gt;<a class="ref" href="../../../include/vlc_picture.h.html#plane_t::i_pitch" title='plane_t::i_pitch' data-ref="plane_t::i_pitch">i_pitch</a>],</td></tr>
+<tr><th id="153">153</th><td>                            &amp;<a class="local col6 ref" href="#116prevp" title='prevp' data-ref="116prevp">prevp</a>-&gt;<a class="ref" href="../../../include/vlc_picture.h.html#plane_t::p_pixels" title='plane_t::p_pixels' data-ref="plane_t::p_pixels">p_pixels</a>[<a class="local col0 ref" href="#120y" title='y' data-ref="120y">y</a> * <a class="local col6 ref" href="#116prevp" title='prevp' data-ref="116prevp">prevp</a>-&gt;<a class="ref" href="../../../include/vlc_picture.h.html#plane_t::i_pitch" title='plane_t::i_pitch' data-ref="plane_t::i_pitch">i_pitch</a>],</td></tr>
+<tr><th id="154">154</th><td>                            &amp;<a class="local col7 ref" href="#117curp" title='curp' data-ref="117curp">curp</a>-&gt;<a class="ref" href="../../../include/vlc_picture.h.html#plane_t::p_pixels" title='plane_t::p_pixels' data-ref="plane_t::p_pixels">p_pixels</a>[<a class="local col0 ref" href="#120y" title='y' data-ref="120y">y</a> * <a class="local col7 ref" href="#117curp" title='curp' data-ref="117curp">curp</a>-&gt;<a class="ref" href="../../../include/vlc_picture.h.html#plane_t::i_pitch" title='plane_t::i_pitch' data-ref="plane_t::i_pitch">i_pitch</a>],</td></tr>
+<tr><th id="155">155</th><td>                            &amp;<a class="local col8 ref" href="#118nextp" title='nextp' data-ref="118nextp">nextp</a>-&gt;<a class="ref" href="../../../include/vlc_picture.h.html#plane_t::p_pixels" title='plane_t::p_pixels' data-ref="plane_t::p_pixels">p_pixels</a>[<a class="local col0 ref" href="#120y" title='y' data-ref="120y">y</a> * <a class="local col8 ref" href="#118nextp" title='nextp' data-ref="118nextp">nextp</a>-&gt;<a class="ref" href="../../../include/vlc_picture.h.html#plane_t::i_pitch" title='plane_t::i_pitch' data-ref="plane_t::i_pitch">i_pitch</a>],</td></tr>
+<tr><th id="156">156</th><td>                            <a class="local col9 ref" href="#119dstp" title='dstp' data-ref="119dstp">dstp</a>-&gt;<a class="ref" href="../../../include/vlc_picture.h.html#plane_t::i_visible_pitch" title='plane_t::i_visible_pitch' data-ref="plane_t::i_visible_pitch">i_visible_pitch</a>,</td></tr>
+<tr><th id="157">157</th><td>                            <a class="local col0 ref" href="#120y" title='y' data-ref="120y">y</a> &lt; <a class="local col9 ref" href="#119dstp" title='dstp' data-ref="119dstp">dstp</a>-&gt;<a class="ref" href="../../../include/vlc_picture.h.html#plane_t::i_visible_lines" title='plane_t::i_visible_lines' data-ref="plane_t::i_visible_lines">i_visible_lines</a> - <var>2</var>  ? <a class="local col7 ref" href="#117curp" title='curp' data-ref="117curp">curp</a>-&gt;<a class="ref" href="../../../include/vlc_picture.h.html#plane_t::i_pitch" title='plane_t::i_pitch' data-ref="plane_t::i_pitch">i_pitch</a> : -<a class="local col7 ref" href="#117curp" title='curp' data-ref="117curp">curp</a>-&gt;<a class="ref" href="../../../include/vlc_picture.h.html#plane_t::i_pitch" title='plane_t::i_pitch' data-ref="plane_t::i_pitch">i_pitch</a>,</td></tr>
+<tr><th id="158">158</th><td>                            <a class="local col0 ref" href="#120y" title='y' data-ref="120y">y</a>  - <var>1</var>  ?  -<a class="local col7 ref" href="#117curp" title='curp' data-ref="117curp">curp</a>-&gt;<a class="ref" href="../../../include/vlc_picture.h.html#plane_t::i_pitch" title='plane_t::i_pitch' data-ref="plane_t::i_pitch">i_pitch</a> : <a class="local col7 ref" href="#117curp" title='curp' data-ref="117curp">curp</a>-&gt;<a class="ref" href="../../../include/vlc_picture.h.html#plane_t::i_pitch" title='plane_t::i_pitch' data-ref="plane_t::i_pitch">i_pitch</a>,</td></tr>
+<tr><th id="159">159</th><td>                            <a class="local col4 ref" href="#104yadif_parity" title='yadif_parity' data-ref="104yadif_parity">yadif_parity</a>,</td></tr>
+<tr><th id="160">160</th><td>                            <a class="local col1 ref" href="#121mode" title='mode' data-ref="121mode">mode</a> );</td></tr>
+<tr><th id="161">161</th><td>                }</td></tr>
+<tr><th id="162">162</th><td></td></tr>
+<tr><th id="163">163</th><td>                <i>/* We duplicate the first and last lines */</i></td></tr>
+<tr><th id="164">164</th><td>                <b>if</b>( <a class="local col0 ref" href="#120y" title='y' data-ref="120y">y</a> == <var>1</var> )</td></tr>
+<tr><th id="165">165</th><td>                    <a class="ref" href="../../../../include/string.h.html#memcpy" title='memcpy' data-ref="memcpy">memcpy</a>(&amp;<a class="local col9 ref" href="#119dstp" title='dstp' data-ref="119dstp">dstp</a>-&gt;<a class="ref" href="../../../include/vlc_picture.h.html#plane_t::p_pixels" title='plane_t::p_pixels' data-ref="plane_t::p_pixels">p_pixels</a>[(<a class="local col0 ref" href="#120y" title='y' data-ref="120y">y</a>-<var>1</var>) * <a class="local col9 ref" href="#119dstp" title='dstp' data-ref="119dstp">dstp</a>-&gt;<a class="ref" href="../../../include/vlc_picture.h.html#plane_t::i_pitch" title='plane_t::i_pitch' data-ref="plane_t::i_pitch">i_pitch</a>],</td></tr>
+<tr><th id="166">166</th><td>                               &amp;<a class="local col9 ref" href="#119dstp" title='dstp' data-ref="119dstp">dstp</a>-&gt;<a class="ref" href="../../../include/vlc_picture.h.html#plane_t::p_pixels" title='plane_t::p_pixels' data-ref="plane_t::p_pixels">p_pixels</a>[ <a class="local col0 ref" href="#120y" title='y' data-ref="120y">y</a>    * <a class="local col9 ref" href="#119dstp" title='dstp' data-ref="119dstp">dstp</a>-&gt;<a class="ref" href="../../../include/vlc_picture.h.html#plane_t::i_pitch" title='plane_t::i_pitch' data-ref="plane_t::i_pitch">i_pitch</a>],</td></tr>
+<tr><th id="167">167</th><td>                               <a class="local col9 ref" href="#119dstp" title='dstp' data-ref="119dstp">dstp</a>-&gt;<a class="ref" href="../../../include/vlc_picture.h.html#plane_t::i_pitch" title='plane_t::i_pitch' data-ref="plane_t::i_pitch">i_pitch</a>);</td></tr>
+<tr><th id="168">168</th><td>                <b>else</b> <b>if</b>( <a class="local col0 ref" href="#120y" title='y' data-ref="120y">y</a> == <a class="local col9 ref" href="#119dstp" title='dstp' data-ref="119dstp">dstp</a>-&gt;<a class="ref" href="../../../include/vlc_picture.h.html#plane_t::i_visible_lines" title='plane_t::i_visible_lines' data-ref="plane_t::i_visible_lines">i_visible_lines</a> - <var>2</var> )</td></tr>
+<tr><th id="169">169</th><td>                    <a class="ref" href="../../../../include/string.h.html#memcpy" title='memcpy' data-ref="memcpy">memcpy</a>(&amp;<a class="local col9 ref" href="#119dstp" title='dstp' data-ref="119dstp">dstp</a>-&gt;<a class="ref" href="../../../include/vlc_picture.h.html#plane_t::p_pixels" title='plane_t::p_pixels' data-ref="plane_t::p_pixels">p_pixels</a>[(<a class="local col0 ref" href="#120y" title='y' data-ref="120y">y</a>+<var>1</var>) * <a class="local col9 ref" href="#119dstp" title='dstp' data-ref="119dstp">dstp</a>-&gt;<a class="ref" href="../../../include/vlc_picture.h.html#plane_t::i_pitch" title='plane_t::i_pitch' data-ref="plane_t::i_pitch">i_pitch</a>],</td></tr>
+<tr><th id="170">170</th><td>                               &amp;<a class="local col9 ref" href="#119dstp" title='dstp' data-ref="119dstp">dstp</a>-&gt;<a class="ref" href="../../../include/vlc_picture.h.html#plane_t::p_pixels" title='plane_t::p_pixels' data-ref="plane_t::p_pixels">p_pixels</a>[ <a class="local col0 ref" href="#120y" title='y' data-ref="120y">y</a>    * <a class="local col9 ref" href="#119dstp" title='dstp' data-ref="119dstp">dstp</a>-&gt;<a class="ref" href="../../../include/vlc_picture.h.html#plane_t::i_pitch" title='plane_t::i_pitch' data-ref="plane_t::i_pitch">i_pitch</a>],</td></tr>
+<tr><th id="171">171</th><td>                               <a class="local col9 ref" href="#119dstp" title='dstp' data-ref="119dstp">dstp</a>-&gt;<a class="ref" href="../../../include/vlc_picture.h.html#plane_t::i_pitch" title='plane_t::i_pitch' data-ref="plane_t::i_pitch">i_pitch</a>);</td></tr>
+<tr><th id="172">172</th><td>            }</td></tr>
+<tr><th id="173">173</th><td>        }</td></tr>
+<tr><th id="174">174</th><td></td></tr>
+<tr><th id="175">175</th><td>        <a class="local col0 ref" href="#100p_sys" title='p_sys' data-ref="100p_sys">p_sys</a>-&gt;<a class="ref" href="deinterlace.h.html#filter_sys_t::i_frame_offset" title='filter_sys_t::i_frame_offset' data-ref="filter_sys_t::i_frame_offset">i_frame_offset</a> = <var>1</var>; <i>/* p_cur will be rendered at next frame, too */</i></td></tr>
+<tr><th id="176">176</th><td></td></tr>
+<tr><th id="177">177</th><td>        <b>return</b> <a class="macro" href="../../../include/vlc_common.h.html#374" title="(-0)" data-ref="_M/VLC_SUCCESS">VLC_SUCCESS</a>;</td></tr>
+<tr><th id="178">178</th><td>    }</td></tr>
+<tr><th id="179">179</th><td>    <b>else</b> <b>if</b>( !<a class="local col1 ref" href="#101p_prev" title='p_prev' data-ref="101p_prev">p_prev</a> &amp;&amp; !<a class="local col2 ref" href="#102p_cur" title='p_cur' data-ref="102p_cur">p_cur</a> &amp;&amp; <a class="local col3 ref" href="#103p_next" title='p_next' data-ref="103p_next">p_next</a> )</td></tr>
+<tr><th id="180">180</th><td>    {</td></tr>
+<tr><th id="181">181</th><td>        <i>/* NOTE: For the first frame, we use the default frame offset</i></td></tr>
+<tr><th id="182">182</th><td><i>                 as set by Open() or SetFilterMethod(). It is always 0. */</i></td></tr>
+<tr><th id="183">183</th><td></td></tr>
+<tr><th id="184">184</th><td>        <i>/* FIXME not good as it does not use i_order/i_field */</i></td></tr>
+<tr><th id="185">185</th><td>        <a class="ref" href="algo_x.h.html#RenderX" title='RenderX' data-ref="RenderX">RenderX</a>( <a class="local col6 ref" href="#96p_dst" title='p_dst' data-ref="96p_dst">p_dst</a>, <a class="local col3 ref" href="#103p_next" title='p_next' data-ref="103p_next">p_next</a> );</td></tr>
+<tr><th id="186">186</th><td>        <b>return</b> <a class="macro" href="../../../include/vlc_common.h.html#374" title="(-0)" data-ref="_M/VLC_SUCCESS">VLC_SUCCESS</a>;</td></tr>
+<tr><th id="187">187</th><td>    }</td></tr>
+<tr><th id="188">188</th><td>    <b>else</b></td></tr>
+<tr><th id="189">189</th><td>    {</td></tr>
+<tr><th id="190">190</th><td>        <a class="local col0 ref" href="#100p_sys" title='p_sys' data-ref="100p_sys">p_sys</a>-&gt;<a class="ref" href="deinterlace.h.html#filter_sys_t::i_frame_offset" title='filter_sys_t::i_frame_offset' data-ref="filter_sys_t::i_frame_offset">i_frame_offset</a> = <var>1</var>; <i>/* p_cur will be rendered at next frame */</i></td></tr>
+<tr><th id="191">191</th><td></td></tr>
+<tr><th id="192">192</th><td>        <b>return</b> <a class="macro" href="../../../include/vlc_common.h.html#375" title="(-1)" data-ref="_M/VLC_EGENERIC">VLC_EGENERIC</a>;</td></tr>
+<tr><th id="193">193</th><td>    }</td></tr>
+<tr><th id="194">194</th><td>}</td></tr>
+<tr><th id="195">195</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project vlc revision <em>2.2.0-git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

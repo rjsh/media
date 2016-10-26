@@ -1,0 +1,201 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>eject.c source code [vlc/modules/gui/eject.c] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'vlc/modules/gui/eject.c'; var root_path = '../../..'; var data_path = '../../../../data';</script>
+<script src='../../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='../..'>vlc</a>/<a href='..'>modules</a>/<a href='./'>gui</a>/<a href='eject.c.html'>eject.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*****************************************************************************</i></td></tr>
+<tr><th id="2">2</th><td><i> * eject.c: CD/DVD-ROM ejection handling functions</i></td></tr>
+<tr><th id="3">3</th><td><i> *****************************************************************************</i></td></tr>
+<tr><th id="4">4</th><td><i> * Copyright (C) 2001-2011 the VideoLAN team</i></td></tr>
+<tr><th id="5">5</th><td><i> *</i></td></tr>
+<tr><th id="6">6</th><td><i> * Authors: Julien Blache &lt;jb@technologeek.org&gt; for the Linux part</i></td></tr>
+<tr><th id="7">7</th><td><i> *                with code taken from the Linux "eject" command</i></td></tr>
+<tr><th id="8">8</th><td><i> *          Jon Lech Johansen &lt;jon-vl@nanocrew.net&gt; for Darwin</i></td></tr>
+<tr><th id="9">9</th><td><i> *          Gildas Bazin &lt;gbazin@netcourrier.com&gt; for Win32</i></td></tr>
+<tr><th id="10">10</th><td><i> *</i></td></tr>
+<tr><th id="11">11</th><td><i> * This program is free software; you can redistribute it and/or modify</i></td></tr>
+<tr><th id="12">12</th><td><i> * it under the terms of the GNU General Public License as published by</i></td></tr>
+<tr><th id="13">13</th><td><i> * the Free Software Foundation; either version 2 of the License, or</i></td></tr>
+<tr><th id="14">14</th><td><i> * (at your option) any later version.</i></td></tr>
+<tr><th id="15">15</th><td><i> *</i></td></tr>
+<tr><th id="16">16</th><td><i> * This program is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="17">17</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="18">18</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the</i></td></tr>
+<tr><th id="19">19</th><td><i> * GNU General Public License for more details.</i></td></tr>
+<tr><th id="20">20</th><td><i> *</i></td></tr>
+<tr><th id="21">21</th><td><i> * You should have received a copy of the GNU General Public License</i></td></tr>
+<tr><th id="22">22</th><td><i> * along with this program; if not, write to the Free Software</i></td></tr>
+<tr><th id="23">23</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.</i></td></tr>
+<tr><th id="24">24</th><td><i> *****************************************************************************/</i></td></tr>
+<tr><th id="25">25</th><td></td></tr>
+<tr><th id="26">26</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="27">27</th><td><i class="doc"> * <span class="command"> \file</span></i></td></tr>
+<tr><th id="28">28</th><td><i class="doc"> *  This file contain functions to eject CD and DVD drives</i></td></tr>
+<tr><th id="29">29</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="30">30</th><td></td></tr>
+<tr><th id="31">31</th><td><i>/*#ifdef HAVE_CONFIG_H</i></td></tr>
+<tr><th id="32">32</th><td><i># include "config.h"</i></td></tr>
+<tr><th id="33">33</th><td><i>#endif*/</i></td></tr>
+<tr><th id="34">34</th><td></td></tr>
+<tr><th id="35">35</th><td><u>#include <a href="../../include/vlc_common.h.html">&lt;vlc_common.h&gt;</a></u></td></tr>
+<tr><th id="36">36</th><td><u>#include <a href="../../include/vlc_fs.h.html">&lt;vlc_fs.h&gt;</a></u></td></tr>
+<tr><th id="37">37</th><td><u>#include <a href="../../include/vlc_charset.h.html">&lt;vlc_charset.h&gt;</a></u></td></tr>
+<tr><th id="38">38</th><td></td></tr>
+<tr><th id="39">39</th><td><u>#<span data-ppcond="39">if</span> defined( <span class="macro" data-ref="_M/_WIN32">_WIN32</span> )</u></td></tr>
+<tr><th id="40">40</th><td><u>#   include &lt;mmsystem.h&gt;</u></td></tr>
+<tr><th id="41">41</th><td><u>#<span data-ppcond="39">elif</span> defined(<span class="macro" data-ref="_M/__linux__">__linux__</span>)</u></td></tr>
+<tr><th id="42">42</th><td><u>#   include <a href="../../../include/x86_64-linux-gnu/sys/types.h.html">&lt;sys/types.h&gt;</a></u></td></tr>
+<tr><th id="43">43</th><td><u>#   include <a href="../../../include/unistd.h.html">&lt;unistd.h&gt;</a></u></td></tr>
+<tr><th id="44">44</th><td><u>#   include <a href="../../../include/fcntl.h.html">&lt;fcntl.h&gt;</a></u></td></tr>
+<tr><th id="45">45</th><td><u>#   include <a href="../../../include/x86_64-linux-gnu/sys/ioctl.h.html">&lt;sys/ioctl.h&gt;</a></u></td></tr>
+<tr><th id="46">46</th><td><u>#   include <a href="../../../include/x86_64-linux-gnu/sys/mount.h.html">&lt;sys/mount.h&gt;</a></u></td></tr>
+<tr><th id="47">47</th><td></td></tr>
+<tr><th id="48">48</th><td><u>#   include <a href="../../../include/linux/cdrom.h.html">&lt;linux/cdrom.h&gt;</a></u></td></tr>
+<tr><th id="49">49</th><td></td></tr>
+<tr><th id="50">50</th><td><u>#   include <a href="../../../include/scsi/scsi.h.html">&lt;scsi/scsi.h&gt;</a></u></td></tr>
+<tr><th id="51">51</th><td><u>#   include <a href="../../../include/scsi/sg.h.html">&lt;scsi/sg.h&gt;</a></u></td></tr>
+<tr><th id="52">52</th><td><u>#   include <a href="../../../include/scsi/scsi_ioctl.h.html">&lt;scsi/scsi_ioctl.h&gt;</a></u></td></tr>
+<tr><th id="53">53</th><td><u>#<span data-ppcond="39">elif</span> defined (HAVE_DVD_H)</u></td></tr>
+<tr><th id="54">54</th><td><u>#   include &lt;unistd.h&gt;</u></td></tr>
+<tr><th id="55">55</th><td><u>#   include &lt;fcntl.h&gt;</u></td></tr>
+<tr><th id="56">56</th><td><u>#   include &lt;dvd.h&gt;</u></td></tr>
+<tr><th id="57">57</th><td><u>#<span data-ppcond="39">endif</span></u></td></tr>
+<tr><th id="58">58</th><td></td></tr>
+<tr><th id="59">59</th><td><u>#<span data-ppcond="59">if</span> defined(<span class="macro" data-ref="_M/__linux__">__linux__</span>)</u></td></tr>
+<tr><th id="60">60</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="61">61</th><td><i class="doc"> * <span class="command">\brief</span> Ejects the CD /DVD using SCSI commands</i></td></tr>
+<tr><th id="62">62</th><td><i class="doc"> * <span class="command">\ingroup</span> <span class="verb">vlc_interface</span></i></td></tr>
+<tr><th id="63">63</th><td><i class="doc"> * This function is local</i></td></tr>
+<tr><th id="64">64</th><td><i class="doc"> * <span class="command">\param</span> <span class="arg">i_fd</span> a device nummber</i></td></tr>
+<tr><th id="65">65</th><td><i class="doc"> * <span class="command">\return</span> 0 on success, VLC_EGENERIC on failure</i></td></tr>
+<tr><th id="66">66</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="67">67</th><td><em>static</em> <em>int</em> <dfn class="decl def" id="EjectSCSI" title='EjectSCSI' data-ref="EjectSCSI">EjectSCSI</dfn>( <em>int</em> <dfn class="local col1 decl" id="1i_fd" title='i_fd' data-type='int' data-ref="1i_fd">i_fd</dfn> )</td></tr>
+<tr><th id="68">68</th><td>{</td></tr>
+<tr><th id="69">69</th><td>    <b>struct</b> <dfn class="local col2 type" id="2sdata" title='sdata' data-ref="2sdata"><a class="local col2 type" href="#2sdata" title='sdata' data-ref="2sdata">sdata</a></dfn></td></tr>
+<tr><th id="70">70</th><td>    {</td></tr>
+<tr><th id="71">71</th><td>        <em>int</em>  <dfn class="local col3 decl" id="3inlen" title='inlen' data-type='int' data-ref="3inlen">inlen</dfn>;</td></tr>
+<tr><th id="72">72</th><td>        <em>int</em>  <dfn class="local col4 decl" id="4outlen" title='outlen' data-type='int' data-ref="4outlen">outlen</dfn>;</td></tr>
+<tr><th id="73">73</th><td>        <em>char</em> <dfn class="local col5 decl" id="5cmd" title='cmd' data-type='char [256]' data-ref="5cmd">cmd</dfn>[<var>256</var>];</td></tr>
+<tr><th id="74">74</th><td>    } <dfn class="local col6 decl" id="6scsi_cmd" title='scsi_cmd' data-type='struct sdata' data-ref="6scsi_cmd">scsi_cmd</dfn>;</td></tr>
+<tr><th id="75">75</th><td></td></tr>
+<tr><th id="76">76</th><td>    <a class="local col6 ref" href="#6scsi_cmd" title='scsi_cmd' data-ref="6scsi_cmd">scsi_cmd</a>.<a class="local col3 ref" href="#3inlen" title='inlen' data-ref="3inlen">inlen</a>  = <var>0</var>;</td></tr>
+<tr><th id="77">77</th><td>    <a class="local col6 ref" href="#6scsi_cmd" title='scsi_cmd' data-ref="6scsi_cmd">scsi_cmd</a>.<a class="local col4 ref" href="#4outlen" title='outlen' data-ref="4outlen">outlen</a> = <var>0</var>;</td></tr>
+<tr><th id="78">78</th><td>    <a class="local col6 ref" href="#6scsi_cmd" title='scsi_cmd' data-ref="6scsi_cmd">scsi_cmd</a>.<a class="local col5 ref" href="#5cmd" title='cmd' data-ref="5cmd">cmd</a>[<var>0</var>] = <a class="macro" href="../../../include/scsi/scsi.h.html#55" title="0x1e" data-ref="_M/ALLOW_MEDIUM_REMOVAL">ALLOW_MEDIUM_REMOVAL</a>;</td></tr>
+<tr><th id="79">79</th><td>    <a class="local col6 ref" href="#6scsi_cmd" title='scsi_cmd' data-ref="6scsi_cmd">scsi_cmd</a>.<a class="local col5 ref" href="#5cmd" title='cmd' data-ref="5cmd">cmd</a>[<var>1</var>] = <var>0</var>;</td></tr>
+<tr><th id="80">80</th><td>    <a class="local col6 ref" href="#6scsi_cmd" title='scsi_cmd' data-ref="6scsi_cmd">scsi_cmd</a>.<a class="local col5 ref" href="#5cmd" title='cmd' data-ref="5cmd">cmd</a>[<var>2</var>] = <var>0</var>;</td></tr>
+<tr><th id="81">81</th><td>    <a class="local col6 ref" href="#6scsi_cmd" title='scsi_cmd' data-ref="6scsi_cmd">scsi_cmd</a>.<a class="local col5 ref" href="#5cmd" title='cmd' data-ref="5cmd">cmd</a>[<var>3</var>] = <var>0</var>;</td></tr>
+<tr><th id="82">82</th><td>    <a class="local col6 ref" href="#6scsi_cmd" title='scsi_cmd' data-ref="6scsi_cmd">scsi_cmd</a>.<a class="local col5 ref" href="#5cmd" title='cmd' data-ref="5cmd">cmd</a>[<var>4</var>] = <var>0</var>;</td></tr>
+<tr><th id="83">83</th><td>    <a class="local col6 ref" href="#6scsi_cmd" title='scsi_cmd' data-ref="6scsi_cmd">scsi_cmd</a>.<a class="local col5 ref" href="#5cmd" title='cmd' data-ref="5cmd">cmd</a>[<var>5</var>] = <var>0</var>;</td></tr>
+<tr><th id="84">84</th><td>    <b>if</b>( <a class="ref" href="../../../include/x86_64-linux-gnu/sys/ioctl.h.html#ioctl" title='ioctl' data-ref="ioctl">ioctl</a>( <a class="local col1 ref" href="#1i_fd" title='i_fd' data-ref="1i_fd">i_fd</a>, <a class="macro" href="../../../include/scsi/scsi_ioctl.h.html#22" title="1" data-ref="_M/SCSI_IOCTL_SEND_COMMAND">SCSI_IOCTL_SEND_COMMAND</a>, (<em>void</em> *)&amp;<a class="local col6 ref" href="#6scsi_cmd" title='scsi_cmd' data-ref="6scsi_cmd">scsi_cmd</a> ) &lt; <var>0</var> )</td></tr>
+<tr><th id="85">85</th><td>        <b>return</b> <a class="macro" href="../../include/vlc_common.h.html#375" title="(-1)" data-ref="_M/VLC_EGENERIC">VLC_EGENERIC</a>;</td></tr>
+<tr><th id="86">86</th><td></td></tr>
+<tr><th id="87">87</th><td>    <a class="local col6 ref" href="#6scsi_cmd" title='scsi_cmd' data-ref="6scsi_cmd">scsi_cmd</a>.<a class="local col3 ref" href="#3inlen" title='inlen' data-ref="3inlen">inlen</a>  = <var>0</var>;</td></tr>
+<tr><th id="88">88</th><td>    <a class="local col6 ref" href="#6scsi_cmd" title='scsi_cmd' data-ref="6scsi_cmd">scsi_cmd</a>.<a class="local col4 ref" href="#4outlen" title='outlen' data-ref="4outlen">outlen</a> = <var>0</var>;</td></tr>
+<tr><th id="89">89</th><td>    <a class="local col6 ref" href="#6scsi_cmd" title='scsi_cmd' data-ref="6scsi_cmd">scsi_cmd</a>.<a class="local col5 ref" href="#5cmd" title='cmd' data-ref="5cmd">cmd</a>[<var>0</var>] = <a class="macro" href="../../../include/scsi/scsi.h.html#52" title="0x1b" data-ref="_M/START_STOP">START_STOP</a>;</td></tr>
+<tr><th id="90">90</th><td>    <a class="local col6 ref" href="#6scsi_cmd" title='scsi_cmd' data-ref="6scsi_cmd">scsi_cmd</a>.<a class="local col5 ref" href="#5cmd" title='cmd' data-ref="5cmd">cmd</a>[<var>1</var>] = <var>0</var>;</td></tr>
+<tr><th id="91">91</th><td>    <a class="local col6 ref" href="#6scsi_cmd" title='scsi_cmd' data-ref="6scsi_cmd">scsi_cmd</a>.<a class="local col5 ref" href="#5cmd" title='cmd' data-ref="5cmd">cmd</a>[<var>2</var>] = <var>0</var>;</td></tr>
+<tr><th id="92">92</th><td>    <a class="local col6 ref" href="#6scsi_cmd" title='scsi_cmd' data-ref="6scsi_cmd">scsi_cmd</a>.<a class="local col5 ref" href="#5cmd" title='cmd' data-ref="5cmd">cmd</a>[<var>3</var>] = <var>0</var>;</td></tr>
+<tr><th id="93">93</th><td>    <a class="local col6 ref" href="#6scsi_cmd" title='scsi_cmd' data-ref="6scsi_cmd">scsi_cmd</a>.<a class="local col5 ref" href="#5cmd" title='cmd' data-ref="5cmd">cmd</a>[<var>4</var>] = <var>1</var>;</td></tr>
+<tr><th id="94">94</th><td>    <a class="local col6 ref" href="#6scsi_cmd" title='scsi_cmd' data-ref="6scsi_cmd">scsi_cmd</a>.<a class="local col5 ref" href="#5cmd" title='cmd' data-ref="5cmd">cmd</a>[<var>5</var>] = <var>0</var>;</td></tr>
+<tr><th id="95">95</th><td>    <b>if</b>( <a class="ref" href="../../../include/x86_64-linux-gnu/sys/ioctl.h.html#ioctl" title='ioctl' data-ref="ioctl">ioctl</a>( <a class="local col1 ref" href="#1i_fd" title='i_fd' data-ref="1i_fd">i_fd</a>, <a class="macro" href="../../../include/scsi/scsi_ioctl.h.html#22" title="1" data-ref="_M/SCSI_IOCTL_SEND_COMMAND">SCSI_IOCTL_SEND_COMMAND</a>, (<em>void</em> *)&amp;<a class="local col6 ref" href="#6scsi_cmd" title='scsi_cmd' data-ref="6scsi_cmd">scsi_cmd</a> ) &lt; <var>0</var> )</td></tr>
+<tr><th id="96">96</th><td>        <b>return</b> <a class="macro" href="../../include/vlc_common.h.html#375" title="(-1)" data-ref="_M/VLC_EGENERIC">VLC_EGENERIC</a>;</td></tr>
+<tr><th id="97">97</th><td></td></tr>
+<tr><th id="98">98</th><td>    <a class="local col6 ref" href="#6scsi_cmd" title='scsi_cmd' data-ref="6scsi_cmd">scsi_cmd</a>.<a class="local col3 ref" href="#3inlen" title='inlen' data-ref="3inlen">inlen</a>  = <var>0</var>;</td></tr>
+<tr><th id="99">99</th><td>    <a class="local col6 ref" href="#6scsi_cmd" title='scsi_cmd' data-ref="6scsi_cmd">scsi_cmd</a>.<a class="local col4 ref" href="#4outlen" title='outlen' data-ref="4outlen">outlen</a> = <var>0</var>;</td></tr>
+<tr><th id="100">100</th><td>    <a class="local col6 ref" href="#6scsi_cmd" title='scsi_cmd' data-ref="6scsi_cmd">scsi_cmd</a>.<a class="local col5 ref" href="#5cmd" title='cmd' data-ref="5cmd">cmd</a>[<var>0</var>] = <a class="macro" href="../../../include/scsi/scsi.h.html#52" title="0x1b" data-ref="_M/START_STOP">START_STOP</a>;</td></tr>
+<tr><th id="101">101</th><td>    <a class="local col6 ref" href="#6scsi_cmd" title='scsi_cmd' data-ref="6scsi_cmd">scsi_cmd</a>.<a class="local col5 ref" href="#5cmd" title='cmd' data-ref="5cmd">cmd</a>[<var>1</var>] = <var>0</var>;</td></tr>
+<tr><th id="102">102</th><td>    <a class="local col6 ref" href="#6scsi_cmd" title='scsi_cmd' data-ref="6scsi_cmd">scsi_cmd</a>.<a class="local col5 ref" href="#5cmd" title='cmd' data-ref="5cmd">cmd</a>[<var>2</var>] = <var>0</var>;</td></tr>
+<tr><th id="103">103</th><td>    <a class="local col6 ref" href="#6scsi_cmd" title='scsi_cmd' data-ref="6scsi_cmd">scsi_cmd</a>.<a class="local col5 ref" href="#5cmd" title='cmd' data-ref="5cmd">cmd</a>[<var>3</var>] = <var>0</var>;</td></tr>
+<tr><th id="104">104</th><td>    <a class="local col6 ref" href="#6scsi_cmd" title='scsi_cmd' data-ref="6scsi_cmd">scsi_cmd</a>.<a class="local col5 ref" href="#5cmd" title='cmd' data-ref="5cmd">cmd</a>[<var>4</var>] = <var>2</var>;</td></tr>
+<tr><th id="105">105</th><td>    <a class="local col6 ref" href="#6scsi_cmd" title='scsi_cmd' data-ref="6scsi_cmd">scsi_cmd</a>.<a class="local col5 ref" href="#5cmd" title='cmd' data-ref="5cmd">cmd</a>[<var>5</var>] = <var>0</var>;</td></tr>
+<tr><th id="106">106</th><td>    <b>if</b>( <a class="ref" href="../../../include/x86_64-linux-gnu/sys/ioctl.h.html#ioctl" title='ioctl' data-ref="ioctl">ioctl</a>( <a class="local col1 ref" href="#1i_fd" title='i_fd' data-ref="1i_fd">i_fd</a>, <a class="macro" href="../../../include/scsi/scsi_ioctl.h.html#22" title="1" data-ref="_M/SCSI_IOCTL_SEND_COMMAND">SCSI_IOCTL_SEND_COMMAND</a>, (<em>void</em> *)&amp;<a class="local col6 ref" href="#6scsi_cmd" title='scsi_cmd' data-ref="6scsi_cmd">scsi_cmd</a> ) &lt; <var>0</var> )</td></tr>
+<tr><th id="107">107</th><td>        <b>return</b> <a class="macro" href="../../include/vlc_common.h.html#375" title="(-1)" data-ref="_M/VLC_EGENERIC">VLC_EGENERIC</a>;</td></tr>
+<tr><th id="108">108</th><td></td></tr>
+<tr><th id="109">109</th><td>    <i>/* Force kernel to reread partition table when new disc inserted */</i></td></tr>
+<tr><th id="110">110</th><td>    <a class="ref" href="../../../include/x86_64-linux-gnu/sys/ioctl.h.html#ioctl" title='ioctl' data-ref="ioctl">ioctl</a>( <a class="local col1 ref" href="#1i_fd" title='i_fd' data-ref="1i_fd">i_fd</a>, <a class="macro" href="../../../include/x86_64-linux-gnu/sys/mount.h.html#103" title="(((0U) &lt;&lt; (((0+8)+8)+14)) | (((0x12)) &lt;&lt; (0+8)) | (((95)) &lt;&lt; 0) | ((0) &lt;&lt; ((0+8)+8)))" data-ref="_M/BLKRRPART">BLKRRPART</a> );</td></tr>
+<tr><th id="111">111</th><td>    <b>return</b> <a class="macro" href="../../include/vlc_common.h.html#374" title="(-0)" data-ref="_M/VLC_SUCCESS">VLC_SUCCESS</a>;</td></tr>
+<tr><th id="112">112</th><td>}</td></tr>
+<tr><th id="113">113</th><td><u>#<span data-ppcond="59">endif</span></u></td></tr>
+<tr><th id="114">114</th><td></td></tr>
+<tr><th id="115">115</th><td><u>#undef <span class="macro" data-ref="_M/intf_Eject">intf_Eject</span></u></td></tr>
+<tr><th id="116">116</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="117">117</th><td><i class="doc"> * Ejects the optical disc in a device</i></td></tr>
+<tr><th id="118">118</th><td><i class="doc"> * <span class="command">\param</span> <span class="arg">p_this</span> the calling vlc_object_t</i></td></tr>
+<tr><th id="119">119</th><td><i class="doc"> * <span class="command">\param</span> <span class="arg">psz_device</span> the CD/DVD to eject</i></td></tr>
+<tr><th id="120">120</th><td><i class="doc"> * <span class="command">\return</span> VLC_SUCCESS or VLC_EGENERIC</i></td></tr>
+<tr><th id="121">121</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="122">122</th><td><em>static</em> <em>int</em> <dfn class="decl def" id="intf_Eject" title='intf_Eject' data-ref="intf_Eject">intf_Eject</dfn>( <a class="typedef" href="../../include/vlc_common.h.html#vlc_object_t" title='vlc_object_t' data-type='struct vlc_object_t' data-ref="vlc_object_t">vlc_object_t</a> *<dfn class="local col7 decl" id="7p_this" title='p_this' data-type='vlc_object_t *' data-ref="7p_this">p_this</dfn>, <em>const</em> <em>char</em> *<dfn class="local col8 decl" id="8psz_device" title='psz_device' data-type='const char *' data-ref="8psz_device">psz_device</dfn> )</td></tr>
+<tr><th id="123">123</th><td>{</td></tr>
+<tr><th id="124">124</th><td>    <a class="macro" href="../../include/vlc_common.h.html#775" title="(void)(p_this)" data-ref="_M/VLC_UNUSED">VLC_UNUSED</a>(<a class="local col7 ref" href="#7p_this" title='p_this' data-ref="7p_this">p_this</a>);</td></tr>
+<tr><th id="125">125</th><td></td></tr>
+<tr><th id="126">126</th><td><u>#<span data-ppcond="126">if</span> defined(<span class="macro" data-ref="_M/_WIN32">_WIN32</span>)</u></td></tr>
+<tr><th id="127">127</th><td>    MCI_OPEN_PARMS op;</td></tr>
+<tr><th id="128">128</th><td>    DWORD i_flags;</td></tr>
+<tr><th id="129">129</th><td>    TCHAR psz_drive[<var>4</var>];</td></tr>
+<tr><th id="130">130</th><td></td></tr>
+<tr><th id="131">131</th><td>    memset( &amp;op, <var>0</var>, <b>sizeof</b>(MCI_OPEN_PARMS) );</td></tr>
+<tr><th id="132">132</th><td>    op.lpstrDeviceType = (LPCTSTR)MCI_DEVTYPE_CD_AUDIO;</td></tr>
+<tr><th id="133">133</th><td></td></tr>
+<tr><th id="134">134</th><td>    _tcscpy( psz_drive, TEXT(<q>"X:"</q>) );</td></tr>
+<tr><th id="135">135</th><td>    psz_drive[<var>0</var>] = psz_device[<var>0</var>];</td></tr>
+<tr><th id="136">136</th><td>    op.lpstrElementName = psz_drive;</td></tr>
+<tr><th id="137">137</th><td></td></tr>
+<tr><th id="138">138</th><td>    <i>/* Set the flags for the device type */</i></td></tr>
+<tr><th id="139">139</th><td>    i_flags = MCI_OPEN_TYPE | MCI_OPEN_TYPE_ID |</td></tr>
+<tr><th id="140">140</th><td>              MCI_OPEN_ELEMENT | MCI_OPEN_SHAREABLE;</td></tr>
+<tr><th id="141">141</th><td></td></tr>
+<tr><th id="142">142</th><td>    <b>if</b>( mciSendCommand( <var>0</var>, MCI_OPEN, i_flags, (uintptr_t)&amp;op ) )</td></tr>
+<tr><th id="143">143</th><td>        <b>return</b> VLC_EGENERIC;</td></tr>
+<tr><th id="144">144</th><td></td></tr>
+<tr><th id="145">145</th><td>    <i>/* Eject disc */</i></td></tr>
+<tr><th id="146">146</th><td>    mciSendCommand( op.wDeviceID, MCI_SET, MCI_SET_DOOR_OPEN, <var>0</var> );</td></tr>
+<tr><th id="147">147</th><td>    <i>/* Release access to the device */</i></td></tr>
+<tr><th id="148">148</th><td>    mciSendCommand( op.wDeviceID, MCI_CLOSE, MCI_WAIT, <var>0</var> );</td></tr>
+<tr><th id="149">149</th><td></td></tr>
+<tr><th id="150">150</th><td>    <b>return</b> VLC_SUCCESS;</td></tr>
+<tr><th id="151">151</th><td></td></tr>
+<tr><th id="152">152</th><td><u>#<span data-ppcond="126">elif</span> defined (<span class="macro" data-ref="_M/__linux__">__linux__</span>) || defined (<span class="macro" data-ref="_M/HAVE_DVD_H">HAVE_DVD_H</span>)</u></td></tr>
+<tr><th id="153">153</th><td>    <i>/* This code could be extended to support CD/DVD-ROM chargers */</i></td></tr>
+<tr><th id="154">154</th><td>    <em>int</em> <dfn class="local col9 decl" id="9fd" title='fd' data-type='int' data-ref="9fd">fd</dfn> = <a class="ref" href="../../include/vlc_fs.h.html#vlc_open" title='vlc_open' data-ref="vlc_open">vlc_open</a>( <a class="local col8 ref" href="#8psz_device" title='psz_device' data-ref="8psz_device">psz_device</a>, <a class="macro" href="../../../include/x86_64-linux-gnu/bits/fcntl-linux.h.html#43" title="00" data-ref="_M/O_RDONLY">O_RDONLY</a> | <a class="macro" href="../../../include/x86_64-linux-gnu/bits/fcntl-linux.h.html#62" title="04000" data-ref="_M/O_NONBLOCK">O_NONBLOCK</a> );</td></tr>
+<tr><th id="155">155</th><td>    <b>if</b>( <a class="local col9 ref" href="#9fd" title='fd' data-ref="9fd">fd</a> == -<var>1</var> )</td></tr>
+<tr><th id="156">156</th><td>    {</td></tr>
+<tr><th id="157">157</th><td>        <a class="macro" href="../../include/vlc_messages.h.html#73" title="vlc_Log( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_this)), psz_object_type), (void)0 , (vlc_object_t *)(p_this)), VLC_MSG_ERR, ncurses, &quot;could not open device %s&quot;, psz_device )" data-ref="_M/msg_Err">msg_Err</a>( p_this, <q>"could not open device %s"</q>, psz_device );</td></tr>
+<tr><th id="158">158</th><td>        <b>return</b> <a class="macro" href="../../include/vlc_common.h.html#375" title="(-1)" data-ref="_M/VLC_EGENERIC">VLC_EGENERIC</a>;</td></tr>
+<tr><th id="159">159</th><td>    }</td></tr>
+<tr><th id="160">160</th><td></td></tr>
+<tr><th id="161">161</th><td><u># <span data-ppcond="161">if</span> defined(<span class="macro" data-ref="_M/__linux__">__linux__</span>)</u></td></tr>
+<tr><th id="162">162</th><td>    <i>/* Try a simple ATAPI eject */</i></td></tr>
+<tr><th id="163">163</th><td>    <b>if</b>( <a class="ref" href="../../../include/x86_64-linux-gnu/sys/ioctl.h.html#ioctl" title='ioctl' data-ref="ioctl">ioctl</a>( <a class="local col9 ref" href="#9fd" title='fd' data-ref="9fd">fd</a>, <a class="macro" href="../../../include/linux/cdrom.h.html#64" title="0x5309" data-ref="_M/CDROMEJECT">CDROMEJECT</a>, <var>0</var> ) &lt; <var>0</var></td></tr>
+<tr><th id="164">164</th><td>     &amp;&amp; <a class="ref" href="#EjectSCSI" title='EjectSCSI' data-ref="EjectSCSI">EjectSCSI</a>( <a class="local col9 ref" href="#9fd" title='fd' data-ref="9fd">fd</a> ) )</td></tr>
+<tr><th id="165">165</th><td><u># <span data-ppcond="161">else</span></u></td></tr>
+<tr><th id="166">166</th><td>    <b>if</b>( ioctl( fd, CDROMEJECT, <var>0</var> ) &lt; <var>0</var> )</td></tr>
+<tr><th id="167">167</th><td><u># <span data-ppcond="161">endif</span></u></td></tr>
+<tr><th id="168">168</th><td>    {</td></tr>
+<tr><th id="169">169</th><td>        <a class="macro" href="../../include/vlc_messages.h.html#73" title="vlc_Log( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_this)), psz_object_type), (void)0 , (vlc_object_t *)(p_this)), VLC_MSG_ERR, ncurses, &quot;could not eject %s&quot;, psz_device )" data-ref="_M/msg_Err">msg_Err</a>( p_this, <q>"could not eject %s"</q>, psz_device );</td></tr>
+<tr><th id="170">170</th><td>        <a class="ref" href="../../../include/unistd.h.html#close" title='close' data-ref="close">close</a>( <a class="local col9 ref" href="#9fd" title='fd' data-ref="9fd">fd</a> );</td></tr>
+<tr><th id="171">171</th><td>        <b>return</b> <a class="macro" href="../../include/vlc_common.h.html#375" title="(-1)" data-ref="_M/VLC_EGENERIC">VLC_EGENERIC</a>;</td></tr>
+<tr><th id="172">172</th><td>    }</td></tr>
+<tr><th id="173">173</th><td>    <a class="ref" href="../../../include/unistd.h.html#close" title='close' data-ref="close">close</a>( <a class="local col9 ref" href="#9fd" title='fd' data-ref="9fd">fd</a> );</td></tr>
+<tr><th id="174">174</th><td>    <b>return</b> <a class="macro" href="../../include/vlc_common.h.html#374" title="(-0)" data-ref="_M/VLC_SUCCESS">VLC_SUCCESS</a>;</td></tr>
+<tr><th id="175">175</th><td></td></tr>
+<tr><th id="176">176</th><td><u>#<span data-ppcond="126">else</span></u></td></tr>
+<tr><th id="177">177</th><td>    VLC_UNUSED( psz_device );</td></tr>
+<tr><th id="178">178</th><td>    msg_Warn( p_this, <q>"CD-Rom ejection unsupported on this platform"</q> );</td></tr>
+<tr><th id="179">179</th><td>    <b>return</b> VLC_EGENERIC;</td></tr>
+<tr><th id="180">180</th><td><u>#<span data-ppcond="126">endif</span></u></td></tr>
+<tr><th id="181">181</th><td>}</td></tr>
+<tr><th id="182">182</th><td></td></tr>
+<tr><th id="183">183</th><td><u>#define <dfn class="macro" id="_M/intf_Eject" data-ref="_M/intf_Eject">intf_Eject</dfn>(o, p) intf_Eject(VLC_OBJECT(o), p)</u></td></tr>
+<tr><th id="184">184</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated while processing <a href='ncurses.c.html'>vlc/modules/gui/ncurses.c</a><br/>Generated on <em>2016-Oct-25</em> from project vlc revision <em>2.2.0-git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

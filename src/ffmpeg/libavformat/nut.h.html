@@ -1,0 +1,163 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>nut.h source code [ffmpeg/libavformat/nut.h] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="ChapterContext,Dispositions,FrameCode,NUTContext,StreamContext,Syncpoint "/>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavformat/nut.h'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavformat</a>/<a href='nut.h.html'>nut.h</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * "NUT" Container Format (de)muxer</i></td></tr>
+<tr><th id="3">3</th><td><i> * Copyright (c) 2006 Michael Niedermayer</i></td></tr>
+<tr><th id="4">4</th><td><i> *</i></td></tr>
+<tr><th id="5">5</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="8">8</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="9">9</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="10">10</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="11">11</th><td><i> *</i></td></tr>
+<tr><th id="12">12</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="13">13</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="14">14</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="15">15</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="16">16</th><td><i> *</i></td></tr>
+<tr><th id="17">17</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="18">18</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="19">19</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="20">20</th><td><i> */</i></td></tr>
+<tr><th id="21">21</th><td></td></tr>
+<tr><th id="22">22</th><td><u>#<span data-ppcond="22">ifndef</span> <span class="macro" data-ref="_M/AVFORMAT_NUT_H">AVFORMAT_NUT_H</span></u></td></tr>
+<tr><th id="23">23</th><td><u>#define <dfn class="macro" id="_M/AVFORMAT_NUT_H" data-ref="_M/AVFORMAT_NUT_H">AVFORMAT_NUT_H</dfn></u></td></tr>
+<tr><th id="24">24</th><td></td></tr>
+<tr><th id="25">25</th><td><u>#include <a href="avformat.h.html">"avformat.h"</a></u></td></tr>
+<tr><th id="26">26</th><td><u>#include <a href="internal.h.html">"internal.h"</a></u></td></tr>
+<tr><th id="27">27</th><td><u>#include <a href="metadata.h.html">"metadata.h"</a></u></td></tr>
+<tr><th id="28">28</th><td></td></tr>
+<tr><th id="29">29</th><td><u>#define      <dfn class="macro" id="_M/MAIN_STARTCODE" data-ref="_M/MAIN_STARTCODE">MAIN_STARTCODE</dfn> (0x7A561F5F04ADULL + (((uint64_t)('N'&lt;&lt;8) + 'M')&lt;&lt;48))</u></td></tr>
+<tr><th id="30">30</th><td><u>#define    <dfn class="macro" id="_M/STREAM_STARTCODE" data-ref="_M/STREAM_STARTCODE">STREAM_STARTCODE</dfn> (0x11405BF2F9DBULL + (((uint64_t)('N'&lt;&lt;8) + 'S')&lt;&lt;48))</u></td></tr>
+<tr><th id="31">31</th><td><u>#define <dfn class="macro" id="_M/SYNCPOINT_STARTCODE" data-ref="_M/SYNCPOINT_STARTCODE">SYNCPOINT_STARTCODE</dfn> (0xE4ADEECA4569ULL + (((uint64_t)('N'&lt;&lt;8) + 'K')&lt;&lt;48))</u></td></tr>
+<tr><th id="32">32</th><td><u>#define     <dfn class="macro" id="_M/INDEX_STARTCODE" data-ref="_M/INDEX_STARTCODE">INDEX_STARTCODE</dfn> (0xDD672F23E64EULL + (((uint64_t)('N'&lt;&lt;8) + 'X')&lt;&lt;48))</u></td></tr>
+<tr><th id="33">33</th><td><u>#define      <dfn class="macro" id="_M/INFO_STARTCODE" data-ref="_M/INFO_STARTCODE">INFO_STARTCODE</dfn> (0xAB68B596BA78ULL + (((uint64_t)('N'&lt;&lt;8) + 'I')&lt;&lt;48))</u></td></tr>
+<tr><th id="34">34</th><td></td></tr>
+<tr><th id="35">35</th><td><u>#define <dfn class="macro" id="_M/ID_STRING" data-ref="_M/ID_STRING">ID_STRING</dfn> "nut/multimedia container\0"</u></td></tr>
+<tr><th id="36">36</th><td></td></tr>
+<tr><th id="37">37</th><td><u>#define <dfn class="macro" id="_M/MAX_DISTANCE" data-ref="_M/MAX_DISTANCE">MAX_DISTANCE</dfn> (1024*32-1)</u></td></tr>
+<tr><th id="38">38</th><td></td></tr>
+<tr><th id="39">39</th><td><u>#define <dfn class="macro" id="_M/NUT_MAX_VERSION" data-ref="_M/NUT_MAX_VERSION">NUT_MAX_VERSION</dfn> 4</u></td></tr>
+<tr><th id="40">40</th><td><u>#define <dfn class="macro" id="_M/NUT_STABLE_VERSION" data-ref="_M/NUT_STABLE_VERSION">NUT_STABLE_VERSION</dfn> 3</u></td></tr>
+<tr><th id="41">41</th><td><u>#define <dfn class="macro" id="_M/NUT_MIN_VERSION" data-ref="_M/NUT_MIN_VERSION">NUT_MIN_VERSION</dfn> 2</u></td></tr>
+<tr><th id="42">42</th><td></td></tr>
+<tr><th id="43">43</th><td><b>typedef</b> <b>enum</b>{</td></tr>
+<tr><th id="44">44</th><td>    <dfn class="enum" id="::FLAG_KEY" title='::FLAG_KEY' data-ref="::FLAG_KEY">FLAG_KEY</dfn>        =   <var>1</var>, <i>// if set, frame is keyframe</i></td></tr>
+<tr><th id="45">45</th><td>    <dfn class="enum" id="::FLAG_EOR" title='::FLAG_EOR' data-ref="::FLAG_EOR">FLAG_EOR</dfn>        =   <var>2</var>, <i>// if set, stream has no relevance on presentation. (EOR)</i></td></tr>
+<tr><th id="46">46</th><td>    <dfn class="enum" id="::FLAG_CODED_PTS" title='::FLAG_CODED_PTS' data-ref="::FLAG_CODED_PTS">FLAG_CODED_PTS</dfn>  =   <var>8</var>, <i>// if set, coded_pts is in the frame header</i></td></tr>
+<tr><th id="47">47</th><td>    <dfn class="enum" id="::FLAG_STREAM_ID" title='::FLAG_STREAM_ID' data-ref="::FLAG_STREAM_ID">FLAG_STREAM_ID</dfn>  =  <var>16</var>, <i>// if set, stream_id is coded in the frame header</i></td></tr>
+<tr><th id="48">48</th><td>    <dfn class="enum" id="::FLAG_SIZE_MSB" title='::FLAG_SIZE_MSB' data-ref="::FLAG_SIZE_MSB">FLAG_SIZE_MSB</dfn>   =  <var>32</var>, <i>// if set, data_size_msb is at frame header, otherwise data_size_msb is 0</i></td></tr>
+<tr><th id="49">49</th><td>    <dfn class="enum" id="::FLAG_CHECKSUM" title='::FLAG_CHECKSUM' data-ref="::FLAG_CHECKSUM">FLAG_CHECKSUM</dfn>   =  <var>64</var>, <i>// if set, the frame header contains a checksum</i></td></tr>
+<tr><th id="50">50</th><td>    <dfn class="enum" id="::FLAG_RESERVED" title='::FLAG_RESERVED' data-ref="::FLAG_RESERVED">FLAG_RESERVED</dfn>   = <var>128</var>, <i>// if set, reserved_count is coded in the frame header</i></td></tr>
+<tr><th id="51">51</th><td>    <dfn class="enum" id="::FLAG_SM_DATA" title='::FLAG_SM_DATA' data-ref="::FLAG_SM_DATA">FLAG_SM_DATA</dfn>    = <var>256</var>, <i>// if set, side / meta data is stored in the frame header.</i></td></tr>
+<tr><th id="52">52</th><td>    <dfn class="enum" id="::FLAG_HEADER_IDX" title='::FLAG_HEADER_IDX' data-ref="::FLAG_HEADER_IDX">FLAG_HEADER_IDX</dfn> =<var>1024</var>, <i>// If set, header_idx is coded in the frame header.</i></td></tr>
+<tr><th id="53">53</th><td>    <dfn class="enum" id="::FLAG_MATCH_TIME" title='::FLAG_MATCH_TIME' data-ref="::FLAG_MATCH_TIME">FLAG_MATCH_TIME</dfn> =<var>2048</var>, <i>// If set, match_time_delta is coded in the frame header</i></td></tr>
+<tr><th id="54">54</th><td>    <dfn class="enum" id="::FLAG_CODED" title='::FLAG_CODED' data-ref="::FLAG_CODED">FLAG_CODED</dfn>      =<var>4096</var>, <i>// if set, coded_flags are stored in the frame header</i></td></tr>
+<tr><th id="55">55</th><td>    <dfn class="enum" id="::FLAG_INVALID" title='::FLAG_INVALID' data-ref="::FLAG_INVALID">FLAG_INVALID</dfn>    =<var>8192</var>, <i>// if set, frame_code is invalid</i></td></tr>
+<tr><th id="56">56</th><td>} <dfn class="typedef" id="Flag" title='Flag' data-type='enum Flag' data-ref="Flag">Flag</dfn>;</td></tr>
+<tr><th id="57">57</th><td></td></tr>
+<tr><th id="58">58</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="Syncpoint" title='Syncpoint' data-ref="Syncpoint"><a class="type" href="#Syncpoint" title='Syncpoint' data-ref="Syncpoint">Syncpoint</a></dfn> {</td></tr>
+<tr><th id="59">59</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint64_t" title='uint64_t' data-type='unsigned long' data-ref="uint64_t">uint64_t</a> <dfn class="decl" id="Syncpoint::pos" title='Syncpoint::pos' data-ref="Syncpoint::pos">pos</dfn>;</td></tr>
+<tr><th id="60">60</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint64_t" title='uint64_t' data-type='unsigned long' data-ref="uint64_t">uint64_t</a> <dfn class="decl" id="Syncpoint::back_ptr" title='Syncpoint::back_ptr' data-ref="Syncpoint::back_ptr">back_ptr</dfn>;</td></tr>
+<tr><th id="61">61</th><td><i>//    uint64_t global_key_pts;</i></td></tr>
+<tr><th id="62">62</th><td>    <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="decl" id="Syncpoint::ts" title='Syncpoint::ts' data-ref="Syncpoint::ts">ts</dfn>;</td></tr>
+<tr><th id="63">63</th><td>} <dfn class="typedef" id="Syncpoint" title='Syncpoint' data-type='struct Syncpoint' data-ref="Syncpoint">Syncpoint</dfn>;</td></tr>
+<tr><th id="64">64</th><td></td></tr>
+<tr><th id="65">65</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="FrameCode" title='FrameCode' data-ref="FrameCode"><a class="type" href="#FrameCode" title='FrameCode' data-ref="FrameCode">FrameCode</a></dfn> {</td></tr>
+<tr><th id="66">66</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> <dfn class="decl" id="FrameCode::flags" title='FrameCode::flags' data-ref="FrameCode::flags">flags</dfn>;</td></tr>
+<tr><th id="67">67</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a>  <dfn class="decl" id="FrameCode::stream_id" title='FrameCode::stream_id' data-ref="FrameCode::stream_id">stream_id</dfn>;</td></tr>
+<tr><th id="68">68</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> <dfn class="decl" id="FrameCode::size_mul" title='FrameCode::size_mul' data-ref="FrameCode::size_mul">size_mul</dfn>;</td></tr>
+<tr><th id="69">69</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> <dfn class="decl" id="FrameCode::size_lsb" title='FrameCode::size_lsb' data-ref="FrameCode::size_lsb">size_lsb</dfn>;</td></tr>
+<tr><th id="70">70</th><td>    <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a>  <dfn class="decl" id="FrameCode::pts_delta" title='FrameCode::pts_delta' data-ref="FrameCode::pts_delta">pts_delta</dfn>;</td></tr>
+<tr><th id="71">71</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a>  <dfn class="decl" id="FrameCode::reserved_count" title='FrameCode::reserved_count' data-ref="FrameCode::reserved_count">reserved_count</dfn>;</td></tr>
+<tr><th id="72">72</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a>  <dfn class="decl" id="FrameCode::header_idx" title='FrameCode::header_idx' data-ref="FrameCode::header_idx">header_idx</dfn>;</td></tr>
+<tr><th id="73">73</th><td>} <dfn class="typedef" id="FrameCode" title='FrameCode' data-type='struct FrameCode' data-ref="FrameCode">FrameCode</dfn>;</td></tr>
+<tr><th id="74">74</th><td></td></tr>
+<tr><th id="75">75</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="StreamContext" title='StreamContext' data-ref="StreamContext"><a class="type" href="#StreamContext" title='StreamContext' data-ref="StreamContext">StreamContext</a></dfn> {</td></tr>
+<tr><th id="76">76</th><td>    <em>int</em> <dfn class="decl" id="StreamContext::last_flags" title='StreamContext::last_flags' data-ref="StreamContext::last_flags">last_flags</dfn>;</td></tr>
+<tr><th id="77">77</th><td>    <em>int</em> <dfn class="decl" id="StreamContext::skip_until_key_frame" title='StreamContext::skip_until_key_frame' data-ref="StreamContext::skip_until_key_frame">skip_until_key_frame</dfn>;</td></tr>
+<tr><th id="78">78</th><td>    <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="decl" id="StreamContext::last_pts" title='StreamContext::last_pts' data-ref="StreamContext::last_pts">last_pts</dfn>;</td></tr>
+<tr><th id="79">79</th><td>    <em>int</em> <dfn class="decl" id="StreamContext::time_base_id" title='StreamContext::time_base_id' data-ref="StreamContext::time_base_id">time_base_id</dfn>;</td></tr>
+<tr><th id="80">80</th><td>    <a class="typedef" href="../libavutil/rational.h.html#AVRational" title='AVRational' data-type='struct AVRational' data-ref="AVRational">AVRational</a> *<dfn class="decl" id="StreamContext::time_base" title='StreamContext::time_base' data-ref="StreamContext::time_base">time_base</dfn>;</td></tr>
+<tr><th id="81">81</th><td>    <em>int</em> <dfn class="decl" id="StreamContext::msb_pts_shift" title='StreamContext::msb_pts_shift' data-ref="StreamContext::msb_pts_shift">msb_pts_shift</dfn>;</td></tr>
+<tr><th id="82">82</th><td>    <em>int</em> <dfn class="decl" id="StreamContext::max_pts_distance" title='StreamContext::max_pts_distance' data-ref="StreamContext::max_pts_distance">max_pts_distance</dfn>;</td></tr>
+<tr><th id="83">83</th><td>    <em>int</em> <dfn class="decl" id="StreamContext::decode_delay" title='StreamContext::decode_delay' data-ref="StreamContext::decode_delay">decode_delay</dfn>; <i>//FIXME duplicate of has_b_frames</i></td></tr>
+<tr><th id="84">84</th><td>    <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> *<dfn class="decl" id="StreamContext::keyframe_pts" title='StreamContext::keyframe_pts' data-ref="StreamContext::keyframe_pts">keyframe_pts</dfn>;</td></tr>
+<tr><th id="85">85</th><td>} <dfn class="typedef" id="StreamContext" title='StreamContext' data-type='struct StreamContext' data-ref="StreamContext">StreamContext</dfn>;</td></tr>
+<tr><th id="86">86</th><td></td></tr>
+<tr><th id="87">87</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="ChapterContext" title='ChapterContext' data-ref="ChapterContext"><a class="type" href="#ChapterContext" title='ChapterContext' data-ref="ChapterContext">ChapterContext</a></dfn> {</td></tr>
+<tr><th id="88">88</th><td>    <a class="typedef" href="../libavutil/rational.h.html#AVRational" title='AVRational' data-type='struct AVRational' data-ref="AVRational">AVRational</a> *<dfn class="decl" id="ChapterContext::time_base" title='ChapterContext::time_base' data-ref="ChapterContext::time_base">time_base</dfn>;</td></tr>
+<tr><th id="89">89</th><td>} <dfn class="typedef" id="ChapterContext" title='ChapterContext' data-type='struct ChapterContext' data-ref="ChapterContext">ChapterContext</dfn>;</td></tr>
+<tr><th id="90">90</th><td></td></tr>
+<tr><th id="91">91</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="NUTContext" title='NUTContext' data-ref="NUTContext"><a class="type" href="#NUTContext" title='NUTContext' data-ref="NUTContext">NUTContext</a></dfn> {</td></tr>
+<tr><th id="92">92</th><td>    <em>const</em> <a class="typedef" href="../libavutil/log.h.html#AVClass" title='AVClass' data-type='struct AVClass' data-ref="AVClass">AVClass</a> *<dfn class="decl" id="NUTContext::av_class" title='NUTContext::av_class' data-ref="NUTContext::av_class">av_class</dfn>;</td></tr>
+<tr><th id="93">93</th><td>    <a class="typedef" href="avformat.h.html#AVFormatContext" title='AVFormatContext' data-type='struct AVFormatContext' data-ref="AVFormatContext">AVFormatContext</a> *<dfn class="decl" id="NUTContext::avf" title='NUTContext::avf' data-ref="NUTContext::avf">avf</dfn>;</td></tr>
+<tr><th id="94">94</th><td><i>//    int written_packet_size;</i></td></tr>
+<tr><th id="95">95</th><td><i>//    int64_t packet_start;</i></td></tr>
+<tr><th id="96">96</th><td>    <a class="typedef" href="#FrameCode" title='FrameCode' data-type='struct FrameCode' data-ref="FrameCode">FrameCode</a> <dfn class="decl" id="NUTContext::frame_code" title='NUTContext::frame_code' data-ref="NUTContext::frame_code">frame_code</dfn>[<var>256</var>];</td></tr>
+<tr><th id="97">97</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="NUTContext::header_len" title='NUTContext::header_len' data-ref="NUTContext::header_len">header_len</dfn>[<var>128</var>];</td></tr>
+<tr><th id="98">98</th><td>    <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="decl" id="NUTContext::header" title='NUTContext::header' data-ref="NUTContext::header">header</dfn>[<var>128</var>];</td></tr>
+<tr><th id="99">99</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint64_t" title='uint64_t' data-type='unsigned long' data-ref="uint64_t">uint64_t</a> <dfn class="decl" id="NUTContext::next_startcode" title='NUTContext::next_startcode' data-ref="NUTContext::next_startcode">next_startcode</dfn>;     <i>// stores the next startcode if it has already been parsed but the stream is not seekable</i></td></tr>
+<tr><th id="100">100</th><td>    <a class="typedef" href="#StreamContext" title='StreamContext' data-type='struct StreamContext' data-ref="StreamContext">StreamContext</a> *<dfn class="decl" id="NUTContext::stream" title='NUTContext::stream' data-ref="NUTContext::stream">stream</dfn>;</td></tr>
+<tr><th id="101">101</th><td>    <a class="typedef" href="#ChapterContext" title='ChapterContext' data-type='struct ChapterContext' data-ref="ChapterContext">ChapterContext</a> *<dfn class="decl" id="NUTContext::chapter" title='NUTContext::chapter' data-ref="NUTContext::chapter">chapter</dfn>;</td></tr>
+<tr><th id="102">102</th><td>    <em>unsigned</em> <em>int</em> <dfn class="decl" id="NUTContext::max_distance" title='NUTContext::max_distance' data-ref="NUTContext::max_distance">max_distance</dfn>;</td></tr>
+<tr><th id="103">103</th><td>    <em>unsigned</em> <em>int</em> <dfn class="decl" id="NUTContext::time_base_count" title='NUTContext::time_base_count' data-ref="NUTContext::time_base_count">time_base_count</dfn>;</td></tr>
+<tr><th id="104">104</th><td>    <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="decl" id="NUTContext::last_syncpoint_pos" title='NUTContext::last_syncpoint_pos' data-ref="NUTContext::last_syncpoint_pos">last_syncpoint_pos</dfn>;</td></tr>
+<tr><th id="105">105</th><td>    <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="decl" id="NUTContext::last_resync_pos" title='NUTContext::last_resync_pos' data-ref="NUTContext::last_resync_pos">last_resync_pos</dfn>;</td></tr>
+<tr><th id="106">106</th><td>    <em>int</em> <dfn class="decl" id="NUTContext::header_count" title='NUTContext::header_count' data-ref="NUTContext::header_count">header_count</dfn>;</td></tr>
+<tr><th id="107">107</th><td>    <a class="typedef" href="../libavutil/rational.h.html#AVRational" title='AVRational' data-type='struct AVRational' data-ref="AVRational">AVRational</a> *<dfn class="decl" id="NUTContext::time_base" title='NUTContext::time_base' data-ref="NUTContext::time_base">time_base</dfn>;</td></tr>
+<tr><th id="108">108</th><td>    <b>struct</b> <a class="type" href="../libavutil/tree.h.html#AVTreeNode" title='AVTreeNode' data-ref="AVTreeNode">AVTreeNode</a> *<dfn class="decl" id="NUTContext::syncpoints" title='NUTContext::syncpoints' data-ref="NUTContext::syncpoints">syncpoints</dfn>;</td></tr>
+<tr><th id="109">109</th><td>    <em>int</em> <dfn class="decl" id="NUTContext::sp_count" title='NUTContext::sp_count' data-ref="NUTContext::sp_count">sp_count</dfn>;</td></tr>
+<tr><th id="110">110</th><td>    <em>int</em> <dfn class="decl" id="NUTContext::write_index" title='NUTContext::write_index' data-ref="NUTContext::write_index">write_index</dfn>;</td></tr>
+<tr><th id="111">111</th><td>    <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="decl" id="NUTContext::max_pts" title='NUTContext::max_pts' data-ref="NUTContext::max_pts">max_pts</dfn>;</td></tr>
+<tr><th id="112">112</th><td>    <a class="typedef" href="../libavutil/rational.h.html#AVRational" title='AVRational' data-type='struct AVRational' data-ref="AVRational">AVRational</a> *<dfn class="decl" id="NUTContext::max_pts_tb" title='NUTContext::max_pts_tb' data-ref="NUTContext::max_pts_tb">max_pts_tb</dfn>;</td></tr>
+<tr><th id="113">113</th><td><u>#define <dfn class="macro" id="_M/NUT_BROADCAST" data-ref="_M/NUT_BROADCAST">NUT_BROADCAST</dfn> 1 // use extended syncpoints</u></td></tr>
+<tr><th id="114">114</th><td><u>#define <dfn class="macro" id="_M/NUT_PIPE" data-ref="_M/NUT_PIPE">NUT_PIPE</dfn> 2      // do not write syncpoints</u></td></tr>
+<tr><th id="115">115</th><td>    <em>int</em> <dfn class="decl" id="NUTContext::flags" title='NUTContext::flags' data-ref="NUTContext::flags">flags</dfn>;</td></tr>
+<tr><th id="116">116</th><td>    <em>int</em> <dfn class="decl" id="NUTContext::version" title='NUTContext::version' data-ref="NUTContext::version">version</dfn>; <i>// version currently in use</i></td></tr>
+<tr><th id="117">117</th><td>    <em>int</em> <dfn class="decl" id="NUTContext::minor_version" title='NUTContext::minor_version' data-ref="NUTContext::minor_version">minor_version</dfn>;</td></tr>
+<tr><th id="118">118</th><td>} <dfn class="typedef" id="NUTContext" title='NUTContext' data-type='struct NUTContext' data-ref="NUTContext">NUTContext</dfn>;</td></tr>
+<tr><th id="119">119</th><td></td></tr>
+<tr><th id="120">120</th><td><b>extern</b> <em>const</em> <a class="typedef" href="internal.h.html#AVCodecTag" title='AVCodecTag' data-type='struct AVCodecTag' data-ref="AVCodecTag">AVCodecTag</a> <dfn class="decl" id="ff_nut_subtitle_tags" title='ff_nut_subtitle_tags' data-ref="ff_nut_subtitle_tags">ff_nut_subtitle_tags</dfn>[];</td></tr>
+<tr><th id="121">121</th><td><b>extern</b> <em>const</em> <a class="typedef" href="internal.h.html#AVCodecTag" title='AVCodecTag' data-type='struct AVCodecTag' data-ref="AVCodecTag">AVCodecTag</a> <dfn class="decl" id="ff_nut_video_tags" title='ff_nut_video_tags' data-ref="ff_nut_video_tags">ff_nut_video_tags</dfn>[];</td></tr>
+<tr><th id="122">122</th><td><b>extern</b> <em>const</em> <a class="typedef" href="internal.h.html#AVCodecTag" title='AVCodecTag' data-type='struct AVCodecTag' data-ref="AVCodecTag">AVCodecTag</a> <dfn class="decl" id="ff_nut_audio_tags" title='ff_nut_audio_tags' data-ref="ff_nut_audio_tags">ff_nut_audio_tags</dfn>[];</td></tr>
+<tr><th id="123">123</th><td><b>extern</b> <em>const</em> <a class="typedef" href="internal.h.html#AVCodecTag" title='AVCodecTag' data-type='struct AVCodecTag' data-ref="AVCodecTag">AVCodecTag</a> <dfn class="decl" id="ff_nut_audio_extra_tags" title='ff_nut_audio_extra_tags' data-ref="ff_nut_audio_extra_tags">ff_nut_audio_extra_tags</dfn>[];</td></tr>
+<tr><th id="124">124</th><td><b>extern</b> <em>const</em> <a class="typedef" href="internal.h.html#AVCodecTag" title='AVCodecTag' data-type='struct AVCodecTag' data-ref="AVCodecTag">AVCodecTag</a> <dfn class="decl" id="ff_nut_data_tags" title='ff_nut_data_tags' data-ref="ff_nut_data_tags">ff_nut_data_tags</dfn>[];</td></tr>
+<tr><th id="125">125</th><td></td></tr>
+<tr><th id="126">126</th><td><b>extern</b> <em>const</em> <a class="typedef" href="internal.h.html#AVCodecTag" title='AVCodecTag' data-type='struct AVCodecTag' data-ref="AVCodecTag">AVCodecTag</a> * <em>const</em> <dfn class="decl" id="ff_nut_codec_tags" title='ff_nut_codec_tags' data-ref="ff_nut_codec_tags">ff_nut_codec_tags</dfn>[];</td></tr>
+<tr><th id="127">127</th><td></td></tr>
+<tr><th id="128">128</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="Dispositions" title='Dispositions' data-ref="Dispositions"><a class="type" href="#Dispositions" title='Dispositions' data-ref="Dispositions">Dispositions</a></dfn> {</td></tr>
+<tr><th id="129">129</th><td>    <em>char</em> <dfn class="decl" id="Dispositions::str" title='Dispositions::str' data-ref="Dispositions::str">str</dfn>[<var>9</var>];</td></tr>
+<tr><th id="130">130</th><td>    <em>int</em> <dfn class="decl" id="Dispositions::flag" title='Dispositions::flag' data-ref="Dispositions::flag">flag</dfn>;</td></tr>
+<tr><th id="131">131</th><td>} <dfn class="typedef" id="Dispositions" title='Dispositions' data-type='struct Dispositions' data-ref="Dispositions">Dispositions</dfn>;</td></tr>
+<tr><th id="132">132</th><td></td></tr>
+<tr><th id="133">133</th><td><em>void</em> <a class="decl" href="nut.c.html#ff_nut_reset_ts" title='ff_nut_reset_ts' data-ref="ff_nut_reset_ts" id="ff_nut_reset_ts">ff_nut_reset_ts</a>(<a class="typedef" href="#NUTContext" title='NUTContext' data-type='struct NUTContext' data-ref="NUTContext">NUTContext</a> *<dfn class="local col1 decl" id="1nut" title='nut' data-type='NUTContext *' data-ref="1nut">nut</dfn>, <a class="typedef" href="../libavutil/rational.h.html#AVRational" title='AVRational' data-type='struct AVRational' data-ref="AVRational">AVRational</a> <dfn class="local col2 decl" id="2time_base" title='time_base' data-type='AVRational' data-ref="2time_base">time_base</dfn>, <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="local col3 decl" id="3val" title='val' data-type='int64_t' data-ref="3val">val</dfn>);</td></tr>
+<tr><th id="134">134</th><td><a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <a class="decl" href="nut.c.html#ff_lsb2full" title='ff_lsb2full' data-ref="ff_lsb2full" id="ff_lsb2full">ff_lsb2full</a>(<a class="typedef" href="#StreamContext" title='StreamContext' data-type='struct StreamContext' data-ref="StreamContext">StreamContext</a> *<dfn class="local col4 decl" id="4stream" title='stream' data-type='StreamContext *' data-ref="4stream">stream</dfn>, <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="local col5 decl" id="5lsb" title='lsb' data-type='int64_t' data-ref="5lsb">lsb</dfn>);</td></tr>
+<tr><th id="135">135</th><td><em>int</em> <a class="decl" href="nut.c.html#ff_nut_sp_pos_cmp" title='ff_nut_sp_pos_cmp' data-ref="ff_nut_sp_pos_cmp" id="ff_nut_sp_pos_cmp">ff_nut_sp_pos_cmp</a>(<em>const</em> <em>void</em> *<dfn class="local col6 decl" id="6a" title='a' data-type='const void *' data-ref="6a">a</dfn>, <em>const</em> <em>void</em> *<dfn class="local col7 decl" id="7b" title='b' data-type='const void *' data-ref="7b">b</dfn>);</td></tr>
+<tr><th id="136">136</th><td><em>int</em> <a class="decl" href="nut.c.html#ff_nut_sp_pts_cmp" title='ff_nut_sp_pts_cmp' data-ref="ff_nut_sp_pts_cmp" id="ff_nut_sp_pts_cmp">ff_nut_sp_pts_cmp</a>(<em>const</em> <em>void</em> *<dfn class="local col8 decl" id="8a" title='a' data-type='const void *' data-ref="8a">a</dfn>, <em>const</em> <em>void</em> *<dfn class="local col9 decl" id="9b" title='b' data-type='const void *' data-ref="9b">b</dfn>);</td></tr>
+<tr><th id="137">137</th><td><em>int</em> <a class="decl" href="nut.c.html#ff_nut_add_sp" title='ff_nut_add_sp' data-ref="ff_nut_add_sp" id="ff_nut_add_sp">ff_nut_add_sp</a>(<a class="typedef" href="#NUTContext" title='NUTContext' data-type='struct NUTContext' data-ref="NUTContext">NUTContext</a> *<dfn class="local col0 decl" id="10nut" title='nut' data-type='NUTContext *' data-ref="10nut">nut</dfn>, <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="local col1 decl" id="11pos" title='pos' data-type='int64_t' data-ref="11pos">pos</dfn>, <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="local col2 decl" id="12back_ptr" title='back_ptr' data-type='int64_t' data-ref="12back_ptr">back_ptr</dfn>, <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="local col3 decl" id="13ts" title='ts' data-type='int64_t' data-ref="13ts">ts</dfn>);</td></tr>
+<tr><th id="138">138</th><td><em>void</em> <a class="decl" href="nut.c.html#ff_nut_free_sp" title='ff_nut_free_sp' data-ref="ff_nut_free_sp" id="ff_nut_free_sp">ff_nut_free_sp</a>(<a class="typedef" href="#NUTContext" title='NUTContext' data-type='struct NUTContext' data-ref="NUTContext">NUTContext</a> *<dfn class="local col4 decl" id="14nut" title='nut' data-type='NUTContext *' data-ref="14nut">nut</dfn>);</td></tr>
+<tr><th id="139">139</th><td></td></tr>
+<tr><th id="140">140</th><td><b>extern</b> <em>const</em> <a class="typedef" href="#Dispositions" title='Dispositions' data-type='struct Dispositions' data-ref="Dispositions">Dispositions</a> <dfn class="decl" id="ff_nut_dispositions" title='ff_nut_dispositions' data-ref="ff_nut_dispositions">ff_nut_dispositions</dfn>[];</td></tr>
+<tr><th id="141">141</th><td></td></tr>
+<tr><th id="142">142</th><td><b>extern</b> <em>const</em> <a class="typedef" href="metadata.h.html#AVMetadataConv" title='AVMetadataConv' data-type='struct AVMetadataConv' data-ref="AVMetadataConv">AVMetadataConv</a> <dfn class="decl" id="ff_nut_metadata_conv" title='ff_nut_metadata_conv' data-ref="ff_nut_metadata_conv">ff_nut_metadata_conv</dfn>[];</td></tr>
+<tr><th id="143">143</th><td></td></tr>
+<tr><th id="144">144</th><td><u>#<span data-ppcond="22">endif</span> /* AVFORMAT_NUT_H */</u></td></tr>
+<tr><th id="145">145</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated while processing <a href='nut.c.html'>ffmpeg/libavformat/nut.c</a><br/>Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

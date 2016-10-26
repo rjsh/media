@@ -1,0 +1,178 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>wnv1.c source code [ffmpeg/libavcodec/wnv1.c] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="WNV1Context "/>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavcodec/wnv1.c'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavcodec</a>/<a href='wnv1.c.html'>wnv1.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * Winnov WNV1 codec</i></td></tr>
+<tr><th id="3">3</th><td><i> * Copyright (c) 2005 Konstantin Shishkov</i></td></tr>
+<tr><th id="4">4</th><td><i> *</i></td></tr>
+<tr><th id="5">5</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="8">8</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="9">9</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="10">10</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="11">11</th><td><i> *</i></td></tr>
+<tr><th id="12">12</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="13">13</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="14">14</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="15">15</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="16">16</th><td><i> *</i></td></tr>
+<tr><th id="17">17</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="18">18</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="19">19</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="20">20</th><td><i> */</i></td></tr>
+<tr><th id="21">21</th><td></td></tr>
+<tr><th id="22">22</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="23">23</th><td><i class="doc"> *<span class="command"> @file</span></i></td></tr>
+<tr><th id="24">24</th><td><i class="doc"> * Winnov WNV1 codec.</i></td></tr>
+<tr><th id="25">25</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="26">26</th><td></td></tr>
+<tr><th id="27">27</th><td><u>#include <a href="avcodec.h.html">"avcodec.h"</a></u></td></tr>
+<tr><th id="28">28</th><td><u>#include <a href="get_bits.h.html">"get_bits.h"</a></u></td></tr>
+<tr><th id="29">29</th><td><u>#include <a href="internal.h.html">"internal.h"</a></u></td></tr>
+<tr><th id="30">30</th><td><u>#include <a href="mathops.h.html">"mathops.h"</a></u></td></tr>
+<tr><th id="31">31</th><td></td></tr>
+<tr><th id="32">32</th><td></td></tr>
+<tr><th id="33">33</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="WNV1Context" title='WNV1Context' data-ref="WNV1Context"><a class="type" href="#WNV1Context" title='WNV1Context' data-ref="WNV1Context">WNV1Context</a></dfn> {</td></tr>
+<tr><th id="34">34</th><td>    <em>int</em> <dfn class="tu decl" id="WNV1Context::shift" title='WNV1Context::shift' data-type='int' data-ref="WNV1Context::shift">shift</dfn>;</td></tr>
+<tr><th id="35">35</th><td>    <a class="typedef" href="get_bits.h.html#GetBitContext" title='GetBitContext' data-type='struct GetBitContext' data-ref="GetBitContext">GetBitContext</a> <dfn class="tu decl" id="WNV1Context::gb" title='WNV1Context::gb' data-type='GetBitContext' data-ref="WNV1Context::gb">gb</dfn>;</td></tr>
+<tr><th id="36">36</th><td>} <dfn class="typedef" id="WNV1Context" title='WNV1Context' data-type='struct WNV1Context' data-ref="WNV1Context">WNV1Context</dfn>;</td></tr>
+<tr><th id="37">37</th><td></td></tr>
+<tr><th id="38">38</th><td><em>static</em> <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> <dfn class="tu decl def" id="code_tab" title='code_tab' data-type='const uint16_t [16][2]' data-ref="code_tab">code_tab</dfn>[<var>16</var>][<var>2</var>] = {</td></tr>
+<tr><th id="39">39</th><td>    { <var>0x1FD</var>, <var>9</var> }, { <var>0xFD</var>, <var>8</var> }, { <var>0x7D</var>, <var>7</var> }, { <var>0x3D</var>, <var>6</var> }, { <var>0x1D</var>, <var>5</var> }, { <var>0x0D</var>, <var>4</var> }, { <var>0x005</var>, <var>3</var> },</td></tr>
+<tr><th id="40">40</th><td>    { <var>0x000</var>, <var>1</var> },</td></tr>
+<tr><th id="41">41</th><td>    { <var>0x004</var>, <var>3</var> }, { <var>0x0C</var>, <var>4</var> }, { <var>0x1C</var>, <var>5</var> }, { <var>0x3C</var>, <var>6</var> }, { <var>0x7C</var>, <var>7</var> }, { <var>0xFC</var>, <var>8</var> }, { <var>0x1FC</var>, <var>9</var> }, { <var>0xFF</var>, <var>8</var> }</td></tr>
+<tr><th id="42">42</th><td>};</td></tr>
+<tr><th id="43">43</th><td></td></tr>
+<tr><th id="44">44</th><td><u>#define <dfn class="macro" id="_M/CODE_VLC_BITS" data-ref="_M/CODE_VLC_BITS">CODE_VLC_BITS</dfn> 9</u></td></tr>
+<tr><th id="45">45</th><td><em>static</em> <a class="typedef" href="vlc.h.html#VLC" title='VLC' data-type='struct VLC' data-ref="VLC">VLC</a> <dfn class="tu decl def" id="code_vlc" title='code_vlc' data-type='VLC' data-ref="code_vlc">code_vlc</dfn>;</td></tr>
+<tr><th id="46">46</th><td></td></tr>
+<tr><th id="47">47</th><td><i  data-doc="wnv1_get_code">/* returns modified base_value */</i></td></tr>
+<tr><th id="48">48</th><td><em>static</em> <b>inline</b> <em>int</em> <dfn class="tu decl def" id="wnv1_get_code" title='wnv1_get_code' data-type='int wnv1_get_code(WNV1Context * w, int base_value)' data-ref="wnv1_get_code">wnv1_get_code</dfn>(<a class="typedef" href="#WNV1Context" title='WNV1Context' data-type='struct WNV1Context' data-ref="WNV1Context">WNV1Context</a> *<dfn class="local col1 decl" id="1w" title='w' data-type='WNV1Context *' data-ref="1w">w</dfn>, <em>int</em> <dfn class="local col2 decl" id="2base_value" title='base_value' data-type='int' data-ref="2base_value">base_value</dfn>)</td></tr>
+<tr><th id="49">49</th><td>{</td></tr>
+<tr><th id="50">50</th><td>    <em>int</em> <dfn class="local col3 decl" id="3v" title='v' data-type='int' data-ref="3v">v</dfn> = <a class="ref" href="get_bits.h.html#get_vlc2" title='get_vlc2' data-ref="get_vlc2">get_vlc2</a>(&amp;<a class="local col1 ref" href="#1w" title='w' data-ref="1w">w</a>-&gt;<a class="tu ref" href="#WNV1Context::gb" title='WNV1Context::gb' data-use='a' data-ref="WNV1Context::gb">gb</a>, <a class="tu ref" href="#code_vlc" title='code_vlc' data-use='m' data-ref="code_vlc">code_vlc</a>.<a class="ref" href="vlc.h.html#VLC::table" title='VLC::table' data-ref="VLC::table">table</a>, <a class="macro" href="#44" title="9" data-ref="_M/CODE_VLC_BITS">CODE_VLC_BITS</a>, <var>1</var>);</td></tr>
+<tr><th id="51">51</th><td></td></tr>
+<tr><th id="52">52</th><td>    <b>if</b> (<a class="local col3 ref" href="#3v" title='v' data-ref="3v">v</a> == <var>15</var>)</td></tr>
+<tr><th id="53">53</th><td>        <b>return</b> <a class="ref" href="../libavutil/internal.h.html#ff_reverse" title='ff_reverse' data-ref="ff_reverse">ff_reverse</a>[<a class="ref" href="get_bits.h.html#get_bits" title='get_bits' data-ref="get_bits">get_bits</a>(&amp;<a class="local col1 ref" href="#1w" title='w' data-ref="1w">w</a>-&gt;<a class="tu ref" href="#WNV1Context::gb" title='WNV1Context::gb' data-use='a' data-ref="WNV1Context::gb">gb</a>, <var>8</var> - <a class="local col1 ref" href="#1w" title='w' data-ref="1w">w</a>-&gt;<a class="tu ref" href="#WNV1Context::shift" title='WNV1Context::shift' data-use='r' data-ref="WNV1Context::shift">shift</a>)];</td></tr>
+<tr><th id="54">54</th><td>    <b>else</b></td></tr>
+<tr><th id="55">55</th><td>        <b>return</b> <a class="local col2 ref" href="#2base_value" title='base_value' data-ref="2base_value">base_value</a> + ((<a class="local col3 ref" href="#3v" title='v' data-ref="3v">v</a> - <var>7</var>) &lt;&lt; <a class="local col1 ref" href="#1w" title='w' data-ref="1w">w</a>-&gt;<a class="tu ref" href="#WNV1Context::shift" title='WNV1Context::shift' data-use='r' data-ref="WNV1Context::shift">shift</a>);</td></tr>
+<tr><th id="56">56</th><td>}</td></tr>
+<tr><th id="57">57</th><td></td></tr>
+<tr><th id="58">58</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="decode_frame" title='decode_frame' data-type='int decode_frame(AVCodecContext * avctx, void * data, int * got_frame, AVPacket * avpkt)' data-ref="decode_frame">decode_frame</dfn>(<a class="typedef" href="avcodec.h.html#AVCodecContext" title='AVCodecContext' data-type='struct AVCodecContext' data-ref="AVCodecContext">AVCodecContext</a> *<dfn class="local col4 decl" id="4avctx" title='avctx' data-type='AVCodecContext *' data-ref="4avctx">avctx</dfn>,</td></tr>
+<tr><th id="59">59</th><td>                        <em>void</em> *<dfn class="local col5 decl" id="5data" title='data' data-type='void *' data-ref="5data">data</dfn>, <em>int</em> *<dfn class="local col6 decl" id="6got_frame" title='got_frame' data-type='int *' data-ref="6got_frame">got_frame</dfn>,</td></tr>
+<tr><th id="60">60</th><td>                        <a class="typedef" href="avcodec.h.html#AVPacket" title='AVPacket' data-type='struct AVPacket' data-ref="AVPacket">AVPacket</a> *<dfn class="local col7 decl" id="7avpkt" title='avpkt' data-type='AVPacket *' data-ref="7avpkt">avpkt</dfn>)</td></tr>
+<tr><th id="61">61</th><td>{</td></tr>
+<tr><th id="62">62</th><td>    <a class="typedef" href="#WNV1Context" title='WNV1Context' data-type='struct WNV1Context' data-ref="WNV1Context">WNV1Context</a> * <em>const</em> <dfn class="local col8 decl" id="8l" title='l' data-type='WNV1Context *const' data-ref="8l">l</dfn> = <a class="local col4 ref" href="#4avctx" title='avctx' data-ref="4avctx">avctx</a>-&gt;<a class="ref" href="avcodec.h.html#AVCodecContext::priv_data" title='AVCodecContext::priv_data' data-ref="AVCodecContext::priv_data">priv_data</a>;</td></tr>
+<tr><th id="63">63</th><td>    <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col9 decl" id="9buf" title='buf' data-type='const uint8_t *' data-ref="9buf">buf</dfn>    = <a class="local col7 ref" href="#7avpkt" title='avpkt' data-ref="7avpkt">avpkt</a>-&gt;<a class="ref" href="avcodec.h.html#AVPacket::data" title='AVPacket::data' data-ref="AVPacket::data">data</a>;</td></tr>
+<tr><th id="64">64</th><td>    <em>int</em> <dfn class="local col0 decl" id="10buf_size" title='buf_size' data-type='int' data-ref="10buf_size">buf_size</dfn>          = <a class="local col7 ref" href="#7avpkt" title='avpkt' data-ref="7avpkt">avpkt</a>-&gt;<a class="ref" href="avcodec.h.html#AVPacket::size" title='AVPacket::size' data-ref="AVPacket::size">size</a>;</td></tr>
+<tr><th id="65">65</th><td>    <a class="typedef" href="../libavutil/frame.h.html#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> * <em>const</em> <dfn class="local col1 decl" id="11p" title='p' data-type='AVFrame *const' data-ref="11p">p</dfn>     = <a class="local col5 ref" href="#5data" title='data' data-ref="5data">data</a>;</td></tr>
+<tr><th id="66">66</th><td>    <em>unsigned</em> <em>char</em> *<dfn class="local col2 decl" id="12Y" title='Y' data-type='unsigned char *' data-ref="12Y">Y</dfn>,*<dfn class="local col3 decl" id="13U" title='U' data-type='unsigned char *' data-ref="13U">U</dfn>,*<dfn class="local col4 decl" id="14V" title='V' data-type='unsigned char *' data-ref="14V">V</dfn>;</td></tr>
+<tr><th id="67">67</th><td>    <em>int</em> <dfn class="local col5 decl" id="15i" title='i' data-type='int' data-ref="15i">i</dfn>, <dfn class="local col6 decl" id="16j" title='j' data-type='int' data-ref="16j">j</dfn>, <dfn class="local col7 decl" id="17ret" title='ret' data-type='int' data-ref="17ret">ret</dfn>;</td></tr>
+<tr><th id="68">68</th><td>    <em>int</em> <dfn class="local col8 decl" id="18prev_y" title='prev_y' data-type='int' data-ref="18prev_y">prev_y</dfn> = <var>0</var>, <dfn class="local col9 decl" id="19prev_u" title='prev_u' data-type='int' data-ref="19prev_u">prev_u</dfn> = <var>0</var>, <dfn class="local col0 decl" id="20prev_v" title='prev_v' data-type='int' data-ref="20prev_v">prev_v</dfn> = <var>0</var>;</td></tr>
+<tr><th id="69">69</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col1 decl" id="21rbuf" title='rbuf' data-type='uint8_t *' data-ref="21rbuf">rbuf</dfn>;</td></tr>
+<tr><th id="70">70</th><td></td></tr>
+<tr><th id="71">71</th><td>    <b>if</b> (<a class="local col0 ref" href="#10buf_size" title='buf_size' data-ref="10buf_size">buf_size</a> &lt;= <var>8</var>) {</td></tr>
+<tr><th id="72">72</th><td>        <a class="ref" href="../libavutil/log.h.html#av_log" title='av_log' data-ref="av_log">av_log</a>(<a class="local col4 ref" href="#4avctx" title='avctx' data-ref="4avctx">avctx</a>, <a class="macro" href="../libavutil/log.h.html#176" title="16" data-ref="_M/AV_LOG_ERROR">AV_LOG_ERROR</a>, <q>"Packet size %d is too small\n"</q>, <a class="local col0 ref" href="#10buf_size" title='buf_size' data-ref="10buf_size">buf_size</a>);</td></tr>
+<tr><th id="73">73</th><td>        <b>return</b> <a class="macro" href="../libavutil/error.h.html#59" title="(-(int)((&apos;I&apos;) | ((&apos;N&apos;) &lt;&lt; 8) | ((&apos;D&apos;) &lt;&lt; 16) | ((unsigned)(&apos;A&apos;) &lt;&lt; 24)))" data-ref="_M/AVERROR_INVALIDDATA">AVERROR_INVALIDDATA</a>;</td></tr>
+<tr><th id="74">74</th><td>    }</td></tr>
+<tr><th id="75">75</th><td></td></tr>
+<tr><th id="76">76</th><td>    <a class="local col1 ref" href="#21rbuf" title='rbuf' data-ref="21rbuf">rbuf</a> = <a class="ref" href="../libavutil/mem.h.html#av_malloc" title='av_malloc' data-ref="av_malloc">av_malloc</a>(<a class="local col0 ref" href="#10buf_size" title='buf_size' data-ref="10buf_size">buf_size</a> + <a class="macro" href="avcodec.h.html#734" title="32" data-ref="_M/AV_INPUT_BUFFER_PADDING_SIZE">AV_INPUT_BUFFER_PADDING_SIZE</a>);</td></tr>
+<tr><th id="77">77</th><td>    <b>if</b> (!<a class="local col1 ref" href="#21rbuf" title='rbuf' data-ref="21rbuf">rbuf</a>) {</td></tr>
+<tr><th id="78">78</th><td>        <a class="ref" href="../libavutil/log.h.html#av_log" title='av_log' data-ref="av_log">av_log</a>(<a class="local col4 ref" href="#4avctx" title='avctx' data-ref="4avctx">avctx</a>, <a class="macro" href="../libavutil/log.h.html#176" title="16" data-ref="_M/AV_LOG_ERROR">AV_LOG_ERROR</a>, <q>"Cannot allocate temporary buffer\n"</q>);</td></tr>
+<tr><th id="79">79</th><td>        <b>return</b> <a class="macro" href="../libavutil/error.h.html#39" title="(-(12))" data-ref="_M/AVERROR">AVERROR</a>(<a class="macro" href="../../include/asm-generic/errno-base.h.html#15" title="12" data-ref="_M/ENOMEM">ENOMEM</a>);</td></tr>
+<tr><th id="80">80</th><td>    }</td></tr>
+<tr><th id="81">81</th><td>    <a class="ref" href="../../include/string.h.html#memset" title='memset' data-ref="memset">memset</a>(<a class="local col1 ref" href="#21rbuf" title='rbuf' data-ref="21rbuf">rbuf</a> + <a class="local col0 ref" href="#10buf_size" title='buf_size' data-ref="10buf_size">buf_size</a>, <var>0</var>, <a class="macro" href="avcodec.h.html#734" title="32" data-ref="_M/AV_INPUT_BUFFER_PADDING_SIZE">AV_INPUT_BUFFER_PADDING_SIZE</a>);</td></tr>
+<tr><th id="82">82</th><td></td></tr>
+<tr><th id="83">83</th><td>    <b>if</b> ((<a class="local col7 ref" href="#17ret" title='ret' data-ref="17ret">ret</a> = <a class="ref" href="internal.h.html#ff_get_buffer" title='ff_get_buffer' data-ref="ff_get_buffer">ff_get_buffer</a>(<a class="local col4 ref" href="#4avctx" title='avctx' data-ref="4avctx">avctx</a>, <a class="local col1 ref" href="#11p" title='p' data-ref="11p">p</a>, <var>0</var>)) &lt; <var>0</var>) {</td></tr>
+<tr><th id="84">84</th><td>        <a class="ref" href="../libavutil/mem.h.html#av_free" title='av_free' data-ref="av_free">av_free</a>(<a class="local col1 ref" href="#21rbuf" title='rbuf' data-ref="21rbuf">rbuf</a>);</td></tr>
+<tr><th id="85">85</th><td>        <b>return</b> <a class="local col7 ref" href="#17ret" title='ret' data-ref="17ret">ret</a>;</td></tr>
+<tr><th id="86">86</th><td>    }</td></tr>
+<tr><th id="87">87</th><td>    <a class="local col1 ref" href="#11p" title='p' data-ref="11p">p</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::key_frame" title='AVFrame::key_frame' data-ref="AVFrame::key_frame">key_frame</a> = <var>1</var>;</td></tr>
+<tr><th id="88">88</th><td></td></tr>
+<tr><th id="89">89</th><td>    <b>for</b> (<a class="local col5 ref" href="#15i" title='i' data-ref="15i">i</a> = <var>8</var>; <a class="local col5 ref" href="#15i" title='i' data-ref="15i">i</a> &lt; <a class="local col0 ref" href="#10buf_size" title='buf_size' data-ref="10buf_size">buf_size</a>; <a class="local col5 ref" href="#15i" title='i' data-ref="15i">i</a>++)</td></tr>
+<tr><th id="90">90</th><td>        <a class="local col1 ref" href="#21rbuf" title='rbuf' data-ref="21rbuf">rbuf</a>[<a class="local col5 ref" href="#15i" title='i' data-ref="15i">i</a>] = <a class="ref" href="../libavutil/internal.h.html#ff_reverse" title='ff_reverse' data-ref="ff_reverse">ff_reverse</a>[<a class="local col9 ref" href="#9buf" title='buf' data-ref="9buf">buf</a>[<a class="local col5 ref" href="#15i" title='i' data-ref="15i">i</a>]];</td></tr>
+<tr><th id="91">91</th><td></td></tr>
+<tr><th id="92">92</th><td>    <b>if</b> ((<a class="local col7 ref" href="#17ret" title='ret' data-ref="17ret">ret</a> = <a class="ref" href="get_bits.h.html#init_get_bits8" title='init_get_bits8' data-ref="init_get_bits8">init_get_bits8</a>(&amp;<a class="local col8 ref" href="#8l" title='l' data-ref="8l">l</a>-&gt;<a class="tu ref" href="#WNV1Context::gb" title='WNV1Context::gb' data-use='a' data-ref="WNV1Context::gb">gb</a>, <a class="local col1 ref" href="#21rbuf" title='rbuf' data-ref="21rbuf">rbuf</a> + <var>8</var>, <a class="local col0 ref" href="#10buf_size" title='buf_size' data-ref="10buf_size">buf_size</a> - <var>8</var>)) &lt; <var>0</var>)</td></tr>
+<tr><th id="93">93</th><td>        <b>return</b> <a class="local col7 ref" href="#17ret" title='ret' data-ref="17ret">ret</a>;</td></tr>
+<tr><th id="94">94</th><td></td></tr>
+<tr><th id="95">95</th><td>    <b>if</b> (<a class="local col9 ref" href="#9buf" title='buf' data-ref="9buf">buf</a>[<var>2</var>] &gt;&gt; <var>4</var> == <var>6</var>)</td></tr>
+<tr><th id="96">96</th><td>        <a class="local col8 ref" href="#8l" title='l' data-ref="8l">l</a>-&gt;<a class="tu ref" href="#WNV1Context::shift" title='WNV1Context::shift' data-use='w' data-ref="WNV1Context::shift">shift</a> = <var>2</var>;</td></tr>
+<tr><th id="97">97</th><td>    <b>else</b> {</td></tr>
+<tr><th id="98">98</th><td>        <a class="local col8 ref" href="#8l" title='l' data-ref="8l">l</a>-&gt;<a class="tu ref" href="#WNV1Context::shift" title='WNV1Context::shift' data-use='w' data-ref="WNV1Context::shift">shift</a> = <var>8</var> - (<a class="local col9 ref" href="#9buf" title='buf' data-ref="9buf">buf</a>[<var>2</var>] &gt;&gt; <var>4</var>);</td></tr>
+<tr><th id="99">99</th><td>        <b>if</b> (<a class="local col8 ref" href="#8l" title='l' data-ref="8l">l</a>-&gt;<a class="tu ref" href="#WNV1Context::shift" title='WNV1Context::shift' data-use='r' data-ref="WNV1Context::shift">shift</a> &gt; <var>4</var>) {</td></tr>
+<tr><th id="100">100</th><td>            <a class="ref" href="../libavutil/internal.h.html#avpriv_request_sample" title='avpriv_request_sample' data-ref="avpriv_request_sample">avpriv_request_sample</a>(<a class="local col4 ref" href="#4avctx" title='avctx' data-ref="4avctx">avctx</a>,</td></tr>
+<tr><th id="101">101</th><td>                                  <q>"Unknown WNV1 frame header value %i"</q>,</td></tr>
+<tr><th id="102">102</th><td>                                  <a class="local col9 ref" href="#9buf" title='buf' data-ref="9buf">buf</a>[<var>2</var>] &gt;&gt; <var>4</var>);</td></tr>
+<tr><th id="103">103</th><td>            <a class="local col8 ref" href="#8l" title='l' data-ref="8l">l</a>-&gt;<a class="tu ref" href="#WNV1Context::shift" title='WNV1Context::shift' data-use='w' data-ref="WNV1Context::shift">shift</a> = <var>4</var>;</td></tr>
+<tr><th id="104">104</th><td>        }</td></tr>
+<tr><th id="105">105</th><td>        <b>if</b> (<a class="local col8 ref" href="#8l" title='l' data-ref="8l">l</a>-&gt;<a class="tu ref" href="#WNV1Context::shift" title='WNV1Context::shift' data-use='r' data-ref="WNV1Context::shift">shift</a> &lt; <var>1</var>) {</td></tr>
+<tr><th id="106">106</th><td>            <a class="ref" href="../libavutil/internal.h.html#avpriv_request_sample" title='avpriv_request_sample' data-ref="avpriv_request_sample">avpriv_request_sample</a>(<a class="local col4 ref" href="#4avctx" title='avctx' data-ref="4avctx">avctx</a>,</td></tr>
+<tr><th id="107">107</th><td>                                  <q>"Unknown WNV1 frame header value %i"</q>,</td></tr>
+<tr><th id="108">108</th><td>                                  <a class="local col9 ref" href="#9buf" title='buf' data-ref="9buf">buf</a>[<var>2</var>] &gt;&gt; <var>4</var>);</td></tr>
+<tr><th id="109">109</th><td>            <a class="local col8 ref" href="#8l" title='l' data-ref="8l">l</a>-&gt;<a class="tu ref" href="#WNV1Context::shift" title='WNV1Context::shift' data-use='w' data-ref="WNV1Context::shift">shift</a> = <var>1</var>;</td></tr>
+<tr><th id="110">110</th><td>        }</td></tr>
+<tr><th id="111">111</th><td>    }</td></tr>
+<tr><th id="112">112</th><td></td></tr>
+<tr><th id="113">113</th><td>    <a class="local col2 ref" href="#12Y" title='Y' data-ref="12Y">Y</a> = <a class="local col1 ref" href="#11p" title='p' data-ref="11p">p</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::data" title='AVFrame::data' data-ref="AVFrame::data">data</a>[<var>0</var>];</td></tr>
+<tr><th id="114">114</th><td>    <a class="local col3 ref" href="#13U" title='U' data-ref="13U">U</a> = <a class="local col1 ref" href="#11p" title='p' data-ref="11p">p</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::data" title='AVFrame::data' data-ref="AVFrame::data">data</a>[<var>1</var>];</td></tr>
+<tr><th id="115">115</th><td>    <a class="local col4 ref" href="#14V" title='V' data-ref="14V">V</a> = <a class="local col1 ref" href="#11p" title='p' data-ref="11p">p</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::data" title='AVFrame::data' data-ref="AVFrame::data">data</a>[<var>2</var>];</td></tr>
+<tr><th id="116">116</th><td>    <b>for</b> (<a class="local col6 ref" href="#16j" title='j' data-ref="16j">j</a> = <var>0</var>; <a class="local col6 ref" href="#16j" title='j' data-ref="16j">j</a> &lt; <a class="local col4 ref" href="#4avctx" title='avctx' data-ref="4avctx">avctx</a>-&gt;<a class="ref" href="avcodec.h.html#AVCodecContext::height" title='AVCodecContext::height' data-ref="AVCodecContext::height">height</a>; <a class="local col6 ref" href="#16j" title='j' data-ref="16j">j</a>++) {</td></tr>
+<tr><th id="117">117</th><td>        <b>for</b> (<a class="local col5 ref" href="#15i" title='i' data-ref="15i">i</a> = <var>0</var>; <a class="local col5 ref" href="#15i" title='i' data-ref="15i">i</a> &lt; <a class="local col4 ref" href="#4avctx" title='avctx' data-ref="4avctx">avctx</a>-&gt;<a class="ref" href="avcodec.h.html#AVCodecContext::width" title='AVCodecContext::width' data-ref="AVCodecContext::width">width</a> / <var>2</var>; <a class="local col5 ref" href="#15i" title='i' data-ref="15i">i</a>++) {</td></tr>
+<tr><th id="118">118</th><td>            <a class="local col2 ref" href="#12Y" title='Y' data-ref="12Y">Y</a>[<a class="local col5 ref" href="#15i" title='i' data-ref="15i">i</a> * <var>2</var>] = <a class="tu ref" href="#wnv1_get_code" title='wnv1_get_code' data-use='c' data-ref="wnv1_get_code">wnv1_get_code</a>(<a class="local col8 ref" href="#8l" title='l' data-ref="8l">l</a>, <a class="local col8 ref" href="#18prev_y" title='prev_y' data-ref="18prev_y">prev_y</a>);</td></tr>
+<tr><th id="119">119</th><td>            <a class="local col9 ref" href="#19prev_u" title='prev_u' data-ref="19prev_u">prev_u</a> = <a class="local col3 ref" href="#13U" title='U' data-ref="13U">U</a>[<a class="local col5 ref" href="#15i" title='i' data-ref="15i">i</a>] = <a class="tu ref" href="#wnv1_get_code" title='wnv1_get_code' data-use='c' data-ref="wnv1_get_code">wnv1_get_code</a>(<a class="local col8 ref" href="#8l" title='l' data-ref="8l">l</a>, <a class="local col9 ref" href="#19prev_u" title='prev_u' data-ref="19prev_u">prev_u</a>);</td></tr>
+<tr><th id="120">120</th><td>            <a class="local col8 ref" href="#18prev_y" title='prev_y' data-ref="18prev_y">prev_y</a> = <a class="local col2 ref" href="#12Y" title='Y' data-ref="12Y">Y</a>[(<a class="local col5 ref" href="#15i" title='i' data-ref="15i">i</a> * <var>2</var>) + <var>1</var>] = <a class="tu ref" href="#wnv1_get_code" title='wnv1_get_code' data-use='c' data-ref="wnv1_get_code">wnv1_get_code</a>(<a class="local col8 ref" href="#8l" title='l' data-ref="8l">l</a>, <a class="local col2 ref" href="#12Y" title='Y' data-ref="12Y">Y</a>[<a class="local col5 ref" href="#15i" title='i' data-ref="15i">i</a> * <var>2</var>]);</td></tr>
+<tr><th id="121">121</th><td>            <a class="local col0 ref" href="#20prev_v" title='prev_v' data-ref="20prev_v">prev_v</a> = <a class="local col4 ref" href="#14V" title='V' data-ref="14V">V</a>[<a class="local col5 ref" href="#15i" title='i' data-ref="15i">i</a>] = <a class="tu ref" href="#wnv1_get_code" title='wnv1_get_code' data-use='c' data-ref="wnv1_get_code">wnv1_get_code</a>(<a class="local col8 ref" href="#8l" title='l' data-ref="8l">l</a>, <a class="local col0 ref" href="#20prev_v" title='prev_v' data-ref="20prev_v">prev_v</a>);</td></tr>
+<tr><th id="122">122</th><td>        }</td></tr>
+<tr><th id="123">123</th><td>        <a class="local col2 ref" href="#12Y" title='Y' data-ref="12Y">Y</a> += <a class="local col1 ref" href="#11p" title='p' data-ref="11p">p</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::linesize" title='AVFrame::linesize' data-ref="AVFrame::linesize">linesize</a>[<var>0</var>];</td></tr>
+<tr><th id="124">124</th><td>        <a class="local col3 ref" href="#13U" title='U' data-ref="13U">U</a> += <a class="local col1 ref" href="#11p" title='p' data-ref="11p">p</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::linesize" title='AVFrame::linesize' data-ref="AVFrame::linesize">linesize</a>[<var>1</var>];</td></tr>
+<tr><th id="125">125</th><td>        <a class="local col4 ref" href="#14V" title='V' data-ref="14V">V</a> += <a class="local col1 ref" href="#11p" title='p' data-ref="11p">p</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::linesize" title='AVFrame::linesize' data-ref="AVFrame::linesize">linesize</a>[<var>2</var>];</td></tr>
+<tr><th id="126">126</th><td>    }</td></tr>
+<tr><th id="127">127</th><td></td></tr>
+<tr><th id="128">128</th><td></td></tr>
+<tr><th id="129">129</th><td>    *<a class="local col6 ref" href="#6got_frame" title='got_frame' data-ref="6got_frame">got_frame</a>      = <var>1</var>;</td></tr>
+<tr><th id="130">130</th><td>    <a class="ref" href="../libavutil/mem.h.html#av_free" title='av_free' data-ref="av_free">av_free</a>(<a class="local col1 ref" href="#21rbuf" title='rbuf' data-ref="21rbuf">rbuf</a>);</td></tr>
+<tr><th id="131">131</th><td></td></tr>
+<tr><th id="132">132</th><td>    <b>return</b> <a class="local col0 ref" href="#10buf_size" title='buf_size' data-ref="10buf_size">buf_size</a>;</td></tr>
+<tr><th id="133">133</th><td>}</td></tr>
+<tr><th id="134">134</th><td></td></tr>
+<tr><th id="135">135</th><td><em>static</em> <a class="macro" href="../libavutil/attributes.h.html#84" title="" data-ref="_M/av_cold">av_cold</a> <em>int</em> <dfn class="tu decl def" id="decode_init" title='decode_init' data-type='int decode_init(AVCodecContext * avctx)' data-ref="decode_init">decode_init</dfn>(<a class="typedef" href="avcodec.h.html#AVCodecContext" title='AVCodecContext' data-type='struct AVCodecContext' data-ref="AVCodecContext">AVCodecContext</a> *<dfn class="local col2 decl" id="22avctx" title='avctx' data-type='AVCodecContext *' data-ref="22avctx">avctx</dfn>)</td></tr>
+<tr><th id="136">136</th><td>{</td></tr>
+<tr><th id="137">137</th><td>    <em>static</em> <a class="macro" href="vlc.h.html#24" title="int16_t" data-ref="_M/VLC_TYPE">VLC_TYPE</a> <dfn class="local col3 decl" id="23code_table" title='code_table' data-type='int16_t [512][2]' data-ref="23code_table">code_table</dfn>[<var>1</var> &lt;&lt; <a class="macro" href="#44" title="9" data-ref="_M/CODE_VLC_BITS">CODE_VLC_BITS</a>][<var>2</var>];</td></tr>
+<tr><th id="138">138</th><td></td></tr>
+<tr><th id="139">139</th><td>    <a class="local col2 ref" href="#22avctx" title='avctx' data-ref="22avctx">avctx</a>-&gt;<a class="ref" href="avcodec.h.html#AVCodecContext::pix_fmt" title='AVCodecContext::pix_fmt' data-ref="AVCodecContext::pix_fmt">pix_fmt</a> = <a class="enum" href="../libavutil/pixfmt.h.html#AVPixelFormat::AV_PIX_FMT_YUV422P" title='AVPixelFormat::AV_PIX_FMT_YUV422P' data-ref="AVPixelFormat::AV_PIX_FMT_YUV422P">AV_PIX_FMT_YUV422P</a>;</td></tr>
+<tr><th id="140">140</th><td></td></tr>
+<tr><th id="141">141</th><td>    <a class="tu ref" href="#code_vlc" title='code_vlc' data-use='m' data-ref="code_vlc">code_vlc</a>.<a class="ref" href="vlc.h.html#VLC::table" title='VLC::table' data-ref="VLC::table">table</a>           = <a class="local col3 ref" href="#23code_table" title='code_table' data-ref="23code_table">code_table</a>;</td></tr>
+<tr><th id="142">142</th><td>    <a class="tu ref" href="#code_vlc" title='code_vlc' data-use='m' data-ref="code_vlc">code_vlc</a>.<a class="ref" href="vlc.h.html#VLC::table_allocated" title='VLC::table_allocated' data-ref="VLC::table_allocated">table_allocated</a> = <var>1</var> &lt;&lt; <a class="macro" href="#44" title="9" data-ref="_M/CODE_VLC_BITS">CODE_VLC_BITS</a>;</td></tr>
+<tr><th id="143">143</th><td>    <a class="macro" href="vlc.h.html#38" title="ff_init_vlc_sparse(&amp;code_vlc, 9, 16, &amp;code_tab[0][1], 4, 2, &amp;code_tab[0][0], 4, 2, ((void*)0), 0, 0, 4)" data-ref="_M/init_vlc">init_vlc</a>(&amp;<a class="tu ref" href="#code_vlc" title='code_vlc' data-use='a' data-ref="code_vlc">code_vlc</a>, <a class="macro" href="#44" title="9" data-ref="_M/CODE_VLC_BITS">CODE_VLC_BITS</a>, <var>16</var>,</td></tr>
+<tr><th id="144">144</th><td>             &amp;<a class="tu ref" href="#code_tab" title='code_tab' data-use='a' data-ref="code_tab">code_tab</a>[<var>0</var>][<var>1</var>], <var>4</var>, <var>2</var>,</td></tr>
+<tr><th id="145">145</th><td>             &amp;<a class="tu ref" href="#code_tab" title='code_tab' data-use='a' data-ref="code_tab">code_tab</a>[<var>0</var>][<var>0</var>], <var>4</var>, <var>2</var>, <a class="macro" href="vlc.h.html#55" title="4" data-ref="_M/INIT_VLC_USE_NEW_STATIC">INIT_VLC_USE_NEW_STATIC</a>);</td></tr>
+<tr><th id="146">146</th><td></td></tr>
+<tr><th id="147">147</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="148">148</th><td>}</td></tr>
+<tr><th id="149">149</th><td></td></tr>
+<tr><th id="150">150</th><td><a class="typedef" href="avcodec.h.html#AVCodec" title='AVCodec' data-type='struct AVCodec' data-ref="AVCodec">AVCodec</a> <dfn class="decl def" id="ff_wnv1_decoder" title='ff_wnv1_decoder' data-ref="ff_wnv1_decoder">ff_wnv1_decoder</dfn> = {</td></tr>
+<tr><th id="151">151</th><td>    .<a class="ref" href="avcodec.h.html#AVCodec::name" title='AVCodec::name' data-ref="AVCodec::name">name</a>           = <q>"wnv1"</q>,</td></tr>
+<tr><th id="152">152</th><td>    .<a class="ref" href="avcodec.h.html#AVCodec::long_name" title='AVCodec::long_name' data-ref="AVCodec::long_name">long_name</a>      = <a class="macro" href="../libavutil/internal.h.html#176" title="&quot;Winnov WNV1&quot;" data-ref="_M/NULL_IF_CONFIG_SMALL">NULL_IF_CONFIG_SMALL</a>(<q>"Winnov WNV1"</q>),</td></tr>
+<tr><th id="153">153</th><td>    .<a class="ref" href="avcodec.h.html#AVCodec::type" title='AVCodec::type' data-ref="AVCodec::type">type</a>           = <a class="enum" href="../libavutil/avutil.h.html#AVMediaType::AVMEDIA_TYPE_VIDEO" title='AVMediaType::AVMEDIA_TYPE_VIDEO' data-ref="AVMediaType::AVMEDIA_TYPE_VIDEO">AVMEDIA_TYPE_VIDEO</a>,</td></tr>
+<tr><th id="154">154</th><td>    .<a class="ref" href="avcodec.h.html#AVCodec::id" title='AVCodec::id' data-ref="AVCodec::id">id</a>             = <a class="enum" href="avcodec.h.html#AVCodecID::AV_CODEC_ID_WNV1" title='AVCodecID::AV_CODEC_ID_WNV1' data-ref="AVCodecID::AV_CODEC_ID_WNV1">AV_CODEC_ID_WNV1</a>,</td></tr>
+<tr><th id="155">155</th><td>    .<a class="ref" href="avcodec.h.html#AVCodec::priv_data_size" title='AVCodec::priv_data_size' data-ref="AVCodec::priv_data_size">priv_data_size</a> = <b>sizeof</b>(<a class="typedef" href="#WNV1Context" title='WNV1Context' data-type='struct WNV1Context' data-ref="WNV1Context">WNV1Context</a>),</td></tr>
+<tr><th id="156">156</th><td>    .<a class="ref" href="avcodec.h.html#AVCodec::init" title='AVCodec::init' data-ref="AVCodec::init">init</a>           = <a class="tu ref" href="#decode_init" title='decode_init' data-ref="decode_init">decode_init</a>,</td></tr>
+<tr><th id="157">157</th><td>    .<a class="ref" href="avcodec.h.html#AVCodec::decode" title='AVCodec::decode' data-ref="AVCodec::decode">decode</a>         = <a class="tu ref" href="#decode_frame" title='decode_frame' data-ref="decode_frame">decode_frame</a>,</td></tr>
+<tr><th id="158">158</th><td>    .<a class="ref" href="avcodec.h.html#AVCodec::capabilities" title='AVCodec::capabilities' data-ref="AVCodec::capabilities">capabilities</a>   = <a class="macro" href="avcodec.h.html#959" title="(1 &lt;&lt; 1)" data-ref="_M/AV_CODEC_CAP_DR1">AV_CODEC_CAP_DR1</a>,</td></tr>
+<tr><th id="159">159</th><td>};</td></tr>
+<tr><th id="160">160</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

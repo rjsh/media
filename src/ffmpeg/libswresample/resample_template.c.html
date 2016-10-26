@@ -1,0 +1,219 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>resample_template.c source code [ffmpeg/libswresample/resample_template.c] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libswresample/resample_template.c'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libswresample</a>/<a href='resample_template.c.html'>resample_template.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * audio resampling</i></td></tr>
+<tr><th id="3">3</th><td><i> * Copyright (c) 2004-2012 Michael Niedermayer &lt;michaelni@gmx.at&gt;</i></td></tr>
+<tr><th id="4">4</th><td><i> *</i></td></tr>
+<tr><th id="5">5</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="8">8</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="9">9</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="10">10</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="11">11</th><td><i> *</i></td></tr>
+<tr><th id="12">12</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="13">13</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="14">14</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="15">15</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="16">16</th><td><i> *</i></td></tr>
+<tr><th id="17">17</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="18">18</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="19">19</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="20">20</th><td><i> */</i></td></tr>
+<tr><th id="21">21</th><td></td></tr>
+<tr><th id="22">22</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="23">23</th><td><i class="doc"> *<span class="command"> @file</span></i></td></tr>
+<tr><th id="24">24</th><td><i class="doc"> * audio resampling</i></td></tr>
+<tr><th id="25">25</th><td><i class="doc"> * <span class="command">@author</span> Michael Niedermayer &lt;michaeln<span class="command">i@gmx</span>.at&gt;</i></td></tr>
+<tr><th id="26">26</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="27">27</th><td></td></tr>
+<tr><th id="28">28</th><td><u>#<span data-ppcond="28">if</span> defined(<span class="macro" data-ref="_M/TEMPLATE_RESAMPLE_DBL">TEMPLATE_RESAMPLE_DBL</span>)</u></td></tr>
+<tr><th id="29">29</th><td></td></tr>
+<tr><th id="30">30</th><td><u>#    define RENAME(N) N ## _double</u></td></tr>
+<tr><th id="31">31</th><td><u>#    define FILTER_SHIFT 0</u></td></tr>
+<tr><th id="32">32</th><td><u>#    define DELEM  double</u></td></tr>
+<tr><th id="33">33</th><td><u>#    define FELEM  double</u></td></tr>
+<tr><th id="34">34</th><td><u>#    define FELEM2 double</u></td></tr>
+<tr><th id="35">35</th><td><u>#    define OUT(d, v) d = v</u></td></tr>
+<tr><th id="36">36</th><td></td></tr>
+<tr><th id="37">37</th><td><u>#elif    defined(<span class="macro" data-ref="_M/TEMPLATE_RESAMPLE_FLT">TEMPLATE_RESAMPLE_FLT</span>)</u></td></tr>
+<tr><th id="38">38</th><td></td></tr>
+<tr><th id="39">39</th><td><u>#    define RENAME(N) N ## _float</u></td></tr>
+<tr><th id="40">40</th><td><u>#    define FILTER_SHIFT 0</u></td></tr>
+<tr><th id="41">41</th><td><u>#    define DELEM  float</u></td></tr>
+<tr><th id="42">42</th><td><u>#    define FELEM  float</u></td></tr>
+<tr><th id="43">43</th><td><u>#    define FELEM2 float</u></td></tr>
+<tr><th id="44">44</th><td><u>#    define OUT(d, v) d = v</u></td></tr>
+<tr><th id="45">45</th><td></td></tr>
+<tr><th id="46">46</th><td><u>#elif defined(<span class="macro" data-ref="_M/TEMPLATE_RESAMPLE_S32">TEMPLATE_RESAMPLE_S32</span>)</u></td></tr>
+<tr><th id="47">47</th><td></td></tr>
+<tr><th id="48">48</th><td><u>#    define RENAME(N) N ## _int32</u></td></tr>
+<tr><th id="49">49</th><td><u>#    define FILTER_SHIFT 30</u></td></tr>
+<tr><th id="50">50</th><td><u>#    define DELEM  int32_t</u></td></tr>
+<tr><th id="51">51</th><td><u>#    define FELEM  int32_t</u></td></tr>
+<tr><th id="52">52</th><td><u>#    define FELEM2 int64_t</u></td></tr>
+<tr><th id="53">53</th><td><u>#    define FELEM_MAX INT32_MAX</u></td></tr>
+<tr><th id="54">54</th><td><u>#    define FELEM_MIN INT32_MIN</u></td></tr>
+<tr><th id="55">55</th><td><u>#    define OUT(d, v) (v) = ((v) + (1&lt;&lt;(FILTER_SHIFT-1)))&gt;&gt;FILTER_SHIFT;\</u></td></tr>
+<tr><th id="56">56</th><td><u>                      (d) = av_clipl_int32(v)</u></td></tr>
+<tr><th id="57">57</th><td></td></tr>
+<tr><th id="58">58</th><td><u>#<span data-ppcond="28">elif</span>    defined(<a class="macro" href="resample_dsp.c.html#30" data-ref="_M/TEMPLATE_RESAMPLE_S16">TEMPLATE_RESAMPLE_S16</a>)</u></td></tr>
+<tr><th id="59">59</th><td></td></tr>
+<tr><th id="60">60</th><td><u>#    define <dfn class="macro" id="_M/RENAME" data-ref="_M/RENAME">RENAME</dfn>(N) N ## _int16</u></td></tr>
+<tr><th id="61">61</th><td><u>#    define <dfn class="macro" id="_M/FILTER_SHIFT" data-ref="_M/FILTER_SHIFT">FILTER_SHIFT</dfn> 15</u></td></tr>
+<tr><th id="62">62</th><td><u>#    define <dfn class="macro" id="_M/DELEM" data-ref="_M/DELEM">DELEM</dfn>  <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a></u></td></tr>
+<tr><th id="63">63</th><td><u>#    define <dfn class="macro" id="_M/FELEM" data-ref="_M/FELEM">FELEM</dfn>  <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a></u></td></tr>
+<tr><th id="64">64</th><td><u>#    define <dfn class="macro" id="_M/FELEM2" data-ref="_M/FELEM2">FELEM2</dfn> <a class="typedef" href="../../include/stdint.h.html#int32_t" title='int32_t' data-type='int' data-ref="int32_t">int32_t</a></u></td></tr>
+<tr><th id="65">65</th><td><u>#    define <dfn class="macro" id="_M/FELEML" data-ref="_M/FELEML">FELEML</dfn> <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a></u></td></tr>
+<tr><th id="66">66</th><td><u>#    define <dfn class="macro" id="_M/FELEM_MAX" data-ref="_M/FELEM_MAX">FELEM_MAX</dfn> INT16_MAX</u></td></tr>
+<tr><th id="67">67</th><td><u>#    define <dfn class="macro" id="_M/FELEM_MIN" data-ref="_M/FELEM_MIN">FELEM_MIN</dfn> INT16_MIN</u></td></tr>
+<tr><th id="68">68</th><td><u>#    define <dfn class="macro" id="_M/OUT" data-ref="_M/OUT">OUT</dfn>(d, v) (v) = ((v) + (1&lt;&lt;(FILTER_SHIFT-1)))&gt;&gt;FILTER_SHIFT;\</u></td></tr>
+<tr><th id="69">69</th><td><u>                      (d) = av_clip_int16(v)</u></td></tr>
+<tr><th id="70">70</th><td></td></tr>
+<tr><th id="71">71</th><td><u>#<span data-ppcond="28">endif</span></u></td></tr>
+<tr><th id="72">72</th><td></td></tr>
+<tr><th id="73">73</th><td><em>static</em> <em>void</em> <a class="macro" href="#60" title="resample_one_int16" data-ref="_M/RENAME">RENAME</a>(resample_one)(<em>void</em> *<dfn class="local col1 decl" id="1dest" title='dest' data-type='void *' data-ref="1dest">dest</dfn>, <em>const</em> <em>void</em> *<dfn class="local col2 decl" id="2source" title='source' data-type='const void *' data-ref="2source">source</dfn>,</td></tr>
+<tr><th id="74">74</th><td>                                 <em>int</em> <dfn class="local col3 decl" id="3dst_size" title='dst_size' data-type='int' data-ref="3dst_size">dst_size</dfn>, <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="local col4 decl" id="4index2" title='index2' data-type='int64_t' data-ref="4index2">index2</dfn>, <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="local col5 decl" id="5incr" title='incr' data-type='int64_t' data-ref="5incr">incr</dfn>)</td></tr>
+<tr><th id="75">75</th><td>{</td></tr>
+<tr><th id="76">76</th><td>    <a class="macro" href="#62" title="int16_t" data-ref="_M/DELEM">DELEM</a> *<dfn class="local col6 decl" id="6dst" title='dst' data-type='int16_t *' data-ref="6dst">dst</dfn> = <a class="local col1 ref" href="#1dest" title='dest' data-ref="1dest">dest</a>;</td></tr>
+<tr><th id="77">77</th><td>    <em>const</em> <a class="macro" href="#62" title="int16_t" data-ref="_M/DELEM">DELEM</a> *<dfn class="local col7 decl" id="7src" title='src' data-type='const int16_t *' data-ref="7src">src</dfn> = <a class="local col2 ref" href="#2source" title='source' data-ref="2source">source</a>;</td></tr>
+<tr><th id="78">78</th><td>    <em>int</em> <dfn class="local col8 decl" id="8dst_index" title='dst_index' data-type='int' data-ref="8dst_index">dst_index</dfn>;</td></tr>
+<tr><th id="79">79</th><td></td></tr>
+<tr><th id="80">80</th><td>    <b>for</b> (<a class="local col8 ref" href="#8dst_index" title='dst_index' data-ref="8dst_index">dst_index</a> = <var>0</var>; <a class="local col8 ref" href="#8dst_index" title='dst_index' data-ref="8dst_index">dst_index</a> &lt; <a class="local col3 ref" href="#3dst_size" title='dst_size' data-ref="3dst_size">dst_size</a>; <a class="local col8 ref" href="#8dst_index" title='dst_index' data-ref="8dst_index">dst_index</a>++) {</td></tr>
+<tr><th id="81">81</th><td>        <a class="local col6 ref" href="#6dst" title='dst' data-ref="6dst">dst</a>[<a class="local col8 ref" href="#8dst_index" title='dst_index' data-ref="8dst_index">dst_index</a>] = <a class="local col7 ref" href="#7src" title='src' data-ref="7src">src</a>[<a class="local col4 ref" href="#4index2" title='index2' data-ref="4index2">index2</a> &gt;&gt; <var>32</var>];</td></tr>
+<tr><th id="82">82</th><td>        <a class="local col4 ref" href="#4index2" title='index2' data-ref="4index2">index2</a> += <a class="local col5 ref" href="#5incr" title='incr' data-ref="5incr">incr</a>;</td></tr>
+<tr><th id="83">83</th><td>    }</td></tr>
+<tr><th id="84">84</th><td>}</td></tr>
+<tr><th id="85">85</th><td></td></tr>
+<tr><th id="86">86</th><td><em>static</em> <em>int</em> <a class="macro" href="#60" title="resample_common_int16" data-ref="_M/RENAME">RENAME</a>(resample_common)(<a class="typedef" href="resample.h.html#ResampleContext" title='ResampleContext' data-type='struct ResampleContext' data-ref="ResampleContext">ResampleContext</a> *<dfn class="local col9 decl" id="9c" title='c' data-type='ResampleContext *' data-ref="9c">c</dfn>,</td></tr>
+<tr><th id="87">87</th><td>                                   <em>void</em> *<dfn class="local col0 decl" id="10dest" title='dest' data-type='void *' data-ref="10dest">dest</dfn>, <em>const</em> <em>void</em> *<dfn class="local col1 decl" id="11source" title='source' data-type='const void *' data-ref="11source">source</dfn>,</td></tr>
+<tr><th id="88">88</th><td>                                   <em>int</em> <dfn class="local col2 decl" id="12n" title='n' data-type='int' data-ref="12n">n</dfn>, <em>int</em> <dfn class="local col3 decl" id="13update_ctx" title='update_ctx' data-type='int' data-ref="13update_ctx">update_ctx</dfn>)</td></tr>
+<tr><th id="89">89</th><td>{</td></tr>
+<tr><th id="90">90</th><td>    <a class="macro" href="#62" title="int16_t" data-ref="_M/DELEM">DELEM</a> *<dfn class="local col4 decl" id="14dst" title='dst' data-type='int16_t *' data-ref="14dst">dst</dfn> = <a class="local col0 ref" href="#10dest" title='dest' data-ref="10dest">dest</a>;</td></tr>
+<tr><th id="91">91</th><td>    <em>const</em> <a class="macro" href="#62" title="int16_t" data-ref="_M/DELEM">DELEM</a> *<dfn class="local col5 decl" id="15src" title='src' data-type='const int16_t *' data-ref="15src">src</dfn> = <a class="local col1 ref" href="#11source" title='source' data-ref="11source">source</a>;</td></tr>
+<tr><th id="92">92</th><td>    <em>int</em> <dfn class="local col6 decl" id="16dst_index" title='dst_index' data-type='int' data-ref="16dst_index">dst_index</dfn>;</td></tr>
+<tr><th id="93">93</th><td>    <em>int</em> <dfn class="local col7 decl" id="17index" title='index' data-type='int' data-ref="17index">index</dfn>= <a class="local col9 ref" href="#9c" title='c' data-ref="9c">c</a>-&gt;<a class="ref" href="resample.h.html#ResampleContext::index" title='ResampleContext::index' data-ref="ResampleContext::index">index</a>;</td></tr>
+<tr><th id="94">94</th><td>    <em>int</em> <dfn class="local col8 decl" id="18frac" title='frac' data-type='int' data-ref="18frac">frac</dfn>= <a class="local col9 ref" href="#9c" title='c' data-ref="9c">c</a>-&gt;<a class="ref" href="resample.h.html#ResampleContext::frac" title='ResampleContext::frac' data-ref="ResampleContext::frac">frac</a>;</td></tr>
+<tr><th id="95">95</th><td>    <em>int</em> <dfn class="local col9 decl" id="19sample_index" title='sample_index' data-type='int' data-ref="19sample_index">sample_index</dfn> = <var>0</var>;</td></tr>
+<tr><th id="96">96</th><td></td></tr>
+<tr><th id="97">97</th><td>    <b>while</b> (<a class="local col7 ref" href="#17index" title='index' data-ref="17index">index</a> &gt;= <a class="local col9 ref" href="#9c" title='c' data-ref="9c">c</a>-&gt;<a class="ref" href="resample.h.html#ResampleContext::phase_count" title='ResampleContext::phase_count' data-ref="ResampleContext::phase_count">phase_count</a>) {</td></tr>
+<tr><th id="98">98</th><td>        <a class="local col9 ref" href="#19sample_index" title='sample_index' data-ref="19sample_index">sample_index</a>++;</td></tr>
+<tr><th id="99">99</th><td>        <a class="local col7 ref" href="#17index" title='index' data-ref="17index">index</a> -= <a class="local col9 ref" href="#9c" title='c' data-ref="9c">c</a>-&gt;<a class="ref" href="resample.h.html#ResampleContext::phase_count" title='ResampleContext::phase_count' data-ref="ResampleContext::phase_count">phase_count</a>;</td></tr>
+<tr><th id="100">100</th><td>    }</td></tr>
+<tr><th id="101">101</th><td></td></tr>
+<tr><th id="102">102</th><td>    <b>for</b> (<a class="local col6 ref" href="#16dst_index" title='dst_index' data-ref="16dst_index">dst_index</a> = <var>0</var>; <a class="local col6 ref" href="#16dst_index" title='dst_index' data-ref="16dst_index">dst_index</a> &lt; <a class="local col2 ref" href="#12n" title='n' data-ref="12n">n</a>; <a class="local col6 ref" href="#16dst_index" title='dst_index' data-ref="16dst_index">dst_index</a>++) {</td></tr>
+<tr><th id="103">103</th><td>        <a class="macro" href="#63" title="int16_t" data-ref="_M/FELEM">FELEM</a> *<dfn class="local col0 decl" id="20filter" title='filter' data-type='int16_t *' data-ref="20filter">filter</dfn> = ((<a class="macro" href="#63" title="int16_t" data-ref="_M/FELEM">FELEM</a> *) <a class="local col9 ref" href="#9c" title='c' data-ref="9c">c</a>-&gt;<a class="ref" href="resample.h.html#ResampleContext::filter_bank" title='ResampleContext::filter_bank' data-ref="ResampleContext::filter_bank">filter_bank</a>) + <a class="local col9 ref" href="#9c" title='c' data-ref="9c">c</a>-&gt;<a class="ref" href="resample.h.html#ResampleContext::filter_alloc" title='ResampleContext::filter_alloc' data-ref="ResampleContext::filter_alloc">filter_alloc</a> * <a class="local col7 ref" href="#17index" title='index' data-ref="17index">index</a>;</td></tr>
+<tr><th id="104">104</th><td></td></tr>
+<tr><th id="105">105</th><td>        <a class="macro" href="#64" title="int32_t" data-ref="_M/FELEM2">FELEM2</a> <dfn class="local col1 decl" id="21val" title='val' data-type='int32_t' data-ref="21val">val</dfn>=<var>0</var>;</td></tr>
+<tr><th id="106">106</th><td>        <em>int</em> <dfn class="local col2 decl" id="22i" title='i' data-type='int' data-ref="22i">i</dfn>;</td></tr>
+<tr><th id="107">107</th><td>        <b>for</b> (<a class="local col2 ref" href="#22i" title='i' data-ref="22i">i</a> = <var>0</var>; <a class="local col2 ref" href="#22i" title='i' data-ref="22i">i</a> &lt; <a class="local col9 ref" href="#9c" title='c' data-ref="9c">c</a>-&gt;<a class="ref" href="resample.h.html#ResampleContext::filter_length" title='ResampleContext::filter_length' data-ref="ResampleContext::filter_length">filter_length</a>; <a class="local col2 ref" href="#22i" title='i' data-ref="22i">i</a>++) {</td></tr>
+<tr><th id="108">108</th><td>            <a class="local col1 ref" href="#21val" title='val' data-ref="21val">val</a> += <a class="local col5 ref" href="#15src" title='src' data-ref="15src">src</a>[<a class="local col9 ref" href="#19sample_index" title='sample_index' data-ref="19sample_index">sample_index</a> + <a class="local col2 ref" href="#22i" title='i' data-ref="22i">i</a>] * (<a class="macro" href="#64" title="int32_t" data-ref="_M/FELEM2">FELEM2</a>)<a class="local col0 ref" href="#20filter" title='filter' data-ref="20filter">filter</a>[<a class="local col2 ref" href="#22i" title='i' data-ref="22i">i</a>];</td></tr>
+<tr><th id="109">109</th><td>        }</td></tr>
+<tr><th id="110">110</th><td>        <a class="macro" href="#68" title="(val) = ((val) + (1&lt;&lt;(15-1)))&gt;&gt;15; (dst[dst_index]) = av_clip_int16_c(val)" data-ref="_M/OUT">OUT</a>(<a class="local col4 ref" href="#14dst" title='dst' data-ref="14dst">dst</a>[<a class="local col6 ref" href="#16dst_index" title='dst_index' data-ref="16dst_index">dst_index</a>], <a class="local col1 ref" href="#21val" title='val' data-ref="21val">val</a>);</td></tr>
+<tr><th id="111">111</th><td></td></tr>
+<tr><th id="112">112</th><td>        <a class="local col8 ref" href="#18frac" title='frac' data-ref="18frac">frac</a>  += <a class="local col9 ref" href="#9c" title='c' data-ref="9c">c</a>-&gt;<a class="ref" href="resample.h.html#ResampleContext::dst_incr_mod" title='ResampleContext::dst_incr_mod' data-ref="ResampleContext::dst_incr_mod">dst_incr_mod</a>;</td></tr>
+<tr><th id="113">113</th><td>        <a class="local col7 ref" href="#17index" title='index' data-ref="17index">index</a> += <a class="local col9 ref" href="#9c" title='c' data-ref="9c">c</a>-&gt;<a class="ref" href="resample.h.html#ResampleContext::dst_incr_div" title='ResampleContext::dst_incr_div' data-ref="ResampleContext::dst_incr_div">dst_incr_div</a>;</td></tr>
+<tr><th id="114">114</th><td>        <b>if</b> (<a class="local col8 ref" href="#18frac" title='frac' data-ref="18frac">frac</a> &gt;= <a class="local col9 ref" href="#9c" title='c' data-ref="9c">c</a>-&gt;<a class="ref" href="resample.h.html#ResampleContext::src_incr" title='ResampleContext::src_incr' data-ref="ResampleContext::src_incr">src_incr</a>) {</td></tr>
+<tr><th id="115">115</th><td>            <a class="local col8 ref" href="#18frac" title='frac' data-ref="18frac">frac</a> -= <a class="local col9 ref" href="#9c" title='c' data-ref="9c">c</a>-&gt;<a class="ref" href="resample.h.html#ResampleContext::src_incr" title='ResampleContext::src_incr' data-ref="ResampleContext::src_incr">src_incr</a>;</td></tr>
+<tr><th id="116">116</th><td>            <a class="local col7 ref" href="#17index" title='index' data-ref="17index">index</a>++;</td></tr>
+<tr><th id="117">117</th><td>        }</td></tr>
+<tr><th id="118">118</th><td></td></tr>
+<tr><th id="119">119</th><td>        <b>while</b> (<a class="local col7 ref" href="#17index" title='index' data-ref="17index">index</a> &gt;= <a class="local col9 ref" href="#9c" title='c' data-ref="9c">c</a>-&gt;<a class="ref" href="resample.h.html#ResampleContext::phase_count" title='ResampleContext::phase_count' data-ref="ResampleContext::phase_count">phase_count</a>) {</td></tr>
+<tr><th id="120">120</th><td>            <a class="local col9 ref" href="#19sample_index" title='sample_index' data-ref="19sample_index">sample_index</a>++;</td></tr>
+<tr><th id="121">121</th><td>            <a class="local col7 ref" href="#17index" title='index' data-ref="17index">index</a> -= <a class="local col9 ref" href="#9c" title='c' data-ref="9c">c</a>-&gt;<a class="ref" href="resample.h.html#ResampleContext::phase_count" title='ResampleContext::phase_count' data-ref="ResampleContext::phase_count">phase_count</a>;</td></tr>
+<tr><th id="122">122</th><td>        }</td></tr>
+<tr><th id="123">123</th><td>    }</td></tr>
+<tr><th id="124">124</th><td></td></tr>
+<tr><th id="125">125</th><td>    <b>if</b>(<a class="local col3 ref" href="#13update_ctx" title='update_ctx' data-ref="13update_ctx">update_ctx</a>){</td></tr>
+<tr><th id="126">126</th><td>        <a class="local col9 ref" href="#9c" title='c' data-ref="9c">c</a>-&gt;<a class="ref" href="resample.h.html#ResampleContext::frac" title='ResampleContext::frac' data-ref="ResampleContext::frac">frac</a>= <a class="local col8 ref" href="#18frac" title='frac' data-ref="18frac">frac</a>;</td></tr>
+<tr><th id="127">127</th><td>        <a class="local col9 ref" href="#9c" title='c' data-ref="9c">c</a>-&gt;<a class="ref" href="resample.h.html#ResampleContext::index" title='ResampleContext::index' data-ref="ResampleContext::index">index</a>= <a class="local col7 ref" href="#17index" title='index' data-ref="17index">index</a>;</td></tr>
+<tr><th id="128">128</th><td>    }</td></tr>
+<tr><th id="129">129</th><td></td></tr>
+<tr><th id="130">130</th><td>    <b>return</b> <a class="local col9 ref" href="#19sample_index" title='sample_index' data-ref="19sample_index">sample_index</a>;</td></tr>
+<tr><th id="131">131</th><td>}</td></tr>
+<tr><th id="132">132</th><td></td></tr>
+<tr><th id="133">133</th><td><em>static</em> <em>int</em> <a class="macro" href="#60" title="resample_linear_int16" data-ref="_M/RENAME">RENAME</a>(resample_linear)(<a class="typedef" href="resample.h.html#ResampleContext" title='ResampleContext' data-type='struct ResampleContext' data-ref="ResampleContext">ResampleContext</a> *<dfn class="local col3 decl" id="23c" title='c' data-type='ResampleContext *' data-ref="23c">c</dfn>,</td></tr>
+<tr><th id="134">134</th><td>                                   <em>void</em> *<dfn class="local col4 decl" id="24dest" title='dest' data-type='void *' data-ref="24dest">dest</dfn>, <em>const</em> <em>void</em> *<dfn class="local col5 decl" id="25source" title='source' data-type='const void *' data-ref="25source">source</dfn>,</td></tr>
+<tr><th id="135">135</th><td>                                   <em>int</em> <dfn class="local col6 decl" id="26n" title='n' data-type='int' data-ref="26n">n</dfn>, <em>int</em> <dfn class="local col7 decl" id="27update_ctx" title='update_ctx' data-type='int' data-ref="27update_ctx">update_ctx</dfn>)</td></tr>
+<tr><th id="136">136</th><td>{</td></tr>
+<tr><th id="137">137</th><td>    <a class="macro" href="#62" title="int16_t" data-ref="_M/DELEM">DELEM</a> *<dfn class="local col8 decl" id="28dst" title='dst' data-type='int16_t *' data-ref="28dst">dst</dfn> = <a class="local col4 ref" href="#24dest" title='dest' data-ref="24dest">dest</a>;</td></tr>
+<tr><th id="138">138</th><td>    <em>const</em> <a class="macro" href="#62" title="int16_t" data-ref="_M/DELEM">DELEM</a> *<dfn class="local col9 decl" id="29src" title='src' data-type='const int16_t *' data-ref="29src">src</dfn> = <a class="local col5 ref" href="#25source" title='source' data-ref="25source">source</a>;</td></tr>
+<tr><th id="139">139</th><td>    <em>int</em> <dfn class="local col0 decl" id="30dst_index" title='dst_index' data-type='int' data-ref="30dst_index">dst_index</dfn>;</td></tr>
+<tr><th id="140">140</th><td>    <em>int</em> <dfn class="local col1 decl" id="31index" title='index' data-type='int' data-ref="31index">index</dfn>= <a class="local col3 ref" href="#23c" title='c' data-ref="23c">c</a>-&gt;<a class="ref" href="resample.h.html#ResampleContext::index" title='ResampleContext::index' data-ref="ResampleContext::index">index</a>;</td></tr>
+<tr><th id="141">141</th><td>    <em>int</em> <dfn class="local col2 decl" id="32frac" title='frac' data-type='int' data-ref="32frac">frac</dfn>= <a class="local col3 ref" href="#23c" title='c' data-ref="23c">c</a>-&gt;<a class="ref" href="resample.h.html#ResampleContext::frac" title='ResampleContext::frac' data-ref="ResampleContext::frac">frac</a>;</td></tr>
+<tr><th id="142">142</th><td>    <em>int</em> <dfn class="local col3 decl" id="33sample_index" title='sample_index' data-type='int' data-ref="33sample_index">sample_index</dfn> = <var>0</var>;</td></tr>
+<tr><th id="143">143</th><td><u>#<span data-ppcond="143">if</span> <a class="macro" href="#61" title="15" data-ref="_M/FILTER_SHIFT">FILTER_SHIFT</a> == 0</u></td></tr>
+<tr><th id="144">144</th><td>    <em>double</em> inv_src_incr = <var>1.0</var> / c-&gt;src_incr;</td></tr>
+<tr><th id="145">145</th><td><u>#<span data-ppcond="143">endif</span></u></td></tr>
+<tr><th id="146">146</th><td></td></tr>
+<tr><th id="147">147</th><td>    <b>while</b> (<a class="local col1 ref" href="#31index" title='index' data-ref="31index">index</a> &gt;= <a class="local col3 ref" href="#23c" title='c' data-ref="23c">c</a>-&gt;<a class="ref" href="resample.h.html#ResampleContext::phase_count" title='ResampleContext::phase_count' data-ref="ResampleContext::phase_count">phase_count</a>) {</td></tr>
+<tr><th id="148">148</th><td>        <a class="local col3 ref" href="#33sample_index" title='sample_index' data-ref="33sample_index">sample_index</a>++;</td></tr>
+<tr><th id="149">149</th><td>        <a class="local col1 ref" href="#31index" title='index' data-ref="31index">index</a> -= <a class="local col3 ref" href="#23c" title='c' data-ref="23c">c</a>-&gt;<a class="ref" href="resample.h.html#ResampleContext::phase_count" title='ResampleContext::phase_count' data-ref="ResampleContext::phase_count">phase_count</a>;</td></tr>
+<tr><th id="150">150</th><td>    }</td></tr>
+<tr><th id="151">151</th><td></td></tr>
+<tr><th id="152">152</th><td>    <b>for</b> (<a class="local col0 ref" href="#30dst_index" title='dst_index' data-ref="30dst_index">dst_index</a> = <var>0</var>; <a class="local col0 ref" href="#30dst_index" title='dst_index' data-ref="30dst_index">dst_index</a> &lt; <a class="local col6 ref" href="#26n" title='n' data-ref="26n">n</a>; <a class="local col0 ref" href="#30dst_index" title='dst_index' data-ref="30dst_index">dst_index</a>++) {</td></tr>
+<tr><th id="153">153</th><td>        <a class="macro" href="#63" title="int16_t" data-ref="_M/FELEM">FELEM</a> *<dfn class="local col4 decl" id="34filter" title='filter' data-type='int16_t *' data-ref="34filter">filter</dfn> = ((<a class="macro" href="#63" title="int16_t" data-ref="_M/FELEM">FELEM</a> *) <a class="local col3 ref" href="#23c" title='c' data-ref="23c">c</a>-&gt;<a class="ref" href="resample.h.html#ResampleContext::filter_bank" title='ResampleContext::filter_bank' data-ref="ResampleContext::filter_bank">filter_bank</a>) + <a class="local col3 ref" href="#23c" title='c' data-ref="23c">c</a>-&gt;<a class="ref" href="resample.h.html#ResampleContext::filter_alloc" title='ResampleContext::filter_alloc' data-ref="ResampleContext::filter_alloc">filter_alloc</a> * <a class="local col1 ref" href="#31index" title='index' data-ref="31index">index</a>;</td></tr>
+<tr><th id="154">154</th><td>        <a class="macro" href="#64" title="int32_t" data-ref="_M/FELEM2">FELEM2</a> <dfn class="local col5 decl" id="35val" title='val' data-type='int32_t' data-ref="35val">val</dfn>=<var>0</var>, <dfn class="local col6 decl" id="36v2" title='v2' data-type='int32_t' data-ref="36v2">v2</dfn> = <var>0</var>;</td></tr>
+<tr><th id="155">155</th><td></td></tr>
+<tr><th id="156">156</th><td>        <em>int</em> <dfn class="local col7 decl" id="37i" title='i' data-type='int' data-ref="37i">i</dfn>;</td></tr>
+<tr><th id="157">157</th><td>        <b>for</b> (<a class="local col7 ref" href="#37i" title='i' data-ref="37i">i</a> = <var>0</var>; <a class="local col7 ref" href="#37i" title='i' data-ref="37i">i</a> &lt; <a class="local col3 ref" href="#23c" title='c' data-ref="23c">c</a>-&gt;<a class="ref" href="resample.h.html#ResampleContext::filter_length" title='ResampleContext::filter_length' data-ref="ResampleContext::filter_length">filter_length</a>; <a class="local col7 ref" href="#37i" title='i' data-ref="37i">i</a>++) {</td></tr>
+<tr><th id="158">158</th><td>            <a class="local col5 ref" href="#35val" title='val' data-ref="35val">val</a> += <a class="local col9 ref" href="#29src" title='src' data-ref="29src">src</a>[<a class="local col3 ref" href="#33sample_index" title='sample_index' data-ref="33sample_index">sample_index</a> + <a class="local col7 ref" href="#37i" title='i' data-ref="37i">i</a>] * (<a class="macro" href="#64" title="int32_t" data-ref="_M/FELEM2">FELEM2</a>)<a class="local col4 ref" href="#34filter" title='filter' data-ref="34filter">filter</a>[<a class="local col7 ref" href="#37i" title='i' data-ref="37i">i</a>];</td></tr>
+<tr><th id="159">159</th><td>            <a class="local col6 ref" href="#36v2" title='v2' data-ref="36v2">v2</a>  += <a class="local col9 ref" href="#29src" title='src' data-ref="29src">src</a>[<a class="local col3 ref" href="#33sample_index" title='sample_index' data-ref="33sample_index">sample_index</a> + <a class="local col7 ref" href="#37i" title='i' data-ref="37i">i</a>] * (<a class="macro" href="#64" title="int32_t" data-ref="_M/FELEM2">FELEM2</a>)<a class="local col4 ref" href="#34filter" title='filter' data-ref="34filter">filter</a>[<a class="local col7 ref" href="#37i" title='i' data-ref="37i">i</a> + <a class="local col3 ref" href="#23c" title='c' data-ref="23c">c</a>-&gt;<a class="ref" href="resample.h.html#ResampleContext::filter_alloc" title='ResampleContext::filter_alloc' data-ref="ResampleContext::filter_alloc">filter_alloc</a>];</td></tr>
+<tr><th id="160">160</th><td>        }</td></tr>
+<tr><th id="161">161</th><td><u>#<span data-ppcond="161">ifdef</span> <a class="macro" href="#65" data-ref="_M/FELEML">FELEML</a></u></td></tr>
+<tr><th id="162">162</th><td>        <a class="local col5 ref" href="#35val" title='val' data-ref="35val">val</a> += (<a class="local col6 ref" href="#36v2" title='v2' data-ref="36v2">v2</a> - <a class="local col5 ref" href="#35val" title='val' data-ref="35val">val</a>) * (<a class="macro" href="#65" title="int64_t" data-ref="_M/FELEML">FELEML</a>) <a class="local col2 ref" href="#32frac" title='frac' data-ref="32frac">frac</a> / <a class="local col3 ref" href="#23c" title='c' data-ref="23c">c</a>-&gt;<a class="ref" href="resample.h.html#ResampleContext::src_incr" title='ResampleContext::src_incr' data-ref="ResampleContext::src_incr">src_incr</a>;</td></tr>
+<tr><th id="163">163</th><td><u>#<span data-ppcond="161">else</span></u></td></tr>
+<tr><th id="164">164</th><td><u>#    if FILTER_SHIFT == 0</u></td></tr>
+<tr><th id="165">165</th><td>        val += (v2 - val) * inv_src_incr * frac;</td></tr>
+<tr><th id="166">166</th><td><u>#    else</u></td></tr>
+<tr><th id="167">167</th><td>        val += (v2 - val) / c-&gt;src_incr * frac;</td></tr>
+<tr><th id="168">168</th><td><u>#    endif</u></td></tr>
+<tr><th id="169">169</th><td><u>#<span data-ppcond="161">endif</span></u></td></tr>
+<tr><th id="170">170</th><td>        <a class="macro" href="#68" title="(val) = ((val) + (1&lt;&lt;(15-1)))&gt;&gt;15; (dst[dst_index]) = av_clip_int16_c(val)" data-ref="_M/OUT">OUT</a>(<a class="local col8 ref" href="#28dst" title='dst' data-ref="28dst">dst</a>[<a class="local col0 ref" href="#30dst_index" title='dst_index' data-ref="30dst_index">dst_index</a>], <a class="local col5 ref" href="#35val" title='val' data-ref="35val">val</a>);</td></tr>
+<tr><th id="171">171</th><td></td></tr>
+<tr><th id="172">172</th><td>        <a class="local col2 ref" href="#32frac" title='frac' data-ref="32frac">frac</a> += <a class="local col3 ref" href="#23c" title='c' data-ref="23c">c</a>-&gt;<a class="ref" href="resample.h.html#ResampleContext::dst_incr_mod" title='ResampleContext::dst_incr_mod' data-ref="ResampleContext::dst_incr_mod">dst_incr_mod</a>;</td></tr>
+<tr><th id="173">173</th><td>        <a class="local col1 ref" href="#31index" title='index' data-ref="31index">index</a> += <a class="local col3 ref" href="#23c" title='c' data-ref="23c">c</a>-&gt;<a class="ref" href="resample.h.html#ResampleContext::dst_incr_div" title='ResampleContext::dst_incr_div' data-ref="ResampleContext::dst_incr_div">dst_incr_div</a>;</td></tr>
+<tr><th id="174">174</th><td>        <b>if</b> (<a class="local col2 ref" href="#32frac" title='frac' data-ref="32frac">frac</a> &gt;= <a class="local col3 ref" href="#23c" title='c' data-ref="23c">c</a>-&gt;<a class="ref" href="resample.h.html#ResampleContext::src_incr" title='ResampleContext::src_incr' data-ref="ResampleContext::src_incr">src_incr</a>) {</td></tr>
+<tr><th id="175">175</th><td>            <a class="local col2 ref" href="#32frac" title='frac' data-ref="32frac">frac</a> -= <a class="local col3 ref" href="#23c" title='c' data-ref="23c">c</a>-&gt;<a class="ref" href="resample.h.html#ResampleContext::src_incr" title='ResampleContext::src_incr' data-ref="ResampleContext::src_incr">src_incr</a>;</td></tr>
+<tr><th id="176">176</th><td>            <a class="local col1 ref" href="#31index" title='index' data-ref="31index">index</a>++;</td></tr>
+<tr><th id="177">177</th><td>        }</td></tr>
+<tr><th id="178">178</th><td></td></tr>
+<tr><th id="179">179</th><td>        <b>while</b> (<a class="local col1 ref" href="#31index" title='index' data-ref="31index">index</a> &gt;= <a class="local col3 ref" href="#23c" title='c' data-ref="23c">c</a>-&gt;<a class="ref" href="resample.h.html#ResampleContext::phase_count" title='ResampleContext::phase_count' data-ref="ResampleContext::phase_count">phase_count</a>) {</td></tr>
+<tr><th id="180">180</th><td>            <a class="local col3 ref" href="#33sample_index" title='sample_index' data-ref="33sample_index">sample_index</a>++;</td></tr>
+<tr><th id="181">181</th><td>            <a class="local col1 ref" href="#31index" title='index' data-ref="31index">index</a> -= <a class="local col3 ref" href="#23c" title='c' data-ref="23c">c</a>-&gt;<a class="ref" href="resample.h.html#ResampleContext::phase_count" title='ResampleContext::phase_count' data-ref="ResampleContext::phase_count">phase_count</a>;</td></tr>
+<tr><th id="182">182</th><td>        }</td></tr>
+<tr><th id="183">183</th><td>    }</td></tr>
+<tr><th id="184">184</th><td></td></tr>
+<tr><th id="185">185</th><td>    <b>if</b>(<a class="local col7 ref" href="#27update_ctx" title='update_ctx' data-ref="27update_ctx">update_ctx</a>){</td></tr>
+<tr><th id="186">186</th><td>        <a class="local col3 ref" href="#23c" title='c' data-ref="23c">c</a>-&gt;<a class="ref" href="resample.h.html#ResampleContext::frac" title='ResampleContext::frac' data-ref="ResampleContext::frac">frac</a>= <a class="local col2 ref" href="#32frac" title='frac' data-ref="32frac">frac</a>;</td></tr>
+<tr><th id="187">187</th><td>        <a class="local col3 ref" href="#23c" title='c' data-ref="23c">c</a>-&gt;<a class="ref" href="resample.h.html#ResampleContext::index" title='ResampleContext::index' data-ref="ResampleContext::index">index</a>= <a class="local col1 ref" href="#31index" title='index' data-ref="31index">index</a>;</td></tr>
+<tr><th id="188">188</th><td>    }</td></tr>
+<tr><th id="189">189</th><td></td></tr>
+<tr><th id="190">190</th><td>    <b>return</b> <a class="local col3 ref" href="#33sample_index" title='sample_index' data-ref="33sample_index">sample_index</a>;</td></tr>
+<tr><th id="191">191</th><td>}</td></tr>
+<tr><th id="192">192</th><td></td></tr>
+<tr><th id="193">193</th><td><u>#undef <a class="macro" href="#60" data-ref="_M/RENAME">RENAME</a></u></td></tr>
+<tr><th id="194">194</th><td><u>#undef <a class="macro" href="#61" data-ref="_M/FILTER_SHIFT">FILTER_SHIFT</a></u></td></tr>
+<tr><th id="195">195</th><td><u>#undef <a class="macro" href="#62" data-ref="_M/DELEM">DELEM</a></u></td></tr>
+<tr><th id="196">196</th><td><u>#undef <a class="macro" href="#63" data-ref="_M/FELEM">FELEM</a></u></td></tr>
+<tr><th id="197">197</th><td><u>#undef <a class="macro" href="#64" data-ref="_M/FELEM2">FELEM2</a></u></td></tr>
+<tr><th id="198">198</th><td><u>#undef <a class="macro" href="#65" data-ref="_M/FELEML">FELEML</a></u></td></tr>
+<tr><th id="199">199</th><td><u>#undef <a class="macro" href="#66" data-ref="_M/FELEM_MAX">FELEM_MAX</a></u></td></tr>
+<tr><th id="200">200</th><td><u>#undef <a class="macro" href="#67" data-ref="_M/FELEM_MIN">FELEM_MIN</a></u></td></tr>
+<tr><th id="201">201</th><td><u>#undef <a class="macro" href="#68" data-ref="_M/OUT">OUT</a></u></td></tr>
+<tr><th id="202">202</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated while processing <a href='resample_dsp.c.html'>ffmpeg/libswresample/resample_dsp.c</a><br/>Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

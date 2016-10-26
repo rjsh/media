@@ -1,0 +1,160 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>exif.c source code [ffmpeg/libavcodec/exif.c] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavcodec/exif.c'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavcodec</a>/<a href='exif.c.html'>exif.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * EXIF metadata parser</i></td></tr>
+<tr><th id="3">3</th><td><i> * Copyright (c) 2013 Thilo Borgmann &lt;thilo.borgmann _at_ mail.de&gt;</i></td></tr>
+<tr><th id="4">4</th><td><i> *</i></td></tr>
+<tr><th id="5">5</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="8">8</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="9">9</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="10">10</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="11">11</th><td><i> *</i></td></tr>
+<tr><th id="12">12</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="13">13</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="14">14</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="15">15</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="16">16</th><td><i> *</i></td></tr>
+<tr><th id="17">17</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="18">18</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="19">19</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="20">20</th><td><i> */</i></td></tr>
+<tr><th id="21">21</th><td></td></tr>
+<tr><th id="22">22</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="23">23</th><td><i class="doc"> *<span class="command"> @file</span></i></td></tr>
+<tr><th id="24">24</th><td><i class="doc"> * EXIF metadata parser</i></td></tr>
+<tr><th id="25">25</th><td><i class="doc"> * <span class="command">@author</span> Thilo Borgmann &lt;thilo.borgmann _at_ mail.de&gt;</i></td></tr>
+<tr><th id="26">26</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="27">27</th><td></td></tr>
+<tr><th id="28">28</th><td><u>#include <a href="exif.h.html">"exif.h"</a></u></td></tr>
+<tr><th id="29">29</th><td></td></tr>
+<tr><th id="30">30</th><td></td></tr>
+<tr><th id="31">31</th><td><em>static</em> <em>const</em> <em>char</em> *<dfn class="tu decl def" id="exif_get_tag_name" title='exif_get_tag_name' data-type='const char * exif_get_tag_name(uint16_t id)' data-ref="exif_get_tag_name">exif_get_tag_name</dfn>(<a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> <dfn class="local col4 decl" id="74id" title='id' data-type='uint16_t' data-ref="74id">id</dfn>)</td></tr>
+<tr><th id="32">32</th><td>{</td></tr>
+<tr><th id="33">33</th><td>    <em>int</em> <dfn class="local col5 decl" id="75i" title='i' data-type='int' data-ref="75i">i</dfn>;</td></tr>
+<tr><th id="34">34</th><td></td></tr>
+<tr><th id="35">35</th><td>    <b>for</b> (<a class="local col5 ref" href="#75i" title='i' data-ref="75i">i</a> = <var>0</var>; <a class="local col5 ref" href="#75i" title='i' data-ref="75i">i</a> &lt; <a class="macro" href="../libavutil/common.h.html#100" title="(sizeof(tag_list) / sizeof((tag_list)[0]))" data-ref="_M/FF_ARRAY_ELEMS">FF_ARRAY_ELEMS</a>(<a class="ref" href="exif.h.html#tag_list" title='tag_list' data-ref="tag_list">tag_list</a>); <a class="local col5 ref" href="#75i" title='i' data-ref="75i">i</a>++) {</td></tr>
+<tr><th id="36">36</th><td>        <b>if</b> (<a class="ref" href="exif.h.html#tag_list" title='tag_list' data-ref="tag_list">tag_list</a>[<a class="local col5 ref" href="#75i" title='i' data-ref="75i">i</a>].<a class="ref" href="exif.h.html#exif_tag::id" title='exif_tag::id' data-ref="exif_tag::id">id</a> == <a class="local col4 ref" href="#74id" title='id' data-ref="74id">id</a>)</td></tr>
+<tr><th id="37">37</th><td>            <b>return</b> <a class="ref" href="exif.h.html#tag_list" title='tag_list' data-ref="tag_list">tag_list</a>[<a class="local col5 ref" href="#75i" title='i' data-ref="75i">i</a>].<a class="ref" href="exif.h.html#exif_tag::name" title='exif_tag::name' data-ref="exif_tag::name">name</a>;</td></tr>
+<tr><th id="38">38</th><td>    }</td></tr>
+<tr><th id="39">39</th><td></td></tr>
+<tr><th id="40">40</th><td>    <b>return</b> <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="41">41</th><td>}</td></tr>
+<tr><th id="42">42</th><td></td></tr>
+<tr><th id="43">43</th><td></td></tr>
+<tr><th id="44">44</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="exif_add_metadata" title='exif_add_metadata' data-type='int exif_add_metadata(void * logctx, int count, int type, const char * name, const char * sep, GetByteContext * gb, int le, AVDictionary ** metadata)' data-ref="exif_add_metadata">exif_add_metadata</dfn>(<em>void</em> *<dfn class="local col6 decl" id="76logctx" title='logctx' data-type='void *' data-ref="76logctx">logctx</dfn>, <em>int</em> <dfn class="local col7 decl" id="77count" title='count' data-type='int' data-ref="77count">count</dfn>, <em>int</em> <dfn class="local col8 decl" id="78type" title='type' data-type='int' data-ref="78type">type</dfn>,</td></tr>
+<tr><th id="45">45</th><td>                             <em>const</em> <em>char</em> *<dfn class="local col9 decl" id="79name" title='name' data-type='const char *' data-ref="79name">name</dfn>, <em>const</em> <em>char</em> *<dfn class="local col0 decl" id="80sep" title='sep' data-type='const char *' data-ref="80sep">sep</dfn>,</td></tr>
+<tr><th id="46">46</th><td>                             <a class="typedef" href="bytestream.h.html#GetByteContext" title='GetByteContext' data-type='struct GetByteContext' data-ref="GetByteContext">GetByteContext</a> *<dfn class="local col1 decl" id="81gb" title='gb' data-type='GetByteContext *' data-ref="81gb">gb</dfn>, <em>int</em> <dfn class="local col2 decl" id="82le" title='le' data-type='int' data-ref="82le">le</dfn>,</td></tr>
+<tr><th id="47">47</th><td>                             <a class="typedef" href="../libavutil/dict.h.html#AVDictionary" title='AVDictionary' data-type='struct AVDictionary' data-ref="AVDictionary">AVDictionary</a> **<dfn class="local col3 decl" id="83metadata" title='metadata' data-type='AVDictionary **' data-ref="83metadata">metadata</dfn>)</td></tr>
+<tr><th id="48">48</th><td>{</td></tr>
+<tr><th id="49">49</th><td>    <b>switch</b>(<a class="local col8 ref" href="#78type" title='type' data-ref="78type">type</a>) {</td></tr>
+<tr><th id="50">50</th><td>    <b>case</b> <var>0</var>:</td></tr>
+<tr><th id="51">51</th><td>        <a class="ref" href="../libavutil/log.h.html#av_log" title='av_log' data-ref="av_log">av_log</a>(<a class="local col6 ref" href="#76logctx" title='logctx' data-ref="76logctx">logctx</a>, <a class="macro" href="../libavutil/log.h.html#182" title="24" data-ref="_M/AV_LOG_WARNING">AV_LOG_WARNING</a>,</td></tr>
+<tr><th id="52">52</th><td>               <q>"Invalid TIFF tag type 0 found for %s with size %d\n"</q>,</td></tr>
+<tr><th id="53">53</th><td>               <a class="local col9 ref" href="#79name" title='name' data-ref="79name">name</a>, <a class="local col7 ref" href="#77count" title='count' data-ref="77count">count</a>);</td></tr>
+<tr><th id="54">54</th><td>        <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="55">55</th><td>    <b>case</b> <a class="enum" href="tiff_common.h.html#TiffTypes::TIFF_DOUBLE" title='TiffTypes::TIFF_DOUBLE' data-ref="TiffTypes::TIFF_DOUBLE">TIFF_DOUBLE</a>   : <b>return</b> <a class="ref" href="tiff_common.h.html#ff_tadd_doubles_metadata" title='ff_tadd_doubles_metadata' data-ref="ff_tadd_doubles_metadata">ff_tadd_doubles_metadata</a>(<a class="local col7 ref" href="#77count" title='count' data-ref="77count">count</a>, <a class="local col9 ref" href="#79name" title='name' data-ref="79name">name</a>, <a class="local col0 ref" href="#80sep" title='sep' data-ref="80sep">sep</a>, <a class="local col1 ref" href="#81gb" title='gb' data-ref="81gb">gb</a>, <a class="local col2 ref" href="#82le" title='le' data-ref="82le">le</a>, <a class="local col3 ref" href="#83metadata" title='metadata' data-ref="83metadata">metadata</a>);</td></tr>
+<tr><th id="56">56</th><td>    <b>case</b> <a class="enum" href="tiff_common.h.html#TiffTypes::TIFF_SSHORT" title='TiffTypes::TIFF_SSHORT' data-ref="TiffTypes::TIFF_SSHORT">TIFF_SSHORT</a>   : <b>return</b> <a class="ref" href="tiff_common.h.html#ff_tadd_shorts_metadata" title='ff_tadd_shorts_metadata' data-ref="ff_tadd_shorts_metadata">ff_tadd_shorts_metadata</a>(<a class="local col7 ref" href="#77count" title='count' data-ref="77count">count</a>, <a class="local col9 ref" href="#79name" title='name' data-ref="79name">name</a>, <a class="local col0 ref" href="#80sep" title='sep' data-ref="80sep">sep</a>, <a class="local col1 ref" href="#81gb" title='gb' data-ref="81gb">gb</a>, <a class="local col2 ref" href="#82le" title='le' data-ref="82le">le</a>, <var>1</var>, <a class="local col3 ref" href="#83metadata" title='metadata' data-ref="83metadata">metadata</a>);</td></tr>
+<tr><th id="57">57</th><td>    <b>case</b> <a class="enum" href="tiff_common.h.html#TiffTypes::TIFF_SHORT" title='TiffTypes::TIFF_SHORT' data-ref="TiffTypes::TIFF_SHORT">TIFF_SHORT</a>    : <b>return</b> <a class="ref" href="tiff_common.h.html#ff_tadd_shorts_metadata" title='ff_tadd_shorts_metadata' data-ref="ff_tadd_shorts_metadata">ff_tadd_shorts_metadata</a>(<a class="local col7 ref" href="#77count" title='count' data-ref="77count">count</a>, <a class="local col9 ref" href="#79name" title='name' data-ref="79name">name</a>, <a class="local col0 ref" href="#80sep" title='sep' data-ref="80sep">sep</a>, <a class="local col1 ref" href="#81gb" title='gb' data-ref="81gb">gb</a>, <a class="local col2 ref" href="#82le" title='le' data-ref="82le">le</a>, <var>0</var>, <a class="local col3 ref" href="#83metadata" title='metadata' data-ref="83metadata">metadata</a>);</td></tr>
+<tr><th id="58">58</th><td>    <b>case</b> <a class="enum" href="tiff_common.h.html#TiffTypes::TIFF_SBYTE" title='TiffTypes::TIFF_SBYTE' data-ref="TiffTypes::TIFF_SBYTE">TIFF_SBYTE</a>    : <b>return</b> <a class="ref" href="tiff_common.h.html#ff_tadd_bytes_metadata" title='ff_tadd_bytes_metadata' data-ref="ff_tadd_bytes_metadata">ff_tadd_bytes_metadata</a>(<a class="local col7 ref" href="#77count" title='count' data-ref="77count">count</a>, <a class="local col9 ref" href="#79name" title='name' data-ref="79name">name</a>, <a class="local col0 ref" href="#80sep" title='sep' data-ref="80sep">sep</a>, <a class="local col1 ref" href="#81gb" title='gb' data-ref="81gb">gb</a>, <a class="local col2 ref" href="#82le" title='le' data-ref="82le">le</a>, <var>1</var>, <a class="local col3 ref" href="#83metadata" title='metadata' data-ref="83metadata">metadata</a>);</td></tr>
+<tr><th id="59">59</th><td>    <b>case</b> <a class="enum" href="tiff_common.h.html#TiffTypes::TIFF_BYTE" title='TiffTypes::TIFF_BYTE' data-ref="TiffTypes::TIFF_BYTE">TIFF_BYTE</a>     :</td></tr>
+<tr><th id="60">60</th><td>    <b>case</b> <a class="enum" href="tiff_common.h.html#TiffTypes::TIFF_UNDEFINED" title='TiffTypes::TIFF_UNDEFINED' data-ref="TiffTypes::TIFF_UNDEFINED">TIFF_UNDEFINED</a>: <b>return</b> <a class="ref" href="tiff_common.h.html#ff_tadd_bytes_metadata" title='ff_tadd_bytes_metadata' data-ref="ff_tadd_bytes_metadata">ff_tadd_bytes_metadata</a>(<a class="local col7 ref" href="#77count" title='count' data-ref="77count">count</a>, <a class="local col9 ref" href="#79name" title='name' data-ref="79name">name</a>, <a class="local col0 ref" href="#80sep" title='sep' data-ref="80sep">sep</a>, <a class="local col1 ref" href="#81gb" title='gb' data-ref="81gb">gb</a>, <a class="local col2 ref" href="#82le" title='le' data-ref="82le">le</a>, <var>0</var>, <a class="local col3 ref" href="#83metadata" title='metadata' data-ref="83metadata">metadata</a>);</td></tr>
+<tr><th id="61">61</th><td>    <b>case</b> <a class="enum" href="tiff_common.h.html#TiffTypes::TIFF_STRING" title='TiffTypes::TIFF_STRING' data-ref="TiffTypes::TIFF_STRING">TIFF_STRING</a>   : <b>return</b> <a class="ref" href="tiff_common.h.html#ff_tadd_string_metadata" title='ff_tadd_string_metadata' data-ref="ff_tadd_string_metadata">ff_tadd_string_metadata</a>(<a class="local col7 ref" href="#77count" title='count' data-ref="77count">count</a>, <a class="local col9 ref" href="#79name" title='name' data-ref="79name">name</a>, <a class="local col1 ref" href="#81gb" title='gb' data-ref="81gb">gb</a>, <a class="local col2 ref" href="#82le" title='le' data-ref="82le">le</a>, <a class="local col3 ref" href="#83metadata" title='metadata' data-ref="83metadata">metadata</a>);</td></tr>
+<tr><th id="62">62</th><td>    <b>case</b> <a class="enum" href="tiff_common.h.html#TiffTypes::TIFF_SRATIONAL" title='TiffTypes::TIFF_SRATIONAL' data-ref="TiffTypes::TIFF_SRATIONAL">TIFF_SRATIONAL</a>:</td></tr>
+<tr><th id="63">63</th><td>    <b>case</b> <a class="enum" href="tiff_common.h.html#TiffTypes::TIFF_RATIONAL" title='TiffTypes::TIFF_RATIONAL' data-ref="TiffTypes::TIFF_RATIONAL">TIFF_RATIONAL</a> : <b>return</b> <a class="ref" href="tiff_common.h.html#ff_tadd_rational_metadata" title='ff_tadd_rational_metadata' data-ref="ff_tadd_rational_metadata">ff_tadd_rational_metadata</a>(<a class="local col7 ref" href="#77count" title='count' data-ref="77count">count</a>, <a class="local col9 ref" href="#79name" title='name' data-ref="79name">name</a>, <a class="local col0 ref" href="#80sep" title='sep' data-ref="80sep">sep</a>, <a class="local col1 ref" href="#81gb" title='gb' data-ref="81gb">gb</a>, <a class="local col2 ref" href="#82le" title='le' data-ref="82le">le</a>, <a class="local col3 ref" href="#83metadata" title='metadata' data-ref="83metadata">metadata</a>);</td></tr>
+<tr><th id="64">64</th><td>    <b>case</b> <a class="enum" href="tiff_common.h.html#TiffTypes::TIFF_SLONG" title='TiffTypes::TIFF_SLONG' data-ref="TiffTypes::TIFF_SLONG">TIFF_SLONG</a>    :</td></tr>
+<tr><th id="65">65</th><td>    <b>case</b> <a class="enum" href="tiff_common.h.html#TiffTypes::TIFF_LONG" title='TiffTypes::TIFF_LONG' data-ref="TiffTypes::TIFF_LONG">TIFF_LONG</a>     : <b>return</b> <a class="ref" href="tiff_common.h.html#ff_tadd_long_metadata" title='ff_tadd_long_metadata' data-ref="ff_tadd_long_metadata">ff_tadd_long_metadata</a>(<a class="local col7 ref" href="#77count" title='count' data-ref="77count">count</a>, <a class="local col9 ref" href="#79name" title='name' data-ref="79name">name</a>, <a class="local col0 ref" href="#80sep" title='sep' data-ref="80sep">sep</a>, <a class="local col1 ref" href="#81gb" title='gb' data-ref="81gb">gb</a>, <a class="local col2 ref" href="#82le" title='le' data-ref="82le">le</a>, <a class="local col3 ref" href="#83metadata" title='metadata' data-ref="83metadata">metadata</a>);</td></tr>
+<tr><th id="66">66</th><td>    <b>default</b>:</td></tr>
+<tr><th id="67">67</th><td>        <a class="ref" href="../libavutil/internal.h.html#avpriv_request_sample" title='avpriv_request_sample' data-ref="avpriv_request_sample">avpriv_request_sample</a>(<a class="local col6 ref" href="#76logctx" title='logctx' data-ref="76logctx">logctx</a>, <q>"TIFF tag type (%u)"</q>, <a class="local col8 ref" href="#78type" title='type' data-ref="78type">type</a>);</td></tr>
+<tr><th id="68">68</th><td>        <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="69">69</th><td>    };</td></tr>
+<tr><th id="70">70</th><td>}</td></tr>
+<tr><th id="71">71</th><td></td></tr>
+<tr><th id="72">72</th><td></td></tr>
+<tr><th id="73">73</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="exif_decode_tag" title='exif_decode_tag' data-type='int exif_decode_tag(void * logctx, GetByteContext * gbytes, int le, int depth, AVDictionary ** metadata)' data-ref="exif_decode_tag">exif_decode_tag</dfn>(<em>void</em> *<dfn class="local col4 decl" id="84logctx" title='logctx' data-type='void *' data-ref="84logctx">logctx</dfn>, <a class="typedef" href="bytestream.h.html#GetByteContext" title='GetByteContext' data-type='struct GetByteContext' data-ref="GetByteContext">GetByteContext</a> *<dfn class="local col5 decl" id="85gbytes" title='gbytes' data-type='GetByteContext *' data-ref="85gbytes">gbytes</dfn>, <em>int</em> <dfn class="local col6 decl" id="86le" title='le' data-type='int' data-ref="86le">le</dfn>,</td></tr>
+<tr><th id="74">74</th><td>                           <em>int</em> <dfn class="local col7 decl" id="87depth" title='depth' data-type='int' data-ref="87depth">depth</dfn>, <a class="typedef" href="../libavutil/dict.h.html#AVDictionary" title='AVDictionary' data-type='struct AVDictionary' data-ref="AVDictionary">AVDictionary</a> **<dfn class="local col8 decl" id="88metadata" title='metadata' data-type='AVDictionary **' data-ref="88metadata">metadata</dfn>)</td></tr>
+<tr><th id="75">75</th><td>{</td></tr>
+<tr><th id="76">76</th><td>    <em>int</em> <dfn class="local col9 decl" id="89ret" title='ret' data-type='int' data-ref="89ret">ret</dfn>, <dfn class="local col0 decl" id="90cur_pos" title='cur_pos' data-type='int' data-ref="90cur_pos">cur_pos</dfn>;</td></tr>
+<tr><th id="77">77</th><td>    <em>unsigned</em> <dfn class="local col1 decl" id="91id" title='id' data-type='unsigned int' data-ref="91id">id</dfn>, <dfn class="local col2 decl" id="92count" title='count' data-type='unsigned int' data-ref="92count">count</dfn>;</td></tr>
+<tr><th id="78">78</th><td>    <b>enum</b> <a class="type" href="tiff_common.h.html#TiffTypes" title='TiffTypes' data-ref="TiffTypes">TiffTypes</a> <dfn class="local col3 decl" id="93type" title='type' data-type='enum TiffTypes' data-ref="93type">type</dfn>;</td></tr>
+<tr><th id="79">79</th><td></td></tr>
+<tr><th id="80">80</th><td>    <b>if</b> (<a class="local col7 ref" href="#87depth" title='depth' data-ref="87depth">depth</a> &gt; <var>2</var>) {</td></tr>
+<tr><th id="81">81</th><td>        <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="82">82</th><td>    }</td></tr>
+<tr><th id="83">83</th><td></td></tr>
+<tr><th id="84">84</th><td>    <a class="ref" href="tiff_common.h.html#ff_tread_tag" title='ff_tread_tag' data-ref="ff_tread_tag">ff_tread_tag</a>(<a class="local col5 ref" href="#85gbytes" title='gbytes' data-ref="85gbytes">gbytes</a>, <a class="local col6 ref" href="#86le" title='le' data-ref="86le">le</a>, &amp;<a class="local col1 ref" href="#91id" title='id' data-ref="91id">id</a>, &amp;<a class="local col3 ref" href="#93type" title='type' data-ref="93type">type</a>, &amp;<a class="local col2 ref" href="#92count" title='count' data-ref="92count">count</a>, &amp;<a class="local col0 ref" href="#90cur_pos" title='cur_pos' data-ref="90cur_pos">cur_pos</a>);</td></tr>
+<tr><th id="85">85</th><td></td></tr>
+<tr><th id="86">86</th><td>    <b>if</b> (!<a class="ref" href="bytestream.h.html#bytestream2_tell" title='bytestream2_tell' data-ref="bytestream2_tell">bytestream2_tell</a>(<a class="local col5 ref" href="#85gbytes" title='gbytes' data-ref="85gbytes">gbytes</a>)) {</td></tr>
+<tr><th id="87">87</th><td>        <a class="ref" href="bytestream.h.html#bytestream2_seek" title='bytestream2_seek' data-ref="bytestream2_seek">bytestream2_seek</a>(<a class="local col5 ref" href="#85gbytes" title='gbytes' data-ref="85gbytes">gbytes</a>, <a class="local col0 ref" href="#90cur_pos" title='cur_pos' data-ref="90cur_pos">cur_pos</a>, <a class="macro" href="../../include/stdio.h.html#140" title="0" data-ref="_M/SEEK_SET">SEEK_SET</a>);</td></tr>
+<tr><th id="88">88</th><td>        <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="89">89</th><td>    }</td></tr>
+<tr><th id="90">90</th><td></td></tr>
+<tr><th id="91">91</th><td>    <i>// read count values and add it metadata</i></td></tr>
+<tr><th id="92">92</th><td><i>    // store metadata or proceed with next IFD</i></td></tr>
+<tr><th id="93">93</th><td>    <a class="local col9 ref" href="#89ret" title='ret' data-ref="89ret">ret</a> = <a class="ref" href="tiff_common.h.html#ff_tis_ifd" title='ff_tis_ifd' data-ref="ff_tis_ifd">ff_tis_ifd</a>(<a class="local col1 ref" href="#91id" title='id' data-ref="91id">id</a>);</td></tr>
+<tr><th id="94">94</th><td>    <b>if</b> (<a class="local col9 ref" href="#89ret" title='ret' data-ref="89ret">ret</a>) {</td></tr>
+<tr><th id="95">95</th><td>        <a class="local col9 ref" href="#89ret" title='ret' data-ref="89ret">ret</a> = <a class="ref" href="#avpriv_exif_decode_ifd" title='avpriv_exif_decode_ifd' data-ref="avpriv_exif_decode_ifd">avpriv_exif_decode_ifd</a>(<a class="local col4 ref" href="#84logctx" title='logctx' data-ref="84logctx">logctx</a>, <a class="local col5 ref" href="#85gbytes" title='gbytes' data-ref="85gbytes">gbytes</a>, <a class="local col6 ref" href="#86le" title='le' data-ref="86le">le</a>, <a class="local col7 ref" href="#87depth" title='depth' data-ref="87depth">depth</a> + <var>1</var>, <a class="local col8 ref" href="#88metadata" title='metadata' data-ref="88metadata">metadata</a>);</td></tr>
+<tr><th id="96">96</th><td>    } <b>else</b> {</td></tr>
+<tr><th id="97">97</th><td>        <em>const</em> <em>char</em> *<dfn class="local col4 decl" id="94name" title='name' data-type='const char *' data-ref="94name">name</dfn> = <a class="tu ref" href="#exif_get_tag_name" title='exif_get_tag_name' data-use='c' data-ref="exif_get_tag_name">exif_get_tag_name</a>(<a class="local col1 ref" href="#91id" title='id' data-ref="91id">id</a>);</td></tr>
+<tr><th id="98">98</th><td>        <em>char</em> *<dfn class="local col5 decl" id="95use_name" title='use_name' data-type='char *' data-ref="95use_name">use_name</dfn>   = (<em>char</em>*) <a class="local col4 ref" href="#94name" title='name' data-ref="94name">name</a>;</td></tr>
+<tr><th id="99">99</th><td></td></tr>
+<tr><th id="100">100</th><td>        <b>if</b> (!<a class="local col5 ref" href="#95use_name" title='use_name' data-ref="95use_name">use_name</a>) {</td></tr>
+<tr><th id="101">101</th><td>            <a class="local col5 ref" href="#95use_name" title='use_name' data-ref="95use_name">use_name</a> = <a class="ref" href="../libavutil/mem.h.html#av_malloc" title='av_malloc' data-ref="av_malloc">av_malloc</a>(<var>7</var>);</td></tr>
+<tr><th id="102">102</th><td>            <b>if</b> (!<a class="local col5 ref" href="#95use_name" title='use_name' data-ref="95use_name">use_name</a>) {</td></tr>
+<tr><th id="103">103</th><td>                <b>return</b> <a class="macro" href="../libavutil/error.h.html#39" title="(-(12))" data-ref="_M/AVERROR">AVERROR</a>(<a class="macro" href="../../include/asm-generic/errno-base.h.html#15" title="12" data-ref="_M/ENOMEM">ENOMEM</a>);</td></tr>
+<tr><th id="104">104</th><td>            }</td></tr>
+<tr><th id="105">105</th><td>            <a class="ref" href="../../include/stdio.h.html#snprintf" title='snprintf' data-ref="snprintf">snprintf</a>(<a class="local col5 ref" href="#95use_name" title='use_name' data-ref="95use_name">use_name</a>, <var>7</var>, <q>"0x%04X"</q>, <a class="local col1 ref" href="#91id" title='id' data-ref="91id">id</a>);</td></tr>
+<tr><th id="106">106</th><td>        }</td></tr>
+<tr><th id="107">107</th><td></td></tr>
+<tr><th id="108">108</th><td>        <a class="local col9 ref" href="#89ret" title='ret' data-ref="89ret">ret</a> = <a class="tu ref" href="#exif_add_metadata" title='exif_add_metadata' data-use='c' data-ref="exif_add_metadata">exif_add_metadata</a>(<a class="local col4 ref" href="#84logctx" title='logctx' data-ref="84logctx">logctx</a>, <a class="local col2 ref" href="#92count" title='count' data-ref="92count">count</a>, <a class="local col3 ref" href="#93type" title='type' data-ref="93type">type</a>, <a class="local col5 ref" href="#95use_name" title='use_name' data-ref="95use_name">use_name</a>, <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>,</td></tr>
+<tr><th id="109">109</th><td>                                <a class="local col5 ref" href="#85gbytes" title='gbytes' data-ref="85gbytes">gbytes</a>, <a class="local col6 ref" href="#86le" title='le' data-ref="86le">le</a>, <a class="local col8 ref" href="#88metadata" title='metadata' data-ref="88metadata">metadata</a>);</td></tr>
+<tr><th id="110">110</th><td></td></tr>
+<tr><th id="111">111</th><td>        <b>if</b> (!<a class="local col4 ref" href="#94name" title='name' data-ref="94name">name</a>) {</td></tr>
+<tr><th id="112">112</th><td>            <a class="ref" href="../libavutil/mem.h.html#av_freep" title='av_freep' data-ref="av_freep">av_freep</a>(&amp;<a class="local col5 ref" href="#95use_name" title='use_name' data-ref="95use_name">use_name</a>);</td></tr>
+<tr><th id="113">113</th><td>        }</td></tr>
+<tr><th id="114">114</th><td>    }</td></tr>
+<tr><th id="115">115</th><td></td></tr>
+<tr><th id="116">116</th><td>    <a class="ref" href="bytestream.h.html#bytestream2_seek" title='bytestream2_seek' data-ref="bytestream2_seek">bytestream2_seek</a>(<a class="local col5 ref" href="#85gbytes" title='gbytes' data-ref="85gbytes">gbytes</a>, <a class="local col0 ref" href="#90cur_pos" title='cur_pos' data-ref="90cur_pos">cur_pos</a>, <a class="macro" href="../../include/stdio.h.html#140" title="0" data-ref="_M/SEEK_SET">SEEK_SET</a>);</td></tr>
+<tr><th id="117">117</th><td></td></tr>
+<tr><th id="118">118</th><td>    <b>return</b> <a class="local col9 ref" href="#89ret" title='ret' data-ref="89ret">ret</a>;</td></tr>
+<tr><th id="119">119</th><td>}</td></tr>
+<tr><th id="120">120</th><td></td></tr>
+<tr><th id="121">121</th><td></td></tr>
+<tr><th id="122">122</th><td><em>int</em> <dfn class="decl def" id="avpriv_exif_decode_ifd" title='avpriv_exif_decode_ifd' data-ref="avpriv_exif_decode_ifd">avpriv_exif_decode_ifd</dfn>(<em>void</em> *<dfn class="local col6 decl" id="96logctx" title='logctx' data-type='void *' data-ref="96logctx">logctx</dfn>, <a class="typedef" href="bytestream.h.html#GetByteContext" title='GetByteContext' data-type='struct GetByteContext' data-ref="GetByteContext">GetByteContext</a> *<dfn class="local col7 decl" id="97gbytes" title='gbytes' data-type='GetByteContext *' data-ref="97gbytes">gbytes</dfn>, <em>int</em> <dfn class="local col8 decl" id="98le" title='le' data-type='int' data-ref="98le">le</dfn>,</td></tr>
+<tr><th id="123">123</th><td>                           <em>int</em> <dfn class="local col9 decl" id="99depth" title='depth' data-type='int' data-ref="99depth">depth</dfn>, <a class="typedef" href="../libavutil/dict.h.html#AVDictionary" title='AVDictionary' data-type='struct AVDictionary' data-ref="AVDictionary">AVDictionary</a> **<dfn class="local col0 decl" id="100metadata" title='metadata' data-type='AVDictionary **' data-ref="100metadata">metadata</dfn>)</td></tr>
+<tr><th id="124">124</th><td>{</td></tr>
+<tr><th id="125">125</th><td>    <em>int</em> <dfn class="local col1 decl" id="101i" title='i' data-type='int' data-ref="101i">i</dfn>, <dfn class="local col2 decl" id="102ret" title='ret' data-type='int' data-ref="102ret">ret</dfn>;</td></tr>
+<tr><th id="126">126</th><td>    <em>int</em> <dfn class="local col3 decl" id="103entries" title='entries' data-type='int' data-ref="103entries">entries</dfn>;</td></tr>
+<tr><th id="127">127</th><td></td></tr>
+<tr><th id="128">128</th><td>    <a class="local col3 ref" href="#103entries" title='entries' data-ref="103entries">entries</a> = <a class="ref" href="tiff_common.h.html#ff_tget_short" title='ff_tget_short' data-ref="ff_tget_short">ff_tget_short</a>(<a class="local col7 ref" href="#97gbytes" title='gbytes' data-ref="97gbytes">gbytes</a>, <a class="local col8 ref" href="#98le" title='le' data-ref="98le">le</a>);</td></tr>
+<tr><th id="129">129</th><td></td></tr>
+<tr><th id="130">130</th><td>    <b>if</b> (<a class="ref" href="bytestream.h.html#bytestream2_get_bytes_left" title='bytestream2_get_bytes_left' data-ref="bytestream2_get_bytes_left">bytestream2_get_bytes_left</a>(<a class="local col7 ref" href="#97gbytes" title='gbytes' data-ref="97gbytes">gbytes</a>) &lt; <a class="local col3 ref" href="#103entries" title='entries' data-ref="103entries">entries</a> * <var>12</var>) {</td></tr>
+<tr><th id="131">131</th><td>        <b>return</b> <a class="macro" href="../libavutil/error.h.html#59" title="(-(int)((&apos;I&apos;) | ((&apos;N&apos;) &lt;&lt; 8) | ((&apos;D&apos;) &lt;&lt; 16) | ((unsigned)(&apos;A&apos;) &lt;&lt; 24)))" data-ref="_M/AVERROR_INVALIDDATA">AVERROR_INVALIDDATA</a>;</td></tr>
+<tr><th id="132">132</th><td>    }</td></tr>
+<tr><th id="133">133</th><td></td></tr>
+<tr><th id="134">134</th><td>    <b>for</b> (<a class="local col1 ref" href="#101i" title='i' data-ref="101i">i</a> = <var>0</var>; <a class="local col1 ref" href="#101i" title='i' data-ref="101i">i</a> &lt; <a class="local col3 ref" href="#103entries" title='entries' data-ref="103entries">entries</a>; <a class="local col1 ref" href="#101i" title='i' data-ref="101i">i</a>++) {</td></tr>
+<tr><th id="135">135</th><td>        <b>if</b> ((<a class="local col2 ref" href="#102ret" title='ret' data-ref="102ret">ret</a> = <a class="tu ref" href="#exif_decode_tag" title='exif_decode_tag' data-use='c' data-ref="exif_decode_tag">exif_decode_tag</a>(<a class="local col6 ref" href="#96logctx" title='logctx' data-ref="96logctx">logctx</a>, <a class="local col7 ref" href="#97gbytes" title='gbytes' data-ref="97gbytes">gbytes</a>, <a class="local col8 ref" href="#98le" title='le' data-ref="98le">le</a>, <a class="local col9 ref" href="#99depth" title='depth' data-ref="99depth">depth</a>, <a class="local col0 ref" href="#100metadata" title='metadata' data-ref="100metadata">metadata</a>)) &lt; <var>0</var>) {</td></tr>
+<tr><th id="136">136</th><td>            <b>return</b> <a class="local col2 ref" href="#102ret" title='ret' data-ref="102ret">ret</a>;</td></tr>
+<tr><th id="137">137</th><td>        }</td></tr>
+<tr><th id="138">138</th><td>    }</td></tr>
+<tr><th id="139">139</th><td></td></tr>
+<tr><th id="140">140</th><td>    <i>// return next IDF offset or 0x000000000 or a value &lt; 0 for failure</i></td></tr>
+<tr><th id="141">141</th><td>    <b>return</b> <a class="ref" href="tiff_common.h.html#ff_tget_long" title='ff_tget_long' data-ref="ff_tget_long">ff_tget_long</a>(<a class="local col7 ref" href="#97gbytes" title='gbytes' data-ref="97gbytes">gbytes</a>, <a class="local col8 ref" href="#98le" title='le' data-ref="98le">le</a>);</td></tr>
+<tr><th id="142">142</th><td>}</td></tr>
+<tr><th id="143">143</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

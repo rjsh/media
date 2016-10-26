@@ -1,0 +1,211 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>parseutils.h source code [ffmpeg/libavutil/parseutils.h] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavutil/parseutils.h'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavutil</a>/<a href='parseutils.h.html'>parseutils.h</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="3">3</th><td><i> *</i></td></tr>
+<tr><th id="4">4</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="5">5</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="6">6</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="7">7</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="8">8</th><td><i> *</i></td></tr>
+<tr><th id="9">9</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="10">10</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="11">11</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="12">12</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="13">13</th><td><i> *</i></td></tr>
+<tr><th id="14">14</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="15">15</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="16">16</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="17">17</th><td><i> */</i></td></tr>
+<tr><th id="18">18</th><td></td></tr>
+<tr><th id="19">19</th><td><u>#<span data-ppcond="19">ifndef</span> <span class="macro" data-ref="_M/AVUTIL_PARSEUTILS_H">AVUTIL_PARSEUTILS_H</span></u></td></tr>
+<tr><th id="20">20</th><td><u>#define <dfn class="macro" id="_M/AVUTIL_PARSEUTILS_H" data-ref="_M/AVUTIL_PARSEUTILS_H">AVUTIL_PARSEUTILS_H</dfn></u></td></tr>
+<tr><th id="21">21</th><td></td></tr>
+<tr><th id="22">22</th><td><u>#include <a href="../../include/time.h.html">&lt;time.h&gt;</a></u></td></tr>
+<tr><th id="23">23</th><td></td></tr>
+<tr><th id="24">24</th><td><u>#include <a href="rational.h.html">"rational.h"</a></u></td></tr>
+<tr><th id="25">25</th><td></td></tr>
+<tr><th id="26">26</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="27">27</th><td><i class="doc"> *<span class="command"> @file</span></i></td></tr>
+<tr><th id="28">28</th><td><i class="doc"> * misc parsing utilities</i></td></tr>
+<tr><th id="29">29</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="30">30</th><td></td></tr>
+<tr><th id="31">31</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="32">32</th><td><i class="doc"> * Parse str and store the parsed ratio in q.</i></td></tr>
+<tr><th id="33">33</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="34">34</th><td><i class="doc"> * Note that a ratio with infinite (1/0) or negative value is</i></td></tr>
+<tr><th id="35">35</th><td><i class="doc"> * considered valid, so you should check on the returned value if you</i></td></tr>
+<tr><th id="36">36</th><td><i class="doc"> * want to exclude those values.</i></td></tr>
+<tr><th id="37">37</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="38">38</th><td><i class="doc"> * The undefined value can be expressed using the "0:0" string.</i></td></tr>
+<tr><th id="39">39</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="40">40</th><td><i class="doc"> * <span class="command">@param</span>[in,out] <span class="arg">q</span> pointer to the AVRational which will contain the ratio</i></td></tr>
+<tr><th id="41">41</th><td><i class="doc"> * <span class="command">@param</span>[in] <span class="arg">str</span> the string to parse: it has to be a string in the format</i></td></tr>
+<tr><th id="42">42</th><td><i class="doc"> * num:den, a float number or an expression</i></td></tr>
+<tr><th id="43">43</th><td><i class="doc"> * <span class="command">@param</span>[in] <span class="arg">max</span> the maximum allowed numerator and denominator</i></td></tr>
+<tr><th id="44">44</th><td><i class="doc"> * <span class="command">@param</span>[in] <span class="arg">log_offset</span> log level offset which is applied to the log</i></td></tr>
+<tr><th id="45">45</th><td><i class="doc"> * level of log_ctx</i></td></tr>
+<tr><th id="46">46</th><td><i class="doc"> * <span class="command">@param</span>[in] <span class="arg">log_ctx</span> parent logging context</i></td></tr>
+<tr><th id="47">47</th><td><i class="doc"> * <span class="command">@return</span> &gt;= 0 on success, a negative error code otherwise</i></td></tr>
+<tr><th id="48">48</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="49">49</th><td><em>int</em> <dfn class="decl" id="av_parse_ratio" title='av_parse_ratio' data-ref="av_parse_ratio">av_parse_ratio</dfn>(<a class="typedef" href="rational.h.html#AVRational" title='AVRational' data-type='struct AVRational' data-ref="AVRational">AVRational</a> *<dfn class="local col1 decl" id="1q" title='q' data-type='AVRational *' data-ref="1q">q</dfn>, <em>const</em> <em>char</em> *<dfn class="local col2 decl" id="2str" title='str' data-type='const char *' data-ref="2str">str</dfn>, <em>int</em> <dfn class="local col3 decl" id="3max" title='max' data-type='int' data-ref="3max">max</dfn>,</td></tr>
+<tr><th id="50">50</th><td>                   <em>int</em> <dfn class="local col4 decl" id="4log_offset" title='log_offset' data-type='int' data-ref="4log_offset">log_offset</dfn>, <em>void</em> *<dfn class="local col5 decl" id="5log_ctx" title='log_ctx' data-type='void *' data-ref="5log_ctx">log_ctx</dfn>);</td></tr>
+<tr><th id="51">51</th><td></td></tr>
+<tr><th id="52">52</th><td><u>#define <dfn class="macro" id="_M/av_parse_ratio_quiet" data-ref="_M/av_parse_ratio_quiet">av_parse_ratio_quiet</dfn>(rate, str, max) \</u></td></tr>
+<tr><th id="53">53</th><td><u>    av_parse_ratio(rate, str, max, AV_LOG_MAX_OFFSET, NULL)</u></td></tr>
+<tr><th id="54">54</th><td></td></tr>
+<tr><th id="55">55</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="56">56</th><td><i class="doc"> * Parse str and put in width_ptr and height_ptr the detected values.</i></td></tr>
+<tr><th id="57">57</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="58">58</th><td><i class="doc"> * <span class="command">@param</span>[in,out] <span class="arg">width_ptr</span> pointer to the variable which will contain the detected</i></td></tr>
+<tr><th id="59">59</th><td><i class="doc"> * width value</i></td></tr>
+<tr><th id="60">60</th><td><i class="doc"> * <span class="command">@param</span>[in,out] <span class="arg">height_ptr</span> pointer to the variable which will contain the detected</i></td></tr>
+<tr><th id="61">61</th><td><i class="doc"> * height value</i></td></tr>
+<tr><th id="62">62</th><td><i class="doc"> * <span class="command">@param</span>[in] <span class="arg">str</span> the string to parse: it has to be a string in the format</i></td></tr>
+<tr><th id="63">63</th><td><i class="doc"> * width x height or a valid video size abbreviation.</i></td></tr>
+<tr><th id="64">64</th><td><i class="doc"> * <span class="command">@return</span> &gt;= 0 on success, a negative error code otherwise</i></td></tr>
+<tr><th id="65">65</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="66">66</th><td><em>int</em> <dfn class="decl" id="av_parse_video_size" title='av_parse_video_size' data-ref="av_parse_video_size">av_parse_video_size</dfn>(<em>int</em> *<dfn class="local col6 decl" id="6width_ptr" title='width_ptr' data-type='int *' data-ref="6width_ptr">width_ptr</dfn>, <em>int</em> *<dfn class="local col7 decl" id="7height_ptr" title='height_ptr' data-type='int *' data-ref="7height_ptr">height_ptr</dfn>, <em>const</em> <em>char</em> *<dfn class="local col8 decl" id="8str" title='str' data-type='const char *' data-ref="8str">str</dfn>);</td></tr>
+<tr><th id="67">67</th><td></td></tr>
+<tr><th id="68">68</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="69">69</th><td><i class="doc"> * Parse str and store the detected values in *rate.</i></td></tr>
+<tr><th id="70">70</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="71">71</th><td><i class="doc"> * <span class="command">@param</span>[in,out] <span class="arg">rate</span> pointer to the AVRational which will contain the detected</i></td></tr>
+<tr><th id="72">72</th><td><i class="doc"> * frame rate</i></td></tr>
+<tr><th id="73">73</th><td><i class="doc"> * <span class="command">@param</span>[in] <span class="arg">str</span> the string to parse: it has to be a string in the format</i></td></tr>
+<tr><th id="74">74</th><td><i class="doc"> * rate_num / rate_den, a float number or a valid video rate abbreviation</i></td></tr>
+<tr><th id="75">75</th><td><i class="doc"> * <span class="command">@return</span> &gt;= 0 on success, a negative error code otherwise</i></td></tr>
+<tr><th id="76">76</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="77">77</th><td><em>int</em> <dfn class="decl" id="av_parse_video_rate" title='av_parse_video_rate' data-ref="av_parse_video_rate">av_parse_video_rate</dfn>(<a class="typedef" href="rational.h.html#AVRational" title='AVRational' data-type='struct AVRational' data-ref="AVRational">AVRational</a> *<dfn class="local col9 decl" id="9rate" title='rate' data-type='AVRational *' data-ref="9rate">rate</dfn>, <em>const</em> <em>char</em> *<dfn class="local col0 decl" id="10str" title='str' data-type='const char *' data-ref="10str">str</dfn>);</td></tr>
+<tr><th id="78">78</th><td></td></tr>
+<tr><th id="79">79</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="80">80</th><td><i class="doc"> * Put the RGBA values that correspond to color_string in rgba_color.</i></td></tr>
+<tr><th id="81">81</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="82">82</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">color_string</span> a string specifying a color. It can be the name of</i></td></tr>
+<tr><th id="83">83</th><td><i class="doc"> * a color (case insensitive match) or a [0x|#]RRGGBB[AA] sequence,</i></td></tr>
+<tr><th id="84">84</th><td><i class="doc"> * possibly followed by "@" and a string representing the alpha</i></td></tr>
+<tr><th id="85">85</th><td><i class="doc"> * component.</i></td></tr>
+<tr><th id="86">86</th><td><i class="doc"> * The alpha component may be a string composed by "0x" followed by an</i></td></tr>
+<tr><th id="87">87</th><td><i class="doc"> * hexadecimal number or a decimal number between 0.0 and 1.0, which</i></td></tr>
+<tr><th id="88">88</th><td><i class="doc"> * represents the opacity value (0x00/0.0 means completely transparent,</i></td></tr>
+<tr><th id="89">89</th><td><i class="doc"> * 0xff/1.0 completely opaque).</i></td></tr>
+<tr><th id="90">90</th><td><i class="doc"> * If the alpha component is not specified then 0xff is assumed.</i></td></tr>
+<tr><th id="91">91</th><td><i class="doc"> * The string "random" will result in a random color.</i></td></tr>
+<tr><th id="92">92</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">slen</span> length of the initial part of color_string containing the</i></td></tr>
+<tr><th id="93">93</th><td><i class="doc"> * color. It can be set to -1 if color_string is a null terminated string</i></td></tr>
+<tr><th id="94">94</th><td><i class="doc"> * containing nothing else than the color.</i></td></tr>
+<tr><th id="95">95</th><td><i class="doc"> * <span class="command">@return</span> &gt;= 0 in case of success, a negative value in case of</i></td></tr>
+<tr><th id="96">96</th><td><i class="doc"> * failure (for example if color_string cannot be parsed).</i></td></tr>
+<tr><th id="97">97</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="98">98</th><td><em>int</em> <dfn class="decl" id="av_parse_color" title='av_parse_color' data-ref="av_parse_color">av_parse_color</dfn>(<a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col1 decl" id="11rgba_color" title='rgba_color' data-type='uint8_t *' data-ref="11rgba_color">rgba_color</dfn>, <em>const</em> <em>char</em> *<dfn class="local col2 decl" id="12color_string" title='color_string' data-type='const char *' data-ref="12color_string">color_string</dfn>, <em>int</em> <dfn class="local col3 decl" id="13slen" title='slen' data-type='int' data-ref="13slen">slen</dfn>,</td></tr>
+<tr><th id="99">99</th><td>                   <em>void</em> *<dfn class="local col4 decl" id="14log_ctx" title='log_ctx' data-type='void *' data-ref="14log_ctx">log_ctx</dfn>);</td></tr>
+<tr><th id="100">100</th><td></td></tr>
+<tr><th id="101">101</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="102">102</th><td><i class="doc"> * Get the name of a color from the internal table of hard-coded named</i></td></tr>
+<tr><th id="103">103</th><td><i class="doc"> * colors.</i></td></tr>
+<tr><th id="104">104</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="105">105</th><td><i class="doc"> * This function is meant to enumerate the color names recognized by</i></td></tr>
+<tr><th id="106">106</th><td><i class="doc"> * av_parse_color().</i></td></tr>
+<tr><th id="107">107</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="108">108</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">color_idx</span> index of the requested color, starting from 0</i></td></tr>
+<tr><th id="109">109</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">rgbp</span>      if not NULL, will point to a 3-elements array with the color value in RGB</i></td></tr>
+<tr><th id="110">110</th><td><i class="doc"> * <span class="command">@return</span> the color name string or NULL if color_idx is not in the array</i></td></tr>
+<tr><th id="111">111</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="112">112</th><td><em>const</em> <em>char</em> *<dfn class="decl" id="av_get_known_color_name" title='av_get_known_color_name' data-ref="av_get_known_color_name">av_get_known_color_name</dfn>(<em>int</em> <dfn class="local col5 decl" id="15color_idx" title='color_idx' data-type='int' data-ref="15color_idx">color_idx</dfn>, <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> **<dfn class="local col6 decl" id="16rgb" title='rgb' data-type='const uint8_t **' data-ref="16rgb">rgb</dfn>);</td></tr>
+<tr><th id="113">113</th><td></td></tr>
+<tr><th id="114">114</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="115">115</th><td><i class="doc"> * Parse timestr and return in *time a corresponding number of</i></td></tr>
+<tr><th id="116">116</th><td><i class="doc"> * microseconds.</i></td></tr>
+<tr><th id="117">117</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="118">118</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">timeval</span> puts here the number of microseconds corresponding</i></td></tr>
+<tr><th id="119">119</th><td><i class="doc"> * to the string in timestr. If the string represents a duration, it</i></td></tr>
+<tr><th id="120">120</th><td><i class="doc"> * is the number of microseconds contained in the time interval.  If</i></td></tr>
+<tr><th id="121">121</th><td><i class="doc"> * the string is a date, is the number of microseconds since 1st of</i></td></tr>
+<tr><th id="122">122</th><td><i class="doc"> * January, 1970 up to the time of the parsed date.  If timestr cannot</i></td></tr>
+<tr><th id="123">123</th><td><i class="doc"> * be successfully parsed, set *time to INT64_MIN.</i></td></tr>
+<tr><th id="124">124</th><td><i class="doc"></i></td></tr>
+<tr><th id="125">125</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">timestr</span> a string representing a date or a duration.</i></td></tr>
+<tr><th id="126">126</th><td><i class="doc"> * - If a date the syntax is:</i></td></tr>
+<tr><th id="127">127</th><td><i class="doc"> * <span class="command">@code</span></i></td></tr>
+<tr><th id="128">128</th><td><i class="doc"> *<span class="verb"> [{YYYY-MM-DD|YYYYMMDD}[T|t| ]]{{HH:MM:SS[.m...]]]}|{HHMMSS[.m...]]]}}[Z]</span></i></td></tr>
+<tr><th id="129">129</th><td><i class="doc"><span class="verb"></span> *<span class="verb"> now</span></i></td></tr>
+<tr><th id="130">130</th><td><i class="doc"><span class="verb"></span> * @endcode</i></td></tr>
+<tr><th id="131">131</th><td><i class="doc"> * If the value is "now" it takes the current time.</i></td></tr>
+<tr><th id="132">132</th><td><i class="doc"> * Time is local time unless Z is appended, in which case it is</i></td></tr>
+<tr><th id="133">133</th><td><i class="doc"> * interpreted as UTC.</i></td></tr>
+<tr><th id="134">134</th><td><i class="doc"> * If the year-month-day part is not specified it takes the current</i></td></tr>
+<tr><th id="135">135</th><td><i class="doc"> * year-month-day.</i></td></tr>
+<tr><th id="136">136</th><td><i class="doc"> * - If a duration the syntax is:</i></td></tr>
+<tr><th id="137">137</th><td><i class="doc"> * <span class="command">@code</span></i></td></tr>
+<tr><th id="138">138</th><td><i class="doc"> *<span class="verb"> [-][HH:]MM:SS[.m...]</span></i></td></tr>
+<tr><th id="139">139</th><td><i class="doc"><span class="verb"></span> *<span class="verb"> [-]S+[.m...]</span></i></td></tr>
+<tr><th id="140">140</th><td><i class="doc"><span class="verb"></span> * @endcode</i></td></tr>
+<tr><th id="141">141</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">duration</span> flag which tells how to interpret timestr, if not</i></td></tr>
+<tr><th id="142">142</th><td><i class="doc"> * zero timestr is interpreted as a duration, otherwise as a date</i></td></tr>
+<tr><th id="143">143</th><td><i class="doc"> * <span class="command">@return</span> &gt;= 0 in case of success, a negative value corresponding to an</i></td></tr>
+<tr><th id="144">144</th><td><i class="doc"> * AVERROR code otherwise</i></td></tr>
+<tr><th id="145">145</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="146">146</th><td><em>int</em> <dfn class="decl" id="av_parse_time" title='av_parse_time' data-ref="av_parse_time">av_parse_time</dfn>(<a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> *<dfn class="local col7 decl" id="17timeval" title='timeval' data-type='int64_t *' data-ref="17timeval">timeval</dfn>, <em>const</em> <em>char</em> *<dfn class="local col8 decl" id="18timestr" title='timestr' data-type='const char *' data-ref="18timestr">timestr</dfn>, <em>int</em> <dfn class="local col9 decl" id="19duration" title='duration' data-type='int' data-ref="19duration">duration</dfn>);</td></tr>
+<tr><th id="147">147</th><td></td></tr>
+<tr><th id="148">148</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="149">149</th><td><i class="doc"> * Attempt to find a specific tag in a URL.</i></td></tr>
+<tr><th id="150">150</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="151">151</th><td><i class="doc"> * syntax: '?tag1=val1&amp;tag2=val2...'. Little URL decoding is done.</i></td></tr>
+<tr><th id="152">152</th><td><i class="doc"> * Return 1 if found.</i></td></tr>
+<tr><th id="153">153</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="154">154</th><td><em>int</em> <dfn class="decl" id="av_find_info_tag" title='av_find_info_tag' data-ref="av_find_info_tag">av_find_info_tag</dfn>(<em>char</em> *<dfn class="local col0 decl" id="20arg" title='arg' data-type='char *' data-ref="20arg">arg</dfn>, <em>int</em> <dfn class="local col1 decl" id="21arg_size" title='arg_size' data-type='int' data-ref="21arg_size">arg_size</dfn>, <em>const</em> <em>char</em> *<dfn class="local col2 decl" id="22tag1" title='tag1' data-type='const char *' data-ref="22tag1">tag1</dfn>, <em>const</em> <em>char</em> *<dfn class="local col3 decl" id="23info" title='info' data-type='const char *' data-ref="23info">info</dfn>);</td></tr>
+<tr><th id="155">155</th><td></td></tr>
+<tr><th id="156">156</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="157">157</th><td><i class="doc"> * Simplified version of strptime</i></td></tr>
+<tr><th id="158">158</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="159">159</th><td><i class="doc"> * Parse the input string p according to the format string fmt and</i></td></tr>
+<tr><th id="160">160</th><td><i class="doc"> * store its results in the structure dt.</i></td></tr>
+<tr><th id="161">161</th><td><i class="doc"> * This implementation supports only a subset of the formats supported</i></td></tr>
+<tr><th id="162">162</th><td><i class="doc"> * by the standard strptime().</i></td></tr>
+<tr><th id="163">163</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="164">164</th><td><i class="doc"> * The supported input field descriptors are listed below.</i></td></tr>
+<tr><th id="165">165</th><td><i class="doc"> * - %H: the hour as a decimal number, using a 24-hour clock, in the</i></td></tr>
+<tr><th id="166">166</th><td><i class="doc"> *   range '00' through '23'</i></td></tr>
+<tr><th id="167">167</th><td><i class="doc"> * - %J: hours as a decimal number, in the range '0' through INT_MAX</i></td></tr>
+<tr><th id="168">168</th><td><i class="doc"> * - %M: the minute as a decimal number, using a 24-hour clock, in the</i></td></tr>
+<tr><th id="169">169</th><td><i class="doc"> *   range '00' through '59'</i></td></tr>
+<tr><th id="170">170</th><td><i class="doc"> * - %S: the second as a decimal number, using a 24-hour clock, in the</i></td></tr>
+<tr><th id="171">171</th><td><i class="doc"> *   range '00' through '59'</i></td></tr>
+<tr><th id="172">172</th><td><i class="doc"> * - %Y: the year as a decimal number, using the Gregorian calendar</i></td></tr>
+<tr><th id="173">173</th><td><i class="doc"> * - %m: the month as a decimal number, in the range '1' through '12'</i></td></tr>
+<tr><th id="174">174</th><td><i class="doc"> * - %d: the day of the month as a decimal number, in the range '1'</i></td></tr>
+<tr><th id="175">175</th><td><i class="doc"> *   through '31'</i></td></tr>
+<tr><th id="176">176</th><td><i class="doc"> * - %T: alias for '%H:%M:%S'</i></td></tr>
+<tr><th id="177">177</th><td><i class="doc"> * - %%: a literal '%'</i></td></tr>
+<tr><th id="178">178</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="179">179</th><td><i class="doc"> * <span class="command">@return</span> a pointer to the first character not processed in this function</i></td></tr>
+<tr><th id="180">180</th><td><i class="doc"> *         call. In case the input string contains more characters than</i></td></tr>
+<tr><th id="181">181</th><td><i class="doc"> *         required by the format string the return value points right after</i></td></tr>
+<tr><th id="182">182</th><td><i class="doc"> *         the last consumed input character. In case the whole input string</i></td></tr>
+<tr><th id="183">183</th><td><i class="doc"> *         is consumed the return value points to the null byte at the end of</i></td></tr>
+<tr><th id="184">184</th><td><i class="doc"> *         the string. On failure NULL is returned.</i></td></tr>
+<tr><th id="185">185</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="186">186</th><td><em>char</em> *<dfn class="decl" id="av_small_strptime" title='av_small_strptime' data-ref="av_small_strptime">av_small_strptime</dfn>(<em>const</em> <em>char</em> *<dfn class="local col4 decl" id="24p" title='p' data-type='const char *' data-ref="24p">p</dfn>, <em>const</em> <em>char</em> *<dfn class="local col5 decl" id="25fmt" title='fmt' data-type='const char *' data-ref="25fmt">fmt</dfn>, <b>struct</b> <a class="type" href="../../include/time.h.html#tm" title='tm' data-ref="tm">tm</a> *<dfn class="local col6 decl" id="26dt" title='dt' data-type='struct tm *' data-ref="26dt">dt</dfn>);</td></tr>
+<tr><th id="187">187</th><td></td></tr>
+<tr><th id="188">188</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="189">189</th><td><i class="doc"> * Convert the decomposed UTC time in tm to a time_t value.</i></td></tr>
+<tr><th id="190">190</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="191">191</th><td><a class="typedef" href="../../include/time.h.html#time_t" title='time_t' data-type='__time_t' data-ref="time_t">time_t</a> <dfn class="decl" id="av_timegm" title='av_timegm' data-ref="av_timegm">av_timegm</dfn>(<b>struct</b> <a class="type" href="../../include/time.h.html#tm" title='tm' data-ref="tm">tm</a> *<dfn class="local col7 decl" id="27tm" title='tm' data-type='struct tm *' data-ref="27tm">tm</dfn>);</td></tr>
+<tr><th id="192">192</th><td></td></tr>
+<tr><th id="193">193</th><td><u>#<span data-ppcond="19">endif</span> /* AVUTIL_PARSEUTILS_H */</u></td></tr>
+<tr><th id="194">194</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated while processing <a href='../libavdevice/fbdev_dec.c.html'>ffmpeg/libavdevice/fbdev_dec.c</a><br/>Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

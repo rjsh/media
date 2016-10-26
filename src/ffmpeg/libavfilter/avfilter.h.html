@@ -1,0 +1,1145 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>avfilter.h source code [ffmpeg/libavfilter/avfilter.h] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="AVFilter,AVFilterContext,AVFilterGraph,AVFilterInOut,AVFilterLink "/>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavfilter/avfilter.h'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavfilter</a>/<a href='avfilter.h.html'>avfilter.h</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * filter layer</i></td></tr>
+<tr><th id="3">3</th><td><i> * Copyright (c) 2007 Bobby Bingham</i></td></tr>
+<tr><th id="4">4</th><td><i> *</i></td></tr>
+<tr><th id="5">5</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="8">8</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="9">9</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="10">10</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="11">11</th><td><i> *</i></td></tr>
+<tr><th id="12">12</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="13">13</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="14">14</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="15">15</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="16">16</th><td><i> *</i></td></tr>
+<tr><th id="17">17</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="18">18</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="19">19</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="20">20</th><td><i> */</i></td></tr>
+<tr><th id="21">21</th><td></td></tr>
+<tr><th id="22">22</th><td><u>#<span data-ppcond="22">ifndef</span> <span class="macro" data-ref="_M/AVFILTER_AVFILTER_H">AVFILTER_AVFILTER_H</span></u></td></tr>
+<tr><th id="23">23</th><td><u>#define <dfn class="macro" id="_M/AVFILTER_AVFILTER_H" data-ref="_M/AVFILTER_AVFILTER_H">AVFILTER_AVFILTER_H</dfn></u></td></tr>
+<tr><th id="24">24</th><td></td></tr>
+<tr><th id="25">25</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="26">26</th><td><i class="doc"> *<span class="command"> @file</span></i></td></tr>
+<tr><th id="27">27</th><td><i class="doc"> * <span class="command">@ingroup</span> <span class="verb">lavfi</span></i></td></tr>
+<tr><th id="28">28</th><td><i class="doc"> * Main libavfilter public API header</i></td></tr>
+<tr><th id="29">29</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="30">30</th><td></td></tr>
+<tr><th id="31">31</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="32">32</th><td><i class="doc"> * <span class="command">@defgroup</span> <span class="verb">lavfi libavfilter</span></i></td></tr>
+<tr><th id="33">33</th><td><i class="doc"> * Graph-based frame editing library.</i></td></tr>
+<tr><th id="34">34</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="35">35</th><td><i class="doc"> * @{</i></td></tr>
+<tr><th id="36">36</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="37">37</th><td></td></tr>
+<tr><th id="38">38</th><td><u>#include &lt;stddef.h&gt;</u></td></tr>
+<tr><th id="39">39</th><td></td></tr>
+<tr><th id="40">40</th><td><u>#include <a href="../libavutil/attributes.h.html">"libavutil/attributes.h"</a></u></td></tr>
+<tr><th id="41">41</th><td><u>#include <a href="../libavutil/avutil.h.html">"libavutil/avutil.h"</a></u></td></tr>
+<tr><th id="42">42</th><td><u>#include <a href="../libavutil/buffer.h.html">"libavutil/buffer.h"</a></u></td></tr>
+<tr><th id="43">43</th><td><u>#include <a href="../libavutil/dict.h.html">"libavutil/dict.h"</a></u></td></tr>
+<tr><th id="44">44</th><td><u>#include <a href="../libavutil/frame.h.html">"libavutil/frame.h"</a></u></td></tr>
+<tr><th id="45">45</th><td><u>#include <a href="../libavutil/log.h.html">"libavutil/log.h"</a></u></td></tr>
+<tr><th id="46">46</th><td><u>#include <a href="../libavutil/samplefmt.h.html">"libavutil/samplefmt.h"</a></u></td></tr>
+<tr><th id="47">47</th><td><u>#include <a href="../libavutil/pixfmt.h.html">"libavutil/pixfmt.h"</a></u></td></tr>
+<tr><th id="48">48</th><td><u>#include <a href="../libavutil/rational.h.html">"libavutil/rational.h"</a></u></td></tr>
+<tr><th id="49">49</th><td></td></tr>
+<tr><th id="50">50</th><td><u>#include <a href="version.h.html">"libavfilter/version.h"</a></u></td></tr>
+<tr><th id="51">51</th><td></td></tr>
+<tr><th id="52">52</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="53">53</th><td><i class="doc"> * Return the LIBAVFILTER_VERSION_INT constant.</i></td></tr>
+<tr><th id="54">54</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="55">55</th><td><em>unsigned</em> <dfn class="decl" id="avfilter_version" title='avfilter_version' data-ref="avfilter_version">avfilter_version</dfn>(<em>void</em>);</td></tr>
+<tr><th id="56">56</th><td></td></tr>
+<tr><th id="57">57</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="58">58</th><td><i class="doc"> * Return the libavfilter build-time configuration.</i></td></tr>
+<tr><th id="59">59</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="60">60</th><td><em>const</em> <em>char</em> *<dfn class="decl" id="avfilter_configuration" title='avfilter_configuration' data-ref="avfilter_configuration">avfilter_configuration</dfn>(<em>void</em>);</td></tr>
+<tr><th id="61">61</th><td></td></tr>
+<tr><th id="62">62</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="63">63</th><td><i class="doc"> * Return the libavfilter license.</i></td></tr>
+<tr><th id="64">64</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="65">65</th><td><em>const</em> <em>char</em> *<dfn class="decl" id="avfilter_license" title='avfilter_license' data-ref="avfilter_license">avfilter_license</dfn>(<em>void</em>);</td></tr>
+<tr><th id="66">66</th><td></td></tr>
+<tr><th id="67">67</th><td><b>typedef</b> <b>struct</b> <a class="type" href="#AVFilterContext" title='AVFilterContext' data-ref="AVFilterContext">AVFilterContext</a> <dfn class="typedef" id="AVFilterContext" title='AVFilterContext' data-type='struct AVFilterContext' data-ref="AVFilterContext">AVFilterContext</dfn>;</td></tr>
+<tr><th id="68">68</th><td><b>typedef</b> <b>struct</b> <a class="type" href="#AVFilterLink" title='AVFilterLink' data-ref="AVFilterLink">AVFilterLink</a>    <dfn class="typedef" id="AVFilterLink" title='AVFilterLink' data-type='struct AVFilterLink' data-ref="AVFilterLink">AVFilterLink</dfn>;</td></tr>
+<tr><th id="69">69</th><td><b>typedef</b> <b>struct</b> <dfn class="type" id="AVFilterPad" title='AVFilterPad' data-ref="AVFilterPad"><a class="type" href="#AVFilterPad" title='AVFilterPad' data-ref="AVFilterPad">AVFilterPad</a></dfn>     <dfn class="typedef" id="AVFilterPad" title='AVFilterPad' data-type='struct AVFilterPad' data-ref="AVFilterPad">AVFilterPad</dfn>;</td></tr>
+<tr><th id="70">70</th><td><b>typedef</b> <b>struct</b> <dfn class="type" id="AVFilterFormats" title='AVFilterFormats' data-ref="AVFilterFormats"><a class="type" href="#AVFilterFormats" title='AVFilterFormats' data-ref="AVFilterFormats">AVFilterFormats</a></dfn> <dfn class="typedef" id="AVFilterFormats" title='AVFilterFormats' data-type='struct AVFilterFormats' data-ref="AVFilterFormats">AVFilterFormats</dfn>;</td></tr>
+<tr><th id="71">71</th><td></td></tr>
+<tr><th id="72">72</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="73">73</th><td><i class="doc"> * Get the number of elements in a NULL-terminated array of AVFilterPads (e.g.</i></td></tr>
+<tr><th id="74">74</th><td><i class="doc"> * AVFilter.inputs/outputs).</i></td></tr>
+<tr><th id="75">75</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="76">76</th><td><em>int</em> <dfn class="decl" id="avfilter_pad_count" title='avfilter_pad_count' data-ref="avfilter_pad_count">avfilter_pad_count</dfn>(<em>const</em> <a class="typedef" href="#AVFilterPad" title='AVFilterPad' data-type='struct AVFilterPad' data-ref="AVFilterPad">AVFilterPad</a> *<dfn class="local col1 decl" id="71pads" title='pads' data-type='const AVFilterPad *' data-ref="71pads">pads</dfn>);</td></tr>
+<tr><th id="77">77</th><td></td></tr>
+<tr><th id="78">78</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="79">79</th><td><i class="doc"> * Get the name of an AVFilterPad.</i></td></tr>
+<tr><th id="80">80</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="81">81</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">pads</span> an array of AVFilterPads</i></td></tr>
+<tr><th id="82">82</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">pad_idx</span> index of the pad in the array it; is the caller's</i></td></tr>
+<tr><th id="83">83</th><td><i class="doc"> *                responsibility to ensure the index is valid</i></td></tr>
+<tr><th id="84">84</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="85">85</th><td><i class="doc"> * <span class="command">@return</span> name of the pad_idx'th pad in pads</i></td></tr>
+<tr><th id="86">86</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="87">87</th><td><em>const</em> <em>char</em> *<dfn class="decl" id="avfilter_pad_get_name" title='avfilter_pad_get_name' data-ref="avfilter_pad_get_name">avfilter_pad_get_name</dfn>(<em>const</em> <a class="typedef" href="#AVFilterPad" title='AVFilterPad' data-type='struct AVFilterPad' data-ref="AVFilterPad">AVFilterPad</a> *<dfn class="local col2 decl" id="72pads" title='pads' data-type='const AVFilterPad *' data-ref="72pads">pads</dfn>, <em>int</em> <dfn class="local col3 decl" id="73pad_idx" title='pad_idx' data-type='int' data-ref="73pad_idx">pad_idx</dfn>);</td></tr>
+<tr><th id="88">88</th><td></td></tr>
+<tr><th id="89">89</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="90">90</th><td><i class="doc"> * Get the type of an AVFilterPad.</i></td></tr>
+<tr><th id="91">91</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="92">92</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">pads</span> an array of AVFilterPads</i></td></tr>
+<tr><th id="93">93</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">pad_idx</span> index of the pad in the array; it is the caller's</i></td></tr>
+<tr><th id="94">94</th><td><i class="doc"> *                responsibility to ensure the index is valid</i></td></tr>
+<tr><th id="95">95</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="96">96</th><td><i class="doc"> * <span class="command">@return</span> type of the pad_idx'th pad in pads</i></td></tr>
+<tr><th id="97">97</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="98">98</th><td><b>enum</b> <a class="type" href="../libavutil/avutil.h.html#AVMediaType" title='AVMediaType' data-ref="AVMediaType">AVMediaType</a> <dfn class="decl" id="avfilter_pad_get_type" title='avfilter_pad_get_type' data-ref="avfilter_pad_get_type">avfilter_pad_get_type</dfn>(<em>const</em> <a class="typedef" href="#AVFilterPad" title='AVFilterPad' data-type='struct AVFilterPad' data-ref="AVFilterPad">AVFilterPad</a> *<dfn class="local col4 decl" id="74pads" title='pads' data-type='const AVFilterPad *' data-ref="74pads">pads</dfn>, <em>int</em> <dfn class="local col5 decl" id="75pad_idx" title='pad_idx' data-type='int' data-ref="75pad_idx">pad_idx</dfn>);</td></tr>
+<tr><th id="99">99</th><td></td></tr>
+<tr><th id="100">100</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="101">101</th><td><i class="doc"> * The number of the filter inputs is not determined just by AVFilter.inputs.</i></td></tr>
+<tr><th id="102">102</th><td><i class="doc"> * The filter might add additional inputs during initialization depending on the</i></td></tr>
+<tr><th id="103">103</th><td><i class="doc"> * options supplied to it.</i></td></tr>
+<tr><th id="104">104</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="105">105</th><td><u>#define <dfn class="macro" id="_M/AVFILTER_FLAG_DYNAMIC_INPUTS" data-ref="_M/AVFILTER_FLAG_DYNAMIC_INPUTS">AVFILTER_FLAG_DYNAMIC_INPUTS</dfn>        (1 &lt;&lt; 0)</u></td></tr>
+<tr><th id="106">106</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="107">107</th><td><i class="doc"> * The number of the filter outputs is not determined just by AVFilter.outputs.</i></td></tr>
+<tr><th id="108">108</th><td><i class="doc"> * The filter might add additional outputs during initialization depending on</i></td></tr>
+<tr><th id="109">109</th><td><i class="doc"> * the options supplied to it.</i></td></tr>
+<tr><th id="110">110</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="111">111</th><td><u>#define <dfn class="macro" id="_M/AVFILTER_FLAG_DYNAMIC_OUTPUTS" data-ref="_M/AVFILTER_FLAG_DYNAMIC_OUTPUTS">AVFILTER_FLAG_DYNAMIC_OUTPUTS</dfn>       (1 &lt;&lt; 1)</u></td></tr>
+<tr><th id="112">112</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="113">113</th><td><i class="doc"> * The filter supports multithreading by splitting frames into multiple parts</i></td></tr>
+<tr><th id="114">114</th><td><i class="doc"> * and processing them concurrently.</i></td></tr>
+<tr><th id="115">115</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="116">116</th><td><u>#define <dfn class="macro" id="_M/AVFILTER_FLAG_SLICE_THREADS" data-ref="_M/AVFILTER_FLAG_SLICE_THREADS">AVFILTER_FLAG_SLICE_THREADS</dfn>         (1 &lt;&lt; 2)</u></td></tr>
+<tr><th id="117">117</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="118">118</th><td><i class="doc"> * Some filters support a generic "enable" expression option that can be used</i></td></tr>
+<tr><th id="119">119</th><td><i class="doc"> * to enable or disable a filter in the timeline. Filters supporting this</i></td></tr>
+<tr><th id="120">120</th><td><i class="doc"> * option have this flag set. When the enable expression is false, the default</i></td></tr>
+<tr><th id="121">121</th><td><i class="doc"> * no-op filter_frame() function is called in place of the filter_frame()</i></td></tr>
+<tr><th id="122">122</th><td><i class="doc"> * callback defined on each input pad, thus the frame is passed unchanged to</i></td></tr>
+<tr><th id="123">123</th><td><i class="doc"> * the next filters.</i></td></tr>
+<tr><th id="124">124</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="125">125</th><td><u>#define <dfn class="macro" id="_M/AVFILTER_FLAG_SUPPORT_TIMELINE_GENERIC" data-ref="_M/AVFILTER_FLAG_SUPPORT_TIMELINE_GENERIC">AVFILTER_FLAG_SUPPORT_TIMELINE_GENERIC</dfn>  (1 &lt;&lt; 16)</u></td></tr>
+<tr><th id="126">126</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="127">127</th><td><i class="doc"> * Same as AVFILTER_FLAG_SUPPORT_TIMELINE_GENERIC, except that the filter will</i></td></tr>
+<tr><th id="128">128</th><td><i class="doc"> * have its filter_frame() callback(s) called as usual even when the enable</i></td></tr>
+<tr><th id="129">129</th><td><i class="doc"> * expression is false. The filter will disable filtering within the</i></td></tr>
+<tr><th id="130">130</th><td><i class="doc"> * filter_frame() callback(s) itself, for example executing code depending on</i></td></tr>
+<tr><th id="131">131</th><td><i class="doc"> * the AVFilterContext-&gt;is_disabled value.</i></td></tr>
+<tr><th id="132">132</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="133">133</th><td><u>#define <dfn class="macro" id="_M/AVFILTER_FLAG_SUPPORT_TIMELINE_INTERNAL" data-ref="_M/AVFILTER_FLAG_SUPPORT_TIMELINE_INTERNAL">AVFILTER_FLAG_SUPPORT_TIMELINE_INTERNAL</dfn> (1 &lt;&lt; 17)</u></td></tr>
+<tr><th id="134">134</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="135">135</th><td><i class="doc"> * Handy mask to test whether the filter supports or no the timeline feature</i></td></tr>
+<tr><th id="136">136</th><td><i class="doc"> * (internally or generically).</i></td></tr>
+<tr><th id="137">137</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="138">138</th><td><u>#define <dfn class="macro" id="_M/AVFILTER_FLAG_SUPPORT_TIMELINE" data-ref="_M/AVFILTER_FLAG_SUPPORT_TIMELINE">AVFILTER_FLAG_SUPPORT_TIMELINE</dfn> (AVFILTER_FLAG_SUPPORT_TIMELINE_GENERIC | AVFILTER_FLAG_SUPPORT_TIMELINE_INTERNAL)</u></td></tr>
+<tr><th id="139">139</th><td></td></tr>
+<tr><th id="140">140</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="141">141</th><td><i class="doc"> * Filter definition. This defines the pads a filter contains, and all the</i></td></tr>
+<tr><th id="142">142</th><td><i class="doc"> * callback functions used to interact with the filter.</i></td></tr>
+<tr><th id="143">143</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="144">144</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="AVFilter" title='AVFilter' data-ref="AVFilter"><a class="type" href="#AVFilter" title='AVFilter' data-ref="AVFilter">AVFilter</a></dfn> {</td></tr>
+<tr><th id="145">145</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="146">146</th><td><i class="doc">     * Filter name. Must be non-NULL and unique among filters.</i></td></tr>
+<tr><th id="147">147</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="148">148</th><td>    <em>const</em> <em>char</em> *<dfn class="decl" id="AVFilter::name" title='AVFilter::name' data-ref="AVFilter::name">name</dfn>;</td></tr>
+<tr><th id="149">149</th><td></td></tr>
+<tr><th id="150">150</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="151">151</th><td><i class="doc">     * A description of the filter. May be NULL.</i></td></tr>
+<tr><th id="152">152</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="153">153</th><td><i class="doc">     * You should use the NULL_IF_CONFIG_SMALL() macro to define it.</i></td></tr>
+<tr><th id="154">154</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="155">155</th><td>    <em>const</em> <em>char</em> *<dfn class="decl" id="AVFilter::description" title='AVFilter::description' data-ref="AVFilter::description">description</dfn>;</td></tr>
+<tr><th id="156">156</th><td></td></tr>
+<tr><th id="157">157</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="158">158</th><td><i class="doc">     * List of inputs, terminated by a zeroed element.</i></td></tr>
+<tr><th id="159">159</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="160">160</th><td><i class="doc">     * NULL if there are no (static) inputs. Instances of filters with</i></td></tr>
+<tr><th id="161">161</th><td><i class="doc">     * AVFILTER_FLAG_DYNAMIC_INPUTS set may have more inputs than present in</i></td></tr>
+<tr><th id="162">162</th><td><i class="doc">     * this list.</i></td></tr>
+<tr><th id="163">163</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="164">164</th><td>    <em>const</em> <a class="typedef" href="#AVFilterPad" title='AVFilterPad' data-type='struct AVFilterPad' data-ref="AVFilterPad">AVFilterPad</a> *<dfn class="decl" id="AVFilter::inputs" title='AVFilter::inputs' data-ref="AVFilter::inputs">inputs</dfn>;</td></tr>
+<tr><th id="165">165</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="166">166</th><td><i class="doc">     * List of outputs, terminated by a zeroed element.</i></td></tr>
+<tr><th id="167">167</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="168">168</th><td><i class="doc">     * NULL if there are no (static) outputs. Instances of filters with</i></td></tr>
+<tr><th id="169">169</th><td><i class="doc">     * AVFILTER_FLAG_DYNAMIC_OUTPUTS set may have more outputs than present in</i></td></tr>
+<tr><th id="170">170</th><td><i class="doc">     * this list.</i></td></tr>
+<tr><th id="171">171</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="172">172</th><td>    <em>const</em> <a class="typedef" href="#AVFilterPad" title='AVFilterPad' data-type='struct AVFilterPad' data-ref="AVFilterPad">AVFilterPad</a> *<dfn class="decl" id="AVFilter::outputs" title='AVFilter::outputs' data-ref="AVFilter::outputs">outputs</dfn>;</td></tr>
+<tr><th id="173">173</th><td></td></tr>
+<tr><th id="174">174</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="175">175</th><td><i class="doc">     * A class for the private data, used to declare filter private AVOptions.</i></td></tr>
+<tr><th id="176">176</th><td><i class="doc">     * This field is NULL for filters that do not declare any options.</i></td></tr>
+<tr><th id="177">177</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="178">178</th><td><i class="doc">     * If this field is non-NULL, the first member of the filter private data</i></td></tr>
+<tr><th id="179">179</th><td><i class="doc">     * must be a pointer to AVClass, which will be set by libavfilter generic</i></td></tr>
+<tr><th id="180">180</th><td><i class="doc">     * code to this class.</i></td></tr>
+<tr><th id="181">181</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="182">182</th><td>    <em>const</em> <a class="typedef" href="../libavutil/log.h.html#AVClass" title='AVClass' data-type='struct AVClass' data-ref="AVClass">AVClass</a> *<dfn class="decl" id="AVFilter::priv_class" title='AVFilter::priv_class' data-ref="AVFilter::priv_class">priv_class</dfn>;</td></tr>
+<tr><th id="183">183</th><td></td></tr>
+<tr><th id="184">184</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="185">185</th><td><i class="doc">     * A combination of AVFILTER_FLAG_*</i></td></tr>
+<tr><th id="186">186</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="187">187</th><td>    <em>int</em> <dfn class="decl" id="AVFilter::flags" title='AVFilter::flags' data-ref="AVFilter::flags">flags</dfn>;</td></tr>
+<tr><th id="188">188</th><td></td></tr>
+<tr><th id="189">189</th><td>    <i>/*****************************************************************</i></td></tr>
+<tr><th id="190">190</th><td><i>     * All fields below this line are not part of the public API. They</i></td></tr>
+<tr><th id="191">191</th><td><i>     * may not be used outside of libavfilter and can be changed and</i></td></tr>
+<tr><th id="192">192</th><td><i>     * removed at will.</i></td></tr>
+<tr><th id="193">193</th><td><i>     * New public fields should be added right above.</i></td></tr>
+<tr><th id="194">194</th><td><i>     *****************************************************************</i></td></tr>
+<tr><th id="195">195</th><td><i>     */</i></td></tr>
+<tr><th id="196">196</th><td></td></tr>
+<tr><th id="197">197</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="198">198</th><td><i class="doc">     * Filter initialization function.</i></td></tr>
+<tr><th id="199">199</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="200">200</th><td><i class="doc">     * This callback will be called only once during the filter lifetime, after</i></td></tr>
+<tr><th id="201">201</th><td><i class="doc">     * all the options have been set, but before links between filters are</i></td></tr>
+<tr><th id="202">202</th><td><i class="doc">     * established and format negotiation is done.</i></td></tr>
+<tr><th id="203">203</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="204">204</th><td><i class="doc">     * Basic filter initialization should be done here. Filters with dynamic</i></td></tr>
+<tr><th id="205">205</th><td><i class="doc">     * inputs and/or outputs should create those inputs/outputs here based on</i></td></tr>
+<tr><th id="206">206</th><td><i class="doc">     * provided options. No more changes to this filter's inputs/outputs can be</i></td></tr>
+<tr><th id="207">207</th><td><i class="doc">     * done after this callback.</i></td></tr>
+<tr><th id="208">208</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="209">209</th><td><i class="doc">     * This callback must not assume that the filter links exist or frame</i></td></tr>
+<tr><th id="210">210</th><td><i class="doc">     * parameters are known.</i></td></tr>
+<tr><th id="211">211</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="212">212</th><td><i class="doc">     * <span class="command">@ref</span> <span class="verb">AVFilter.uninit "uninit" is guaranteed to be called even if</span></i></td></tr>
+<tr><th id="213">213</th><td><i class="doc">     * initialization fails, so this callback does not have to clean up on</i></td></tr>
+<tr><th id="214">214</th><td><i class="doc">     * failure.</i></td></tr>
+<tr><th id="215">215</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="216">216</th><td><i class="doc">     * <span class="command">@return</span> 0 on success, a negative AVERROR on failure</i></td></tr>
+<tr><th id="217">217</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="218">218</th><td>    <em>int</em> (*<dfn class="decl" id="AVFilter::init" title='AVFilter::init' data-ref="AVFilter::init">init</dfn>)(<a class="typedef" href="#AVFilterContext" title='AVFilterContext' data-type='struct AVFilterContext' data-ref="AVFilterContext">AVFilterContext</a> *<dfn class="local col6 decl" id="76ctx" title='ctx' data-type='AVFilterContext *' data-ref="76ctx">ctx</dfn>);</td></tr>
+<tr><th id="219">219</th><td></td></tr>
+<tr><th id="220">220</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="221">221</th><td><i class="doc">     * Should be set instead of <span class="command">@ref</span> <span class="verb">AVFilter.init "init" by the filters that</span></i></td></tr>
+<tr><th id="222">222</th><td><i class="doc">     * want to pass a dictionary of AVOptions to nested contexts that are</i></td></tr>
+<tr><th id="223">223</th><td><i class="doc">     * allocated during init.</i></td></tr>
+<tr><th id="224">224</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="225">225</th><td><i class="doc">     * On return, the options dict should be freed and replaced with one that</i></td></tr>
+<tr><th id="226">226</th><td><i class="doc">     * contains all the options which could not be processed by this filter (or</i></td></tr>
+<tr><th id="227">227</th><td><i class="doc">     * with NULL if all the options were processed).</i></td></tr>
+<tr><th id="228">228</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="229">229</th><td><i class="doc">     * Otherwise the semantics is the same as for <span class="command">@ref</span> <span class="verb">AVFilter.init "init".</span></i></td></tr>
+<tr><th id="230">230</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="231">231</th><td>    <em>int</em> (*<dfn class="decl" id="AVFilter::init_dict" title='AVFilter::init_dict' data-ref="AVFilter::init_dict">init_dict</dfn>)(<a class="typedef" href="#AVFilterContext" title='AVFilterContext' data-type='struct AVFilterContext' data-ref="AVFilterContext">AVFilterContext</a> *<dfn class="local col7 decl" id="77ctx" title='ctx' data-type='AVFilterContext *' data-ref="77ctx">ctx</dfn>, <a class="typedef" href="../libavutil/dict.h.html#AVDictionary" title='AVDictionary' data-type='struct AVDictionary' data-ref="AVDictionary">AVDictionary</a> **<dfn class="local col8 decl" id="78options" title='options' data-type='AVDictionary **' data-ref="78options">options</dfn>);</td></tr>
+<tr><th id="232">232</th><td></td></tr>
+<tr><th id="233">233</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="234">234</th><td><i class="doc">     * Filter uninitialization function.</i></td></tr>
+<tr><th id="235">235</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="236">236</th><td><i class="doc">     * Called only once right before the filter is freed. Should deallocate any</i></td></tr>
+<tr><th id="237">237</th><td><i class="doc">     * memory held by the filter, release any buffer references, etc. It does</i></td></tr>
+<tr><th id="238">238</th><td><i class="doc">     * not need to deallocate the AVFilterContext.priv memory itself.</i></td></tr>
+<tr><th id="239">239</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="240">240</th><td><i class="doc">     * This callback may be called even if <span class="command">@ref</span> <span class="verb">AVFilter.init "init" was not</span></i></td></tr>
+<tr><th id="241">241</th><td><i class="doc">     * called or failed, so it must be prepared to handle such a situation.</i></td></tr>
+<tr><th id="242">242</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="243">243</th><td>    <em>void</em> (*<dfn class="decl" id="AVFilter::uninit" title='AVFilter::uninit' data-ref="AVFilter::uninit">uninit</dfn>)(<a class="typedef" href="#AVFilterContext" title='AVFilterContext' data-type='struct AVFilterContext' data-ref="AVFilterContext">AVFilterContext</a> *<dfn class="local col9 decl" id="79ctx" title='ctx' data-type='AVFilterContext *' data-ref="79ctx">ctx</dfn>);</td></tr>
+<tr><th id="244">244</th><td></td></tr>
+<tr><th id="245">245</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="246">246</th><td><i class="doc">     * Query formats supported by the filter on its inputs and outputs.</i></td></tr>
+<tr><th id="247">247</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="248">248</th><td><i class="doc">     * This callback is called after the filter is initialized (so the inputs</i></td></tr>
+<tr><th id="249">249</th><td><i class="doc">     * and outputs are fixed), shortly before the format negotiation. This</i></td></tr>
+<tr><th id="250">250</th><td><i class="doc">     * callback may be called more than once.</i></td></tr>
+<tr><th id="251">251</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="252">252</th><td><i class="doc">     * This callback must set AVFilterLink.out_formats on every input link and</i></td></tr>
+<tr><th id="253">253</th><td><i class="doc">     * AVFilterLink.in_formats on every output link to a list of pixel/sample</i></td></tr>
+<tr><th id="254">254</th><td><i class="doc">     * formats that the filter supports on that link. For audio links, this</i></td></tr>
+<tr><th id="255">255</th><td><i class="doc">     * filter must also set <span class="command">@ref</span> <span class="verb">AVFilterLink.in_samplerates "in_samplerates" /</span></i></td></tr>
+<tr><th id="256">256</th><td><i class="doc">     * <span class="command">@ref</span> <span class="verb">AVFilterLink.out_samplerates "out_samplerates" and</span></i></td></tr>
+<tr><th id="257">257</th><td><i class="doc">     * <span class="command">@ref</span> <span class="verb">AVFilterLink.in_channel_layouts "in_channel_layouts" /</span></i></td></tr>
+<tr><th id="258">258</th><td><i class="doc">     * <span class="command">@ref</span> <span class="verb">AVFilterLink.out_channel_layouts "out_channel_layouts" analogously.</span></i></td></tr>
+<tr><th id="259">259</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="260">260</th><td><i class="doc">     * This callback may be NULL for filters with one input, in which case</i></td></tr>
+<tr><th id="261">261</th><td><i class="doc">     * libavfilter assumes that it supports all input formats and preserves</i></td></tr>
+<tr><th id="262">262</th><td><i class="doc">     * them on output.</i></td></tr>
+<tr><th id="263">263</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="264">264</th><td><i class="doc">     * <span class="command">@return</span> zero on success, a negative value corresponding to an</i></td></tr>
+<tr><th id="265">265</th><td><i class="doc">     * AVERROR code otherwise</i></td></tr>
+<tr><th id="266">266</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="267">267</th><td>    <em>int</em> (*<dfn class="decl" id="AVFilter::query_formats" title='AVFilter::query_formats' data-ref="AVFilter::query_formats">query_formats</dfn>)(<a class="typedef" href="#AVFilterContext" title='AVFilterContext' data-type='struct AVFilterContext' data-ref="AVFilterContext">AVFilterContext</a> *);</td></tr>
+<tr><th id="268">268</th><td></td></tr>
+<tr><th id="269">269</th><td>    <em>int</em> <dfn class="decl" id="AVFilter::priv_size" title='AVFilter::priv_size' data-ref="AVFilter::priv_size">priv_size</dfn>;      <i class="doc">///&lt; size of private data to allocate for the filter</i></td></tr>
+<tr><th id="270">270</th><td></td></tr>
+<tr><th id="271">271</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="272">272</th><td><i class="doc">     * Used by the filter registration system. Must not be touched by any other</i></td></tr>
+<tr><th id="273">273</th><td><i class="doc">     * code.</i></td></tr>
+<tr><th id="274">274</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="275">275</th><td>    <b>struct</b> <a class="type" href="#AVFilter" title='AVFilter' data-ref="AVFilter">AVFilter</a> *<dfn class="decl" id="AVFilter::next" title='AVFilter::next' data-ref="AVFilter::next">next</dfn>;</td></tr>
+<tr><th id="276">276</th><td></td></tr>
+<tr><th id="277">277</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="278">278</th><td><i class="doc">     * Make the filter instance process a command.</i></td></tr>
+<tr><th id="279">279</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="280">280</th><td><i class="doc">     * <span class="command">@param</span> <span class="arg">cmd</span>    the command to process, for handling simplicity all commands must be alphanumeric only</i></td></tr>
+<tr><th id="281">281</th><td><i class="doc">     * <span class="command">@param</span> <span class="arg">arg</span>    the argument for the command</i></td></tr>
+<tr><th id="282">282</th><td><i class="doc">     * <span class="command">@param</span> <span class="arg">res</span>    a buffer with size res_size where the filter(s) can return a response. This must not change when the command is not supported.</i></td></tr>
+<tr><th id="283">283</th><td><i class="doc">     * <span class="command">@param</span> <span class="arg">flags</span>  if AVFILTER_CMD_FLAG_FAST is set and the command would be</i></td></tr>
+<tr><th id="284">284</th><td><i class="doc">     *               time consuming then a filter should treat it like an unsupported command</i></td></tr>
+<tr><th id="285">285</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="286">286</th><td><i class="doc">     * <span class="command">@returns</span> &gt;=0 on success otherwise an error code.</i></td></tr>
+<tr><th id="287">287</th><td><i class="doc">     *          AVERROR(ENOSYS) on unsupported commands</i></td></tr>
+<tr><th id="288">288</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="289">289</th><td>    <em>int</em> (*<dfn class="decl" id="AVFilter::process_command" title='AVFilter::process_command' data-ref="AVFilter::process_command">process_command</dfn>)(<a class="typedef" href="#AVFilterContext" title='AVFilterContext' data-type='struct AVFilterContext' data-ref="AVFilterContext">AVFilterContext</a> *, <em>const</em> <em>char</em> *<dfn class="local col0 decl" id="80cmd" title='cmd' data-type='const char *' data-ref="80cmd">cmd</dfn>, <em>const</em> <em>char</em> *<dfn class="local col1 decl" id="81arg" title='arg' data-type='const char *' data-ref="81arg">arg</dfn>, <em>char</em> *<dfn class="local col2 decl" id="82res" title='res' data-type='char *' data-ref="82res">res</dfn>, <em>int</em> <dfn class="local col3 decl" id="83res_len" title='res_len' data-type='int' data-ref="83res_len">res_len</dfn>, <em>int</em> <dfn class="local col4 decl" id="84flags" title='flags' data-type='int' data-ref="84flags">flags</dfn>);</td></tr>
+<tr><th id="290">290</th><td></td></tr>
+<tr><th id="291">291</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="292">292</th><td><i class="doc">     * Filter initialization function, alternative to the init()</i></td></tr>
+<tr><th id="293">293</th><td><i class="doc">     * callback. Args contains the user-supplied parameters, opaque is</i></td></tr>
+<tr><th id="294">294</th><td><i class="doc">     * used for providing binary data.</i></td></tr>
+<tr><th id="295">295</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="296">296</th><td>    <em>int</em> (*<dfn class="decl" id="AVFilter::init_opaque" title='AVFilter::init_opaque' data-ref="AVFilter::init_opaque">init_opaque</dfn>)(<a class="typedef" href="#AVFilterContext" title='AVFilterContext' data-type='struct AVFilterContext' data-ref="AVFilterContext">AVFilterContext</a> *<dfn class="local col5 decl" id="85ctx" title='ctx' data-type='AVFilterContext *' data-ref="85ctx">ctx</dfn>, <em>void</em> *<dfn class="local col6 decl" id="86opaque" title='opaque' data-type='void *' data-ref="86opaque">opaque</dfn>);</td></tr>
+<tr><th id="297">297</th><td>} <dfn class="typedef" id="AVFilter" title='AVFilter' data-type='struct AVFilter' data-ref="AVFilter">AVFilter</dfn>;</td></tr>
+<tr><th id="298">298</th><td></td></tr>
+<tr><th id="299">299</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="300">300</th><td><i class="doc"> * Process multiple parts of the frame concurrently.</i></td></tr>
+<tr><th id="301">301</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="302">302</th><td><u>#define <dfn class="macro" id="_M/AVFILTER_THREAD_SLICE" data-ref="_M/AVFILTER_THREAD_SLICE">AVFILTER_THREAD_SLICE</dfn> (1 &lt;&lt; 0)</u></td></tr>
+<tr><th id="303">303</th><td></td></tr>
+<tr><th id="304">304</th><td><b>typedef</b> <b>struct</b> <dfn class="type" id="AVFilterInternal" title='AVFilterInternal' data-ref="AVFilterInternal"><a class="type" href="#AVFilterInternal" title='AVFilterInternal' data-ref="AVFilterInternal">AVFilterInternal</a></dfn> <dfn class="typedef" id="AVFilterInternal" title='AVFilterInternal' data-type='struct AVFilterInternal' data-ref="AVFilterInternal">AVFilterInternal</dfn>;</td></tr>
+<tr><th id="305">305</th><td></td></tr>
+<tr><th id="306">306</th><td><i class="doc">/** An instance of a filter */</i></td></tr>
+<tr><th id="307">307</th><td><b>struct</b> <dfn class="type def" id="AVFilterContext" title='AVFilterContext' data-ref="AVFilterContext">AVFilterContext</dfn> {</td></tr>
+<tr><th id="308">308</th><td>    <em>const</em> <a class="typedef" href="../libavutil/log.h.html#AVClass" title='AVClass' data-type='struct AVClass' data-ref="AVClass">AVClass</a> *<dfn class="decl" id="AVFilterContext::av_class" title='AVFilterContext::av_class' data-ref="AVFilterContext::av_class">av_class</dfn>;        <i class="doc">///&lt; needed for av_log() and filters common options</i></td></tr>
+<tr><th id="309">309</th><td></td></tr>
+<tr><th id="310">310</th><td>    <em>const</em> <a class="typedef" href="#AVFilter" title='AVFilter' data-type='struct AVFilter' data-ref="AVFilter">AVFilter</a> *<dfn class="decl" id="AVFilterContext::filter" title='AVFilterContext::filter' data-ref="AVFilterContext::filter">filter</dfn>;         <i class="doc">///&lt; the AVFilter of which this is an instance</i></td></tr>
+<tr><th id="311">311</th><td></td></tr>
+<tr><th id="312">312</th><td>    <em>char</em> *<dfn class="decl" id="AVFilterContext::name" title='AVFilterContext::name' data-ref="AVFilterContext::name">name</dfn>;                     <i class="doc">///&lt; name of this filter instance</i></td></tr>
+<tr><th id="313">313</th><td></td></tr>
+<tr><th id="314">314</th><td>    <a class="typedef" href="#AVFilterPad" title='AVFilterPad' data-type='struct AVFilterPad' data-ref="AVFilterPad">AVFilterPad</a>   *<dfn class="decl" id="AVFilterContext::input_pads" title='AVFilterContext::input_pads' data-ref="AVFilterContext::input_pads">input_pads</dfn>;      <i class="doc">///&lt; array of input pads</i></td></tr>
+<tr><th id="315">315</th><td>    <a class="typedef" href="#AVFilterLink" title='AVFilterLink' data-type='struct AVFilterLink' data-ref="AVFilterLink">AVFilterLink</a> **<dfn class="decl" id="AVFilterContext::inputs" title='AVFilterContext::inputs' data-ref="AVFilterContext::inputs">inputs</dfn>;          <i class="doc">///&lt; array of pointers to input links</i></td></tr>
+<tr><th id="316">316</th><td>    <em>unsigned</em>    <dfn class="decl" id="AVFilterContext::nb_inputs" title='AVFilterContext::nb_inputs' data-ref="AVFilterContext::nb_inputs">nb_inputs</dfn>;          <i class="doc">///&lt; number of input pads</i></td></tr>
+<tr><th id="317">317</th><td></td></tr>
+<tr><th id="318">318</th><td>    <a class="typedef" href="#AVFilterPad" title='AVFilterPad' data-type='struct AVFilterPad' data-ref="AVFilterPad">AVFilterPad</a>   *<dfn class="decl" id="AVFilterContext::output_pads" title='AVFilterContext::output_pads' data-ref="AVFilterContext::output_pads">output_pads</dfn>;     <i class="doc">///&lt; array of output pads</i></td></tr>
+<tr><th id="319">319</th><td>    <a class="typedef" href="#AVFilterLink" title='AVFilterLink' data-type='struct AVFilterLink' data-ref="AVFilterLink">AVFilterLink</a> **<dfn class="decl" id="AVFilterContext::outputs" title='AVFilterContext::outputs' data-ref="AVFilterContext::outputs">outputs</dfn>;         <i class="doc">///&lt; array of pointers to output links</i></td></tr>
+<tr><th id="320">320</th><td>    <em>unsigned</em>    <dfn class="decl" id="AVFilterContext::nb_outputs" title='AVFilterContext::nb_outputs' data-ref="AVFilterContext::nb_outputs">nb_outputs</dfn>;         <i class="doc">///&lt; number of output pads</i></td></tr>
+<tr><th id="321">321</th><td></td></tr>
+<tr><th id="322">322</th><td>    <em>void</em> *<dfn class="decl" id="AVFilterContext::priv" title='AVFilterContext::priv' data-ref="AVFilterContext::priv">priv</dfn>;                     <i class="doc">///&lt; private data for use by the filter</i></td></tr>
+<tr><th id="323">323</th><td></td></tr>
+<tr><th id="324">324</th><td>    <b>struct</b> <a class="type" href="#AVFilterGraph" title='AVFilterGraph' data-ref="AVFilterGraph">AVFilterGraph</a> *<dfn class="decl" id="AVFilterContext::graph" title='AVFilterContext::graph' data-ref="AVFilterContext::graph">graph</dfn>;    <i class="doc">///&lt; filtergraph this filter belongs to</i></td></tr>
+<tr><th id="325">325</th><td></td></tr>
+<tr><th id="326">326</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="327">327</th><td><i class="doc">     * Type of multithreading being allowed/used. A combination of</i></td></tr>
+<tr><th id="328">328</th><td><i class="doc">     * AVFILTER_THREAD_* flags.</i></td></tr>
+<tr><th id="329">329</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="330">330</th><td><i class="doc">     * May be set by the caller before initializing the filter to forbid some</i></td></tr>
+<tr><th id="331">331</th><td><i class="doc">     * or all kinds of multithreading for this filter. The default is allowing</i></td></tr>
+<tr><th id="332">332</th><td><i class="doc">     * everything.</i></td></tr>
+<tr><th id="333">333</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="334">334</th><td><i class="doc">     * When the filter is initialized, this field is combined using bit AND with</i></td></tr>
+<tr><th id="335">335</th><td><i class="doc">     * AVFilterGraph.thread_type to get the final mask used for determining</i></td></tr>
+<tr><th id="336">336</th><td><i class="doc">     * allowed threading types. I.e. a threading type needs to be set in both</i></td></tr>
+<tr><th id="337">337</th><td><i class="doc">     * to be allowed.</i></td></tr>
+<tr><th id="338">338</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="339">339</th><td><i class="doc">     * After the filter is initialized, libavfilter sets this field to the</i></td></tr>
+<tr><th id="340">340</th><td><i class="doc">     * threading type that is actually used (0 for no multithreading).</i></td></tr>
+<tr><th id="341">341</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="342">342</th><td>    <em>int</em> <dfn class="decl" id="AVFilterContext::thread_type" title='AVFilterContext::thread_type' data-ref="AVFilterContext::thread_type">thread_type</dfn>;</td></tr>
+<tr><th id="343">343</th><td></td></tr>
+<tr><th id="344">344</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="345">345</th><td><i class="doc">     * An opaque struct for libavfilter internal use.</i></td></tr>
+<tr><th id="346">346</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="347">347</th><td>    <a class="typedef" href="#AVFilterInternal" title='AVFilterInternal' data-type='struct AVFilterInternal' data-ref="AVFilterInternal">AVFilterInternal</a> *<dfn class="decl" id="AVFilterContext::internal" title='AVFilterContext::internal' data-ref="AVFilterContext::internal">internal</dfn>;</td></tr>
+<tr><th id="348">348</th><td></td></tr>
+<tr><th id="349">349</th><td>    <b>struct</b> <dfn class="type" id="AVFilterCommand" title='AVFilterCommand' data-ref="AVFilterCommand"><a class="type" href="#AVFilterCommand" title='AVFilterCommand' data-ref="AVFilterCommand">AVFilterCommand</a></dfn> *<dfn class="decl" id="AVFilterContext::command_queue" title='AVFilterContext::command_queue' data-ref="AVFilterContext::command_queue">command_queue</dfn>;</td></tr>
+<tr><th id="350">350</th><td></td></tr>
+<tr><th id="351">351</th><td>    <em>char</em> *<dfn class="decl" id="AVFilterContext::enable_str" title='AVFilterContext::enable_str' data-ref="AVFilterContext::enable_str">enable_str</dfn>;               <i class="doc">///&lt; enable expression string</i></td></tr>
+<tr><th id="352">352</th><td>    <em>void</em> *<dfn class="decl" id="AVFilterContext::enable" title='AVFilterContext::enable' data-ref="AVFilterContext::enable">enable</dfn>;                   <i class="doc">///&lt; parsed expression (AVExpr*)</i></td></tr>
+<tr><th id="353">353</th><td>    <em>double</em> *<dfn class="decl" id="AVFilterContext::var_values" title='AVFilterContext::var_values' data-ref="AVFilterContext::var_values">var_values</dfn>;             <i class="doc">///&lt; variable values for the enable expression</i></td></tr>
+<tr><th id="354">354</th><td>    <em>int</em> <dfn class="decl" id="AVFilterContext::is_disabled" title='AVFilterContext::is_disabled' data-ref="AVFilterContext::is_disabled">is_disabled</dfn>;                <i class="doc">///&lt; the enabled state from the last expression evaluation</i></td></tr>
+<tr><th id="355">355</th><td></td></tr>
+<tr><th id="356">356</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="357">357</th><td><i class="doc">     * For filters which will create hardware frames, sets the device the</i></td></tr>
+<tr><th id="358">358</th><td><i class="doc">     * filter should create them in.  All other filters will ignore this field:</i></td></tr>
+<tr><th id="359">359</th><td><i class="doc">     * in particular, a filter which consumes or processes hardware frames will</i></td></tr>
+<tr><th id="360">360</th><td><i class="doc">     * instead use the hw_frames_ctx field in AVFilterLink to carry the</i></td></tr>
+<tr><th id="361">361</th><td><i class="doc">     * hardware context information.</i></td></tr>
+<tr><th id="362">362</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="363">363</th><td>    <a class="typedef" href="../libavutil/buffer.h.html#AVBufferRef" title='AVBufferRef' data-type='struct AVBufferRef' data-ref="AVBufferRef">AVBufferRef</a> *<dfn class="decl" id="AVFilterContext::hw_device_ctx" title='AVFilterContext::hw_device_ctx' data-ref="AVFilterContext::hw_device_ctx">hw_device_ctx</dfn>;</td></tr>
+<tr><th id="364">364</th><td></td></tr>
+<tr><th id="365">365</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="366">366</th><td><i class="doc">     * Max number of threads allowed in this filter instance.</i></td></tr>
+<tr><th id="367">367</th><td><i class="doc">     * If &lt;= 0, its value is ignored.</i></td></tr>
+<tr><th id="368">368</th><td><i class="doc">     * Overrides global number of threads set per filter graph.</i></td></tr>
+<tr><th id="369">369</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="370">370</th><td>    <em>int</em> <dfn class="decl" id="AVFilterContext::nb_threads" title='AVFilterContext::nb_threads' data-ref="AVFilterContext::nb_threads">nb_threads</dfn>;</td></tr>
+<tr><th id="371">371</th><td>};</td></tr>
+<tr><th id="372">372</th><td></td></tr>
+<tr><th id="373">373</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="374">374</th><td><i class="doc"> * A link between two filters. This contains pointers to the source and</i></td></tr>
+<tr><th id="375">375</th><td><i class="doc"> * destination filters between which this link exists, and the indexes of</i></td></tr>
+<tr><th id="376">376</th><td><i class="doc"> * the pads involved. In addition, this link also contains the parameters</i></td></tr>
+<tr><th id="377">377</th><td><i class="doc"> * which have been negotiated and agreed upon between the filter, such as</i></td></tr>
+<tr><th id="378">378</th><td><i class="doc"> * image dimensions, format, etc.</i></td></tr>
+<tr><th id="379">379</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="380">380</th><td><b>struct</b> <dfn class="type def" id="AVFilterLink" title='AVFilterLink' data-ref="AVFilterLink">AVFilterLink</dfn> {</td></tr>
+<tr><th id="381">381</th><td>    <a class="typedef" href="#AVFilterContext" title='AVFilterContext' data-type='struct AVFilterContext' data-ref="AVFilterContext">AVFilterContext</a> *<dfn class="decl" id="AVFilterLink::src" title='AVFilterLink::src' data-ref="AVFilterLink::src">src</dfn>;       <i class="doc">///&lt; source filter</i></td></tr>
+<tr><th id="382">382</th><td>    <a class="typedef" href="#AVFilterPad" title='AVFilterPad' data-type='struct AVFilterPad' data-ref="AVFilterPad">AVFilterPad</a> *<dfn class="decl" id="AVFilterLink::srcpad" title='AVFilterLink::srcpad' data-ref="AVFilterLink::srcpad">srcpad</dfn>;        <i class="doc">///&lt; output pad on the source filter</i></td></tr>
+<tr><th id="383">383</th><td></td></tr>
+<tr><th id="384">384</th><td>    <a class="typedef" href="#AVFilterContext" title='AVFilterContext' data-type='struct AVFilterContext' data-ref="AVFilterContext">AVFilterContext</a> *<dfn class="decl" id="AVFilterLink::dst" title='AVFilterLink::dst' data-ref="AVFilterLink::dst">dst</dfn>;       <i class="doc">///&lt; dest filter</i></td></tr>
+<tr><th id="385">385</th><td>    <a class="typedef" href="#AVFilterPad" title='AVFilterPad' data-type='struct AVFilterPad' data-ref="AVFilterPad">AVFilterPad</a> *<dfn class="decl" id="AVFilterLink::dstpad" title='AVFilterLink::dstpad' data-ref="AVFilterLink::dstpad">dstpad</dfn>;        <i class="doc">///&lt; input pad on the dest filter</i></td></tr>
+<tr><th id="386">386</th><td></td></tr>
+<tr><th id="387">387</th><td>    <b>enum</b> <a class="type" href="../libavutil/avutil.h.html#AVMediaType" title='AVMediaType' data-ref="AVMediaType">AVMediaType</a> <dfn class="decl" id="AVFilterLink::type" title='AVFilterLink::type' data-ref="AVFilterLink::type">type</dfn>;      <i class="doc">///&lt; filter media type</i></td></tr>
+<tr><th id="388">388</th><td></td></tr>
+<tr><th id="389">389</th><td>    <i>/* These parameters apply only to video */</i></td></tr>
+<tr><th id="390">390</th><td>    <em>int</em> <dfn class="decl" id="AVFilterLink::w" title='AVFilterLink::w' data-ref="AVFilterLink::w">w</dfn>;                      <i class="doc">///&lt; agreed upon image width</i></td></tr>
+<tr><th id="391">391</th><td>    <em>int</em> <dfn class="decl" id="AVFilterLink::h" title='AVFilterLink::h' data-ref="AVFilterLink::h">h</dfn>;                      <i class="doc">///&lt; agreed upon image height</i></td></tr>
+<tr><th id="392">392</th><td>    <a class="typedef" href="../libavutil/rational.h.html#AVRational" title='AVRational' data-type='struct AVRational' data-ref="AVRational">AVRational</a> <dfn class="decl" id="AVFilterLink::sample_aspect_ratio" title='AVFilterLink::sample_aspect_ratio' data-ref="AVFilterLink::sample_aspect_ratio">sample_aspect_ratio</dfn>; <i class="doc">///&lt; agreed upon sample aspect ratio</i></td></tr>
+<tr><th id="393">393</th><td>    <i>/* These parameters apply only to audio */</i></td></tr>
+<tr><th id="394">394</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint64_t" title='uint64_t' data-type='unsigned long' data-ref="uint64_t">uint64_t</a> <dfn class="decl" id="AVFilterLink::channel_layout" title='AVFilterLink::channel_layout' data-ref="AVFilterLink::channel_layout">channel_layout</dfn>;    <i class="doc">///&lt; channel layout of current buffer (see libavutil/channel_layout.h)</i></td></tr>
+<tr><th id="395">395</th><td>    <em>int</em> <dfn class="decl" id="AVFilterLink::sample_rate" title='AVFilterLink::sample_rate' data-ref="AVFilterLink::sample_rate">sample_rate</dfn>;            <i class="doc">///&lt; samples per second</i></td></tr>
+<tr><th id="396">396</th><td></td></tr>
+<tr><th id="397">397</th><td>    <em>int</em> <dfn class="decl" id="AVFilterLink::format" title='AVFilterLink::format' data-ref="AVFilterLink::format">format</dfn>;                 <i class="doc">///&lt; agreed upon media format</i></td></tr>
+<tr><th id="398">398</th><td></td></tr>
+<tr><th id="399">399</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="400">400</th><td><i class="doc">     * Define the time base used by the PTS of the frames/samples</i></td></tr>
+<tr><th id="401">401</th><td><i class="doc">     * which will pass through this link.</i></td></tr>
+<tr><th id="402">402</th><td><i class="doc">     * During the configuration stage, each filter is supposed to</i></td></tr>
+<tr><th id="403">403</th><td><i class="doc">     * change only the output timebase, while the timebase of the</i></td></tr>
+<tr><th id="404">404</th><td><i class="doc">     * input link is assumed to be an unchangeable property.</i></td></tr>
+<tr><th id="405">405</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="406">406</th><td>    <a class="typedef" href="../libavutil/rational.h.html#AVRational" title='AVRational' data-type='struct AVRational' data-ref="AVRational">AVRational</a> <dfn class="decl" id="AVFilterLink::time_base" title='AVFilterLink::time_base' data-ref="AVFilterLink::time_base">time_base</dfn>;</td></tr>
+<tr><th id="407">407</th><td></td></tr>
+<tr><th id="408">408</th><td>    <i>/*****************************************************************</i></td></tr>
+<tr><th id="409">409</th><td><i>     * All fields below this line are not part of the public API. They</i></td></tr>
+<tr><th id="410">410</th><td><i>     * may not be used outside of libavfilter and can be changed and</i></td></tr>
+<tr><th id="411">411</th><td><i>     * removed at will.</i></td></tr>
+<tr><th id="412">412</th><td><i>     * New public fields should be added right above.</i></td></tr>
+<tr><th id="413">413</th><td><i>     *****************************************************************</i></td></tr>
+<tr><th id="414">414</th><td><i>     */</i></td></tr>
+<tr><th id="415">415</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="416">416</th><td><i class="doc">     * Lists of formats and channel layouts supported by the input and output</i></td></tr>
+<tr><th id="417">417</th><td><i class="doc">     * filters respectively. These lists are used for negotiating the format</i></td></tr>
+<tr><th id="418">418</th><td><i class="doc">     * to actually be used, which will be loaded into the format and</i></td></tr>
+<tr><th id="419">419</th><td><i class="doc">     * channel_layout members, above, when chosen.</i></td></tr>
+<tr><th id="420">420</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="421">421</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="422">422</th><td>    <a class="typedef" href="#AVFilterFormats" title='AVFilterFormats' data-type='struct AVFilterFormats' data-ref="AVFilterFormats">AVFilterFormats</a> *<dfn class="decl" id="AVFilterLink::in_formats" title='AVFilterLink::in_formats' data-ref="AVFilterLink::in_formats">in_formats</dfn>;</td></tr>
+<tr><th id="423">423</th><td>    <a class="typedef" href="#AVFilterFormats" title='AVFilterFormats' data-type='struct AVFilterFormats' data-ref="AVFilterFormats">AVFilterFormats</a> *<dfn class="decl" id="AVFilterLink::out_formats" title='AVFilterLink::out_formats' data-ref="AVFilterLink::out_formats">out_formats</dfn>;</td></tr>
+<tr><th id="424">424</th><td></td></tr>
+<tr><th id="425">425</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="426">426</th><td><i class="doc">     * Lists of channel layouts and sample rates used for automatic</i></td></tr>
+<tr><th id="427">427</th><td><i class="doc">     * negotiation.</i></td></tr>
+<tr><th id="428">428</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="429">429</th><td>    <a class="typedef" href="#AVFilterFormats" title='AVFilterFormats' data-type='struct AVFilterFormats' data-ref="AVFilterFormats">AVFilterFormats</a>  *<dfn class="decl" id="AVFilterLink::in_samplerates" title='AVFilterLink::in_samplerates' data-ref="AVFilterLink::in_samplerates">in_samplerates</dfn>;</td></tr>
+<tr><th id="430">430</th><td>    <a class="typedef" href="#AVFilterFormats" title='AVFilterFormats' data-type='struct AVFilterFormats' data-ref="AVFilterFormats">AVFilterFormats</a> *<dfn class="decl" id="AVFilterLink::out_samplerates" title='AVFilterLink::out_samplerates' data-ref="AVFilterLink::out_samplerates">out_samplerates</dfn>;</td></tr>
+<tr><th id="431">431</th><td>    <b>struct</b> <dfn class="type" id="AVFilterChannelLayouts" title='AVFilterChannelLayouts' data-ref="AVFilterChannelLayouts"><a class="type" href="#AVFilterChannelLayouts" title='AVFilterChannelLayouts' data-ref="AVFilterChannelLayouts">AVFilterChannelLayouts</a></dfn>  *<dfn class="decl" id="AVFilterLink::in_channel_layouts" title='AVFilterLink::in_channel_layouts' data-ref="AVFilterLink::in_channel_layouts">in_channel_layouts</dfn>;</td></tr>
+<tr><th id="432">432</th><td>    <b>struct</b> <a class="type" href="#AVFilterChannelLayouts" title='AVFilterChannelLayouts' data-ref="AVFilterChannelLayouts">AVFilterChannelLayouts</a> *<dfn class="decl" id="AVFilterLink::out_channel_layouts" title='AVFilterLink::out_channel_layouts' data-ref="AVFilterLink::out_channel_layouts">out_channel_layouts</dfn>;</td></tr>
+<tr><th id="433">433</th><td></td></tr>
+<tr><th id="434">434</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="435">435</th><td><i class="doc">     * Audio only, the destination filter sets this to a non-zero value to</i></td></tr>
+<tr><th id="436">436</th><td><i class="doc">     * request that buffers with the given number of samples should be sent to</i></td></tr>
+<tr><th id="437">437</th><td><i class="doc">     * it. AVFilterPad.needs_fifo must also be set on the corresponding input</i></td></tr>
+<tr><th id="438">438</th><td><i class="doc">     * pad.</i></td></tr>
+<tr><th id="439">439</th><td><i class="doc">     * Last buffer before EOF will be padded with silence.</i></td></tr>
+<tr><th id="440">440</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="441">441</th><td>    <em>int</em> <dfn class="decl" id="AVFilterLink::request_samples" title='AVFilterLink::request_samples' data-ref="AVFilterLink::request_samples">request_samples</dfn>;</td></tr>
+<tr><th id="442">442</th><td></td></tr>
+<tr><th id="443">443</th><td>    <i class="doc">/** stage of the initialization of the link properties (dimensions, etc) */</i></td></tr>
+<tr><th id="444">444</th><td>    <b>enum</b> {</td></tr>
+<tr><th id="445">445</th><td>        <dfn class="enum" id="AVFilterLink::::AVLINK_UNINIT" title='AVFilterLink::::AVLINK_UNINIT' data-ref="AVFilterLink::::AVLINK_UNINIT">AVLINK_UNINIT</dfn> = <var>0</var>,      <i class="doc">///&lt; not started</i></td></tr>
+<tr><th id="446">446</th><td>        <dfn class="enum" id="AVFilterLink::::AVLINK_STARTINIT" title='AVFilterLink::::AVLINK_STARTINIT' data-ref="AVFilterLink::::AVLINK_STARTINIT">AVLINK_STARTINIT</dfn>,       <i class="doc">///&lt; started, but incomplete</i></td></tr>
+<tr><th id="447">447</th><td>        <dfn class="enum" id="AVFilterLink::::AVLINK_INIT" title='AVFilterLink::::AVLINK_INIT' data-ref="AVFilterLink::::AVLINK_INIT">AVLINK_INIT</dfn>             <i class="doc">///&lt; complete</i></td></tr>
+<tr><th id="448">448</th><td>    } <dfn class="decl" id="AVFilterLink::init_state" title='AVFilterLink::init_state' data-ref="AVFilterLink::init_state">init_state</dfn>;</td></tr>
+<tr><th id="449">449</th><td></td></tr>
+<tr><th id="450">450</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="451">451</th><td><i class="doc">     * Graph the filter belongs to.</i></td></tr>
+<tr><th id="452">452</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="453">453</th><td>    <b>struct</b> <a class="type" href="#AVFilterGraph" title='AVFilterGraph' data-ref="AVFilterGraph">AVFilterGraph</a> *<dfn class="decl" id="AVFilterLink::graph" title='AVFilterLink::graph' data-ref="AVFilterLink::graph">graph</dfn>;</td></tr>
+<tr><th id="454">454</th><td></td></tr>
+<tr><th id="455">455</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="456">456</th><td><i class="doc">     * Current timestamp of the link, as defined by the most recent</i></td></tr>
+<tr><th id="457">457</th><td><i class="doc">     * frame(s), in link time_base units.</i></td></tr>
+<tr><th id="458">458</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="459">459</th><td>    <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="decl" id="AVFilterLink::current_pts" title='AVFilterLink::current_pts' data-ref="AVFilterLink::current_pts">current_pts</dfn>;</td></tr>
+<tr><th id="460">460</th><td></td></tr>
+<tr><th id="461">461</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="462">462</th><td><i class="doc">     * Current timestamp of the link, as defined by the most recent</i></td></tr>
+<tr><th id="463">463</th><td><i class="doc">     * frame(s), in AV_TIME_BASE units.</i></td></tr>
+<tr><th id="464">464</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="465">465</th><td>    <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="decl" id="AVFilterLink::current_pts_us" title='AVFilterLink::current_pts_us' data-ref="AVFilterLink::current_pts_us">current_pts_us</dfn>;</td></tr>
+<tr><th id="466">466</th><td></td></tr>
+<tr><th id="467">467</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="468">468</th><td><i class="doc">     * Index in the age array.</i></td></tr>
+<tr><th id="469">469</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="470">470</th><td>    <em>int</em> <dfn class="decl" id="AVFilterLink::age_index" title='AVFilterLink::age_index' data-ref="AVFilterLink::age_index">age_index</dfn>;</td></tr>
+<tr><th id="471">471</th><td></td></tr>
+<tr><th id="472">472</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="473">473</th><td><i class="doc">     * Frame rate of the stream on the link, or 1/0 if unknown or variable;</i></td></tr>
+<tr><th id="474">474</th><td><i class="doc">     * if left to 0/0, will be automatically copied from the first input</i></td></tr>
+<tr><th id="475">475</th><td><i class="doc">     * of the source filter if it exists.</i></td></tr>
+<tr><th id="476">476</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="477">477</th><td><i class="doc">     * Sources should set it to the best estimation of the real frame rate.</i></td></tr>
+<tr><th id="478">478</th><td><i class="doc">     * If the source frame rate is unknown or variable, set this to 1/0.</i></td></tr>
+<tr><th id="479">479</th><td><i class="doc">     * Filters should update it if necessary depending on their function.</i></td></tr>
+<tr><th id="480">480</th><td><i class="doc">     * Sinks can use it to set a default output frame rate.</i></td></tr>
+<tr><th id="481">481</th><td><i class="doc">     * It is similar to the r_frame_rate field in AVStream.</i></td></tr>
+<tr><th id="482">482</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="483">483</th><td>    <a class="typedef" href="../libavutil/rational.h.html#AVRational" title='AVRational' data-type='struct AVRational' data-ref="AVRational">AVRational</a> <dfn class="decl" id="AVFilterLink::frame_rate" title='AVFilterLink::frame_rate' data-ref="AVFilterLink::frame_rate">frame_rate</dfn>;</td></tr>
+<tr><th id="484">484</th><td></td></tr>
+<tr><th id="485">485</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="486">486</th><td><i class="doc">     * Buffer partially filled with samples to achieve a fixed/minimum size.</i></td></tr>
+<tr><th id="487">487</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="488">488</th><td>    <a class="typedef" href="../libavutil/frame.h.html#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="decl" id="AVFilterLink::partial_buf" title='AVFilterLink::partial_buf' data-ref="AVFilterLink::partial_buf">partial_buf</dfn>;</td></tr>
+<tr><th id="489">489</th><td></td></tr>
+<tr><th id="490">490</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="491">491</th><td><i class="doc">     * Size of the partial buffer to allocate.</i></td></tr>
+<tr><th id="492">492</th><td><i class="doc">     * Must be between min_samples and max_samples.</i></td></tr>
+<tr><th id="493">493</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="494">494</th><td>    <em>int</em> <dfn class="decl" id="AVFilterLink::partial_buf_size" title='AVFilterLink::partial_buf_size' data-ref="AVFilterLink::partial_buf_size">partial_buf_size</dfn>;</td></tr>
+<tr><th id="495">495</th><td></td></tr>
+<tr><th id="496">496</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="497">497</th><td><i class="doc">     * Minimum number of samples to filter at once. If filter_frame() is</i></td></tr>
+<tr><th id="498">498</th><td><i class="doc">     * called with fewer samples, it will accumulate them in partial_buf.</i></td></tr>
+<tr><th id="499">499</th><td><i class="doc">     * This field and the related ones must not be changed after filtering</i></td></tr>
+<tr><th id="500">500</th><td><i class="doc">     * has started.</i></td></tr>
+<tr><th id="501">501</th><td><i class="doc">     * If 0, all related fields are ignored.</i></td></tr>
+<tr><th id="502">502</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="503">503</th><td>    <em>int</em> <dfn class="decl" id="AVFilterLink::min_samples" title='AVFilterLink::min_samples' data-ref="AVFilterLink::min_samples">min_samples</dfn>;</td></tr>
+<tr><th id="504">504</th><td></td></tr>
+<tr><th id="505">505</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="506">506</th><td><i class="doc">     * Maximum number of samples to filter at once. If filter_frame() is</i></td></tr>
+<tr><th id="507">507</th><td><i class="doc">     * called with more samples, it will split them.</i></td></tr>
+<tr><th id="508">508</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="509">509</th><td>    <em>int</em> <dfn class="decl" id="AVFilterLink::max_samples" title='AVFilterLink::max_samples' data-ref="AVFilterLink::max_samples">max_samples</dfn>;</td></tr>
+<tr><th id="510">510</th><td></td></tr>
+<tr><th id="511">511</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="512">512</th><td><i class="doc">     * Link status.</i></td></tr>
+<tr><th id="513">513</th><td><i class="doc">     * If not zero, all attempts of filter_frame or request_frame</i></td></tr>
+<tr><th id="514">514</th><td><i class="doc">     * will fail with the corresponding code, and if necessary the reference</i></td></tr>
+<tr><th id="515">515</th><td><i class="doc">     * will be destroyed.</i></td></tr>
+<tr><th id="516">516</th><td><i class="doc">     * If request_frame returns an error, the status is set on the</i></td></tr>
+<tr><th id="517">517</th><td><i class="doc">     * corresponding link.</i></td></tr>
+<tr><th id="518">518</th><td><i class="doc">     * It can be set also be set by either the source or the destination</i></td></tr>
+<tr><th id="519">519</th><td><i class="doc">     * filter.</i></td></tr>
+<tr><th id="520">520</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="521">521</th><td>    <em>int</em> <dfn class="decl" id="AVFilterLink::status" title='AVFilterLink::status' data-ref="AVFilterLink::status">status</dfn>;</td></tr>
+<tr><th id="522">522</th><td></td></tr>
+<tr><th id="523">523</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="524">524</th><td><i class="doc">     * Number of channels.</i></td></tr>
+<tr><th id="525">525</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="526">526</th><td>    <em>int</em> <dfn class="decl" id="AVFilterLink::channels" title='AVFilterLink::channels' data-ref="AVFilterLink::channels">channels</dfn>;</td></tr>
+<tr><th id="527">527</th><td></td></tr>
+<tr><th id="528">528</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="529">529</th><td><i class="doc">     * Link processing flags.</i></td></tr>
+<tr><th id="530">530</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="531">531</th><td>    <em>unsigned</em> <dfn class="decl" id="AVFilterLink::flags" title='AVFilterLink::flags' data-ref="AVFilterLink::flags">flags</dfn>;</td></tr>
+<tr><th id="532">532</th><td></td></tr>
+<tr><th id="533">533</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="534">534</th><td><i class="doc">     * Number of past frames sent through the link.</i></td></tr>
+<tr><th id="535">535</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="536">536</th><td>    <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="decl" id="AVFilterLink::frame_count" title='AVFilterLink::frame_count' data-ref="AVFilterLink::frame_count">frame_count</dfn>;</td></tr>
+<tr><th id="537">537</th><td></td></tr>
+<tr><th id="538">538</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="539">539</th><td><i class="doc">     * A pointer to a FFVideoFramePool struct.</i></td></tr>
+<tr><th id="540">540</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="541">541</th><td>    <em>void</em> *<dfn class="decl" id="AVFilterLink::video_frame_pool" title='AVFilterLink::video_frame_pool' data-ref="AVFilterLink::video_frame_pool">video_frame_pool</dfn>;</td></tr>
+<tr><th id="542">542</th><td></td></tr>
+<tr><th id="543">543</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="544">544</th><td><i class="doc">     * True if a frame is currently wanted on the input of this filter.</i></td></tr>
+<tr><th id="545">545</th><td><i class="doc">     * Set when ff_request_frame() is called by the output,</i></td></tr>
+<tr><th id="546">546</th><td><i class="doc">     * cleared when the request is handled or forwarded.</i></td></tr>
+<tr><th id="547">547</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="548">548</th><td>    <em>int</em> <dfn class="decl" id="AVFilterLink::frame_wanted_in" title='AVFilterLink::frame_wanted_in' data-ref="AVFilterLink::frame_wanted_in">frame_wanted_in</dfn>;</td></tr>
+<tr><th id="549">549</th><td></td></tr>
+<tr><th id="550">550</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="551">551</th><td><i class="doc">     * True if a frame is currently wanted on the output of this filter.</i></td></tr>
+<tr><th id="552">552</th><td><i class="doc">     * Set when ff_request_frame() is called by the output,</i></td></tr>
+<tr><th id="553">553</th><td><i class="doc">     * cleared when a frame is filtered.</i></td></tr>
+<tr><th id="554">554</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="555">555</th><td>    <em>int</em> <dfn class="decl" id="AVFilterLink::frame_wanted_out" title='AVFilterLink::frame_wanted_out' data-ref="AVFilterLink::frame_wanted_out">frame_wanted_out</dfn>;</td></tr>
+<tr><th id="556">556</th><td></td></tr>
+<tr><th id="557">557</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="558">558</th><td><i class="doc">     * For hwaccel pixel formats, this should be a reference to the</i></td></tr>
+<tr><th id="559">559</th><td><i class="doc">     * AVHWFramesContext describing the frames.</i></td></tr>
+<tr><th id="560">560</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="561">561</th><td>    <a class="typedef" href="../libavutil/buffer.h.html#AVBufferRef" title='AVBufferRef' data-type='struct AVBufferRef' data-ref="AVBufferRef">AVBufferRef</a> *<dfn class="decl" id="AVFilterLink::hw_frames_ctx" title='AVFilterLink::hw_frames_ctx' data-ref="AVFilterLink::hw_frames_ctx">hw_frames_ctx</dfn>;</td></tr>
+<tr><th id="562">562</th><td>};</td></tr>
+<tr><th id="563">563</th><td></td></tr>
+<tr><th id="564">564</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="565">565</th><td><i class="doc"> * Link two filters together.</i></td></tr>
+<tr><th id="566">566</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="567">567</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">src</span>    the source filter</i></td></tr>
+<tr><th id="568">568</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">srcpad</span> index of the output pad on the source filter</i></td></tr>
+<tr><th id="569">569</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">dst</span>    the destination filter</i></td></tr>
+<tr><th id="570">570</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">dstpad</span> index of the input pad on the destination filter</i></td></tr>
+<tr><th id="571">571</th><td><i class="doc"> * <span class="command">@return</span>       zero on success</i></td></tr>
+<tr><th id="572">572</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="573">573</th><td><em>int</em> <dfn class="decl" id="avfilter_link" title='avfilter_link' data-ref="avfilter_link">avfilter_link</dfn>(<a class="typedef" href="#AVFilterContext" title='AVFilterContext' data-type='struct AVFilterContext' data-ref="AVFilterContext">AVFilterContext</a> *<dfn class="local col7 decl" id="87src" title='src' data-type='AVFilterContext *' data-ref="87src">src</dfn>, <em>unsigned</em> <dfn class="local col8 decl" id="88srcpad" title='srcpad' data-type='unsigned int' data-ref="88srcpad">srcpad</dfn>,</td></tr>
+<tr><th id="574">574</th><td>                  <a class="typedef" href="#AVFilterContext" title='AVFilterContext' data-type='struct AVFilterContext' data-ref="AVFilterContext">AVFilterContext</a> *<dfn class="local col9 decl" id="89dst" title='dst' data-type='AVFilterContext *' data-ref="89dst">dst</dfn>, <em>unsigned</em> <dfn class="local col0 decl" id="90dstpad" title='dstpad' data-type='unsigned int' data-ref="90dstpad">dstpad</dfn>);</td></tr>
+<tr><th id="575">575</th><td></td></tr>
+<tr><th id="576">576</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="577">577</th><td><i class="doc"> * Free the link in *link, and set its pointer to NULL.</i></td></tr>
+<tr><th id="578">578</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="579">579</th><td><em>void</em> <dfn class="decl" id="avfilter_link_free" title='avfilter_link_free' data-ref="avfilter_link_free">avfilter_link_free</dfn>(<a class="typedef" href="#AVFilterLink" title='AVFilterLink' data-type='struct AVFilterLink' data-ref="AVFilterLink">AVFilterLink</a> **<dfn class="local col1 decl" id="91link" title='link' data-type='AVFilterLink **' data-ref="91link">link</dfn>);</td></tr>
+<tr><th id="580">580</th><td></td></tr>
+<tr><th id="581">581</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="582">582</th><td><i class="doc"> * Get the number of channels of a link.</i></td></tr>
+<tr><th id="583">583</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="584">584</th><td><em>int</em> <dfn class="decl" id="avfilter_link_get_channels" title='avfilter_link_get_channels' data-ref="avfilter_link_get_channels">avfilter_link_get_channels</dfn>(<a class="typedef" href="#AVFilterLink" title='AVFilterLink' data-type='struct AVFilterLink' data-ref="AVFilterLink">AVFilterLink</a> *<dfn class="local col2 decl" id="92link" title='link' data-type='AVFilterLink *' data-ref="92link">link</dfn>);</td></tr>
+<tr><th id="585">585</th><td></td></tr>
+<tr><th id="586">586</th><td><i>/**</i></td></tr>
+<tr><th id="587">587</th><td><i> * Set the closed field of a link.</i></td></tr>
+<tr><th id="588">588</th><td><i> * @deprecated applications are not supposed to mess with links, they should</i></td></tr>
+<tr><th id="589">589</th><td><i> * close the sinks.</i></td></tr>
+<tr><th id="590">590</th><td><i> */</i></td></tr>
+<tr><th id="591">591</th><td><a class="macro" href="../libavutil/attributes.h.html#94" title="__attribute__((deprecated))" data-ref="_M/attribute_deprecated">attribute_deprecated</a></td></tr>
+<tr><th id="592">592</th><td><em>void</em> <dfn class="decl" id="avfilter_link_set_closed" title='avfilter_link_set_closed' data-ref="avfilter_link_set_closed">avfilter_link_set_closed</dfn>(<a class="typedef" href="#AVFilterLink" title='AVFilterLink' data-type='struct AVFilterLink' data-ref="AVFilterLink">AVFilterLink</a> *<dfn class="local col3 decl" id="93link" title='link' data-type='AVFilterLink *' data-ref="93link">link</dfn>, <em>int</em> <dfn class="local col4 decl" id="94closed" title='closed' data-type='int' data-ref="94closed">closed</dfn>);</td></tr>
+<tr><th id="593">593</th><td></td></tr>
+<tr><th id="594">594</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="595">595</th><td><i class="doc"> * Negotiate the media format, dimensions, etc of all inputs to a filter.</i></td></tr>
+<tr><th id="596">596</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="597">597</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">filter</span> the filter to negotiate the properties for its inputs</i></td></tr>
+<tr><th id="598">598</th><td><i class="doc"> * <span class="command">@return</span>       zero on successful negotiation</i></td></tr>
+<tr><th id="599">599</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="600">600</th><td><em>int</em> <dfn class="decl" id="avfilter_config_links" title='avfilter_config_links' data-ref="avfilter_config_links">avfilter_config_links</dfn>(<a class="typedef" href="#AVFilterContext" title='AVFilterContext' data-type='struct AVFilterContext' data-ref="AVFilterContext">AVFilterContext</a> *<dfn class="local col5 decl" id="95filter" title='filter' data-type='AVFilterContext *' data-ref="95filter">filter</dfn>);</td></tr>
+<tr><th id="601">601</th><td></td></tr>
+<tr><th id="602">602</th><td><u>#define <dfn class="macro" id="_M/AVFILTER_CMD_FLAG_ONE" data-ref="_M/AVFILTER_CMD_FLAG_ONE">AVFILTER_CMD_FLAG_ONE</dfn>   1 ///&lt; Stop once a filter understood the command (for target=all for example), fast filters are favored automatically</u></td></tr>
+<tr><th id="603">603</th><td><u>#define <dfn class="macro" id="_M/AVFILTER_CMD_FLAG_FAST" data-ref="_M/AVFILTER_CMD_FLAG_FAST">AVFILTER_CMD_FLAG_FAST</dfn>  2 ///&lt; Only execute command when its fast (like a video out that supports contrast adjustment in hw)</u></td></tr>
+<tr><th id="604">604</th><td></td></tr>
+<tr><th id="605">605</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="606">606</th><td><i class="doc"> * Make the filter instance process a command.</i></td></tr>
+<tr><th id="607">607</th><td><i class="doc"> * It is recommended to use avfilter_graph_send_command().</i></td></tr>
+<tr><th id="608">608</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="609">609</th><td><em>int</em> <dfn class="decl" id="avfilter_process_command" title='avfilter_process_command' data-ref="avfilter_process_command">avfilter_process_command</dfn>(<a class="typedef" href="#AVFilterContext" title='AVFilterContext' data-type='struct AVFilterContext' data-ref="AVFilterContext">AVFilterContext</a> *<dfn class="local col6 decl" id="96filter" title='filter' data-type='AVFilterContext *' data-ref="96filter">filter</dfn>, <em>const</em> <em>char</em> *<dfn class="local col7 decl" id="97cmd" title='cmd' data-type='const char *' data-ref="97cmd">cmd</dfn>, <em>const</em> <em>char</em> *<dfn class="local col8 decl" id="98arg" title='arg' data-type='const char *' data-ref="98arg">arg</dfn>, <em>char</em> *<dfn class="local col9 decl" id="99res" title='res' data-type='char *' data-ref="99res">res</dfn>, <em>int</em> <dfn class="local col0 decl" id="100res_len" title='res_len' data-type='int' data-ref="100res_len">res_len</dfn>, <em>int</em> <dfn class="local col1 decl" id="101flags" title='flags' data-type='int' data-ref="101flags">flags</dfn>);</td></tr>
+<tr><th id="610">610</th><td></td></tr>
+<tr><th id="611">611</th><td><i class="doc">/** Initialize the filter system. Register all builtin filters. */</i></td></tr>
+<tr><th id="612">612</th><td><em>void</em> <dfn class="decl" id="avfilter_register_all" title='avfilter_register_all' data-ref="avfilter_register_all">avfilter_register_all</dfn>(<em>void</em>);</td></tr>
+<tr><th id="613">613</th><td></td></tr>
+<tr><th id="614">614</th><td><u>#<span data-ppcond="614">if</span> <a class="macro" href="version.h.html#65" title="(6 &lt; 7)" data-ref="_M/FF_API_OLD_FILTER_REGISTER">FF_API_OLD_FILTER_REGISTER</a></u></td></tr>
+<tr><th id="615">615</th><td><i class="doc">/** Uninitialize the filter system. Unregister all filters. */</i></td></tr>
+<tr><th id="616">616</th><td><a class="macro" href="../libavutil/attributes.h.html#94" title="__attribute__((deprecated))" data-ref="_M/attribute_deprecated">attribute_deprecated</a></td></tr>
+<tr><th id="617">617</th><td><em>void</em> <dfn class="decl" id="avfilter_uninit" title='avfilter_uninit' data-ref="avfilter_uninit">avfilter_uninit</dfn>(<em>void</em>);</td></tr>
+<tr><th id="618">618</th><td><u>#<span data-ppcond="614">endif</span></u></td></tr>
+<tr><th id="619">619</th><td></td></tr>
+<tr><th id="620">620</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="621">621</th><td><i class="doc"> * Register a filter. This is only needed if you plan to use</i></td></tr>
+<tr><th id="622">622</th><td><i class="doc"> * avfilter_get_by_name later to lookup the AVFilter structure by name. A</i></td></tr>
+<tr><th id="623">623</th><td><i class="doc"> * filter can still by instantiated with avfilter_graph_alloc_filter even if it</i></td></tr>
+<tr><th id="624">624</th><td><i class="doc"> * is not registered.</i></td></tr>
+<tr><th id="625">625</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="626">626</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">filter</span> the filter to register</i></td></tr>
+<tr><th id="627">627</th><td><i class="doc"> * <span class="command">@return</span> 0 if the registration was successful, a negative value</i></td></tr>
+<tr><th id="628">628</th><td><i class="doc"> * otherwise</i></td></tr>
+<tr><th id="629">629</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="630">630</th><td><em>int</em> <dfn class="decl" id="avfilter_register" title='avfilter_register' data-ref="avfilter_register">avfilter_register</dfn>(<a class="typedef" href="#AVFilter" title='AVFilter' data-type='struct AVFilter' data-ref="AVFilter">AVFilter</a> *<dfn class="local col2 decl" id="102filter" title='filter' data-type='AVFilter *' data-ref="102filter">filter</dfn>);</td></tr>
+<tr><th id="631">631</th><td></td></tr>
+<tr><th id="632">632</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="633">633</th><td><i class="doc"> * Get a filter definition matching the given name.</i></td></tr>
+<tr><th id="634">634</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="635">635</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">name</span> the filter name to find</i></td></tr>
+<tr><th id="636">636</th><td><i class="doc"> * <span class="command">@return</span>     the filter definition, if any matching one is registered.</i></td></tr>
+<tr><th id="637">637</th><td><i class="doc"> *             NULL if none found.</i></td></tr>
+<tr><th id="638">638</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="639">639</th><td><u>#<span data-ppcond="639">if</span> !<a class="macro" href="version.h.html#68" title="(6 &lt; 7)" data-ref="_M/FF_API_NOCONST_GET_NAME">FF_API_NOCONST_GET_NAME</a></u></td></tr>
+<tr><th id="640">640</th><td><em>const</em></td></tr>
+<tr><th id="641">641</th><td><u>#<span data-ppcond="639">endif</span></u></td></tr>
+<tr><th id="642">642</th><td><a class="typedef" href="#AVFilter" title='AVFilter' data-type='struct AVFilter' data-ref="AVFilter">AVFilter</a> *<dfn class="decl" id="avfilter_get_by_name" title='avfilter_get_by_name' data-ref="avfilter_get_by_name">avfilter_get_by_name</dfn>(<em>const</em> <em>char</em> *<dfn class="local col3 decl" id="103name" title='name' data-type='const char *' data-ref="103name">name</dfn>);</td></tr>
+<tr><th id="643">643</th><td></td></tr>
+<tr><th id="644">644</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="645">645</th><td><i class="doc"> * Iterate over all registered filters.</i></td></tr>
+<tr><th id="646">646</th><td><i class="doc"> * <span class="command">@return</span> If prev is non-NULL, next registered filter after prev or NULL if</i></td></tr>
+<tr><th id="647">647</th><td><i class="doc"> * prev is the last filter. If prev is NULL, return the first registered filter.</i></td></tr>
+<tr><th id="648">648</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="649">649</th><td><em>const</em> <a class="typedef" href="#AVFilter" title='AVFilter' data-type='struct AVFilter' data-ref="AVFilter">AVFilter</a> *<dfn class="decl" id="avfilter_next" title='avfilter_next' data-ref="avfilter_next">avfilter_next</dfn>(<em>const</em> <a class="typedef" href="#AVFilter" title='AVFilter' data-type='struct AVFilter' data-ref="AVFilter">AVFilter</a> *<dfn class="local col4 decl" id="104prev" title='prev' data-type='const AVFilter *' data-ref="104prev">prev</dfn>);</td></tr>
+<tr><th id="650">650</th><td></td></tr>
+<tr><th id="651">651</th><td><u>#<span data-ppcond="651">if</span> <a class="macro" href="version.h.html#65" title="(6 &lt; 7)" data-ref="_M/FF_API_OLD_FILTER_REGISTER">FF_API_OLD_FILTER_REGISTER</a></u></td></tr>
+<tr><th id="652">652</th><td><i>/**</i></td></tr>
+<tr><th id="653">653</th><td><i> * If filter is NULL, returns a pointer to the first registered filter pointer,</i></td></tr>
+<tr><th id="654">654</th><td><i> * if filter is non-NULL, returns the next pointer after filter.</i></td></tr>
+<tr><th id="655">655</th><td><i> * If the returned pointer points to NULL, the last registered filter</i></td></tr>
+<tr><th id="656">656</th><td><i> * was already reached.</i></td></tr>
+<tr><th id="657">657</th><td><i> * @deprecated use avfilter_next()</i></td></tr>
+<tr><th id="658">658</th><td><i> */</i></td></tr>
+<tr><th id="659">659</th><td><a class="macro" href="../libavutil/attributes.h.html#94" title="__attribute__((deprecated))" data-ref="_M/attribute_deprecated">attribute_deprecated</a></td></tr>
+<tr><th id="660">660</th><td><a class="typedef" href="#AVFilter" title='AVFilter' data-type='struct AVFilter' data-ref="AVFilter">AVFilter</a> **<dfn class="decl" id="av_filter_next" title='av_filter_next' data-ref="av_filter_next">av_filter_next</dfn>(<a class="typedef" href="#AVFilter" title='AVFilter' data-type='struct AVFilter' data-ref="AVFilter">AVFilter</a> **<dfn class="local col5 decl" id="105filter" title='filter' data-type='AVFilter **' data-ref="105filter">filter</dfn>);</td></tr>
+<tr><th id="661">661</th><td><u>#<span data-ppcond="651">endif</span></u></td></tr>
+<tr><th id="662">662</th><td></td></tr>
+<tr><th id="663">663</th><td><u>#<span data-ppcond="663">if</span> <a class="macro" href="version.h.html#59" title="(6 &lt; 7)" data-ref="_M/FF_API_AVFILTER_OPEN">FF_API_AVFILTER_OPEN</a></u></td></tr>
+<tr><th id="664">664</th><td><i>/**</i></td></tr>
+<tr><th id="665">665</th><td><i> * Create a filter instance.</i></td></tr>
+<tr><th id="666">666</th><td><i> *</i></td></tr>
+<tr><th id="667">667</th><td><i> * @param filter_ctx put here a pointer to the created filter context</i></td></tr>
+<tr><th id="668">668</th><td><i> * on success, NULL on failure</i></td></tr>
+<tr><th id="669">669</th><td><i> * @param filter    the filter to create an instance of</i></td></tr>
+<tr><th id="670">670</th><td><i> * @param inst_name Name to give to the new instance. Can be NULL for none.</i></td></tr>
+<tr><th id="671">671</th><td><i> * @return &gt;= 0 in case of success, a negative error code otherwise</i></td></tr>
+<tr><th id="672">672</th><td><i> * @deprecated use avfilter_graph_alloc_filter() instead</i></td></tr>
+<tr><th id="673">673</th><td><i> */</i></td></tr>
+<tr><th id="674">674</th><td><a class="macro" href="../libavutil/attributes.h.html#94" title="__attribute__((deprecated))" data-ref="_M/attribute_deprecated">attribute_deprecated</a></td></tr>
+<tr><th id="675">675</th><td><em>int</em> <dfn class="decl" id="avfilter_open" title='avfilter_open' data-ref="avfilter_open">avfilter_open</dfn>(<a class="typedef" href="#AVFilterContext" title='AVFilterContext' data-type='struct AVFilterContext' data-ref="AVFilterContext">AVFilterContext</a> **<dfn class="local col6 decl" id="106filter_ctx" title='filter_ctx' data-type='AVFilterContext **' data-ref="106filter_ctx">filter_ctx</dfn>, <a class="typedef" href="#AVFilter" title='AVFilter' data-type='struct AVFilter' data-ref="AVFilter">AVFilter</a> *<dfn class="local col7 decl" id="107filter" title='filter' data-type='AVFilter *' data-ref="107filter">filter</dfn>, <em>const</em> <em>char</em> *<dfn class="local col8 decl" id="108inst_name" title='inst_name' data-type='const char *' data-ref="108inst_name">inst_name</dfn>);</td></tr>
+<tr><th id="676">676</th><td><u>#<span data-ppcond="663">endif</span></u></td></tr>
+<tr><th id="677">677</th><td></td></tr>
+<tr><th id="678">678</th><td></td></tr>
+<tr><th id="679">679</th><td><u>#<span data-ppcond="679">if</span> <a class="macro" href="version.h.html#62" title="(6 &lt; 7)" data-ref="_M/FF_API_AVFILTER_INIT_FILTER">FF_API_AVFILTER_INIT_FILTER</a></u></td></tr>
+<tr><th id="680">680</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="681">681</th><td><i class="doc"> * Initialize a filter.</i></td></tr>
+<tr><th id="682">682</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="683">683</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">filter</span> the filter to initialize</i></td></tr>
+<tr><th id="684">684</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">args</span>   A string of parameters to use when initializing the filter.</i></td></tr>
+<tr><th id="685">685</th><td><i class="doc"> *               The format and meaning of this string varies by filter.</i></td></tr>
+<tr><th id="686">686</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">opaque</span> Any extra non-string data needed by the filter. The meaning</i></td></tr>
+<tr><th id="687">687</th><td><i class="doc"> *               of this parameter varies by filter.</i></td></tr>
+<tr><th id="688">688</th><td><i class="doc"> * <span class="command">@return</span>       zero on success</i></td></tr>
+<tr><th id="689">689</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="690">690</th><td><a class="macro" href="../libavutil/attributes.h.html#94" title="__attribute__((deprecated))" data-ref="_M/attribute_deprecated">attribute_deprecated</a></td></tr>
+<tr><th id="691">691</th><td><em>int</em> <dfn class="decl" id="avfilter_init_filter" title='avfilter_init_filter' data-ref="avfilter_init_filter">avfilter_init_filter</dfn>(<a class="typedef" href="#AVFilterContext" title='AVFilterContext' data-type='struct AVFilterContext' data-ref="AVFilterContext">AVFilterContext</a> *<dfn class="local col9 decl" id="109filter" title='filter' data-type='AVFilterContext *' data-ref="109filter">filter</dfn>, <em>const</em> <em>char</em> *<dfn class="local col0 decl" id="110args" title='args' data-type='const char *' data-ref="110args">args</dfn>, <em>void</em> *<dfn class="local col1 decl" id="111opaque" title='opaque' data-type='void *' data-ref="111opaque">opaque</dfn>);</td></tr>
+<tr><th id="692">692</th><td><u>#<span data-ppcond="679">endif</span></u></td></tr>
+<tr><th id="693">693</th><td></td></tr>
+<tr><th id="694">694</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="695">695</th><td><i class="doc"> * Initialize a filter with the supplied parameters.</i></td></tr>
+<tr><th id="696">696</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="697">697</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">ctx</span>  uninitialized filter context to initialize</i></td></tr>
+<tr><th id="698">698</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">args</span> Options to initialize the filter with. This must be a</i></td></tr>
+<tr><th id="699">699</th><td><i class="doc"> *             ':'-separated list of options in the 'key=value' form.</i></td></tr>
+<tr><th id="700">700</th><td><i class="doc"> *             May be NULL if the options have been set directly using the</i></td></tr>
+<tr><th id="701">701</th><td><i class="doc"> *             AVOptions API or there are no options that need to be set.</i></td></tr>
+<tr><th id="702">702</th><td><i class="doc"> * <span class="command">@return</span> 0 on success, a negative AVERROR on failure</i></td></tr>
+<tr><th id="703">703</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="704">704</th><td><em>int</em> <dfn class="decl" id="avfilter_init_str" title='avfilter_init_str' data-ref="avfilter_init_str">avfilter_init_str</dfn>(<a class="typedef" href="#AVFilterContext" title='AVFilterContext' data-type='struct AVFilterContext' data-ref="AVFilterContext">AVFilterContext</a> *<dfn class="local col2 decl" id="112ctx" title='ctx' data-type='AVFilterContext *' data-ref="112ctx">ctx</dfn>, <em>const</em> <em>char</em> *<dfn class="local col3 decl" id="113args" title='args' data-type='const char *' data-ref="113args">args</dfn>);</td></tr>
+<tr><th id="705">705</th><td></td></tr>
+<tr><th id="706">706</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="707">707</th><td><i class="doc"> * Initialize a filter with the supplied dictionary of options.</i></td></tr>
+<tr><th id="708">708</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="709">709</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">ctx</span>     uninitialized filter context to initialize</i></td></tr>
+<tr><th id="710">710</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">options</span> An AVDictionary filled with options for this filter. On</i></td></tr>
+<tr><th id="711">711</th><td><i class="doc"> *                return this parameter will be destroyed and replaced with</i></td></tr>
+<tr><th id="712">712</th><td><i class="doc"> *                a dict containing options that were not found. This dictionary</i></td></tr>
+<tr><th id="713">713</th><td><i class="doc"> *                must be freed by the caller.</i></td></tr>
+<tr><th id="714">714</th><td><i class="doc"> *                May be NULL, then this function is equivalent to</i></td></tr>
+<tr><th id="715">715</th><td><i class="doc"> *                avfilter_init_str() with the second parameter set to NULL.</i></td></tr>
+<tr><th id="716">716</th><td><i class="doc"> * <span class="command">@return</span> 0 on success, a negative AVERROR on failure</i></td></tr>
+<tr><th id="717">717</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="718">718</th><td><i class="doc"> * <span class="command">@note</span> This function and avfilter_init_str() do essentially the same thing,</i></td></tr>
+<tr><th id="719">719</th><td><i class="doc"> * the difference is in manner in which the options are passed. It is up to the</i></td></tr>
+<tr><th id="720">720</th><td><i class="doc"> * calling code to choose whichever is more preferable. The two functions also</i></td></tr>
+<tr><th id="721">721</th><td><i class="doc"> * behave differently when some of the provided options are not declared as</i></td></tr>
+<tr><th id="722">722</th><td><i class="doc"> * supported by the filter. In such a case, avfilter_init_str() will fail, but</i></td></tr>
+<tr><th id="723">723</th><td><i class="doc"> * this function will leave those extra options in the options AVDictionary and</i></td></tr>
+<tr><th id="724">724</th><td><i class="doc"> * continue as usual.</i></td></tr>
+<tr><th id="725">725</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="726">726</th><td><em>int</em> <dfn class="decl" id="avfilter_init_dict" title='avfilter_init_dict' data-ref="avfilter_init_dict">avfilter_init_dict</dfn>(<a class="typedef" href="#AVFilterContext" title='AVFilterContext' data-type='struct AVFilterContext' data-ref="AVFilterContext">AVFilterContext</a> *<dfn class="local col4 decl" id="114ctx" title='ctx' data-type='AVFilterContext *' data-ref="114ctx">ctx</dfn>, <a class="typedef" href="../libavutil/dict.h.html#AVDictionary" title='AVDictionary' data-type='struct AVDictionary' data-ref="AVDictionary">AVDictionary</a> **<dfn class="local col5 decl" id="115options" title='options' data-type='AVDictionary **' data-ref="115options">options</dfn>);</td></tr>
+<tr><th id="727">727</th><td></td></tr>
+<tr><th id="728">728</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="729">729</th><td><i class="doc"> * Free a filter context. This will also remove the filter from its</i></td></tr>
+<tr><th id="730">730</th><td><i class="doc"> * filtergraph's list of filters.</i></td></tr>
+<tr><th id="731">731</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="732">732</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">filter</span> the filter to free</i></td></tr>
+<tr><th id="733">733</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="734">734</th><td><em>void</em> <dfn class="decl" id="avfilter_free" title='avfilter_free' data-ref="avfilter_free">avfilter_free</dfn>(<a class="typedef" href="#AVFilterContext" title='AVFilterContext' data-type='struct AVFilterContext' data-ref="AVFilterContext">AVFilterContext</a> *<dfn class="local col6 decl" id="116filter" title='filter' data-type='AVFilterContext *' data-ref="116filter">filter</dfn>);</td></tr>
+<tr><th id="735">735</th><td></td></tr>
+<tr><th id="736">736</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="737">737</th><td><i class="doc"> * Insert a filter in the middle of an existing link.</i></td></tr>
+<tr><th id="738">738</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="739">739</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">link</span> the link into which the filter should be inserted</i></td></tr>
+<tr><th id="740">740</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">filt</span> the filter to be inserted</i></td></tr>
+<tr><th id="741">741</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">filt_srcpad_idx</span> the input pad on the filter to connect</i></td></tr>
+<tr><th id="742">742</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">filt_dstpad_idx</span> the output pad on the filter to connect</i></td></tr>
+<tr><th id="743">743</th><td><i class="doc"> * <span class="command">@return</span>     zero on success</i></td></tr>
+<tr><th id="744">744</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="745">745</th><td><em>int</em> <dfn class="decl" id="avfilter_insert_filter" title='avfilter_insert_filter' data-ref="avfilter_insert_filter">avfilter_insert_filter</dfn>(<a class="typedef" href="#AVFilterLink" title='AVFilterLink' data-type='struct AVFilterLink' data-ref="AVFilterLink">AVFilterLink</a> *<dfn class="local col7 decl" id="117link" title='link' data-type='AVFilterLink *' data-ref="117link">link</dfn>, <a class="typedef" href="#AVFilterContext" title='AVFilterContext' data-type='struct AVFilterContext' data-ref="AVFilterContext">AVFilterContext</a> *<dfn class="local col8 decl" id="118filt" title='filt' data-type='AVFilterContext *' data-ref="118filt">filt</dfn>,</td></tr>
+<tr><th id="746">746</th><td>                           <em>unsigned</em> <dfn class="local col9 decl" id="119filt_srcpad_idx" title='filt_srcpad_idx' data-type='unsigned int' data-ref="119filt_srcpad_idx">filt_srcpad_idx</dfn>, <em>unsigned</em> <dfn class="local col0 decl" id="120filt_dstpad_idx" title='filt_dstpad_idx' data-type='unsigned int' data-ref="120filt_dstpad_idx">filt_dstpad_idx</dfn>);</td></tr>
+<tr><th id="747">747</th><td></td></tr>
+<tr><th id="748">748</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="749">749</th><td><i class="doc"> * <span class="command">@return</span> AVClass for AVFilterContext.</i></td></tr>
+<tr><th id="750">750</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="751">751</th><td><i class="doc"> * <span class="command">@see</span> av_opt_find().</i></td></tr>
+<tr><th id="752">752</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="753">753</th><td><em>const</em> <a class="typedef" href="../libavutil/log.h.html#AVClass" title='AVClass' data-type='struct AVClass' data-ref="AVClass">AVClass</a> *<dfn class="decl" id="avfilter_get_class" title='avfilter_get_class' data-ref="avfilter_get_class">avfilter_get_class</dfn>(<em>void</em>);</td></tr>
+<tr><th id="754">754</th><td></td></tr>
+<tr><th id="755">755</th><td><b>typedef</b> <b>struct</b> <dfn class="type" id="AVFilterGraphInternal" title='AVFilterGraphInternal' data-ref="AVFilterGraphInternal"><a class="type" href="#AVFilterGraphInternal" title='AVFilterGraphInternal' data-ref="AVFilterGraphInternal">AVFilterGraphInternal</a></dfn> <dfn class="typedef" id="AVFilterGraphInternal" title='AVFilterGraphInternal' data-type='struct AVFilterGraphInternal' data-ref="AVFilterGraphInternal">AVFilterGraphInternal</dfn>;</td></tr>
+<tr><th id="756">756</th><td></td></tr>
+<tr><th id="757">757</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="758">758</th><td><i class="doc"> * A function pointer passed to the <span class="command">@ref</span> <span class="verb">AVFilterGraph.execute callback to be</span></i></td></tr>
+<tr><th id="759">759</th><td><i class="doc"> * executed multiple times, possibly in parallel.</i></td></tr>
+<tr><th id="760">760</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="761">761</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">ctx</span> the filter context the job belongs to</i></td></tr>
+<tr><th id="762">762</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">arg</span> an opaque parameter passed through from <span class="command">@ref</span></i></td></tr>
+<tr><th id="763">763</th><td><i class="doc"> *            AVFilterGraph.execute</i></td></tr>
+<tr><th id="764">764</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">jobnr</span> the index of the job being executed</i></td></tr>
+<tr><th id="765">765</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">nb_jobs</span> the total number of jobs</i></td></tr>
+<tr><th id="766">766</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="767">767</th><td><i class="doc"> * <span class="command">@return</span> 0 on success, a negative AVERROR on error</i></td></tr>
+<tr><th id="768">768</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="769">769</th><td><b>typedef</b> <em>int</em> (<dfn class="typedef" id="avfilter_action_func" title='avfilter_action_func' data-type='int (AVFilterContext *, void *, int, int)' data-ref="avfilter_action_func">avfilter_action_func</dfn>)(<a class="typedef" href="#AVFilterContext" title='AVFilterContext' data-type='struct AVFilterContext' data-ref="AVFilterContext">AVFilterContext</a> *<dfn class="local col1 decl" id="121ctx" title='ctx' data-type='AVFilterContext *' data-ref="121ctx">ctx</dfn>, <em>void</em> *<dfn class="local col2 decl" id="122arg" title='arg' data-type='void *' data-ref="122arg">arg</dfn>, <em>int</em> <dfn class="local col3 decl" id="123jobnr" title='jobnr' data-type='int' data-ref="123jobnr">jobnr</dfn>, <em>int</em> <dfn class="local col4 decl" id="124nb_jobs" title='nb_jobs' data-type='int' data-ref="124nb_jobs">nb_jobs</dfn>);</td></tr>
+<tr><th id="770">770</th><td></td></tr>
+<tr><th id="771">771</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="772">772</th><td><i class="doc"> * A function executing multiple jobs, possibly in parallel.</i></td></tr>
+<tr><th id="773">773</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="774">774</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">ctx</span> the filter context to which the jobs belong</i></td></tr>
+<tr><th id="775">775</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">func</span> the function to be called multiple times</i></td></tr>
+<tr><th id="776">776</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">arg</span> the argument to be passed to func</i></td></tr>
+<tr><th id="777">777</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">ret</span> a nb_jobs-sized array to be filled with return values from each</i></td></tr>
+<tr><th id="778">778</th><td><i class="doc"> *            invocation of func</i></td></tr>
+<tr><th id="779">779</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">nb_jobs</span> the number of jobs to execute</i></td></tr>
+<tr><th id="780">780</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="781">781</th><td><i class="doc"> * <span class="command">@return</span> 0 on success, a negative AVERROR on error</i></td></tr>
+<tr><th id="782">782</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="783">783</th><td><b>typedef</b> <em>int</em> (<dfn class="typedef" id="avfilter_execute_func" title='avfilter_execute_func' data-type='int (AVFilterContext *, avfilter_action_func *, void *, int *, int)' data-ref="avfilter_execute_func">avfilter_execute_func</dfn>)(<a class="typedef" href="#AVFilterContext" title='AVFilterContext' data-type='struct AVFilterContext' data-ref="AVFilterContext">AVFilterContext</a> *<dfn class="local col5 decl" id="125ctx" title='ctx' data-type='AVFilterContext *' data-ref="125ctx">ctx</dfn>, <a class="typedef" href="#avfilter_action_func" title='avfilter_action_func' data-type='int (AVFilterContext *, void *, int, int)' data-ref="avfilter_action_func">avfilter_action_func</a> *<dfn class="local col6 decl" id="126func" title='func' data-type='avfilter_action_func *' data-ref="126func">func</dfn>,</td></tr>
+<tr><th id="784">784</th><td>                                    <em>void</em> *<dfn class="local col7 decl" id="127arg" title='arg' data-type='void *' data-ref="127arg">arg</dfn>, <em>int</em> *<dfn class="local col8 decl" id="128ret" title='ret' data-type='int *' data-ref="128ret">ret</dfn>, <em>int</em> <dfn class="local col9 decl" id="129nb_jobs" title='nb_jobs' data-type='int' data-ref="129nb_jobs">nb_jobs</dfn>);</td></tr>
+<tr><th id="785">785</th><td></td></tr>
+<tr><th id="786">786</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="AVFilterGraph" title='AVFilterGraph' data-ref="AVFilterGraph"><a class="type" href="#AVFilterGraph" title='AVFilterGraph' data-ref="AVFilterGraph">AVFilterGraph</a></dfn> {</td></tr>
+<tr><th id="787">787</th><td>    <em>const</em> <a class="typedef" href="../libavutil/log.h.html#AVClass" title='AVClass' data-type='struct AVClass' data-ref="AVClass">AVClass</a> *<dfn class="decl" id="AVFilterGraph::av_class" title='AVFilterGraph::av_class' data-ref="AVFilterGraph::av_class">av_class</dfn>;</td></tr>
+<tr><th id="788">788</th><td>    <a class="typedef" href="#AVFilterContext" title='AVFilterContext' data-type='struct AVFilterContext' data-ref="AVFilterContext">AVFilterContext</a> **<dfn class="decl" id="AVFilterGraph::filters" title='AVFilterGraph::filters' data-ref="AVFilterGraph::filters">filters</dfn>;</td></tr>
+<tr><th id="789">789</th><td>    <em>unsigned</em> <dfn class="decl" id="AVFilterGraph::nb_filters" title='AVFilterGraph::nb_filters' data-ref="AVFilterGraph::nb_filters">nb_filters</dfn>;</td></tr>
+<tr><th id="790">790</th><td></td></tr>
+<tr><th id="791">791</th><td>    <em>char</em> *<dfn class="decl" id="AVFilterGraph::scale_sws_opts" title='AVFilterGraph::scale_sws_opts' data-ref="AVFilterGraph::scale_sws_opts">scale_sws_opts</dfn>; <i class="doc">///&lt; sws options to use for the auto-inserted scale filters</i></td></tr>
+<tr><th id="792">792</th><td>    <em>char</em> *<dfn class="decl" id="AVFilterGraph::resample_lavr_opts" title='AVFilterGraph::resample_lavr_opts' data-ref="AVFilterGraph::resample_lavr_opts">resample_lavr_opts</dfn>;   <i class="doc">///&lt; libavresample options to use for the auto-inserted resample filters</i></td></tr>
+<tr><th id="793">793</th><td></td></tr>
+<tr><th id="794">794</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="795">795</th><td><i class="doc">     * Type of multithreading allowed for filters in this graph. A combination</i></td></tr>
+<tr><th id="796">796</th><td><i class="doc">     * of AVFILTER_THREAD_* flags.</i></td></tr>
+<tr><th id="797">797</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="798">798</th><td><i class="doc">     * May be set by the caller at any point, the setting will apply to all</i></td></tr>
+<tr><th id="799">799</th><td><i class="doc">     * filters initialized after that. The default is allowing everything.</i></td></tr>
+<tr><th id="800">800</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="801">801</th><td><i class="doc">     * When a filter in this graph is initialized, this field is combined using</i></td></tr>
+<tr><th id="802">802</th><td><i class="doc">     * bit AND with AVFilterContext.thread_type to get the final mask used for</i></td></tr>
+<tr><th id="803">803</th><td><i class="doc">     * determining allowed threading types. I.e. a threading type needs to be</i></td></tr>
+<tr><th id="804">804</th><td><i class="doc">     * set in both to be allowed.</i></td></tr>
+<tr><th id="805">805</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="806">806</th><td>    <em>int</em> <dfn class="decl" id="AVFilterGraph::thread_type" title='AVFilterGraph::thread_type' data-ref="AVFilterGraph::thread_type">thread_type</dfn>;</td></tr>
+<tr><th id="807">807</th><td></td></tr>
+<tr><th id="808">808</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="809">809</th><td><i class="doc">     * Maximum number of threads used by filters in this graph. May be set by</i></td></tr>
+<tr><th id="810">810</th><td><i class="doc">     * the caller before adding any filters to the filtergraph. Zero (the</i></td></tr>
+<tr><th id="811">811</th><td><i class="doc">     * default) means that the number of threads is determined automatically.</i></td></tr>
+<tr><th id="812">812</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="813">813</th><td>    <em>int</em> <dfn class="decl" id="AVFilterGraph::nb_threads" title='AVFilterGraph::nb_threads' data-ref="AVFilterGraph::nb_threads">nb_threads</dfn>;</td></tr>
+<tr><th id="814">814</th><td></td></tr>
+<tr><th id="815">815</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="816">816</th><td><i class="doc">     * Opaque object for libavfilter internal use.</i></td></tr>
+<tr><th id="817">817</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="818">818</th><td>    <a class="typedef" href="#AVFilterGraphInternal" title='AVFilterGraphInternal' data-type='struct AVFilterGraphInternal' data-ref="AVFilterGraphInternal">AVFilterGraphInternal</a> *<dfn class="decl" id="AVFilterGraph::internal" title='AVFilterGraph::internal' data-ref="AVFilterGraph::internal">internal</dfn>;</td></tr>
+<tr><th id="819">819</th><td></td></tr>
+<tr><th id="820">820</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="821">821</th><td><i class="doc">     * Opaque user data. May be set by the caller to an arbitrary value, e.g. to</i></td></tr>
+<tr><th id="822">822</th><td><i class="doc">     * be used from callbacks like <span class="command">@ref</span> <span class="verb">AVFilterGraph.execute.</span></i></td></tr>
+<tr><th id="823">823</th><td><i class="doc">     * Libavfilter will not touch this field in any way.</i></td></tr>
+<tr><th id="824">824</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="825">825</th><td>    <em>void</em> *<dfn class="decl" id="AVFilterGraph::opaque" title='AVFilterGraph::opaque' data-ref="AVFilterGraph::opaque">opaque</dfn>;</td></tr>
+<tr><th id="826">826</th><td></td></tr>
+<tr><th id="827">827</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="828">828</th><td><i class="doc">     * This callback may be set by the caller immediately after allocating the</i></td></tr>
+<tr><th id="829">829</th><td><i class="doc">     * graph and before adding any filters to it, to provide a custom</i></td></tr>
+<tr><th id="830">830</th><td><i class="doc">     * multithreading implementation.</i></td></tr>
+<tr><th id="831">831</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="832">832</th><td><i class="doc">     * If set, filters with slice threading capability will call this callback</i></td></tr>
+<tr><th id="833">833</th><td><i class="doc">     * to execute multiple jobs in parallel.</i></td></tr>
+<tr><th id="834">834</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="835">835</th><td><i class="doc">     * If this field is left unset, libavfilter will use its internal</i></td></tr>
+<tr><th id="836">836</th><td><i class="doc">     * implementation, which may or may not be multithreaded depending on the</i></td></tr>
+<tr><th id="837">837</th><td><i class="doc">     * platform and build options.</i></td></tr>
+<tr><th id="838">838</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="839">839</th><td>    <a class="typedef" href="#avfilter_execute_func" title='avfilter_execute_func' data-type='int (AVFilterContext *, avfilter_action_func *, void *, int *, int)' data-ref="avfilter_execute_func">avfilter_execute_func</a> *<dfn class="decl" id="AVFilterGraph::execute" title='AVFilterGraph::execute' data-ref="AVFilterGraph::execute">execute</dfn>;</td></tr>
+<tr><th id="840">840</th><td></td></tr>
+<tr><th id="841">841</th><td>    <em>char</em> *<dfn class="decl" id="AVFilterGraph::aresample_swr_opts" title='AVFilterGraph::aresample_swr_opts' data-ref="AVFilterGraph::aresample_swr_opts">aresample_swr_opts</dfn>; <i class="doc">///&lt; swr options to use for the auto-inserted aresample filters, Access ONLY through AVOptions</i></td></tr>
+<tr><th id="842">842</th><td></td></tr>
+<tr><th id="843">843</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="844">844</th><td><i class="doc">     * Private fields</i></td></tr>
+<tr><th id="845">845</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="846">846</th><td><i class="doc">     * The following fields are for internal use only.</i></td></tr>
+<tr><th id="847">847</th><td><i class="doc">     * Their type, offset, number and semantic can change without notice.</i></td></tr>
+<tr><th id="848">848</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="849">849</th><td></td></tr>
+<tr><th id="850">850</th><td>    <a class="typedef" href="#AVFilterLink" title='AVFilterLink' data-type='struct AVFilterLink' data-ref="AVFilterLink">AVFilterLink</a> **<dfn class="decl" id="AVFilterGraph::sink_links" title='AVFilterGraph::sink_links' data-ref="AVFilterGraph::sink_links">sink_links</dfn>;</td></tr>
+<tr><th id="851">851</th><td>    <em>int</em> <dfn class="decl" id="AVFilterGraph::sink_links_count" title='AVFilterGraph::sink_links_count' data-ref="AVFilterGraph::sink_links_count">sink_links_count</dfn>;</td></tr>
+<tr><th id="852">852</th><td></td></tr>
+<tr><th id="853">853</th><td>    <em>unsigned</em> <dfn class="decl" id="AVFilterGraph::disable_auto_convert" title='AVFilterGraph::disable_auto_convert' data-ref="AVFilterGraph::disable_auto_convert">disable_auto_convert</dfn>;</td></tr>
+<tr><th id="854">854</th><td>} <dfn class="typedef" id="AVFilterGraph" title='AVFilterGraph' data-type='struct AVFilterGraph' data-ref="AVFilterGraph">AVFilterGraph</dfn>;</td></tr>
+<tr><th id="855">855</th><td></td></tr>
+<tr><th id="856">856</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="857">857</th><td><i class="doc"> * Allocate a filter graph.</i></td></tr>
+<tr><th id="858">858</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="859">859</th><td><i class="doc"> * <span class="command">@return</span> the allocated filter graph on success or NULL.</i></td></tr>
+<tr><th id="860">860</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="861">861</th><td><a class="typedef" href="#AVFilterGraph" title='AVFilterGraph' data-type='struct AVFilterGraph' data-ref="AVFilterGraph">AVFilterGraph</a> *<dfn class="decl" id="avfilter_graph_alloc" title='avfilter_graph_alloc' data-ref="avfilter_graph_alloc">avfilter_graph_alloc</dfn>(<em>void</em>);</td></tr>
+<tr><th id="862">862</th><td></td></tr>
+<tr><th id="863">863</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="864">864</th><td><i class="doc"> * Create a new filter instance in a filter graph.</i></td></tr>
+<tr><th id="865">865</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="866">866</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">graph</span> graph in which the new filter will be used</i></td></tr>
+<tr><th id="867">867</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">filter</span> the filter to create an instance of</i></td></tr>
+<tr><th id="868">868</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">name</span> Name to give to the new instance (will be copied to</i></td></tr>
+<tr><th id="869">869</th><td><i class="doc"> *             AVFilterContext.name). This may be used by the caller to identify</i></td></tr>
+<tr><th id="870">870</th><td><i class="doc"> *             different filters, libavfilter itself assigns no semantics to</i></td></tr>
+<tr><th id="871">871</th><td><i class="doc"> *             this parameter. May be NULL.</i></td></tr>
+<tr><th id="872">872</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="873">873</th><td><i class="doc"> * <span class="command">@return</span> the context of the newly created filter instance (note that it is</i></td></tr>
+<tr><th id="874">874</th><td><i class="doc"> *         also retrievable directly through AVFilterGraph.filters or with</i></td></tr>
+<tr><th id="875">875</th><td><i class="doc"> *         avfilter_graph_get_filter()) on success or NULL on failure.</i></td></tr>
+<tr><th id="876">876</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="877">877</th><td><a class="typedef" href="#AVFilterContext" title='AVFilterContext' data-type='struct AVFilterContext' data-ref="AVFilterContext">AVFilterContext</a> *<dfn class="decl" id="avfilter_graph_alloc_filter" title='avfilter_graph_alloc_filter' data-ref="avfilter_graph_alloc_filter">avfilter_graph_alloc_filter</dfn>(<a class="typedef" href="#AVFilterGraph" title='AVFilterGraph' data-type='struct AVFilterGraph' data-ref="AVFilterGraph">AVFilterGraph</a> *<dfn class="local col0 decl" id="130graph" title='graph' data-type='AVFilterGraph *' data-ref="130graph">graph</dfn>,</td></tr>
+<tr><th id="878">878</th><td>                                             <em>const</em> <a class="typedef" href="#AVFilter" title='AVFilter' data-type='struct AVFilter' data-ref="AVFilter">AVFilter</a> *<dfn class="local col1 decl" id="131filter" title='filter' data-type='const AVFilter *' data-ref="131filter">filter</dfn>,</td></tr>
+<tr><th id="879">879</th><td>                                             <em>const</em> <em>char</em> *<dfn class="local col2 decl" id="132name" title='name' data-type='const char *' data-ref="132name">name</dfn>);</td></tr>
+<tr><th id="880">880</th><td></td></tr>
+<tr><th id="881">881</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="882">882</th><td><i class="doc"> * Get a filter instance identified by instance name from graph.</i></td></tr>
+<tr><th id="883">883</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="884">884</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">graph</span> filter graph to search through.</i></td></tr>
+<tr><th id="885">885</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">name</span> filter instance name (should be unique in the graph).</i></td></tr>
+<tr><th id="886">886</th><td><i class="doc"> * <span class="command">@return</span> the pointer to the found filter instance or NULL if it</i></td></tr>
+<tr><th id="887">887</th><td><i class="doc"> * cannot be found.</i></td></tr>
+<tr><th id="888">888</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="889">889</th><td><a class="typedef" href="#AVFilterContext" title='AVFilterContext' data-type='struct AVFilterContext' data-ref="AVFilterContext">AVFilterContext</a> *<dfn class="decl" id="avfilter_graph_get_filter" title='avfilter_graph_get_filter' data-ref="avfilter_graph_get_filter">avfilter_graph_get_filter</dfn>(<a class="typedef" href="#AVFilterGraph" title='AVFilterGraph' data-type='struct AVFilterGraph' data-ref="AVFilterGraph">AVFilterGraph</a> *<dfn class="local col3 decl" id="133graph" title='graph' data-type='AVFilterGraph *' data-ref="133graph">graph</dfn>, <em>const</em> <em>char</em> *<dfn class="local col4 decl" id="134name" title='name' data-type='const char *' data-ref="134name">name</dfn>);</td></tr>
+<tr><th id="890">890</th><td></td></tr>
+<tr><th id="891">891</th><td><u>#<span data-ppcond="891">if</span> <a class="macro" href="version.h.html#59" title="(6 &lt; 7)" data-ref="_M/FF_API_AVFILTER_OPEN">FF_API_AVFILTER_OPEN</a></u></td></tr>
+<tr><th id="892">892</th><td><i>/**</i></td></tr>
+<tr><th id="893">893</th><td><i> * Add an existing filter instance to a filter graph.</i></td></tr>
+<tr><th id="894">894</th><td><i> *</i></td></tr>
+<tr><th id="895">895</th><td><i> * @param graphctx  the filter graph</i></td></tr>
+<tr><th id="896">896</th><td><i> * @param filter the filter to be added</i></td></tr>
+<tr><th id="897">897</th><td><i> *</i></td></tr>
+<tr><th id="898">898</th><td><i> * @deprecated use avfilter_graph_alloc_filter() to allocate a filter in a</i></td></tr>
+<tr><th id="899">899</th><td><i> * filter graph</i></td></tr>
+<tr><th id="900">900</th><td><i> */</i></td></tr>
+<tr><th id="901">901</th><td><a class="macro" href="../libavutil/attributes.h.html#94" title="__attribute__((deprecated))" data-ref="_M/attribute_deprecated">attribute_deprecated</a></td></tr>
+<tr><th id="902">902</th><td><em>int</em> <dfn class="decl" id="avfilter_graph_add_filter" title='avfilter_graph_add_filter' data-ref="avfilter_graph_add_filter">avfilter_graph_add_filter</dfn>(<a class="typedef" href="#AVFilterGraph" title='AVFilterGraph' data-type='struct AVFilterGraph' data-ref="AVFilterGraph">AVFilterGraph</a> *<dfn class="local col5 decl" id="135graphctx" title='graphctx' data-type='AVFilterGraph *' data-ref="135graphctx">graphctx</dfn>, <a class="typedef" href="#AVFilterContext" title='AVFilterContext' data-type='struct AVFilterContext' data-ref="AVFilterContext">AVFilterContext</a> *<dfn class="local col6 decl" id="136filter" title='filter' data-type='AVFilterContext *' data-ref="136filter">filter</dfn>);</td></tr>
+<tr><th id="903">903</th><td><u>#<span data-ppcond="891">endif</span></u></td></tr>
+<tr><th id="904">904</th><td></td></tr>
+<tr><th id="905">905</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="906">906</th><td><i class="doc"> * Create and add a filter instance into an existing graph.</i></td></tr>
+<tr><th id="907">907</th><td><i class="doc"> * The filter instance is created from the filter filt and inited</i></td></tr>
+<tr><th id="908">908</th><td><i class="doc"> * with the parameters args and opaque.</i></td></tr>
+<tr><th id="909">909</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="910">910</th><td><i class="doc"> * In case of success put in *filt_ctx the pointer to the created</i></td></tr>
+<tr><th id="911">911</th><td><i class="doc"> * filter instance, otherwise set *filt_ctx to NULL.</i></td></tr>
+<tr><th id="912">912</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="913">913</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">name</span> the instance name to give to the created filter instance</i></td></tr>
+<tr><th id="914">914</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">graph_ctx</span> the filter graph</i></td></tr>
+<tr><th id="915">915</th><td><i class="doc"> * <span class="command">@return</span> a negative AVERROR error code in case of failure, a non</i></td></tr>
+<tr><th id="916">916</th><td><i class="doc"> * negative value otherwise</i></td></tr>
+<tr><th id="917">917</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="918">918</th><td><em>int</em> <dfn class="decl" id="avfilter_graph_create_filter" title='avfilter_graph_create_filter' data-ref="avfilter_graph_create_filter">avfilter_graph_create_filter</dfn>(<a class="typedef" href="#AVFilterContext" title='AVFilterContext' data-type='struct AVFilterContext' data-ref="AVFilterContext">AVFilterContext</a> **<dfn class="local col7 decl" id="137filt_ctx" title='filt_ctx' data-type='AVFilterContext **' data-ref="137filt_ctx">filt_ctx</dfn>, <em>const</em> <a class="typedef" href="#AVFilter" title='AVFilter' data-type='struct AVFilter' data-ref="AVFilter">AVFilter</a> *<dfn class="local col8 decl" id="138filt" title='filt' data-type='const AVFilter *' data-ref="138filt">filt</dfn>,</td></tr>
+<tr><th id="919">919</th><td>                                 <em>const</em> <em>char</em> *<dfn class="local col9 decl" id="139name" title='name' data-type='const char *' data-ref="139name">name</dfn>, <em>const</em> <em>char</em> *<dfn class="local col0 decl" id="140args" title='args' data-type='const char *' data-ref="140args">args</dfn>, <em>void</em> *<dfn class="local col1 decl" id="141opaque" title='opaque' data-type='void *' data-ref="141opaque">opaque</dfn>,</td></tr>
+<tr><th id="920">920</th><td>                                 <a class="typedef" href="#AVFilterGraph" title='AVFilterGraph' data-type='struct AVFilterGraph' data-ref="AVFilterGraph">AVFilterGraph</a> *<dfn class="local col2 decl" id="142graph_ctx" title='graph_ctx' data-type='AVFilterGraph *' data-ref="142graph_ctx">graph_ctx</dfn>);</td></tr>
+<tr><th id="921">921</th><td></td></tr>
+<tr><th id="922">922</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="923">923</th><td><i class="doc"> * Enable or disable automatic format conversion inside the graph.</i></td></tr>
+<tr><th id="924">924</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="925">925</th><td><i class="doc"> * Note that format conversion can still happen inside explicitly inserted</i></td></tr>
+<tr><th id="926">926</th><td><i class="doc"> * scale and aresample filters.</i></td></tr>
+<tr><th id="927">927</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="928">928</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">flags</span>  any of the AVFILTER_AUTO_CONVERT_* constants</i></td></tr>
+<tr><th id="929">929</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="930">930</th><td><em>void</em> <dfn class="decl" id="avfilter_graph_set_auto_convert" title='avfilter_graph_set_auto_convert' data-ref="avfilter_graph_set_auto_convert">avfilter_graph_set_auto_convert</dfn>(<a class="typedef" href="#AVFilterGraph" title='AVFilterGraph' data-type='struct AVFilterGraph' data-ref="AVFilterGraph">AVFilterGraph</a> *<dfn class="local col3 decl" id="143graph" title='graph' data-type='AVFilterGraph *' data-ref="143graph">graph</dfn>, <em>unsigned</em> <dfn class="local col4 decl" id="144flags" title='flags' data-type='unsigned int' data-ref="144flags">flags</dfn>);</td></tr>
+<tr><th id="931">931</th><td></td></tr>
+<tr><th id="932">932</th><td><b>enum</b> {</td></tr>
+<tr><th id="933">933</th><td>    <dfn class="enum" id="::AVFILTER_AUTO_CONVERT_ALL" title='::AVFILTER_AUTO_CONVERT_ALL' data-ref="::AVFILTER_AUTO_CONVERT_ALL">AVFILTER_AUTO_CONVERT_ALL</dfn>  =  <var>0</var>, <i class="doc">/**&lt; all automatic conversions enabled */</i></td></tr>
+<tr><th id="934">934</th><td>    <dfn class="enum" id="::AVFILTER_AUTO_CONVERT_NONE" title='::AVFILTER_AUTO_CONVERT_NONE' data-ref="::AVFILTER_AUTO_CONVERT_NONE">AVFILTER_AUTO_CONVERT_NONE</dfn> = -<var>1</var>, <i class="doc">/**&lt; all automatic conversions disabled */</i></td></tr>
+<tr><th id="935">935</th><td>};</td></tr>
+<tr><th id="936">936</th><td></td></tr>
+<tr><th id="937">937</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="938">938</th><td><i class="doc"> * Check validity and configure all the links and formats in the graph.</i></td></tr>
+<tr><th id="939">939</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="940">940</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">graphctx</span> the filter graph</i></td></tr>
+<tr><th id="941">941</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">log_ctx</span> context used for logging</i></td></tr>
+<tr><th id="942">942</th><td><i class="doc"> * <span class="command">@return</span> &gt;= 0 in case of success, a negative AVERROR code otherwise</i></td></tr>
+<tr><th id="943">943</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="944">944</th><td><em>int</em> <dfn class="decl" id="avfilter_graph_config" title='avfilter_graph_config' data-ref="avfilter_graph_config">avfilter_graph_config</dfn>(<a class="typedef" href="#AVFilterGraph" title='AVFilterGraph' data-type='struct AVFilterGraph' data-ref="AVFilterGraph">AVFilterGraph</a> *<dfn class="local col5 decl" id="145graphctx" title='graphctx' data-type='AVFilterGraph *' data-ref="145graphctx">graphctx</dfn>, <em>void</em> *<dfn class="local col6 decl" id="146log_ctx" title='log_ctx' data-type='void *' data-ref="146log_ctx">log_ctx</dfn>);</td></tr>
+<tr><th id="945">945</th><td></td></tr>
+<tr><th id="946">946</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="947">947</th><td><i class="doc"> * Free a graph, destroy its links, and set *graph to NULL.</i></td></tr>
+<tr><th id="948">948</th><td><i class="doc"> * If *graph is NULL, do nothing.</i></td></tr>
+<tr><th id="949">949</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="950">950</th><td><em>void</em> <dfn class="decl" id="avfilter_graph_free" title='avfilter_graph_free' data-ref="avfilter_graph_free">avfilter_graph_free</dfn>(<a class="typedef" href="#AVFilterGraph" title='AVFilterGraph' data-type='struct AVFilterGraph' data-ref="AVFilterGraph">AVFilterGraph</a> **<dfn class="local col7 decl" id="147graph" title='graph' data-type='AVFilterGraph **' data-ref="147graph">graph</dfn>);</td></tr>
+<tr><th id="951">951</th><td></td></tr>
+<tr><th id="952">952</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="953">953</th><td><i class="doc"> * A linked-list of the inputs/outputs of the filter chain.</i></td></tr>
+<tr><th id="954">954</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="955">955</th><td><i class="doc"> * This is mainly useful for avfilter_graph_parse() / avfilter_graph_parse2(),</i></td></tr>
+<tr><th id="956">956</th><td><i class="doc"> * where it is used to communicate open (unlinked) inputs and outputs from and</i></td></tr>
+<tr><th id="957">957</th><td><i class="doc"> * to the caller.</i></td></tr>
+<tr><th id="958">958</th><td><i class="doc"> * This struct specifies, per each not connected pad contained in the graph, the</i></td></tr>
+<tr><th id="959">959</th><td><i class="doc"> * filter context and the pad index required for establishing a link.</i></td></tr>
+<tr><th id="960">960</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="961">961</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="AVFilterInOut" title='AVFilterInOut' data-ref="AVFilterInOut"><a class="type" href="#AVFilterInOut" title='AVFilterInOut' data-ref="AVFilterInOut">AVFilterInOut</a></dfn> {</td></tr>
+<tr><th id="962">962</th><td>    <i class="doc">/** unique name for this input/output in the list */</i></td></tr>
+<tr><th id="963">963</th><td>    <em>char</em> *<dfn class="decl" id="AVFilterInOut::name" title='AVFilterInOut::name' data-ref="AVFilterInOut::name">name</dfn>;</td></tr>
+<tr><th id="964">964</th><td></td></tr>
+<tr><th id="965">965</th><td>    <i class="doc">/** filter context associated to this input/output */</i></td></tr>
+<tr><th id="966">966</th><td>    <a class="typedef" href="#AVFilterContext" title='AVFilterContext' data-type='struct AVFilterContext' data-ref="AVFilterContext">AVFilterContext</a> *<dfn class="decl" id="AVFilterInOut::filter_ctx" title='AVFilterInOut::filter_ctx' data-ref="AVFilterInOut::filter_ctx">filter_ctx</dfn>;</td></tr>
+<tr><th id="967">967</th><td></td></tr>
+<tr><th id="968">968</th><td>    <i class="doc">/** index of the filt_ctx pad to use for linking */</i></td></tr>
+<tr><th id="969">969</th><td>    <em>int</em> <dfn class="decl" id="AVFilterInOut::pad_idx" title='AVFilterInOut::pad_idx' data-ref="AVFilterInOut::pad_idx">pad_idx</dfn>;</td></tr>
+<tr><th id="970">970</th><td></td></tr>
+<tr><th id="971">971</th><td>    <i class="doc">/** next input/input in the list, NULL if this is the last */</i></td></tr>
+<tr><th id="972">972</th><td>    <b>struct</b> <a class="type" href="#AVFilterInOut" title='AVFilterInOut' data-ref="AVFilterInOut">AVFilterInOut</a> *<dfn class="decl" id="AVFilterInOut::next" title='AVFilterInOut::next' data-ref="AVFilterInOut::next">next</dfn>;</td></tr>
+<tr><th id="973">973</th><td>} <dfn class="typedef" id="AVFilterInOut" title='AVFilterInOut' data-type='struct AVFilterInOut' data-ref="AVFilterInOut">AVFilterInOut</dfn>;</td></tr>
+<tr><th id="974">974</th><td></td></tr>
+<tr><th id="975">975</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="976">976</th><td><i class="doc"> * Allocate a single AVFilterInOut entry.</i></td></tr>
+<tr><th id="977">977</th><td><i class="doc"> * Must be freed with avfilter_inout_free().</i></td></tr>
+<tr><th id="978">978</th><td><i class="doc"> * <span class="command">@return</span> allocated AVFilterInOut on success, NULL on failure.</i></td></tr>
+<tr><th id="979">979</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="980">980</th><td><a class="typedef" href="#AVFilterInOut" title='AVFilterInOut' data-type='struct AVFilterInOut' data-ref="AVFilterInOut">AVFilterInOut</a> *<dfn class="decl" id="avfilter_inout_alloc" title='avfilter_inout_alloc' data-ref="avfilter_inout_alloc">avfilter_inout_alloc</dfn>(<em>void</em>);</td></tr>
+<tr><th id="981">981</th><td></td></tr>
+<tr><th id="982">982</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="983">983</th><td><i class="doc"> * Free the supplied list of AVFilterInOut and set *inout to NULL.</i></td></tr>
+<tr><th id="984">984</th><td><i class="doc"> * If *inout is NULL, do nothing.</i></td></tr>
+<tr><th id="985">985</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="986">986</th><td><em>void</em> <dfn class="decl" id="avfilter_inout_free" title='avfilter_inout_free' data-ref="avfilter_inout_free">avfilter_inout_free</dfn>(<a class="typedef" href="#AVFilterInOut" title='AVFilterInOut' data-type='struct AVFilterInOut' data-ref="AVFilterInOut">AVFilterInOut</a> **<dfn class="local col8 decl" id="148inout" title='inout' data-type='AVFilterInOut **' data-ref="148inout">inout</dfn>);</td></tr>
+<tr><th id="987">987</th><td></td></tr>
+<tr><th id="988">988</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="989">989</th><td><i class="doc"> * Add a graph described by a string to a graph.</i></td></tr>
+<tr><th id="990">990</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="991">991</th><td><i class="doc"> * <span class="command">@note</span> The caller must provide the lists of inputs and outputs,</i></td></tr>
+<tr><th id="992">992</th><td><i class="doc"> * which therefore must be known before calling the function.</i></td></tr>
+<tr><th id="993">993</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="994">994</th><td><i class="doc"> * <span class="command">@note</span> The inputs parameter describes inputs of the already existing</i></td></tr>
+<tr><th id="995">995</th><td><i class="doc"> * part of the graph; i.e. from the point of view of the newly created</i></td></tr>
+<tr><th id="996">996</th><td><i class="doc"> * part, they are outputs. Similarly the outputs parameter describes</i></td></tr>
+<tr><th id="997">997</th><td><i class="doc"> * outputs of the already existing filters, which are provided as</i></td></tr>
+<tr><th id="998">998</th><td><i class="doc"> * inputs to the parsed filters.</i></td></tr>
+<tr><th id="999">999</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="1000">1000</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">graph</span>   the filter graph where to link the parsed graph context</i></td></tr>
+<tr><th id="1001">1001</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">filters</span> string to be parsed</i></td></tr>
+<tr><th id="1002">1002</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">inputs</span>  linked list to the inputs of the graph</i></td></tr>
+<tr><th id="1003">1003</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">outputs</span> linked list to the outputs of the graph</i></td></tr>
+<tr><th id="1004">1004</th><td><i class="doc"> * <span class="command">@return</span> zero on success, a negative AVERROR code on error</i></td></tr>
+<tr><th id="1005">1005</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="1006">1006</th><td><em>int</em> <dfn class="decl" id="avfilter_graph_parse" title='avfilter_graph_parse' data-ref="avfilter_graph_parse">avfilter_graph_parse</dfn>(<a class="typedef" href="#AVFilterGraph" title='AVFilterGraph' data-type='struct AVFilterGraph' data-ref="AVFilterGraph">AVFilterGraph</a> *<dfn class="local col9 decl" id="149graph" title='graph' data-type='AVFilterGraph *' data-ref="149graph">graph</dfn>, <em>const</em> <em>char</em> *<dfn class="local col0 decl" id="150filters" title='filters' data-type='const char *' data-ref="150filters">filters</dfn>,</td></tr>
+<tr><th id="1007">1007</th><td>                         <a class="typedef" href="#AVFilterInOut" title='AVFilterInOut' data-type='struct AVFilterInOut' data-ref="AVFilterInOut">AVFilterInOut</a> *<dfn class="local col1 decl" id="151inputs" title='inputs' data-type='AVFilterInOut *' data-ref="151inputs">inputs</dfn>, <a class="typedef" href="#AVFilterInOut" title='AVFilterInOut' data-type='struct AVFilterInOut' data-ref="AVFilterInOut">AVFilterInOut</a> *<dfn class="local col2 decl" id="152outputs" title='outputs' data-type='AVFilterInOut *' data-ref="152outputs">outputs</dfn>,</td></tr>
+<tr><th id="1008">1008</th><td>                         <em>void</em> *<dfn class="local col3 decl" id="153log_ctx" title='log_ctx' data-type='void *' data-ref="153log_ctx">log_ctx</dfn>);</td></tr>
+<tr><th id="1009">1009</th><td></td></tr>
+<tr><th id="1010">1010</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="1011">1011</th><td><i class="doc"> * Add a graph described by a string to a graph.</i></td></tr>
+<tr><th id="1012">1012</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="1013">1013</th><td><i class="doc"> * In the graph filters description, if the input label of the first</i></td></tr>
+<tr><th id="1014">1014</th><td><i class="doc"> * filter is not specified, "in" is assumed; if the output label of</i></td></tr>
+<tr><th id="1015">1015</th><td><i class="doc"> * the last filter is not specified, "out" is assumed.</i></td></tr>
+<tr><th id="1016">1016</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="1017">1017</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">graph</span>   the filter graph where to link the parsed graph context</i></td></tr>
+<tr><th id="1018">1018</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">filters</span> string to be parsed</i></td></tr>
+<tr><th id="1019">1019</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">inputs</span>  pointer to a linked list to the inputs of the graph, may be NULL.</i></td></tr>
+<tr><th id="1020">1020</th><td><i class="doc"> *                If non-NULL, *inputs is updated to contain the list of open inputs</i></td></tr>
+<tr><th id="1021">1021</th><td><i class="doc"> *                after the parsing, should be freed with avfilter_inout_free().</i></td></tr>
+<tr><th id="1022">1022</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">outputs</span> pointer to a linked list to the outputs of the graph, may be NULL.</i></td></tr>
+<tr><th id="1023">1023</th><td><i class="doc"> *                If non-NULL, *outputs is updated to contain the list of open outputs</i></td></tr>
+<tr><th id="1024">1024</th><td><i class="doc"> *                after the parsing, should be freed with avfilter_inout_free().</i></td></tr>
+<tr><th id="1025">1025</th><td><i class="doc"> * <span class="command">@return</span> non negative on success, a negative AVERROR code on error</i></td></tr>
+<tr><th id="1026">1026</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="1027">1027</th><td><em>int</em> <dfn class="decl" id="avfilter_graph_parse_ptr" title='avfilter_graph_parse_ptr' data-ref="avfilter_graph_parse_ptr">avfilter_graph_parse_ptr</dfn>(<a class="typedef" href="#AVFilterGraph" title='AVFilterGraph' data-type='struct AVFilterGraph' data-ref="AVFilterGraph">AVFilterGraph</a> *<dfn class="local col4 decl" id="154graph" title='graph' data-type='AVFilterGraph *' data-ref="154graph">graph</dfn>, <em>const</em> <em>char</em> *<dfn class="local col5 decl" id="155filters" title='filters' data-type='const char *' data-ref="155filters">filters</dfn>,</td></tr>
+<tr><th id="1028">1028</th><td>                             <a class="typedef" href="#AVFilterInOut" title='AVFilterInOut' data-type='struct AVFilterInOut' data-ref="AVFilterInOut">AVFilterInOut</a> **<dfn class="local col6 decl" id="156inputs" title='inputs' data-type='AVFilterInOut **' data-ref="156inputs">inputs</dfn>, <a class="typedef" href="#AVFilterInOut" title='AVFilterInOut' data-type='struct AVFilterInOut' data-ref="AVFilterInOut">AVFilterInOut</a> **<dfn class="local col7 decl" id="157outputs" title='outputs' data-type='AVFilterInOut **' data-ref="157outputs">outputs</dfn>,</td></tr>
+<tr><th id="1029">1029</th><td>                             <em>void</em> *<dfn class="local col8 decl" id="158log_ctx" title='log_ctx' data-type='void *' data-ref="158log_ctx">log_ctx</dfn>);</td></tr>
+<tr><th id="1030">1030</th><td></td></tr>
+<tr><th id="1031">1031</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="1032">1032</th><td><i class="doc"> * Add a graph described by a string to a graph.</i></td></tr>
+<tr><th id="1033">1033</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="1034">1034</th><td><i class="doc"> * <span class="command">@param</span>[in]  <span class="arg">graph</span>   the filter graph where to link the parsed graph context</i></td></tr>
+<tr><th id="1035">1035</th><td><i class="doc"> * <span class="command">@param</span>[in]  <span class="arg">filters</span> string to be parsed</i></td></tr>
+<tr><th id="1036">1036</th><td><i class="doc"> * <span class="command">@param</span>[out] <span class="arg">inputs</span>  a linked list of all free (unlinked) inputs of the</i></td></tr>
+<tr><th id="1037">1037</th><td><i class="doc"> *                     parsed graph will be returned here. It is to be freed</i></td></tr>
+<tr><th id="1038">1038</th><td><i class="doc"> *                     by the caller using avfilter_inout_free().</i></td></tr>
+<tr><th id="1039">1039</th><td><i class="doc"> * <span class="command">@param</span>[out] <span class="arg">outputs</span> a linked list of all free (unlinked) outputs of the</i></td></tr>
+<tr><th id="1040">1040</th><td><i class="doc"> *                     parsed graph will be returned here. It is to be freed by the</i></td></tr>
+<tr><th id="1041">1041</th><td><i class="doc"> *                     caller using avfilter_inout_free().</i></td></tr>
+<tr><th id="1042">1042</th><td><i class="doc"> * <span class="command">@return</span> zero on success, a negative AVERROR code on error</i></td></tr>
+<tr><th id="1043">1043</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="1044">1044</th><td><i class="doc"> * <span class="command">@note</span> This function returns the inputs and outputs that are left</i></td></tr>
+<tr><th id="1045">1045</th><td><i class="doc"> * unlinked after parsing the graph and the caller then deals with</i></td></tr>
+<tr><th id="1046">1046</th><td><i class="doc"> * them.</i></td></tr>
+<tr><th id="1047">1047</th><td><i class="doc"> * <span class="command">@note</span> This function makes no reference whatsoever to already</i></td></tr>
+<tr><th id="1048">1048</th><td><i class="doc"> * existing parts of the graph and the inputs parameter will on return</i></td></tr>
+<tr><th id="1049">1049</th><td><i class="doc"> * contain inputs of the newly parsed part of the graph.  Analogously</i></td></tr>
+<tr><th id="1050">1050</th><td><i class="doc"> * the outputs parameter will contain outputs of the newly created</i></td></tr>
+<tr><th id="1051">1051</th><td><i class="doc"> * filters.</i></td></tr>
+<tr><th id="1052">1052</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="1053">1053</th><td><em>int</em> <dfn class="decl" id="avfilter_graph_parse2" title='avfilter_graph_parse2' data-ref="avfilter_graph_parse2">avfilter_graph_parse2</dfn>(<a class="typedef" href="#AVFilterGraph" title='AVFilterGraph' data-type='struct AVFilterGraph' data-ref="AVFilterGraph">AVFilterGraph</a> *<dfn class="local col9 decl" id="159graph" title='graph' data-type='AVFilterGraph *' data-ref="159graph">graph</dfn>, <em>const</em> <em>char</em> *<dfn class="local col0 decl" id="160filters" title='filters' data-type='const char *' data-ref="160filters">filters</dfn>,</td></tr>
+<tr><th id="1054">1054</th><td>                          <a class="typedef" href="#AVFilterInOut" title='AVFilterInOut' data-type='struct AVFilterInOut' data-ref="AVFilterInOut">AVFilterInOut</a> **<dfn class="local col1 decl" id="161inputs" title='inputs' data-type='AVFilterInOut **' data-ref="161inputs">inputs</dfn>,</td></tr>
+<tr><th id="1055">1055</th><td>                          <a class="typedef" href="#AVFilterInOut" title='AVFilterInOut' data-type='struct AVFilterInOut' data-ref="AVFilterInOut">AVFilterInOut</a> **<dfn class="local col2 decl" id="162outputs" title='outputs' data-type='AVFilterInOut **' data-ref="162outputs">outputs</dfn>);</td></tr>
+<tr><th id="1056">1056</th><td></td></tr>
+<tr><th id="1057">1057</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="1058">1058</th><td><i class="doc"> * Send a command to one or more filter instances.</i></td></tr>
+<tr><th id="1059">1059</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="1060">1060</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">graph</span>  the filter graph</i></td></tr>
+<tr><th id="1061">1061</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">target</span> the filter(s) to which the command should be sent</i></td></tr>
+<tr><th id="1062">1062</th><td><i class="doc"> *               "all" sends to all filters</i></td></tr>
+<tr><th id="1063">1063</th><td><i class="doc"> *               otherwise it can be a filter or filter instance name</i></td></tr>
+<tr><th id="1064">1064</th><td><i class="doc"> *               which will send the command to all matching filters.</i></td></tr>
+<tr><th id="1065">1065</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">cmd</span>    the command to send, for handling simplicity all commands must be alphanumeric only</i></td></tr>
+<tr><th id="1066">1066</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">arg</span>    the argument for the command</i></td></tr>
+<tr><th id="1067">1067</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">res</span>    a buffer with size res_size where the filter(s) can return a response.</i></td></tr>
+<tr><th id="1068">1068</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="1069">1069</th><td><i class="doc"> * <span class="command">@returns</span> &gt;=0 on success otherwise an error code.</i></td></tr>
+<tr><th id="1070">1070</th><td><i class="doc"> *              AVERROR(ENOSYS) on unsupported commands</i></td></tr>
+<tr><th id="1071">1071</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="1072">1072</th><td><em>int</em> <dfn class="decl" id="avfilter_graph_send_command" title='avfilter_graph_send_command' data-ref="avfilter_graph_send_command">avfilter_graph_send_command</dfn>(<a class="typedef" href="#AVFilterGraph" title='AVFilterGraph' data-type='struct AVFilterGraph' data-ref="AVFilterGraph">AVFilterGraph</a> *<dfn class="local col3 decl" id="163graph" title='graph' data-type='AVFilterGraph *' data-ref="163graph">graph</dfn>, <em>const</em> <em>char</em> *<dfn class="local col4 decl" id="164target" title='target' data-type='const char *' data-ref="164target">target</dfn>, <em>const</em> <em>char</em> *<dfn class="local col5 decl" id="165cmd" title='cmd' data-type='const char *' data-ref="165cmd">cmd</dfn>, <em>const</em> <em>char</em> *<dfn class="local col6 decl" id="166arg" title='arg' data-type='const char *' data-ref="166arg">arg</dfn>, <em>char</em> *<dfn class="local col7 decl" id="167res" title='res' data-type='char *' data-ref="167res">res</dfn>, <em>int</em> <dfn class="local col8 decl" id="168res_len" title='res_len' data-type='int' data-ref="168res_len">res_len</dfn>, <em>int</em> <dfn class="local col9 decl" id="169flags" title='flags' data-type='int' data-ref="169flags">flags</dfn>);</td></tr>
+<tr><th id="1073">1073</th><td></td></tr>
+<tr><th id="1074">1074</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="1075">1075</th><td><i class="doc"> * Queue a command for one or more filter instances.</i></td></tr>
+<tr><th id="1076">1076</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="1077">1077</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">graph</span>  the filter graph</i></td></tr>
+<tr><th id="1078">1078</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">target</span> the filter(s) to which the command should be sent</i></td></tr>
+<tr><th id="1079">1079</th><td><i class="doc"> *               "all" sends to all filters</i></td></tr>
+<tr><th id="1080">1080</th><td><i class="doc"> *               otherwise it can be a filter or filter instance name</i></td></tr>
+<tr><th id="1081">1081</th><td><i class="doc"> *               which will send the command to all matching filters.</i></td></tr>
+<tr><th id="1082">1082</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">cmd</span>    the command to sent, for handling simplicity all commands must be alphanumeric only</i></td></tr>
+<tr><th id="1083">1083</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">arg</span>    the argument for the command</i></td></tr>
+<tr><th id="1084">1084</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">ts</span>     time at which the command should be sent to the filter</i></td></tr>
+<tr><th id="1085">1085</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="1086">1086</th><td><i class="doc"> * <span class="command">@note</span> As this executes commands after this function returns, no return code</i></td></tr>
+<tr><th id="1087">1087</th><td><i class="doc"> *       from the filter is provided, also AVFILTER_CMD_FLAG_ONE is not supported.</i></td></tr>
+<tr><th id="1088">1088</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="1089">1089</th><td><em>int</em> <dfn class="decl" id="avfilter_graph_queue_command" title='avfilter_graph_queue_command' data-ref="avfilter_graph_queue_command">avfilter_graph_queue_command</dfn>(<a class="typedef" href="#AVFilterGraph" title='AVFilterGraph' data-type='struct AVFilterGraph' data-ref="AVFilterGraph">AVFilterGraph</a> *<dfn class="local col0 decl" id="170graph" title='graph' data-type='AVFilterGraph *' data-ref="170graph">graph</dfn>, <em>const</em> <em>char</em> *<dfn class="local col1 decl" id="171target" title='target' data-type='const char *' data-ref="171target">target</dfn>, <em>const</em> <em>char</em> *<dfn class="local col2 decl" id="172cmd" title='cmd' data-type='const char *' data-ref="172cmd">cmd</dfn>, <em>const</em> <em>char</em> *<dfn class="local col3 decl" id="173arg" title='arg' data-type='const char *' data-ref="173arg">arg</dfn>, <em>int</em> <dfn class="local col4 decl" id="174flags" title='flags' data-type='int' data-ref="174flags">flags</dfn>, <em>double</em> <dfn class="local col5 decl" id="175ts" title='ts' data-type='double' data-ref="175ts">ts</dfn>);</td></tr>
+<tr><th id="1090">1090</th><td></td></tr>
+<tr><th id="1091">1091</th><td></td></tr>
+<tr><th id="1092">1092</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="1093">1093</th><td><i class="doc"> * Dump a graph into a human-readable string representation.</i></td></tr>
+<tr><th id="1094">1094</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="1095">1095</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">graph</span>    the graph to dump</i></td></tr>
+<tr><th id="1096">1096</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">options</span>  formatting options; currently ignored</i></td></tr>
+<tr><th id="1097">1097</th><td><i class="doc"> * <span class="command">@return</span>  a string, or NULL in case of memory allocation failure;</i></td></tr>
+<tr><th id="1098">1098</th><td><i class="doc"> *          the string must be freed using av_free</i></td></tr>
+<tr><th id="1099">1099</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="1100">1100</th><td><em>char</em> *<dfn class="decl" id="avfilter_graph_dump" title='avfilter_graph_dump' data-ref="avfilter_graph_dump">avfilter_graph_dump</dfn>(<a class="typedef" href="#AVFilterGraph" title='AVFilterGraph' data-type='struct AVFilterGraph' data-ref="AVFilterGraph">AVFilterGraph</a> *<dfn class="local col6 decl" id="176graph" title='graph' data-type='AVFilterGraph *' data-ref="176graph">graph</dfn>, <em>const</em> <em>char</em> *<dfn class="local col7 decl" id="177options" title='options' data-type='const char *' data-ref="177options">options</dfn>);</td></tr>
+<tr><th id="1101">1101</th><td></td></tr>
+<tr><th id="1102">1102</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="1103">1103</th><td><i class="doc"> * Request a frame on the oldest sink link.</i></td></tr>
+<tr><th id="1104">1104</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="1105">1105</th><td><i class="doc"> * If the request returns AVERROR_EOF, try the next.</i></td></tr>
+<tr><th id="1106">1106</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="1107">1107</th><td><i class="doc"> * Note that this function is not meant to be the sole scheduling mechanism</i></td></tr>
+<tr><th id="1108">1108</th><td><i class="doc"> * of a filtergraph, only a convenience function to help drain a filtergraph</i></td></tr>
+<tr><th id="1109">1109</th><td><i class="doc"> * in a balanced way under normal circumstances.</i></td></tr>
+<tr><th id="1110">1110</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="1111">1111</th><td><i class="doc"> * Also note that AVERROR_EOF does not mean that frames did not arrive on</i></td></tr>
+<tr><th id="1112">1112</th><td><i class="doc"> * some of the sinks during the process.</i></td></tr>
+<tr><th id="1113">1113</th><td><i class="doc"> * When there are multiple sink links, in case the requested link</i></td></tr>
+<tr><th id="1114">1114</th><td><i class="doc"> * returns an EOF, this may cause a filter to flush pending frames</i></td></tr>
+<tr><th id="1115">1115</th><td><i class="doc"> * which are sent to another sink link, although unrequested.</i></td></tr>
+<tr><th id="1116">1116</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="1117">1117</th><td><i class="doc"> * <span class="command">@return</span>  the return value of ff_request_frame(),</i></td></tr>
+<tr><th id="1118">1118</th><td><i class="doc"> *          or AVERROR_EOF if all links returned AVERROR_EOF</i></td></tr>
+<tr><th id="1119">1119</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="1120">1120</th><td><em>int</em> <dfn class="decl" id="avfilter_graph_request_oldest" title='avfilter_graph_request_oldest' data-ref="avfilter_graph_request_oldest">avfilter_graph_request_oldest</dfn>(<a class="typedef" href="#AVFilterGraph" title='AVFilterGraph' data-type='struct AVFilterGraph' data-ref="AVFilterGraph">AVFilterGraph</a> *<dfn class="local col8 decl" id="178graph" title='graph' data-type='AVFilterGraph *' data-ref="178graph">graph</dfn>);</td></tr>
+<tr><th id="1121">1121</th><td></td></tr>
+<tr><th id="1122">1122</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="1123">1123</th><td><i class="doc"> * @}</i></td></tr>
+<tr><th id="1124">1124</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="1125">1125</th><td></td></tr>
+<tr><th id="1126">1126</th><td><u>#<span data-ppcond="22">endif</span> /* AVFILTER_AVFILTER_H */</u></td></tr>
+<tr><th id="1127">1127</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated while processing <a href='../libavdevice/lavfi.c.html'>ffmpeg/libavdevice/lavfi.c</a><br/>Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

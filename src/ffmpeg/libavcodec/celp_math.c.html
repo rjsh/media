@@ -1,0 +1,144 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>celp_math.c source code [ffmpeg/libavcodec/celp_math.c] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavcodec/celp_math.c'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavcodec</a>/<a href='celp_math.c.html'>celp_math.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * Various fixed-point math operations</i></td></tr>
+<tr><th id="3">3</th><td><i> *</i></td></tr>
+<tr><th id="4">4</th><td><i> * Copyright (c) 2008 Vladimir Voroshilov</i></td></tr>
+<tr><th id="5">5</th><td><i> *</i></td></tr>
+<tr><th id="6">6</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="7">7</th><td><i> *</i></td></tr>
+<tr><th id="8">8</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="9">9</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="10">10</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="11">11</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="12">12</th><td><i> *</i></td></tr>
+<tr><th id="13">13</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="14">14</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="15">15</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="16">16</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="17">17</th><td><i> *</i></td></tr>
+<tr><th id="18">18</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="19">19</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="20">20</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="21">21</th><td><i> */</i></td></tr>
+<tr><th id="22">22</th><td></td></tr>
+<tr><th id="23">23</th><td><u>#include <a href="../../include/inttypes.h.html">&lt;inttypes.h&gt;</a></u></td></tr>
+<tr><th id="24">24</th><td><u>#include &lt;limits.h&gt;</u></td></tr>
+<tr><th id="25">25</th><td></td></tr>
+<tr><th id="26">26</th><td><u>#include <a href="../libavutil/avassert.h.html">"libavutil/avassert.h"</a></u></td></tr>
+<tr><th id="27">27</th><td><u>#include <a href="avcodec.h.html">"avcodec.h"</a></u></td></tr>
+<tr><th id="28">28</th><td><u>#include <a href="mathops.h.html">"mathops.h"</a></u></td></tr>
+<tr><th id="29">29</th><td><u>#include <a href="celp_math.h.html">"celp_math.h"</a></u></td></tr>
+<tr><th id="30">30</th><td><u>#include <a href="../libavutil/common.h.html">"libavutil/common.h"</a></u></td></tr>
+<tr><th id="31">31</th><td></td></tr>
+<tr><th id="32">32</th><td><em>static</em> <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> <dfn class="tu decl def" id="exp2a" title='exp2a' data-type='const uint16_t [32]' data-ref="exp2a">exp2a</dfn>[]=</td></tr>
+<tr><th id="33">33</th><td>{</td></tr>
+<tr><th id="34">34</th><td>     <var>0</var>,  <var>1435</var>,  <var>2901</var>,  <var>4400</var>,  <var>5931</var>,  <var>7496</var>,  <var>9096</var>, <var>10730</var>,</td></tr>
+<tr><th id="35">35</th><td> <var>12400</var>, <var>14106</var>, <var>15850</var>, <var>17632</var>, <var>19454</var>, <var>21315</var>, <var>23216</var>, <var>25160</var>,</td></tr>
+<tr><th id="36">36</th><td> <var>27146</var>, <var>29175</var>, <var>31249</var>, <var>33368</var>, <var>35534</var>, <var>37747</var>, <var>40009</var>, <var>42320</var>,</td></tr>
+<tr><th id="37">37</th><td> <var>44682</var>, <var>47095</var>, <var>49562</var>, <var>52082</var>, <var>54657</var>, <var>57289</var>, <var>59979</var>, <var>62727</var>,</td></tr>
+<tr><th id="38">38</th><td>};</td></tr>
+<tr><th id="39">39</th><td></td></tr>
+<tr><th id="40">40</th><td><em>static</em> <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> <dfn class="tu decl def" id="exp2b" title='exp2b' data-type='const uint16_t [32]' data-ref="exp2b">exp2b</dfn>[]=</td></tr>
+<tr><th id="41">41</th><td>{</td></tr>
+<tr><th id="42">42</th><td>     <var>3</var>,   <var>712</var>,  <var>1424</var>,  <var>2134</var>,  <var>2845</var>,  <var>3557</var>,  <var>4270</var>,  <var>4982</var>,</td></tr>
+<tr><th id="43">43</th><td>  <var>5696</var>,  <var>6409</var>,  <var>7124</var>,  <var>7839</var>,  <var>8554</var>,  <var>9270</var>,  <var>9986</var>, <var>10704</var>,</td></tr>
+<tr><th id="44">44</th><td> <var>11421</var>, <var>12138</var>, <var>12857</var>, <var>13576</var>, <var>14295</var>, <var>15014</var>, <var>15734</var>, <var>16455</var>,</td></tr>
+<tr><th id="45">45</th><td> <var>17176</var>, <var>17898</var>, <var>18620</var>, <var>19343</var>, <var>20066</var>, <var>20790</var>, <var>21514</var>, <var>22238</var>,</td></tr>
+<tr><th id="46">46</th><td>};</td></tr>
+<tr><th id="47">47</th><td></td></tr>
+<tr><th id="48">48</th><td><em>int</em> <dfn class="decl def" id="ff_exp2" title='ff_exp2' data-ref="ff_exp2">ff_exp2</dfn>(<a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> <dfn class="local col1 decl" id="1power" title='power' data-type='uint16_t' data-ref="1power">power</dfn>)</td></tr>
+<tr><th id="49">49</th><td>{</td></tr>
+<tr><th id="50">50</th><td>    <em>unsigned</em> <em>int</em> <dfn class="local col2 decl" id="2result" title='result' data-type='unsigned int' data-ref="2result">result</dfn>= <a class="tu ref" href="#exp2a" title='exp2a' data-use='r' data-ref="exp2a">exp2a</a>[<a class="local col1 ref" href="#1power" title='power' data-ref="1power">power</a>&gt;&gt;<var>10</var>] + <var>0x10000</var>;</td></tr>
+<tr><th id="51">51</th><td></td></tr>
+<tr><th id="52">52</th><td>    <a class="macro" href="../libavutil/avassert.h.html#64" title="((void)0)" data-ref="_M/av_assert2">av_assert2</a>(power &lt;= <var>0x7fff</var>);</td></tr>
+<tr><th id="53">53</th><td></td></tr>
+<tr><th id="54">54</th><td>    <a class="local col2 ref" href="#2result" title='result' data-ref="2result">result</a>= (<a class="local col2 ref" href="#2result" title='result' data-ref="2result">result</a>&lt;&lt;<var>3</var>) + ((<a class="local col2 ref" href="#2result" title='result' data-ref="2result">result</a>*<a class="tu ref" href="#exp2b" title='exp2b' data-use='r' data-ref="exp2b">exp2b</a>[(<a class="local col1 ref" href="#1power" title='power' data-ref="1power">power</a>&gt;&gt;<var>5</var>)&amp;<var>31</var>])&gt;&gt;<var>17</var>);</td></tr>
+<tr><th id="55">55</th><td>    <b>return</b> <a class="local col2 ref" href="#2result" title='result' data-ref="2result">result</a> + ((<a class="local col2 ref" href="#2result" title='result' data-ref="2result">result</a>*(<a class="local col1 ref" href="#1power" title='power' data-ref="1power">power</a>&amp;<var>31</var>)*<var>89</var>)&gt;&gt;<var>22</var>);</td></tr>
+<tr><th id="56">56</th><td>}</td></tr>
+<tr><th id="57">57</th><td></td></tr>
+<tr><th id="58">58</th><td><i class="doc" data-doc="tab_log2">/**</i></td></tr>
+<tr><th id="59">59</th><td><i class="doc" data-doc="tab_log2"> * Table used to compute log2(x)</i></td></tr>
+<tr><th id="60">60</th><td><i class="doc" data-doc="tab_log2"> *</i></td></tr>
+<tr><th id="61">61</th><td><i class="doc" data-doc="tab_log2"> * tab_log2[i] = (1&lt;&lt;15) * log2(1 + i/32), i=0..32</i></td></tr>
+<tr><th id="62">62</th><td><i class="doc" data-doc="tab_log2"> */</i></td></tr>
+<tr><th id="63">63</th><td><em>static</em> <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> <dfn class="tu decl def" id="tab_log2" title='tab_log2' data-type='const uint16_t [33]' data-ref="tab_log2">tab_log2</dfn>[<var>33</var>] =</td></tr>
+<tr><th id="64">64</th><td>{</td></tr>
+<tr><th id="65">65</th><td><u>#<span data-ppcond="65">ifdef</span> <span class="macro" data-ref="_M/G729_BITEXACT">G729_BITEXACT</span></u></td></tr>
+<tr><th id="66">66</th><td>      <var>0</var>,   <var>1455</var>,   <var>2866</var>,   <var>4236</var>,   <var>5568</var>,   <var>6863</var>,   <var>8124</var>,   <var>9352</var>,</td></tr>
+<tr><th id="67">67</th><td>  <var>10549</var>,  <var>11716</var>,  <var>12855</var>,  <var>13967</var>,  <var>15054</var>,  <var>16117</var>,  <var>17156</var>,  <var>18172</var>,</td></tr>
+<tr><th id="68">68</th><td>  <var>19167</var>,  <var>20142</var>,  <var>21097</var>,  <var>22033</var>,  <var>22951</var>,  <var>23852</var>,  <var>24735</var>,  <var>25603</var>,</td></tr>
+<tr><th id="69">69</th><td>  <var>26455</var>,  <var>27291</var>,  <var>28113</var>,  <var>28922</var>,  <var>29716</var>,  <var>30497</var>,  <var>31266</var>,  <var>32023</var>,  <var>32767</var>,</td></tr>
+<tr><th id="70">70</th><td><u>#<span data-ppcond="65">else</span></u></td></tr>
+<tr><th id="71">71</th><td>      <var>4</var>,   <var>1459</var>,   <var>2870</var>,   <var>4240</var>,   <var>5572</var>,   <var>6867</var>,   <var>8127</var>,   <var>9355</var>,</td></tr>
+<tr><th id="72">72</th><td>  <var>10552</var>,  <var>11719</var>,  <var>12858</var>,  <var>13971</var>,  <var>15057</var>,  <var>16120</var>,  <var>17158</var>,  <var>18175</var>,</td></tr>
+<tr><th id="73">73</th><td>  <var>19170</var>,  <var>20145</var>,  <var>21100</var>,  <var>22036</var>,  <var>22954</var>,  <var>23854</var>,  <var>24738</var>,  <var>25605</var>,</td></tr>
+<tr><th id="74">74</th><td>  <var>26457</var>,  <var>27294</var>,  <var>28116</var>,  <var>28924</var>,  <var>29719</var>,  <var>30500</var>,  <var>31269</var>,  <var>32025</var>,  <var>32769</var>,</td></tr>
+<tr><th id="75">75</th><td><u>#<span data-ppcond="65">endif</span></u></td></tr>
+<tr><th id="76">76</th><td>};</td></tr>
+<tr><th id="77">77</th><td></td></tr>
+<tr><th id="78">78</th><td><em>int</em> <dfn class="decl def" id="ff_log2_q15" title='ff_log2_q15' data-ref="ff_log2_q15">ff_log2_q15</dfn>(<a class="typedef" href="../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a> <dfn class="local col3 decl" id="3value" title='value' data-type='uint32_t' data-ref="3value">value</dfn>)</td></tr>
+<tr><th id="79">79</th><td>{</td></tr>
+<tr><th id="80">80</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a>  <dfn class="local col4 decl" id="4power_int" title='power_int' data-type='uint8_t' data-ref="4power_int">power_int</dfn>;</td></tr>
+<tr><th id="81">81</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a>  <dfn class="local col5 decl" id="5frac_x0" title='frac_x0' data-type='uint8_t' data-ref="5frac_x0">frac_x0</dfn>;</td></tr>
+<tr><th id="82">82</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> <dfn class="local col6 decl" id="6frac_dx" title='frac_dx' data-type='uint16_t' data-ref="6frac_dx">frac_dx</dfn>;</td></tr>
+<tr><th id="83">83</th><td></td></tr>
+<tr><th id="84">84</th><td>    <i>// Stripping zeros from beginning</i></td></tr>
+<tr><th id="85">85</th><td>    <a class="local col4 ref" href="#4power_int" title='power_int' data-ref="4power_int">power_int</a> = <a class="macro" href="../libavutil/intmath.h.html#83" title="ff_log2" data-ref="_M/av_log2">av_log2</a>(<a class="local col3 ref" href="#3value" title='value' data-ref="3value">value</a>);</td></tr>
+<tr><th id="86">86</th><td>    <a class="local col3 ref" href="#3value" title='value' data-ref="3value">value</a> &lt;&lt;= (<var>31</var> - <a class="local col4 ref" href="#4power_int" title='power_int' data-ref="4power_int">power_int</a>);</td></tr>
+<tr><th id="87">87</th><td></td></tr>
+<tr><th id="88">88</th><td>    <i>// b31 is always non-zero now</i></td></tr>
+<tr><th id="89">89</th><td>    <a class="local col5 ref" href="#5frac_x0" title='frac_x0' data-ref="5frac_x0">frac_x0</a> = (<a class="local col3 ref" href="#3value" title='value' data-ref="3value">value</a> &amp; <var>0x7c000000</var>) &gt;&gt; <var>26</var>; <i>// b26-b31 and [32..63] -&gt; [0..31]</i></td></tr>
+<tr><th id="90">90</th><td>    <a class="local col6 ref" href="#6frac_dx" title='frac_dx' data-ref="6frac_dx">frac_dx</a> = (<a class="local col3 ref" href="#3value" title='value' data-ref="3value">value</a> &amp; <var>0x03fff800</var>) &gt;&gt; <var>11</var>;</td></tr>
+<tr><th id="91">91</th><td></td></tr>
+<tr><th id="92">92</th><td>    <a class="local col3 ref" href="#3value" title='value' data-ref="3value">value</a> = <a class="tu ref" href="#tab_log2" title='tab_log2' data-use='r' data-ref="tab_log2">tab_log2</a>[<a class="local col5 ref" href="#5frac_x0" title='frac_x0' data-ref="5frac_x0">frac_x0</a>];</td></tr>
+<tr><th id="93">93</th><td>    <a class="local col3 ref" href="#3value" title='value' data-ref="3value">value</a> += (<a class="local col6 ref" href="#6frac_dx" title='frac_dx' data-ref="6frac_dx">frac_dx</a> * (<a class="tu ref" href="#tab_log2" title='tab_log2' data-use='r' data-ref="tab_log2">tab_log2</a>[<a class="local col5 ref" href="#5frac_x0" title='frac_x0' data-ref="5frac_x0">frac_x0</a>+<var>1</var>] - <a class="tu ref" href="#tab_log2" title='tab_log2' data-use='r' data-ref="tab_log2">tab_log2</a>[<a class="local col5 ref" href="#5frac_x0" title='frac_x0' data-ref="5frac_x0">frac_x0</a>])) &gt;&gt; <var>15</var>;</td></tr>
+<tr><th id="94">94</th><td></td></tr>
+<tr><th id="95">95</th><td>    <b>return</b> (<a class="local col4 ref" href="#4power_int" title='power_int' data-ref="4power_int">power_int</a> &lt;&lt; <var>15</var>) + <a class="local col3 ref" href="#3value" title='value' data-ref="3value">value</a>;</td></tr>
+<tr><th id="96">96</th><td>}</td></tr>
+<tr><th id="97">97</th><td></td></tr>
+<tr><th id="98">98</th><td><a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="decl def" id="ff_dot_product" title='ff_dot_product' data-ref="ff_dot_product">ff_dot_product</dfn>(<em>const</em> <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> *<dfn class="local col7 decl" id="7a" title='a' data-type='const int16_t *' data-ref="7a">a</dfn>, <em>const</em> <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> *<dfn class="local col8 decl" id="8b" title='b' data-type='const int16_t *' data-ref="8b">b</dfn>, <em>int</em> <dfn class="local col9 decl" id="9length" title='length' data-type='int' data-ref="9length">length</dfn>)</td></tr>
+<tr><th id="99">99</th><td>{</td></tr>
+<tr><th id="100">100</th><td>    <em>int</em> <dfn class="local col0 decl" id="10i" title='i' data-type='int' data-ref="10i">i</dfn>;</td></tr>
+<tr><th id="101">101</th><td>    <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="local col1 decl" id="11sum" title='sum' data-type='int64_t' data-ref="11sum">sum</dfn> = <var>0</var>;</td></tr>
+<tr><th id="102">102</th><td></td></tr>
+<tr><th id="103">103</th><td>    <b>for</b> (<a class="local col0 ref" href="#10i" title='i' data-ref="10i">i</a> = <var>0</var>; <a class="local col0 ref" href="#10i" title='i' data-ref="10i">i</a> &lt; <a class="local col9 ref" href="#9length" title='length' data-ref="9length">length</a>; <a class="local col0 ref" href="#10i" title='i' data-ref="10i">i</a>++)</td></tr>
+<tr><th id="104">104</th><td>        <a class="local col1 ref" href="#11sum" title='sum' data-ref="11sum">sum</a> += <a class="macro" href="mathops.h.html#87" title="((a[i]) * (b[i]))" data-ref="_M/MUL16">MUL16</a>(<a class="local col7 ref" href="#7a" title='a' data-ref="7a">a</a>[<a class="local col0 ref" href="#10i" title='i' data-ref="10i">i</a>], <a class="local col8 ref" href="#8b" title='b' data-ref="8b">b</a>[<a class="local col0 ref" href="#10i" title='i' data-ref="10i">i</a>]);</td></tr>
+<tr><th id="105">105</th><td></td></tr>
+<tr><th id="106">106</th><td>    <b>return</b> <a class="local col1 ref" href="#11sum" title='sum' data-ref="11sum">sum</a>;</td></tr>
+<tr><th id="107">107</th><td>}</td></tr>
+<tr><th id="108">108</th><td></td></tr>
+<tr><th id="109">109</th><td><em>float</em> <dfn class="decl def" id="ff_dot_productf" title='ff_dot_productf' data-ref="ff_dot_productf">ff_dot_productf</dfn>(<em>const</em> <em>float</em>* <dfn class="local col2 decl" id="12a" title='a' data-type='const float *' data-ref="12a">a</dfn>, <em>const</em> <em>float</em>* <dfn class="local col3 decl" id="13b" title='b' data-type='const float *' data-ref="13b">b</dfn>, <em>int</em> <dfn class="local col4 decl" id="14length" title='length' data-type='int' data-ref="14length">length</dfn>)</td></tr>
+<tr><th id="110">110</th><td>{</td></tr>
+<tr><th id="111">111</th><td>    <em>float</em> <dfn class="local col5 decl" id="15sum" title='sum' data-type='float' data-ref="15sum">sum</dfn> = <var>0</var>;</td></tr>
+<tr><th id="112">112</th><td>    <em>int</em> <dfn class="local col6 decl" id="16i" title='i' data-type='int' data-ref="16i">i</dfn>;</td></tr>
+<tr><th id="113">113</th><td></td></tr>
+<tr><th id="114">114</th><td>    <b>for</b>(<a class="local col6 ref" href="#16i" title='i' data-ref="16i">i</a>=<var>0</var>; <a class="local col6 ref" href="#16i" title='i' data-ref="16i">i</a>&lt;<a class="local col4 ref" href="#14length" title='length' data-ref="14length">length</a>; <a class="local col6 ref" href="#16i" title='i' data-ref="16i">i</a>++)</td></tr>
+<tr><th id="115">115</th><td>        <a class="local col5 ref" href="#15sum" title='sum' data-ref="15sum">sum</a> += <a class="local col2 ref" href="#12a" title='a' data-ref="12a">a</a>[<a class="local col6 ref" href="#16i" title='i' data-ref="16i">i</a>] * <a class="local col3 ref" href="#13b" title='b' data-ref="13b">b</a>[<a class="local col6 ref" href="#16i" title='i' data-ref="16i">i</a>];</td></tr>
+<tr><th id="116">116</th><td></td></tr>
+<tr><th id="117">117</th><td>    <b>return</b> <a class="local col5 ref" href="#15sum" title='sum' data-ref="15sum">sum</a>;</td></tr>
+<tr><th id="118">118</th><td>}</td></tr>
+<tr><th id="119">119</th><td></td></tr>
+<tr><th id="120">120</th><td><em>void</em> <dfn class="decl def" id="ff_celp_math_init" title='ff_celp_math_init' data-ref="ff_celp_math_init">ff_celp_math_init</dfn>(<a class="typedef" href="celp_math.h.html#CELPMContext" title='CELPMContext' data-type='struct CELPMContext' data-ref="CELPMContext">CELPMContext</a> *<dfn class="local col7 decl" id="17c" title='c' data-type='CELPMContext *' data-ref="17c">c</dfn>)</td></tr>
+<tr><th id="121">121</th><td>{</td></tr>
+<tr><th id="122">122</th><td>    <a class="local col7 ref" href="#17c" title='c' data-ref="17c">c</a>-&gt;<a class="ref" href="celp_math.h.html#CELPMContext::dot_productf" title='CELPMContext::dot_productf' data-ref="CELPMContext::dot_productf">dot_productf</a>   = <a class="ref" href="#ff_dot_productf" title='ff_dot_productf' data-ref="ff_dot_productf">ff_dot_productf</a>;</td></tr>
+<tr><th id="123">123</th><td></td></tr>
+<tr><th id="124">124</th><td>    <b>if</b>(<a class="macro" href="../config.h.html#73" title="0" data-ref="_M/HAVE_MIPSFPU">HAVE_MIPSFPU</a>)</td></tr>
+<tr><th id="125">125</th><td>        <a class="ref" href="celp_math.h.html#ff_celp_math_init_mips" title='ff_celp_math_init_mips' data-ref="ff_celp_math_init_mips">ff_celp_math_init_mips</a>(<a class="local col7 ref" href="#17c" title='c' data-ref="17c">c</a>);</td></tr>
+<tr><th id="126">126</th><td>}</td></tr>
+<tr><th id="127">127</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

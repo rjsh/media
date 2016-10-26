@@ -1,0 +1,226 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>nvenc.h source code [ffmpeg/libavcodec/nvenc.h] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="NvencContext,NvencDynLoadFunctions,NvencSurface,cudaError_enum "/>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavcodec/nvenc.h'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavcodec</a>/<a href='nvenc.h.html'>nvenc.h</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="3">3</th><td><i> *</i></td></tr>
+<tr><th id="4">4</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="5">5</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="6">6</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="7">7</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="8">8</th><td><i> *</i></td></tr>
+<tr><th id="9">9</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="10">10</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="11">11</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="12">12</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="13">13</th><td><i> *</i></td></tr>
+<tr><th id="14">14</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="15">15</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="16">16</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="17">17</th><td><i> */</i></td></tr>
+<tr><th id="18">18</th><td></td></tr>
+<tr><th id="19">19</th><td><u>#<span data-ppcond="19">ifndef</span> <span class="macro" data-ref="_M/AVCODEC_NVENC_H">AVCODEC_NVENC_H</span></u></td></tr>
+<tr><th id="20">20</th><td><u>#define <dfn class="macro" id="_M/AVCODEC_NVENC_H" data-ref="_M/AVCODEC_NVENC_H">AVCODEC_NVENC_H</dfn></u></td></tr>
+<tr><th id="21">21</th><td></td></tr>
+<tr><th id="22">22</th><td><u>#include <a href="../compat/nvenc/nvEncodeAPI.h.html">"compat/nvenc/nvEncodeAPI.h"</a></u></td></tr>
+<tr><th id="23">23</th><td></td></tr>
+<tr><th id="24">24</th><td><u>#include <a href="../config.h.html">"config.h"</a></u></td></tr>
+<tr><th id="25">25</th><td></td></tr>
+<tr><th id="26">26</th><td><u>#include <a href="../libavutil/fifo.h.html">"libavutil/fifo.h"</a></u></td></tr>
+<tr><th id="27">27</th><td><u>#include <a href="../libavutil/opt.h.html">"libavutil/opt.h"</a></u></td></tr>
+<tr><th id="28">28</th><td></td></tr>
+<tr><th id="29">29</th><td><u>#include <a href="avcodec.h.html">"avcodec.h"</a></u></td></tr>
+<tr><th id="30">30</th><td></td></tr>
+<tr><th id="31">31</th><td><u>#<span data-ppcond="31">if</span> <a class="macro" href="../config.h.html#512" title="0" data-ref="_M/CONFIG_CUDA">CONFIG_CUDA</a></u></td></tr>
+<tr><th id="32">32</th><td><u>#include "libavutil/hwcontext_cuda.h"</u></td></tr>
+<tr><th id="33">33</th><td><u>#<span data-ppcond="31">else</span></u></td></tr>
+<tr><th id="34">34</th><td></td></tr>
+<tr><th id="35">35</th><td><u>#<span data-ppcond="35">if</span> defined(<span class="macro" data-ref="_M/_WIN32">_WIN32</span>)</u></td></tr>
+<tr><th id="36">36</th><td><u>#define CUDAAPI __stdcall</u></td></tr>
+<tr><th id="37">37</th><td><u>#<span data-ppcond="35">else</span></u></td></tr>
+<tr><th id="38">38</th><td><u>#define <dfn class="macro" id="_M/CUDAAPI" data-ref="_M/CUDAAPI">CUDAAPI</dfn></u></td></tr>
+<tr><th id="39">39</th><td><u>#<span data-ppcond="35">endif</span></u></td></tr>
+<tr><th id="40">40</th><td></td></tr>
+<tr><th id="41">41</th><td><b>typedef</b> <b>enum</b> <dfn class="type def" id="cudaError_enum" title='cudaError_enum' data-ref="cudaError_enum"><a class="type" href="#cudaError_enum" title='cudaError_enum' data-ref="cudaError_enum">cudaError_enum</a></dfn> {</td></tr>
+<tr><th id="42">42</th><td>    <dfn class="enum" id="cudaError_enum::CUDA_SUCCESS" title='cudaError_enum::CUDA_SUCCESS' data-ref="cudaError_enum::CUDA_SUCCESS">CUDA_SUCCESS</dfn> = <var>0</var></td></tr>
+<tr><th id="43">43</th><td>} <dfn class="typedef" id="CUresult" title='CUresult' data-type='enum cudaError_enum' data-ref="CUresult">CUresult</dfn>;</td></tr>
+<tr><th id="44">44</th><td><b>typedef</b> <em>int</em> <dfn class="typedef" id="CUdevice" title='CUdevice' data-type='int' data-ref="CUdevice">CUdevice</dfn>;</td></tr>
+<tr><th id="45">45</th><td><b>typedef</b> <em>void</em>* <dfn class="typedef" id="CUcontext" title='CUcontext' data-type='void *' data-ref="CUcontext">CUcontext</dfn>;</td></tr>
+<tr><th id="46">46</th><td><b>typedef</b> <em>void</em>* <dfn class="typedef" id="CUdeviceptr" title='CUdeviceptr' data-type='void *' data-ref="CUdeviceptr">CUdeviceptr</dfn>;</td></tr>
+<tr><th id="47">47</th><td><u>#<span data-ppcond="31">endif</span></u></td></tr>
+<tr><th id="48">48</th><td></td></tr>
+<tr><th id="49">49</th><td><u>#define <dfn class="macro" id="_M/MAX_REGISTERED_FRAMES" data-ref="_M/MAX_REGISTERED_FRAMES">MAX_REGISTERED_FRAMES</dfn> 64</u></td></tr>
+<tr><th id="50">50</th><td></td></tr>
+<tr><th id="51">51</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="NvencSurface" title='NvencSurface' data-ref="NvencSurface"><a class="type" href="#NvencSurface" title='NvencSurface' data-ref="NvencSurface">NvencSurface</a></dfn></td></tr>
+<tr><th id="52">52</th><td>{</td></tr>
+<tr><th id="53">53</th><td>    <a class="typedef" href="../compat/nvenc/nvEncodeAPI.h.html#NV_ENC_INPUT_PTR" title='NV_ENC_INPUT_PTR' data-type='void *' data-ref="NV_ENC_INPUT_PTR">NV_ENC_INPUT_PTR</a> <dfn class="decl" id="NvencSurface::input_surface" title='NvencSurface::input_surface' data-ref="NvencSurface::input_surface">input_surface</dfn>;</td></tr>
+<tr><th id="54">54</th><td>    <a class="typedef" href="../libavutil/frame.h.html#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="decl" id="NvencSurface::in_ref" title='NvencSurface::in_ref' data-ref="NvencSurface::in_ref">in_ref</dfn>;</td></tr>
+<tr><th id="55">55</th><td>    <a class="typedef" href="../compat/nvenc/nvEncodeAPI.h.html#NV_ENC_MAP_INPUT_RESOURCE" title='NV_ENC_MAP_INPUT_RESOURCE' data-type='struct _NV_ENC_MAP_INPUT_RESOURCE' data-ref="NV_ENC_MAP_INPUT_RESOURCE">NV_ENC_MAP_INPUT_RESOURCE</a> <dfn class="decl" id="NvencSurface::in_map" title='NvencSurface::in_map' data-ref="NvencSurface::in_map">in_map</dfn>;</td></tr>
+<tr><th id="56">56</th><td>    <em>int</em> <dfn class="decl" id="NvencSurface::reg_idx" title='NvencSurface::reg_idx' data-ref="NvencSurface::reg_idx">reg_idx</dfn>;</td></tr>
+<tr><th id="57">57</th><td>    <em>int</em> <dfn class="decl" id="NvencSurface::width" title='NvencSurface::width' data-ref="NvencSurface::width">width</dfn>;</td></tr>
+<tr><th id="58">58</th><td>    <em>int</em> <dfn class="decl" id="NvencSurface::height" title='NvencSurface::height' data-ref="NvencSurface::height">height</dfn>;</td></tr>
+<tr><th id="59">59</th><td>    <em>int</em> <dfn class="decl" id="NvencSurface::pitch" title='NvencSurface::pitch' data-ref="NvencSurface::pitch">pitch</dfn>;</td></tr>
+<tr><th id="60">60</th><td></td></tr>
+<tr><th id="61">61</th><td>    <a class="typedef" href="../compat/nvenc/nvEncodeAPI.h.html#NV_ENC_OUTPUT_PTR" title='NV_ENC_OUTPUT_PTR' data-type='void *' data-ref="NV_ENC_OUTPUT_PTR">NV_ENC_OUTPUT_PTR</a> <dfn class="decl" id="NvencSurface::output_surface" title='NvencSurface::output_surface' data-ref="NvencSurface::output_surface">output_surface</dfn>;</td></tr>
+<tr><th id="62">62</th><td>    <a class="typedef" href="../compat/nvenc/nvEncodeAPI.h.html#NV_ENC_BUFFER_FORMAT" title='NV_ENC_BUFFER_FORMAT' data-type='enum _NV_ENC_BUFFER_FORMAT' data-ref="NV_ENC_BUFFER_FORMAT">NV_ENC_BUFFER_FORMAT</a> <dfn class="decl" id="NvencSurface::format" title='NvencSurface::format' data-ref="NvencSurface::format">format</dfn>;</td></tr>
+<tr><th id="63">63</th><td>    <em>int</em> <dfn class="decl" id="NvencSurface::size" title='NvencSurface::size' data-ref="NvencSurface::size">size</dfn>;</td></tr>
+<tr><th id="64">64</th><td>    <em>int</em> <dfn class="decl" id="NvencSurface::lockCount" title='NvencSurface::lockCount' data-ref="NvencSurface::lockCount">lockCount</dfn>;</td></tr>
+<tr><th id="65">65</th><td>} <dfn class="typedef" id="NvencSurface" title='NvencSurface' data-type='struct NvencSurface' data-ref="NvencSurface">NvencSurface</dfn>;</td></tr>
+<tr><th id="66">66</th><td></td></tr>
+<tr><th id="67">67</th><td><b>typedef</b> <a class="typedef" href="#CUresult" title='CUresult' data-type='enum cudaError_enum' data-ref="CUresult">CUresult</a>(<a class="macro" href="#38" title="" data-ref="_M/CUDAAPI">CUDAAPI</a> *<dfn class="typedef" id="PCUINIT" title='PCUINIT' data-type='CUresult (*)(unsigned int)' data-ref="PCUINIT">PCUINIT</dfn>)(<em>unsigned</em> <em>int</em> <dfn class="local col8 decl" id="188Flags" title='Flags' data-type='unsigned int' data-ref="188Flags">Flags</dfn>);</td></tr>
+<tr><th id="68">68</th><td><b>typedef</b> <a class="typedef" href="#CUresult" title='CUresult' data-type='enum cudaError_enum' data-ref="CUresult">CUresult</a>(<a class="macro" href="#38" title="" data-ref="_M/CUDAAPI">CUDAAPI</a> *<dfn class="typedef" id="PCUDEVICEGETCOUNT" title='PCUDEVICEGETCOUNT' data-type='CUresult (*)(int *)' data-ref="PCUDEVICEGETCOUNT">PCUDEVICEGETCOUNT</dfn>)(<em>int</em> *<dfn class="local col9 decl" id="189count" title='count' data-type='int *' data-ref="189count">count</dfn>);</td></tr>
+<tr><th id="69">69</th><td><b>typedef</b> <a class="typedef" href="#CUresult" title='CUresult' data-type='enum cudaError_enum' data-ref="CUresult">CUresult</a>(<a class="macro" href="#38" title="" data-ref="_M/CUDAAPI">CUDAAPI</a> *<dfn class="typedef" id="PCUDEVICEGET" title='PCUDEVICEGET' data-type='CUresult (*)(CUdevice *, int)' data-ref="PCUDEVICEGET">PCUDEVICEGET</dfn>)(<a class="typedef" href="#CUdevice" title='CUdevice' data-type='int' data-ref="CUdevice">CUdevice</a> *<dfn class="local col0 decl" id="190device" title='device' data-type='CUdevice *' data-ref="190device">device</dfn>, <em>int</em> <dfn class="local col1 decl" id="191ordinal" title='ordinal' data-type='int' data-ref="191ordinal">ordinal</dfn>);</td></tr>
+<tr><th id="70">70</th><td><b>typedef</b> <a class="typedef" href="#CUresult" title='CUresult' data-type='enum cudaError_enum' data-ref="CUresult">CUresult</a>(<a class="macro" href="#38" title="" data-ref="_M/CUDAAPI">CUDAAPI</a> *<dfn class="typedef" id="PCUDEVICEGETNAME" title='PCUDEVICEGETNAME' data-type='CUresult (*)(char *, int, CUdevice)' data-ref="PCUDEVICEGETNAME">PCUDEVICEGETNAME</dfn>)(<em>char</em> *<dfn class="local col2 decl" id="192name" title='name' data-type='char *' data-ref="192name">name</dfn>, <em>int</em> <dfn class="local col3 decl" id="193len" title='len' data-type='int' data-ref="193len">len</dfn>, <a class="typedef" href="#CUdevice" title='CUdevice' data-type='int' data-ref="CUdevice">CUdevice</a> <dfn class="local col4 decl" id="194dev" title='dev' data-type='CUdevice' data-ref="194dev">dev</dfn>);</td></tr>
+<tr><th id="71">71</th><td><b>typedef</b> <a class="typedef" href="#CUresult" title='CUresult' data-type='enum cudaError_enum' data-ref="CUresult">CUresult</a>(<a class="macro" href="#38" title="" data-ref="_M/CUDAAPI">CUDAAPI</a> *<dfn class="typedef" id="PCUDEVICECOMPUTECAPABILITY" title='PCUDEVICECOMPUTECAPABILITY' data-type='CUresult (*)(int *, int *, CUdevice)' data-ref="PCUDEVICECOMPUTECAPABILITY">PCUDEVICECOMPUTECAPABILITY</dfn>)(<em>int</em> *<dfn class="local col5 decl" id="195major" title='major' data-type='int *' data-ref="195major">major</dfn>, <em>int</em> *<dfn class="local col6 decl" id="196minor" title='minor' data-type='int *' data-ref="196minor">minor</dfn>, <a class="typedef" href="#CUdevice" title='CUdevice' data-type='int' data-ref="CUdevice">CUdevice</a> <dfn class="local col7 decl" id="197dev" title='dev' data-type='CUdevice' data-ref="197dev">dev</dfn>);</td></tr>
+<tr><th id="72">72</th><td><b>typedef</b> <a class="typedef" href="#CUresult" title='CUresult' data-type='enum cudaError_enum' data-ref="CUresult">CUresult</a>(<a class="macro" href="#38" title="" data-ref="_M/CUDAAPI">CUDAAPI</a> *<dfn class="typedef" id="PCUCTXCREATE" title='PCUCTXCREATE' data-type='CUresult (*)(CUcontext *, unsigned int, CUdevice)' data-ref="PCUCTXCREATE">PCUCTXCREATE</dfn>)(<a class="typedef" href="#CUcontext" title='CUcontext' data-type='void *' data-ref="CUcontext">CUcontext</a> *<dfn class="local col8 decl" id="198pctx" title='pctx' data-type='CUcontext *' data-ref="198pctx">pctx</dfn>, <em>unsigned</em> <em>int</em> <dfn class="local col9 decl" id="199flags" title='flags' data-type='unsigned int' data-ref="199flags">flags</dfn>, <a class="typedef" href="#CUdevice" title='CUdevice' data-type='int' data-ref="CUdevice">CUdevice</a> <dfn class="local col0 decl" id="200dev" title='dev' data-type='CUdevice' data-ref="200dev">dev</dfn>);</td></tr>
+<tr><th id="73">73</th><td><b>typedef</b> <a class="typedef" href="#CUresult" title='CUresult' data-type='enum cudaError_enum' data-ref="CUresult">CUresult</a>(<a class="macro" href="#38" title="" data-ref="_M/CUDAAPI">CUDAAPI</a> *<dfn class="typedef" id="PCUCTXPOPCURRENT" title='PCUCTXPOPCURRENT' data-type='CUresult (*)(CUcontext *)' data-ref="PCUCTXPOPCURRENT">PCUCTXPOPCURRENT</dfn>)(<a class="typedef" href="#CUcontext" title='CUcontext' data-type='void *' data-ref="CUcontext">CUcontext</a> *<dfn class="local col1 decl" id="201pctx" title='pctx' data-type='CUcontext *' data-ref="201pctx">pctx</dfn>);</td></tr>
+<tr><th id="74">74</th><td><b>typedef</b> <a class="typedef" href="#CUresult" title='CUresult' data-type='enum cudaError_enum' data-ref="CUresult">CUresult</a>(<a class="macro" href="#38" title="" data-ref="_M/CUDAAPI">CUDAAPI</a> *<dfn class="typedef" id="PCUCTXDESTROY" title='PCUCTXDESTROY' data-type='CUresult (*)(CUcontext)' data-ref="PCUCTXDESTROY">PCUCTXDESTROY</dfn>)(<a class="typedef" href="#CUcontext" title='CUcontext' data-type='void *' data-ref="CUcontext">CUcontext</a> <dfn class="local col2 decl" id="202ctx" title='ctx' data-type='CUcontext' data-ref="202ctx">ctx</dfn>);</td></tr>
+<tr><th id="75">75</th><td></td></tr>
+<tr><th id="76">76</th><td><b>typedef</b> <a class="typedef" href="../compat/nvenc/nvEncodeAPI.h.html#NVENCSTATUS" title='NVENCSTATUS' data-type='enum _NVENCSTATUS' data-ref="NVENCSTATUS">NVENCSTATUS</a> (<a class="macro" href="../compat/nvenc/nvEncodeAPI.h.html#71" title="" data-ref="_M/NVENCAPI">NVENCAPI</a> *<dfn class="typedef" id="PNVENCODEAPIGETMAXSUPPORTEDVERSION" title='PNVENCODEAPIGETMAXSUPPORTEDVERSION' data-type='NVENCSTATUS (*)(uint32_t *)' data-ref="PNVENCODEAPIGETMAXSUPPORTEDVERSION">PNVENCODEAPIGETMAXSUPPORTEDVERSION</dfn>)(<a class="typedef" href="../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a>* <dfn class="local col3 decl" id="203version" title='version' data-type='uint32_t *' data-ref="203version">version</dfn>);</td></tr>
+<tr><th id="77">77</th><td><b>typedef</b> <a class="typedef" href="../compat/nvenc/nvEncodeAPI.h.html#NVENCSTATUS" title='NVENCSTATUS' data-type='enum _NVENCSTATUS' data-ref="NVENCSTATUS">NVENCSTATUS</a> (<a class="macro" href="../compat/nvenc/nvEncodeAPI.h.html#71" title="" data-ref="_M/NVENCAPI">NVENCAPI</a> *<dfn class="typedef" id="PNVENCODEAPICREATEINSTANCE" title='PNVENCODEAPICREATEINSTANCE' data-type='NVENCSTATUS (*)(NV_ENCODE_API_FUNCTION_LIST *)' data-ref="PNVENCODEAPICREATEINSTANCE">PNVENCODEAPICREATEINSTANCE</dfn>)(<a class="typedef" href="../compat/nvenc/nvEncodeAPI.h.html#NV_ENCODE_API_FUNCTION_LIST" title='NV_ENCODE_API_FUNCTION_LIST' data-type='struct _NV_ENCODE_API_FUNCTION_LIST' data-ref="NV_ENCODE_API_FUNCTION_LIST">NV_ENCODE_API_FUNCTION_LIST</a> *<dfn class="local col4 decl" id="204functionList" title='functionList' data-type='NV_ENCODE_API_FUNCTION_LIST *' data-ref="204functionList">functionList</dfn>);</td></tr>
+<tr><th id="78">78</th><td></td></tr>
+<tr><th id="79">79</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="NvencDynLoadFunctions" title='NvencDynLoadFunctions' data-ref="NvencDynLoadFunctions"><a class="type" href="#NvencDynLoadFunctions" title='NvencDynLoadFunctions' data-ref="NvencDynLoadFunctions">NvencDynLoadFunctions</a></dfn></td></tr>
+<tr><th id="80">80</th><td>{</td></tr>
+<tr><th id="81">81</th><td><u>#<span data-ppcond="81">if</span> !<a class="macro" href="../config.h.html#512" title="0" data-ref="_M/CONFIG_CUDA">CONFIG_CUDA</a></u></td></tr>
+<tr><th id="82">82</th><td>    <em>void</em> *<dfn class="decl" id="NvencDynLoadFunctions::cuda" title='NvencDynLoadFunctions::cuda' data-ref="NvencDynLoadFunctions::cuda">cuda</dfn>;</td></tr>
+<tr><th id="83">83</th><td><u>#<span data-ppcond="81">endif</span></u></td></tr>
+<tr><th id="84">84</th><td>    <em>void</em> *<dfn class="decl" id="NvencDynLoadFunctions::nvenc" title='NvencDynLoadFunctions::nvenc' data-ref="NvencDynLoadFunctions::nvenc">nvenc</dfn>;</td></tr>
+<tr><th id="85">85</th><td></td></tr>
+<tr><th id="86">86</th><td>    <a class="typedef" href="#PCUINIT" title='PCUINIT' data-type='CUresult (*)(unsigned int)' data-ref="PCUINIT">PCUINIT</a> <dfn class="decl" id="NvencDynLoadFunctions::cu_init" title='NvencDynLoadFunctions::cu_init' data-ref="NvencDynLoadFunctions::cu_init">cu_init</dfn>;</td></tr>
+<tr><th id="87">87</th><td>    <a class="typedef" href="#PCUDEVICEGETCOUNT" title='PCUDEVICEGETCOUNT' data-type='CUresult (*)(int *)' data-ref="PCUDEVICEGETCOUNT">PCUDEVICEGETCOUNT</a> <dfn class="decl" id="NvencDynLoadFunctions::cu_device_get_count" title='NvencDynLoadFunctions::cu_device_get_count' data-ref="NvencDynLoadFunctions::cu_device_get_count">cu_device_get_count</dfn>;</td></tr>
+<tr><th id="88">88</th><td>    <a class="typedef" href="#PCUDEVICEGET" title='PCUDEVICEGET' data-type='CUresult (*)(CUdevice *, int)' data-ref="PCUDEVICEGET">PCUDEVICEGET</a> <dfn class="decl" id="NvencDynLoadFunctions::cu_device_get" title='NvencDynLoadFunctions::cu_device_get' data-ref="NvencDynLoadFunctions::cu_device_get">cu_device_get</dfn>;</td></tr>
+<tr><th id="89">89</th><td>    <a class="typedef" href="#PCUDEVICEGETNAME" title='PCUDEVICEGETNAME' data-type='CUresult (*)(char *, int, CUdevice)' data-ref="PCUDEVICEGETNAME">PCUDEVICEGETNAME</a> <dfn class="decl" id="NvencDynLoadFunctions::cu_device_get_name" title='NvencDynLoadFunctions::cu_device_get_name' data-ref="NvencDynLoadFunctions::cu_device_get_name">cu_device_get_name</dfn>;</td></tr>
+<tr><th id="90">90</th><td>    <a class="typedef" href="#PCUDEVICECOMPUTECAPABILITY" title='PCUDEVICECOMPUTECAPABILITY' data-type='CUresult (*)(int *, int *, CUdevice)' data-ref="PCUDEVICECOMPUTECAPABILITY">PCUDEVICECOMPUTECAPABILITY</a> <dfn class="decl" id="NvencDynLoadFunctions::cu_device_compute_capability" title='NvencDynLoadFunctions::cu_device_compute_capability' data-ref="NvencDynLoadFunctions::cu_device_compute_capability">cu_device_compute_capability</dfn>;</td></tr>
+<tr><th id="91">91</th><td>    <a class="typedef" href="#PCUCTXCREATE" title='PCUCTXCREATE' data-type='CUresult (*)(CUcontext *, unsigned int, CUdevice)' data-ref="PCUCTXCREATE">PCUCTXCREATE</a> <dfn class="decl" id="NvencDynLoadFunctions::cu_ctx_create" title='NvencDynLoadFunctions::cu_ctx_create' data-ref="NvencDynLoadFunctions::cu_ctx_create">cu_ctx_create</dfn>;</td></tr>
+<tr><th id="92">92</th><td>    <a class="typedef" href="#PCUCTXPOPCURRENT" title='PCUCTXPOPCURRENT' data-type='CUresult (*)(CUcontext *)' data-ref="PCUCTXPOPCURRENT">PCUCTXPOPCURRENT</a> <dfn class="decl" id="NvencDynLoadFunctions::cu_ctx_pop_current" title='NvencDynLoadFunctions::cu_ctx_pop_current' data-ref="NvencDynLoadFunctions::cu_ctx_pop_current">cu_ctx_pop_current</dfn>;</td></tr>
+<tr><th id="93">93</th><td>    <a class="typedef" href="#PCUCTXDESTROY" title='PCUCTXDESTROY' data-type='CUresult (*)(CUcontext)' data-ref="PCUCTXDESTROY">PCUCTXDESTROY</a> <dfn class="decl" id="NvencDynLoadFunctions::cu_ctx_destroy" title='NvencDynLoadFunctions::cu_ctx_destroy' data-ref="NvencDynLoadFunctions::cu_ctx_destroy">cu_ctx_destroy</dfn>;</td></tr>
+<tr><th id="94">94</th><td></td></tr>
+<tr><th id="95">95</th><td>    <a class="typedef" href="../compat/nvenc/nvEncodeAPI.h.html#NV_ENCODE_API_FUNCTION_LIST" title='NV_ENCODE_API_FUNCTION_LIST' data-type='struct _NV_ENCODE_API_FUNCTION_LIST' data-ref="NV_ENCODE_API_FUNCTION_LIST">NV_ENCODE_API_FUNCTION_LIST</a> <dfn class="decl" id="NvencDynLoadFunctions::nvenc_funcs" title='NvencDynLoadFunctions::nvenc_funcs' data-ref="NvencDynLoadFunctions::nvenc_funcs">nvenc_funcs</dfn>;</td></tr>
+<tr><th id="96">96</th><td>    <em>int</em> <dfn class="decl" id="NvencDynLoadFunctions::nvenc_device_count" title='NvencDynLoadFunctions::nvenc_device_count' data-ref="NvencDynLoadFunctions::nvenc_device_count">nvenc_device_count</dfn>;</td></tr>
+<tr><th id="97">97</th><td>} <dfn class="typedef" id="NvencDynLoadFunctions" title='NvencDynLoadFunctions' data-type='struct NvencDynLoadFunctions' data-ref="NvencDynLoadFunctions">NvencDynLoadFunctions</dfn>;</td></tr>
+<tr><th id="98">98</th><td></td></tr>
+<tr><th id="99">99</th><td><b>enum</b> {</td></tr>
+<tr><th id="100">100</th><td>    <dfn class="enum" id="::PRESET_DEFAULT" title='::PRESET_DEFAULT' data-ref="::PRESET_DEFAULT">PRESET_DEFAULT</dfn> = <var>0</var>,</td></tr>
+<tr><th id="101">101</th><td>    <dfn class="enum" id="::PRESET_SLOW" title='::PRESET_SLOW' data-ref="::PRESET_SLOW">PRESET_SLOW</dfn>,</td></tr>
+<tr><th id="102">102</th><td>    <dfn class="enum" id="::PRESET_MEDIUM" title='::PRESET_MEDIUM' data-ref="::PRESET_MEDIUM">PRESET_MEDIUM</dfn>,</td></tr>
+<tr><th id="103">103</th><td>    <dfn class="enum" id="::PRESET_FAST" title='::PRESET_FAST' data-ref="::PRESET_FAST">PRESET_FAST</dfn>,</td></tr>
+<tr><th id="104">104</th><td>    <dfn class="enum" id="::PRESET_HP" title='::PRESET_HP' data-ref="::PRESET_HP">PRESET_HP</dfn>,</td></tr>
+<tr><th id="105">105</th><td>    <dfn class="enum" id="::PRESET_HQ" title='::PRESET_HQ' data-ref="::PRESET_HQ">PRESET_HQ</dfn>,</td></tr>
+<tr><th id="106">106</th><td>    <dfn class="enum" id="::PRESET_BD" title='::PRESET_BD' data-ref="::PRESET_BD">PRESET_BD</dfn> ,</td></tr>
+<tr><th id="107">107</th><td>    <dfn class="enum" id="::PRESET_LOW_LATENCY_DEFAULT" title='::PRESET_LOW_LATENCY_DEFAULT' data-ref="::PRESET_LOW_LATENCY_DEFAULT">PRESET_LOW_LATENCY_DEFAULT</dfn> ,</td></tr>
+<tr><th id="108">108</th><td>    <dfn class="enum" id="::PRESET_LOW_LATENCY_HQ" title='::PRESET_LOW_LATENCY_HQ' data-ref="::PRESET_LOW_LATENCY_HQ">PRESET_LOW_LATENCY_HQ</dfn> ,</td></tr>
+<tr><th id="109">109</th><td>    <dfn class="enum" id="::PRESET_LOW_LATENCY_HP" title='::PRESET_LOW_LATENCY_HP' data-ref="::PRESET_LOW_LATENCY_HP">PRESET_LOW_LATENCY_HP</dfn>,</td></tr>
+<tr><th id="110">110</th><td>    <dfn class="enum" id="::PRESET_LOSSLESS_DEFAULT" title='::PRESET_LOSSLESS_DEFAULT' data-ref="::PRESET_LOSSLESS_DEFAULT">PRESET_LOSSLESS_DEFAULT</dfn>, <i>// lossless presets must be the last ones</i></td></tr>
+<tr><th id="111">111</th><td>    <dfn class="enum" id="::PRESET_LOSSLESS_HP" title='::PRESET_LOSSLESS_HP' data-ref="::PRESET_LOSSLESS_HP">PRESET_LOSSLESS_HP</dfn>,</td></tr>
+<tr><th id="112">112</th><td>};</td></tr>
+<tr><th id="113">113</th><td></td></tr>
+<tr><th id="114">114</th><td><b>enum</b> {</td></tr>
+<tr><th id="115">115</th><td>    <dfn class="enum" id="::NV_ENC_H264_PROFILE_BASELINE" title='::NV_ENC_H264_PROFILE_BASELINE' data-ref="::NV_ENC_H264_PROFILE_BASELINE">NV_ENC_H264_PROFILE_BASELINE</dfn>,</td></tr>
+<tr><th id="116">116</th><td>    <dfn class="enum" id="::NV_ENC_H264_PROFILE_MAIN" title='::NV_ENC_H264_PROFILE_MAIN' data-ref="::NV_ENC_H264_PROFILE_MAIN">NV_ENC_H264_PROFILE_MAIN</dfn>,</td></tr>
+<tr><th id="117">117</th><td>    <dfn class="enum" id="::NV_ENC_H264_PROFILE_HIGH" title='::NV_ENC_H264_PROFILE_HIGH' data-ref="::NV_ENC_H264_PROFILE_HIGH">NV_ENC_H264_PROFILE_HIGH</dfn>,</td></tr>
+<tr><th id="118">118</th><td>    <dfn class="enum" id="::NV_ENC_H264_PROFILE_HIGH_444P" title='::NV_ENC_H264_PROFILE_HIGH_444P' data-ref="::NV_ENC_H264_PROFILE_HIGH_444P">NV_ENC_H264_PROFILE_HIGH_444P</dfn>,</td></tr>
+<tr><th id="119">119</th><td>};</td></tr>
+<tr><th id="120">120</th><td></td></tr>
+<tr><th id="121">121</th><td><b>enum</b> {</td></tr>
+<tr><th id="122">122</th><td>    <dfn class="enum" id="::NV_ENC_HEVC_PROFILE_MAIN" title='::NV_ENC_HEVC_PROFILE_MAIN' data-ref="::NV_ENC_HEVC_PROFILE_MAIN">NV_ENC_HEVC_PROFILE_MAIN</dfn>,</td></tr>
+<tr><th id="123">123</th><td>    <dfn class="enum" id="::NV_ENC_HEVC_PROFILE_MAIN_10" title='::NV_ENC_HEVC_PROFILE_MAIN_10' data-ref="::NV_ENC_HEVC_PROFILE_MAIN_10">NV_ENC_HEVC_PROFILE_MAIN_10</dfn>,</td></tr>
+<tr><th id="124">124</th><td>    <dfn class="enum" id="::NV_ENC_HEVC_PROFILE_REXT" title='::NV_ENC_HEVC_PROFILE_REXT' data-ref="::NV_ENC_HEVC_PROFILE_REXT">NV_ENC_HEVC_PROFILE_REXT</dfn>,</td></tr>
+<tr><th id="125">125</th><td>};</td></tr>
+<tr><th id="126">126</th><td></td></tr>
+<tr><th id="127">127</th><td><b>enum</b> {</td></tr>
+<tr><th id="128">128</th><td>    <dfn class="enum" id="::NVENC_LOWLATENCY" title='::NVENC_LOWLATENCY' data-ref="::NVENC_LOWLATENCY">NVENC_LOWLATENCY</dfn> = <var>1</var>,</td></tr>
+<tr><th id="129">129</th><td>    <dfn class="enum" id="::NVENC_LOSSLESS" title='::NVENC_LOSSLESS' data-ref="::NVENC_LOSSLESS">NVENC_LOSSLESS</dfn>   = <var>2</var>,</td></tr>
+<tr><th id="130">130</th><td>    <dfn class="enum" id="::NVENC_ONE_PASS" title='::NVENC_ONE_PASS' data-ref="::NVENC_ONE_PASS">NVENC_ONE_PASS</dfn>   = <var>4</var>,</td></tr>
+<tr><th id="131">131</th><td>    <dfn class="enum" id="::NVENC_TWO_PASSES" title='::NVENC_TWO_PASSES' data-ref="::NVENC_TWO_PASSES">NVENC_TWO_PASSES</dfn> = <var>8</var>,</td></tr>
+<tr><th id="132">132</th><td>};</td></tr>
+<tr><th id="133">133</th><td></td></tr>
+<tr><th id="134">134</th><td><b>enum</b> {</td></tr>
+<tr><th id="135">135</th><td>    <dfn class="enum" id="::LIST_DEVICES" title='::LIST_DEVICES' data-ref="::LIST_DEVICES">LIST_DEVICES</dfn> = -<var>2</var>,</td></tr>
+<tr><th id="136">136</th><td>    <dfn class="enum" id="::ANY_DEVICE" title='::ANY_DEVICE' data-ref="::ANY_DEVICE">ANY_DEVICE</dfn>,</td></tr>
+<tr><th id="137">137</th><td>};</td></tr>
+<tr><th id="138">138</th><td></td></tr>
+<tr><th id="139">139</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="NvencContext" title='NvencContext' data-ref="NvencContext"><a class="type" href="#NvencContext" title='NvencContext' data-ref="NvencContext">NvencContext</a></dfn></td></tr>
+<tr><th id="140">140</th><td>{</td></tr>
+<tr><th id="141">141</th><td>    <a class="typedef" href="../libavutil/log.h.html#AVClass" title='AVClass' data-type='struct AVClass' data-ref="AVClass">AVClass</a> *<dfn class="decl" id="NvencContext::avclass" title='NvencContext::avclass' data-ref="NvencContext::avclass">avclass</dfn>;</td></tr>
+<tr><th id="142">142</th><td></td></tr>
+<tr><th id="143">143</th><td>    <a class="typedef" href="#NvencDynLoadFunctions" title='NvencDynLoadFunctions' data-type='struct NvencDynLoadFunctions' data-ref="NvencDynLoadFunctions">NvencDynLoadFunctions</a> <dfn class="decl" id="NvencContext::nvenc_dload_funcs" title='NvencContext::nvenc_dload_funcs' data-ref="NvencContext::nvenc_dload_funcs">nvenc_dload_funcs</dfn>;</td></tr>
+<tr><th id="144">144</th><td></td></tr>
+<tr><th id="145">145</th><td>    <a class="typedef" href="../compat/nvenc/nvEncodeAPI.h.html#NV_ENC_INITIALIZE_PARAMS" title='NV_ENC_INITIALIZE_PARAMS' data-type='struct _NV_ENC_INITIALIZE_PARAMS' data-ref="NV_ENC_INITIALIZE_PARAMS">NV_ENC_INITIALIZE_PARAMS</a> <dfn class="decl" id="NvencContext::init_encode_params" title='NvencContext::init_encode_params' data-ref="NvencContext::init_encode_params">init_encode_params</dfn>;</td></tr>
+<tr><th id="146">146</th><td>    <a class="typedef" href="../compat/nvenc/nvEncodeAPI.h.html#NV_ENC_CONFIG" title='NV_ENC_CONFIG' data-type='struct _NV_ENC_CONFIG' data-ref="NV_ENC_CONFIG">NV_ENC_CONFIG</a> <dfn class="decl" id="NvencContext::encode_config" title='NvencContext::encode_config' data-ref="NvencContext::encode_config">encode_config</dfn>;</td></tr>
+<tr><th id="147">147</th><td>    <a class="typedef" href="#CUcontext" title='CUcontext' data-type='void *' data-ref="CUcontext">CUcontext</a> <dfn class="decl" id="NvencContext::cu_context" title='NvencContext::cu_context' data-ref="NvencContext::cu_context">cu_context</dfn>;</td></tr>
+<tr><th id="148">148</th><td>    <a class="typedef" href="#CUcontext" title='CUcontext' data-type='void *' data-ref="CUcontext">CUcontext</a> <dfn class="decl" id="NvencContext::cu_context_internal" title='NvencContext::cu_context_internal' data-ref="NvencContext::cu_context_internal">cu_context_internal</dfn>;</td></tr>
+<tr><th id="149">149</th><td></td></tr>
+<tr><th id="150">150</th><td>    <em>int</em> <dfn class="decl" id="NvencContext::nb_surfaces" title='NvencContext::nb_surfaces' data-ref="NvencContext::nb_surfaces">nb_surfaces</dfn>;</td></tr>
+<tr><th id="151">151</th><td>    <a class="typedef" href="#NvencSurface" title='NvencSurface' data-type='struct NvencSurface' data-ref="NvencSurface">NvencSurface</a> *<dfn class="decl" id="NvencContext::surfaces" title='NvencContext::surfaces' data-ref="NvencContext::surfaces">surfaces</dfn>;</td></tr>
+<tr><th id="152">152</th><td></td></tr>
+<tr><th id="153">153</th><td>    <a class="typedef" href="../libavutil/fifo.h.html#AVFifoBuffer" title='AVFifoBuffer' data-type='struct AVFifoBuffer' data-ref="AVFifoBuffer">AVFifoBuffer</a> *<dfn class="decl" id="NvencContext::output_surface_queue" title='NvencContext::output_surface_queue' data-ref="NvencContext::output_surface_queue">output_surface_queue</dfn>;</td></tr>
+<tr><th id="154">154</th><td>    <a class="typedef" href="../libavutil/fifo.h.html#AVFifoBuffer" title='AVFifoBuffer' data-type='struct AVFifoBuffer' data-ref="AVFifoBuffer">AVFifoBuffer</a> *<dfn class="decl" id="NvencContext::output_surface_ready_queue" title='NvencContext::output_surface_ready_queue' data-ref="NvencContext::output_surface_ready_queue">output_surface_ready_queue</dfn>;</td></tr>
+<tr><th id="155">155</th><td>    <a class="typedef" href="../libavutil/fifo.h.html#AVFifoBuffer" title='AVFifoBuffer' data-type='struct AVFifoBuffer' data-ref="AVFifoBuffer">AVFifoBuffer</a> *<dfn class="decl" id="NvencContext::timestamp_list" title='NvencContext::timestamp_list' data-ref="NvencContext::timestamp_list">timestamp_list</dfn>;</td></tr>
+<tr><th id="156">156</th><td></td></tr>
+<tr><th id="157">157</th><td>    <b>struct</b> {</td></tr>
+<tr><th id="158">158</th><td>        <a class="typedef" href="#CUdeviceptr" title='CUdeviceptr' data-type='void *' data-ref="CUdeviceptr">CUdeviceptr</a> <dfn class="decl" id="NvencContext::{anonymous}::ptr" title='NvencContext::&lt;anonymous struct&gt;::ptr' data-ref="NvencContext::{anonymous}::ptr">ptr</dfn>;</td></tr>
+<tr><th id="159">159</th><td>        <a class="typedef" href="../compat/nvenc/nvEncodeAPI.h.html#NV_ENC_REGISTERED_PTR" title='NV_ENC_REGISTERED_PTR' data-type='void *' data-ref="NV_ENC_REGISTERED_PTR">NV_ENC_REGISTERED_PTR</a> <dfn class="decl" id="NvencContext::{anonymous}::regptr" title='NvencContext::&lt;anonymous struct&gt;::regptr' data-ref="NvencContext::{anonymous}::regptr">regptr</dfn>;</td></tr>
+<tr><th id="160">160</th><td>        <em>int</em> <dfn class="decl" id="NvencContext::{anonymous}::mapped" title='NvencContext::&lt;anonymous struct&gt;::mapped' data-ref="NvencContext::{anonymous}::mapped">mapped</dfn>;</td></tr>
+<tr><th id="161">161</th><td>    } <dfn class="decl" id="NvencContext::registered_frames" title='NvencContext::registered_frames' data-ref="NvencContext::registered_frames">registered_frames</dfn>[<a class="macro" href="#49" title="64" data-ref="_M/MAX_REGISTERED_FRAMES">MAX_REGISTERED_FRAMES</a>];</td></tr>
+<tr><th id="162">162</th><td>    <em>int</em> <dfn class="decl" id="NvencContext::nb_registered_frames" title='NvencContext::nb_registered_frames' data-ref="NvencContext::nb_registered_frames">nb_registered_frames</dfn>;</td></tr>
+<tr><th id="163">163</th><td></td></tr>
+<tr><th id="164">164</th><td>    <i>/* the actual data pixel format, different from</i></td></tr>
+<tr><th id="165">165</th><td><i>     * AVCodecContext.pix_fmt when using hwaccel frames on input */</i></td></tr>
+<tr><th id="166">166</th><td>    <b>enum</b> <a class="type" href="../libavutil/pixfmt.h.html#AVPixelFormat" title='AVPixelFormat' data-ref="AVPixelFormat">AVPixelFormat</a> <dfn class="decl" id="NvencContext::data_pix_fmt" title='NvencContext::data_pix_fmt' data-ref="NvencContext::data_pix_fmt">data_pix_fmt</dfn>;</td></tr>
+<tr><th id="167">167</th><td></td></tr>
+<tr><th id="168">168</th><td>    <i>/* timestamps of the first two frames, for computing the first dts</i></td></tr>
+<tr><th id="169">169</th><td><i>     * when B-frames are present */</i></td></tr>
+<tr><th id="170">170</th><td>    <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="decl" id="NvencContext::initial_pts" title='NvencContext::initial_pts' data-ref="NvencContext::initial_pts">initial_pts</dfn>[<var>2</var>];</td></tr>
+<tr><th id="171">171</th><td>    <em>int</em> <dfn class="decl" id="NvencContext::first_packet_output" title='NvencContext::first_packet_output' data-ref="NvencContext::first_packet_output">first_packet_output</dfn>;</td></tr>
+<tr><th id="172">172</th><td></td></tr>
+<tr><th id="173">173</th><td>    <em>void</em> *<dfn class="decl" id="NvencContext::nvencoder" title='NvencContext::nvencoder' data-ref="NvencContext::nvencoder">nvencoder</dfn>;</td></tr>
+<tr><th id="174">174</th><td></td></tr>
+<tr><th id="175">175</th><td>    <em>int</em> <dfn class="decl" id="NvencContext::preset" title='NvencContext::preset' data-ref="NvencContext::preset">preset</dfn>;</td></tr>
+<tr><th id="176">176</th><td>    <em>int</em> <dfn class="decl" id="NvencContext::profile" title='NvencContext::profile' data-ref="NvencContext::profile">profile</dfn>;</td></tr>
+<tr><th id="177">177</th><td>    <em>int</em> <dfn class="decl" id="NvencContext::level" title='NvencContext::level' data-ref="NvencContext::level">level</dfn>;</td></tr>
+<tr><th id="178">178</th><td>    <em>int</em> <dfn class="decl" id="NvencContext::tier" title='NvencContext::tier' data-ref="NvencContext::tier">tier</dfn>;</td></tr>
+<tr><th id="179">179</th><td>    <em>int</em> <dfn class="decl" id="NvencContext::rc" title='NvencContext::rc' data-ref="NvencContext::rc">rc</dfn>;</td></tr>
+<tr><th id="180">180</th><td>    <em>int</em> <dfn class="decl" id="NvencContext::cbr" title='NvencContext::cbr' data-ref="NvencContext::cbr">cbr</dfn>;</td></tr>
+<tr><th id="181">181</th><td>    <em>int</em> <dfn class="decl" id="NvencContext::twopass" title='NvencContext::twopass' data-ref="NvencContext::twopass">twopass</dfn>;</td></tr>
+<tr><th id="182">182</th><td>    <em>int</em> <dfn class="decl" id="NvencContext::device" title='NvencContext::device' data-ref="NvencContext::device">device</dfn>;</td></tr>
+<tr><th id="183">183</th><td>    <em>int</em> <dfn class="decl" id="NvencContext::flags" title='NvencContext::flags' data-ref="NvencContext::flags">flags</dfn>;</td></tr>
+<tr><th id="184">184</th><td>    <em>int</em> <dfn class="decl" id="NvencContext::async_depth" title='NvencContext::async_depth' data-ref="NvencContext::async_depth">async_depth</dfn>;</td></tr>
+<tr><th id="185">185</th><td>    <em>int</em> <dfn class="decl" id="NvencContext::rc_lookahead" title='NvencContext::rc_lookahead' data-ref="NvencContext::rc_lookahead">rc_lookahead</dfn>;</td></tr>
+<tr><th id="186">186</th><td>    <em>int</em> <dfn class="decl" id="NvencContext::aq" title='NvencContext::aq' data-ref="NvencContext::aq">aq</dfn>;</td></tr>
+<tr><th id="187">187</th><td>    <em>int</em> <dfn class="decl" id="NvencContext::no_scenecut" title='NvencContext::no_scenecut' data-ref="NvencContext::no_scenecut">no_scenecut</dfn>;</td></tr>
+<tr><th id="188">188</th><td>    <em>int</em> <dfn class="decl" id="NvencContext::forced_idr" title='NvencContext::forced_idr' data-ref="NvencContext::forced_idr">forced_idr</dfn>;</td></tr>
+<tr><th id="189">189</th><td>    <em>int</em> <dfn class="decl" id="NvencContext::b_adapt" title='NvencContext::b_adapt' data-ref="NvencContext::b_adapt">b_adapt</dfn>;</td></tr>
+<tr><th id="190">190</th><td>    <em>int</em> <dfn class="decl" id="NvencContext::temporal_aq" title='NvencContext::temporal_aq' data-ref="NvencContext::temporal_aq">temporal_aq</dfn>;</td></tr>
+<tr><th id="191">191</th><td>    <em>int</em> <dfn class="decl" id="NvencContext::zerolatency" title='NvencContext::zerolatency' data-ref="NvencContext::zerolatency">zerolatency</dfn>;</td></tr>
+<tr><th id="192">192</th><td>    <em>int</em> <dfn class="decl" id="NvencContext::nonref_p" title='NvencContext::nonref_p' data-ref="NvencContext::nonref_p">nonref_p</dfn>;</td></tr>
+<tr><th id="193">193</th><td>    <em>int</em> <dfn class="decl" id="NvencContext::strict_gop" title='NvencContext::strict_gop' data-ref="NvencContext::strict_gop">strict_gop</dfn>;</td></tr>
+<tr><th id="194">194</th><td>    <em>int</em> <dfn class="decl" id="NvencContext::aq_strength" title='NvencContext::aq_strength' data-ref="NvencContext::aq_strength">aq_strength</dfn>;</td></tr>
+<tr><th id="195">195</th><td>    <em>int</em> <dfn class="decl" id="NvencContext::quality" title='NvencContext::quality' data-ref="NvencContext::quality">quality</dfn>;</td></tr>
+<tr><th id="196">196</th><td>} <dfn class="typedef" id="NvencContext" title='NvencContext' data-type='struct NvencContext' data-ref="NvencContext">NvencContext</dfn>;</td></tr>
+<tr><th id="197">197</th><td></td></tr>
+<tr><th id="198">198</th><td><em>int</em> <a class="decl" href="nvenc.c.html#ff_nvenc_encode_init" title='ff_nvenc_encode_init' data-ref="ff_nvenc_encode_init" id="ff_nvenc_encode_init">ff_nvenc_encode_init</a>(<a class="typedef" href="avcodec.h.html#AVCodecContext" title='AVCodecContext' data-type='struct AVCodecContext' data-ref="AVCodecContext">AVCodecContext</a> *<dfn class="local col5 decl" id="205avctx" title='avctx' data-type='AVCodecContext *' data-ref="205avctx">avctx</dfn>);</td></tr>
+<tr><th id="199">199</th><td></td></tr>
+<tr><th id="200">200</th><td><em>int</em> <a class="decl" href="nvenc.c.html#ff_nvenc_encode_close" title='ff_nvenc_encode_close' data-ref="ff_nvenc_encode_close" id="ff_nvenc_encode_close">ff_nvenc_encode_close</a>(<a class="typedef" href="avcodec.h.html#AVCodecContext" title='AVCodecContext' data-type='struct AVCodecContext' data-ref="AVCodecContext">AVCodecContext</a> *<dfn class="local col6 decl" id="206avctx" title='avctx' data-type='AVCodecContext *' data-ref="206avctx">avctx</dfn>);</td></tr>
+<tr><th id="201">201</th><td></td></tr>
+<tr><th id="202">202</th><td><em>int</em> <a class="decl" href="nvenc.c.html#ff_nvenc_encode_frame" title='ff_nvenc_encode_frame' data-ref="ff_nvenc_encode_frame" id="ff_nvenc_encode_frame">ff_nvenc_encode_frame</a>(<a class="typedef" href="avcodec.h.html#AVCodecContext" title='AVCodecContext' data-type='struct AVCodecContext' data-ref="AVCodecContext">AVCodecContext</a> *<dfn class="local col7 decl" id="207avctx" title='avctx' data-type='AVCodecContext *' data-ref="207avctx">avctx</dfn>, <a class="typedef" href="avcodec.h.html#AVPacket" title='AVPacket' data-type='struct AVPacket' data-ref="AVPacket">AVPacket</a> *<dfn class="local col8 decl" id="208pkt" title='pkt' data-type='AVPacket *' data-ref="208pkt">pkt</dfn>,</td></tr>
+<tr><th id="203">203</th><td>                          <em>const</em> <a class="typedef" href="../libavutil/frame.h.html#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col9 decl" id="209frame" title='frame' data-type='const AVFrame *' data-ref="209frame">frame</dfn>, <em>int</em> *<dfn class="local col0 decl" id="210got_packet" title='got_packet' data-type='int *' data-ref="210got_packet">got_packet</dfn>);</td></tr>
+<tr><th id="204">204</th><td></td></tr>
+<tr><th id="205">205</th><td><b>extern</b> <em>const</em> <b>enum</b> <a class="type" href="../libavutil/pixfmt.h.html#AVPixelFormat" title='AVPixelFormat' data-ref="AVPixelFormat">AVPixelFormat</a> <dfn class="decl" id="ff_nvenc_pix_fmts" title='ff_nvenc_pix_fmts' data-ref="ff_nvenc_pix_fmts">ff_nvenc_pix_fmts</dfn>[];</td></tr>
+<tr><th id="206">206</th><td></td></tr>
+<tr><th id="207">207</th><td><u>#<span data-ppcond="19">endif</span> /* AVCODEC_NVENC_H */</u></td></tr>
+<tr><th id="208">208</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated while processing <a href='nvenc.c.html'>ffmpeg/libavcodec/nvenc.c</a><br/>Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

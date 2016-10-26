@@ -1,0 +1,307 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>xiph.c source code [vlc/modules/access/rtp/xiph.c] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="rtp_xiph_t "/>
+<link rel="stylesheet" href="../../../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'vlc/modules/access/rtp/xiph.c'; var root_path = '../../../..'; var data_path = '../../../../../data';</script>
+<script src='../../../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='../../..'>vlc</a>/<a href='../..'>modules</a>/<a href='..'>access</a>/<a href='./'>rtp</a>/<a href='xiph.c.html'>xiph.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="2">2</th><td><i class="doc"> *<span class="command"> @file</span> rtpxiph.c</i></td></tr>
+<tr><th id="3">3</th><td><i class="doc"> * <span class="command">@brief</span> Real-Time Protocol (RTP) Xiph payloads receival</i></td></tr>
+<tr><th id="4">4</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="5">5</th><td><i>/*****************************************************************************</i></td></tr>
+<tr><th id="6">6</th><td><i> * Copyright © 2008 Rémi Denis-Courmont</i></td></tr>
+<tr><th id="7">7</th><td><i> *</i></td></tr>
+<tr><th id="8">8</th><td><i> * This library is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="9">9</th><td><i> * modify it under the terms of the GNU Lesser General Public License</i></td></tr>
+<tr><th id="10">10</th><td><i> * as published by the Free Software Foundation; either version 2.1</i></td></tr>
+<tr><th id="11">11</th><td><i> * of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="12">12</th><td><i> *</i></td></tr>
+<tr><th id="13">13</th><td><i> * This library is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="14">14</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="15">15</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</i></td></tr>
+<tr><th id="16">16</th><td><i> * GNU Lesser General Public License for more details.</i></td></tr>
+<tr><th id="17">17</th><td><i> *</i></td></tr>
+<tr><th id="18">18</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="19">19</th><td><i> * License along with this library; if not, write to the Free Software</i></td></tr>
+<tr><th id="20">20</th><td><i> * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA</i></td></tr>
+<tr><th id="21">21</th><td><i> ****************************************************************************/</i></td></tr>
+<tr><th id="22">22</th><td></td></tr>
+<tr><th id="23">23</th><td><u>#<span data-ppcond="23">ifdef</span> <span class="macro" data-ref="_M/HAVE_CONFIG_H">HAVE_CONFIG_H</span></u></td></tr>
+<tr><th id="24">24</th><td><u># include <a href="../../../config.h.html">&lt;config.h&gt;</a></u></td></tr>
+<tr><th id="25">25</th><td><u>#<span data-ppcond="23">endif</span></u></td></tr>
+<tr><th id="26">26</th><td><u>#include &lt;stdarg.h&gt;</u></td></tr>
+<tr><th id="27">27</th><td><u>#include <a href="../../../../include/assert.h.html">&lt;assert.h&gt;</a></u></td></tr>
+<tr><th id="28">28</th><td></td></tr>
+<tr><th id="29">29</th><td><u>#include <a href="../../../include/vlc_common.h.html">&lt;vlc_common.h&gt;</a></u></td></tr>
+<tr><th id="30">30</th><td><u>#include <a href="../../../include/vlc_demux.h.html">&lt;vlc_demux.h&gt;</a></u></td></tr>
+<tr><th id="31">31</th><td><u>#include <a href="../../../include/vlc_network.h.html">&lt;vlc_network.h&gt;</a></u></td></tr>
+<tr><th id="32">32</th><td><u>#include <a href="../../../include/vlc_plugin.h.html">&lt;vlc_plugin.h&gt;</a></u></td></tr>
+<tr><th id="33">33</th><td></td></tr>
+<tr><th id="34">34</th><td><u>#include <a href="../../demux/xiph.h.html">"../../demux/xiph.h"</a></u></td></tr>
+<tr><th id="35">35</th><td></td></tr>
+<tr><th id="36">36</th><td><u>#include <a href="rtp.h.html">"rtp.h"</a></u></td></tr>
+<tr><th id="37">37</th><td></td></tr>
+<tr><th id="38">38</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="rtp_xiph_t" title='rtp_xiph_t' data-ref="rtp_xiph_t"><a class="type" href="#rtp_xiph_t" title='rtp_xiph_t' data-ref="rtp_xiph_t">rtp_xiph_t</a></dfn></td></tr>
+<tr><th id="39">39</th><td>{</td></tr>
+<tr><th id="40">40</th><td>    <a class="typedef" href="../../../include/vlc_common.h.html#es_out_id_t" title='es_out_id_t' data-type='struct es_out_id_t' data-ref="es_out_id_t">es_out_id_t</a> *<dfn class="tu decl" id="rtp_xiph_t::id" title='rtp_xiph_t::id' data-type='es_out_id_t *' data-ref="rtp_xiph_t::id">id</dfn>;</td></tr>
+<tr><th id="41">41</th><td>    <a class="typedef" href="../../../include/vlc_common.h.html#block_t" title='block_t' data-type='struct block_t' data-ref="block_t">block_t</a>     *<dfn class="tu decl" id="rtp_xiph_t::block" title='rtp_xiph_t::block' data-type='block_t *' data-ref="rtp_xiph_t::block">block</dfn>;</td></tr>
+<tr><th id="42">42</th><td>    <a class="typedef" href="../../../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a>     <dfn class="tu decl" id="rtp_xiph_t::ident" title='rtp_xiph_t::ident' data-type='uint32_t' data-ref="rtp_xiph_t::ident">ident</dfn>;</td></tr>
+<tr><th id="43">43</th><td>    <span class="macro" title="_Bool" data-ref="_M/bool">bool</span>         <dfn class="tu decl" id="rtp_xiph_t::vorbis" title='rtp_xiph_t::vorbis' data-type='_Bool' data-ref="rtp_xiph_t::vorbis">vorbis</dfn>;</td></tr>
+<tr><th id="44">44</th><td>} <dfn class="typedef" id="rtp_xiph_t" title='rtp_xiph_t' data-type='struct rtp_xiph_t' data-ref="rtp_xiph_t">rtp_xiph_t</dfn>;</td></tr>
+<tr><th id="45">45</th><td></td></tr>
+<tr><th id="46">46</th><td><em>static</em> <em>void</em> *<dfn class="tu decl def" id="xiph_init" title='xiph_init' data-type='void * xiph_init(_Bool vorbis)' data-ref="xiph_init">xiph_init</dfn> (<span class="macro" title="_Bool" data-ref="_M/bool">bool</span> <dfn class="local col3 decl" id="43vorbis" title='vorbis' data-type='_Bool' data-ref="43vorbis">vorbis</dfn>)</td></tr>
+<tr><th id="47">47</th><td>{</td></tr>
+<tr><th id="48">48</th><td>    <a class="typedef" href="#rtp_xiph_t" title='rtp_xiph_t' data-type='struct rtp_xiph_t' data-ref="rtp_xiph_t">rtp_xiph_t</a> *<dfn class="local col4 decl" id="44self" title='self' data-type='rtp_xiph_t *' data-ref="44self">self</dfn> = <a class="ref" href="../../../../include/stdlib.h.html#malloc" title='malloc' data-ref="malloc">malloc</a> (<b>sizeof</b> (*<a class="local col4 ref" href="#44self" title='self' data-ref="44self">self</a>));</td></tr>
+<tr><th id="49">49</th><td></td></tr>
+<tr><th id="50">50</th><td>    <b>if</b> (<a class="local col4 ref" href="#44self" title='self' data-ref="44self">self</a> == <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>)</td></tr>
+<tr><th id="51">51</th><td>        <b>return</b> <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="52">52</th><td></td></tr>
+<tr><th id="53">53</th><td>    <a class="local col4 ref" href="#44self" title='self' data-ref="44self">self</a>-&gt;<a class="tu ref" href="#rtp_xiph_t::id" title='rtp_xiph_t::id' data-use='w' data-ref="rtp_xiph_t::id">id</a> = <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="54">54</th><td>    <a class="local col4 ref" href="#44self" title='self' data-ref="44self">self</a>-&gt;<a class="tu ref" href="#rtp_xiph_t::block" title='rtp_xiph_t::block' data-use='w' data-ref="rtp_xiph_t::block">block</a> = <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="55">55</th><td>    <a class="local col4 ref" href="#44self" title='self' data-ref="44self">self</a>-&gt;<a class="tu ref" href="#rtp_xiph_t::ident" title='rtp_xiph_t::ident' data-use='w' data-ref="rtp_xiph_t::ident">ident</a> = <var>0xffffffff</var>; <i>/* impossible value on the wire */</i></td></tr>
+<tr><th id="56">56</th><td>    <a class="local col4 ref" href="#44self" title='self' data-ref="44self">self</a>-&gt;<a class="tu ref" href="#rtp_xiph_t::vorbis" title='rtp_xiph_t::vorbis' data-use='w' data-ref="rtp_xiph_t::vorbis">vorbis</a> = <a class="local col3 ref" href="#43vorbis" title='vorbis' data-ref="43vorbis">vorbis</a>;</td></tr>
+<tr><th id="57">57</th><td>    <b>return</b> <a class="local col4 ref" href="#44self" title='self' data-ref="44self">self</a>;</td></tr>
+<tr><th id="58">58</th><td>}</td></tr>
+<tr><th id="59">59</th><td></td></tr>
+<tr><th id="60">60</th><td><u>#<span data-ppcond="60">if</span> 0</u></td></tr>
+<tr><th id="61">61</th><td><i>/* PT=dynamic</i></td></tr>
+<tr><th id="62">62</th><td><i> * vorbis: Xiph Vorbis audio (RFC 5215)</i></td></tr>
+<tr><th id="63">63</th><td><i> */</i></td></tr>
+<tr><th id="64">64</th><td><em>static</em> <em>void</em> *vorbis_init (demux_t *demux)</td></tr>
+<tr><th id="65">65</th><td>{</td></tr>
+<tr><th id="66">66</th><td>    (<em>void</em>)demux;</td></tr>
+<tr><th id="67">67</th><td>    <b>return</b> xiph_init (true);</td></tr>
+<tr><th id="68">68</th><td>}</td></tr>
+<tr><th id="69">69</th><td><u>#<span data-ppcond="60">endif</span></u></td></tr>
+<tr><th id="70">70</th><td></td></tr>
+<tr><th id="71">71</th><td><i>/* PT=dynamic</i></td></tr>
+<tr><th id="72">72</th><td><i> * vorbis: Xiph Theora video</i></td></tr>
+<tr><th id="73">73</th><td><i> */</i></td></tr>
+<tr><th id="74">74</th><td><em>void</em> *<dfn class="decl def" id="theora_init" title='theora_init' data-ref="theora_init">theora_init</dfn> (<a class="typedef" href="../../../include/vlc_common.h.html#demux_t" title='demux_t' data-type='struct demux_t' data-ref="demux_t">demux_t</a> *<dfn class="local col5 decl" id="45demux" title='demux' data-type='demux_t *' data-ref="45demux">demux</dfn>)</td></tr>
+<tr><th id="75">75</th><td>{</td></tr>
+<tr><th id="76">76</th><td>    (<em>void</em>)<a class="local col5 ref" href="#45demux" title='demux' data-ref="45demux">demux</a>;</td></tr>
+<tr><th id="77">77</th><td>    <b>return</b> <a class="tu ref" href="#xiph_init" title='xiph_init' data-use='c' data-ref="xiph_init">xiph_init</a> (<span class="macro" title="0" data-ref="_M/false">false</span>);</td></tr>
+<tr><th id="78">78</th><td>}</td></tr>
+<tr><th id="79">79</th><td></td></tr>
+<tr><th id="80">80</th><td><em>void</em> <dfn class="decl def" id="xiph_destroy" title='xiph_destroy' data-ref="xiph_destroy">xiph_destroy</dfn> (<a class="typedef" href="../../../include/vlc_common.h.html#demux_t" title='demux_t' data-type='struct demux_t' data-ref="demux_t">demux_t</a> *<dfn class="local col6 decl" id="46demux" title='demux' data-type='demux_t *' data-ref="46demux">demux</dfn>, <em>void</em> *<dfn class="local col7 decl" id="47data" title='data' data-type='void *' data-ref="47data">data</dfn>)</td></tr>
+<tr><th id="81">81</th><td>{</td></tr>
+<tr><th id="82">82</th><td>    <a class="typedef" href="#rtp_xiph_t" title='rtp_xiph_t' data-type='struct rtp_xiph_t' data-ref="rtp_xiph_t">rtp_xiph_t</a> *<dfn class="local col8 decl" id="48self" title='self' data-type='rtp_xiph_t *' data-ref="48self">self</dfn> = <a class="local col7 ref" href="#47data" title='data' data-ref="47data">data</a>;</td></tr>
+<tr><th id="83">83</th><td></td></tr>
+<tr><th id="84">84</th><td>    <b>if</b> (!<a class="local col7 ref" href="#47data" title='data' data-ref="47data">data</a>)</td></tr>
+<tr><th id="85">85</th><td>        <b>return</b>;</td></tr>
+<tr><th id="86">86</th><td>    <b>if</b> (<a class="local col8 ref" href="#48self" title='self' data-ref="48self">self</a>-&gt;<a class="tu ref" href="#rtp_xiph_t::block" title='rtp_xiph_t::block' data-use='r' data-ref="rtp_xiph_t::block">block</a>)</td></tr>
+<tr><th id="87">87</th><td>    {</td></tr>
+<tr><th id="88">88</th><td>        <a class="local col8 ref" href="#48self" title='self' data-ref="48self">self</a>-&gt;<a class="tu ref" href="#rtp_xiph_t::block" title='rtp_xiph_t::block' data-use='r' data-ref="rtp_xiph_t::block">block</a>-&gt;<a class="ref" href="../../../include/vlc_block.h.html#block_t::i_flags" title='block_t::i_flags' data-ref="block_t::i_flags">i_flags</a> |= <a class="macro" href="../../../include/vlc_block.h.html#79" title="0x1000" data-ref="_M/BLOCK_FLAG_CORRUPTED">BLOCK_FLAG_CORRUPTED</a>;</td></tr>
+<tr><th id="89">89</th><td>        <a class="ref" href="rtp.h.html#codec_decode" title='codec_decode' data-ref="codec_decode">codec_decode</a> (<a class="local col6 ref" href="#46demux" title='demux' data-ref="46demux">demux</a>, <a class="local col8 ref" href="#48self" title='self' data-ref="48self">self</a>-&gt;<a class="tu ref" href="#rtp_xiph_t::id" title='rtp_xiph_t::id' data-use='r' data-ref="rtp_xiph_t::id">id</a>, <a class="local col8 ref" href="#48self" title='self' data-ref="48self">self</a>-&gt;<a class="tu ref" href="#rtp_xiph_t::block" title='rtp_xiph_t::block' data-use='r' data-ref="rtp_xiph_t::block">block</a>);</td></tr>
+<tr><th id="90">90</th><td>    }</td></tr>
+<tr><th id="91">91</th><td>    <a class="ref" href="rtp.h.html#codec_destroy" title='codec_destroy' data-ref="codec_destroy">codec_destroy</a> (<a class="local col6 ref" href="#46demux" title='demux' data-ref="46demux">demux</a>, <a class="local col8 ref" href="#48self" title='self' data-ref="48self">self</a>-&gt;<a class="tu ref" href="#rtp_xiph_t::id" title='rtp_xiph_t::id' data-use='r' data-ref="rtp_xiph_t::id">id</a>);</td></tr>
+<tr><th id="92">92</th><td>    <a class="ref" href="../../../../include/stdlib.h.html#free" title='free' data-ref="free">free</a> (<a class="local col8 ref" href="#48self" title='self' data-ref="48self">self</a>);</td></tr>
+<tr><th id="93">93</th><td>}</td></tr>
+<tr><th id="94">94</th><td></td></tr>
+<tr><th id="95">95</th><td><i  data-doc="xiph_header">/* Convert configuration from RTP to VLC format */</i></td></tr>
+<tr><th id="96">96</th><td><em>static</em> <a class="typedef" href="../../../../include/x86_64-linux-gnu/sys/types.h.html#ssize_t" title='ssize_t' data-type='__ssize_t' data-ref="ssize_t">ssize_t</a> <dfn class="tu decl def" id="xiph_header" title='xiph_header' data-type='ssize_t xiph_header(void ** pextra, const uint8_t * buf, size_t len)' data-ref="xiph_header">xiph_header</dfn> (<em>void</em> **<dfn class="local col9 decl" id="49pextra" title='pextra' data-type='void **' data-ref="49pextra">pextra</dfn>, <em>const</em> <a class="typedef" href="../../../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col0 decl" id="50buf" title='buf' data-type='const uint8_t *' data-ref="50buf">buf</dfn>, <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="local col1 decl" id="51len" title='len' data-type='size_t' data-ref="51len">len</dfn>)</td></tr>
+<tr><th id="97">97</th><td>{</td></tr>
+<tr><th id="98">98</th><td>    <i>/* Headers number */</i></td></tr>
+<tr><th id="99">99</th><td>    <b>if</b> (<a class="local col1 ref" href="#51len" title='len' data-ref="51len">len</a> == <var>0</var>)</td></tr>
+<tr><th id="100">100</th><td>          <b>return</b> -<var>1</var>; <i>/* Invalid */</i></td></tr>
+<tr><th id="101">101</th><td>    <em>unsigned</em> <dfn class="local col2 decl" id="52hcount" title='hcount' data-type='unsigned int' data-ref="52hcount">hcount</dfn> = <var>1</var> + *<a class="local col0 ref" href="#50buf" title='buf' data-ref="50buf">buf</a>++;</td></tr>
+<tr><th id="102">102</th><td>    <a class="local col1 ref" href="#51len" title='len' data-ref="51len">len</a>--;</td></tr>
+<tr><th id="103">103</th><td>    <b>if</b> (<a class="local col2 ref" href="#52hcount" title='hcount' data-ref="52hcount">hcount</a> != <var>3</var>)</td></tr>
+<tr><th id="104">104</th><td>          <b>return</b> -<var>1</var>; <i>/* Invalid */</i></td></tr>
+<tr><th id="105">105</th><td></td></tr>
+<tr><th id="106">106</th><td>    <i>/* Header lengths */</i></td></tr>
+<tr><th id="107">107</th><td>    <a class="typedef" href="../../../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> <dfn class="local col3 decl" id="53idlen" title='idlen' data-type='uint16_t' data-ref="53idlen">idlen</dfn> = <var>0</var>, <dfn class="local col4 decl" id="54cmtlen" title='cmtlen' data-type='uint16_t' data-ref="54cmtlen">cmtlen</dfn> = <var>0</var>, <dfn class="local col5 decl" id="55setuplen" title='setuplen' data-type='uint16_t' data-ref="55setuplen">setuplen</dfn> = <var>0</var>;</td></tr>
+<tr><th id="108">108</th><td>    <b>do</b></td></tr>
+<tr><th id="109">109</th><td>    {</td></tr>
+<tr><th id="110">110</th><td>        <b>if</b> (<a class="local col1 ref" href="#51len" title='len' data-ref="51len">len</a> == <var>0</var>)</td></tr>
+<tr><th id="111">111</th><td>            <b>return</b> -<var>1</var>;</td></tr>
+<tr><th id="112">112</th><td>        <a class="local col3 ref" href="#53idlen" title='idlen' data-ref="53idlen">idlen</a> = (<a class="local col3 ref" href="#53idlen" title='idlen' data-ref="53idlen">idlen</a> &lt;&lt; <var>7</var>) | (*<a class="local col0 ref" href="#50buf" title='buf' data-ref="50buf">buf</a> &amp; <var>0x7f</var>);</td></tr>
+<tr><th id="113">113</th><td>        <a class="local col1 ref" href="#51len" title='len' data-ref="51len">len</a>--;</td></tr>
+<tr><th id="114">114</th><td>    }</td></tr>
+<tr><th id="115">115</th><td>    <b>while</b> (*<a class="local col0 ref" href="#50buf" title='buf' data-ref="50buf">buf</a>++ &amp; <var>0x80</var>);</td></tr>
+<tr><th id="116">116</th><td>    <b>do</b></td></tr>
+<tr><th id="117">117</th><td>    {</td></tr>
+<tr><th id="118">118</th><td>        <b>if</b> (<a class="local col1 ref" href="#51len" title='len' data-ref="51len">len</a> == <var>0</var>)</td></tr>
+<tr><th id="119">119</th><td>            <b>return</b> -<var>1</var>;</td></tr>
+<tr><th id="120">120</th><td>        <a class="local col4 ref" href="#54cmtlen" title='cmtlen' data-ref="54cmtlen">cmtlen</a> = (<a class="local col4 ref" href="#54cmtlen" title='cmtlen' data-ref="54cmtlen">cmtlen</a> &lt;&lt; <var>7</var>) | (*<a class="local col0 ref" href="#50buf" title='buf' data-ref="50buf">buf</a> &amp; <var>0x7f</var>);</td></tr>
+<tr><th id="121">121</th><td>        <a class="local col1 ref" href="#51len" title='len' data-ref="51len">len</a>--;</td></tr>
+<tr><th id="122">122</th><td>    }</td></tr>
+<tr><th id="123">123</th><td>    <b>while</b> (*<a class="local col0 ref" href="#50buf" title='buf' data-ref="50buf">buf</a>++ &amp; <var>0x80</var>);</td></tr>
+<tr><th id="124">124</th><td>    <b>if</b> (<a class="local col1 ref" href="#51len" title='len' data-ref="51len">len</a> &lt; <a class="local col3 ref" href="#53idlen" title='idlen' data-ref="53idlen">idlen</a> + <a class="local col4 ref" href="#54cmtlen" title='cmtlen' data-ref="54cmtlen">cmtlen</a>)</td></tr>
+<tr><th id="125">125</th><td>        <b>return</b> -<var>1</var>;</td></tr>
+<tr><th id="126">126</th><td>    <a class="local col5 ref" href="#55setuplen" title='setuplen' data-ref="55setuplen">setuplen</a> = <a class="local col1 ref" href="#51len" title='len' data-ref="51len">len</a> - (<a class="local col3 ref" href="#53idlen" title='idlen' data-ref="53idlen">idlen</a> + <a class="local col4 ref" href="#54cmtlen" title='cmtlen' data-ref="54cmtlen">cmtlen</a>);</td></tr>
+<tr><th id="127">127</th><td></td></tr>
+<tr><th id="128">128</th><td>    <i>/* Create the VLC extra format header */</i></td></tr>
+<tr><th id="129">129</th><td>    <em>unsigned</em> <dfn class="local col6 decl" id="56sizes" title='sizes' data-type='unsigned int [3]' data-ref="56sizes">sizes</dfn>[<var>3</var>] = {</td></tr>
+<tr><th id="130">130</th><td>        <a class="local col3 ref" href="#53idlen" title='idlen' data-ref="53idlen">idlen</a>, <a class="local col4 ref" href="#54cmtlen" title='cmtlen' data-ref="54cmtlen">cmtlen</a>, <a class="local col5 ref" href="#55setuplen" title='setuplen' data-ref="55setuplen">setuplen</a></td></tr>
+<tr><th id="131">131</th><td>    };</td></tr>
+<tr><th id="132">132</th><td>    <em>const</em> <em>void</em> *<dfn class="local col7 decl" id="57payloads" title='payloads' data-type='const void *[3]' data-ref="57payloads">payloads</dfn>[<var>3</var>] = {</td></tr>
+<tr><th id="133">133</th><td>        <a class="local col0 ref" href="#50buf" title='buf' data-ref="50buf">buf</a> + <var>0</var>,</td></tr>
+<tr><th id="134">134</th><td>        <a class="local col0 ref" href="#50buf" title='buf' data-ref="50buf">buf</a> + <a class="local col3 ref" href="#53idlen" title='idlen' data-ref="53idlen">idlen</a>,</td></tr>
+<tr><th id="135">135</th><td>        <a class="local col0 ref" href="#50buf" title='buf' data-ref="50buf">buf</a> + <a class="local col3 ref" href="#53idlen" title='idlen' data-ref="53idlen">idlen</a> + <a class="local col4 ref" href="#54cmtlen" title='cmtlen' data-ref="54cmtlen">cmtlen</a></td></tr>
+<tr><th id="136">136</th><td>    };</td></tr>
+<tr><th id="137">137</th><td>    <em>void</em> *<dfn class="local col8 decl" id="58extra" title='extra' data-type='void *' data-ref="58extra">extra</dfn>;</td></tr>
+<tr><th id="138">138</th><td>    <em>int</em>  <dfn class="local col9 decl" id="59extra_size" title='extra_size' data-type='int' data-ref="59extra_size">extra_size</dfn>;</td></tr>
+<tr><th id="139">139</th><td>    <b>if</b> (<a class="ref" href="../../demux/xiph.h.html#xiph_PackHeaders" title='xiph_PackHeaders' data-ref="xiph_PackHeaders">xiph_PackHeaders</a> (&amp;<a class="local col9 ref" href="#59extra_size" title='extra_size' data-ref="59extra_size">extra_size</a>, &amp;<a class="local col8 ref" href="#58extra" title='extra' data-ref="58extra">extra</a>, <a class="local col6 ref" href="#56sizes" title='sizes' data-ref="56sizes">sizes</a>, <a class="local col7 ref" href="#57payloads" title='payloads' data-ref="57payloads">payloads</a>, <var>3</var>))</td></tr>
+<tr><th id="140">140</th><td>        <b>return</b> -<var>1</var>;;</td></tr>
+<tr><th id="141">141</th><td>    *<a class="local col9 ref" href="#49pextra" title='pextra' data-ref="49pextra">pextra</a> = <a class="local col8 ref" href="#58extra" title='extra' data-ref="58extra">extra</a>;</td></tr>
+<tr><th id="142">142</th><td>    <b>return</b> <a class="local col9 ref" href="#59extra_size" title='extra_size' data-ref="59extra_size">extra_size</a>;</td></tr>
+<tr><th id="143">143</th><td>}</td></tr>
+<tr><th id="144">144</th><td></td></tr>
+<tr><th id="145">145</th><td></td></tr>
+<tr><th id="146">146</th><td><em>void</em> <dfn class="decl def" id="xiph_decode" title='xiph_decode' data-ref="xiph_decode">xiph_decode</dfn> (<a class="typedef" href="../../../include/vlc_common.h.html#demux_t" title='demux_t' data-type='struct demux_t' data-ref="demux_t">demux_t</a> *<dfn class="local col0 decl" id="60demux" title='demux' data-type='demux_t *' data-ref="60demux">demux</dfn>, <em>void</em> *<dfn class="local col1 decl" id="61data" title='data' data-type='void *' data-ref="61data">data</dfn>, <a class="typedef" href="../../../include/vlc_common.h.html#block_t" title='block_t' data-type='struct block_t' data-ref="block_t">block_t</a> *<dfn class="local col2 decl" id="62block" title='block' data-type='block_t *' data-ref="62block">block</dfn>)</td></tr>
+<tr><th id="147">147</th><td>{</td></tr>
+<tr><th id="148">148</th><td>    <a class="typedef" href="#rtp_xiph_t" title='rtp_xiph_t' data-type='struct rtp_xiph_t' data-ref="rtp_xiph_t">rtp_xiph_t</a> *<dfn class="local col3 decl" id="63self" title='self' data-type='rtp_xiph_t *' data-ref="63self">self</dfn> = <a class="local col1 ref" href="#61data" title='data' data-ref="61data">data</a>;</td></tr>
+<tr><th id="149">149</th><td></td></tr>
+<tr><th id="150">150</th><td>    <b>if</b> (!<a class="local col1 ref" href="#61data" title='data' data-ref="61data">data</a> || <a class="local col2 ref" href="#62block" title='block' data-ref="62block">block</a>-&gt;<a class="ref" href="../../../include/vlc_block.h.html#block_t::i_buffer" title='block_t::i_buffer' data-ref="block_t::i_buffer">i_buffer</a> &lt; <var>4</var>)</td></tr>
+<tr><th id="151">151</th><td>        <b>goto</b> <a class="lbl" href="#64drop" data-ref="64drop">drop</a>;</td></tr>
+<tr><th id="152">152</th><td></td></tr>
+<tr><th id="153">153</th><td>    <i>/* 32-bits RTP header (§2.2) */</i></td></tr>
+<tr><th id="154">154</th><td>    <a class="typedef" href="../../../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a> <dfn class="local col5 decl" id="65ident" title='ident' data-type='uint32_t' data-ref="65ident">ident</dfn> = <a class="macro" href="../../../include/vlc_common.h.html#684" title="U32_AT(block-&gt;p_buffer)" data-ref="_M/GetDWBE">GetDWBE</a> (<a class="local col2 ref" href="#62block" title='block' data-ref="62block">block</a>-&gt;<a class="ref" href="../../../include/vlc_block.h.html#block_t::p_buffer" title='block_t::p_buffer' data-ref="block_t::p_buffer">p_buffer</a>);</td></tr>
+<tr><th id="155">155</th><td>    <a class="local col2 ref" href="#62block" title='block' data-ref="62block">block</a>-&gt;<a class="ref" href="../../../include/vlc_block.h.html#block_t::i_buffer" title='block_t::i_buffer' data-ref="block_t::i_buffer">i_buffer</a> -= <var>4</var>;</td></tr>
+<tr><th id="156">156</th><td>    <a class="local col2 ref" href="#62block" title='block' data-ref="62block">block</a>-&gt;<a class="ref" href="../../../include/vlc_block.h.html#block_t::p_buffer" title='block_t::p_buffer' data-ref="block_t::p_buffer">p_buffer</a> += <var>4</var>;</td></tr>
+<tr><th id="157">157</th><td></td></tr>
+<tr><th id="158">158</th><td>    <em>unsigned</em> <dfn class="local col6 decl" id="66fragtype" title='fragtype' data-type='unsigned int' data-ref="66fragtype">fragtype</dfn> = (<a class="local col5 ref" href="#65ident" title='ident' data-ref="65ident">ident</a> &gt;&gt; <var>6</var>) &amp; <var>3</var>;</td></tr>
+<tr><th id="159">159</th><td>    <em>unsigned</em> <dfn class="local col7 decl" id="67datatype" title='datatype' data-type='unsigned int' data-ref="67datatype">datatype</dfn> = (<a class="local col5 ref" href="#65ident" title='ident' data-ref="65ident">ident</a> &gt;&gt; <var>4</var>) &amp; <var>3</var>;</td></tr>
+<tr><th id="160">160</th><td>    <em>unsigned</em> <dfn class="local col8 decl" id="68pkts" title='pkts' data-type='unsigned int' data-ref="68pkts">pkts</dfn> = (<a class="local col5 ref" href="#65ident" title='ident' data-ref="65ident">ident</a>) &amp; <var>15</var>;</td></tr>
+<tr><th id="161">161</th><td>    <a class="local col5 ref" href="#65ident" title='ident' data-ref="65ident">ident</a> &gt;&gt;= <var>8</var>;</td></tr>
+<tr><th id="162">162</th><td></td></tr>
+<tr><th id="163">163</th><td>    <i>/* RTP defragmentation */</i></td></tr>
+<tr><th id="164">164</th><td>    <b>if</b> (<a class="local col3 ref" href="#63self" title='self' data-ref="63self">self</a>-&gt;<a class="tu ref" href="#rtp_xiph_t::block" title='rtp_xiph_t::block' data-use='r' data-ref="rtp_xiph_t::block">block</a> &amp;&amp; (<a class="local col2 ref" href="#62block" title='block' data-ref="62block">block</a>-&gt;<a class="ref" href="../../../include/vlc_block.h.html#block_t::i_flags" title='block_t::i_flags' data-ref="block_t::i_flags">i_flags</a> &amp; <a class="macro" href="../../../include/vlc_block.h.html#55" title="0x0001" data-ref="_M/BLOCK_FLAG_DISCONTINUITY">BLOCK_FLAG_DISCONTINUITY</a>))</td></tr>
+<tr><th id="165">165</th><td>    {   <i>/* Screwed! discontinuity within a fragmented packet */</i></td></tr>
+<tr><th id="166">166</th><td>        <a class="macro" href="../../../include/vlc_messages.h.html#75" title="vlc_Log( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(demux)), psz_object_type), (void)0 , (vlc_object_t *)(demux)), VLC_MSG_WARN, rtp, self-&gt;vorbis ? &quot;discontinuity in fragmented Vorbis packet&quot; : &quot;discontinuity in fragmented Theora packet&quot; )" data-ref="_M/msg_Warn">msg_Warn</a> (demux, self-&gt;vorbis ?</td></tr>
+<tr><th id="167">167</th><td>                  <q>"discontinuity in fragmented Vorbis packet"</q> :</td></tr>
+<tr><th id="168">168</th><td>                  <q>"discontinuity in fragmented Theora packet"</q>);</td></tr>
+<tr><th id="169">169</th><td>        <a class="ref" href="../../../include/vlc_block.h.html#block_Release" title='block_Release' data-ref="block_Release">block_Release</a> (<a class="local col3 ref" href="#63self" title='self' data-ref="63self">self</a>-&gt;<a class="tu ref" href="#rtp_xiph_t::block" title='rtp_xiph_t::block' data-use='r' data-ref="rtp_xiph_t::block">block</a>);</td></tr>
+<tr><th id="170">170</th><td>        <a class="local col3 ref" href="#63self" title='self' data-ref="63self">self</a>-&gt;<a class="tu ref" href="#rtp_xiph_t::block" title='rtp_xiph_t::block' data-use='w' data-ref="rtp_xiph_t::block">block</a> = <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="171">171</th><td>    }</td></tr>
+<tr><th id="172">172</th><td></td></tr>
+<tr><th id="173">173</th><td>    <b>if</b> (<a class="local col6 ref" href="#66fragtype" title='fragtype' data-ref="66fragtype">fragtype</a> &lt;= <var>1</var>)</td></tr>
+<tr><th id="174">174</th><td>    {</td></tr>
+<tr><th id="175">175</th><td>        <b>if</b> (<a class="local col3 ref" href="#63self" title='self' data-ref="63self">self</a>-&gt;<a class="tu ref" href="#rtp_xiph_t::block" title='rtp_xiph_t::block' data-use='r' data-ref="rtp_xiph_t::block">block</a>) <i>/* Invalid first fragment */</i></td></tr>
+<tr><th id="176">176</th><td>        {</td></tr>
+<tr><th id="177">177</th><td>            <a class="ref" href="../../../include/vlc_block.h.html#block_Release" title='block_Release' data-ref="block_Release">block_Release</a> (<a class="local col3 ref" href="#63self" title='self' data-ref="63self">self</a>-&gt;<a class="tu ref" href="#rtp_xiph_t::block" title='rtp_xiph_t::block' data-use='r' data-ref="rtp_xiph_t::block">block</a>);</td></tr>
+<tr><th id="178">178</th><td>            <a class="local col3 ref" href="#63self" title='self' data-ref="63self">self</a>-&gt;<a class="tu ref" href="#rtp_xiph_t::block" title='rtp_xiph_t::block' data-use='w' data-ref="rtp_xiph_t::block">block</a> = <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="179">179</th><td>        }</td></tr>
+<tr><th id="180">180</th><td>    }</td></tr>
+<tr><th id="181">181</th><td>    <b>else</b></td></tr>
+<tr><th id="182">182</th><td>    {</td></tr>
+<tr><th id="183">183</th><td>        <b>if</b> (!<a class="local col3 ref" href="#63self" title='self' data-ref="63self">self</a>-&gt;<a class="tu ref" href="#rtp_xiph_t::block" title='rtp_xiph_t::block' data-use='r' data-ref="rtp_xiph_t::block">block</a>)</td></tr>
+<tr><th id="184">184</th><td>            <b>goto</b> <a class="lbl" href="#64drop" data-ref="64drop">drop</a>; <i>/* Invalid non-first fragment */</i></td></tr>
+<tr><th id="185">185</th><td>    }</td></tr>
+<tr><th id="186">186</th><td></td></tr>
+<tr><th id="187">187</th><td>    <b>if</b> (<a class="local col6 ref" href="#66fragtype" title='fragtype' data-ref="66fragtype">fragtype</a> &gt; <var>0</var>)</td></tr>
+<tr><th id="188">188</th><td>    {   <i>/* Fragment */</i></td></tr>
+<tr><th id="189">189</th><td>        <b>if</b> (<a class="local col8 ref" href="#68pkts" title='pkts' data-ref="68pkts">pkts</a> &gt; <var>0</var> || <a class="local col2 ref" href="#62block" title='block' data-ref="62block">block</a>-&gt;<a class="ref" href="../../../include/vlc_block.h.html#block_t::i_buffer" title='block_t::i_buffer' data-ref="block_t::i_buffer">i_buffer</a> &lt; <var>2</var>)</td></tr>
+<tr><th id="190">190</th><td>            <b>goto</b> <a class="lbl" href="#64drop" data-ref="64drop">drop</a>;</td></tr>
+<tr><th id="191">191</th><td></td></tr>
+<tr><th id="192">192</th><td>        <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="local col9 decl" id="69fraglen" title='fraglen' data-type='size_t' data-ref="69fraglen">fraglen</dfn> = <a class="macro" href="../../../include/vlc_common.h.html#683" title="U16_AT(block-&gt;p_buffer)" data-ref="_M/GetWBE">GetWBE</a> (<a class="local col2 ref" href="#62block" title='block' data-ref="62block">block</a>-&gt;<a class="ref" href="../../../include/vlc_block.h.html#block_t::p_buffer" title='block_t::p_buffer' data-ref="block_t::p_buffer">p_buffer</a>);</td></tr>
+<tr><th id="193">193</th><td>        <b>if</b> (<a class="local col2 ref" href="#62block" title='block' data-ref="62block">block</a>-&gt;<a class="ref" href="../../../include/vlc_block.h.html#block_t::i_buffer" title='block_t::i_buffer' data-ref="block_t::i_buffer">i_buffer</a> &lt; (<a class="local col9 ref" href="#69fraglen" title='fraglen' data-ref="69fraglen">fraglen</a> + <var>2</var>))</td></tr>
+<tr><th id="194">194</th><td>            <b>goto</b> <a class="lbl" href="#64drop" data-ref="64drop">drop</a>; <i>/* Invalid payload length */</i></td></tr>
+<tr><th id="195">195</th><td>        <a class="local col2 ref" href="#62block" title='block' data-ref="62block">block</a>-&gt;<a class="ref" href="../../../include/vlc_block.h.html#block_t::i_buffer" title='block_t::i_buffer' data-ref="block_t::i_buffer">i_buffer</a> = <a class="local col9 ref" href="#69fraglen" title='fraglen' data-ref="69fraglen">fraglen</a>;</td></tr>
+<tr><th id="196">196</th><td>        <b>if</b> (<a class="local col6 ref" href="#66fragtype" title='fragtype' data-ref="66fragtype">fragtype</a> == <var>1</var>)<i>/* Keep first fragment */</i></td></tr>
+<tr><th id="197">197</th><td>        {</td></tr>
+<tr><th id="198">198</th><td>            <a class="local col2 ref" href="#62block" title='block' data-ref="62block">block</a>-&gt;<a class="ref" href="../../../include/vlc_block.h.html#block_t::i_buffer" title='block_t::i_buffer' data-ref="block_t::i_buffer">i_buffer</a> += <var>2</var>;</td></tr>
+<tr><th id="199">199</th><td>            <a class="local col3 ref" href="#63self" title='self' data-ref="63self">self</a>-&gt;<a class="tu ref" href="#rtp_xiph_t::block" title='rtp_xiph_t::block' data-use='w' data-ref="rtp_xiph_t::block">block</a> = <a class="local col2 ref" href="#62block" title='block' data-ref="62block">block</a>;</td></tr>
+<tr><th id="200">200</th><td>        }</td></tr>
+<tr><th id="201">201</th><td>        <b>else</b></td></tr>
+<tr><th id="202">202</th><td>        {   <i>/* Append non-first fragment */</i></td></tr>
+<tr><th id="203">203</th><td>            <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="local col0 decl" id="70len" title='len' data-type='size_t' data-ref="70len">len</dfn> = <a class="local col3 ref" href="#63self" title='self' data-ref="63self">self</a>-&gt;<a class="tu ref" href="#rtp_xiph_t::block" title='rtp_xiph_t::block' data-use='r' data-ref="rtp_xiph_t::block">block</a>-&gt;<a class="ref" href="../../../include/vlc_block.h.html#block_t::i_buffer" title='block_t::i_buffer' data-ref="block_t::i_buffer">i_buffer</a>;</td></tr>
+<tr><th id="204">204</th><td>            <a class="local col3 ref" href="#63self" title='self' data-ref="63self">self</a>-&gt;<a class="tu ref" href="#rtp_xiph_t::block" title='rtp_xiph_t::block' data-use='w' data-ref="rtp_xiph_t::block">block</a> = <a class="ref" href="../../../include/vlc_block.h.html#block_Realloc" title='block_Realloc' data-ref="block_Realloc">block_Realloc</a> (<a class="local col3 ref" href="#63self" title='self' data-ref="63self">self</a>-&gt;<a class="tu ref" href="#rtp_xiph_t::block" title='rtp_xiph_t::block' data-use='r' data-ref="rtp_xiph_t::block">block</a>, <var>0</var>, <a class="local col0 ref" href="#70len" title='len' data-ref="70len">len</a> + <a class="local col9 ref" href="#69fraglen" title='fraglen' data-ref="69fraglen">fraglen</a>);</td></tr>
+<tr><th id="205">205</th><td>            <b>if</b> (!<a class="local col3 ref" href="#63self" title='self' data-ref="63self">self</a>-&gt;<a class="tu ref" href="#rtp_xiph_t::block" title='rtp_xiph_t::block' data-use='r' data-ref="rtp_xiph_t::block">block</a>)</td></tr>
+<tr><th id="206">206</th><td>            {</td></tr>
+<tr><th id="207">207</th><td>                <a class="ref" href="../../../include/vlc_block.h.html#block_Release" title='block_Release' data-ref="block_Release">block_Release</a> (<a class="local col2 ref" href="#62block" title='block' data-ref="62block">block</a>);</td></tr>
+<tr><th id="208">208</th><td>                <b>return</b>;</td></tr>
+<tr><th id="209">209</th><td>            }</td></tr>
+<tr><th id="210">210</th><td>            <a class="ref" href="../../../../include/string.h.html#memcpy" title='memcpy' data-ref="memcpy">memcpy</a> (<a class="local col3 ref" href="#63self" title='self' data-ref="63self">self</a>-&gt;<a class="tu ref" href="#rtp_xiph_t::block" title='rtp_xiph_t::block' data-use='r' data-ref="rtp_xiph_t::block">block</a>-&gt;<a class="ref" href="../../../include/vlc_block.h.html#block_t::p_buffer" title='block_t::p_buffer' data-ref="block_t::p_buffer">p_buffer</a> + <a class="local col0 ref" href="#70len" title='len' data-ref="70len">len</a>, <a class="local col2 ref" href="#62block" title='block' data-ref="62block">block</a>-&gt;<a class="ref" href="../../../include/vlc_block.h.html#block_t::p_buffer" title='block_t::p_buffer' data-ref="block_t::p_buffer">p_buffer</a> + <var>2</var>,</td></tr>
+<tr><th id="211">211</th><td>                    <a class="local col9 ref" href="#69fraglen" title='fraglen' data-ref="69fraglen">fraglen</a>);</td></tr>
+<tr><th id="212">212</th><td>            <a class="ref" href="../../../include/vlc_block.h.html#block_Release" title='block_Release' data-ref="block_Release">block_Release</a> (<a class="local col2 ref" href="#62block" title='block' data-ref="62block">block</a>);</td></tr>
+<tr><th id="213">213</th><td>        }</td></tr>
+<tr><th id="214">214</th><td>        <b>if</b> (<a class="local col6 ref" href="#66fragtype" title='fragtype' data-ref="66fragtype">fragtype</a> &lt; <var>3</var>)</td></tr>
+<tr><th id="215">215</th><td>            <b>return</b>; <i>/* Non-last fragment */</i></td></tr>
+<tr><th id="216">216</th><td></td></tr>
+<tr><th id="217">217</th><td>        <i>/* Last fragment reached, process it */</i></td></tr>
+<tr><th id="218">218</th><td>        <a class="local col2 ref" href="#62block" title='block' data-ref="62block">block</a> = <a class="local col3 ref" href="#63self" title='self' data-ref="63self">self</a>-&gt;<a class="tu ref" href="#rtp_xiph_t::block" title='rtp_xiph_t::block' data-use='r' data-ref="rtp_xiph_t::block">block</a>;</td></tr>
+<tr><th id="219">219</th><td>        <a class="local col3 ref" href="#63self" title='self' data-ref="63self">self</a>-&gt;<a class="tu ref" href="#rtp_xiph_t::block" title='rtp_xiph_t::block' data-use='w' data-ref="rtp_xiph_t::block">block</a> = <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="220">220</th><td>        <a class="ref" href="../../../include/vlc_common.h.html#SetWBE" title='SetWBE' data-ref="SetWBE">SetWBE</a> (<a class="local col2 ref" href="#62block" title='block' data-ref="62block">block</a>-&gt;<a class="ref" href="../../../include/vlc_block.h.html#block_t::p_buffer" title='block_t::p_buffer' data-ref="block_t::p_buffer">p_buffer</a>, <a class="local col2 ref" href="#62block" title='block' data-ref="62block">block</a>-&gt;<a class="ref" href="../../../include/vlc_block.h.html#block_t::i_buffer" title='block_t::i_buffer' data-ref="block_t::i_buffer">i_buffer</a> - <var>2</var>);</td></tr>
+<tr><th id="221">221</th><td>        <a class="local col8 ref" href="#68pkts" title='pkts' data-ref="68pkts">pkts</a> = <var>1</var>;</td></tr>
+<tr><th id="222">222</th><td>    }</td></tr>
+<tr><th id="223">223</th><td></td></tr>
+<tr><th id="224">224</th><td>    <i>/* RTP payload packets processing */</i></td></tr>
+<tr><th id="225">225</th><td>    <b>while</b> (<a class="local col8 ref" href="#68pkts" title='pkts' data-ref="68pkts">pkts</a> &gt; <var>0</var>)</td></tr>
+<tr><th id="226">226</th><td>    {</td></tr>
+<tr><th id="227">227</th><td>        <b>if</b> (<a class="local col2 ref" href="#62block" title='block' data-ref="62block">block</a>-&gt;<a class="ref" href="../../../include/vlc_block.h.html#block_t::i_buffer" title='block_t::i_buffer' data-ref="block_t::i_buffer">i_buffer</a> &lt; <var>2</var>)</td></tr>
+<tr><th id="228">228</th><td>            <b>goto</b> <a class="lbl" href="#64drop" data-ref="64drop">drop</a>;</td></tr>
+<tr><th id="229">229</th><td></td></tr>
+<tr><th id="230">230</th><td>        <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="local col1 decl" id="71len" title='len' data-type='size_t' data-ref="71len">len</dfn> = <a class="macro" href="../../../include/vlc_common.h.html#683" title="U16_AT(block-&gt;p_buffer)" data-ref="_M/GetWBE">GetWBE</a> (<a class="local col2 ref" href="#62block" title='block' data-ref="62block">block</a>-&gt;<a class="ref" href="../../../include/vlc_block.h.html#block_t::p_buffer" title='block_t::p_buffer' data-ref="block_t::p_buffer">p_buffer</a>);</td></tr>
+<tr><th id="231">231</th><td>        <a class="local col2 ref" href="#62block" title='block' data-ref="62block">block</a>-&gt;<a class="ref" href="../../../include/vlc_block.h.html#block_t::i_buffer" title='block_t::i_buffer' data-ref="block_t::i_buffer">i_buffer</a> -= <var>2</var>;</td></tr>
+<tr><th id="232">232</th><td>        <a class="local col2 ref" href="#62block" title='block' data-ref="62block">block</a>-&gt;<a class="ref" href="../../../include/vlc_block.h.html#block_t::p_buffer" title='block_t::p_buffer' data-ref="block_t::p_buffer">p_buffer</a> += <var>2</var>;</td></tr>
+<tr><th id="233">233</th><td>        <b>if</b> (<a class="local col2 ref" href="#62block" title='block' data-ref="62block">block</a>-&gt;<a class="ref" href="../../../include/vlc_block.h.html#block_t::i_buffer" title='block_t::i_buffer' data-ref="block_t::i_buffer">i_buffer</a> &lt; <a class="local col1 ref" href="#71len" title='len' data-ref="71len">len</a>)</td></tr>
+<tr><th id="234">234</th><td>            <b>goto</b> <a class="lbl" href="#64drop" data-ref="64drop">drop</a>;</td></tr>
+<tr><th id="235">235</th><td></td></tr>
+<tr><th id="236">236</th><td>        <b>switch</b> (<a class="local col7 ref" href="#67datatype" title='datatype' data-ref="67datatype">datatype</a>)</td></tr>
+<tr><th id="237">237</th><td>        {</td></tr>
+<tr><th id="238">238</th><td>            <b>case</b> <var>0</var>: <i>/* Raw payload */</i></td></tr>
+<tr><th id="239">239</th><td>            {</td></tr>
+<tr><th id="240">240</th><td>                <b>if</b> (<a class="local col3 ref" href="#63self" title='self' data-ref="63self">self</a>-&gt;<a class="tu ref" href="#rtp_xiph_t::ident" title='rtp_xiph_t::ident' data-use='r' data-ref="rtp_xiph_t::ident">ident</a> != <a class="local col5 ref" href="#65ident" title='ident' data-ref="65ident">ident</a>)</td></tr>
+<tr><th id="241">241</th><td>                {</td></tr>
+<tr><th id="242">242</th><td>                    <a class="macro" href="../../../include/vlc_messages.h.html#75" title="vlc_Log( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(demux)), psz_object_type), (void)0 , (vlc_object_t *)(demux)), VLC_MSG_WARN, rtp, self-&gt;vorbis ? &quot;ignoring raw Vorbis payload without configuration&quot; : &quot;ignoring raw Theora payload without configuration&quot; )" data-ref="_M/msg_Warn">msg_Warn</a> (demux, self-&gt;vorbis ?</td></tr>
+<tr><th id="243">243</th><td>                        <q>"ignoring raw Vorbis payload without configuration"</q> :</td></tr>
+<tr><th id="244">244</th><td>                        <q>"ignoring raw Theora payload without configuration"</q>);</td></tr>
+<tr><th id="245">245</th><td>                    <b>break</b>;</td></tr>
+<tr><th id="246">246</th><td>                }</td></tr>
+<tr><th id="247">247</th><td>                <a class="typedef" href="../../../include/vlc_common.h.html#block_t" title='block_t' data-type='struct block_t' data-ref="block_t">block_t</a> *<dfn class="local col2 decl" id="72raw" title='raw' data-type='block_t *' data-ref="72raw">raw</dfn> = <a class="ref" href="../../../include/vlc_block.h.html#block_Alloc" title='block_Alloc' data-ref="block_Alloc">block_Alloc</a> (<a class="local col1 ref" href="#71len" title='len' data-ref="71len">len</a>);</td></tr>
+<tr><th id="248">248</th><td>                <a class="ref" href="../../../../include/string.h.html#memcpy" title='memcpy' data-ref="memcpy">memcpy</a> (<a class="local col2 ref" href="#72raw" title='raw' data-ref="72raw">raw</a>-&gt;<a class="ref" href="../../../include/vlc_block.h.html#block_t::p_buffer" title='block_t::p_buffer' data-ref="block_t::p_buffer">p_buffer</a>, <a class="local col2 ref" href="#62block" title='block' data-ref="62block">block</a>-&gt;<a class="ref" href="../../../include/vlc_block.h.html#block_t::p_buffer" title='block_t::p_buffer' data-ref="block_t::p_buffer">p_buffer</a>, <a class="local col1 ref" href="#71len" title='len' data-ref="71len">len</a>);</td></tr>
+<tr><th id="249">249</th><td>                <a class="local col2 ref" href="#72raw" title='raw' data-ref="72raw">raw</a>-&gt;<a class="ref" href="../../../include/vlc_block.h.html#block_t::i_pts" title='block_t::i_pts' data-ref="block_t::i_pts">i_pts</a> = <a class="local col2 ref" href="#62block" title='block' data-ref="62block">block</a>-&gt;<a class="ref" href="../../../include/vlc_block.h.html#block_t::i_pts" title='block_t::i_pts' data-ref="block_t::i_pts">i_pts</a>; <i>/* FIXME: what about pkts &gt; 1 */</i></td></tr>
+<tr><th id="250">250</th><td>                <a class="ref" href="rtp.h.html#codec_decode" title='codec_decode' data-ref="codec_decode">codec_decode</a> (<a class="local col0 ref" href="#60demux" title='demux' data-ref="60demux">demux</a>, <a class="local col3 ref" href="#63self" title='self' data-ref="63self">self</a>-&gt;<a class="tu ref" href="#rtp_xiph_t::id" title='rtp_xiph_t::id' data-use='r' data-ref="rtp_xiph_t::id">id</a>, <a class="local col2 ref" href="#72raw" title='raw' data-ref="72raw">raw</a>);</td></tr>
+<tr><th id="251">251</th><td>                <b>break</b>;</td></tr>
+<tr><th id="252">252</th><td>            }</td></tr>
+<tr><th id="253">253</th><td></td></tr>
+<tr><th id="254">254</th><td>            <b>case</b> <var>1</var>: <i>/* Packed configuration frame (§3.1.1) */</i></td></tr>
+<tr><th id="255">255</th><td>            {</td></tr>
+<tr><th id="256">256</th><td>                <b>if</b> (<a class="local col3 ref" href="#63self" title='self' data-ref="63self">self</a>-&gt;<a class="tu ref" href="#rtp_xiph_t::ident" title='rtp_xiph_t::ident' data-use='r' data-ref="rtp_xiph_t::ident">ident</a> == <a class="local col5 ref" href="#65ident" title='ident' data-ref="65ident">ident</a>)</td></tr>
+<tr><th id="257">257</th><td>                    <b>break</b>; <i>/* Ignore config retransmission */</i></td></tr>
+<tr><th id="258">258</th><td></td></tr>
+<tr><th id="259">259</th><td>                <em>void</em> *<dfn class="local col3 decl" id="73extv" title='extv' data-type='void *' data-ref="73extv">extv</dfn>;</td></tr>
+<tr><th id="260">260</th><td>                <a class="typedef" href="../../../../include/x86_64-linux-gnu/sys/types.h.html#ssize_t" title='ssize_t' data-type='__ssize_t' data-ref="ssize_t">ssize_t</a> <dfn class="local col4 decl" id="74extc" title='extc' data-type='ssize_t' data-ref="74extc">extc</dfn> = <a class="tu ref" href="#xiph_header" title='xiph_header' data-use='c' data-ref="xiph_header">xiph_header</a> (&amp;<a class="local col3 ref" href="#73extv" title='extv' data-ref="73extv">extv</a>, <a class="local col2 ref" href="#62block" title='block' data-ref="62block">block</a>-&gt;<a class="ref" href="../../../include/vlc_block.h.html#block_t::p_buffer" title='block_t::p_buffer' data-ref="block_t::p_buffer">p_buffer</a>, <a class="local col1 ref" href="#71len" title='len' data-ref="71len">len</a>);</td></tr>
+<tr><th id="261">261</th><td>                <b>if</b> (<a class="local col4 ref" href="#74extc" title='extc' data-ref="74extc">extc</a> &lt; <var>0</var>)</td></tr>
+<tr><th id="262">262</th><td>                    <b>break</b>;</td></tr>
+<tr><th id="263">263</th><td></td></tr>
+<tr><th id="264">264</th><td>                <a class="typedef" href="../../../include/vlc_common.h.html#es_format_t" title='es_format_t' data-type='struct es_format_t' data-ref="es_format_t">es_format_t</a> <dfn class="local col5 decl" id="75fmt" title='fmt' data-type='es_format_t' data-ref="75fmt">fmt</dfn>;</td></tr>
+<tr><th id="265">265</th><td>                <a class="ref" href="../../../include/vlc_es.h.html#es_format_Init" title='es_format_Init' data-ref="es_format_Init">es_format_Init</a> (&amp;<a class="local col5 ref" href="#75fmt" title='fmt' data-ref="75fmt">fmt</a>, <a class="local col3 ref" href="#63self" title='self' data-ref="63self">self</a>-&gt;<a class="tu ref" href="#rtp_xiph_t::vorbis" title='rtp_xiph_t::vorbis' data-use='r' data-ref="rtp_xiph_t::vorbis">vorbis</a> ? <a class="enum" href="../../../include/vlc_es.h.html#es_format_category_e::AUDIO_ES" title='es_format_category_e::AUDIO_ES' data-ref="es_format_category_e::AUDIO_ES">AUDIO_ES</a> : <a class="enum" href="../../../include/vlc_es.h.html#es_format_category_e::VIDEO_ES" title='es_format_category_e::VIDEO_ES' data-ref="es_format_category_e::VIDEO_ES">VIDEO_ES</a>,</td></tr>
+<tr><th id="266">266</th><td>                                <a class="local col3 ref" href="#63self" title='self' data-ref="63self">self</a>-&gt;<a class="tu ref" href="#rtp_xiph_t::vorbis" title='rtp_xiph_t::vorbis' data-use='r' data-ref="rtp_xiph_t::vorbis">vorbis</a> ? <a class="macro" href="../../../include/vlc_fourcc.h.html#319" title="( ((uint32_t)&apos;v&apos;) | ( ((uint32_t)&apos;o&apos;) &lt;&lt; 8 ) | ( ((uint32_t)&apos;r&apos;) &lt;&lt; 16 ) | ( ((uint32_t)&apos;b&apos;) &lt;&lt; 24 ) )" data-ref="_M/VLC_CODEC_VORBIS">VLC_CODEC_VORBIS</a></td></tr>
+<tr><th id="267">267</th><td>                                             : <a class="macro" href="../../../include/vlc_fourcc.h.html#53" title="( ((uint32_t)&apos;t&apos;) | ( ((uint32_t)&apos;h&apos;) &lt;&lt; 8 ) | ( ((uint32_t)&apos;e&apos;) &lt;&lt; 16 ) | ( ((uint32_t)&apos;o&apos;) &lt;&lt; 24 ) )" data-ref="_M/VLC_CODEC_THEORA">VLC_CODEC_THEORA</a>);</td></tr>
+<tr><th id="268">268</th><td>                <a class="local col5 ref" href="#75fmt" title='fmt' data-ref="75fmt">fmt</a>.<a class="ref" href="../../../include/vlc_es.h.html#es_format_t::p_extra" title='es_format_t::p_extra' data-ref="es_format_t::p_extra">p_extra</a> = <a class="local col3 ref" href="#73extv" title='extv' data-ref="73extv">extv</a>;</td></tr>
+<tr><th id="269">269</th><td>                <a class="local col5 ref" href="#75fmt" title='fmt' data-ref="75fmt">fmt</a>.<a class="ref" href="../../../include/vlc_es.h.html#es_format_t::i_extra" title='es_format_t::i_extra' data-ref="es_format_t::i_extra">i_extra</a> = <a class="local col4 ref" href="#74extc" title='extc' data-ref="74extc">extc</a>;</td></tr>
+<tr><th id="270">270</th><td>                <a class="ref" href="rtp.h.html#codec_destroy" title='codec_destroy' data-ref="codec_destroy">codec_destroy</a> (<a class="local col0 ref" href="#60demux" title='demux' data-ref="60demux">demux</a>, <a class="local col3 ref" href="#63self" title='self' data-ref="63self">self</a>-&gt;<a class="tu ref" href="#rtp_xiph_t::id" title='rtp_xiph_t::id' data-use='r' data-ref="rtp_xiph_t::id">id</a>);</td></tr>
+<tr><th id="271">271</th><td>                <a class="macro" href="../../../include/vlc_messages.h.html#77" title="vlc_Log( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(demux)), psz_object_type), (void)0 , (vlc_object_t *)(demux)), VLC_MSG_DBG, rtp, self-&gt;vorbis ? &quot;Vorbis packed configuration received (%06&quot;&quot;x&quot;&quot;)&quot; : &quot;Theora packed configuration received (%06&quot;&quot;x&quot;&quot;)&quot;, ident )" data-ref="_M/msg_Dbg">msg_Dbg</a> (demux, self-&gt;vorbis ?</td></tr>
+<tr><th id="272">272</th><td>                         <q>"Vorbis packed configuration received (%06"</q><a class="macro" href="../../../../include/inttypes.h.html#120" title="&quot;x&quot;" data-ref="_M/PRIx32">PRIx32</a><q>")"</q> :</td></tr>
+<tr><th id="273">273</th><td>                         <q>"Theora packed configuration received (%06"</q><a class="macro" href="../../../../include/inttypes.h.html#120" title="&quot;x&quot;" data-ref="_M/PRIx32">PRIx32</a><q>")"</q>,</td></tr>
+<tr><th id="274">274</th><td>                         ident);</td></tr>
+<tr><th id="275">275</th><td>                <a class="local col3 ref" href="#63self" title='self' data-ref="63self">self</a>-&gt;<a class="tu ref" href="#rtp_xiph_t::ident" title='rtp_xiph_t::ident' data-use='w' data-ref="rtp_xiph_t::ident">ident</a> = <a class="local col5 ref" href="#65ident" title='ident' data-ref="65ident">ident</a>;</td></tr>
+<tr><th id="276">276</th><td>                <a class="local col3 ref" href="#63self" title='self' data-ref="63self">self</a>-&gt;<a class="tu ref" href="#rtp_xiph_t::id" title='rtp_xiph_t::id' data-use='w' data-ref="rtp_xiph_t::id">id</a> = <a class="ref" href="rtp.h.html#codec_init" title='codec_init' data-ref="codec_init">codec_init</a> (<a class="local col0 ref" href="#60demux" title='demux' data-ref="60demux">demux</a>, &amp;<a class="local col5 ref" href="#75fmt" title='fmt' data-ref="75fmt">fmt</a>);</td></tr>
+<tr><th id="277">277</th><td>                <b>break</b>;</td></tr>
+<tr><th id="278">278</th><td>            }</td></tr>
+<tr><th id="279">279</th><td>        }</td></tr>
+<tr><th id="280">280</th><td></td></tr>
+<tr><th id="281">281</th><td>        <a class="local col2 ref" href="#62block" title='block' data-ref="62block">block</a>-&gt;<a class="ref" href="../../../include/vlc_block.h.html#block_t::i_buffer" title='block_t::i_buffer' data-ref="block_t::i_buffer">i_buffer</a> -= <a class="local col1 ref" href="#71len" title='len' data-ref="71len">len</a>;</td></tr>
+<tr><th id="282">282</th><td>        <a class="local col2 ref" href="#62block" title='block' data-ref="62block">block</a>-&gt;<a class="ref" href="../../../include/vlc_block.h.html#block_t::p_buffer" title='block_t::p_buffer' data-ref="block_t::p_buffer">p_buffer</a> += <a class="local col1 ref" href="#71len" title='len' data-ref="71len">len</a>;</td></tr>
+<tr><th id="283">283</th><td>        <a class="local col8 ref" href="#68pkts" title='pkts' data-ref="68pkts">pkts</a>--;</td></tr>
+<tr><th id="284">284</th><td>    }</td></tr>
+<tr><th id="285">285</th><td></td></tr>
+<tr><th id="286">286</th><td><dfn class="lbl" id="64drop" data-ref="64drop">drop</dfn>:</td></tr>
+<tr><th id="287">287</th><td>    <a class="ref" href="../../../include/vlc_block.h.html#block_Release" title='block_Release' data-ref="block_Release">block_Release</a> (<a class="local col2 ref" href="#62block" title='block' data-ref="62block">block</a>);</td></tr>
+<tr><th id="288">288</th><td>}</td></tr>
+<tr><th id="289">289</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project vlc revision <em>2.2.0-git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

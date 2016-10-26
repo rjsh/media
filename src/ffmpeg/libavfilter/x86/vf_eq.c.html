@@ -1,0 +1,114 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>vf_eq.c source code [ffmpeg/libavfilter/x86/vf_eq.c] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavfilter/x86/vf_eq.c'; var root_path = '../../..'; var data_path = '../../../../data';</script>
+<script src='../../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='../..'>ffmpeg</a>/<a href='..'>libavfilter</a>/<a href='./'>x86</a>/<a href='vf_eq.c.html'>vf_eq.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> *</i></td></tr>
+<tr><th id="3">3</th><td><i> * Original MPlayer filters by Richard Felker.</i></td></tr>
+<tr><th id="4">4</th><td><i> *</i></td></tr>
+<tr><th id="5">5</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * FFmpeg is free software; you can redistribute it and/or modify</i></td></tr>
+<tr><th id="8">8</th><td><i> * it under the terms of the GNU General Public License as published by</i></td></tr>
+<tr><th id="9">9</th><td><i> * the Free Software Foundation; either version 2 of the License, or</i></td></tr>
+<tr><th id="10">10</th><td><i> * (at your option) any later version.</i></td></tr>
+<tr><th id="11">11</th><td><i> *</i></td></tr>
+<tr><th id="12">12</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="13">13</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="14">14</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the</i></td></tr>
+<tr><th id="15">15</th><td><i> * GNU General Public License for more details.</i></td></tr>
+<tr><th id="16">16</th><td><i> *</i></td></tr>
+<tr><th id="17">17</th><td><i> * You should have received a copy of the GNU General Public License along</i></td></tr>
+<tr><th id="18">18</th><td><i> * with FFmpeg; if not, write to the Free Software Foundation, Inc.,</i></td></tr>
+<tr><th id="19">19</th><td><i> * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.</i></td></tr>
+<tr><th id="20">20</th><td><i> */</i></td></tr>
+<tr><th id="21">21</th><td></td></tr>
+<tr><th id="22">22</th><td><u>#include <a href="../../libavutil/attributes.h.html">"libavutil/attributes.h"</a></u></td></tr>
+<tr><th id="23">23</th><td><u>#include <a href="../../libavutil/cpu.h.html">"libavutil/cpu.h"</a></u></td></tr>
+<tr><th id="24">24</th><td><u>#include <a href="../../libavutil/mem.h.html">"libavutil/mem.h"</a></u></td></tr>
+<tr><th id="25">25</th><td><u>#include <a href="../../libavutil/x86/asm.h.html">"libavutil/x86/asm.h"</a></u></td></tr>
+<tr><th id="26">26</th><td><u>#include <a href="../vf_eq.h.html">"libavfilter/vf_eq.h"</a></u></td></tr>
+<tr><th id="27">27</th><td></td></tr>
+<tr><th id="28">28</th><td><u>#<span data-ppcond="28">if</span> <a class="macro" href="../../config.h.html#150" title="1" data-ref="_M/HAVE_MMX_INLINE">HAVE_MMX_INLINE</a> &amp;&amp; <a class="macro" href="../../libavutil/x86/asm.h.html#76" title="(1 || (1 || 0))" data-ref="_M/HAVE_6REGS">HAVE_6REGS</a></u></td></tr>
+<tr><th id="29">29</th><td><em>static</em> <em>void</em> <dfn class="tu decl def" id="process_MMX" title='process_MMX' data-type='void process_MMX(EQParameters * param, uint8_t * dst, int dst_stride, const uint8_t * src, int src_stride, int w, int h)' data-ref="process_MMX">process_MMX</dfn>(<a class="typedef" href="../vf_eq.h.html#EQParameters" title='EQParameters' data-type='struct EQParameters' data-ref="EQParameters">EQParameters</a> *<dfn class="local col1 decl" id="1param" title='param' data-type='EQParameters *' data-ref="1param">param</dfn>, <a class="typedef" href="../../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col2 decl" id="2dst" title='dst' data-type='uint8_t *' data-ref="2dst">dst</dfn>, <em>int</em> <dfn class="local col3 decl" id="3dst_stride" title='dst_stride' data-type='int' data-ref="3dst_stride">dst_stride</dfn>,</td></tr>
+<tr><th id="30">30</th><td>                        <em>const</em> <a class="typedef" href="../../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col4 decl" id="4src" title='src' data-type='const uint8_t *' data-ref="4src">src</dfn>, <em>int</em> <dfn class="local col5 decl" id="5src_stride" title='src_stride' data-type='int' data-ref="5src_stride">src_stride</dfn>, <em>int</em> <dfn class="local col6 decl" id="6w" title='w' data-type='int' data-ref="6w">w</dfn>, <em>int</em> <dfn class="local col7 decl" id="7h" title='h' data-type='int' data-ref="7h">h</dfn>)</td></tr>
+<tr><th id="31">31</th><td>{</td></tr>
+<tr><th id="32">32</th><td>        <em>int</em> <dfn class="local col8 decl" id="8i" title='i' data-type='int' data-ref="8i">i</dfn>;</td></tr>
+<tr><th id="33">33</th><td>        <em>int</em> <dfn class="local col9 decl" id="9pel" title='pel' data-type='int' data-ref="9pel">pel</dfn>;</td></tr>
+<tr><th id="34">34</th><td>        <em>int</em> <dfn class="local col0 decl" id="10dstep" title='dstep' data-type='int' data-ref="10dstep">dstep</dfn> = <a class="local col3 ref" href="#3dst_stride" title='dst_stride' data-ref="3dst_stride">dst_stride</a> - <a class="local col6 ref" href="#6w" title='w' data-ref="6w">w</a>;</td></tr>
+<tr><th id="35">35</th><td>        <em>int</em> <dfn class="local col1 decl" id="11sstep" title='sstep' data-type='int' data-ref="11sstep">sstep</dfn> = <a class="local col5 ref" href="#5src_stride" title='src_stride' data-ref="5src_stride">src_stride</a> - <a class="local col6 ref" href="#6w" title='w' data-ref="6w">w</a>;</td></tr>
+<tr><th id="36">36</th><td>        <em>short</em> <dfn class="local col2 decl" id="12brvec" title='brvec' data-type='short [4]' data-ref="12brvec">brvec</dfn>[<var>4</var>];</td></tr>
+<tr><th id="37">37</th><td>        <em>short</em> <dfn class="local col3 decl" id="13contvec" title='contvec' data-type='short [4]' data-ref="13contvec">contvec</dfn>[<var>4</var>];</td></tr>
+<tr><th id="38">38</th><td>        <em>int</em> <dfn class="local col4 decl" id="14contrast" title='contrast' data-type='int' data-ref="14contrast">contrast</dfn> = (<em>int</em>) (<a class="local col1 ref" href="#1param" title='param' data-ref="1param">param</a>-&gt;<a class="ref" href="../vf_eq.h.html#EQParameters::contrast" title='EQParameters::contrast' data-ref="EQParameters::contrast">contrast</a> * <var>256</var> * <var>16</var>);</td></tr>
+<tr><th id="39">39</th><td>        <em>int</em> <dfn class="local col5 decl" id="15brightness" title='brightness' data-type='int' data-ref="15brightness">brightness</dfn> = ((<em>int</em>) (<var>100.0</var> * <a class="local col1 ref" href="#1param" title='param' data-ref="1param">param</a>-&gt;<a class="ref" href="../vf_eq.h.html#EQParameters::brightness" title='EQParameters::brightness' data-ref="EQParameters::brightness">brightness</a> + <var>100.0</var>) * <var>511</var>) / <var>200</var> - <var>128</var> - <a class="local col4 ref" href="#14contrast" title='contrast' data-ref="14contrast">contrast</a> / <var>32</var>;</td></tr>
+<tr><th id="40">40</th><td></td></tr>
+<tr><th id="41">41</th><td>        <a class="local col2 ref" href="#12brvec" title='brvec' data-ref="12brvec">brvec</a>[<var>0</var>] = <a class="local col2 ref" href="#12brvec" title='brvec' data-ref="12brvec">brvec</a>[<var>1</var>] = <a class="local col2 ref" href="#12brvec" title='brvec' data-ref="12brvec">brvec</a>[<var>2</var>] = <a class="local col2 ref" href="#12brvec" title='brvec' data-ref="12brvec">brvec</a>[<var>3</var>] = <a class="local col5 ref" href="#15brightness" title='brightness' data-ref="15brightness">brightness</a>;</td></tr>
+<tr><th id="42">42</th><td>        <a class="local col3 ref" href="#13contvec" title='contvec' data-ref="13contvec">contvec</a>[<var>0</var>] = <a class="local col3 ref" href="#13contvec" title='contvec' data-ref="13contvec">contvec</a>[<var>1</var>] = <a class="local col3 ref" href="#13contvec" title='contvec' data-ref="13contvec">contvec</a>[<var>2</var>] = <a class="local col3 ref" href="#13contvec" title='contvec' data-ref="13contvec">contvec</a>[<var>3</var>] = <a class="local col4 ref" href="#14contrast" title='contrast' data-ref="14contrast">contrast</a>;</td></tr>
+<tr><th id="43">43</th><td></td></tr>
+<tr><th id="44">44</th><td>        <b>while</b> (<a class="local col7 ref" href="#7h" title='h' data-ref="7h">h</a>--) {</td></tr>
+<tr><th id="45">45</th><td>                <b>__asm__</b> <em>volatile</em> (</td></tr>
+<tr><th id="46">46</th><td>                        <q>"movq (%5), %%mm3      \n\t"</q></td></tr>
+<tr><th id="47">47</th><td>                        <q>"movq (%6), %%mm4      \n\t"</q></td></tr>
+<tr><th id="48">48</th><td>                        <q>"pxor %%mm0, %%mm0     \n\t"</q></td></tr>
+<tr><th id="49">49</th><td>                        <q>"movl %4, %%eax        \n\t"</q></td></tr>
+<tr><th id="50">50</th><td>                        <q>".p2align 4 \n\t"</q></td></tr>
+<tr><th id="51">51</th><td>                        <q>"1:                    \n\t"</q></td></tr>
+<tr><th id="52">52</th><td>                        <q>"movq (%0), %%mm1      \n\t"</q></td></tr>
+<tr><th id="53">53</th><td>                        <q>"movq (%0), %%mm2      \n\t"</q></td></tr>
+<tr><th id="54">54</th><td>                        <q>"punpcklbw %%mm0, %%mm1\n\t"</q></td></tr>
+<tr><th id="55">55</th><td>                        <q>"punpckhbw %%mm0, %%mm2\n\t"</q></td></tr>
+<tr><th id="56">56</th><td>                        <q>"psllw $4, %%mm1       \n\t"</q></td></tr>
+<tr><th id="57">57</th><td>                        <q>"psllw $4, %%mm2       \n\t"</q></td></tr>
+<tr><th id="58">58</th><td>                        <q>"pmulhw %%mm4, %%mm1   \n\t"</q></td></tr>
+<tr><th id="59">59</th><td>                        <q>"pmulhw %%mm4, %%mm2   \n\t"</q></td></tr>
+<tr><th id="60">60</th><td>                        <q>"paddw %%mm3, %%mm1    \n\t"</q></td></tr>
+<tr><th id="61">61</th><td>                        <q>"paddw %%mm3, %%mm2    \n\t"</q></td></tr>
+<tr><th id="62">62</th><td>                        <q>"packuswb %%mm2, %%mm1 \n\t"</q></td></tr>
+<tr><th id="63">63</th><td>                        <q>"add $8, %0            \n\t"</q></td></tr>
+<tr><th id="64">64</th><td>                        <q>"movq %%mm1, (%1)      \n\t"</q></td></tr>
+<tr><th id="65">65</th><td>                        <q>"add $8, %1            \n\t"</q></td></tr>
+<tr><th id="66">66</th><td>                        <q>"decl %%eax            \n\t"</q></td></tr>
+<tr><th id="67">67</th><td>                        <q>"jnz 1b                \n\t"</q></td></tr>
+<tr><th id="68">68</th><td>                        : <q>"=r"</q> (<a class="local col4 ref" href="#4src" title='src' data-ref="4src">src</a>), <q>"=r"</q> (<a class="local col2 ref" href="#2dst" title='dst' data-ref="2dst">dst</a>)</td></tr>
+<tr><th id="69">69</th><td>                        : <q>"0"</q> (<a class="local col4 ref" href="#4src" title='src' data-ref="4src">src</a>), <q>"1"</q> (<a class="local col2 ref" href="#2dst" title='dst' data-ref="2dst">dst</a>), <q>"r"</q> (<a class="local col6 ref" href="#6w" title='w' data-ref="6w">w</a>&gt;&gt;<var>3</var>), <q>"r"</q> (<a class="local col2 ref" href="#12brvec" title='brvec' data-ref="12brvec">brvec</a>), <q>"r"</q> (<a class="local col3 ref" href="#13contvec" title='contvec' data-ref="13contvec">contvec</a>)</td></tr>
+<tr><th id="70">70</th><td>                        : <q>"%eax"</q></td></tr>
+<tr><th id="71">71</th><td>                );</td></tr>
+<tr><th id="72">72</th><td></td></tr>
+<tr><th id="73">73</th><td>                <b>for</b> (<a class="local col8 ref" href="#8i" title='i' data-ref="8i">i</a> = <a class="local col6 ref" href="#6w" title='w' data-ref="6w">w</a>&amp;<var>7</var>; <a class="local col8 ref" href="#8i" title='i' data-ref="8i">i</a>; <a class="local col8 ref" href="#8i" title='i' data-ref="8i">i</a>--) {</td></tr>
+<tr><th id="74">74</th><td>                        <a class="local col9 ref" href="#9pel" title='pel' data-ref="9pel">pel</a> = ((*<a class="local col4 ref" href="#4src" title='src' data-ref="4src">src</a>++ * <a class="local col4 ref" href="#14contrast" title='contrast' data-ref="14contrast">contrast</a>) &gt;&gt; <var>12</var>) + <a class="local col5 ref" href="#15brightness" title='brightness' data-ref="15brightness">brightness</a>;</td></tr>
+<tr><th id="75">75</th><td>                        <b>if</b> (<a class="local col9 ref" href="#9pel" title='pel' data-ref="9pel">pel</a> &amp; ~<var>255</var>)</td></tr>
+<tr><th id="76">76</th><td>                            <a class="local col9 ref" href="#9pel" title='pel' data-ref="9pel">pel</a> = (-<a class="local col9 ref" href="#9pel" title='pel' data-ref="9pel">pel</a>) &gt;&gt; <var>31</var>;</td></tr>
+<tr><th id="77">77</th><td>                        *<a class="local col2 ref" href="#2dst" title='dst' data-ref="2dst">dst</a>++ = <a class="local col9 ref" href="#9pel" title='pel' data-ref="9pel">pel</a>;</td></tr>
+<tr><th id="78">78</th><td>                }</td></tr>
+<tr><th id="79">79</th><td></td></tr>
+<tr><th id="80">80</th><td>                <a class="local col4 ref" href="#4src" title='src' data-ref="4src">src</a> += <a class="local col1 ref" href="#11sstep" title='sstep' data-ref="11sstep">sstep</a>;</td></tr>
+<tr><th id="81">81</th><td>                <a class="local col2 ref" href="#2dst" title='dst' data-ref="2dst">dst</a> += <a class="local col0 ref" href="#10dstep" title='dstep' data-ref="10dstep">dstep</a>;</td></tr>
+<tr><th id="82">82</th><td>        }</td></tr>
+<tr><th id="83">83</th><td>        <b>__asm__</b> <em>volatile</em> ( <q>"emms \n\t"</q> ::: <q>"memory"</q> );</td></tr>
+<tr><th id="84">84</th><td>}</td></tr>
+<tr><th id="85">85</th><td><u>#<span data-ppcond="28">endif</span></u></td></tr>
+<tr><th id="86">86</th><td></td></tr>
+<tr><th id="87">87</th><td><a class="macro" href="../../libavutil/attributes.h.html#84" title="" data-ref="_M/av_cold">av_cold</a> <em>void</em> <dfn class="decl def" id="ff_eq_init_x86" title='ff_eq_init_x86' data-ref="ff_eq_init_x86">ff_eq_init_x86</dfn>(<a class="typedef" href="../vf_eq.h.html#EQContext" title='EQContext' data-type='struct EQContext' data-ref="EQContext">EQContext</a> *<dfn class="local col6 decl" id="16eq" title='eq' data-type='EQContext *' data-ref="16eq">eq</dfn>)</td></tr>
+<tr><th id="88">88</th><td>{</td></tr>
+<tr><th id="89">89</th><td><u>#<span data-ppcond="89">if</span> <a class="macro" href="../../config.h.html#150" title="1" data-ref="_M/HAVE_MMX_INLINE">HAVE_MMX_INLINE</a> &amp;&amp; <a class="macro" href="../../libavutil/x86/asm.h.html#76" title="(1 || (1 || 0))" data-ref="_M/HAVE_6REGS">HAVE_6REGS</a></u></td></tr>
+<tr><th id="90">90</th><td>    <em>int</em> <dfn class="local col7 decl" id="17cpu_flags" title='cpu_flags' data-type='int' data-ref="17cpu_flags">cpu_flags</dfn> = <a class="ref" href="../../libavutil/cpu.h.html#av_get_cpu_flags" title='av_get_cpu_flags' data-ref="av_get_cpu_flags">av_get_cpu_flags</a>();</td></tr>
+<tr><th id="91">91</th><td></td></tr>
+<tr><th id="92">92</th><td>    <b>if</b> (<a class="local col7 ref" href="#17cpu_flags" title='cpu_flags' data-ref="17cpu_flags">cpu_flags</a> &amp; <a class="macro" href="../../libavutil/cpu.h.html#29" title="0x0001" data-ref="_M/AV_CPU_FLAG_MMX">AV_CPU_FLAG_MMX</a>) {</td></tr>
+<tr><th id="93">93</th><td>        <a class="local col6 ref" href="#16eq" title='eq' data-ref="16eq">eq</a>-&gt;<a class="ref" href="../vf_eq.h.html#{anonymous}::process" title='&lt;anonymous struct&gt;::process' data-ref="{anonymous}::process">process</a> = <a class="tu ref" href="#process_MMX" title='process_MMX' data-use='r' data-ref="process_MMX">process_MMX</a>;</td></tr>
+<tr><th id="94">94</th><td>    }</td></tr>
+<tr><th id="95">95</th><td><u>#<span data-ppcond="89">endif</span></u></td></tr>
+<tr><th id="96">96</th><td>}</td></tr>
+<tr><th id="97">97</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

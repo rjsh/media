@@ -1,0 +1,154 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>motion_est.h source code [ffmpeg/libavcodec/motion_est.h] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="MotionEstContext "/>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavcodec/motion_est.h'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavcodec</a>/<a href='motion_est.h.html'>motion_est.h</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * Motion estimation</i></td></tr>
+<tr><th id="3">3</th><td><i> *</i></td></tr>
+<tr><th id="4">4</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="5">5</th><td><i> *</i></td></tr>
+<tr><th id="6">6</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="7">7</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="8">8</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="9">9</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="10">10</th><td><i> *</i></td></tr>
+<tr><th id="11">11</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="12">12</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="13">13</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="14">14</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="15">15</th><td><i> *</i></td></tr>
+<tr><th id="16">16</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="17">17</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="18">18</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="19">19</th><td><i> */</i></td></tr>
+<tr><th id="20">20</th><td></td></tr>
+<tr><th id="21">21</th><td><u>#<span data-ppcond="21">ifndef</span> <span class="macro" data-ref="_M/AVCODEC_MOTION_EST_H">AVCODEC_MOTION_EST_H</span></u></td></tr>
+<tr><th id="22">22</th><td><u>#define <dfn class="macro" id="_M/AVCODEC_MOTION_EST_H" data-ref="_M/AVCODEC_MOTION_EST_H">AVCODEC_MOTION_EST_H</dfn></u></td></tr>
+<tr><th id="23">23</th><td></td></tr>
+<tr><th id="24">24</th><td><u>#include &lt;stdint.h&gt;</u></td></tr>
+<tr><th id="25">25</th><td></td></tr>
+<tr><th id="26">26</th><td><u>#include <a href="avcodec.h.html">"avcodec.h"</a></u></td></tr>
+<tr><th id="27">27</th><td><u>#include <a href="hpeldsp.h.html">"hpeldsp.h"</a></u></td></tr>
+<tr><th id="28">28</th><td><u>#include <a href="qpeldsp.h.html">"qpeldsp.h"</a></u></td></tr>
+<tr><th id="29">29</th><td></td></tr>
+<tr><th id="30">30</th><td><b>struct</b> <a class="type" href="mpegvideo.h.html#MpegEncContext" title='MpegEncContext' data-ref="MpegEncContext" id="MpegEncContext">MpegEncContext</a>;</td></tr>
+<tr><th id="31">31</th><td></td></tr>
+<tr><th id="32">32</th><td><u>#<span data-ppcond="32">if</span> <a class="macro" href="../config.h.html#24" title="0" data-ref="_M/ARCH_IA64">ARCH_IA64</a> // Limit static arrays to avoid gcc failing "short data segment overflowed"</u></td></tr>
+<tr><th id="33">33</th><td><u>#define MAX_MV 1024</u></td></tr>
+<tr><th id="34">34</th><td><u>#<span data-ppcond="32">else</span></u></td></tr>
+<tr><th id="35">35</th><td><u>#define <dfn class="macro" id="_M/MAX_MV" data-ref="_M/MAX_MV">MAX_MV</dfn> 4096</u></td></tr>
+<tr><th id="36">36</th><td><u>#<span data-ppcond="32">endif</span></u></td></tr>
+<tr><th id="37">37</th><td><u>#define <dfn class="macro" id="_M/MAX_DMV" data-ref="_M/MAX_DMV">MAX_DMV</dfn> (2*MAX_MV)</u></td></tr>
+<tr><th id="38">38</th><td><u>#define <dfn class="macro" id="_M/ME_MAP_SIZE" data-ref="_M/ME_MAP_SIZE">ME_MAP_SIZE</dfn> 64</u></td></tr>
+<tr><th id="39">39</th><td></td></tr>
+<tr><th id="40">40</th><td><u>#define <dfn class="macro" id="_M/FF_ME_ZERO" data-ref="_M/FF_ME_ZERO">FF_ME_ZERO</dfn> 0</u></td></tr>
+<tr><th id="41">41</th><td><u>#define <dfn class="macro" id="_M/FF_ME_EPZS" data-ref="_M/FF_ME_EPZS">FF_ME_EPZS</dfn> 1</u></td></tr>
+<tr><th id="42">42</th><td><u>#define <dfn class="macro" id="_M/FF_ME_XONE" data-ref="_M/FF_ME_XONE">FF_ME_XONE</dfn> 2</u></td></tr>
+<tr><th id="43">43</th><td></td></tr>
+<tr><th id="44">44</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="45">45</th><td><i class="doc"> * Motion estimation context.</i></td></tr>
+<tr><th id="46">46</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="47">47</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="MotionEstContext" title='MotionEstContext' data-ref="MotionEstContext"><a class="type" href="#MotionEstContext" title='MotionEstContext' data-ref="MotionEstContext">MotionEstContext</a></dfn> {</td></tr>
+<tr><th id="48">48</th><td>    <a class="typedef" href="avcodec.h.html#AVCodecContext" title='AVCodecContext' data-type='struct AVCodecContext' data-ref="AVCodecContext">AVCodecContext</a> *<dfn class="decl" id="MotionEstContext::avctx" title='MotionEstContext::avctx' data-ref="MotionEstContext::avctx">avctx</dfn>;</td></tr>
+<tr><th id="49">49</th><td>    <em>int</em> <dfn class="decl" id="MotionEstContext::skip" title='MotionEstContext::skip' data-ref="MotionEstContext::skip">skip</dfn>;                       <i class="doc">///&lt; set if ME is skipped for the current MB</i></td></tr>
+<tr><th id="50">50</th><td>    <em>int</em> <dfn class="decl" id="MotionEstContext::co_located_mv" title='MotionEstContext::co_located_mv' data-ref="MotionEstContext::co_located_mv">co_located_mv</dfn>[<var>4</var>][<var>2</var>];        <i class="doc">///&lt; mv from last P-frame for direct mode ME</i></td></tr>
+<tr><th id="51">51</th><td>    <em>int</em> <dfn class="decl" id="MotionEstContext::direct_basis_mv" title='MotionEstContext::direct_basis_mv' data-ref="MotionEstContext::direct_basis_mv">direct_basis_mv</dfn>[<var>4</var>][<var>2</var>];</td></tr>
+<tr><th id="52">52</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="decl" id="MotionEstContext::scratchpad" title='MotionEstContext::scratchpad' data-ref="MotionEstContext::scratchpad">scratchpad</dfn>;            <i class="doc">/**&lt; data area for the ME algo, so that</i></td></tr>
+<tr><th id="53">53</th><td><i class="doc">                                     * the ME does not need to malloc/free. */</i></td></tr>
+<tr><th id="54">54</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="decl" id="MotionEstContext::best_mb" title='MotionEstContext::best_mb' data-ref="MotionEstContext::best_mb">best_mb</dfn>;</td></tr>
+<tr><th id="55">55</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="decl" id="MotionEstContext::temp_mb" title='MotionEstContext::temp_mb' data-ref="MotionEstContext::temp_mb">temp_mb</dfn>[<var>2</var>];</td></tr>
+<tr><th id="56">56</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="decl" id="MotionEstContext::temp" title='MotionEstContext::temp' data-ref="MotionEstContext::temp">temp</dfn>;</td></tr>
+<tr><th id="57">57</th><td>    <em>int</em> <dfn class="decl" id="MotionEstContext::best_bits" title='MotionEstContext::best_bits' data-ref="MotionEstContext::best_bits">best_bits</dfn>;</td></tr>
+<tr><th id="58">58</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a> *<dfn class="decl" id="MotionEstContext::map" title='MotionEstContext::map' data-ref="MotionEstContext::map">map</dfn>;                  <i class="doc">///&lt; map to avoid duplicate evaluations</i></td></tr>
+<tr><th id="59">59</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a> *<dfn class="decl" id="MotionEstContext::score_map" title='MotionEstContext::score_map' data-ref="MotionEstContext::score_map">score_map</dfn>;            <i class="doc">///&lt; map to store the scores</i></td></tr>
+<tr><th id="60">60</th><td>    <em>unsigned</em> <dfn class="decl" id="MotionEstContext::map_generation" title='MotionEstContext::map_generation' data-ref="MotionEstContext::map_generation">map_generation</dfn>;</td></tr>
+<tr><th id="61">61</th><td>    <em>int</em> <dfn class="decl" id="MotionEstContext::pre_penalty_factor" title='MotionEstContext::pre_penalty_factor' data-ref="MotionEstContext::pre_penalty_factor">pre_penalty_factor</dfn>;</td></tr>
+<tr><th id="62">62</th><td>    <em>int</em> <dfn class="decl" id="MotionEstContext::penalty_factor" title='MotionEstContext::penalty_factor' data-ref="MotionEstContext::penalty_factor">penalty_factor</dfn>;             <i class="doc">/**&lt; an estimate of the bits required to</i></td></tr>
+<tr><th id="63">63</th><td><i class="doc">                                     * code a given mv value, e.g. (1,0) takes</i></td></tr>
+<tr><th id="64">64</th><td><i class="doc">                                     * more bits than (0,0). We have to</i></td></tr>
+<tr><th id="65">65</th><td><i class="doc">                                     * estimate whether any reduction in</i></td></tr>
+<tr><th id="66">66</th><td><i class="doc">                                     * residual is worth the extra bits. */</i></td></tr>
+<tr><th id="67">67</th><td>    <em>int</em> <dfn class="decl" id="MotionEstContext::sub_penalty_factor" title='MotionEstContext::sub_penalty_factor' data-ref="MotionEstContext::sub_penalty_factor">sub_penalty_factor</dfn>;</td></tr>
+<tr><th id="68">68</th><td>    <em>int</em> <dfn class="decl" id="MotionEstContext::mb_penalty_factor" title='MotionEstContext::mb_penalty_factor' data-ref="MotionEstContext::mb_penalty_factor">mb_penalty_factor</dfn>;</td></tr>
+<tr><th id="69">69</th><td>    <em>int</em> <dfn class="decl" id="MotionEstContext::flags" title='MotionEstContext::flags' data-ref="MotionEstContext::flags">flags</dfn>;</td></tr>
+<tr><th id="70">70</th><td>    <em>int</em> <dfn class="decl" id="MotionEstContext::sub_flags" title='MotionEstContext::sub_flags' data-ref="MotionEstContext::sub_flags">sub_flags</dfn>;</td></tr>
+<tr><th id="71">71</th><td>    <em>int</em> <dfn class="decl" id="MotionEstContext::mb_flags" title='MotionEstContext::mb_flags' data-ref="MotionEstContext::mb_flags">mb_flags</dfn>;</td></tr>
+<tr><th id="72">72</th><td>    <em>int</em> <dfn class="decl" id="MotionEstContext::pre_pass" title='MotionEstContext::pre_pass' data-ref="MotionEstContext::pre_pass">pre_pass</dfn>;                   <i class="doc">///&lt; = 1 for the pre pass</i></td></tr>
+<tr><th id="73">73</th><td>    <em>int</em> <dfn class="decl" id="MotionEstContext::dia_size" title='MotionEstContext::dia_size' data-ref="MotionEstContext::dia_size">dia_size</dfn>;</td></tr>
+<tr><th id="74">74</th><td>    <em>int</em> <dfn class="decl" id="MotionEstContext::xmin" title='MotionEstContext::xmin' data-ref="MotionEstContext::xmin">xmin</dfn>;</td></tr>
+<tr><th id="75">75</th><td>    <em>int</em> <dfn class="decl" id="MotionEstContext::xmax" title='MotionEstContext::xmax' data-ref="MotionEstContext::xmax">xmax</dfn>;</td></tr>
+<tr><th id="76">76</th><td>    <em>int</em> <dfn class="decl" id="MotionEstContext::ymin" title='MotionEstContext::ymin' data-ref="MotionEstContext::ymin">ymin</dfn>;</td></tr>
+<tr><th id="77">77</th><td>    <em>int</em> <dfn class="decl" id="MotionEstContext::ymax" title='MotionEstContext::ymax' data-ref="MotionEstContext::ymax">ymax</dfn>;</td></tr>
+<tr><th id="78">78</th><td>    <em>int</em> <dfn class="decl" id="MotionEstContext::pred_x" title='MotionEstContext::pred_x' data-ref="MotionEstContext::pred_x">pred_x</dfn>;</td></tr>
+<tr><th id="79">79</th><td>    <em>int</em> <dfn class="decl" id="MotionEstContext::pred_y" title='MotionEstContext::pred_y' data-ref="MotionEstContext::pred_y">pred_y</dfn>;</td></tr>
+<tr><th id="80">80</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="decl" id="MotionEstContext::src" title='MotionEstContext::src' data-ref="MotionEstContext::src">src</dfn>[<var>4</var>][<var>4</var>];</td></tr>
+<tr><th id="81">81</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="decl" id="MotionEstContext::ref" title='MotionEstContext::ref' data-ref="MotionEstContext::ref">ref</dfn>[<var>4</var>][<var>4</var>];</td></tr>
+<tr><th id="82">82</th><td>    <em>int</em> <dfn class="decl" id="MotionEstContext::stride" title='MotionEstContext::stride' data-ref="MotionEstContext::stride">stride</dfn>;</td></tr>
+<tr><th id="83">83</th><td>    <em>int</em> <dfn class="decl" id="MotionEstContext::uvstride" title='MotionEstContext::uvstride' data-ref="MotionEstContext::uvstride">uvstride</dfn>;</td></tr>
+<tr><th id="84">84</th><td>    <i>/* temp variables for picture complexity calculation */</i></td></tr>
+<tr><th id="85">85</th><td>    <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="decl" id="MotionEstContext::mc_mb_var_sum_temp" title='MotionEstContext::mc_mb_var_sum_temp' data-ref="MotionEstContext::mc_mb_var_sum_temp">mc_mb_var_sum_temp</dfn>;</td></tr>
+<tr><th id="86">86</th><td>    <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="decl" id="MotionEstContext::mb_var_sum_temp" title='MotionEstContext::mb_var_sum_temp' data-ref="MotionEstContext::mb_var_sum_temp">mb_var_sum_temp</dfn>;</td></tr>
+<tr><th id="87">87</th><td>    <em>int</em> <dfn class="decl" id="MotionEstContext::scene_change_score" title='MotionEstContext::scene_change_score' data-ref="MotionEstContext::scene_change_score">scene_change_score</dfn>;</td></tr>
+<tr><th id="88">88</th><td></td></tr>
+<tr><th id="89">89</th><td>    <a class="typedef" href="hpeldsp.h.html#op_pixels_func" title='op_pixels_func' data-type='void (*)(uint8_t *, const uint8_t *, ptrdiff_t, int)' data-ref="op_pixels_func">op_pixels_func</a>(*<dfn class="decl" id="MotionEstContext::hpel_put" title='MotionEstContext::hpel_put' data-ref="MotionEstContext::hpel_put">hpel_put</dfn>)[<var>4</var>];</td></tr>
+<tr><th id="90">90</th><td>    <a class="typedef" href="hpeldsp.h.html#op_pixels_func" title='op_pixels_func' data-type='void (*)(uint8_t *, const uint8_t *, ptrdiff_t, int)' data-ref="op_pixels_func">op_pixels_func</a>(*<dfn class="decl" id="MotionEstContext::hpel_avg" title='MotionEstContext::hpel_avg' data-ref="MotionEstContext::hpel_avg">hpel_avg</dfn>)[<var>4</var>];</td></tr>
+<tr><th id="91">91</th><td>    <a class="typedef" href="qpeldsp.h.html#qpel_mc_func" title='qpel_mc_func' data-type='void (*)(uint8_t *, const uint8_t *, ptrdiff_t)' data-ref="qpel_mc_func">qpel_mc_func</a>(*<dfn class="decl" id="MotionEstContext::qpel_put" title='MotionEstContext::qpel_put' data-ref="MotionEstContext::qpel_put">qpel_put</dfn>)[<var>16</var>];</td></tr>
+<tr><th id="92">92</th><td>    <a class="typedef" href="qpeldsp.h.html#qpel_mc_func" title='qpel_mc_func' data-type='void (*)(uint8_t *, const uint8_t *, ptrdiff_t)' data-ref="qpel_mc_func">qpel_mc_func</a>(*<dfn class="decl" id="MotionEstContext::qpel_avg" title='MotionEstContext::qpel_avg' data-ref="MotionEstContext::qpel_avg">qpel_avg</dfn>)[<var>16</var>];</td></tr>
+<tr><th id="93">93</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> (*<dfn class="decl" id="MotionEstContext::mv_penalty" title='MotionEstContext::mv_penalty' data-ref="MotionEstContext::mv_penalty">mv_penalty</dfn>)[<a class="macro" href="#37" title="(2*4096)" data-ref="_M/MAX_DMV">MAX_DMV</a> * <var>2</var> + <var>1</var>]; <i class="doc">///&lt; bit amount needed to encode a MV</i></td></tr>
+<tr><th id="94">94</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="decl" id="MotionEstContext::current_mv_penalty" title='MotionEstContext::current_mv_penalty' data-ref="MotionEstContext::current_mv_penalty">current_mv_penalty</dfn>;</td></tr>
+<tr><th id="95">95</th><td>    <em>int</em> (*<dfn class="decl" id="MotionEstContext::sub_motion_search" title='MotionEstContext::sub_motion_search' data-ref="MotionEstContext::sub_motion_search">sub_motion_search</dfn>)(<b>struct</b> <a class="type" href="mpegvideo.h.html#MpegEncContext" title='MpegEncContext' data-ref="MpegEncContext">MpegEncContext</a> *<dfn class="local col7 decl" id="27s" title='s' data-type='struct MpegEncContext *' data-ref="27s">s</dfn>,</td></tr>
+<tr><th id="96">96</th><td>                             <em>int</em> *<dfn class="local col8 decl" id="28mx_ptr" title='mx_ptr' data-type='int *' data-ref="28mx_ptr">mx_ptr</dfn>, <em>int</em> *<dfn class="local col9 decl" id="29my_ptr" title='my_ptr' data-type='int *' data-ref="29my_ptr">my_ptr</dfn>, <em>int</em> <dfn class="local col0 decl" id="30dmin" title='dmin' data-type='int' data-ref="30dmin">dmin</dfn>,</td></tr>
+<tr><th id="97">97</th><td>                             <em>int</em> <dfn class="local col1 decl" id="31src_index" title='src_index' data-type='int' data-ref="31src_index">src_index</dfn>, <em>int</em> <dfn class="local col2 decl" id="32ref_index" title='ref_index' data-type='int' data-ref="32ref_index">ref_index</dfn>,</td></tr>
+<tr><th id="98">98</th><td>                             <em>int</em> <dfn class="local col3 decl" id="33size" title='size' data-type='int' data-ref="33size">size</dfn>, <em>int</em> <dfn class="local col4 decl" id="34h" title='h' data-type='int' data-ref="34h">h</dfn>);</td></tr>
+<tr><th id="99">99</th><td>} <dfn class="typedef" id="MotionEstContext" title='MotionEstContext' data-type='struct MotionEstContext' data-ref="MotionEstContext">MotionEstContext</dfn>;</td></tr>
+<tr><th id="100">100</th><td></td></tr>
+<tr><th id="101">101</th><td><em>static</em> <b>inline</b> <em>int</em> <dfn class="decl def" id="ff_h263_round_chroma" title='ff_h263_round_chroma' data-ref="ff_h263_round_chroma">ff_h263_round_chroma</dfn>(<em>int</em> <dfn class="local col5 decl" id="35x" title='x' data-type='int' data-ref="35x">x</dfn>)</td></tr>
+<tr><th id="102">102</th><td>{</td></tr>
+<tr><th id="103">103</th><td>    <i>//FIXME static or not?</i></td></tr>
+<tr><th id="104">104</th><td>    <em>static</em> <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="local col6 decl" id="36h263_chroma_roundtab" title='h263_chroma_roundtab' data-type='const uint8_t [16]' data-ref="36h263_chroma_roundtab">h263_chroma_roundtab</dfn>[<var>16</var>] = {</td></tr>
+<tr><th id="105">105</th><td>    <i>//  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15</i></td></tr>
+<tr><th id="106">106</th><td>        <var>0</var>, <var>0</var>, <var>0</var>, <var>1</var>, <var>1</var>, <var>1</var>, <var>1</var>, <var>1</var>, <var>0</var>, <var>0</var>, <var>0</var>, <var>0</var>, <var>0</var>, <var>0</var>, <var>1</var>, <var>1</var>,</td></tr>
+<tr><th id="107">107</th><td>    };</td></tr>
+<tr><th id="108">108</th><td>    <b>return</b> <a class="local col6 ref" href="#36h263_chroma_roundtab" title='h263_chroma_roundtab' data-ref="36h263_chroma_roundtab">h263_chroma_roundtab</a>[<a class="local col5 ref" href="#35x" title='x' data-ref="35x">x</a> &amp; <var>0xf</var>] + (<a class="local col5 ref" href="#35x" title='x' data-ref="35x">x</a> &gt;&gt; <var>3</var>);</td></tr>
+<tr><th id="109">109</th><td>}</td></tr>
+<tr><th id="110">110</th><td></td></tr>
+<tr><th id="111">111</th><td><em>int</em> <dfn class="decl" id="ff_init_me" title='ff_init_me' data-ref="ff_init_me">ff_init_me</dfn>(<b>struct</b> <a class="type" href="mpegvideo.h.html#MpegEncContext" title='MpegEncContext' data-ref="MpegEncContext">MpegEncContext</a> *<dfn class="local col7 decl" id="37s" title='s' data-type='struct MpegEncContext *' data-ref="37s">s</dfn>);</td></tr>
+<tr><th id="112">112</th><td></td></tr>
+<tr><th id="113">113</th><td><em>void</em> <dfn class="decl" id="ff_estimate_p_frame_motion" title='ff_estimate_p_frame_motion' data-ref="ff_estimate_p_frame_motion">ff_estimate_p_frame_motion</dfn>(<b>struct</b> <a class="type" href="mpegvideo.h.html#MpegEncContext" title='MpegEncContext' data-ref="MpegEncContext">MpegEncContext</a> *<dfn class="local col8 decl" id="38s" title='s' data-type='struct MpegEncContext *' data-ref="38s">s</dfn>, <em>int</em> <dfn class="local col9 decl" id="39mb_x" title='mb_x' data-type='int' data-ref="39mb_x">mb_x</dfn>, <em>int</em> <dfn class="local col0 decl" id="40mb_y" title='mb_y' data-type='int' data-ref="40mb_y">mb_y</dfn>);</td></tr>
+<tr><th id="114">114</th><td><em>void</em> <dfn class="decl" id="ff_estimate_b_frame_motion" title='ff_estimate_b_frame_motion' data-ref="ff_estimate_b_frame_motion">ff_estimate_b_frame_motion</dfn>(<b>struct</b> <a class="type" href="mpegvideo.h.html#MpegEncContext" title='MpegEncContext' data-ref="MpegEncContext">MpegEncContext</a> *<dfn class="local col1 decl" id="41s" title='s' data-type='struct MpegEncContext *' data-ref="41s">s</dfn>, <em>int</em> <dfn class="local col2 decl" id="42mb_x" title='mb_x' data-type='int' data-ref="42mb_x">mb_x</dfn>, <em>int</em> <dfn class="local col3 decl" id="43mb_y" title='mb_y' data-type='int' data-ref="43mb_y">mb_y</dfn>);</td></tr>
+<tr><th id="115">115</th><td></td></tr>
+<tr><th id="116">116</th><td><em>int</em> <dfn class="decl" id="ff_pre_estimate_p_frame_motion" title='ff_pre_estimate_p_frame_motion' data-ref="ff_pre_estimate_p_frame_motion">ff_pre_estimate_p_frame_motion</dfn>(<b>struct</b> <a class="type" href="mpegvideo.h.html#MpegEncContext" title='MpegEncContext' data-ref="MpegEncContext">MpegEncContext</a> *<dfn class="local col4 decl" id="44s" title='s' data-type='struct MpegEncContext *' data-ref="44s">s</dfn>,</td></tr>
+<tr><th id="117">117</th><td>                                   <em>int</em> <dfn class="local col5 decl" id="45mb_x" title='mb_x' data-type='int' data-ref="45mb_x">mb_x</dfn>, <em>int</em> <dfn class="local col6 decl" id="46mb_y" title='mb_y' data-type='int' data-ref="46mb_y">mb_y</dfn>);</td></tr>
+<tr><th id="118">118</th><td></td></tr>
+<tr><th id="119">119</th><td><em>int</em> <dfn class="decl" id="ff_epzs_motion_search" title='ff_epzs_motion_search' data-ref="ff_epzs_motion_search">ff_epzs_motion_search</dfn>(<b>struct</b> <a class="type" href="mpegvideo.h.html#MpegEncContext" title='MpegEncContext' data-ref="MpegEncContext">MpegEncContext</a> *<dfn class="local col7 decl" id="47s" title='s' data-type='struct MpegEncContext *' data-ref="47s">s</dfn>, <em>int</em> *<dfn class="local col8 decl" id="48mx_ptr" title='mx_ptr' data-type='int *' data-ref="48mx_ptr">mx_ptr</dfn>, <em>int</em> *<dfn class="local col9 decl" id="49my_ptr" title='my_ptr' data-type='int *' data-ref="49my_ptr">my_ptr</dfn>,</td></tr>
+<tr><th id="120">120</th><td>                          <em>int</em> <dfn class="local col0 decl" id="50P" title='P' data-type='int (*)[2]' data-ref="50P">P</dfn>[<var>10</var>][<var>2</var>], <em>int</em> <dfn class="local col1 decl" id="51src_index" title='src_index' data-type='int' data-ref="51src_index">src_index</dfn>, <em>int</em> <dfn class="local col2 decl" id="52ref_index" title='ref_index' data-type='int' data-ref="52ref_index">ref_index</dfn>,</td></tr>
+<tr><th id="121">121</th><td>                          <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> (*<dfn class="local col3 decl" id="53last_mv" title='last_mv' data-type='int16_t (*)[2]' data-ref="53last_mv">last_mv</dfn>)[<var>2</var>], <em>int</em> <dfn class="local col4 decl" id="54ref_mv_scale" title='ref_mv_scale' data-type='int' data-ref="54ref_mv_scale">ref_mv_scale</dfn>, <em>int</em> <dfn class="local col5 decl" id="55size" title='size' data-type='int' data-ref="55size">size</dfn>,</td></tr>
+<tr><th id="122">122</th><td>                          <em>int</em> <dfn class="local col6 decl" id="56h" title='h' data-type='int' data-ref="56h">h</dfn>);</td></tr>
+<tr><th id="123">123</th><td></td></tr>
+<tr><th id="124">124</th><td><em>int</em> <dfn class="decl" id="ff_get_mb_score" title='ff_get_mb_score' data-ref="ff_get_mb_score">ff_get_mb_score</dfn>(<b>struct</b> <a class="type" href="mpegvideo.h.html#MpegEncContext" title='MpegEncContext' data-ref="MpegEncContext">MpegEncContext</a> *<dfn class="local col7 decl" id="57s" title='s' data-type='struct MpegEncContext *' data-ref="57s">s</dfn>, <em>int</em> <dfn class="local col8 decl" id="58mx" title='mx' data-type='int' data-ref="58mx">mx</dfn>, <em>int</em> <dfn class="local col9 decl" id="59my" title='my' data-type='int' data-ref="59my">my</dfn>, <em>int</em> <dfn class="local col0 decl" id="60src_index" title='src_index' data-type='int' data-ref="60src_index">src_index</dfn>,</td></tr>
+<tr><th id="125">125</th><td>                    <em>int</em> <dfn class="local col1 decl" id="61ref_index" title='ref_index' data-type='int' data-ref="61ref_index">ref_index</dfn>, <em>int</em> <dfn class="local col2 decl" id="62size" title='size' data-type='int' data-ref="62size">size</dfn>, <em>int</em> <dfn class="local col3 decl" id="63h" title='h' data-type='int' data-ref="63h">h</dfn>, <em>int</em> <dfn class="local col4 decl" id="64add_rate" title='add_rate' data-type='int' data-ref="64add_rate">add_rate</dfn>);</td></tr>
+<tr><th id="126">126</th><td></td></tr>
+<tr><th id="127">127</th><td><em>int</em> <dfn class="decl" id="ff_get_best_fcode" title='ff_get_best_fcode' data-ref="ff_get_best_fcode">ff_get_best_fcode</dfn>(<b>struct</b> <a class="type" href="mpegvideo.h.html#MpegEncContext" title='MpegEncContext' data-ref="MpegEncContext">MpegEncContext</a> *<dfn class="local col5 decl" id="65s" title='s' data-type='struct MpegEncContext *' data-ref="65s">s</dfn>,</td></tr>
+<tr><th id="128">128</th><td>                      <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> (*<dfn class="local col6 decl" id="66mv_table" title='mv_table' data-type='int16_t (*)[2]' data-ref="66mv_table">mv_table</dfn>)[<var>2</var>], <em>int</em> <dfn class="local col7 decl" id="67type" title='type' data-type='int' data-ref="67type">type</dfn>);</td></tr>
+<tr><th id="129">129</th><td></td></tr>
+<tr><th id="130">130</th><td><em>void</em> <dfn class="decl" id="ff_fix_long_p_mvs" title='ff_fix_long_p_mvs' data-ref="ff_fix_long_p_mvs">ff_fix_long_p_mvs</dfn>(<b>struct</b> <a class="type" href="mpegvideo.h.html#MpegEncContext" title='MpegEncContext' data-ref="MpegEncContext">MpegEncContext</a> *<dfn class="local col8 decl" id="68s" title='s' data-type='struct MpegEncContext *' data-ref="68s">s</dfn>);</td></tr>
+<tr><th id="131">131</th><td><em>void</em> <dfn class="decl" id="ff_fix_long_mvs" title='ff_fix_long_mvs' data-ref="ff_fix_long_mvs">ff_fix_long_mvs</dfn>(<b>struct</b> <a class="type" href="mpegvideo.h.html#MpegEncContext" title='MpegEncContext' data-ref="MpegEncContext">MpegEncContext</a> *<dfn class="local col9 decl" id="69s" title='s' data-type='struct MpegEncContext *' data-ref="69s">s</dfn>, <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col0 decl" id="70field_select_table" title='field_select_table' data-type='uint8_t *' data-ref="70field_select_table">field_select_table</dfn>,</td></tr>
+<tr><th id="132">132</th><td>                     <em>int</em> <dfn class="local col1 decl" id="71field_select" title='field_select' data-type='int' data-ref="71field_select">field_select</dfn>, <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> (*<dfn class="local col2 decl" id="72mv_table" title='mv_table' data-type='int16_t (*)[2]' data-ref="72mv_table">mv_table</dfn>)[<var>2</var>], <em>int</em> <dfn class="local col3 decl" id="73f_code" title='f_code' data-type='int' data-ref="73f_code">f_code</dfn>,</td></tr>
+<tr><th id="133">133</th><td>                     <em>int</em> <dfn class="local col4 decl" id="74type" title='type' data-type='int' data-ref="74type">type</dfn>, <em>int</em> <dfn class="local col5 decl" id="75truncate" title='truncate' data-type='int' data-ref="75truncate">truncate</dfn>);</td></tr>
+<tr><th id="134">134</th><td></td></tr>
+<tr><th id="135">135</th><td><u>#<span data-ppcond="21">endif</span> /* AVCODEC_MOTION_EST_H */</u></td></tr>
+<tr><th id="136">136</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated while processing <a href='diracdec.c.html'>ffmpeg/libavcodec/diracdec.c</a><br/>Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

@@ -1,0 +1,176 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>swresample_frame.c source code [ffmpeg/libswresample/swresample_frame.c] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libswresample/swresample_frame.c'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libswresample</a>/<a href='swresample_frame.c.html'>swresample_frame.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * Copyright (c) 2014 Luca Barbato &lt;lu_zero@gentoo.org&gt;</i></td></tr>
+<tr><th id="3">3</th><td><i> * Copyright (c) 2014 Michael Niedermayer &lt;michaelni@gmx.at&gt;</i></td></tr>
+<tr><th id="4">4</th><td><i> *</i></td></tr>
+<tr><th id="5">5</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="8">8</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="9">9</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="10">10</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="11">11</th><td><i> *</i></td></tr>
+<tr><th id="12">12</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="13">13</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="14">14</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="15">15</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="16">16</th><td><i> *</i></td></tr>
+<tr><th id="17">17</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="18">18</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="19">19</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="20">20</th><td><i> */</i></td></tr>
+<tr><th id="21">21</th><td></td></tr>
+<tr><th id="22">22</th><td><u>#include <a href="swresample_internal.h.html">"swresample_internal.h"</a></u></td></tr>
+<tr><th id="23">23</th><td><u>#include <a href="../libavutil/frame.h.html">"libavutil/frame.h"</a></u></td></tr>
+<tr><th id="24">24</th><td><u>#include <a href="../libavutil/opt.h.html">"libavutil/opt.h"</a></u></td></tr>
+<tr><th id="25">25</th><td></td></tr>
+<tr><th id="26">26</th><td><em>int</em> <dfn class="decl def" id="swr_config_frame" title='swr_config_frame' data-ref="swr_config_frame">swr_config_frame</dfn>(<a class="typedef" href="swresample.h.html#SwrContext" title='SwrContext' data-type='struct SwrContext' data-ref="SwrContext">SwrContext</a> *<dfn class="local col1 decl" id="1s" title='s' data-type='SwrContext *' data-ref="1s">s</dfn>, <em>const</em> <a class="typedef" href="../libavutil/frame.h.html#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col2 decl" id="2out" title='out' data-type='const AVFrame *' data-ref="2out">out</dfn>, <em>const</em> <a class="typedef" href="../libavutil/frame.h.html#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col3 decl" id="3in" title='in' data-type='const AVFrame *' data-ref="3in">in</dfn>)</td></tr>
+<tr><th id="27">27</th><td>{</td></tr>
+<tr><th id="28">28</th><td>    <a class="ref" href="swresample.h.html#swr_close" title='swr_close' data-ref="swr_close">swr_close</a>(<a class="local col1 ref" href="#1s" title='s' data-ref="1s">s</a>);</td></tr>
+<tr><th id="29">29</th><td></td></tr>
+<tr><th id="30">30</th><td>    <b>if</b> (<a class="local col3 ref" href="#3in" title='in' data-ref="3in">in</a>) {</td></tr>
+<tr><th id="31">31</th><td>        <b>if</b> (<a class="ref" href="../libavutil/opt.h.html#av_opt_set_int" title='av_opt_set_int' data-ref="av_opt_set_int">av_opt_set_int</a>(<a class="local col1 ref" href="#1s" title='s' data-ref="1s">s</a>, <q>"icl"</q>, <a class="local col3 ref" href="#3in" title='in' data-ref="3in">in</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::channel_layout" title='AVFrame::channel_layout' data-ref="AVFrame::channel_layout">channel_layout</a>, <var>0</var>) &lt; <var>0</var>)</td></tr>
+<tr><th id="32">32</th><td>            <b>goto</b> <a class="lbl" href="#4fail" data-ref="4fail">fail</a>;</td></tr>
+<tr><th id="33">33</th><td>        <b>if</b> (<a class="ref" href="../libavutil/opt.h.html#av_opt_set_int" title='av_opt_set_int' data-ref="av_opt_set_int">av_opt_set_int</a>(<a class="local col1 ref" href="#1s" title='s' data-ref="1s">s</a>, <q>"isf"</q>, <a class="local col3 ref" href="#3in" title='in' data-ref="3in">in</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::format" title='AVFrame::format' data-ref="AVFrame::format">format</a>, <var>0</var>) &lt; <var>0</var>)</td></tr>
+<tr><th id="34">34</th><td>            <b>goto</b> <a class="lbl" href="#4fail" data-ref="4fail">fail</a>;</td></tr>
+<tr><th id="35">35</th><td>        <b>if</b> (<a class="ref" href="../libavutil/opt.h.html#av_opt_set_int" title='av_opt_set_int' data-ref="av_opt_set_int">av_opt_set_int</a>(<a class="local col1 ref" href="#1s" title='s' data-ref="1s">s</a>, <q>"isr"</q>, <a class="local col3 ref" href="#3in" title='in' data-ref="3in">in</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::sample_rate" title='AVFrame::sample_rate' data-ref="AVFrame::sample_rate">sample_rate</a>, <var>0</var>) &lt; <var>0</var>)</td></tr>
+<tr><th id="36">36</th><td>            <b>goto</b> <a class="lbl" href="#4fail" data-ref="4fail">fail</a>;</td></tr>
+<tr><th id="37">37</th><td>    }</td></tr>
+<tr><th id="38">38</th><td></td></tr>
+<tr><th id="39">39</th><td>    <b>if</b> (<a class="local col2 ref" href="#2out" title='out' data-ref="2out">out</a>) {</td></tr>
+<tr><th id="40">40</th><td>        <b>if</b> (<a class="ref" href="../libavutil/opt.h.html#av_opt_set_int" title='av_opt_set_int' data-ref="av_opt_set_int">av_opt_set_int</a>(<a class="local col1 ref" href="#1s" title='s' data-ref="1s">s</a>, <q>"ocl"</q>, <a class="local col2 ref" href="#2out" title='out' data-ref="2out">out</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::channel_layout" title='AVFrame::channel_layout' data-ref="AVFrame::channel_layout">channel_layout</a>, <var>0</var>) &lt; <var>0</var>)</td></tr>
+<tr><th id="41">41</th><td>            <b>goto</b> <a class="lbl" href="#4fail" data-ref="4fail">fail</a>;</td></tr>
+<tr><th id="42">42</th><td>        <b>if</b> (<a class="ref" href="../libavutil/opt.h.html#av_opt_set_int" title='av_opt_set_int' data-ref="av_opt_set_int">av_opt_set_int</a>(<a class="local col1 ref" href="#1s" title='s' data-ref="1s">s</a>, <q>"osf"</q>, <a class="local col2 ref" href="#2out" title='out' data-ref="2out">out</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::format" title='AVFrame::format' data-ref="AVFrame::format">format</a>,  <var>0</var>) &lt; <var>0</var>)</td></tr>
+<tr><th id="43">43</th><td>            <b>goto</b> <a class="lbl" href="#4fail" data-ref="4fail">fail</a>;</td></tr>
+<tr><th id="44">44</th><td>        <b>if</b> (<a class="ref" href="../libavutil/opt.h.html#av_opt_set_int" title='av_opt_set_int' data-ref="av_opt_set_int">av_opt_set_int</a>(<a class="local col1 ref" href="#1s" title='s' data-ref="1s">s</a>, <q>"osr"</q>, <a class="local col2 ref" href="#2out" title='out' data-ref="2out">out</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::sample_rate" title='AVFrame::sample_rate' data-ref="AVFrame::sample_rate">sample_rate</a>, <var>0</var>) &lt; <var>0</var>)</td></tr>
+<tr><th id="45">45</th><td>            <b>goto</b> <a class="lbl" href="#4fail" data-ref="4fail">fail</a>;</td></tr>
+<tr><th id="46">46</th><td>    }</td></tr>
+<tr><th id="47">47</th><td></td></tr>
+<tr><th id="48">48</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="49">49</th><td><dfn class="lbl" id="4fail" data-ref="4fail">fail</dfn>:</td></tr>
+<tr><th id="50">50</th><td>    <a class="ref" href="../libavutil/log.h.html#av_log" title='av_log' data-ref="av_log">av_log</a>(<a class="local col1 ref" href="#1s" title='s' data-ref="1s">s</a>, <a class="macro" href="../libavutil/log.h.html#176" title="16" data-ref="_M/AV_LOG_ERROR">AV_LOG_ERROR</a>, <q>"Failed to set option\n"</q>);</td></tr>
+<tr><th id="51">51</th><td>    <b>return</b> <a class="macro" href="../libavutil/error.h.html#39" title="(-(22))" data-ref="_M/AVERROR">AVERROR</a>(<a class="macro" href="../../include/asm-generic/errno-base.h.html#25" title="22" data-ref="_M/EINVAL">EINVAL</a>);</td></tr>
+<tr><th id="52">52</th><td>}</td></tr>
+<tr><th id="53">53</th><td></td></tr>
+<tr><th id="54">54</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="config_changed" title='config_changed' data-type='int config_changed(SwrContext * s, const AVFrame * out, const AVFrame * in)' data-ref="config_changed">config_changed</dfn>(<a class="typedef" href="swresample.h.html#SwrContext" title='SwrContext' data-type='struct SwrContext' data-ref="SwrContext">SwrContext</a> *<dfn class="local col5 decl" id="5s" title='s' data-type='SwrContext *' data-ref="5s">s</dfn>,</td></tr>
+<tr><th id="55">55</th><td>                          <em>const</em> <a class="typedef" href="../libavutil/frame.h.html#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col6 decl" id="6out" title='out' data-type='const AVFrame *' data-ref="6out">out</dfn>, <em>const</em> <a class="typedef" href="../libavutil/frame.h.html#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col7 decl" id="7in" title='in' data-type='const AVFrame *' data-ref="7in">in</dfn>)</td></tr>
+<tr><th id="56">56</th><td>{</td></tr>
+<tr><th id="57">57</th><td>    <em>int</em> <dfn class="local col8 decl" id="8ret" title='ret' data-type='int' data-ref="8ret">ret</dfn> = <var>0</var>;</td></tr>
+<tr><th id="58">58</th><td></td></tr>
+<tr><th id="59">59</th><td>    <b>if</b> (<a class="local col7 ref" href="#7in" title='in' data-ref="7in">in</a>) {</td></tr>
+<tr><th id="60">60</th><td>        <b>if</b> (<a class="local col5 ref" href="#5s" title='s' data-ref="5s">s</a>-&gt;<a class="ref" href="swresample_internal.h.html#SwrContext::in_ch_layout" title='SwrContext::in_ch_layout' data-ref="SwrContext::in_ch_layout">in_ch_layout</a>   != <a class="local col7 ref" href="#7in" title='in' data-ref="7in">in</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::channel_layout" title='AVFrame::channel_layout' data-ref="AVFrame::channel_layout">channel_layout</a> ||</td></tr>
+<tr><th id="61">61</th><td>            <a class="local col5 ref" href="#5s" title='s' data-ref="5s">s</a>-&gt;<a class="ref" href="swresample_internal.h.html#SwrContext::in_sample_rate" title='SwrContext::in_sample_rate' data-ref="SwrContext::in_sample_rate">in_sample_rate</a> != <a class="local col7 ref" href="#7in" title='in' data-ref="7in">in</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::sample_rate" title='AVFrame::sample_rate' data-ref="AVFrame::sample_rate">sample_rate</a> ||</td></tr>
+<tr><th id="62">62</th><td>            <a class="local col5 ref" href="#5s" title='s' data-ref="5s">s</a>-&gt;<a class="ref" href="swresample_internal.h.html#SwrContext::in_sample_fmt" title='SwrContext::in_sample_fmt' data-ref="SwrContext::in_sample_fmt">in_sample_fmt</a>  != <a class="local col7 ref" href="#7in" title='in' data-ref="7in">in</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::format" title='AVFrame::format' data-ref="AVFrame::format">format</a>) {</td></tr>
+<tr><th id="63">63</th><td>            <a class="local col8 ref" href="#8ret" title='ret' data-ref="8ret">ret</a> |= <a class="macro" href="../libavutil/error.h.html#73" title="(-0x636e6701)" data-ref="_M/AVERROR_INPUT_CHANGED">AVERROR_INPUT_CHANGED</a>;</td></tr>
+<tr><th id="64">64</th><td>        }</td></tr>
+<tr><th id="65">65</th><td>    }</td></tr>
+<tr><th id="66">66</th><td></td></tr>
+<tr><th id="67">67</th><td>    <b>if</b> (<a class="local col6 ref" href="#6out" title='out' data-ref="6out">out</a>) {</td></tr>
+<tr><th id="68">68</th><td>        <b>if</b> (<a class="local col5 ref" href="#5s" title='s' data-ref="5s">s</a>-&gt;<a class="ref" href="swresample_internal.h.html#SwrContext::out_ch_layout" title='SwrContext::out_ch_layout' data-ref="SwrContext::out_ch_layout">out_ch_layout</a>   != <a class="local col6 ref" href="#6out" title='out' data-ref="6out">out</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::channel_layout" title='AVFrame::channel_layout' data-ref="AVFrame::channel_layout">channel_layout</a> ||</td></tr>
+<tr><th id="69">69</th><td>            <a class="local col5 ref" href="#5s" title='s' data-ref="5s">s</a>-&gt;<a class="ref" href="swresample_internal.h.html#SwrContext::out_sample_rate" title='SwrContext::out_sample_rate' data-ref="SwrContext::out_sample_rate">out_sample_rate</a> != <a class="local col6 ref" href="#6out" title='out' data-ref="6out">out</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::sample_rate" title='AVFrame::sample_rate' data-ref="AVFrame::sample_rate">sample_rate</a> ||</td></tr>
+<tr><th id="70">70</th><td>            <a class="local col5 ref" href="#5s" title='s' data-ref="5s">s</a>-&gt;<a class="ref" href="swresample_internal.h.html#SwrContext::out_sample_fmt" title='SwrContext::out_sample_fmt' data-ref="SwrContext::out_sample_fmt">out_sample_fmt</a>  != <a class="local col6 ref" href="#6out" title='out' data-ref="6out">out</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::format" title='AVFrame::format' data-ref="AVFrame::format">format</a>) {</td></tr>
+<tr><th id="71">71</th><td>            <a class="local col8 ref" href="#8ret" title='ret' data-ref="8ret">ret</a> |= <a class="macro" href="../libavutil/error.h.html#74" title="(-0x636e6702)" data-ref="_M/AVERROR_OUTPUT_CHANGED">AVERROR_OUTPUT_CHANGED</a>;</td></tr>
+<tr><th id="72">72</th><td>        }</td></tr>
+<tr><th id="73">73</th><td>    }</td></tr>
+<tr><th id="74">74</th><td></td></tr>
+<tr><th id="75">75</th><td>    <b>return</b> <a class="local col8 ref" href="#8ret" title='ret' data-ref="8ret">ret</a>;</td></tr>
+<tr><th id="76">76</th><td>}</td></tr>
+<tr><th id="77">77</th><td></td></tr>
+<tr><th id="78">78</th><td><em>static</em> <b>inline</b> <em>int</em> <dfn class="tu decl def" id="convert_frame" title='convert_frame' data-type='int convert_frame(SwrContext * s, AVFrame * out, const AVFrame * in)' data-ref="convert_frame">convert_frame</dfn>(<a class="typedef" href="swresample.h.html#SwrContext" title='SwrContext' data-type='struct SwrContext' data-ref="SwrContext">SwrContext</a> *<dfn class="local col9 decl" id="9s" title='s' data-type='SwrContext *' data-ref="9s">s</dfn>,</td></tr>
+<tr><th id="79">79</th><td>                                <a class="typedef" href="../libavutil/frame.h.html#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col0 decl" id="10out" title='out' data-type='AVFrame *' data-ref="10out">out</dfn>, <em>const</em> <a class="typedef" href="../libavutil/frame.h.html#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col1 decl" id="11in" title='in' data-type='const AVFrame *' data-ref="11in">in</dfn>)</td></tr>
+<tr><th id="80">80</th><td>{</td></tr>
+<tr><th id="81">81</th><td>    <em>int</em> <dfn class="local col2 decl" id="12ret" title='ret' data-type='int' data-ref="12ret">ret</dfn>;</td></tr>
+<tr><th id="82">82</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> **<dfn class="local col3 decl" id="13out_data" title='out_data' data-type='uint8_t **' data-ref="13out_data">out_data</dfn> = <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="83">83</th><td>    <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> **<dfn class="local col4 decl" id="14in_data" title='in_data' data-type='const uint8_t **' data-ref="14in_data">in_data</dfn> = <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="84">84</th><td>    <em>int</em> <dfn class="local col5 decl" id="15out_nb_samples" title='out_nb_samples' data-type='int' data-ref="15out_nb_samples">out_nb_samples</dfn> = <var>0</var>, <dfn class="local col6 decl" id="16in_nb_samples" title='in_nb_samples' data-type='int' data-ref="16in_nb_samples">in_nb_samples</dfn> = <var>0</var>;</td></tr>
+<tr><th id="85">85</th><td></td></tr>
+<tr><th id="86">86</th><td>    <b>if</b> (<a class="local col0 ref" href="#10out" title='out' data-ref="10out">out</a>) {</td></tr>
+<tr><th id="87">87</th><td>        <a class="local col3 ref" href="#13out_data" title='out_data' data-ref="13out_data">out_data</a>       = <a class="local col0 ref" href="#10out" title='out' data-ref="10out">out</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::extended_data" title='AVFrame::extended_data' data-ref="AVFrame::extended_data">extended_data</a>;</td></tr>
+<tr><th id="88">88</th><td>        <a class="local col5 ref" href="#15out_nb_samples" title='out_nb_samples' data-ref="15out_nb_samples">out_nb_samples</a> = <a class="local col0 ref" href="#10out" title='out' data-ref="10out">out</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::nb_samples" title='AVFrame::nb_samples' data-ref="AVFrame::nb_samples">nb_samples</a>;</td></tr>
+<tr><th id="89">89</th><td>    }</td></tr>
+<tr><th id="90">90</th><td></td></tr>
+<tr><th id="91">91</th><td>    <b>if</b> (<a class="local col1 ref" href="#11in" title='in' data-ref="11in">in</a>) {</td></tr>
+<tr><th id="92">92</th><td>        <a class="local col4 ref" href="#14in_data" title='in_data' data-ref="14in_data">in_data</a>       = (<em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> **)<a class="local col1 ref" href="#11in" title='in' data-ref="11in">in</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::extended_data" title='AVFrame::extended_data' data-ref="AVFrame::extended_data">extended_data</a>;</td></tr>
+<tr><th id="93">93</th><td>        <a class="local col6 ref" href="#16in_nb_samples" title='in_nb_samples' data-ref="16in_nb_samples">in_nb_samples</a> = <a class="local col1 ref" href="#11in" title='in' data-ref="11in">in</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::nb_samples" title='AVFrame::nb_samples' data-ref="AVFrame::nb_samples">nb_samples</a>;</td></tr>
+<tr><th id="94">94</th><td>    }</td></tr>
+<tr><th id="95">95</th><td></td></tr>
+<tr><th id="96">96</th><td>    <a class="local col2 ref" href="#12ret" title='ret' data-ref="12ret">ret</a> = <a class="ref" href="swresample.h.html#swr_convert" title='swr_convert' data-ref="swr_convert">swr_convert</a>(<a class="local col9 ref" href="#9s" title='s' data-ref="9s">s</a>, <a class="local col3 ref" href="#13out_data" title='out_data' data-ref="13out_data">out_data</a>, <a class="local col5 ref" href="#15out_nb_samples" title='out_nb_samples' data-ref="15out_nb_samples">out_nb_samples</a>, <a class="local col4 ref" href="#14in_data" title='in_data' data-ref="14in_data">in_data</a>, <a class="local col6 ref" href="#16in_nb_samples" title='in_nb_samples' data-ref="16in_nb_samples">in_nb_samples</a>);</td></tr>
+<tr><th id="97">97</th><td></td></tr>
+<tr><th id="98">98</th><td>    <b>if</b> (<a class="local col2 ref" href="#12ret" title='ret' data-ref="12ret">ret</a> &lt; <var>0</var>) {</td></tr>
+<tr><th id="99">99</th><td>        <b>if</b> (<a class="local col0 ref" href="#10out" title='out' data-ref="10out">out</a>)</td></tr>
+<tr><th id="100">100</th><td>            <a class="local col0 ref" href="#10out" title='out' data-ref="10out">out</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::nb_samples" title='AVFrame::nb_samples' data-ref="AVFrame::nb_samples">nb_samples</a> = <var>0</var>;</td></tr>
+<tr><th id="101">101</th><td>        <b>return</b> <a class="local col2 ref" href="#12ret" title='ret' data-ref="12ret">ret</a>;</td></tr>
+<tr><th id="102">102</th><td>    }</td></tr>
+<tr><th id="103">103</th><td></td></tr>
+<tr><th id="104">104</th><td>    <b>if</b> (<a class="local col0 ref" href="#10out" title='out' data-ref="10out">out</a>)</td></tr>
+<tr><th id="105">105</th><td>        <a class="local col0 ref" href="#10out" title='out' data-ref="10out">out</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::nb_samples" title='AVFrame::nb_samples' data-ref="AVFrame::nb_samples">nb_samples</a> = <a class="local col2 ref" href="#12ret" title='ret' data-ref="12ret">ret</a>;</td></tr>
+<tr><th id="106">106</th><td></td></tr>
+<tr><th id="107">107</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="108">108</th><td>}</td></tr>
+<tr><th id="109">109</th><td></td></tr>
+<tr><th id="110">110</th><td><em>static</em> <b>inline</b> <em>int</em> <dfn class="tu decl def" id="available_samples" title='available_samples' data-type='int available_samples(AVFrame * out)' data-ref="available_samples">available_samples</dfn>(<a class="typedef" href="../libavutil/frame.h.html#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col7 decl" id="17out" title='out' data-type='AVFrame *' data-ref="17out">out</dfn>)</td></tr>
+<tr><th id="111">111</th><td>{</td></tr>
+<tr><th id="112">112</th><td>    <em>int</em> <dfn class="local col8 decl" id="18bytes_per_sample" title='bytes_per_sample' data-type='int' data-ref="18bytes_per_sample">bytes_per_sample</dfn> = <a class="ref" href="../libavutil/samplefmt.h.html#av_get_bytes_per_sample" title='av_get_bytes_per_sample' data-ref="av_get_bytes_per_sample">av_get_bytes_per_sample</a>(<a class="local col7 ref" href="#17out" title='out' data-ref="17out">out</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::format" title='AVFrame::format' data-ref="AVFrame::format">format</a>);</td></tr>
+<tr><th id="113">113</th><td>    <em>int</em> <dfn class="local col9 decl" id="19samples" title='samples' data-type='int' data-ref="19samples">samples</dfn> = <a class="local col7 ref" href="#17out" title='out' data-ref="17out">out</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::linesize" title='AVFrame::linesize' data-ref="AVFrame::linesize">linesize</a>[<var>0</var>] / <a class="local col8 ref" href="#18bytes_per_sample" title='bytes_per_sample' data-ref="18bytes_per_sample">bytes_per_sample</a>;</td></tr>
+<tr><th id="114">114</th><td></td></tr>
+<tr><th id="115">115</th><td>    <b>if</b> (<a class="ref" href="../libavutil/samplefmt.h.html#av_sample_fmt_is_planar" title='av_sample_fmt_is_planar' data-ref="av_sample_fmt_is_planar">av_sample_fmt_is_planar</a>(<a class="local col7 ref" href="#17out" title='out' data-ref="17out">out</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::format" title='AVFrame::format' data-ref="AVFrame::format">format</a>)) {</td></tr>
+<tr><th id="116">116</th><td>        <b>return</b> <a class="local col9 ref" href="#19samples" title='samples' data-ref="19samples">samples</a>;</td></tr>
+<tr><th id="117">117</th><td>    } <b>else</b> {</td></tr>
+<tr><th id="118">118</th><td>        <em>int</em> <dfn class="local col0 decl" id="20channels" title='channels' data-type='int' data-ref="20channels">channels</dfn> = <a class="ref" href="../libavutil/channel_layout.h.html#av_get_channel_layout_nb_channels" title='av_get_channel_layout_nb_channels' data-ref="av_get_channel_layout_nb_channels">av_get_channel_layout_nb_channels</a>(<a class="local col7 ref" href="#17out" title='out' data-ref="17out">out</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::channel_layout" title='AVFrame::channel_layout' data-ref="AVFrame::channel_layout">channel_layout</a>);</td></tr>
+<tr><th id="119">119</th><td>        <b>return</b> <a class="local col9 ref" href="#19samples" title='samples' data-ref="19samples">samples</a> / <a class="local col0 ref" href="#20channels" title='channels' data-ref="20channels">channels</a>;</td></tr>
+<tr><th id="120">120</th><td>    }</td></tr>
+<tr><th id="121">121</th><td>}</td></tr>
+<tr><th id="122">122</th><td></td></tr>
+<tr><th id="123">123</th><td><em>int</em> <dfn class="decl def" id="swr_convert_frame" title='swr_convert_frame' data-ref="swr_convert_frame">swr_convert_frame</dfn>(<a class="typedef" href="swresample.h.html#SwrContext" title='SwrContext' data-type='struct SwrContext' data-ref="SwrContext">SwrContext</a> *<dfn class="local col1 decl" id="21s" title='s' data-type='SwrContext *' data-ref="21s">s</dfn>,</td></tr>
+<tr><th id="124">124</th><td>                      <a class="typedef" href="../libavutil/frame.h.html#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col2 decl" id="22out" title='out' data-type='AVFrame *' data-ref="22out">out</dfn>, <em>const</em> <a class="typedef" href="../libavutil/frame.h.html#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col3 decl" id="23in" title='in' data-type='const AVFrame *' data-ref="23in">in</dfn>)</td></tr>
+<tr><th id="125">125</th><td>{</td></tr>
+<tr><th id="126">126</th><td>    <em>int</em> <dfn class="local col4 decl" id="24ret" title='ret' data-type='int' data-ref="24ret">ret</dfn>, <dfn class="local col5 decl" id="25setup" title='setup' data-type='int' data-ref="25setup">setup</dfn> = <var>0</var>;</td></tr>
+<tr><th id="127">127</th><td></td></tr>
+<tr><th id="128">128</th><td>    <b>if</b> (!<a class="ref" href="swresample.h.html#swr_is_initialized" title='swr_is_initialized' data-ref="swr_is_initialized">swr_is_initialized</a>(<a class="local col1 ref" href="#21s" title='s' data-ref="21s">s</a>)) {</td></tr>
+<tr><th id="129">129</th><td>        <b>if</b> ((<a class="local col4 ref" href="#24ret" title='ret' data-ref="24ret">ret</a> = <a class="ref" href="#swr_config_frame" title='swr_config_frame' data-ref="swr_config_frame">swr_config_frame</a>(<a class="local col1 ref" href="#21s" title='s' data-ref="21s">s</a>, <a class="local col2 ref" href="#22out" title='out' data-ref="22out">out</a>, <a class="local col3 ref" href="#23in" title='in' data-ref="23in">in</a>)) &lt; <var>0</var>)</td></tr>
+<tr><th id="130">130</th><td>            <b>return</b> <a class="local col4 ref" href="#24ret" title='ret' data-ref="24ret">ret</a>;</td></tr>
+<tr><th id="131">131</th><td>        <b>if</b> ((<a class="local col4 ref" href="#24ret" title='ret' data-ref="24ret">ret</a> = <a class="ref" href="swresample.h.html#swr_init" title='swr_init' data-ref="swr_init">swr_init</a>(<a class="local col1 ref" href="#21s" title='s' data-ref="21s">s</a>)) &lt; <var>0</var>)</td></tr>
+<tr><th id="132">132</th><td>            <b>return</b> <a class="local col4 ref" href="#24ret" title='ret' data-ref="24ret">ret</a>;</td></tr>
+<tr><th id="133">133</th><td>        <a class="local col5 ref" href="#25setup" title='setup' data-ref="25setup">setup</a> = <var>1</var>;</td></tr>
+<tr><th id="134">134</th><td>    } <b>else</b> {</td></tr>
+<tr><th id="135">135</th><td>        <i>// return as is or reconfigure for input changes?</i></td></tr>
+<tr><th id="136">136</th><td>        <b>if</b> ((<a class="local col4 ref" href="#24ret" title='ret' data-ref="24ret">ret</a> = <a class="tu ref" href="#config_changed" title='config_changed' data-use='c' data-ref="config_changed">config_changed</a>(<a class="local col1 ref" href="#21s" title='s' data-ref="21s">s</a>, <a class="local col2 ref" href="#22out" title='out' data-ref="22out">out</a>, <a class="local col3 ref" href="#23in" title='in' data-ref="23in">in</a>)))</td></tr>
+<tr><th id="137">137</th><td>            <b>return</b> <a class="local col4 ref" href="#24ret" title='ret' data-ref="24ret">ret</a>;</td></tr>
+<tr><th id="138">138</th><td>    }</td></tr>
+<tr><th id="139">139</th><td></td></tr>
+<tr><th id="140">140</th><td>    <b>if</b> (<a class="local col2 ref" href="#22out" title='out' data-ref="22out">out</a>) {</td></tr>
+<tr><th id="141">141</th><td>        <b>if</b> (!<a class="local col2 ref" href="#22out" title='out' data-ref="22out">out</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::linesize" title='AVFrame::linesize' data-ref="AVFrame::linesize">linesize</a>[<var>0</var>]) {</td></tr>
+<tr><th id="142">142</th><td>            <a class="local col2 ref" href="#22out" title='out' data-ref="22out">out</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::nb_samples" title='AVFrame::nb_samples' data-ref="AVFrame::nb_samples">nb_samples</a> =   <a class="ref" href="swresample.h.html#swr_get_delay" title='swr_get_delay' data-ref="swr_get_delay">swr_get_delay</a>(<a class="local col1 ref" href="#21s" title='s' data-ref="21s">s</a>, <a class="local col1 ref" href="#21s" title='s' data-ref="21s">s</a>-&gt;<a class="ref" href="swresample_internal.h.html#SwrContext::out_sample_rate" title='SwrContext::out_sample_rate' data-ref="SwrContext::out_sample_rate">out_sample_rate</a>)</td></tr>
+<tr><th id="143">143</th><td>                              + <a class="local col3 ref" href="#23in" title='in' data-ref="23in">in</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::nb_samples" title='AVFrame::nb_samples' data-ref="AVFrame::nb_samples">nb_samples</a>*(<a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a>)<a class="local col1 ref" href="#21s" title='s' data-ref="21s">s</a>-&gt;<a class="ref" href="swresample_internal.h.html#SwrContext::out_sample_rate" title='SwrContext::out_sample_rate' data-ref="SwrContext::out_sample_rate">out_sample_rate</a> / <a class="local col1 ref" href="#21s" title='s' data-ref="21s">s</a>-&gt;<a class="ref" href="swresample_internal.h.html#SwrContext::in_sample_rate" title='SwrContext::in_sample_rate' data-ref="SwrContext::in_sample_rate">in_sample_rate</a></td></tr>
+<tr><th id="144">144</th><td>                              + <var>3</var>;</td></tr>
+<tr><th id="145">145</th><td>            <b>if</b> ((<a class="local col4 ref" href="#24ret" title='ret' data-ref="24ret">ret</a> = <a class="ref" href="../libavutil/frame.h.html#av_frame_get_buffer" title='av_frame_get_buffer' data-ref="av_frame_get_buffer">av_frame_get_buffer</a>(<a class="local col2 ref" href="#22out" title='out' data-ref="22out">out</a>, <var>0</var>)) &lt; <var>0</var>) {</td></tr>
+<tr><th id="146">146</th><td>                <b>if</b> (<a class="local col5 ref" href="#25setup" title='setup' data-ref="25setup">setup</a>)</td></tr>
+<tr><th id="147">147</th><td>                    <a class="ref" href="swresample.h.html#swr_close" title='swr_close' data-ref="swr_close">swr_close</a>(<a class="local col1 ref" href="#21s" title='s' data-ref="21s">s</a>);</td></tr>
+<tr><th id="148">148</th><td>                <b>return</b> <a class="local col4 ref" href="#24ret" title='ret' data-ref="24ret">ret</a>;</td></tr>
+<tr><th id="149">149</th><td>            }</td></tr>
+<tr><th id="150">150</th><td>        } <b>else</b> {</td></tr>
+<tr><th id="151">151</th><td>            <b>if</b> (!<a class="local col2 ref" href="#22out" title='out' data-ref="22out">out</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::nb_samples" title='AVFrame::nb_samples' data-ref="AVFrame::nb_samples">nb_samples</a>)</td></tr>
+<tr><th id="152">152</th><td>                <a class="local col2 ref" href="#22out" title='out' data-ref="22out">out</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::nb_samples" title='AVFrame::nb_samples' data-ref="AVFrame::nb_samples">nb_samples</a> = <a class="tu ref" href="#available_samples" title='available_samples' data-use='c' data-ref="available_samples">available_samples</a>(<a class="local col2 ref" href="#22out" title='out' data-ref="22out">out</a>);</td></tr>
+<tr><th id="153">153</th><td>        }</td></tr>
+<tr><th id="154">154</th><td>    }</td></tr>
+<tr><th id="155">155</th><td></td></tr>
+<tr><th id="156">156</th><td>    <b>return</b> <a class="tu ref" href="#convert_frame" title='convert_frame' data-use='c' data-ref="convert_frame">convert_frame</a>(<a class="local col1 ref" href="#21s" title='s' data-ref="21s">s</a>, <a class="local col2 ref" href="#22out" title='out' data-ref="22out">out</a>, <a class="local col3 ref" href="#23in" title='in' data-ref="23in">in</a>);</td></tr>
+<tr><th id="157">157</th><td>}</td></tr>
+<tr><th id="158">158</th><td></td></tr>
+<tr><th id="159">159</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

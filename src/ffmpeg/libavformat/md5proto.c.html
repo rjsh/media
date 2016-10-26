@@ -1,0 +1,115 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>md5proto.c source code [ffmpeg/libavformat/md5proto.c] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="MD5Context "/>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavformat/md5proto.c'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavformat</a>/<a href='md5proto.c.html'>md5proto.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * Copyright (c) 2010 Mans Rullgard</i></td></tr>
+<tr><th id="3">3</th><td><i> *</i></td></tr>
+<tr><th id="4">4</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="5">5</th><td><i> *</i></td></tr>
+<tr><th id="6">6</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="7">7</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="8">8</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="9">9</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="10">10</th><td><i> *</i></td></tr>
+<tr><th id="11">11</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="12">12</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="13">13</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="14">14</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="15">15</th><td><i> *</i></td></tr>
+<tr><th id="16">16</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="17">17</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="18">18</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="19">19</th><td><i> */</i></td></tr>
+<tr><th id="20">20</th><td></td></tr>
+<tr><th id="21">21</th><td><u>#include <a href="../../include/stdio.h.html">&lt;stdio.h&gt;</a></u></td></tr>
+<tr><th id="22">22</th><td><u>#include <a href="../libavutil/avstring.h.html">"libavutil/avstring.h"</a></u></td></tr>
+<tr><th id="23">23</th><td><u>#include <a href="../libavutil/md5.h.html">"libavutil/md5.h"</a></u></td></tr>
+<tr><th id="24">24</th><td><u>#include <a href="../libavutil/mem.h.html">"libavutil/mem.h"</a></u></td></tr>
+<tr><th id="25">25</th><td><u>#include <a href="../libavutil/error.h.html">"libavutil/error.h"</a></u></td></tr>
+<tr><th id="26">26</th><td><u>#include <a href="avformat.h.html">"avformat.h"</a></u></td></tr>
+<tr><th id="27">27</th><td><u>#include <a href="avio.h.html">"avio.h"</a></u></td></tr>
+<tr><th id="28">28</th><td><u>#include <a href="url.h.html">"url.h"</a></u></td></tr>
+<tr><th id="29">29</th><td></td></tr>
+<tr><th id="30">30</th><td><b>struct</b> <dfn class="type def" id="MD5Context" title='MD5Context' data-ref="MD5Context">MD5Context</dfn> {</td></tr>
+<tr><th id="31">31</th><td>    <b>struct</b> <a class="type" href="../libavutil/md5.h.html#AVMD5" title='AVMD5' data-ref="AVMD5">AVMD5</a> *<dfn class="tu decl" id="MD5Context::md5" title='MD5Context::md5' data-type='struct AVMD5 *' data-ref="MD5Context::md5">md5</dfn>;</td></tr>
+<tr><th id="32">32</th><td>};</td></tr>
+<tr><th id="33">33</th><td></td></tr>
+<tr><th id="34">34</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="md5_open" title='md5_open' data-type='int md5_open(URLContext * h, const char * filename, int flags)' data-ref="md5_open">md5_open</dfn>(<a class="typedef" href="url.h.html#URLContext" title='URLContext' data-type='struct URLContext' data-ref="URLContext">URLContext</a> *<dfn class="local col1 decl" id="1h" title='h' data-type='URLContext *' data-ref="1h">h</dfn>, <em>const</em> <em>char</em> *<dfn class="local col2 decl" id="2filename" title='filename' data-type='const char *' data-ref="2filename">filename</dfn>, <em>int</em> <dfn class="local col3 decl" id="3flags" title='flags' data-type='int' data-ref="3flags">flags</dfn>)</td></tr>
+<tr><th id="35">35</th><td>{</td></tr>
+<tr><th id="36">36</th><td>    <b>struct</b> <a class="type" href="#MD5Context" title='MD5Context' data-ref="MD5Context">MD5Context</a> *<dfn class="local col4 decl" id="4c" title='c' data-type='struct MD5Context *' data-ref="4c">c</dfn> = <a class="local col1 ref" href="#1h" title='h' data-ref="1h">h</a>-&gt;<a class="ref" href="url.h.html#URLContext::priv_data" title='URLContext::priv_data' data-ref="URLContext::priv_data">priv_data</a>;</td></tr>
+<tr><th id="37">37</th><td></td></tr>
+<tr><th id="38">38</th><td>    <b>if</b> (!(<a class="local col3 ref" href="#3flags" title='flags' data-ref="3flags">flags</a> &amp; <a class="macro" href="avio.h.html#607" title="2" data-ref="_M/AVIO_FLAG_WRITE">AVIO_FLAG_WRITE</a>))</td></tr>
+<tr><th id="39">39</th><td>        <b>return</b> <a class="macro" href="../libavutil/error.h.html#39" title="(-(22))" data-ref="_M/AVERROR">AVERROR</a>(<a class="macro" href="../../include/asm-generic/errno-base.h.html#25" title="22" data-ref="_M/EINVAL">EINVAL</a>);</td></tr>
+<tr><th id="40">40</th><td></td></tr>
+<tr><th id="41">41</th><td>    <a class="local col4 ref" href="#4c" title='c' data-ref="4c">c</a>-&gt;<a class="tu ref" href="#MD5Context::md5" title='MD5Context::md5' data-use='w' data-ref="MD5Context::md5">md5</a> = <a class="ref" href="../libavutil/md5.h.html#av_md5_alloc" title='av_md5_alloc' data-ref="av_md5_alloc">av_md5_alloc</a>();</td></tr>
+<tr><th id="42">42</th><td>    <b>if</b> (!<a class="local col4 ref" href="#4c" title='c' data-ref="4c">c</a>-&gt;<a class="tu ref" href="#MD5Context::md5" title='MD5Context::md5' data-use='r' data-ref="MD5Context::md5">md5</a>)</td></tr>
+<tr><th id="43">43</th><td>        <b>return</b> <a class="macro" href="../libavutil/error.h.html#39" title="(-(12))" data-ref="_M/AVERROR">AVERROR</a>(<a class="macro" href="../../include/asm-generic/errno-base.h.html#15" title="12" data-ref="_M/ENOMEM">ENOMEM</a>);</td></tr>
+<tr><th id="44">44</th><td>    <a class="ref" href="../libavutil/md5.h.html#av_md5_init" title='av_md5_init' data-ref="av_md5_init">av_md5_init</a>(<a class="local col4 ref" href="#4c" title='c' data-ref="4c">c</a>-&gt;<a class="tu ref" href="#MD5Context::md5" title='MD5Context::md5' data-use='r' data-ref="MD5Context::md5">md5</a>);</td></tr>
+<tr><th id="45">45</th><td></td></tr>
+<tr><th id="46">46</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="47">47</th><td>}</td></tr>
+<tr><th id="48">48</th><td></td></tr>
+<tr><th id="49">49</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="md5_write" title='md5_write' data-type='int md5_write(URLContext * h, const unsigned char * buf, int size)' data-ref="md5_write">md5_write</dfn>(<a class="typedef" href="url.h.html#URLContext" title='URLContext' data-type='struct URLContext' data-ref="URLContext">URLContext</a> *<dfn class="local col5 decl" id="5h" title='h' data-type='URLContext *' data-ref="5h">h</dfn>, <em>const</em> <em>unsigned</em> <em>char</em> *<dfn class="local col6 decl" id="6buf" title='buf' data-type='const unsigned char *' data-ref="6buf">buf</dfn>, <em>int</em> <dfn class="local col7 decl" id="7size" title='size' data-type='int' data-ref="7size">size</dfn>)</td></tr>
+<tr><th id="50">50</th><td>{</td></tr>
+<tr><th id="51">51</th><td>    <b>struct</b> <a class="type" href="#MD5Context" title='MD5Context' data-ref="MD5Context">MD5Context</a> *<dfn class="local col8 decl" id="8c" title='c' data-type='struct MD5Context *' data-ref="8c">c</dfn> = <a class="local col5 ref" href="#5h" title='h' data-ref="5h">h</a>-&gt;<a class="ref" href="url.h.html#URLContext::priv_data" title='URLContext::priv_data' data-ref="URLContext::priv_data">priv_data</a>;</td></tr>
+<tr><th id="52">52</th><td>    <a class="ref" href="../libavutil/md5.h.html#av_md5_update" title='av_md5_update' data-ref="av_md5_update">av_md5_update</a>(<a class="local col8 ref" href="#8c" title='c' data-ref="8c">c</a>-&gt;<a class="tu ref" href="#MD5Context::md5" title='MD5Context::md5' data-use='r' data-ref="MD5Context::md5">md5</a>, <a class="local col6 ref" href="#6buf" title='buf' data-ref="6buf">buf</a>, <a class="local col7 ref" href="#7size" title='size' data-ref="7size">size</a>);</td></tr>
+<tr><th id="53">53</th><td>    <b>return</b> <a class="local col7 ref" href="#7size" title='size' data-ref="7size">size</a>;</td></tr>
+<tr><th id="54">54</th><td>}</td></tr>
+<tr><th id="55">55</th><td></td></tr>
+<tr><th id="56">56</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="md5_close" title='md5_close' data-type='int md5_close(URLContext * h)' data-ref="md5_close">md5_close</dfn>(<a class="typedef" href="url.h.html#URLContext" title='URLContext' data-type='struct URLContext' data-ref="URLContext">URLContext</a> *<dfn class="local col9 decl" id="9h" title='h' data-type='URLContext *' data-ref="9h">h</dfn>)</td></tr>
+<tr><th id="57">57</th><td>{</td></tr>
+<tr><th id="58">58</th><td>    <b>struct</b> <a class="type" href="#MD5Context" title='MD5Context' data-ref="MD5Context">MD5Context</a> *<dfn class="local col0 decl" id="10c" title='c' data-type='struct MD5Context *' data-ref="10c">c</dfn> = <a class="local col9 ref" href="#9h" title='h' data-ref="9h">h</a>-&gt;<a class="ref" href="url.h.html#URLContext::priv_data" title='URLContext::priv_data' data-ref="URLContext::priv_data">priv_data</a>;</td></tr>
+<tr><th id="59">59</th><td>    <em>const</em> <em>char</em> *<dfn class="local col1 decl" id="11filename" title='filename' data-type='const char *' data-ref="11filename">filename</dfn> = <a class="local col9 ref" href="#9h" title='h' data-ref="9h">h</a>-&gt;<a class="ref" href="url.h.html#URLContext::filename" title='URLContext::filename' data-ref="URLContext::filename">filename</a>;</td></tr>
+<tr><th id="60">60</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="local col2 decl" id="12md5" title='md5' data-type='uint8_t [16]' data-ref="12md5">md5</dfn>[<var>16</var>], <dfn class="local col3 decl" id="13buf" title='buf' data-type='uint8_t [64]' data-ref="13buf">buf</dfn>[<var>64</var>];</td></tr>
+<tr><th id="61">61</th><td>    <a class="typedef" href="url.h.html#URLContext" title='URLContext' data-type='struct URLContext' data-ref="URLContext">URLContext</a> *<dfn class="local col4 decl" id="14out" title='out' data-type='URLContext *' data-ref="14out">out</dfn>;</td></tr>
+<tr><th id="62">62</th><td>    <em>int</em> <dfn class="local col5 decl" id="15i" title='i' data-type='int' data-ref="15i">i</dfn>, <dfn class="local col6 decl" id="16err" title='err' data-type='int' data-ref="16err">err</dfn> = <var>0</var>;</td></tr>
+<tr><th id="63">63</th><td></td></tr>
+<tr><th id="64">64</th><td>    <a class="ref" href="../libavutil/md5.h.html#av_md5_final" title='av_md5_final' data-ref="av_md5_final">av_md5_final</a>(<a class="local col0 ref" href="#10c" title='c' data-ref="10c">c</a>-&gt;<a class="tu ref" href="#MD5Context::md5" title='MD5Context::md5' data-use='r' data-ref="MD5Context::md5">md5</a>, <a class="local col2 ref" href="#12md5" title='md5' data-ref="12md5">md5</a>);</td></tr>
+<tr><th id="65">65</th><td>    <b>for</b> (<a class="local col5 ref" href="#15i" title='i' data-ref="15i">i</a> = <var>0</var>; <a class="local col5 ref" href="#15i" title='i' data-ref="15i">i</a> &lt; <b>sizeof</b>(<a class="local col2 ref" href="#12md5" title='md5' data-ref="12md5">md5</a>); <a class="local col5 ref" href="#15i" title='i' data-ref="15i">i</a>++)</td></tr>
+<tr><th id="66">66</th><td>        <a class="ref" href="../../include/stdio.h.html#snprintf" title='snprintf' data-ref="snprintf">snprintf</a>(<a class="local col3 ref" href="#13buf" title='buf' data-ref="13buf">buf</a> + <a class="local col5 ref" href="#15i" title='i' data-ref="15i">i</a>*<var>2</var>, <var>3</var>, <q>"%02x"</q>, <a class="local col2 ref" href="#12md5" title='md5' data-ref="12md5">md5</a>[<a class="local col5 ref" href="#15i" title='i' data-ref="15i">i</a>]);</td></tr>
+<tr><th id="67">67</th><td>    <a class="local col3 ref" href="#13buf" title='buf' data-ref="13buf">buf</a>[<a class="local col5 ref" href="#15i" title='i' data-ref="15i">i</a>*<var>2</var>] = <kbd>'\n'</kbd>;</td></tr>
+<tr><th id="68">68</th><td></td></tr>
+<tr><th id="69">69</th><td>    <a class="ref" href="../libavutil/avstring.h.html#av_strstart" title='av_strstart' data-ref="av_strstart">av_strstart</a>(<a class="local col1 ref" href="#11filename" title='filename' data-ref="11filename">filename</a>, <q>"md5:"</q>, &amp;<a class="local col1 ref" href="#11filename" title='filename' data-ref="11filename">filename</a>);</td></tr>
+<tr><th id="70">70</th><td></td></tr>
+<tr><th id="71">71</th><td>    <b>if</b> (*<a class="local col1 ref" href="#11filename" title='filename' data-ref="11filename">filename</a>) {</td></tr>
+<tr><th id="72">72</th><td>        <a class="local col6 ref" href="#16err" title='err' data-ref="16err">err</a> = <a class="ref" href="url.h.html#ffurl_open_whitelist" title='ffurl_open_whitelist' data-ref="ffurl_open_whitelist">ffurl_open_whitelist</a>(&amp;<a class="local col4 ref" href="#14out" title='out' data-ref="14out">out</a>, <a class="local col1 ref" href="#11filename" title='filename' data-ref="11filename">filename</a>, <a class="macro" href="avio.h.html#607" title="2" data-ref="_M/AVIO_FLAG_WRITE">AVIO_FLAG_WRITE</a>,</td></tr>
+<tr><th id="73">73</th><td>                                   &amp;<a class="local col9 ref" href="#9h" title='h' data-ref="9h">h</a>-&gt;<a class="ref" href="url.h.html#URLContext::interrupt_callback" title='URLContext::interrupt_callback' data-ref="URLContext::interrupt_callback">interrupt_callback</a>, <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>,</td></tr>
+<tr><th id="74">74</th><td>                                   <a class="local col9 ref" href="#9h" title='h' data-ref="9h">h</a>-&gt;<a class="ref" href="url.h.html#URLContext::protocol_whitelist" title='URLContext::protocol_whitelist' data-ref="URLContext::protocol_whitelist">protocol_whitelist</a>, <a class="local col9 ref" href="#9h" title='h' data-ref="9h">h</a>-&gt;<a class="ref" href="url.h.html#URLContext::protocol_blacklist" title='URLContext::protocol_blacklist' data-ref="URLContext::protocol_blacklist">protocol_blacklist</a>, <a class="local col9 ref" href="#9h" title='h' data-ref="9h">h</a>);</td></tr>
+<tr><th id="75">75</th><td>        <b>if</b> (<a class="local col6 ref" href="#16err" title='err' data-ref="16err">err</a>)</td></tr>
+<tr><th id="76">76</th><td>            <b>return</b> <a class="local col6 ref" href="#16err" title='err' data-ref="16err">err</a>;</td></tr>
+<tr><th id="77">77</th><td>        <a class="local col6 ref" href="#16err" title='err' data-ref="16err">err</a> = <a class="ref" href="url.h.html#ffurl_write" title='ffurl_write' data-ref="ffurl_write">ffurl_write</a>(<a class="local col4 ref" href="#14out" title='out' data-ref="14out">out</a>, <a class="local col3 ref" href="#13buf" title='buf' data-ref="13buf">buf</a>, <a class="local col5 ref" href="#15i" title='i' data-ref="15i">i</a>*<var>2</var>+<var>1</var>);</td></tr>
+<tr><th id="78">78</th><td>        <a class="ref" href="url.h.html#ffurl_close" title='ffurl_close' data-ref="ffurl_close">ffurl_close</a>(<a class="local col4 ref" href="#14out" title='out' data-ref="14out">out</a>);</td></tr>
+<tr><th id="79">79</th><td>    } <b>else</b> {</td></tr>
+<tr><th id="80">80</th><td>        <b>if</b> (<a class="ref" href="../../include/stdio.h.html#fwrite" title='fwrite' data-ref="fwrite">fwrite</a>(<a class="local col3 ref" href="#13buf" title='buf' data-ref="13buf">buf</a>, <var>1</var>, <a class="local col5 ref" href="#15i" title='i' data-ref="15i">i</a>*<var>2</var>+<var>1</var>, <a class="macro" href="../../include/stdio.h.html#173" title="stdout" data-ref="_M/stdout">stdout</a>) &lt; <a class="local col5 ref" href="#15i" title='i' data-ref="15i">i</a>*<var>2</var>+<var>1</var>)</td></tr>
+<tr><th id="81">81</th><td>            <a class="local col6 ref" href="#16err" title='err' data-ref="16err">err</a> = <a class="macro" href="../libavutil/error.h.html#39" title="(-((*__errno_location ())))" data-ref="_M/AVERROR">AVERROR</a>(<a class="macro" href="../../include/x86_64-linux-gnu/bits/errno.h.html#54" title="(*__errno_location ())" data-ref="_M/errno">errno</a>);</td></tr>
+<tr><th id="82">82</th><td>    }</td></tr>
+<tr><th id="83">83</th><td></td></tr>
+<tr><th id="84">84</th><td>    <a class="ref" href="../libavutil/mem.h.html#av_freep" title='av_freep' data-ref="av_freep">av_freep</a>(&amp;<a class="local col0 ref" href="#10c" title='c' data-ref="10c">c</a>-&gt;<a class="tu ref" href="#MD5Context::md5" title='MD5Context::md5' data-use='a' data-ref="MD5Context::md5">md5</a>);</td></tr>
+<tr><th id="85">85</th><td></td></tr>
+<tr><th id="86">86</th><td>    <b>return</b> <a class="local col6 ref" href="#16err" title='err' data-ref="16err">err</a>;</td></tr>
+<tr><th id="87">87</th><td>}</td></tr>
+<tr><th id="88">88</th><td></td></tr>
+<tr><th id="89">89</th><td></td></tr>
+<tr><th id="90">90</th><td><em>const</em> <a class="typedef" href="url.h.html#URLProtocol" title='URLProtocol' data-type='struct URLProtocol' data-ref="URLProtocol">URLProtocol</a> <dfn class="decl def" id="ff_md5_protocol" title='ff_md5_protocol' data-ref="ff_md5_protocol">ff_md5_protocol</dfn> = {</td></tr>
+<tr><th id="91">91</th><td>    .<a class="ref" href="url.h.html#URLProtocol::name" title='URLProtocol::name' data-ref="URLProtocol::name">name</a>                = <q>"md5"</q>,</td></tr>
+<tr><th id="92">92</th><td>    .<a class="ref" href="url.h.html#URLProtocol::url_open" title='URLProtocol::url_open' data-ref="URLProtocol::url_open">url_open</a>            = <a class="tu ref" href="#md5_open" title='md5_open' data-use='r' data-ref="md5_open">md5_open</a>,</td></tr>
+<tr><th id="93">93</th><td>    .<a class="ref" href="url.h.html#URLProtocol::url_write" title='URLProtocol::url_write' data-ref="URLProtocol::url_write">url_write</a>           = <a class="tu ref" href="#md5_write" title='md5_write' data-use='r' data-ref="md5_write">md5_write</a>,</td></tr>
+<tr><th id="94">94</th><td>    .<a class="ref" href="url.h.html#URLProtocol::url_close" title='URLProtocol::url_close' data-ref="URLProtocol::url_close">url_close</a>           = <a class="tu ref" href="#md5_close" title='md5_close' data-use='r' data-ref="md5_close">md5_close</a>,</td></tr>
+<tr><th id="95">95</th><td>    .<a class="ref" href="url.h.html#URLProtocol::priv_data_size" title='URLProtocol::priv_data_size' data-ref="URLProtocol::priv_data_size">priv_data_size</a>      = <b>sizeof</b>(<b>struct</b> <a class="type" href="#MD5Context" title='MD5Context' data-ref="MD5Context">MD5Context</a>),</td></tr>
+<tr><th id="96">96</th><td>};</td></tr>
+<tr><th id="97">97</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

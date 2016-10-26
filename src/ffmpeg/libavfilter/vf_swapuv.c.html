@@ -1,0 +1,150 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>vf_swapuv.c source code [ffmpeg/libavfilter/vf_swapuv.c] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="SwapUVContext "/>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavfilter/vf_swapuv.c'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavfilter</a>/<a href='vf_swapuv.c.html'>vf_swapuv.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * Copyright (c) 2002 Michael Niedermayer &lt;michaelni@gmx.at&gt;</i></td></tr>
+<tr><th id="3">3</th><td><i> *</i></td></tr>
+<tr><th id="4">4</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="5">5</th><td><i> *</i></td></tr>
+<tr><th id="6">6</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="7">7</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="8">8</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="9">9</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="10">10</th><td><i> *</i></td></tr>
+<tr><th id="11">11</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="12">12</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="13">13</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="14">14</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="15">15</th><td><i> *</i></td></tr>
+<tr><th id="16">16</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="17">17</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="18">18</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="19">19</th><td><i> */</i></td></tr>
+<tr><th id="20">20</th><td></td></tr>
+<tr><th id="21">21</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="22">22</th><td><i class="doc"> *<span class="command"> @file</span></i></td></tr>
+<tr><th id="23">23</th><td><i class="doc"> * swap UV filter</i></td></tr>
+<tr><th id="24">24</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="25">25</th><td></td></tr>
+<tr><th id="26">26</th><td><u>#include <a href="../libavutil/opt.h.html">"libavutil/opt.h"</a></u></td></tr>
+<tr><th id="27">27</th><td><u>#include <a href="../libavutil/pixdesc.h.html">"libavutil/pixdesc.h"</a></u></td></tr>
+<tr><th id="28">28</th><td><u>#include <a href="../libavutil/version.h.html">"libavutil/version.h"</a></u></td></tr>
+<tr><th id="29">29</th><td><u>#include <a href="avfilter.h.html">"avfilter.h"</a></u></td></tr>
+<tr><th id="30">30</th><td><u>#include <a href="formats.h.html">"formats.h"</a></u></td></tr>
+<tr><th id="31">31</th><td><u>#include <a href="internal.h.html">"internal.h"</a></u></td></tr>
+<tr><th id="32">32</th><td><u>#include <a href="video.h.html">"video.h"</a></u></td></tr>
+<tr><th id="33">33</th><td></td></tr>
+<tr><th id="34">34</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="SwapUVContext" title='SwapUVContext' data-ref="SwapUVContext"><a class="type" href="#SwapUVContext" title='SwapUVContext' data-ref="SwapUVContext">SwapUVContext</a></dfn> {</td></tr>
+<tr><th id="35">35</th><td>    <em>const</em> <a class="typedef" href="../libavutil/log.h.html#AVClass" title='AVClass' data-type='struct AVClass' data-ref="AVClass">AVClass</a> *<dfn class="tu decl" id="SwapUVContext::class" title='SwapUVContext::class' data-type='const AVClass *' data-ref="SwapUVContext::class">class</dfn>;</td></tr>
+<tr><th id="36">36</th><td>} <dfn class="typedef" id="SwapUVContext" title='SwapUVContext' data-type='struct SwapUVContext' data-ref="SwapUVContext">SwapUVContext</dfn>;</td></tr>
+<tr><th id="37">37</th><td></td></tr>
+<tr><th id="38">38</th><td><em>static</em> <em>const</em> <a class="typedef" href="../libavutil/opt.h.html#AVOption" title='AVOption' data-type='struct AVOption' data-ref="AVOption">AVOption</a> <dfn class="tu decl def" id="swapuv_options" title='swapuv_options' data-type='const AVOption [1]' data-ref="swapuv_options">swapuv_options</dfn>[] = {</td></tr>
+<tr><th id="39">39</th><td>    { <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span> }</td></tr>
+<tr><th id="40">40</th><td>};</td></tr>
+<tr><th id="41">41</th><td></td></tr>
+<tr><th id="42">42</th><td><a class="macro" href="internal.h.html#339" title="static const AVClass swapuv_class = { .class_name = &quot;swapuv&quot;, .item_name = av_default_item_name, .option = swapuv_options, .version = ((55)&lt;&lt;16 | (33)&lt;&lt;8 | (100)), .category = AV_CLASS_CATEGORY_FILTER, }" data-ref="_M/AVFILTER_DEFINE_CLASS">AVFILTER_DEFINE_CLASS</a>(swapuv);</td></tr>
+<tr><th id="43">43</th><td></td></tr>
+<tr><th id="44">44</th><td><em>static</em> <em>void</em> <dfn class="tu decl def" id="do_swap" title='do_swap' data-type='void do_swap(AVFrame * frame)' data-ref="do_swap">do_swap</dfn>(<a class="typedef" href="../libavutil/frame.h.html#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col1 decl" id="1frame" title='frame' data-type='AVFrame *' data-ref="1frame">frame</dfn>)</td></tr>
+<tr><th id="45">45</th><td>{</td></tr>
+<tr><th id="46">46</th><td>    <a class="macro" href="../libavutil/common.h.html#99" title="do{uint8_t* SWAP_tmp= frame-&gt;data[2]; frame-&gt;data[2]= frame-&gt;data[1]; frame-&gt;data[1]= SWAP_tmp;}while(0)" data-ref="_M/FFSWAP">FFSWAP</a>(<a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a>*,     <a class="local col1 ref" href="#1frame" title='frame' data-ref="1frame">frame</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::data" title='AVFrame::data' data-ref="AVFrame::data">data</a>[<var>1</var>],     <a class="local col1 ref" href="#1frame" title='frame' data-ref="1frame">frame</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::data" title='AVFrame::data' data-ref="AVFrame::data">data</a>[<var>2</var>]);</td></tr>
+<tr><th id="47">47</th><td>    <a class="macro" href="../libavutil/common.h.html#99" title="do{int SWAP_tmp= frame-&gt;linesize[2]; frame-&gt;linesize[2]= frame-&gt;linesize[1]; frame-&gt;linesize[1]= SWAP_tmp;}while(0)" data-ref="_M/FFSWAP">FFSWAP</a>(<em>int</em>,          <a class="local col1 ref" href="#1frame" title='frame' data-ref="1frame">frame</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::linesize" title='AVFrame::linesize' data-ref="AVFrame::linesize">linesize</a>[<var>1</var>], <a class="local col1 ref" href="#1frame" title='frame' data-ref="1frame">frame</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::linesize" title='AVFrame::linesize' data-ref="AVFrame::linesize">linesize</a>[<var>2</var>]);</td></tr>
+<tr><th id="48">48</th><td>    <a class="macro" href="../libavutil/common.h.html#99" title="do{AVBufferRef* SWAP_tmp= frame-&gt;buf[2]; frame-&gt;buf[2]= frame-&gt;buf[1]; frame-&gt;buf[1]= SWAP_tmp;}while(0)" data-ref="_M/FFSWAP">FFSWAP</a>(<a class="typedef" href="../libavutil/buffer.h.html#AVBufferRef" title='AVBufferRef' data-type='struct AVBufferRef' data-ref="AVBufferRef">AVBufferRef</a>*, <a class="local col1 ref" href="#1frame" title='frame' data-ref="1frame">frame</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::buf" title='AVFrame::buf' data-ref="AVFrame::buf">buf</a>[<var>1</var>],      <a class="local col1 ref" href="#1frame" title='frame' data-ref="1frame">frame</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::buf" title='AVFrame::buf' data-ref="AVFrame::buf">buf</a>[<var>2</var>]);</td></tr>
+<tr><th id="49">49</th><td></td></tr>
+<tr><th id="50">50</th><td><u>#<span data-ppcond="50">if</span> <a class="macro" href="../libavutil/version.h.html#130" title="(55 &lt; 56)" data-ref="_M/FF_API_ERROR_FRAME">FF_API_ERROR_FRAME</a></u></td></tr>
+<tr><th id="51">51</th><td><a class="macro" href="../libavutil/internal.h.html#76" title=" GCC diagnostic ignored &quot;-Wdeprecated-declarations&quot;
+" data-ref="_M/FF_DISABLE_DEPRECATION_WARNINGS">FF_DISABLE_DEPRECATION_WARNINGS</a></td></tr>
+<tr><th id="52">52</th><td>    <a class="macro" href="../libavutil/common.h.html#99" title="do{uint64_t SWAP_tmp= frame-&gt;error[2]; frame-&gt;error[2]= frame-&gt;error[1]; frame-&gt;error[1]= SWAP_tmp;}while(0)" data-ref="_M/FFSWAP">FFSWAP</a>(<a class="typedef" href="../../include/stdint.h.html#uint64_t" title='uint64_t' data-type='unsigned long' data-ref="uint64_t">uint64_t</a>,     <a class="local col1 ref" href="#1frame" title='frame' data-ref="1frame">frame</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::error" title='AVFrame::error' data-ref="AVFrame::error">error</a>[<var>1</var>],    <a class="local col1 ref" href="#1frame" title='frame' data-ref="1frame">frame</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::error" title='AVFrame::error' data-ref="AVFrame::error">error</a>[<var>2</var>]);</td></tr>
+<tr><th id="53">53</th><td><a class="macro" href="../libavutil/internal.h.html#77" title=" GCC diagnostic warning &quot;-Wdeprecated-declarations&quot;
+" data-ref="_M/FF_ENABLE_DEPRECATION_WARNINGS">FF_ENABLE_DEPRECATION_WARNINGS</a></td></tr>
+<tr><th id="54">54</th><td><u>#<span data-ppcond="50">endif</span></u></td></tr>
+<tr><th id="55">55</th><td>}</td></tr>
+<tr><th id="56">56</th><td></td></tr>
+<tr><th id="57">57</th><td><em>static</em> <a class="typedef" href="../libavutil/frame.h.html#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="tu decl def" id="get_video_buffer" title='get_video_buffer' data-type='AVFrame * get_video_buffer(AVFilterLink * link, int w, int h)' data-ref="get_video_buffer">get_video_buffer</dfn>(<a class="typedef" href="avfilter.h.html#AVFilterLink" title='AVFilterLink' data-type='struct AVFilterLink' data-ref="AVFilterLink">AVFilterLink</a> *<dfn class="local col2 decl" id="2link" title='link' data-type='AVFilterLink *' data-ref="2link">link</dfn>, <em>int</em> <dfn class="local col3 decl" id="3w" title='w' data-type='int' data-ref="3w">w</dfn>, <em>int</em> <dfn class="local col4 decl" id="4h" title='h' data-type='int' data-ref="4h">h</dfn>)</td></tr>
+<tr><th id="58">58</th><td>{</td></tr>
+<tr><th id="59">59</th><td>    <a class="typedef" href="../libavutil/frame.h.html#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col5 decl" id="5picref" title='picref' data-type='AVFrame *' data-ref="5picref">picref</dfn> = <a class="ref" href="video.h.html#ff_default_get_video_buffer" title='ff_default_get_video_buffer' data-ref="ff_default_get_video_buffer">ff_default_get_video_buffer</a>(<a class="local col2 ref" href="#2link" title='link' data-ref="2link">link</a>, <a class="local col3 ref" href="#3w" title='w' data-ref="3w">w</a>, <a class="local col4 ref" href="#4h" title='h' data-ref="4h">h</a>);</td></tr>
+<tr><th id="60">60</th><td>    <a class="tu ref" href="#do_swap" title='do_swap' data-use='c' data-ref="do_swap">do_swap</a>(<a class="local col5 ref" href="#5picref" title='picref' data-ref="5picref">picref</a>);</td></tr>
+<tr><th id="61">61</th><td>    <b>return</b> <a class="local col5 ref" href="#5picref" title='picref' data-ref="5picref">picref</a>;</td></tr>
+<tr><th id="62">62</th><td>}</td></tr>
+<tr><th id="63">63</th><td></td></tr>
+<tr><th id="64">64</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="filter_frame" title='filter_frame' data-type='int filter_frame(AVFilterLink * link, AVFrame * inpicref)' data-ref="filter_frame">filter_frame</dfn>(<a class="typedef" href="avfilter.h.html#AVFilterLink" title='AVFilterLink' data-type='struct AVFilterLink' data-ref="AVFilterLink">AVFilterLink</a> *<dfn class="local col6 decl" id="6link" title='link' data-type='AVFilterLink *' data-ref="6link">link</dfn>, <a class="typedef" href="../libavutil/frame.h.html#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col7 decl" id="7inpicref" title='inpicref' data-type='AVFrame *' data-ref="7inpicref">inpicref</dfn>)</td></tr>
+<tr><th id="65">65</th><td>{</td></tr>
+<tr><th id="66">66</th><td>    <a class="tu ref" href="#do_swap" title='do_swap' data-use='c' data-ref="do_swap">do_swap</a>(<a class="local col7 ref" href="#7inpicref" title='inpicref' data-ref="7inpicref">inpicref</a>);</td></tr>
+<tr><th id="67">67</th><td>    <b>return</b> <a class="ref" href="internal.h.html#ff_filter_frame" title='ff_filter_frame' data-ref="ff_filter_frame">ff_filter_frame</a>(<a class="local col6 ref" href="#6link" title='link' data-ref="6link">link</a>-&gt;<a class="ref" href="avfilter.h.html#AVFilterLink::dst" title='AVFilterLink::dst' data-ref="AVFilterLink::dst">dst</a>-&gt;<a class="ref" href="avfilter.h.html#AVFilterContext::outputs" title='AVFilterContext::outputs' data-ref="AVFilterContext::outputs">outputs</a>[<var>0</var>], <a class="local col7 ref" href="#7inpicref" title='inpicref' data-ref="7inpicref">inpicref</a>);</td></tr>
+<tr><th id="68">68</th><td>}</td></tr>
+<tr><th id="69">69</th><td></td></tr>
+<tr><th id="70">70</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="is_planar_yuv" title='is_planar_yuv' data-type='int is_planar_yuv(const AVPixFmtDescriptor * desc)' data-ref="is_planar_yuv">is_planar_yuv</dfn>(<em>const</em> <a class="typedef" href="../libavutil/pixdesc.h.html#AVPixFmtDescriptor" title='AVPixFmtDescriptor' data-type='struct AVPixFmtDescriptor' data-ref="AVPixFmtDescriptor">AVPixFmtDescriptor</a> *<dfn class="local col8 decl" id="8desc" title='desc' data-type='const AVPixFmtDescriptor *' data-ref="8desc">desc</dfn>)</td></tr>
+<tr><th id="71">71</th><td>{</td></tr>
+<tr><th id="72">72</th><td>    <em>int</em> <dfn class="local col9 decl" id="9i" title='i' data-type='int' data-ref="9i">i</dfn>;</td></tr>
+<tr><th id="73">73</th><td></td></tr>
+<tr><th id="74">74</th><td>    <b>if</b> (<a class="local col8 ref" href="#8desc" title='desc' data-ref="8desc">desc</a>-&gt;<a class="ref" href="../libavutil/pixdesc.h.html#AVPixFmtDescriptor::flags" title='AVPixFmtDescriptor::flags' data-ref="AVPixFmtDescriptor::flags">flags</a> &amp; ~(<a class="macro" href="../libavutil/pixdesc.h.html#128" title="(1 &lt;&lt; 0)" data-ref="_M/AV_PIX_FMT_FLAG_BE">AV_PIX_FMT_FLAG_BE</a> | <a class="macro" href="../libavutil/pixdesc.h.html#144" title="(1 &lt;&lt; 4)" data-ref="_M/AV_PIX_FMT_FLAG_PLANAR">AV_PIX_FMT_FLAG_PLANAR</a> | <a class="macro" href="../libavutil/pixdesc.h.html#173" title="(1 &lt;&lt; 7)" data-ref="_M/AV_PIX_FMT_FLAG_ALPHA">AV_PIX_FMT_FLAG_ALPHA</a>) ||</td></tr>
+<tr><th id="75">75</th><td>        <a class="local col8 ref" href="#8desc" title='desc' data-ref="8desc">desc</a>-&gt;<a class="ref" href="../libavutil/pixdesc.h.html#AVPixFmtDescriptor::nb_components" title='AVPixFmtDescriptor::nb_components' data-ref="AVPixFmtDescriptor::nb_components">nb_components</a> &lt; <var>3</var> ||</td></tr>
+<tr><th id="76">76</th><td>        (<a class="local col8 ref" href="#8desc" title='desc' data-ref="8desc">desc</a>-&gt;<a class="ref" href="../libavutil/pixdesc.h.html#AVPixFmtDescriptor::comp" title='AVPixFmtDescriptor::comp' data-ref="AVPixFmtDescriptor::comp">comp</a>[<var>1</var>].<a class="ref" href="../libavutil/pixdesc.h.html#AVComponentDescriptor::depth" title='AVComponentDescriptor::depth' data-ref="AVComponentDescriptor::depth">depth</a> != <a class="local col8 ref" href="#8desc" title='desc' data-ref="8desc">desc</a>-&gt;<a class="ref" href="../libavutil/pixdesc.h.html#AVPixFmtDescriptor::comp" title='AVPixFmtDescriptor::comp' data-ref="AVPixFmtDescriptor::comp">comp</a>[<var>2</var>].<a class="ref" href="../libavutil/pixdesc.h.html#AVComponentDescriptor::depth" title='AVComponentDescriptor::depth' data-ref="AVComponentDescriptor::depth">depth</a>))</td></tr>
+<tr><th id="77">77</th><td>        <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="78">78</th><td>    <b>for</b> (<a class="local col9 ref" href="#9i" title='i' data-ref="9i">i</a> = <var>0</var>; <a class="local col9 ref" href="#9i" title='i' data-ref="9i">i</a> &lt; <a class="local col8 ref" href="#8desc" title='desc' data-ref="8desc">desc</a>-&gt;<a class="ref" href="../libavutil/pixdesc.h.html#AVPixFmtDescriptor::nb_components" title='AVPixFmtDescriptor::nb_components' data-ref="AVPixFmtDescriptor::nb_components">nb_components</a>; <a class="local col9 ref" href="#9i" title='i' data-ref="9i">i</a>++) {</td></tr>
+<tr><th id="79">79</th><td>        <b>if</b> (<a class="local col8 ref" href="#8desc" title='desc' data-ref="8desc">desc</a>-&gt;<a class="ref" href="../libavutil/pixdesc.h.html#AVPixFmtDescriptor::comp" title='AVPixFmtDescriptor::comp' data-ref="AVPixFmtDescriptor::comp">comp</a>[<a class="local col9 ref" href="#9i" title='i' data-ref="9i">i</a>].<a class="ref" href="../libavutil/pixdesc.h.html#AVComponentDescriptor::offset" title='AVComponentDescriptor::offset' data-ref="AVComponentDescriptor::offset">offset</a> != <var>0</var> ||</td></tr>
+<tr><th id="80">80</th><td>            <a class="local col8 ref" href="#8desc" title='desc' data-ref="8desc">desc</a>-&gt;<a class="ref" href="../libavutil/pixdesc.h.html#AVPixFmtDescriptor::comp" title='AVPixFmtDescriptor::comp' data-ref="AVPixFmtDescriptor::comp">comp</a>[<a class="local col9 ref" href="#9i" title='i' data-ref="9i">i</a>].<a class="ref" href="../libavutil/pixdesc.h.html#AVComponentDescriptor::shift" title='AVComponentDescriptor::shift' data-ref="AVComponentDescriptor::shift">shift</a> != <var>0</var> ||</td></tr>
+<tr><th id="81">81</th><td>            <a class="local col8 ref" href="#8desc" title='desc' data-ref="8desc">desc</a>-&gt;<a class="ref" href="../libavutil/pixdesc.h.html#AVPixFmtDescriptor::comp" title='AVPixFmtDescriptor::comp' data-ref="AVPixFmtDescriptor::comp">comp</a>[<a class="local col9 ref" href="#9i" title='i' data-ref="9i">i</a>].<a class="ref" href="../libavutil/pixdesc.h.html#AVComponentDescriptor::plane" title='AVComponentDescriptor::plane' data-ref="AVComponentDescriptor::plane">plane</a> != <a class="local col9 ref" href="#9i" title='i' data-ref="9i">i</a>)</td></tr>
+<tr><th id="82">82</th><td>            <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="83">83</th><td>    }</td></tr>
+<tr><th id="84">84</th><td></td></tr>
+<tr><th id="85">85</th><td>    <b>return</b> <var>1</var>;</td></tr>
+<tr><th id="86">86</th><td>}</td></tr>
+<tr><th id="87">87</th><td></td></tr>
+<tr><th id="88">88</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="query_formats" title='query_formats' data-type='int query_formats(AVFilterContext * ctx)' data-ref="query_formats">query_formats</dfn>(<a class="typedef" href="avfilter.h.html#AVFilterContext" title='AVFilterContext' data-type='struct AVFilterContext' data-ref="AVFilterContext">AVFilterContext</a> *<dfn class="local col0 decl" id="10ctx" title='ctx' data-type='AVFilterContext *' data-ref="10ctx">ctx</dfn>)</td></tr>
+<tr><th id="89">89</th><td>{</td></tr>
+<tr><th id="90">90</th><td>    <a class="typedef" href="avfilter.h.html#AVFilterFormats" title='AVFilterFormats' data-type='struct AVFilterFormats' data-ref="AVFilterFormats">AVFilterFormats</a> *<dfn class="local col1 decl" id="11formats" title='formats' data-type='AVFilterFormats *' data-ref="11formats">formats</dfn> = <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="91">91</th><td>    <em>int</em> <dfn class="local col2 decl" id="12fmt" title='fmt' data-type='int' data-ref="12fmt">fmt</dfn>, <dfn class="local col3 decl" id="13ret" title='ret' data-type='int' data-ref="13ret">ret</dfn>;</td></tr>
+<tr><th id="92">92</th><td></td></tr>
+<tr><th id="93">93</th><td>    <b>for</b> (<a class="local col2 ref" href="#12fmt" title='fmt' data-ref="12fmt">fmt</a> = <var>0</var>; <a class="ref" href="../libavutil/pixdesc.h.html#av_pix_fmt_desc_get" title='av_pix_fmt_desc_get' data-ref="av_pix_fmt_desc_get">av_pix_fmt_desc_get</a>(<a class="local col2 ref" href="#12fmt" title='fmt' data-ref="12fmt">fmt</a>); <a class="local col2 ref" href="#12fmt" title='fmt' data-ref="12fmt">fmt</a>++) {</td></tr>
+<tr><th id="94">94</th><td>        <em>const</em> <a class="typedef" href="../libavutil/pixdesc.h.html#AVPixFmtDescriptor" title='AVPixFmtDescriptor' data-type='struct AVPixFmtDescriptor' data-ref="AVPixFmtDescriptor">AVPixFmtDescriptor</a> *<dfn class="local col4 decl" id="14desc" title='desc' data-type='const AVPixFmtDescriptor *' data-ref="14desc">desc</dfn> = <a class="ref" href="../libavutil/pixdesc.h.html#av_pix_fmt_desc_get" title='av_pix_fmt_desc_get' data-ref="av_pix_fmt_desc_get">av_pix_fmt_desc_get</a>(<a class="local col2 ref" href="#12fmt" title='fmt' data-ref="12fmt">fmt</a>);</td></tr>
+<tr><th id="95">95</th><td>        <b>if</b> (<a class="tu ref" href="#is_planar_yuv" title='is_planar_yuv' data-use='c' data-ref="is_planar_yuv">is_planar_yuv</a>(<a class="local col4 ref" href="#14desc" title='desc' data-ref="14desc">desc</a>) &amp;&amp; (<a class="local col3 ref" href="#13ret" title='ret' data-ref="13ret">ret</a> = <a class="ref" href="formats.h.html#ff_add_format" title='ff_add_format' data-ref="ff_add_format">ff_add_format</a>(&amp;<a class="local col1 ref" href="#11formats" title='formats' data-ref="11formats">formats</a>, <a class="local col2 ref" href="#12fmt" title='fmt' data-ref="12fmt">fmt</a>)) &lt; <var>0</var>)</td></tr>
+<tr><th id="96">96</th><td>            <b>return</b> <a class="local col3 ref" href="#13ret" title='ret' data-ref="13ret">ret</a>;</td></tr>
+<tr><th id="97">97</th><td>    }</td></tr>
+<tr><th id="98">98</th><td></td></tr>
+<tr><th id="99">99</th><td>    <b>return</b> <a class="ref" href="formats.h.html#ff_set_common_formats" title='ff_set_common_formats' data-ref="ff_set_common_formats">ff_set_common_formats</a>(<a class="local col0 ref" href="#10ctx" title='ctx' data-ref="10ctx">ctx</a>, <a class="local col1 ref" href="#11formats" title='formats' data-ref="11formats">formats</a>);</td></tr>
+<tr><th id="100">100</th><td>}</td></tr>
+<tr><th id="101">101</th><td></td></tr>
+<tr><th id="102">102</th><td><em>static</em> <em>const</em> <a class="typedef" href="avfilter.h.html#AVFilterPad" title='AVFilterPad' data-type='struct AVFilterPad' data-ref="AVFilterPad">AVFilterPad</a> <dfn class="tu decl def" id="swapuv_inputs" title='swapuv_inputs' data-type='const AVFilterPad [2]' data-ref="swapuv_inputs">swapuv_inputs</dfn>[] = {</td></tr>
+<tr><th id="103">103</th><td>    {</td></tr>
+<tr><th id="104">104</th><td>        .<a class="ref" href="internal.h.html#AVFilterPad::name" title='AVFilterPad::name' data-ref="AVFilterPad::name">name</a>             = <q>"default"</q>,</td></tr>
+<tr><th id="105">105</th><td>        .<a class="ref" href="internal.h.html#AVFilterPad::type" title='AVFilterPad::type' data-ref="AVFilterPad::type">type</a>             = <a class="enum" href="../libavutil/avutil.h.html#AVMediaType::AVMEDIA_TYPE_VIDEO" title='AVMediaType::AVMEDIA_TYPE_VIDEO' data-ref="AVMediaType::AVMEDIA_TYPE_VIDEO">AVMEDIA_TYPE_VIDEO</a>,</td></tr>
+<tr><th id="106">106</th><td>        .<a class="ref" href="internal.h.html#AVFilterPad::get_video_buffer" title='AVFilterPad::get_video_buffer' data-ref="AVFilterPad::get_video_buffer">get_video_buffer</a> = <a class="tu ref" href="#get_video_buffer" title='get_video_buffer' data-ref="get_video_buffer">get_video_buffer</a>,</td></tr>
+<tr><th id="107">107</th><td>        .<a class="ref" href="internal.h.html#AVFilterPad::filter_frame" title='AVFilterPad::filter_frame' data-ref="AVFilterPad::filter_frame">filter_frame</a>     = <a class="tu ref" href="#filter_frame" title='filter_frame' data-ref="filter_frame">filter_frame</a>,</td></tr>
+<tr><th id="108">108</th><td>    },</td></tr>
+<tr><th id="109">109</th><td>    { <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span> }</td></tr>
+<tr><th id="110">110</th><td>};</td></tr>
+<tr><th id="111">111</th><td></td></tr>
+<tr><th id="112">112</th><td><em>static</em> <em>const</em> <a class="typedef" href="avfilter.h.html#AVFilterPad" title='AVFilterPad' data-type='struct AVFilterPad' data-ref="AVFilterPad">AVFilterPad</a> <dfn class="tu decl def" id="swapuv_outputs" title='swapuv_outputs' data-type='const AVFilterPad [2]' data-ref="swapuv_outputs">swapuv_outputs</dfn>[] = {</td></tr>
+<tr><th id="113">113</th><td>    {</td></tr>
+<tr><th id="114">114</th><td>        .<a class="ref" href="internal.h.html#AVFilterPad::name" title='AVFilterPad::name' data-ref="AVFilterPad::name">name</a> = <q>"default"</q>,</td></tr>
+<tr><th id="115">115</th><td>        .<a class="ref" href="internal.h.html#AVFilterPad::type" title='AVFilterPad::type' data-ref="AVFilterPad::type">type</a> = <a class="enum" href="../libavutil/avutil.h.html#AVMediaType::AVMEDIA_TYPE_VIDEO" title='AVMediaType::AVMEDIA_TYPE_VIDEO' data-ref="AVMediaType::AVMEDIA_TYPE_VIDEO">AVMEDIA_TYPE_VIDEO</a>,</td></tr>
+<tr><th id="116">116</th><td>    },</td></tr>
+<tr><th id="117">117</th><td>    { <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span> }</td></tr>
+<tr><th id="118">118</th><td>};</td></tr>
+<tr><th id="119">119</th><td></td></tr>
+<tr><th id="120">120</th><td><a class="typedef" href="avfilter.h.html#AVFilter" title='AVFilter' data-type='struct AVFilter' data-ref="AVFilter">AVFilter</a> <dfn class="decl def" id="ff_vf_swapuv" title='ff_vf_swapuv' data-ref="ff_vf_swapuv">ff_vf_swapuv</dfn> = {</td></tr>
+<tr><th id="121">121</th><td>    .<a class="ref" href="avfilter.h.html#AVFilter::name" title='AVFilter::name' data-ref="AVFilter::name">name</a>          = <q>"swapuv"</q>,</td></tr>
+<tr><th id="122">122</th><td>    .<a class="ref" href="avfilter.h.html#AVFilter::description" title='AVFilter::description' data-ref="AVFilter::description">description</a>   = <a class="macro" href="../libavutil/internal.h.html#176" title="&quot;Swap U and V components.&quot;" data-ref="_M/NULL_IF_CONFIG_SMALL">NULL_IF_CONFIG_SMALL</a>(<q>"Swap U and V components."</q>),</td></tr>
+<tr><th id="123">123</th><td>    .<a class="ref" href="avfilter.h.html#AVFilter::query_formats" title='AVFilter::query_formats' data-ref="AVFilter::query_formats">query_formats</a> = <a class="tu ref" href="#query_formats" title='query_formats' data-ref="query_formats">query_formats</a>,</td></tr>
+<tr><th id="124">124</th><td>    .<a class="ref" href="avfilter.h.html#AVFilter::priv_size" title='AVFilter::priv_size' data-ref="AVFilter::priv_size">priv_size</a>     = <b>sizeof</b>(<a class="typedef" href="#SwapUVContext" title='SwapUVContext' data-type='struct SwapUVContext' data-ref="SwapUVContext">SwapUVContext</a>),</td></tr>
+<tr><th id="125">125</th><td>    .<a class="ref" href="avfilter.h.html#AVFilter::priv_class" title='AVFilter::priv_class' data-ref="AVFilter::priv_class">priv_class</a>    = &amp;<a class="ref" href="#42" title='swapuv_class' data-ref="swapuv_class">swapuv_class</a>,</td></tr>
+<tr><th id="126">126</th><td>    .<a class="ref" href="avfilter.h.html#AVFilter::inputs" title='AVFilter::inputs' data-ref="AVFilter::inputs">inputs</a>        = <a class="tu ref" href="#swapuv_inputs" title='swapuv_inputs' data-ref="swapuv_inputs">swapuv_inputs</a>,</td></tr>
+<tr><th id="127">127</th><td>    .<a class="ref" href="avfilter.h.html#AVFilter::outputs" title='AVFilter::outputs' data-ref="AVFilter::outputs">outputs</a>       = <a class="tu ref" href="#swapuv_outputs" title='swapuv_outputs' data-ref="swapuv_outputs">swapuv_outputs</a>,</td></tr>
+<tr><th id="128">128</th><td>    .<a class="ref" href="avfilter.h.html#AVFilter::flags" title='AVFilter::flags' data-ref="AVFilter::flags">flags</a>         = <a class="macro" href="avfilter.h.html#125" title="(1 &lt;&lt; 16)" data-ref="_M/AVFILTER_FLAG_SUPPORT_TIMELINE_GENERIC">AVFILTER_FLAG_SUPPORT_TIMELINE_GENERIC</a>,</td></tr>
+<tr><th id="129">129</th><td>};</td></tr>
+<tr><th id="130">130</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

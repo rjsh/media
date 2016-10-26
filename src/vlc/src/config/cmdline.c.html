@@ -1,0 +1,338 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>cmdline.c source code [vlc/src/config/cmdline.c] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'vlc/src/config/cmdline.c'; var root_path = '../../..'; var data_path = '../../../../data';</script>
+<script src='../../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='../..'>vlc</a>/<a href='..'>src</a>/<a href='./'>config</a>/<a href='cmdline.c.html'>cmdline.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*****************************************************************************</i></td></tr>
+<tr><th id="2">2</th><td><i> * cmdline.c: command line parsing</i></td></tr>
+<tr><th id="3">3</th><td><i> *****************************************************************************</i></td></tr>
+<tr><th id="4">4</th><td><i> * Copyright (C) 2001-2007 VLC authors and VideoLAN</i></td></tr>
+<tr><th id="5">5</th><td><i> * $Id: 12e92ba49711f109cebd0b6d8e25d44938b576e6 $</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * Authors: Gildas Bazin &lt;gbazin@videolan.org&gt;</i></td></tr>
+<tr><th id="8">8</th><td><i> *</i></td></tr>
+<tr><th id="9">9</th><td><i> * This program is free software; you can redistribute it and/or modify it</i></td></tr>
+<tr><th id="10">10</th><td><i> * under the terms of the GNU Lesser General Public License as published by</i></td></tr>
+<tr><th id="11">11</th><td><i> * the Free Software Foundation; either version 2.1 of the License, or</i></td></tr>
+<tr><th id="12">12</th><td><i> * (at your option) any later version.</i></td></tr>
+<tr><th id="13">13</th><td><i> *</i></td></tr>
+<tr><th id="14">14</th><td><i> * This program is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="15">15</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="16">16</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</i></td></tr>
+<tr><th id="17">17</th><td><i> * GNU Lesser General Public License for more details.</i></td></tr>
+<tr><th id="18">18</th><td><i> *</i></td></tr>
+<tr><th id="19">19</th><td><i> * You should have received a copy of the GNU Lesser General Public License</i></td></tr>
+<tr><th id="20">20</th><td><i> * along with this program; if not, write to the Free Software Foundation,</i></td></tr>
+<tr><th id="21">21</th><td><i> * Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.</i></td></tr>
+<tr><th id="22">22</th><td><i> *****************************************************************************/</i></td></tr>
+<tr><th id="23">23</th><td></td></tr>
+<tr><th id="24">24</th><td><u>#<span data-ppcond="24">ifdef</span> <span class="macro" data-ref="_M/HAVE_CONFIG_H">HAVE_CONFIG_H</span></u></td></tr>
+<tr><th id="25">25</th><td><u># include <a href="../../config.h.html">"config.h"</a></u></td></tr>
+<tr><th id="26">26</th><td><u>#<span data-ppcond="24">endif</span></u></td></tr>
+<tr><th id="27">27</th><td></td></tr>
+<tr><th id="28">28</th><td><u>#include <a href="../../include/vlc_common.h.html">&lt;vlc_common.h&gt;</a></u></td></tr>
+<tr><th id="29">29</th><td><u>#include <a href="../libvlc.h.html">"../libvlc.h"</a></u></td></tr>
+<tr><th id="30">30</th><td><u>#include <a href="../../include/vlc_keys.h.html">&lt;vlc_keys.h&gt;</a></u></td></tr>
+<tr><th id="31">31</th><td><u>#include <a href="../../include/vlc_charset.h.html">&lt;vlc_charset.h&gt;</a></u></td></tr>
+<tr><th id="32">32</th><td><u>#include <a href="../../include/vlc_modules.h.html">&lt;vlc_modules.h&gt;</a></u></td></tr>
+<tr><th id="33">33</th><td><u>#include <a href="../../include/vlc_plugin.h.html">&lt;vlc_plugin.h&gt;</a></u></td></tr>
+<tr><th id="34">34</th><td></td></tr>
+<tr><th id="35">35</th><td><u>#include <a href="vlc_getopt.h.html">"vlc_getopt.h"</a></u></td></tr>
+<tr><th id="36">36</th><td></td></tr>
+<tr><th id="37">37</th><td><u>#include <a href="configuration.h.html">"configuration.h"</a></u></td></tr>
+<tr><th id="38">38</th><td><u>#include <a href="../modules/modules.h.html">"modules/modules.h"</a></u></td></tr>
+<tr><th id="39">39</th><td></td></tr>
+<tr><th id="40">40</th><td><u>#include <a href="../../../include/assert.h.html">&lt;assert.h&gt;</a></u></td></tr>
+<tr><th id="41">41</th><td></td></tr>
+<tr><th id="42">42</th><td><u>#undef <a class="macro" href="configuration.h.html#37" data-ref="_M/config_LoadCmdLine">config_LoadCmdLine</a></u></td></tr>
+<tr><th id="43">43</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="44">44</th><td><i class="doc"> * Parse command line for configuration options.</i></td></tr>
+<tr><th id="45">45</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="46">46</th><td><i class="doc"> * Now that the module_bank has been initialized, we can dynamically</i></td></tr>
+<tr><th id="47">47</th><td><i class="doc"> * generate the longopts structure used by getops. We have to do it this way</i></td></tr>
+<tr><th id="48">48</th><td><i class="doc"> * because we don't know (and don't want to know) in advance the configuration</i></td></tr>
+<tr><th id="49">49</th><td><i class="doc"> * options used (ie. exported) by each module.</i></td></tr>
+<tr><th id="50">50</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="51">51</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">p_this</span> object to write command line options as variables to</i></td></tr>
+<tr><th id="52">52</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">i_argc</span> number of command line arguments</i></td></tr>
+<tr><th id="53">53</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">ppsz_args</span> commandl ine arguments [IN/OUT]</i></td></tr>
+<tr><th id="54">54</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">pindex</span> NULL to ignore unknown options,</i></td></tr>
+<tr><th id="55">55</th><td><i class="doc"> *               otherwise index of the first non-option argument [OUT]</i></td></tr>
+<tr><th id="56">56</th><td><i class="doc"> * <span class="command">@return</span> 0 on success, -1 on error.</i></td></tr>
+<tr><th id="57">57</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="58">58</th><td><em>int</em> <dfn class="decl def" id="config_LoadCmdLine" title='config_LoadCmdLine' data-ref="config_LoadCmdLine">config_LoadCmdLine</dfn>( <a class="typedef" href="../../include/vlc_common.h.html#vlc_object_t" title='vlc_object_t' data-type='struct vlc_object_t' data-ref="vlc_object_t">vlc_object_t</a> *<dfn class="local col7 decl" id="7p_this" title='p_this' data-type='vlc_object_t *' data-ref="7p_this">p_this</dfn>, <em>int</em> <dfn class="local col8 decl" id="8i_argc" title='i_argc' data-type='int' data-ref="8i_argc">i_argc</dfn>,</td></tr>
+<tr><th id="59">59</th><td>                        <em>const</em> <em>char</em> *<dfn class="local col9 decl" id="9ppsz_argv" title='ppsz_argv' data-type='const char **' data-ref="9ppsz_argv">ppsz_argv</dfn>[], <em>int</em> *<dfn class="local col0 decl" id="10pindex" title='pindex' data-type='int *' data-ref="10pindex">pindex</dfn> )</td></tr>
+<tr><th id="60">60</th><td>{</td></tr>
+<tr><th id="61">61</th><td>    <em>int</em> <dfn class="local col1 decl" id="11i_cmd" title='i_cmd' data-type='int' data-ref="11i_cmd">i_cmd</dfn>, <dfn class="local col2 decl" id="12i_index" title='i_index' data-type='int' data-ref="12i_index">i_index</dfn>, <dfn class="local col3 decl" id="13i_opts" title='i_opts' data-type='int' data-ref="13i_opts">i_opts</dfn>, <dfn class="local col4 decl" id="14i_shortopts" title='i_shortopts' data-type='int' data-ref="14i_shortopts">i_shortopts</dfn>, <dfn class="local col5 decl" id="15flag" title='flag' data-type='int' data-ref="15flag">flag</dfn>, <dfn class="local col6 decl" id="16i_verbose" title='i_verbose' data-type='int' data-ref="16i_verbose">i_verbose</dfn> = <var>0</var>;</td></tr>
+<tr><th id="62">62</th><td>    <b>struct</b> <a class="type" href="vlc_getopt.h.html#vlc_option" title='vlc_option' data-ref="vlc_option">vlc_option</a> *<dfn class="local col7 decl" id="17p_longopts" title='p_longopts' data-type='struct vlc_option *' data-ref="17p_longopts">p_longopts</dfn>;</td></tr>
+<tr><th id="63">63</th><td>    <em>const</em> <em>char</em> **<dfn class="local col8 decl" id="18argv_copy" title='argv_copy' data-type='const char **' data-ref="18argv_copy">argv_copy</dfn> = <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="64">64</th><td><u>#define <dfn class="macro" id="_M/b_ignore_errors" data-ref="_M/b_ignore_errors">b_ignore_errors</dfn> (<a class="local col0 ref" href="#10pindex" title='pindex' data-ref="10pindex">pindex</a> == NULL)</u></td></tr>
+<tr><th id="65">65</th><td></td></tr>
+<tr><th id="66">66</th><td>    <i>/* Short options */</i></td></tr>
+<tr><th id="67">67</th><td>    <a class="typedef" href="../../include/vlc_common.h.html#module_config_t" title='module_config_t' data-type='struct module_config_t' data-ref="module_config_t">module_config_t</a> *<dfn class="local col9 decl" id="19pp_shortopts" title='pp_shortopts' data-type='module_config_t *[256]' data-ref="19pp_shortopts">pp_shortopts</dfn>[<var>256</var>];</td></tr>
+<tr><th id="68">68</th><td>    <em>char</em> *<dfn class="local col0 decl" id="20psz_shortopts" title='psz_shortopts' data-type='char *' data-ref="20psz_shortopts">psz_shortopts</dfn>;</td></tr>
+<tr><th id="69">69</th><td></td></tr>
+<tr><th id="70">70</th><td>    <i>/* List all modules */</i></td></tr>
+<tr><th id="71">71</th><td>    <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="local col1 decl" id="21count" title='count' data-type='size_t' data-ref="21count">count</dfn>;</td></tr>
+<tr><th id="72">72</th><td>    <a class="typedef" href="../../include/vlc_common.h.html#module_t" title='module_t' data-type='struct module_t' data-ref="module_t">module_t</a> **<dfn class="local col2 decl" id="22list" title='list' data-type='module_t **' data-ref="22list">list</dfn> = <a class="ref" href="../../include/vlc_modules.h.html#module_list_get" title='module_list_get' data-ref="module_list_get">module_list_get</a> (&amp;<a class="local col1 ref" href="#21count" title='count' data-ref="21count">count</a>);</td></tr>
+<tr><th id="73">73</th><td></td></tr>
+<tr><th id="74">74</th><td>    <i>/*</i></td></tr>
+<tr><th id="75">75</th><td><i>     * Generate the longopts and shortopts structures used by getopt_long</i></td></tr>
+<tr><th id="76">76</th><td><i>     */</i></td></tr>
+<tr><th id="77">77</th><td></td></tr>
+<tr><th id="78">78</th><td>    <a class="local col3 ref" href="#13i_opts" title='i_opts' data-ref="13i_opts">i_opts</a> = <var>0</var>;</td></tr>
+<tr><th id="79">79</th><td>    <b>for</b> (<span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="local col3 decl" id="23i" title='i' data-type='size_t' data-ref="23i">i</dfn> = <var>0</var>; <a class="local col3 ref" href="#23i" title='i' data-ref="23i">i</a> &lt; <a class="local col1 ref" href="#21count" title='count' data-ref="21count">count</a>; <a class="local col3 ref" href="#23i" title='i' data-ref="23i">i</a>++)</td></tr>
+<tr><th id="80">80</th><td>    {</td></tr>
+<tr><th id="81">81</th><td>        <i>/* count the number of exported configuration options (to allocate</i></td></tr>
+<tr><th id="82">82</th><td><i>         * longopts). We also need to allocate space for two options when</i></td></tr>
+<tr><th id="83">83</th><td><i>         * dealing with boolean to allow for --foo and --no-foo */</i></td></tr>
+<tr><th id="84">84</th><td>        <a class="typedef" href="../../include/vlc_common.h.html#module_t" title='module_t' data-type='struct module_t' data-ref="module_t">module_t</a> *<dfn class="local col4 decl" id="24p_parser" title='p_parser' data-type='module_t *' data-ref="24p_parser">p_parser</dfn> = <a class="local col2 ref" href="#22list" title='list' data-ref="22list">list</a>[<a class="local col3 ref" href="#23i" title='i' data-ref="23i">i</a>];</td></tr>
+<tr><th id="85">85</th><td></td></tr>
+<tr><th id="86">86</th><td>        <a class="local col3 ref" href="#13i_opts" title='i_opts' data-ref="13i_opts">i_opts</a> += <a class="local col4 ref" href="#24p_parser" title='p_parser' data-ref="24p_parser">p_parser</a>-&gt;<a class="ref" href="../modules/modules.h.html#module_t::i_config_items" title='module_t::i_config_items' data-ref="module_t::i_config_items">i_config_items</a> + <var>2</var> * <a class="local col4 ref" href="#24p_parser" title='p_parser' data-ref="24p_parser">p_parser</a>-&gt;<a class="ref" href="../modules/modules.h.html#module_t::i_bool_items" title='module_t::i_bool_items' data-ref="module_t::i_bool_items">i_bool_items</a>;</td></tr>
+<tr><th id="87">87</th><td>    }</td></tr>
+<tr><th id="88">88</th><td></td></tr>
+<tr><th id="89">89</th><td>    <a class="local col7 ref" href="#17p_longopts" title='p_longopts' data-ref="17p_longopts">p_longopts</a> = <a class="ref" href="../../../include/stdlib.h.html#malloc" title='malloc' data-ref="malloc">malloc</a>( <b>sizeof</b>(*<a class="local col7 ref" href="#17p_longopts" title='p_longopts' data-ref="17p_longopts">p_longopts</a>) * (<a class="local col3 ref" href="#13i_opts" title='i_opts' data-ref="13i_opts">i_opts</a> + <var>1</var>) );</td></tr>
+<tr><th id="90">90</th><td>    <b>if</b>( <a class="local col7 ref" href="#17p_longopts" title='p_longopts' data-ref="17p_longopts">p_longopts</a> == <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span> )</td></tr>
+<tr><th id="91">91</th><td>    {</td></tr>
+<tr><th id="92">92</th><td>        <a class="ref" href="../../include/vlc_modules.h.html#module_list_free" title='module_list_free' data-ref="module_list_free">module_list_free</a> (<a class="local col2 ref" href="#22list" title='list' data-ref="22list">list</a>);</td></tr>
+<tr><th id="93">93</th><td>        <b>return</b> -<var>1</var>;</td></tr>
+<tr><th id="94">94</th><td>    }</td></tr>
+<tr><th id="95">95</th><td></td></tr>
+<tr><th id="96">96</th><td>    <a class="local col0 ref" href="#20psz_shortopts" title='psz_shortopts' data-ref="20psz_shortopts">psz_shortopts</a> = <a class="ref" href="../../../include/stdlib.h.html#malloc" title='malloc' data-ref="malloc">malloc</a>( <var>2</var> * <a class="local col3 ref" href="#13i_opts" title='i_opts' data-ref="13i_opts">i_opts</a> + <var>1</var> );</td></tr>
+<tr><th id="97">97</th><td>    <b>if</b>( <a class="local col0 ref" href="#20psz_shortopts" title='psz_shortopts' data-ref="20psz_shortopts">psz_shortopts</a> == <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span> )</td></tr>
+<tr><th id="98">98</th><td>    {</td></tr>
+<tr><th id="99">99</th><td>        <a class="ref" href="../../../include/stdlib.h.html#free" title='free' data-ref="free">free</a>( <a class="local col7 ref" href="#17p_longopts" title='p_longopts' data-ref="17p_longopts">p_longopts</a> );</td></tr>
+<tr><th id="100">100</th><td>        <a class="ref" href="../../include/vlc_modules.h.html#module_list_free" title='module_list_free' data-ref="module_list_free">module_list_free</a> (<a class="local col2 ref" href="#22list" title='list' data-ref="22list">list</a>);</td></tr>
+<tr><th id="101">101</th><td>        <b>return</b> -<var>1</var>;</td></tr>
+<tr><th id="102">102</th><td>    }</td></tr>
+<tr><th id="103">103</th><td></td></tr>
+<tr><th id="104">104</th><td>    <i>/* If we are requested to ignore errors, then we must work on a copy</i></td></tr>
+<tr><th id="105">105</th><td><i>     * of the ppsz_argv array, otherwise getopt_long will reorder it for</i></td></tr>
+<tr><th id="106">106</th><td><i>     * us, ignoring the arity of the options */</i></td></tr>
+<tr><th id="107">107</th><td>    <b>if</b>( <a class="macro" href="#64" title="(pindex == ((void*)0))" data-ref="_M/b_ignore_errors">b_ignore_errors</a> )</td></tr>
+<tr><th id="108">108</th><td>    {</td></tr>
+<tr><th id="109">109</th><td>        <a class="local col8 ref" href="#18argv_copy" title='argv_copy' data-ref="18argv_copy">argv_copy</a> = (<em>const</em> <em>char</em>**)<a class="ref" href="../../../include/stdlib.h.html#malloc" title='malloc' data-ref="malloc">malloc</a>( <a class="local col8 ref" href="#8i_argc" title='i_argc' data-ref="8i_argc">i_argc</a> * <b>sizeof</b>(<em>char</em> *) );</td></tr>
+<tr><th id="110">110</th><td>        <b>if</b>( <a class="local col8 ref" href="#18argv_copy" title='argv_copy' data-ref="18argv_copy">argv_copy</a> == <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span> )</td></tr>
+<tr><th id="111">111</th><td>        {</td></tr>
+<tr><th id="112">112</th><td>            <a class="ref" href="../../../include/stdlib.h.html#free" title='free' data-ref="free">free</a>( <a class="local col0 ref" href="#20psz_shortopts" title='psz_shortopts' data-ref="20psz_shortopts">psz_shortopts</a> );</td></tr>
+<tr><th id="113">113</th><td>            <a class="ref" href="../../../include/stdlib.h.html#free" title='free' data-ref="free">free</a>( <a class="local col7 ref" href="#17p_longopts" title='p_longopts' data-ref="17p_longopts">p_longopts</a> );</td></tr>
+<tr><th id="114">114</th><td>            <a class="ref" href="../../include/vlc_modules.h.html#module_list_free" title='module_list_free' data-ref="module_list_free">module_list_free</a> (<a class="local col2 ref" href="#22list" title='list' data-ref="22list">list</a>);</td></tr>
+<tr><th id="115">115</th><td>            <b>return</b> -<var>1</var>;</td></tr>
+<tr><th id="116">116</th><td>        }</td></tr>
+<tr><th id="117">117</th><td>        <a class="ref" href="../../../include/string.h.html#memcpy" title='memcpy' data-ref="memcpy">memcpy</a>( <a class="local col8 ref" href="#18argv_copy" title='argv_copy' data-ref="18argv_copy">argv_copy</a>, <a class="local col9 ref" href="#9ppsz_argv" title='ppsz_argv' data-ref="9ppsz_argv">ppsz_argv</a>, <a class="local col8 ref" href="#8i_argc" title='i_argc' data-ref="8i_argc">i_argc</a> * <b>sizeof</b>(<em>char</em> *) );</td></tr>
+<tr><th id="118">118</th><td>        <a class="local col9 ref" href="#9ppsz_argv" title='ppsz_argv' data-ref="9ppsz_argv">ppsz_argv</a> = <a class="local col8 ref" href="#18argv_copy" title='argv_copy' data-ref="18argv_copy">argv_copy</a>;</td></tr>
+<tr><th id="119">119</th><td>    }</td></tr>
+<tr><th id="120">120</th><td></td></tr>
+<tr><th id="121">121</th><td>    <a class="local col4 ref" href="#14i_shortopts" title='i_shortopts' data-ref="14i_shortopts">i_shortopts</a> = <var>0</var>;</td></tr>
+<tr><th id="122">122</th><td>    <b>for</b>( <a class="local col2 ref" href="#12i_index" title='i_index' data-ref="12i_index">i_index</a> = <var>0</var>; <a class="local col2 ref" href="#12i_index" title='i_index' data-ref="12i_index">i_index</a> &lt; <var>256</var>; <a class="local col2 ref" href="#12i_index" title='i_index' data-ref="12i_index">i_index</a>++ )</td></tr>
+<tr><th id="123">123</th><td>    {</td></tr>
+<tr><th id="124">124</th><td>        <a class="local col9 ref" href="#19pp_shortopts" title='pp_shortopts' data-ref="19pp_shortopts">pp_shortopts</a>[<a class="local col2 ref" href="#12i_index" title='i_index' data-ref="12i_index">i_index</a>] = <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="125">125</th><td>    }</td></tr>
+<tr><th id="126">126</th><td></td></tr>
+<tr><th id="127">127</th><td>    <i>/* Fill the p_longopts and psz_shortopts structures */</i></td></tr>
+<tr><th id="128">128</th><td>    <a class="local col2 ref" href="#12i_index" title='i_index' data-ref="12i_index">i_index</a> = <var>0</var>;</td></tr>
+<tr><th id="129">129</th><td>    <b>for</b> (<span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="local col5 decl" id="25i" title='i' data-type='size_t' data-ref="25i">i</dfn> = <var>0</var>; <a class="local col5 ref" href="#25i" title='i' data-ref="25i">i</a> &lt; <a class="local col1 ref" href="#21count" title='count' data-ref="21count">count</a>; <a class="local col5 ref" href="#25i" title='i' data-ref="25i">i</a>++)</td></tr>
+<tr><th id="130">130</th><td>    {</td></tr>
+<tr><th id="131">131</th><td>        <a class="typedef" href="../../include/vlc_common.h.html#module_t" title='module_t' data-type='struct module_t' data-ref="module_t">module_t</a> *<dfn class="local col6 decl" id="26p_parser" title='p_parser' data-type='module_t *' data-ref="26p_parser">p_parser</dfn> = <a class="local col2 ref" href="#22list" title='list' data-ref="22list">list</a>[<a class="local col5 ref" href="#25i" title='i' data-ref="25i">i</a>];</td></tr>
+<tr><th id="132">132</th><td>        <a class="typedef" href="../../include/vlc_common.h.html#module_config_t" title='module_config_t' data-type='struct module_config_t' data-ref="module_config_t">module_config_t</a> *<dfn class="local col7 decl" id="27p_item" title='p_item' data-type='module_config_t *' data-ref="27p_item">p_item</dfn>, *<dfn class="local col8 decl" id="28p_end" title='p_end' data-type='module_config_t *' data-ref="28p_end">p_end</dfn>;</td></tr>
+<tr><th id="133">133</th><td></td></tr>
+<tr><th id="134">134</th><td>        <b>if</b>( !<a class="local col6 ref" href="#26p_parser" title='p_parser' data-ref="26p_parser">p_parser</a>-&gt;<a class="ref" href="../modules/modules.h.html#module_t::i_config_items" title='module_t::i_config_items' data-ref="module_t::i_config_items">i_config_items</a> )</td></tr>
+<tr><th id="135">135</th><td>            <b>continue</b>;</td></tr>
+<tr><th id="136">136</th><td></td></tr>
+<tr><th id="137">137</th><td>        <b>for</b>( <a class="local col7 ref" href="#27p_item" title='p_item' data-ref="27p_item">p_item</a> = <a class="local col6 ref" href="#26p_parser" title='p_parser' data-ref="26p_parser">p_parser</a>-&gt;<a class="ref" href="../modules/modules.h.html#module_t::p_config" title='module_t::p_config' data-ref="module_t::p_config">p_config</a>, <a class="local col8 ref" href="#28p_end" title='p_end' data-ref="28p_end">p_end</a> = <a class="local col7 ref" href="#27p_item" title='p_item' data-ref="27p_item">p_item</a> + <a class="local col6 ref" href="#26p_parser" title='p_parser' data-ref="26p_parser">p_parser</a>-&gt;<a class="ref" href="../modules/modules.h.html#module_t::confsize" title='module_t::confsize' data-ref="module_t::confsize">confsize</a>;</td></tr>
+<tr><th id="138">138</th><td>             <a class="local col7 ref" href="#27p_item" title='p_item' data-ref="27p_item">p_item</a> &lt; <a class="local col8 ref" href="#28p_end" title='p_end' data-ref="28p_end">p_end</a>;</td></tr>
+<tr><th id="139">139</th><td>             <a class="local col7 ref" href="#27p_item" title='p_item' data-ref="27p_item">p_item</a>++ )</td></tr>
+<tr><th id="140">140</th><td>        {</td></tr>
+<tr><th id="141">141</th><td>            <i>/* Ignore hints */</i></td></tr>
+<tr><th id="142">142</th><td>            <b>if</b>( !<a class="macro" href="../../include/vlc_plugin.h.html#136" title="(((p_item-&gt;i_type) &amp; ~0xF) != 0)" data-ref="_M/CONFIG_ITEM">CONFIG_ITEM</a>(<a class="local col7 ref" href="#27p_item" title='p_item' data-ref="27p_item">p_item</a>-&gt;<a class="ref" href="../../include/vlc_configuration.h.html#module_config_t::i_type" title='module_config_t::i_type' data-ref="module_config_t::i_type">i_type</a>) )</td></tr>
+<tr><th id="143">143</th><td>                <b>continue</b>;</td></tr>
+<tr><th id="144">144</th><td></td></tr>
+<tr><th id="145">145</th><td>            <i>/* Add item to long options */</i></td></tr>
+<tr><th id="146">146</th><td>            <a class="local col7 ref" href="#17p_longopts" title='p_longopts' data-ref="17p_longopts">p_longopts</a>[<a class="local col2 ref" href="#12i_index" title='i_index' data-ref="12i_index">i_index</a>].<a class="ref" href="vlc_getopt.h.html#vlc_option::name" title='vlc_option::name' data-ref="vlc_option::name">name</a> = <a class="macro" href="../../../include/x86_64-linux-gnu/bits/string2.h.html#1291" title="(__extension__ (__builtin_constant_p (p_item-&gt;psz_name) &amp;&amp; ((size_t)(const void *)((p_item-&gt;psz_name) + 1) - (size_t)(const void *)(p_item-&gt;psz_name) == 1) ? (((const char *) (p_item-&gt;psz_name))[0] == &apos;\0&apos; ? (char *) calloc ((size_t) 1, (size_t) 1) : ({ size_t __len = strlen (p_item-&gt;psz_name) + 1; char *__retval = (char *) malloc (__len); if (__retval != ((void*)0)) __retval = (char *) memcpy (__retval, p_item-&gt;psz_name, __len); __retval; })) : __strdup (p_item-&gt;psz_name)))" data-ref="_M/strdup">strdup</a>( <a class="local col7 ref" href="#27p_item" title='p_item' data-ref="27p_item">p_item</a>-&gt;<a class="ref" href="../../include/vlc_configuration.h.html#module_config_t::psz_name" title='module_config_t::psz_name' data-ref="module_config_t::psz_name">psz_name</a> );</td></tr>
+<tr><th id="147">147</th><td>            <b>if</b>( <a class="local col7 ref" href="#17p_longopts" title='p_longopts' data-ref="17p_longopts">p_longopts</a>[<a class="local col2 ref" href="#12i_index" title='i_index' data-ref="12i_index">i_index</a>].<a class="ref" href="vlc_getopt.h.html#vlc_option::name" title='vlc_option::name' data-ref="vlc_option::name">name</a> == <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span> ) <b>continue</b>;</td></tr>
+<tr><th id="148">148</th><td>            <a class="local col7 ref" href="#17p_longopts" title='p_longopts' data-ref="17p_longopts">p_longopts</a>[<a class="local col2 ref" href="#12i_index" title='i_index' data-ref="12i_index">i_index</a>].<a class="ref" href="vlc_getopt.h.html#vlc_option::flag" title='vlc_option::flag' data-ref="vlc_option::flag">flag</a> = &amp;<a class="local col5 ref" href="#15flag" title='flag' data-ref="15flag">flag</a>;</td></tr>
+<tr><th id="149">149</th><td>            <a class="local col7 ref" href="#17p_longopts" title='p_longopts' data-ref="17p_longopts">p_longopts</a>[<a class="local col2 ref" href="#12i_index" title='i_index' data-ref="12i_index">i_index</a>].<a class="ref" href="vlc_getopt.h.html#vlc_option::val" title='vlc_option::val' data-ref="vlc_option::val">val</a> = <var>0</var>;</td></tr>
+<tr><th id="150">150</th><td></td></tr>
+<tr><th id="151">151</th><td>            <b>if</b>( <a class="macro" href="configuration.h.html#44" title="((p_item-&gt;i_type) &amp; ~0x1F)" data-ref="_M/CONFIG_CLASS">CONFIG_CLASS</a>(<a class="local col7 ref" href="#27p_item" title='p_item' data-ref="27p_item">p_item</a>-&gt;<a class="ref" href="../../include/vlc_configuration.h.html#module_config_t::i_type" title='module_config_t::i_type' data-ref="module_config_t::i_type">i_type</a>) != <a class="macro" href="../../include/vlc_plugin.h.html#123" title="0x60" data-ref="_M/CONFIG_ITEM_BOOL">CONFIG_ITEM_BOOL</a> )</td></tr>
+<tr><th id="152">152</th><td>                <a class="local col7 ref" href="#17p_longopts" title='p_longopts' data-ref="17p_longopts">p_longopts</a>[<a class="local col2 ref" href="#12i_index" title='i_index' data-ref="12i_index">i_index</a>].<a class="ref" href="vlc_getopt.h.html#vlc_option::has_arg" title='vlc_option::has_arg' data-ref="vlc_option::has_arg">has_arg</a> = <span class="macro" title="1" data-ref="_M/true">true</span>;</td></tr>
+<tr><th id="153">153</th><td>            <b>else</b></td></tr>
+<tr><th id="154">154</th><td>            <i>/* Booleans also need --no-foo and --nofoo options */</i></td></tr>
+<tr><th id="155">155</th><td>            {</td></tr>
+<tr><th id="156">156</th><td>                <em>char</em> *<dfn class="local col9 decl" id="29psz_name" title='psz_name' data-type='char *' data-ref="29psz_name">psz_name</dfn>;</td></tr>
+<tr><th id="157">157</th><td></td></tr>
+<tr><th id="158">158</th><td>                <a class="local col7 ref" href="#17p_longopts" title='p_longopts' data-ref="17p_longopts">p_longopts</a>[<a class="local col2 ref" href="#12i_index" title='i_index' data-ref="12i_index">i_index</a>].<a class="ref" href="vlc_getopt.h.html#vlc_option::has_arg" title='vlc_option::has_arg' data-ref="vlc_option::has_arg">has_arg</a> = <span class="macro" title="0" data-ref="_M/false">false</span>;</td></tr>
+<tr><th id="159">159</th><td>                <a class="local col2 ref" href="#12i_index" title='i_index' data-ref="12i_index">i_index</a>++;</td></tr>
+<tr><th id="160">160</th><td></td></tr>
+<tr><th id="161">161</th><td>                <b>if</b>( <a class="macro" href="../../../include/x86_64-linux-gnu/bits/stdio2.h.html#198" title="__asprintf_chk (&amp;psz_name, 2 - 1, &quot;no%s&quot;, p_item-&gt;psz_name)" data-ref="_M/asprintf">asprintf</a>( &amp;<a class="local col9 ref" href="#29psz_name" title='psz_name' data-ref="29psz_name">psz_name</a>, <q>"no%s"</q>, <a class="local col7 ref" href="#27p_item" title='p_item' data-ref="27p_item">p_item</a>-&gt;<a class="ref" href="../../include/vlc_configuration.h.html#module_config_t::psz_name" title='module_config_t::psz_name' data-ref="module_config_t::psz_name">psz_name</a> ) == -<var>1</var> )</td></tr>
+<tr><th id="162">162</th><td>                    <b>continue</b>;</td></tr>
+<tr><th id="163">163</th><td>                <a class="local col7 ref" href="#17p_longopts" title='p_longopts' data-ref="17p_longopts">p_longopts</a>[<a class="local col2 ref" href="#12i_index" title='i_index' data-ref="12i_index">i_index</a>].<a class="ref" href="vlc_getopt.h.html#vlc_option::name" title='vlc_option::name' data-ref="vlc_option::name">name</a> = <a class="local col9 ref" href="#29psz_name" title='psz_name' data-ref="29psz_name">psz_name</a>;</td></tr>
+<tr><th id="164">164</th><td>                <a class="local col7 ref" href="#17p_longopts" title='p_longopts' data-ref="17p_longopts">p_longopts</a>[<a class="local col2 ref" href="#12i_index" title='i_index' data-ref="12i_index">i_index</a>].<a class="ref" href="vlc_getopt.h.html#vlc_option::has_arg" title='vlc_option::has_arg' data-ref="vlc_option::has_arg">has_arg</a> = <span class="macro" title="0" data-ref="_M/false">false</span>;</td></tr>
+<tr><th id="165">165</th><td>                <a class="local col7 ref" href="#17p_longopts" title='p_longopts' data-ref="17p_longopts">p_longopts</a>[<a class="local col2 ref" href="#12i_index" title='i_index' data-ref="12i_index">i_index</a>].<a class="ref" href="vlc_getopt.h.html#vlc_option::flag" title='vlc_option::flag' data-ref="vlc_option::flag">flag</a> = &amp;<a class="local col5 ref" href="#15flag" title='flag' data-ref="15flag">flag</a>;</td></tr>
+<tr><th id="166">166</th><td>                <a class="local col7 ref" href="#17p_longopts" title='p_longopts' data-ref="17p_longopts">p_longopts</a>[<a class="local col2 ref" href="#12i_index" title='i_index' data-ref="12i_index">i_index</a>].<a class="ref" href="vlc_getopt.h.html#vlc_option::val" title='vlc_option::val' data-ref="vlc_option::val">val</a> = <var>1</var>;</td></tr>
+<tr><th id="167">167</th><td>                <a class="local col2 ref" href="#12i_index" title='i_index' data-ref="12i_index">i_index</a>++;</td></tr>
+<tr><th id="168">168</th><td></td></tr>
+<tr><th id="169">169</th><td>                <b>if</b>( <a class="macro" href="../../../include/x86_64-linux-gnu/bits/stdio2.h.html#198" title="__asprintf_chk (&amp;psz_name, 2 - 1, &quot;no-%s&quot;, p_item-&gt;psz_name)" data-ref="_M/asprintf">asprintf</a>( &amp;<a class="local col9 ref" href="#29psz_name" title='psz_name' data-ref="29psz_name">psz_name</a>, <q>"no-%s"</q>, <a class="local col7 ref" href="#27p_item" title='p_item' data-ref="27p_item">p_item</a>-&gt;<a class="ref" href="../../include/vlc_configuration.h.html#module_config_t::psz_name" title='module_config_t::psz_name' data-ref="module_config_t::psz_name">psz_name</a> ) == -<var>1</var> )</td></tr>
+<tr><th id="170">170</th><td>                    <b>continue</b>;</td></tr>
+<tr><th id="171">171</th><td>                <a class="local col7 ref" href="#17p_longopts" title='p_longopts' data-ref="17p_longopts">p_longopts</a>[<a class="local col2 ref" href="#12i_index" title='i_index' data-ref="12i_index">i_index</a>].<a class="ref" href="vlc_getopt.h.html#vlc_option::name" title='vlc_option::name' data-ref="vlc_option::name">name</a> = <a class="local col9 ref" href="#29psz_name" title='psz_name' data-ref="29psz_name">psz_name</a>;</td></tr>
+<tr><th id="172">172</th><td>                <a class="local col7 ref" href="#17p_longopts" title='p_longopts' data-ref="17p_longopts">p_longopts</a>[<a class="local col2 ref" href="#12i_index" title='i_index' data-ref="12i_index">i_index</a>].<a class="ref" href="vlc_getopt.h.html#vlc_option::has_arg" title='vlc_option::has_arg' data-ref="vlc_option::has_arg">has_arg</a> = <span class="macro" title="0" data-ref="_M/false">false</span>;</td></tr>
+<tr><th id="173">173</th><td>                <a class="local col7 ref" href="#17p_longopts" title='p_longopts' data-ref="17p_longopts">p_longopts</a>[<a class="local col2 ref" href="#12i_index" title='i_index' data-ref="12i_index">i_index</a>].<a class="ref" href="vlc_getopt.h.html#vlc_option::flag" title='vlc_option::flag' data-ref="vlc_option::flag">flag</a> = &amp;<a class="local col5 ref" href="#15flag" title='flag' data-ref="15flag">flag</a>;</td></tr>
+<tr><th id="174">174</th><td>                <a class="local col7 ref" href="#17p_longopts" title='p_longopts' data-ref="17p_longopts">p_longopts</a>[<a class="local col2 ref" href="#12i_index" title='i_index' data-ref="12i_index">i_index</a>].<a class="ref" href="vlc_getopt.h.html#vlc_option::val" title='vlc_option::val' data-ref="vlc_option::val">val</a> = <var>1</var>;</td></tr>
+<tr><th id="175">175</th><td>            }</td></tr>
+<tr><th id="176">176</th><td>            <a class="local col2 ref" href="#12i_index" title='i_index' data-ref="12i_index">i_index</a>++;</td></tr>
+<tr><th id="177">177</th><td></td></tr>
+<tr><th id="178">178</th><td>            <i>/* If item also has a short option, add it */</i></td></tr>
+<tr><th id="179">179</th><td>            <b>if</b>( <a class="local col7 ref" href="#27p_item" title='p_item' data-ref="27p_item">p_item</a>-&gt;<a class="ref" href="../../include/vlc_configuration.h.html#module_config_t::i_short" title='module_config_t::i_short' data-ref="module_config_t::i_short">i_short</a> )</td></tr>
+<tr><th id="180">180</th><td>            {</td></tr>
+<tr><th id="181">181</th><td>                <a class="local col9 ref" href="#19pp_shortopts" title='pp_shortopts' data-ref="19pp_shortopts">pp_shortopts</a>[(<em>int</em>)<a class="local col7 ref" href="#27p_item" title='p_item' data-ref="27p_item">p_item</a>-&gt;<a class="ref" href="../../include/vlc_configuration.h.html#module_config_t::i_short" title='module_config_t::i_short' data-ref="module_config_t::i_short">i_short</a>] = <a class="local col7 ref" href="#27p_item" title='p_item' data-ref="27p_item">p_item</a>;</td></tr>
+<tr><th id="182">182</th><td>                <a class="local col0 ref" href="#20psz_shortopts" title='psz_shortopts' data-ref="20psz_shortopts">psz_shortopts</a>[<a class="local col4 ref" href="#14i_shortopts" title='i_shortopts' data-ref="14i_shortopts">i_shortopts</a>] = <a class="local col7 ref" href="#27p_item" title='p_item' data-ref="27p_item">p_item</a>-&gt;<a class="ref" href="../../include/vlc_configuration.h.html#module_config_t::i_short" title='module_config_t::i_short' data-ref="module_config_t::i_short">i_short</a>;</td></tr>
+<tr><th id="183">183</th><td>                <a class="local col4 ref" href="#14i_shortopts" title='i_shortopts' data-ref="14i_shortopts">i_shortopts</a>++;</td></tr>
+<tr><th id="184">184</th><td>                <b>if</b>( <a class="local col7 ref" href="#27p_item" title='p_item' data-ref="27p_item">p_item</a>-&gt;<a class="ref" href="../../include/vlc_configuration.h.html#module_config_t::i_type" title='module_config_t::i_type' data-ref="module_config_t::i_type">i_type</a> != <a class="macro" href="../../include/vlc_plugin.h.html#123" title="0x60" data-ref="_M/CONFIG_ITEM_BOOL">CONFIG_ITEM_BOOL</a></td></tr>
+<tr><th id="185">185</th><td>                 &amp;&amp; <a class="local col7 ref" href="#27p_item" title='p_item' data-ref="27p_item">p_item</a>-&gt;<a class="ref" href="../../include/vlc_configuration.h.html#module_config_t::i_short" title='module_config_t::i_short' data-ref="module_config_t::i_short">i_short</a> != <kbd>'v'</kbd> )</td></tr>
+<tr><th id="186">186</th><td>                {</td></tr>
+<tr><th id="187">187</th><td>                    <a class="local col0 ref" href="#20psz_shortopts" title='psz_shortopts' data-ref="20psz_shortopts">psz_shortopts</a>[<a class="local col4 ref" href="#14i_shortopts" title='i_shortopts' data-ref="14i_shortopts">i_shortopts</a>] = <kbd>':'</kbd>;</td></tr>
+<tr><th id="188">188</th><td>                    <a class="local col4 ref" href="#14i_shortopts" title='i_shortopts' data-ref="14i_shortopts">i_shortopts</a>++;</td></tr>
+<tr><th id="189">189</th><td>                }</td></tr>
+<tr><th id="190">190</th><td>            }</td></tr>
+<tr><th id="191">191</th><td>        }</td></tr>
+<tr><th id="192">192</th><td>    }</td></tr>
+<tr><th id="193">193</th><td></td></tr>
+<tr><th id="194">194</th><td>    <i>/* We don't need the module list anymore */</i></td></tr>
+<tr><th id="195">195</th><td>    <a class="ref" href="../../include/vlc_modules.h.html#module_list_free" title='module_list_free' data-ref="module_list_free">module_list_free</a>( <a class="local col2 ref" href="#22list" title='list' data-ref="22list">list</a> );</td></tr>
+<tr><th id="196">196</th><td></td></tr>
+<tr><th id="197">197</th><td>    <i>/* Close the longopts and shortopts structures */</i></td></tr>
+<tr><th id="198">198</th><td>    <a class="ref" href="../../../include/string.h.html#memset" title='memset' data-ref="memset">memset</a>( &amp;<a class="local col7 ref" href="#17p_longopts" title='p_longopts' data-ref="17p_longopts">p_longopts</a>[<a class="local col2 ref" href="#12i_index" title='i_index' data-ref="12i_index">i_index</a>], <var>0</var>, <b>sizeof</b>(*<a class="local col7 ref" href="#17p_longopts" title='p_longopts' data-ref="17p_longopts">p_longopts</a>) );</td></tr>
+<tr><th id="199">199</th><td>    <a class="local col0 ref" href="#20psz_shortopts" title='psz_shortopts' data-ref="20psz_shortopts">psz_shortopts</a>[<a class="local col4 ref" href="#14i_shortopts" title='i_shortopts' data-ref="14i_shortopts">i_shortopts</a>] = <kbd>'\0'</kbd>;</td></tr>
+<tr><th id="200">200</th><td></td></tr>
+<tr><th id="201">201</th><td>    <em>int</em> <dfn class="local col0 decl" id="30ret" title='ret' data-type='int' data-ref="30ret">ret</dfn> = -<var>1</var>;</td></tr>
+<tr><th id="202">202</th><td></td></tr>
+<tr><th id="203">203</th><td>    <i>/*</i></td></tr>
+<tr><th id="204">204</th><td><i>     * Parse the command line options</i></td></tr>
+<tr><th id="205">205</th><td><i>     */</i></td></tr>
+<tr><th id="206">206</th><td>    <a class="typedef" href="vlc_getopt.h.html#vlc_getopt_t" title='vlc_getopt_t' data-type='struct vlc_getopt_s' data-ref="vlc_getopt_t">vlc_getopt_t</a> <dfn class="local col1 decl" id="31state" title='state' data-type='vlc_getopt_t' data-ref="31state">state</dfn>;</td></tr>
+<tr><th id="207">207</th><td>    <a class="local col1 ref" href="#31state" title='state' data-ref="31state">state</a>.<a class="ref" href="vlc_getopt.h.html#vlc_getopt_s::ind" title='vlc_getopt_s::ind' data-ref="vlc_getopt_s::ind">ind</a> = <var>0</var> ; <i>/* set to 0 to tell GNU getopt to reinitialize */</i></td></tr>
+<tr><th id="208">208</th><td>    <b>while</b>( ( <a class="local col1 ref" href="#11i_cmd" title='i_cmd' data-ref="11i_cmd">i_cmd</a> = <a class="ref" href="vlc_getopt.h.html#vlc_getopt_long" title='vlc_getopt_long' data-ref="vlc_getopt_long">vlc_getopt_long</a>( <a class="local col8 ref" href="#8i_argc" title='i_argc' data-ref="8i_argc">i_argc</a>, (<em>char</em> **)<a class="local col9 ref" href="#9ppsz_argv" title='ppsz_argv' data-ref="9ppsz_argv">ppsz_argv</a>,</td></tr>
+<tr><th id="209">209</th><td>                                      <a class="local col0 ref" href="#20psz_shortopts" title='psz_shortopts' data-ref="20psz_shortopts">psz_shortopts</a>,</td></tr>
+<tr><th id="210">210</th><td>                                      <a class="local col7 ref" href="#17p_longopts" title='p_longopts' data-ref="17p_longopts">p_longopts</a>, &amp;<a class="local col2 ref" href="#12i_index" title='i_index' data-ref="12i_index">i_index</a>, &amp;<a class="local col1 ref" href="#31state" title='state' data-ref="31state">state</a> ) ) != -<var>1</var> )</td></tr>
+<tr><th id="211">211</th><td>    {</td></tr>
+<tr><th id="212">212</th><td>        <i>/* A long option has been recognized */</i></td></tr>
+<tr><th id="213">213</th><td>        <b>if</b>( <a class="local col1 ref" href="#11i_cmd" title='i_cmd' data-ref="11i_cmd">i_cmd</a> == <var>0</var> )</td></tr>
+<tr><th id="214">214</th><td>        {</td></tr>
+<tr><th id="215">215</th><td>            <a class="typedef" href="../../include/vlc_common.h.html#module_config_t" title='module_config_t' data-type='struct module_config_t' data-ref="module_config_t">module_config_t</a> *<dfn class="local col2 decl" id="32p_conf" title='p_conf' data-type='module_config_t *' data-ref="32p_conf">p_conf</dfn>;</td></tr>
+<tr><th id="216">216</th><td>            <em>const</em> <em>char</em> *<dfn class="local col3 decl" id="33psz_name" title='psz_name' data-type='const char *' data-ref="33psz_name">psz_name</dfn> = <a class="local col7 ref" href="#17p_longopts" title='p_longopts' data-ref="17p_longopts">p_longopts</a>[<a class="local col2 ref" href="#12i_index" title='i_index' data-ref="12i_index">i_index</a>].<a class="ref" href="vlc_getopt.h.html#vlc_option::name" title='vlc_option::name' data-ref="vlc_option::name">name</a>;</td></tr>
+<tr><th id="217">217</th><td></td></tr>
+<tr><th id="218">218</th><td>            <i>/* Check if we deal with a --nofoo or --no-foo long option */</i></td></tr>
+<tr><th id="219">219</th><td>            <b>if</b>( <a class="local col5 ref" href="#15flag" title='flag' data-ref="15flag">flag</a> ) <a class="local col3 ref" href="#33psz_name" title='psz_name' data-ref="33psz_name">psz_name</a> += <a class="local col3 ref" href="#33psz_name" title='psz_name' data-ref="33psz_name">psz_name</a>[<var>2</var>] == <kbd>'-'</kbd> ? <var>3</var> : <var>2</var>;</td></tr>
+<tr><th id="220">220</th><td></td></tr>
+<tr><th id="221">221</th><td>            <i>/* Store the configuration option */</i></td></tr>
+<tr><th id="222">222</th><td>            <a class="local col2 ref" href="#32p_conf" title='p_conf' data-ref="32p_conf">p_conf</a> = <a class="ref" href="../../include/vlc_configuration.h.html#config_FindConfig" title='config_FindConfig' data-ref="config_FindConfig">config_FindConfig</a>( <a class="local col7 ref" href="#7p_this" title='p_this' data-ref="7p_this">p_this</a>, <a class="local col3 ref" href="#33psz_name" title='psz_name' data-ref="33psz_name">psz_name</a> );</td></tr>
+<tr><th id="223">223</th><td>            <b>if</b>( <a class="local col2 ref" href="#32p_conf" title='p_conf' data-ref="32p_conf">p_conf</a> )</td></tr>
+<tr><th id="224">224</th><td>            {</td></tr>
+<tr><th id="225">225</th><td>                <i>/* Check if the option is deprecated */</i></td></tr>
+<tr><th id="226">226</th><td>                <b>if</b>( <a class="local col2 ref" href="#32p_conf" title='p_conf' data-ref="32p_conf">p_conf</a>-&gt;<a class="ref" href="../../include/vlc_configuration.h.html#module_config_t::b_removed" title='module_config_t::b_removed' data-ref="module_config_t::b_removed">b_removed</a> )</td></tr>
+<tr><th id="227">227</th><td>                {</td></tr>
+<tr><th id="228">228</th><td>                    <a class="macro" href="../../../include/x86_64-linux-gnu/bits/stdio2.h.html#109" title="__fprintf_chk (stderr, 2 - 1, &quot;Warning: option --%s no longer exists.\n&quot;, psz_name)" data-ref="_M/fprintf">fprintf</a>(<a class="macro" href="../../../include/stdio.h.html#174" title="stderr" data-ref="_M/stderr">stderr</a>,</td></tr>
+<tr><th id="229">229</th><td>                            <q>"Warning: option --%s no longer exists.\n"</q>,</td></tr>
+<tr><th id="230">230</th><td>                            <a class="local col3 ref" href="#33psz_name" title='psz_name' data-ref="33psz_name">psz_name</a>);</td></tr>
+<tr><th id="231">231</th><td>                    <b>continue</b>;</td></tr>
+<tr><th id="232">232</th><td>                }</td></tr>
+<tr><th id="233">233</th><td></td></tr>
+<tr><th id="234">234</th><td>                <b>switch</b>( <a class="macro" href="configuration.h.html#44" title="((p_conf-&gt;i_type) &amp; ~0x1F)" data-ref="_M/CONFIG_CLASS">CONFIG_CLASS</a>(<a class="local col2 ref" href="#32p_conf" title='p_conf' data-ref="32p_conf">p_conf</a>-&gt;<a class="ref" href="../../include/vlc_configuration.h.html#module_config_t::i_type" title='module_config_t::i_type' data-ref="module_config_t::i_type">i_type</a>) )</td></tr>
+<tr><th id="235">235</th><td>                {</td></tr>
+<tr><th id="236">236</th><td>                    <b>case</b> <a class="macro" href="../../include/vlc_plugin.h.html#124" title="0x80" data-ref="_M/CONFIG_ITEM_STRING">CONFIG_ITEM_STRING</a>:</td></tr>
+<tr><th id="237">237</th><td>                        <a class="macro" href="../../include/vlc_variables.h.html#145" title="var_Create( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_this)), psz_object_type), (void)0 , (vlc_object_t *)(p_this)), psz_name, 0x0040 )" data-ref="_M/var_Create">var_Create</a>( <a class="local col7 ref" href="#7p_this" title='p_this' data-ref="7p_this">p_this</a>, <a class="local col3 ref" href="#33psz_name" title='psz_name' data-ref="33psz_name">psz_name</a>, <a class="macro" href="../../include/vlc_variables.h.html#57" title="0x0040" data-ref="_M/VLC_VAR_STRING">VLC_VAR_STRING</a> );</td></tr>
+<tr><th id="238">238</th><td>                        <a class="macro" href="../../include/vlc_variables.h.html#294" title="var_SetString( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_this)), psz_object_type), (void)0 , (vlc_object_t *)(p_this)),psz_name,state.arg)" data-ref="_M/var_SetString">var_SetString</a>( <a class="local col7 ref" href="#7p_this" title='p_this' data-ref="7p_this">p_this</a>, <a class="local col3 ref" href="#33psz_name" title='psz_name' data-ref="33psz_name">psz_name</a>, <a class="local col1 ref" href="#31state" title='state' data-ref="31state">state</a>.<a class="ref" href="vlc_getopt.h.html#vlc_getopt_s::arg" title='vlc_getopt_s::arg' data-ref="vlc_getopt_s::arg">arg</a> );</td></tr>
+<tr><th id="239">239</th><td>                        <b>break</b>;</td></tr>
+<tr><th id="240">240</th><td>                    <b>case</b> <a class="macro" href="../../include/vlc_plugin.h.html#121" title="0x40" data-ref="_M/CONFIG_ITEM_INTEGER">CONFIG_ITEM_INTEGER</a>:</td></tr>
+<tr><th id="241">241</th><td>                        <a class="macro" href="../../include/vlc_variables.h.html#145" title="var_Create( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_this)), psz_object_type), (void)0 , (vlc_object_t *)(p_this)), psz_name, 0x0030 )" data-ref="_M/var_Create">var_Create</a>( <a class="local col7 ref" href="#7p_this" title='p_this' data-ref="7p_this">p_this</a>, <a class="local col3 ref" href="#33psz_name" title='psz_name' data-ref="33psz_name">psz_name</a>, <a class="macro" href="../../include/vlc_variables.h.html#55" title="0x0030" data-ref="_M/VLC_VAR_INTEGER">VLC_VAR_INTEGER</a> );</td></tr>
+<tr><th id="242">242</th><td>                        <a class="macro" href="../../include/vlc_variables.h.html#290" title="var_SetInteger( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_this)), psz_object_type), (void)0 , (vlc_object_t *)(p_this)),psz_name,strtoll(state.arg, ((void*)0), 0))" data-ref="_M/var_SetInteger">var_SetInteger</a>( <a class="local col7 ref" href="#7p_this" title='p_this' data-ref="7p_this">p_this</a>, <a class="local col3 ref" href="#33psz_name" title='psz_name' data-ref="33psz_name">psz_name</a>,</td></tr>
+<tr><th id="243">243</th><td>                                        <a class="ref" href="../../../include/stdlib.h.html#strtoll" title='strtoll' data-ref="strtoll">strtoll</a>(<a class="local col1 ref" href="#31state" title='state' data-ref="31state">state</a>.<a class="ref" href="vlc_getopt.h.html#vlc_getopt_s::arg" title='vlc_getopt_s::arg' data-ref="vlc_getopt_s::arg">arg</a>, <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>, <var>0</var>));</td></tr>
+<tr><th id="244">244</th><td>                        <b>break</b>;</td></tr>
+<tr><th id="245">245</th><td>                    <b>case</b> <a class="macro" href="../../include/vlc_plugin.h.html#120" title="0x20" data-ref="_M/CONFIG_ITEM_FLOAT">CONFIG_ITEM_FLOAT</a>:</td></tr>
+<tr><th id="246">246</th><td>                        <a class="macro" href="../../include/vlc_variables.h.html#145" title="var_Create( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_this)), psz_object_type), (void)0 , (vlc_object_t *)(p_this)), psz_name, 0x0050 )" data-ref="_M/var_Create">var_Create</a>( <a class="local col7 ref" href="#7p_this" title='p_this' data-ref="7p_this">p_this</a>, <a class="local col3 ref" href="#33psz_name" title='psz_name' data-ref="33psz_name">psz_name</a>, <a class="macro" href="../../include/vlc_variables.h.html#59" title="0x0050" data-ref="_M/VLC_VAR_FLOAT">VLC_VAR_FLOAT</a> );</td></tr>
+<tr><th id="247">247</th><td>                        <a class="macro" href="../../include/vlc_variables.h.html#293" title="var_SetFloat( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_this)), psz_object_type), (void)0 , (vlc_object_t *)(p_this)),psz_name,us_atof(state.arg))" data-ref="_M/var_SetFloat">var_SetFloat</a>( <a class="local col7 ref" href="#7p_this" title='p_this' data-ref="7p_this">p_this</a>, <a class="local col3 ref" href="#33psz_name" title='psz_name' data-ref="33psz_name">psz_name</a>, <a class="ref" href="../../include/vlc_charset.h.html#us_atof" title='us_atof' data-ref="us_atof">us_atof</a>(<a class="local col1 ref" href="#31state" title='state' data-ref="31state">state</a>.<a class="ref" href="vlc_getopt.h.html#vlc_getopt_s::arg" title='vlc_getopt_s::arg' data-ref="vlc_getopt_s::arg">arg</a>) );</td></tr>
+<tr><th id="248">248</th><td>                        <b>break</b>;</td></tr>
+<tr><th id="249">249</th><td>                    <b>case</b> <a class="macro" href="../../include/vlc_plugin.h.html#123" title="0x60" data-ref="_M/CONFIG_ITEM_BOOL">CONFIG_ITEM_BOOL</a>:</td></tr>
+<tr><th id="250">250</th><td>                        <a class="macro" href="../../include/vlc_variables.h.html#145" title="var_Create( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_this)), psz_object_type), (void)0 , (vlc_object_t *)(p_this)), psz_name, 0x0020 )" data-ref="_M/var_Create">var_Create</a>( <a class="local col7 ref" href="#7p_this" title='p_this' data-ref="7p_this">p_this</a>, <a class="local col3 ref" href="#33psz_name" title='psz_name' data-ref="33psz_name">psz_name</a>, <a class="macro" href="../../include/vlc_variables.h.html#54" title="0x0020" data-ref="_M/VLC_VAR_BOOL">VLC_VAR_BOOL</a> );</td></tr>
+<tr><th id="251">251</th><td>                        <a class="macro" href="../../include/vlc_variables.h.html#291" title="var_SetBool( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_this)), psz_object_type), (void)0 , (vlc_object_t *)(p_this)),psz_name,!flag)" data-ref="_M/var_SetBool">var_SetBool</a>( <a class="local col7 ref" href="#7p_this" title='p_this' data-ref="7p_this">p_this</a>, <a class="local col3 ref" href="#33psz_name" title='psz_name' data-ref="33psz_name">psz_name</a>, !<a class="local col5 ref" href="#15flag" title='flag' data-ref="15flag">flag</a> );</td></tr>
+<tr><th id="252">252</th><td>                        <b>break</b>;</td></tr>
+<tr><th id="253">253</th><td>                }</td></tr>
+<tr><th id="254">254</th><td>                <b>continue</b>;</td></tr>
+<tr><th id="255">255</th><td>            }</td></tr>
+<tr><th id="256">256</th><td>        }</td></tr>
+<tr><th id="257">257</th><td></td></tr>
+<tr><th id="258">258</th><td>        <i>/* A short option has been recognized */</i></td></tr>
+<tr><th id="259">259</th><td>        <b>if</b>( <a class="local col9 ref" href="#19pp_shortopts" title='pp_shortopts' data-ref="19pp_shortopts">pp_shortopts</a>[<a class="local col1 ref" href="#11i_cmd" title='i_cmd' data-ref="11i_cmd">i_cmd</a>] != <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span> )</td></tr>
+<tr><th id="260">260</th><td>        {</td></tr>
+<tr><th id="261">261</th><td>            <em>const</em> <em>char</em> *<dfn class="local col4 decl" id="34name" title='name' data-type='const char *' data-ref="34name">name</dfn> = <a class="local col9 ref" href="#19pp_shortopts" title='pp_shortopts' data-ref="19pp_shortopts">pp_shortopts</a>[<a class="local col1 ref" href="#11i_cmd" title='i_cmd' data-ref="11i_cmd">i_cmd</a>]-&gt;<a class="ref" href="../../include/vlc_configuration.h.html#module_config_t::psz_name" title='module_config_t::psz_name' data-ref="module_config_t::psz_name">psz_name</a>;</td></tr>
+<tr><th id="262">262</th><td>            <b>switch</b>( <a class="macro" href="configuration.h.html#44" title="((pp_shortopts[i_cmd]-&gt;i_type) &amp; ~0x1F)" data-ref="_M/CONFIG_CLASS">CONFIG_CLASS</a>(<a class="local col9 ref" href="#19pp_shortopts" title='pp_shortopts' data-ref="19pp_shortopts">pp_shortopts</a>[<a class="local col1 ref" href="#11i_cmd" title='i_cmd' data-ref="11i_cmd">i_cmd</a>]-&gt;<a class="ref" href="../../include/vlc_configuration.h.html#module_config_t::i_type" title='module_config_t::i_type' data-ref="module_config_t::i_type">i_type</a>) )</td></tr>
+<tr><th id="263">263</th><td>            {</td></tr>
+<tr><th id="264">264</th><td>                <b>case</b> <a class="macro" href="../../include/vlc_plugin.h.html#124" title="0x80" data-ref="_M/CONFIG_ITEM_STRING">CONFIG_ITEM_STRING</a>:</td></tr>
+<tr><th id="265">265</th><td>                    <a class="macro" href="../../include/vlc_variables.h.html#145" title="var_Create( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_this)), psz_object_type), (void)0 , (vlc_object_t *)(p_this)), name, 0x0040 )" data-ref="_M/var_Create">var_Create</a>( <a class="local col7 ref" href="#7p_this" title='p_this' data-ref="7p_this">p_this</a>, <a class="local col4 ref" href="#34name" title='name' data-ref="34name">name</a>, <a class="macro" href="../../include/vlc_variables.h.html#57" title="0x0040" data-ref="_M/VLC_VAR_STRING">VLC_VAR_STRING</a> );</td></tr>
+<tr><th id="266">266</th><td>                    <a class="macro" href="../../include/vlc_variables.h.html#294" title="var_SetString( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_this)), psz_object_type), (void)0 , (vlc_object_t *)(p_this)),name,state.arg)" data-ref="_M/var_SetString">var_SetString</a>( <a class="local col7 ref" href="#7p_this" title='p_this' data-ref="7p_this">p_this</a>, <a class="local col4 ref" href="#34name" title='name' data-ref="34name">name</a>, <a class="local col1 ref" href="#31state" title='state' data-ref="31state">state</a>.<a class="ref" href="vlc_getopt.h.html#vlc_getopt_s::arg" title='vlc_getopt_s::arg' data-ref="vlc_getopt_s::arg">arg</a> );</td></tr>
+<tr><th id="267">267</th><td>                    <b>break</b>;</td></tr>
+<tr><th id="268">268</th><td>                <b>case</b> <a class="macro" href="../../include/vlc_plugin.h.html#121" title="0x40" data-ref="_M/CONFIG_ITEM_INTEGER">CONFIG_ITEM_INTEGER</a>:</td></tr>
+<tr><th id="269">269</th><td>                    <a class="macro" href="../../include/vlc_variables.h.html#145" title="var_Create( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_this)), psz_object_type), (void)0 , (vlc_object_t *)(p_this)), name, 0x0030 )" data-ref="_M/var_Create">var_Create</a>( <a class="local col7 ref" href="#7p_this" title='p_this' data-ref="7p_this">p_this</a>, <a class="local col4 ref" href="#34name" title='name' data-ref="34name">name</a>, <a class="macro" href="../../include/vlc_variables.h.html#55" title="0x0030" data-ref="_M/VLC_VAR_INTEGER">VLC_VAR_INTEGER</a> );</td></tr>
+<tr><th id="270">270</th><td>                    <b>if</b>( <a class="local col1 ref" href="#11i_cmd" title='i_cmd' data-ref="11i_cmd">i_cmd</a> == <kbd>'v'</kbd> )</td></tr>
+<tr><th id="271">271</th><td>                    {</td></tr>
+<tr><th id="272">272</th><td>                        <a class="local col6 ref" href="#16i_verbose" title='i_verbose' data-ref="16i_verbose">i_verbose</a>++; <i>/* -v */</i></td></tr>
+<tr><th id="273">273</th><td>                        <a class="macro" href="../../include/vlc_variables.h.html#290" title="var_SetInteger( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_this)), psz_object_type), (void)0 , (vlc_object_t *)(p_this)),name,i_verbose)" data-ref="_M/var_SetInteger">var_SetInteger</a>( <a class="local col7 ref" href="#7p_this" title='p_this' data-ref="7p_this">p_this</a>, <a class="local col4 ref" href="#34name" title='name' data-ref="34name">name</a>, <a class="local col6 ref" href="#16i_verbose" title='i_verbose' data-ref="16i_verbose">i_verbose</a> );</td></tr>
+<tr><th id="274">274</th><td>                    }</td></tr>
+<tr><th id="275">275</th><td>                    <b>else</b></td></tr>
+<tr><th id="276">276</th><td>                    {</td></tr>
+<tr><th id="277">277</th><td>                        <a class="macro" href="../../include/vlc_variables.h.html#290" title="var_SetInteger( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_this)), psz_object_type), (void)0 , (vlc_object_t *)(p_this)),name,strtoll(state.arg, ((void*)0), 0))" data-ref="_M/var_SetInteger">var_SetInteger</a>( <a class="local col7 ref" href="#7p_this" title='p_this' data-ref="7p_this">p_this</a>, <a class="local col4 ref" href="#34name" title='name' data-ref="34name">name</a>,</td></tr>
+<tr><th id="278">278</th><td>                                        <a class="ref" href="../../../include/stdlib.h.html#strtoll" title='strtoll' data-ref="strtoll">strtoll</a>(<a class="local col1 ref" href="#31state" title='state' data-ref="31state">state</a>.<a class="ref" href="vlc_getopt.h.html#vlc_getopt_s::arg" title='vlc_getopt_s::arg' data-ref="vlc_getopt_s::arg">arg</a>, <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>, <var>0</var>) );</td></tr>
+<tr><th id="279">279</th><td>                    }</td></tr>
+<tr><th id="280">280</th><td>                    <b>break</b>;</td></tr>
+<tr><th id="281">281</th><td>                <b>case</b> <a class="macro" href="../../include/vlc_plugin.h.html#123" title="0x60" data-ref="_M/CONFIG_ITEM_BOOL">CONFIG_ITEM_BOOL</a>:</td></tr>
+<tr><th id="282">282</th><td>                    <a class="macro" href="../../include/vlc_variables.h.html#145" title="var_Create( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_this)), psz_object_type), (void)0 , (vlc_object_t *)(p_this)), name, 0x0020 )" data-ref="_M/var_Create">var_Create</a>( <a class="local col7 ref" href="#7p_this" title='p_this' data-ref="7p_this">p_this</a>, <a class="local col4 ref" href="#34name" title='name' data-ref="34name">name</a>, <a class="macro" href="../../include/vlc_variables.h.html#54" title="0x0020" data-ref="_M/VLC_VAR_BOOL">VLC_VAR_BOOL</a> );</td></tr>
+<tr><th id="283">283</th><td>                    <a class="macro" href="../../include/vlc_variables.h.html#291" title="var_SetBool( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_this)), psz_object_type), (void)0 , (vlc_object_t *)(p_this)),name,1)" data-ref="_M/var_SetBool">var_SetBool</a>( <a class="local col7 ref" href="#7p_this" title='p_this' data-ref="7p_this">p_this</a>, <a class="local col4 ref" href="#34name" title='name' data-ref="34name">name</a>, <span class="macro" title="1" data-ref="_M/true">true</span> );</td></tr>
+<tr><th id="284">284</th><td>                    <b>break</b>;</td></tr>
+<tr><th id="285">285</th><td>            }</td></tr>
+<tr><th id="286">286</th><td></td></tr>
+<tr><th id="287">287</th><td>            <b>continue</b>;</td></tr>
+<tr><th id="288">288</th><td>        }</td></tr>
+<tr><th id="289">289</th><td></td></tr>
+<tr><th id="290">290</th><td>        <i>/* Internal error: unknown option */</i></td></tr>
+<tr><th id="291">291</th><td>        <b>if</b>( !<a class="macro" href="#64" title="(pindex == ((void*)0))" data-ref="_M/b_ignore_errors">b_ignore_errors</a> )</td></tr>
+<tr><th id="292">292</th><td>        {</td></tr>
+<tr><th id="293">293</th><td>            <a class="ref" href="../../../include/stdio.h.html#fputs" title='fputs' data-ref="fputs">fputs</a>( <q>"vlc: unknown option"</q></td></tr>
+<tr><th id="294">294</th><td>                     <q>" or missing mandatory argument "</q>, <a class="macro" href="../../../include/stdio.h.html#174" title="stderr" data-ref="_M/stderr">stderr</a> );</td></tr>
+<tr><th id="295">295</th><td>            <b>if</b>( <a class="local col1 ref" href="#31state" title='state' data-ref="31state">state</a>.<a class="ref" href="vlc_getopt.h.html#vlc_getopt_s::opt" title='vlc_getopt_s::opt' data-ref="vlc_getopt_s::opt">opt</a> )</td></tr>
+<tr><th id="296">296</th><td>            {</td></tr>
+<tr><th id="297">297</th><td>                <a class="macro" href="../../../include/x86_64-linux-gnu/bits/stdio2.h.html#109" title="__fprintf_chk (stderr, 2 - 1, &quot;`-%c&apos;\n&quot;, state.opt)" data-ref="_M/fprintf">fprintf</a>( <a class="macro" href="../../../include/stdio.h.html#174" title="stderr" data-ref="_M/stderr">stderr</a>, <q>"`-%c'\n"</q>, <a class="local col1 ref" href="#31state" title='state' data-ref="31state">state</a>.<a class="ref" href="vlc_getopt.h.html#vlc_getopt_s::opt" title='vlc_getopt_s::opt' data-ref="vlc_getopt_s::opt">opt</a> );</td></tr>
+<tr><th id="298">298</th><td>            }</td></tr>
+<tr><th id="299">299</th><td>            <b>else</b></td></tr>
+<tr><th id="300">300</th><td>            {</td></tr>
+<tr><th id="301">301</th><td>                <a class="macro" href="../../../include/x86_64-linux-gnu/bits/stdio2.h.html#109" title="__fprintf_chk (stderr, 2 - 1, &quot;`%s&apos;\n&quot;, ppsz_argv[state.ind-1])" data-ref="_M/fprintf">fprintf</a>( <a class="macro" href="../../../include/stdio.h.html#174" title="stderr" data-ref="_M/stderr">stderr</a>, <q>"`%s'\n"</q>, <a class="local col9 ref" href="#9ppsz_argv" title='ppsz_argv' data-ref="9ppsz_argv">ppsz_argv</a>[<a class="local col1 ref" href="#31state" title='state' data-ref="31state">state</a>.<a class="ref" href="vlc_getopt.h.html#vlc_getopt_s::ind" title='vlc_getopt_s::ind' data-ref="vlc_getopt_s::ind">ind</a>-<var>1</var>] );</td></tr>
+<tr><th id="302">302</th><td>            }</td></tr>
+<tr><th id="303">303</th><td>            <a class="ref" href="../../../include/stdio.h.html#fputs" title='fputs' data-ref="fputs">fputs</a>( <q>"Try `vlc --help' for more information.\n"</q>, <a class="macro" href="../../../include/stdio.h.html#174" title="stderr" data-ref="_M/stderr">stderr</a> );</td></tr>
+<tr><th id="304">304</th><td>            <b>goto</b> <a class="lbl" href="#35out" data-ref="35out">out</a>;</td></tr>
+<tr><th id="305">305</th><td>        }</td></tr>
+<tr><th id="306">306</th><td>    }</td></tr>
+<tr><th id="307">307</th><td></td></tr>
+<tr><th id="308">308</th><td>    <a class="local col0 ref" href="#30ret" title='ret' data-ref="30ret">ret</a> = <var>0</var>;</td></tr>
+<tr><th id="309">309</th><td>    <b>if</b>( <a class="local col0 ref" href="#10pindex" title='pindex' data-ref="10pindex">pindex</a> != <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span> )</td></tr>
+<tr><th id="310">310</th><td>        *<a class="local col0 ref" href="#10pindex" title='pindex' data-ref="10pindex">pindex</a> = <a class="local col1 ref" href="#31state" title='state' data-ref="31state">state</a>.<a class="ref" href="vlc_getopt.h.html#vlc_getopt_s::ind" title='vlc_getopt_s::ind' data-ref="vlc_getopt_s::ind">ind</a>;</td></tr>
+<tr><th id="311">311</th><td><dfn class="lbl" id="35out" data-ref="35out">out</dfn>:</td></tr>
+<tr><th id="312">312</th><td>    <i>/* Free allocated resources */</i></td></tr>
+<tr><th id="313">313</th><td>    <b>for</b>( <a class="local col2 ref" href="#12i_index" title='i_index' data-ref="12i_index">i_index</a> = <var>0</var>; <a class="local col7 ref" href="#17p_longopts" title='p_longopts' data-ref="17p_longopts">p_longopts</a>[<a class="local col2 ref" href="#12i_index" title='i_index' data-ref="12i_index">i_index</a>].<a class="ref" href="vlc_getopt.h.html#vlc_option::name" title='vlc_option::name' data-ref="vlc_option::name">name</a>; <a class="local col2 ref" href="#12i_index" title='i_index' data-ref="12i_index">i_index</a>++ )</td></tr>
+<tr><th id="314">314</th><td>        <a class="ref" href="../../../include/stdlib.h.html#free" title='free' data-ref="free">free</a>( (<em>char</em> *)<a class="local col7 ref" href="#17p_longopts" title='p_longopts' data-ref="17p_longopts">p_longopts</a>[<a class="local col2 ref" href="#12i_index" title='i_index' data-ref="12i_index">i_index</a>].<a class="ref" href="vlc_getopt.h.html#vlc_option::name" title='vlc_option::name' data-ref="vlc_option::name">name</a> );</td></tr>
+<tr><th id="315">315</th><td>    <a class="ref" href="../../../include/stdlib.h.html#free" title='free' data-ref="free">free</a>( <a class="local col7 ref" href="#17p_longopts" title='p_longopts' data-ref="17p_longopts">p_longopts</a> );</td></tr>
+<tr><th id="316">316</th><td>    <a class="ref" href="../../../include/stdlib.h.html#free" title='free' data-ref="free">free</a>( <a class="local col0 ref" href="#20psz_shortopts" title='psz_shortopts' data-ref="20psz_shortopts">psz_shortopts</a> );</td></tr>
+<tr><th id="317">317</th><td>    <a class="ref" href="../../../include/stdlib.h.html#free" title='free' data-ref="free">free</a>( <a class="local col8 ref" href="#18argv_copy" title='argv_copy' data-ref="18argv_copy">argv_copy</a> );</td></tr>
+<tr><th id="318">318</th><td>    <b>return</b> <a class="local col0 ref" href="#30ret" title='ret' data-ref="30ret">ret</a>;</td></tr>
+<tr><th id="319">319</th><td>}</td></tr>
+<tr><th id="320">320</th><td></td></tr>
+<tr><th id="321">321</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project vlc revision <em>2.2.0-git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

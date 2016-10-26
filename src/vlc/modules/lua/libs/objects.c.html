@@ -1,0 +1,178 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>objects.c source code [vlc/modules/lua/libs/objects.c] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'vlc/modules/lua/libs/objects.c'; var root_path = '../../../..'; var data_path = '../../../../../data';</script>
+<script src='../../../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='../../..'>vlc</a>/<a href='../..'>modules</a>/<a href='..'>lua</a>/<a href='./'>libs</a>/<a href='objects.c.html'>objects.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*****************************************************************************</i></td></tr>
+<tr><th id="2">2</th><td><i> * objects.c: Generic lua&lt;-&gt;vlc object wrapper</i></td></tr>
+<tr><th id="3">3</th><td><i> *****************************************************************************</i></td></tr>
+<tr><th id="4">4</th><td><i> * Copyright (C) 2007-2008 the VideoLAN team</i></td></tr>
+<tr><th id="5">5</th><td><i> * $Id: 6517816d2a2b77eb0ed3fb591a1e117e740dad45 $</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * Authors: Antoine Cellerier &lt;dionoea at videolan tod org&gt;</i></td></tr>
+<tr><th id="8">8</th><td><i> *</i></td></tr>
+<tr><th id="9">9</th><td><i> * This program is free software; you can redistribute it and/or modify</i></td></tr>
+<tr><th id="10">10</th><td><i> * it under the terms of the GNU General Public License as published by</i></td></tr>
+<tr><th id="11">11</th><td><i> * the Free Software Foundation; either version 2 of the License, or</i></td></tr>
+<tr><th id="12">12</th><td><i> * (at your option) any later version.</i></td></tr>
+<tr><th id="13">13</th><td><i> *</i></td></tr>
+<tr><th id="14">14</th><td><i> * This program is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="15">15</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="16">16</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the</i></td></tr>
+<tr><th id="17">17</th><td><i> * GNU General Public License for more details.</i></td></tr>
+<tr><th id="18">18</th><td><i> *</i></td></tr>
+<tr><th id="19">19</th><td><i> * You should have received a copy of the GNU General Public License</i></td></tr>
+<tr><th id="20">20</th><td><i> * along with this program; if not, write to the Free Software</i></td></tr>
+<tr><th id="21">21</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.</i></td></tr>
+<tr><th id="22">22</th><td><i> *****************************************************************************/</i></td></tr>
+<tr><th id="23">23</th><td></td></tr>
+<tr><th id="24">24</th><td><i>/*****************************************************************************</i></td></tr>
+<tr><th id="25">25</th><td><i> * Preamble</i></td></tr>
+<tr><th id="26">26</th><td><i> *****************************************************************************/</i></td></tr>
+<tr><th id="27">27</th><td><u>#<span data-ppcond="27">ifndef</span>  <span class="macro" data-ref="_M/_GNU_SOURCE">_GNU_SOURCE</span></u></td></tr>
+<tr><th id="28">28</th><td><u>#   define  <dfn class="macro" id="_M/_GNU_SOURCE" data-ref="_M/_GNU_SOURCE">_GNU_SOURCE</dfn></u></td></tr>
+<tr><th id="29">29</th><td><u>#<span data-ppcond="27">endif</span></u></td></tr>
+<tr><th id="30">30</th><td></td></tr>
+<tr><th id="31">31</th><td><u>#<span data-ppcond="31">ifdef</span> <span class="macro" data-ref="_M/HAVE_CONFIG_H">HAVE_CONFIG_H</span></u></td></tr>
+<tr><th id="32">32</th><td><u># include <a href="../../../config.h.html">"config.h"</a></u></td></tr>
+<tr><th id="33">33</th><td><u>#<span data-ppcond="31">endif</span></u></td></tr>
+<tr><th id="34">34</th><td></td></tr>
+<tr><th id="35">35</th><td><u>#include <a href="../../../include/vlc_common.h.html">&lt;vlc_common.h&gt;</a></u></td></tr>
+<tr><th id="36">36</th><td><u>#include <a href="../../../include/vlc_vout.h.html">&lt;vlc_vout.h&gt;</a></u></td></tr>
+<tr><th id="37">37</th><td></td></tr>
+<tr><th id="38">38</th><td><u>#include <a href="../vlc.h.html">"../vlc.h"</a></u></td></tr>
+<tr><th id="39">39</th><td><u>#include <a href="../libs.h.html">"../libs.h"</a></u></td></tr>
+<tr><th id="40">40</th><td><u>#include <a href="objects.h.html">"objects.h"</a></u></td></tr>
+<tr><th id="41">41</th><td><u>#include <a href="input.h.html">"input.h"</a></u></td></tr>
+<tr><th id="42">42</th><td></td></tr>
+<tr><th id="43">43</th><td><i  data-doc="vlclua_object_release">/*****************************************************************************</i></td></tr>
+<tr><th id="44">44</th><td><i  data-doc="vlclua_object_release"> * Generic vlc_object_t wrapper creation</i></td></tr>
+<tr><th id="45">45</th><td><i  data-doc="vlclua_object_release"> *****************************************************************************/</i></td></tr>
+<tr><th id="46">46</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="vlclua_object_release" title='vlclua_object_release' data-type='int vlclua_object_release(lua_State * L)' data-ref="vlclua_object_release">vlclua_object_release</dfn>( <a class="typedef" href="../../../../include/lua5.2/lua.h.html#lua_State" title='lua_State' data-type='struct lua_State' data-ref="lua_State">lua_State</a> *<dfn class="local col3 decl" id="3L" title='L' data-type='lua_State *' data-ref="3L">L</dfn> )</td></tr>
+<tr><th id="47">47</th><td>{</td></tr>
+<tr><th id="48">48</th><td>    <a class="typedef" href="../../../include/vlc_common.h.html#vlc_object_t" title='vlc_object_t' data-type='struct vlc_object_t' data-ref="vlc_object_t">vlc_object_t</a> **<dfn class="local col4 decl" id="4p_obj" title='p_obj' data-type='vlc_object_t **' data-ref="4p_obj">p_obj</dfn> = (<a class="typedef" href="../../../include/vlc_common.h.html#vlc_object_t" title='vlc_object_t' data-type='struct vlc_object_t' data-ref="vlc_object_t">vlc_object_t</a> **)<a class="ref" href="../../../../include/lua5.2/lauxlib.h.html#luaL_checkudata" title='luaL_checkudata' data-ref="luaL_checkudata">luaL_checkudata</a>( <a class="local col3 ref" href="#3L" title='L' data-ref="3L">L</a>, <var>1</var>, <q>"vlc_object"</q> );</td></tr>
+<tr><th id="49">49</th><td>    <a class="macro" href="../../../../include/lua5.2/lua.h.html#323" title="lua_settop(L, -(1)-1)" data-ref="_M/lua_pop">lua_pop</a>( <a class="local col3 ref" href="#3L" title='L' data-ref="3L">L</a>, <var>1</var> );</td></tr>
+<tr><th id="50">50</th><td>    <a class="macro" href="../../../include/vlc_objects.h.html#69" title="vlc_object_release( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(*p_obj)), psz_object_type), (void)0 , (vlc_object_t *)(*p_obj)) )" data-ref="_M/vlc_object_release">vlc_object_release</a>( *<a class="local col4 ref" href="#4p_obj" title='p_obj' data-ref="4p_obj">p_obj</a> );</td></tr>
+<tr><th id="51">51</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="52">52</th><td>}</td></tr>
+<tr><th id="53">53</th><td></td></tr>
+<tr><th id="54">54</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="vlclua_object_find" title='vlclua_object_find' data-type='int vlclua_object_find(lua_State * L)' data-ref="vlclua_object_find">vlclua_object_find</dfn>( <a class="typedef" href="../../../../include/lua5.2/lua.h.html#lua_State" title='lua_State' data-type='struct lua_State' data-ref="lua_State">lua_State</a> *<dfn class="local col5 decl" id="5L" title='L' data-type='lua_State *' data-ref="5L">L</dfn> )</td></tr>
+<tr><th id="55">55</th><td>{</td></tr>
+<tr><th id="56">56</th><td>    <a class="ref" href="../../../../include/lua5.2/lua.h.html#lua_pushnil" title='lua_pushnil' data-ref="lua_pushnil">lua_pushnil</a>( <a class="local col5 ref" href="#5L" title='L' data-ref="5L">L</a> );</td></tr>
+<tr><th id="57">57</th><td>    <b>return</b> <var>1</var>;</td></tr>
+<tr><th id="58">58</th><td>}</td></tr>
+<tr><th id="59">59</th><td></td></tr>
+<tr><th id="60">60</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="vlclua_get_libvlc" title='vlclua_get_libvlc' data-type='int vlclua_get_libvlc(lua_State * L)' data-ref="vlclua_get_libvlc">vlclua_get_libvlc</dfn>( <a class="typedef" href="../../../../include/lua5.2/lua.h.html#lua_State" title='lua_State' data-type='struct lua_State' data-ref="lua_State">lua_State</a> *<dfn class="local col6 decl" id="6L" title='L' data-type='lua_State *' data-ref="6L">L</dfn> )</td></tr>
+<tr><th id="61">61</th><td>{</td></tr>
+<tr><th id="62">62</th><td>    <a class="typedef" href="../../../include/vlc_common.h.html#libvlc_int_t" title='libvlc_int_t' data-type='struct libvlc_int_t' data-ref="libvlc_int_t">libvlc_int_t</a> *<dfn class="local col7 decl" id="7p_libvlc" title='p_libvlc' data-type='libvlc_int_t *' data-ref="7p_libvlc">p_libvlc</dfn> = <a class="ref" href="../vlc.h.html#vlclua_get_this" title='vlclua_get_this' data-ref="vlclua_get_this">vlclua_get_this</a>( <a class="local col6 ref" href="#6L" title='L' data-ref="6L">L</a> )-&gt;<a class="ref" href="../../../include/vlc_objects.h.html#44" title='vlc_object_t::p_libvlc' data-ref="vlc_object_t::p_libvlc">p_libvlc</a>;</td></tr>
+<tr><th id="63">63</th><td>    <a class="macro" href="../../../include/vlc_objects.h.html#66" title="vlc_object_hold( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)) )" data-ref="_M/vlc_object_hold">vlc_object_hold</a>( <a class="local col7 ref" href="#7p_libvlc" title='p_libvlc' data-ref="7p_libvlc">p_libvlc</a> );</td></tr>
+<tr><th id="64">64</th><td>    <a class="macro" href="objects.h.html#29" title="vlclua_push_vlc_object( L, __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(p_libvlc)) )" data-ref="_M/vlclua_push_vlc_object">vlclua_push_vlc_object</a>( <a class="local col6 ref" href="#6L" title='L' data-ref="6L">L</a>, <a class="local col7 ref" href="#7p_libvlc" title='p_libvlc' data-ref="7p_libvlc">p_libvlc</a> );</td></tr>
+<tr><th id="65">65</th><td>    <b>return</b> <var>1</var>;</td></tr>
+<tr><th id="66">66</th><td>}</td></tr>
+<tr><th id="67">67</th><td></td></tr>
+<tr><th id="68">68</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="vlclua_get_playlist" title='vlclua_get_playlist' data-type='int vlclua_get_playlist(lua_State * L)' data-ref="vlclua_get_playlist">vlclua_get_playlist</dfn>( <a class="typedef" href="../../../../include/lua5.2/lua.h.html#lua_State" title='lua_State' data-type='struct lua_State' data-ref="lua_State">lua_State</a> *<dfn class="local col8 decl" id="8L" title='L' data-type='lua_State *' data-ref="8L">L</dfn> )</td></tr>
+<tr><th id="69">69</th><td>{</td></tr>
+<tr><th id="70">70</th><td>    <a class="typedef" href="../../../include/vlc_common.h.html#playlist_t" title='playlist_t' data-type='struct playlist_t' data-ref="playlist_t">playlist_t</a> *<dfn class="local col9 decl" id="9p_playlist" title='p_playlist' data-type='playlist_t *' data-ref="9p_playlist">p_playlist</dfn> = <a class="ref" href="../vlc.h.html#vlclua_get_playlist_internal" title='vlclua_get_playlist_internal' data-ref="vlclua_get_playlist_internal">vlclua_get_playlist_internal</a>( <a class="local col8 ref" href="#8L" title='L' data-ref="8L">L</a> );</td></tr>
+<tr><th id="71">71</th><td>    <b>if</b>( <a class="local col9 ref" href="#9p_playlist" title='p_playlist' data-ref="9p_playlist">p_playlist</a> )</td></tr>
+<tr><th id="72">72</th><td>    {</td></tr>
+<tr><th id="73">73</th><td>        <a class="macro" href="../../../include/vlc_objects.h.html#66" title="vlc_object_hold( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_playlist)), psz_object_type), (void)0 , (vlc_object_t *)(p_playlist)) )" data-ref="_M/vlc_object_hold">vlc_object_hold</a>( <a class="local col9 ref" href="#9p_playlist" title='p_playlist' data-ref="9p_playlist">p_playlist</a> );</td></tr>
+<tr><th id="74">74</th><td>        <a class="macro" href="objects.h.html#29" title="vlclua_push_vlc_object( L, __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_playlist)), psz_object_type), (void)0 , (vlc_object_t *)(p_playlist)) )" data-ref="_M/vlclua_push_vlc_object">vlclua_push_vlc_object</a>( <a class="local col8 ref" href="#8L" title='L' data-ref="8L">L</a>, <a class="local col9 ref" href="#9p_playlist" title='p_playlist' data-ref="9p_playlist">p_playlist</a> );</td></tr>
+<tr><th id="75">75</th><td>    }</td></tr>
+<tr><th id="76">76</th><td>    <b>else</b> <a class="ref" href="../../../../include/lua5.2/lua.h.html#lua_pushnil" title='lua_pushnil' data-ref="lua_pushnil">lua_pushnil</a>( <a class="local col8 ref" href="#8L" title='L' data-ref="8L">L</a> );</td></tr>
+<tr><th id="77">77</th><td>    <b>return</b> <var>1</var>;</td></tr>
+<tr><th id="78">78</th><td>}</td></tr>
+<tr><th id="79">79</th><td></td></tr>
+<tr><th id="80">80</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="vlclua_get_input" title='vlclua_get_input' data-type='int vlclua_get_input(lua_State * L)' data-ref="vlclua_get_input">vlclua_get_input</dfn>( <a class="typedef" href="../../../../include/lua5.2/lua.h.html#lua_State" title='lua_State' data-type='struct lua_State' data-ref="lua_State">lua_State</a> *<dfn class="local col0 decl" id="10L" title='L' data-type='lua_State *' data-ref="10L">L</dfn> )</td></tr>
+<tr><th id="81">81</th><td>{</td></tr>
+<tr><th id="82">82</th><td>    <a class="typedef" href="../../../include/vlc_common.h.html#input_thread_t" title='input_thread_t' data-type='struct input_thread_t' data-ref="input_thread_t">input_thread_t</a> *<dfn class="local col1 decl" id="11p_input" title='p_input' data-type='input_thread_t *' data-ref="11p_input">p_input</dfn> = <a class="ref" href="input.h.html#vlclua_get_input_internal" title='vlclua_get_input_internal' data-ref="vlclua_get_input_internal">vlclua_get_input_internal</a>( <a class="local col0 ref" href="#10L" title='L' data-ref="10L">L</a> );</td></tr>
+<tr><th id="83">83</th><td>    <b>if</b>( <a class="local col1 ref" href="#11p_input" title='p_input' data-ref="11p_input">p_input</a> )</td></tr>
+<tr><th id="84">84</th><td>    {</td></tr>
+<tr><th id="85">85</th><td>        <i>/* NOTE: p_input is already held by vlclua_get_input_internal() */</i></td></tr>
+<tr><th id="86">86</th><td>        <a class="macro" href="objects.h.html#29" title="vlclua_push_vlc_object( L, __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_input)), psz_object_type), (void)0 , (vlc_object_t *)(p_input)) )" data-ref="_M/vlclua_push_vlc_object">vlclua_push_vlc_object</a>( <a class="local col0 ref" href="#10L" title='L' data-ref="10L">L</a>, <a class="local col1 ref" href="#11p_input" title='p_input' data-ref="11p_input">p_input</a> );</td></tr>
+<tr><th id="87">87</th><td>    }</td></tr>
+<tr><th id="88">88</th><td>    <b>else</b> <a class="ref" href="../../../../include/lua5.2/lua.h.html#lua_pushnil" title='lua_pushnil' data-ref="lua_pushnil">lua_pushnil</a>( <a class="local col0 ref" href="#10L" title='L' data-ref="10L">L</a> );</td></tr>
+<tr><th id="89">89</th><td>    <b>return</b> <var>1</var>;</td></tr>
+<tr><th id="90">90</th><td>}</td></tr>
+<tr><th id="91">91</th><td></td></tr>
+<tr><th id="92">92</th><td><u>#undef <a class="macro" href="objects.h.html#29" data-ref="_M/vlclua_push_vlc_object">vlclua_push_vlc_object</a></u></td></tr>
+<tr><th id="93">93</th><td><em>int</em> <dfn class="decl def" id="vlclua_push_vlc_object" title='vlclua_push_vlc_object' data-ref="vlclua_push_vlc_object">vlclua_push_vlc_object</dfn>( <a class="typedef" href="../../../../include/lua5.2/lua.h.html#lua_State" title='lua_State' data-type='struct lua_State' data-ref="lua_State">lua_State</a> *<dfn class="local col2 decl" id="12L" title='L' data-type='lua_State *' data-ref="12L">L</dfn>, <a class="typedef" href="../../../include/vlc_common.h.html#vlc_object_t" title='vlc_object_t' data-type='struct vlc_object_t' data-ref="vlc_object_t">vlc_object_t</a> *<dfn class="local col3 decl" id="13p_obj" title='p_obj' data-type='vlc_object_t *' data-ref="13p_obj">p_obj</dfn> )</td></tr>
+<tr><th id="94">94</th><td>{</td></tr>
+<tr><th id="95">95</th><td>    <a class="typedef" href="../../../include/vlc_common.h.html#vlc_object_t" title='vlc_object_t' data-type='struct vlc_object_t' data-ref="vlc_object_t">vlc_object_t</a> **<dfn class="local col4 decl" id="14udata" title='udata' data-type='vlc_object_t **' data-ref="14udata">udata</dfn> = (<a class="typedef" href="../../../include/vlc_common.h.html#vlc_object_t" title='vlc_object_t' data-type='struct vlc_object_t' data-ref="vlc_object_t">vlc_object_t</a> **)</td></tr>
+<tr><th id="96">96</th><td>        <a class="ref" href="../../../../include/lua5.2/lua.h.html#lua_newuserdata" title='lua_newuserdata' data-ref="lua_newuserdata">lua_newuserdata</a>( <a class="local col2 ref" href="#12L" title='L' data-ref="12L">L</a>, <b>sizeof</b>( <a class="typedef" href="../../../include/vlc_common.h.html#vlc_object_t" title='vlc_object_t' data-type='struct vlc_object_t' data-ref="vlc_object_t">vlc_object_t</a> * ) );</td></tr>
+<tr><th id="97">97</th><td>    *<a class="local col4 ref" href="#14udata" title='udata' data-ref="14udata">udata</a> = <a class="local col3 ref" href="#13p_obj" title='p_obj' data-ref="13p_obj">p_obj</a>;</td></tr>
+<tr><th id="98">98</th><td></td></tr>
+<tr><th id="99">99</th><td>    <b>if</b>( <a class="ref" href="../../../../include/lua5.2/lauxlib.h.html#luaL_newmetatable" title='luaL_newmetatable' data-ref="luaL_newmetatable">luaL_newmetatable</a>( <a class="local col2 ref" href="#12L" title='L' data-ref="12L">L</a>, <q>"vlc_object"</q> ) )</td></tr>
+<tr><th id="100">100</th><td>    {</td></tr>
+<tr><th id="101">101</th><td>        <i>/* Hide the metatable */</i></td></tr>
+<tr><th id="102">102</th><td>        <a class="macro" href="../../../../include/lua5.2/lua.h.html#340" title="lua_pushlstring(L, &quot;&quot; &quot;none of your business&quot;, (sizeof(&quot;none of your business&quot;)/sizeof(char))-1)" data-ref="_M/lua_pushliteral">lua_pushliteral</a>( <a class="local col2 ref" href="#12L" title='L' data-ref="12L">L</a>, <q>"none of your business"</q> );</td></tr>
+<tr><th id="103">103</th><td>        <a class="ref" href="../../../../include/lua5.2/lua.h.html#lua_setfield" title='lua_setfield' data-ref="lua_setfield">lua_setfield</a>( <a class="local col2 ref" href="#12L" title='L' data-ref="12L">L</a>, -<var>2</var>, <q>"__metatable"</q> );</td></tr>
+<tr><th id="104">104</th><td>        <i>/* Set the garbage collector if needed */</i></td></tr>
+<tr><th id="105">105</th><td>        <a class="macro" href="../../../../include/lua5.2/lua.h.html#329" title="lua_pushcclosure(L, (vlclua_object_release), 0)" data-ref="_M/lua_pushcfunction">lua_pushcfunction</a>( <a class="local col2 ref" href="#12L" title='L' data-ref="12L">L</a>, <a class="tu ref" href="#vlclua_object_release" title='vlclua_object_release' data-use='r' data-ref="vlclua_object_release">vlclua_object_release</a> );</td></tr>
+<tr><th id="106">106</th><td>        <a class="ref" href="../../../../include/lua5.2/lua.h.html#lua_setfield" title='lua_setfield' data-ref="lua_setfield">lua_setfield</a>( <a class="local col2 ref" href="#12L" title='L' data-ref="12L">L</a>, -<var>2</var>, <q>"__gc"</q> );</td></tr>
+<tr><th id="107">107</th><td>    }</td></tr>
+<tr><th id="108">108</th><td>    <a class="ref" href="../../../../include/lua5.2/lua.h.html#lua_setmetatable" title='lua_setmetatable' data-ref="lua_setmetatable">lua_setmetatable</a>( <a class="local col2 ref" href="#12L" title='L' data-ref="12L">L</a>, -<var>2</var> );</td></tr>
+<tr><th id="109">109</th><td>    <b>return</b> <var>1</var>;</td></tr>
+<tr><th id="110">110</th><td>}</td></tr>
+<tr><th id="111">111</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="vlclua_get_vout" title='vlclua_get_vout' data-type='int vlclua_get_vout(lua_State * L)' data-ref="vlclua_get_vout">vlclua_get_vout</dfn>( <a class="typedef" href="../../../../include/lua5.2/lua.h.html#lua_State" title='lua_State' data-type='struct lua_State' data-ref="lua_State">lua_State</a> *<dfn class="local col5 decl" id="15L" title='L' data-type='lua_State *' data-ref="15L">L</dfn> )</td></tr>
+<tr><th id="112">112</th><td>{</td></tr>
+<tr><th id="113">113</th><td>    <a class="typedef" href="../../../include/vlc_common.h.html#input_thread_t" title='input_thread_t' data-type='struct input_thread_t' data-ref="input_thread_t">input_thread_t</a> *<dfn class="local col6 decl" id="16p_input" title='p_input' data-type='input_thread_t *' data-ref="16p_input">p_input</dfn> = <a class="ref" href="input.h.html#vlclua_get_input_internal" title='vlclua_get_input_internal' data-ref="vlclua_get_input_internal">vlclua_get_input_internal</a>( <a class="local col5 ref" href="#15L" title='L' data-ref="15L">L</a> );</td></tr>
+<tr><th id="114">114</th><td>    <b>if</b>( <a class="local col6 ref" href="#16p_input" title='p_input' data-ref="16p_input">p_input</a> )</td></tr>
+<tr><th id="115">115</th><td>    {</td></tr>
+<tr><th id="116">116</th><td>        <a class="typedef" href="../../../include/vlc_common.h.html#vout_thread_t" title='vout_thread_t' data-type='struct vout_thread_t' data-ref="vout_thread_t">vout_thread_t</a> *<dfn class="local col7 decl" id="17p_vout" title='p_vout' data-type='vout_thread_t *' data-ref="17p_vout">p_vout</dfn> = <a class="ref" href="../../../include/vlc_input.h.html#input_GetVout" title='input_GetVout' data-ref="input_GetVout">input_GetVout</a>( <a class="local col6 ref" href="#16p_input" title='p_input' data-ref="16p_input">p_input</a> );</td></tr>
+<tr><th id="117">117</th><td>        <a class="macro" href="../../../include/vlc_objects.h.html#69" title="vlc_object_release( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_input)), psz_object_type), (void)0 , (vlc_object_t *)(p_input)) )" data-ref="_M/vlc_object_release">vlc_object_release</a>( <a class="local col6 ref" href="#16p_input" title='p_input' data-ref="16p_input">p_input</a> );</td></tr>
+<tr><th id="118">118</th><td>        <b>if</b>(<a class="local col7 ref" href="#17p_vout" title='p_vout' data-ref="17p_vout">p_vout</a>)</td></tr>
+<tr><th id="119">119</th><td>        {</td></tr>
+<tr><th id="120">120</th><td>            <a class="ref" href="#vlclua_push_vlc_object" title='vlclua_push_vlc_object' data-ref="vlclua_push_vlc_object">vlclua_push_vlc_object</a>( <a class="local col5 ref" href="#15L" title='L' data-ref="15L">L</a>, (<a class="typedef" href="../../../include/vlc_common.h.html#vlc_object_t" title='vlc_object_t' data-type='struct vlc_object_t' data-ref="vlc_object_t">vlc_object_t</a> *) <a class="local col7 ref" href="#17p_vout" title='p_vout' data-ref="17p_vout">p_vout</a> );</td></tr>
+<tr><th id="121">121</th><td>            <b>return</b> <var>1</var>;</td></tr>
+<tr><th id="122">122</th><td>        }</td></tr>
+<tr><th id="123">123</th><td>    }</td></tr>
+<tr><th id="124">124</th><td>    <a class="ref" href="../../../../include/lua5.2/lua.h.html#lua_pushnil" title='lua_pushnil' data-ref="lua_pushnil">lua_pushnil</a>( <a class="local col5 ref" href="#15L" title='L' data-ref="15L">L</a> );</td></tr>
+<tr><th id="125">125</th><td>    <b>return</b> <var>1</var>;</td></tr>
+<tr><th id="126">126</th><td>}</td></tr>
+<tr><th id="127">127</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="vlclua_get_aout" title='vlclua_get_aout' data-type='int vlclua_get_aout(lua_State * L)' data-ref="vlclua_get_aout">vlclua_get_aout</dfn>( <a class="typedef" href="../../../../include/lua5.2/lua.h.html#lua_State" title='lua_State' data-type='struct lua_State' data-ref="lua_State">lua_State</a> *<dfn class="local col8 decl" id="18L" title='L' data-type='lua_State *' data-ref="18L">L</dfn> )</td></tr>
+<tr><th id="128">128</th><td>{</td></tr>
+<tr><th id="129">129</th><td>    <a class="typedef" href="../../../include/vlc_common.h.html#playlist_t" title='playlist_t' data-type='struct playlist_t' data-ref="playlist_t">playlist_t</a> *<dfn class="local col9 decl" id="19p_playlist" title='p_playlist' data-type='playlist_t *' data-ref="19p_playlist">p_playlist</dfn> = <a class="ref" href="../vlc.h.html#vlclua_get_playlist_internal" title='vlclua_get_playlist_internal' data-ref="vlclua_get_playlist_internal">vlclua_get_playlist_internal</a>( <a class="local col8 ref" href="#18L" title='L' data-ref="18L">L</a> );</td></tr>
+<tr><th id="130">130</th><td>    <b>if</b>( <a class="local col9 ref" href="#19p_playlist" title='p_playlist' data-ref="19p_playlist">p_playlist</a> != <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span> )</td></tr>
+<tr><th id="131">131</th><td>    {</td></tr>
+<tr><th id="132">132</th><td>        <a class="typedef" href="../../../include/vlc_common.h.html#audio_output_t" title='audio_output_t' data-type='struct audio_output' data-ref="audio_output_t">audio_output_t</a> *<dfn class="local col0 decl" id="20p_aout" title='p_aout' data-type='audio_output_t *' data-ref="20p_aout">p_aout</dfn> = <a class="ref" href="../../../include/vlc_playlist.h.html#playlist_GetAout" title='playlist_GetAout' data-ref="playlist_GetAout">playlist_GetAout</a>( <a class="local col9 ref" href="#19p_playlist" title='p_playlist' data-ref="19p_playlist">p_playlist</a> );</td></tr>
+<tr><th id="133">133</th><td>        <b>if</b>( <a class="local col0 ref" href="#20p_aout" title='p_aout' data-ref="20p_aout">p_aout</a> != <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span> )</td></tr>
+<tr><th id="134">134</th><td>        {</td></tr>
+<tr><th id="135">135</th><td>            <a class="ref" href="#vlclua_push_vlc_object" title='vlclua_push_vlc_object' data-ref="vlclua_push_vlc_object">vlclua_push_vlc_object</a>( <a class="local col8 ref" href="#18L" title='L' data-ref="18L">L</a>, (<a class="typedef" href="../../../include/vlc_common.h.html#vlc_object_t" title='vlc_object_t' data-type='struct vlc_object_t' data-ref="vlc_object_t">vlc_object_t</a> *)<a class="local col0 ref" href="#20p_aout" title='p_aout' data-ref="20p_aout">p_aout</a> );</td></tr>
+<tr><th id="136">136</th><td>            <b>return</b> <var>1</var>;</td></tr>
+<tr><th id="137">137</th><td>        }</td></tr>
+<tr><th id="138">138</th><td>    }</td></tr>
+<tr><th id="139">139</th><td>    <a class="ref" href="../../../../include/lua5.2/lua.h.html#lua_pushnil" title='lua_pushnil' data-ref="lua_pushnil">lua_pushnil</a>( <a class="local col8 ref" href="#18L" title='L' data-ref="18L">L</a> );</td></tr>
+<tr><th id="140">140</th><td>    <b>return</b> <var>1</var>;</td></tr>
+<tr><th id="141">141</th><td>}</td></tr>
+<tr><th id="142">142</th><td><i  data-doc="vlclua_object_reg">/*****************************************************************************</i></td></tr>
+<tr><th id="143">143</th><td><i  data-doc="vlclua_object_reg"> *</i></td></tr>
+<tr><th id="144">144</th><td><i  data-doc="vlclua_object_reg"> *****************************************************************************/</i></td></tr>
+<tr><th id="145">145</th><td><em>static</em> <em>const</em> <a class="typedef" href="../../../../include/lua5.2/lauxlib.h.html#luaL_Reg" title='luaL_Reg' data-type='struct luaL_Reg' data-ref="luaL_Reg">luaL_Reg</a> <dfn class="tu decl def" id="vlclua_object_reg" title='vlclua_object_reg' data-type='const luaL_Reg [7]' data-ref="vlclua_object_reg">vlclua_object_reg</dfn>[] = {</td></tr>
+<tr><th id="146">146</th><td>    { <q>"input"</q>, <a class="tu ref" href="#vlclua_get_input" title='vlclua_get_input' data-ref="vlclua_get_input">vlclua_get_input</a> },</td></tr>
+<tr><th id="147">147</th><td>    { <q>"playlist"</q>, <a class="tu ref" href="#vlclua_get_playlist" title='vlclua_get_playlist' data-ref="vlclua_get_playlist">vlclua_get_playlist</a> },</td></tr>
+<tr><th id="148">148</th><td>    { <q>"libvlc"</q>, <a class="tu ref" href="#vlclua_get_libvlc" title='vlclua_get_libvlc' data-ref="vlclua_get_libvlc">vlclua_get_libvlc</a> },</td></tr>
+<tr><th id="149">149</th><td>    { <q>"find"</q>, <a class="tu ref" href="#vlclua_object_find" title='vlclua_object_find' data-ref="vlclua_object_find">vlclua_object_find</a> },</td></tr>
+<tr><th id="150">150</th><td>    { <q>"vout"</q>, <a class="tu ref" href="#vlclua_get_vout" title='vlclua_get_vout' data-ref="vlclua_get_vout">vlclua_get_vout</a>},</td></tr>
+<tr><th id="151">151</th><td>    { <q>"aout"</q>, <a class="tu ref" href="#vlclua_get_aout" title='vlclua_get_aout' data-ref="vlclua_get_aout">vlclua_get_aout</a>},</td></tr>
+<tr><th id="152">152</th><td>    { <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>, <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span> }</td></tr>
+<tr><th id="153">153</th><td>};</td></tr>
+<tr><th id="154">154</th><td></td></tr>
+<tr><th id="155">155</th><td><em>void</em> <dfn class="decl def" id="luaopen_object" title='luaopen_object' data-ref="luaopen_object">luaopen_object</dfn>( <a class="typedef" href="../../../../include/lua5.2/lua.h.html#lua_State" title='lua_State' data-type='struct lua_State' data-ref="lua_State">lua_State</a> *<dfn class="local col1 decl" id="21L" title='L' data-type='lua_State *' data-ref="21L">L</dfn> )</td></tr>
+<tr><th id="156">156</th><td>{</td></tr>
+<tr><th id="157">157</th><td>    <a class="macro" href="../../../../include/lua5.2/lua.h.html#325" title="lua_createtable(L, 0, 0)" data-ref="_M/lua_newtable">lua_newtable</a>( <a class="local col1 ref" href="#21L" title='L' data-ref="21L">L</a> );</td></tr>
+<tr><th id="158">158</th><td>    <a class="macro" href="../../../../include/lua5.2/lauxlib.h.html#205" title="(luaL_openlib(L,(((void*)0)),(vlclua_object_reg),0))" data-ref="_M/luaL_register">luaL_register</a>( <a class="local col1 ref" href="#21L" title='L' data-ref="21L">L</a>, <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>, <a class="tu ref" href="#vlclua_object_reg" title='vlclua_object_reg' data-use='r' data-ref="vlclua_object_reg">vlclua_object_reg</a> );</td></tr>
+<tr><th id="159">159</th><td>    <a class="ref" href="../../../../include/lua5.2/lua.h.html#lua_setfield" title='lua_setfield' data-ref="lua_setfield">lua_setfield</a>( <a class="local col1 ref" href="#21L" title='L' data-ref="21L">L</a>, -<var>2</var>, <q>"object"</q> );</td></tr>
+<tr><th id="160">160</th><td>}</td></tr>
+<tr><th id="161">161</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project vlc revision <em>2.2.0-git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

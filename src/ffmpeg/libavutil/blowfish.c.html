@@ -1,0 +1,442 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>blowfish.c source code [ffmpeg/libavutil/blowfish.c] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavutil/blowfish.c'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavutil</a>/<a href='blowfish.c.html'>blowfish.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * Blowfish algorithm</i></td></tr>
+<tr><th id="3">3</th><td><i> * Copyright (c) 2012 Samuel Pitoiset</i></td></tr>
+<tr><th id="4">4</th><td><i> *</i></td></tr>
+<tr><th id="5">5</th><td><i> * loosely based on Paul Kocher's implementation</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="8">8</th><td><i> *</i></td></tr>
+<tr><th id="9">9</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="10">10</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="11">11</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="12">12</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="13">13</th><td><i> *</i></td></tr>
+<tr><th id="14">14</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="15">15</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="16">16</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="17">17</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="18">18</th><td><i> *</i></td></tr>
+<tr><th id="19">19</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="20">20</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="21">21</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="22">22</th><td><i> */</i></td></tr>
+<tr><th id="23">23</th><td></td></tr>
+<tr><th id="24">24</th><td><u>#include <a href="avutil.h.html">"avutil.h"</a></u></td></tr>
+<tr><th id="25">25</th><td><u>#include <a href="common.h.html">"common.h"</a></u></td></tr>
+<tr><th id="26">26</th><td><u>#include <a href="intreadwrite.h.html">"intreadwrite.h"</a></u></td></tr>
+<tr><th id="27">27</th><td><u>#include <a href="mem.h.html">"mem.h"</a></u></td></tr>
+<tr><th id="28">28</th><td><u>#include <a href="blowfish.h.html">"blowfish.h"</a></u></td></tr>
+<tr><th id="29">29</th><td></td></tr>
+<tr><th id="30">30</th><td><em>static</em> <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a> <dfn class="tu decl def" id="orig_p" title='orig_p' data-type='const uint32_t [18]' data-ref="orig_p">orig_p</dfn>[<a class="macro" href="blowfish.h.html#33" title="16" data-ref="_M/AV_BF_ROUNDS">AV_BF_ROUNDS</a> + <var>2</var>] = {</td></tr>
+<tr><th id="31">31</th><td>    <var>0x243F6A88</var>, <var>0x85A308D3</var>, <var>0x13198A2E</var>, <var>0x03707344</var>,</td></tr>
+<tr><th id="32">32</th><td>    <var>0xA4093822</var>, <var>0x299F31D0</var>, <var>0x082EFA98</var>, <var>0xEC4E6C89</var>,</td></tr>
+<tr><th id="33">33</th><td>    <var>0x452821E6</var>, <var>0x38D01377</var>, <var>0xBE5466CF</var>, <var>0x34E90C6C</var>,</td></tr>
+<tr><th id="34">34</th><td>    <var>0xC0AC29B7</var>, <var>0xC97C50DD</var>, <var>0x3F84D5B5</var>, <var>0xB5470917</var>,</td></tr>
+<tr><th id="35">35</th><td>    <var>0x9216D5D9</var>, <var>0x8979FB1B</var></td></tr>
+<tr><th id="36">36</th><td>};</td></tr>
+<tr><th id="37">37</th><td></td></tr>
+<tr><th id="38">38</th><td><em>static</em> <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a> <dfn class="tu decl def" id="orig_s" title='orig_s' data-type='const uint32_t [4][256]' data-ref="orig_s">orig_s</dfn>[<var>4</var>][<var>256</var>] = {</td></tr>
+<tr><th id="39">39</th><td>    { <var>0xD1310BA6</var>, <var>0x98DFB5AC</var>, <var>0x2FFD72DB</var>, <var>0xD01ADFB7</var>,</td></tr>
+<tr><th id="40">40</th><td>      <var>0xB8E1AFED</var>, <var>0x6A267E96</var>, <var>0xBA7C9045</var>, <var>0xF12C7F99</var>,</td></tr>
+<tr><th id="41">41</th><td>      <var>0x24A19947</var>, <var>0xB3916CF7</var>, <var>0x0801F2E2</var>, <var>0x858EFC16</var>,</td></tr>
+<tr><th id="42">42</th><td>      <var>0x636920D8</var>, <var>0x71574E69</var>, <var>0xA458FEA3</var>, <var>0xF4933D7E</var>,</td></tr>
+<tr><th id="43">43</th><td>      <var>0x0D95748F</var>, <var>0x728EB658</var>, <var>0x718BCD58</var>, <var>0x82154AEE</var>,</td></tr>
+<tr><th id="44">44</th><td>      <var>0x7B54A41D</var>, <var>0xC25A59B5</var>, <var>0x9C30D539</var>, <var>0x2AF26013</var>,</td></tr>
+<tr><th id="45">45</th><td>      <var>0xC5D1B023</var>, <var>0x286085F0</var>, <var>0xCA417918</var>, <var>0xB8DB38EF</var>,</td></tr>
+<tr><th id="46">46</th><td>      <var>0x8E79DCB0</var>, <var>0x603A180E</var>, <var>0x6C9E0E8B</var>, <var>0xB01E8A3E</var>,</td></tr>
+<tr><th id="47">47</th><td>      <var>0xD71577C1</var>, <var>0xBD314B27</var>, <var>0x78AF2FDA</var>, <var>0x55605C60</var>,</td></tr>
+<tr><th id="48">48</th><td>      <var>0xE65525F3</var>, <var>0xAA55AB94</var>, <var>0x57489862</var>, <var>0x63E81440</var>,</td></tr>
+<tr><th id="49">49</th><td>      <var>0x55CA396A</var>, <var>0x2AAB10B6</var>, <var>0xB4CC5C34</var>, <var>0x1141E8CE</var>,</td></tr>
+<tr><th id="50">50</th><td>      <var>0xA15486AF</var>, <var>0x7C72E993</var>, <var>0xB3EE1411</var>, <var>0x636FBC2A</var>,</td></tr>
+<tr><th id="51">51</th><td>      <var>0x2BA9C55D</var>, <var>0x741831F6</var>, <var>0xCE5C3E16</var>, <var>0x9B87931E</var>,</td></tr>
+<tr><th id="52">52</th><td>      <var>0xAFD6BA33</var>, <var>0x6C24CF5C</var>, <var>0x7A325381</var>, <var>0x28958677</var>,</td></tr>
+<tr><th id="53">53</th><td>      <var>0x3B8F4898</var>, <var>0x6B4BB9AF</var>, <var>0xC4BFE81B</var>, <var>0x66282193</var>,</td></tr>
+<tr><th id="54">54</th><td>      <var>0x61D809CC</var>, <var>0xFB21A991</var>, <var>0x487CAC60</var>, <var>0x5DEC8032</var>,</td></tr>
+<tr><th id="55">55</th><td>      <var>0xEF845D5D</var>, <var>0xE98575B1</var>, <var>0xDC262302</var>, <var>0xEB651B88</var>,</td></tr>
+<tr><th id="56">56</th><td>      <var>0x23893E81</var>, <var>0xD396ACC5</var>, <var>0x0F6D6FF3</var>, <var>0x83F44239</var>,</td></tr>
+<tr><th id="57">57</th><td>      <var>0x2E0B4482</var>, <var>0xA4842004</var>, <var>0x69C8F04A</var>, <var>0x9E1F9B5E</var>,</td></tr>
+<tr><th id="58">58</th><td>      <var>0x21C66842</var>, <var>0xF6E96C9A</var>, <var>0x670C9C61</var>, <var>0xABD388F0</var>,</td></tr>
+<tr><th id="59">59</th><td>      <var>0x6A51A0D2</var>, <var>0xD8542F68</var>, <var>0x960FA728</var>, <var>0xAB5133A3</var>,</td></tr>
+<tr><th id="60">60</th><td>      <var>0x6EEF0B6C</var>, <var>0x137A3BE4</var>, <var>0xBA3BF050</var>, <var>0x7EFB2A98</var>,</td></tr>
+<tr><th id="61">61</th><td>      <var>0xA1F1651D</var>, <var>0x39AF0176</var>, <var>0x66CA593E</var>, <var>0x82430E88</var>,</td></tr>
+<tr><th id="62">62</th><td>      <var>0x8CEE8619</var>, <var>0x456F9FB4</var>, <var>0x7D84A5C3</var>, <var>0x3B8B5EBE</var>,</td></tr>
+<tr><th id="63">63</th><td>      <var>0xE06F75D8</var>, <var>0x85C12073</var>, <var>0x401A449F</var>, <var>0x56C16AA6</var>,</td></tr>
+<tr><th id="64">64</th><td>      <var>0x4ED3AA62</var>, <var>0x363F7706</var>, <var>0x1BFEDF72</var>, <var>0x429B023D</var>,</td></tr>
+<tr><th id="65">65</th><td>      <var>0x37D0D724</var>, <var>0xD00A1248</var>, <var>0xDB0FEAD3</var>, <var>0x49F1C09B</var>,</td></tr>
+<tr><th id="66">66</th><td>      <var>0x075372C9</var>, <var>0x80991B7B</var>, <var>0x25D479D8</var>, <var>0xF6E8DEF7</var>,</td></tr>
+<tr><th id="67">67</th><td>      <var>0xE3FE501A</var>, <var>0xB6794C3B</var>, <var>0x976CE0BD</var>, <var>0x04C006BA</var>,</td></tr>
+<tr><th id="68">68</th><td>      <var>0xC1A94FB6</var>, <var>0x409F60C4</var>, <var>0x5E5C9EC2</var>, <var>0x196A2463</var>,</td></tr>
+<tr><th id="69">69</th><td>      <var>0x68FB6FAF</var>, <var>0x3E6C53B5</var>, <var>0x1339B2EB</var>, <var>0x3B52EC6F</var>,</td></tr>
+<tr><th id="70">70</th><td>      <var>0x6DFC511F</var>, <var>0x9B30952C</var>, <var>0xCC814544</var>, <var>0xAF5EBD09</var>,</td></tr>
+<tr><th id="71">71</th><td>      <var>0xBEE3D004</var>, <var>0xDE334AFD</var>, <var>0x660F2807</var>, <var>0x192E4BB3</var>,</td></tr>
+<tr><th id="72">72</th><td>      <var>0xC0CBA857</var>, <var>0x45C8740F</var>, <var>0xD20B5F39</var>, <var>0xB9D3FBDB</var>,</td></tr>
+<tr><th id="73">73</th><td>      <var>0x5579C0BD</var>, <var>0x1A60320A</var>, <var>0xD6A100C6</var>, <var>0x402C7279</var>,</td></tr>
+<tr><th id="74">74</th><td>      <var>0x679F25FE</var>, <var>0xFB1FA3CC</var>, <var>0x8EA5E9F8</var>, <var>0xDB3222F8</var>,</td></tr>
+<tr><th id="75">75</th><td>      <var>0x3C7516DF</var>, <var>0xFD616B15</var>, <var>0x2F501EC8</var>, <var>0xAD0552AB</var>,</td></tr>
+<tr><th id="76">76</th><td>      <var>0x323DB5FA</var>, <var>0xFD238760</var>, <var>0x53317B48</var>, <var>0x3E00DF82</var>,</td></tr>
+<tr><th id="77">77</th><td>      <var>0x9E5C57BB</var>, <var>0xCA6F8CA0</var>, <var>0x1A87562E</var>, <var>0xDF1769DB</var>,</td></tr>
+<tr><th id="78">78</th><td>      <var>0xD542A8F6</var>, <var>0x287EFFC3</var>, <var>0xAC6732C6</var>, <var>0x8C4F5573</var>,</td></tr>
+<tr><th id="79">79</th><td>      <var>0x695B27B0</var>, <var>0xBBCA58C8</var>, <var>0xE1FFA35D</var>, <var>0xB8F011A0</var>,</td></tr>
+<tr><th id="80">80</th><td>      <var>0x10FA3D98</var>, <var>0xFD2183B8</var>, <var>0x4AFCB56C</var>, <var>0x2DD1D35B</var>,</td></tr>
+<tr><th id="81">81</th><td>      <var>0x9A53E479</var>, <var>0xB6F84565</var>, <var>0xD28E49BC</var>, <var>0x4BFB9790</var>,</td></tr>
+<tr><th id="82">82</th><td>      <var>0xE1DDF2DA</var>, <var>0xA4CB7E33</var>, <var>0x62FB1341</var>, <var>0xCEE4C6E8</var>,</td></tr>
+<tr><th id="83">83</th><td>      <var>0xEF20CADA</var>, <var>0x36774C01</var>, <var>0xD07E9EFE</var>, <var>0x2BF11FB4</var>,</td></tr>
+<tr><th id="84">84</th><td>      <var>0x95DBDA4D</var>, <var>0xAE909198</var>, <var>0xEAAD8E71</var>, <var>0x6B93D5A0</var>,</td></tr>
+<tr><th id="85">85</th><td>      <var>0xD08ED1D0</var>, <var>0xAFC725E0</var>, <var>0x8E3C5B2F</var>, <var>0x8E7594B7</var>,</td></tr>
+<tr><th id="86">86</th><td>      <var>0x8FF6E2FB</var>, <var>0xF2122B64</var>, <var>0x8888B812</var>, <var>0x900DF01C</var>,</td></tr>
+<tr><th id="87">87</th><td>      <var>0x4FAD5EA0</var>, <var>0x688FC31C</var>, <var>0xD1CFF191</var>, <var>0xB3A8C1AD</var>,</td></tr>
+<tr><th id="88">88</th><td>      <var>0x2F2F2218</var>, <var>0xBE0E1777</var>, <var>0xEA752DFE</var>, <var>0x8B021FA1</var>,</td></tr>
+<tr><th id="89">89</th><td>      <var>0xE5A0CC0F</var>, <var>0xB56F74E8</var>, <var>0x18ACF3D6</var>, <var>0xCE89E299</var>,</td></tr>
+<tr><th id="90">90</th><td>      <var>0xB4A84FE0</var>, <var>0xFD13E0B7</var>, <var>0x7CC43B81</var>, <var>0xD2ADA8D9</var>,</td></tr>
+<tr><th id="91">91</th><td>      <var>0x165FA266</var>, <var>0x80957705</var>, <var>0x93CC7314</var>, <var>0x211A1477</var>,</td></tr>
+<tr><th id="92">92</th><td>      <var>0xE6AD2065</var>, <var>0x77B5FA86</var>, <var>0xC75442F5</var>, <var>0xFB9D35CF</var>,</td></tr>
+<tr><th id="93">93</th><td>      <var>0xEBCDAF0C</var>, <var>0x7B3E89A0</var>, <var>0xD6411BD3</var>, <var>0xAE1E7E49</var>,</td></tr>
+<tr><th id="94">94</th><td>      <var>0x00250E2D</var>, <var>0x2071B35E</var>, <var>0x226800BB</var>, <var>0x57B8E0AF</var>,</td></tr>
+<tr><th id="95">95</th><td>      <var>0x2464369B</var>, <var>0xF009B91E</var>, <var>0x5563911D</var>, <var>0x59DFA6AA</var>,</td></tr>
+<tr><th id="96">96</th><td>      <var>0x78C14389</var>, <var>0xD95A537F</var>, <var>0x207D5BA2</var>, <var>0x02E5B9C5</var>,</td></tr>
+<tr><th id="97">97</th><td>      <var>0x83260376</var>, <var>0x6295CFA9</var>, <var>0x11C81968</var>, <var>0x4E734A41</var>,</td></tr>
+<tr><th id="98">98</th><td>      <var>0xB3472DCA</var>, <var>0x7B14A94A</var>, <var>0x1B510052</var>, <var>0x9A532915</var>,</td></tr>
+<tr><th id="99">99</th><td>      <var>0xD60F573F</var>, <var>0xBC9BC6E4</var>, <var>0x2B60A476</var>, <var>0x81E67400</var>,</td></tr>
+<tr><th id="100">100</th><td>      <var>0x08BA6FB5</var>, <var>0x571BE91F</var>, <var>0xF296EC6B</var>, <var>0x2A0DD915</var>,</td></tr>
+<tr><th id="101">101</th><td>      <var>0xB6636521</var>, <var>0xE7B9F9B6</var>, <var>0xFF34052E</var>, <var>0xC5855664</var>,</td></tr>
+<tr><th id="102">102</th><td>      <var>0x53B02D5D</var>, <var>0xA99F8FA1</var>, <var>0x08BA4799</var>, <var>0x6E85076A</var> },</td></tr>
+<tr><th id="103">103</th><td>    { <var>0x4B7A70E9</var>, <var>0xB5B32944</var>, <var>0xDB75092E</var>, <var>0xC4192623</var>,</td></tr>
+<tr><th id="104">104</th><td>      <var>0xAD6EA6B0</var>, <var>0x49A7DF7D</var>, <var>0x9CEE60B8</var>, <var>0x8FEDB266</var>,</td></tr>
+<tr><th id="105">105</th><td>      <var>0xECAA8C71</var>, <var>0x699A17FF</var>, <var>0x5664526C</var>, <var>0xC2B19EE1</var>,</td></tr>
+<tr><th id="106">106</th><td>      <var>0x193602A5</var>, <var>0x75094C29</var>, <var>0xA0591340</var>, <var>0xE4183A3E</var>,</td></tr>
+<tr><th id="107">107</th><td>      <var>0x3F54989A</var>, <var>0x5B429D65</var>, <var>0x6B8FE4D6</var>, <var>0x99F73FD6</var>,</td></tr>
+<tr><th id="108">108</th><td>      <var>0xA1D29C07</var>, <var>0xEFE830F5</var>, <var>0x4D2D38E6</var>, <var>0xF0255DC1</var>,</td></tr>
+<tr><th id="109">109</th><td>      <var>0x4CDD2086</var>, <var>0x8470EB26</var>, <var>0x6382E9C6</var>, <var>0x021ECC5E</var>,</td></tr>
+<tr><th id="110">110</th><td>      <var>0x09686B3F</var>, <var>0x3EBAEFC9</var>, <var>0x3C971814</var>, <var>0x6B6A70A1</var>,</td></tr>
+<tr><th id="111">111</th><td>      <var>0x687F3584</var>, <var>0x52A0E286</var>, <var>0xB79C5305</var>, <var>0xAA500737</var>,</td></tr>
+<tr><th id="112">112</th><td>      <var>0x3E07841C</var>, <var>0x7FDEAE5C</var>, <var>0x8E7D44EC</var>, <var>0x5716F2B8</var>,</td></tr>
+<tr><th id="113">113</th><td>      <var>0xB03ADA37</var>, <var>0xF0500C0D</var>, <var>0xF01C1F04</var>, <var>0x0200B3FF</var>,</td></tr>
+<tr><th id="114">114</th><td>      <var>0xAE0CF51A</var>, <var>0x3CB574B2</var>, <var>0x25837A58</var>, <var>0xDC0921BD</var>,</td></tr>
+<tr><th id="115">115</th><td>      <var>0xD19113F9</var>, <var>0x7CA92FF6</var>, <var>0x94324773</var>, <var>0x22F54701</var>,</td></tr>
+<tr><th id="116">116</th><td>      <var>0x3AE5E581</var>, <var>0x37C2DADC</var>, <var>0xC8B57634</var>, <var>0x9AF3DDA7</var>,</td></tr>
+<tr><th id="117">117</th><td>      <var>0xA9446146</var>, <var>0x0FD0030E</var>, <var>0xECC8C73E</var>, <var>0xA4751E41</var>,</td></tr>
+<tr><th id="118">118</th><td>      <var>0xE238CD99</var>, <var>0x3BEA0E2F</var>, <var>0x3280BBA1</var>, <var>0x183EB331</var>,</td></tr>
+<tr><th id="119">119</th><td>      <var>0x4E548B38</var>, <var>0x4F6DB908</var>, <var>0x6F420D03</var>, <var>0xF60A04BF</var>,</td></tr>
+<tr><th id="120">120</th><td>      <var>0x2CB81290</var>, <var>0x24977C79</var>, <var>0x5679B072</var>, <var>0xBCAF89AF</var>,</td></tr>
+<tr><th id="121">121</th><td>      <var>0xDE9A771F</var>, <var>0xD9930810</var>, <var>0xB38BAE12</var>, <var>0xDCCF3F2E</var>,</td></tr>
+<tr><th id="122">122</th><td>      <var>0x5512721F</var>, <var>0x2E6B7124</var>, <var>0x501ADDE6</var>, <var>0x9F84CD87</var>,</td></tr>
+<tr><th id="123">123</th><td>      <var>0x7A584718</var>, <var>0x7408DA17</var>, <var>0xBC9F9ABC</var>, <var>0xE94B7D8C</var>,</td></tr>
+<tr><th id="124">124</th><td>      <var>0xEC7AEC3A</var>, <var>0xDB851DFA</var>, <var>0x63094366</var>, <var>0xC464C3D2</var>,</td></tr>
+<tr><th id="125">125</th><td>      <var>0xEF1C1847</var>, <var>0x3215D908</var>, <var>0xDD433B37</var>, <var>0x24C2BA16</var>,</td></tr>
+<tr><th id="126">126</th><td>      <var>0x12A14D43</var>, <var>0x2A65C451</var>, <var>0x50940002</var>, <var>0x133AE4DD</var>,</td></tr>
+<tr><th id="127">127</th><td>      <var>0x71DFF89E</var>, <var>0x10314E55</var>, <var>0x81AC77D6</var>, <var>0x5F11199B</var>,</td></tr>
+<tr><th id="128">128</th><td>      <var>0x043556F1</var>, <var>0xD7A3C76B</var>, <var>0x3C11183B</var>, <var>0x5924A509</var>,</td></tr>
+<tr><th id="129">129</th><td>      <var>0xF28FE6ED</var>, <var>0x97F1FBFA</var>, <var>0x9EBABF2C</var>, <var>0x1E153C6E</var>,</td></tr>
+<tr><th id="130">130</th><td>      <var>0x86E34570</var>, <var>0xEAE96FB1</var>, <var>0x860E5E0A</var>, <var>0x5A3E2AB3</var>,</td></tr>
+<tr><th id="131">131</th><td>      <var>0x771FE71C</var>, <var>0x4E3D06FA</var>, <var>0x2965DCB9</var>, <var>0x99E71D0F</var>,</td></tr>
+<tr><th id="132">132</th><td>      <var>0x803E89D6</var>, <var>0x5266C825</var>, <var>0x2E4CC978</var>, <var>0x9C10B36A</var>,</td></tr>
+<tr><th id="133">133</th><td>      <var>0xC6150EBA</var>, <var>0x94E2EA78</var>, <var>0xA5FC3C53</var>, <var>0x1E0A2DF4</var>,</td></tr>
+<tr><th id="134">134</th><td>      <var>0xF2F74EA7</var>, <var>0x361D2B3D</var>, <var>0x1939260F</var>, <var>0x19C27960</var>,</td></tr>
+<tr><th id="135">135</th><td>      <var>0x5223A708</var>, <var>0xF71312B6</var>, <var>0xEBADFE6E</var>, <var>0xEAC31F66</var>,</td></tr>
+<tr><th id="136">136</th><td>      <var>0xE3BC4595</var>, <var>0xA67BC883</var>, <var>0xB17F37D1</var>, <var>0x018CFF28</var>,</td></tr>
+<tr><th id="137">137</th><td>      <var>0xC332DDEF</var>, <var>0xBE6C5AA5</var>, <var>0x65582185</var>, <var>0x68AB9802</var>,</td></tr>
+<tr><th id="138">138</th><td>      <var>0xEECEA50F</var>, <var>0xDB2F953B</var>, <var>0x2AEF7DAD</var>, <var>0x5B6E2F84</var>,</td></tr>
+<tr><th id="139">139</th><td>      <var>0x1521B628</var>, <var>0x29076170</var>, <var>0xECDD4775</var>, <var>0x619F1510</var>,</td></tr>
+<tr><th id="140">140</th><td>      <var>0x13CCA830</var>, <var>0xEB61BD96</var>, <var>0x0334FE1E</var>, <var>0xAA0363CF</var>,</td></tr>
+<tr><th id="141">141</th><td>      <var>0xB5735C90</var>, <var>0x4C70A239</var>, <var>0xD59E9E0B</var>, <var>0xCBAADE14</var>,</td></tr>
+<tr><th id="142">142</th><td>      <var>0xEECC86BC</var>, <var>0x60622CA7</var>, <var>0x9CAB5CAB</var>, <var>0xB2F3846E</var>,</td></tr>
+<tr><th id="143">143</th><td>      <var>0x648B1EAF</var>, <var>0x19BDF0CA</var>, <var>0xA02369B9</var>, <var>0x655ABB50</var>,</td></tr>
+<tr><th id="144">144</th><td>      <var>0x40685A32</var>, <var>0x3C2AB4B3</var>, <var>0x319EE9D5</var>, <var>0xC021B8F7</var>,</td></tr>
+<tr><th id="145">145</th><td>      <var>0x9B540B19</var>, <var>0x875FA099</var>, <var>0x95F7997E</var>, <var>0x623D7DA8</var>,</td></tr>
+<tr><th id="146">146</th><td>      <var>0xF837889A</var>, <var>0x97E32D77</var>, <var>0x11ED935F</var>, <var>0x16681281</var>,</td></tr>
+<tr><th id="147">147</th><td>      <var>0x0E358829</var>, <var>0xC7E61FD6</var>, <var>0x96DEDFA1</var>, <var>0x7858BA99</var>,</td></tr>
+<tr><th id="148">148</th><td>      <var>0x57F584A5</var>, <var>0x1B227263</var>, <var>0x9B83C3FF</var>, <var>0x1AC24696</var>,</td></tr>
+<tr><th id="149">149</th><td>      <var>0xCDB30AEB</var>, <var>0x532E3054</var>, <var>0x8FD948E4</var>, <var>0x6DBC3128</var>,</td></tr>
+<tr><th id="150">150</th><td>      <var>0x58EBF2EF</var>, <var>0x34C6FFEA</var>, <var>0xFE28ED61</var>, <var>0xEE7C3C73</var>,</td></tr>
+<tr><th id="151">151</th><td>      <var>0x5D4A14D9</var>, <var>0xE864B7E3</var>, <var>0x42105D14</var>, <var>0x203E13E0</var>,</td></tr>
+<tr><th id="152">152</th><td>      <var>0x45EEE2B6</var>, <var>0xA3AAABEA</var>, <var>0xDB6C4F15</var>, <var>0xFACB4FD0</var>,</td></tr>
+<tr><th id="153">153</th><td>      <var>0xC742F442</var>, <var>0xEF6ABBB5</var>, <var>0x654F3B1D</var>, <var>0x41CD2105</var>,</td></tr>
+<tr><th id="154">154</th><td>      <var>0xD81E799E</var>, <var>0x86854DC7</var>, <var>0xE44B476A</var>, <var>0x3D816250</var>,</td></tr>
+<tr><th id="155">155</th><td>      <var>0xCF62A1F2</var>, <var>0x5B8D2646</var>, <var>0xFC8883A0</var>, <var>0xC1C7B6A3</var>,</td></tr>
+<tr><th id="156">156</th><td>      <var>0x7F1524C3</var>, <var>0x69CB7492</var>, <var>0x47848A0B</var>, <var>0x5692B285</var>,</td></tr>
+<tr><th id="157">157</th><td>      <var>0x095BBF00</var>, <var>0xAD19489D</var>, <var>0x1462B174</var>, <var>0x23820E00</var>,</td></tr>
+<tr><th id="158">158</th><td>      <var>0x58428D2A</var>, <var>0x0C55F5EA</var>, <var>0x1DADF43E</var>, <var>0x233F7061</var>,</td></tr>
+<tr><th id="159">159</th><td>      <var>0x3372F092</var>, <var>0x8D937E41</var>, <var>0xD65FECF1</var>, <var>0x6C223BDB</var>,</td></tr>
+<tr><th id="160">160</th><td>      <var>0x7CDE3759</var>, <var>0xCBEE7460</var>, <var>0x4085F2A7</var>, <var>0xCE77326E</var>,</td></tr>
+<tr><th id="161">161</th><td>      <var>0xA6078084</var>, <var>0x19F8509E</var>, <var>0xE8EFD855</var>, <var>0x61D99735</var>,</td></tr>
+<tr><th id="162">162</th><td>      <var>0xA969A7AA</var>, <var>0xC50C06C2</var>, <var>0x5A04ABFC</var>, <var>0x800BCADC</var>,</td></tr>
+<tr><th id="163">163</th><td>      <var>0x9E447A2E</var>, <var>0xC3453484</var>, <var>0xFDD56705</var>, <var>0x0E1E9EC9</var>,</td></tr>
+<tr><th id="164">164</th><td>      <var>0xDB73DBD3</var>, <var>0x105588CD</var>, <var>0x675FDA79</var>, <var>0xE3674340</var>,</td></tr>
+<tr><th id="165">165</th><td>      <var>0xC5C43465</var>, <var>0x713E38D8</var>, <var>0x3D28F89E</var>, <var>0xF16DFF20</var>,</td></tr>
+<tr><th id="166">166</th><td>      <var>0x153E21E7</var>, <var>0x8FB03D4A</var>, <var>0xE6E39F2B</var>, <var>0xDB83ADF7</var> },</td></tr>
+<tr><th id="167">167</th><td>    { <var>0xE93D5A68</var>, <var>0x948140F7</var>, <var>0xF64C261C</var>, <var>0x94692934</var>,</td></tr>
+<tr><th id="168">168</th><td>      <var>0x411520F7</var>, <var>0x7602D4F7</var>, <var>0xBCF46B2E</var>, <var>0xD4A20068</var>,</td></tr>
+<tr><th id="169">169</th><td>      <var>0xD4082471</var>, <var>0x3320F46A</var>, <var>0x43B7D4B7</var>, <var>0x500061AF</var>,</td></tr>
+<tr><th id="170">170</th><td>      <var>0x1E39F62E</var>, <var>0x97244546</var>, <var>0x14214F74</var>, <var>0xBF8B8840</var>,</td></tr>
+<tr><th id="171">171</th><td>      <var>0x4D95FC1D</var>, <var>0x96B591AF</var>, <var>0x70F4DDD3</var>, <var>0x66A02F45</var>,</td></tr>
+<tr><th id="172">172</th><td>      <var>0xBFBC09EC</var>, <var>0x03BD9785</var>, <var>0x7FAC6DD0</var>, <var>0x31CB8504</var>,</td></tr>
+<tr><th id="173">173</th><td>      <var>0x96EB27B3</var>, <var>0x55FD3941</var>, <var>0xDA2547E6</var>, <var>0xABCA0A9A</var>,</td></tr>
+<tr><th id="174">174</th><td>      <var>0x28507825</var>, <var>0x530429F4</var>, <var>0x0A2C86DA</var>, <var>0xE9B66DFB</var>,</td></tr>
+<tr><th id="175">175</th><td>      <var>0x68DC1462</var>, <var>0xD7486900</var>, <var>0x680EC0A4</var>, <var>0x27A18DEE</var>,</td></tr>
+<tr><th id="176">176</th><td>      <var>0x4F3FFEA2</var>, <var>0xE887AD8C</var>, <var>0xB58CE006</var>, <var>0x7AF4D6B6</var>,</td></tr>
+<tr><th id="177">177</th><td>      <var>0xAACE1E7C</var>, <var>0xD3375FEC</var>, <var>0xCE78A399</var>, <var>0x406B2A42</var>,</td></tr>
+<tr><th id="178">178</th><td>      <var>0x20FE9E35</var>, <var>0xD9F385B9</var>, <var>0xEE39D7AB</var>, <var>0x3B124E8B</var>,</td></tr>
+<tr><th id="179">179</th><td>      <var>0x1DC9FAF7</var>, <var>0x4B6D1856</var>, <var>0x26A36631</var>, <var>0xEAE397B2</var>,</td></tr>
+<tr><th id="180">180</th><td>      <var>0x3A6EFA74</var>, <var>0xDD5B4332</var>, <var>0x6841E7F7</var>, <var>0xCA7820FB</var>,</td></tr>
+<tr><th id="181">181</th><td>      <var>0xFB0AF54E</var>, <var>0xD8FEB397</var>, <var>0x454056AC</var>, <var>0xBA489527</var>,</td></tr>
+<tr><th id="182">182</th><td>      <var>0x55533A3A</var>, <var>0x20838D87</var>, <var>0xFE6BA9B7</var>, <var>0xD096954B</var>,</td></tr>
+<tr><th id="183">183</th><td>      <var>0x55A867BC</var>, <var>0xA1159A58</var>, <var>0xCCA92963</var>, <var>0x99E1DB33</var>,</td></tr>
+<tr><th id="184">184</th><td>      <var>0xA62A4A56</var>, <var>0x3F3125F9</var>, <var>0x5EF47E1C</var>, <var>0x9029317C</var>,</td></tr>
+<tr><th id="185">185</th><td>      <var>0xFDF8E802</var>, <var>0x04272F70</var>, <var>0x80BB155C</var>, <var>0x05282CE3</var>,</td></tr>
+<tr><th id="186">186</th><td>      <var>0x95C11548</var>, <var>0xE4C66D22</var>, <var>0x48C1133F</var>, <var>0xC70F86DC</var>,</td></tr>
+<tr><th id="187">187</th><td>      <var>0x07F9C9EE</var>, <var>0x41041F0F</var>, <var>0x404779A4</var>, <var>0x5D886E17</var>,</td></tr>
+<tr><th id="188">188</th><td>      <var>0x325F51EB</var>, <var>0xD59BC0D1</var>, <var>0xF2BCC18F</var>, <var>0x41113564</var>,</td></tr>
+<tr><th id="189">189</th><td>      <var>0x257B7834</var>, <var>0x602A9C60</var>, <var>0xDFF8E8A3</var>, <var>0x1F636C1B</var>,</td></tr>
+<tr><th id="190">190</th><td>      <var>0x0E12B4C2</var>, <var>0x02E1329E</var>, <var>0xAF664FD1</var>, <var>0xCAD18115</var>,</td></tr>
+<tr><th id="191">191</th><td>      <var>0x6B2395E0</var>, <var>0x333E92E1</var>, <var>0x3B240B62</var>, <var>0xEEBEB922</var>,</td></tr>
+<tr><th id="192">192</th><td>      <var>0x85B2A20E</var>, <var>0xE6BA0D99</var>, <var>0xDE720C8C</var>, <var>0x2DA2F728</var>,</td></tr>
+<tr><th id="193">193</th><td>      <var>0xD0127845</var>, <var>0x95B794FD</var>, <var>0x647D0862</var>, <var>0xE7CCF5F0</var>,</td></tr>
+<tr><th id="194">194</th><td>      <var>0x5449A36F</var>, <var>0x877D48FA</var>, <var>0xC39DFD27</var>, <var>0xF33E8D1E</var>,</td></tr>
+<tr><th id="195">195</th><td>      <var>0x0A476341</var>, <var>0x992EFF74</var>, <var>0x3A6F6EAB</var>, <var>0xF4F8FD37</var>,</td></tr>
+<tr><th id="196">196</th><td>      <var>0xA812DC60</var>, <var>0xA1EBDDF8</var>, <var>0x991BE14C</var>, <var>0xDB6E6B0D</var>,</td></tr>
+<tr><th id="197">197</th><td>      <var>0xC67B5510</var>, <var>0x6D672C37</var>, <var>0x2765D43B</var>, <var>0xDCD0E804</var>,</td></tr>
+<tr><th id="198">198</th><td>      <var>0xF1290DC7</var>, <var>0xCC00FFA3</var>, <var>0xB5390F92</var>, <var>0x690FED0B</var>,</td></tr>
+<tr><th id="199">199</th><td>      <var>0x667B9FFB</var>, <var>0xCEDB7D9C</var>, <var>0xA091CF0B</var>, <var>0xD9155EA3</var>,</td></tr>
+<tr><th id="200">200</th><td>      <var>0xBB132F88</var>, <var>0x515BAD24</var>, <var>0x7B9479BF</var>, <var>0x763BD6EB</var>,</td></tr>
+<tr><th id="201">201</th><td>      <var>0x37392EB3</var>, <var>0xCC115979</var>, <var>0x8026E297</var>, <var>0xF42E312D</var>,</td></tr>
+<tr><th id="202">202</th><td>      <var>0x6842ADA7</var>, <var>0xC66A2B3B</var>, <var>0x12754CCC</var>, <var>0x782EF11C</var>,</td></tr>
+<tr><th id="203">203</th><td>      <var>0x6A124237</var>, <var>0xB79251E7</var>, <var>0x06A1BBE6</var>, <var>0x4BFB6350</var>,</td></tr>
+<tr><th id="204">204</th><td>      <var>0x1A6B1018</var>, <var>0x11CAEDFA</var>, <var>0x3D25BDD8</var>, <var>0xE2E1C3C9</var>,</td></tr>
+<tr><th id="205">205</th><td>      <var>0x44421659</var>, <var>0x0A121386</var>, <var>0xD90CEC6E</var>, <var>0xD5ABEA2A</var>,</td></tr>
+<tr><th id="206">206</th><td>      <var>0x64AF674E</var>, <var>0xDA86A85F</var>, <var>0xBEBFE988</var>, <var>0x64E4C3FE</var>,</td></tr>
+<tr><th id="207">207</th><td>      <var>0x9DBC8057</var>, <var>0xF0F7C086</var>, <var>0x60787BF8</var>, <var>0x6003604D</var>,</td></tr>
+<tr><th id="208">208</th><td>      <var>0xD1FD8346</var>, <var>0xF6381FB0</var>, <var>0x7745AE04</var>, <var>0xD736FCCC</var>,</td></tr>
+<tr><th id="209">209</th><td>      <var>0x83426B33</var>, <var>0xF01EAB71</var>, <var>0xB0804187</var>, <var>0x3C005E5F</var>,</td></tr>
+<tr><th id="210">210</th><td>      <var>0x77A057BE</var>, <var>0xBDE8AE24</var>, <var>0x55464299</var>, <var>0xBF582E61</var>,</td></tr>
+<tr><th id="211">211</th><td>      <var>0x4E58F48F</var>, <var>0xF2DDFDA2</var>, <var>0xF474EF38</var>, <var>0x8789BDC2</var>,</td></tr>
+<tr><th id="212">212</th><td>      <var>0x5366F9C3</var>, <var>0xC8B38E74</var>, <var>0xB475F255</var>, <var>0x46FCD9B9</var>,</td></tr>
+<tr><th id="213">213</th><td>      <var>0x7AEB2661</var>, <var>0x8B1DDF84</var>, <var>0x846A0E79</var>, <var>0x915F95E2</var>,</td></tr>
+<tr><th id="214">214</th><td>      <var>0x466E598E</var>, <var>0x20B45770</var>, <var>0x8CD55591</var>, <var>0xC902DE4C</var>,</td></tr>
+<tr><th id="215">215</th><td>      <var>0xB90BACE1</var>, <var>0xBB8205D0</var>, <var>0x11A86248</var>, <var>0x7574A99E</var>,</td></tr>
+<tr><th id="216">216</th><td>      <var>0xB77F19B6</var>, <var>0xE0A9DC09</var>, <var>0x662D09A1</var>, <var>0xC4324633</var>,</td></tr>
+<tr><th id="217">217</th><td>      <var>0xE85A1F02</var>, <var>0x09F0BE8C</var>, <var>0x4A99A025</var>, <var>0x1D6EFE10</var>,</td></tr>
+<tr><th id="218">218</th><td>      <var>0x1AB93D1D</var>, <var>0x0BA5A4DF</var>, <var>0xA186F20F</var>, <var>0x2868F169</var>,</td></tr>
+<tr><th id="219">219</th><td>      <var>0xDCB7DA83</var>, <var>0x573906FE</var>, <var>0xA1E2CE9B</var>, <var>0x4FCD7F52</var>,</td></tr>
+<tr><th id="220">220</th><td>      <var>0x50115E01</var>, <var>0xA70683FA</var>, <var>0xA002B5C4</var>, <var>0x0DE6D027</var>,</td></tr>
+<tr><th id="221">221</th><td>      <var>0x9AF88C27</var>, <var>0x773F8641</var>, <var>0xC3604C06</var>, <var>0x61A806B5</var>,</td></tr>
+<tr><th id="222">222</th><td>      <var>0xF0177A28</var>, <var>0xC0F586E0</var>, <var>0x006058AA</var>, <var>0x30DC7D62</var>,</td></tr>
+<tr><th id="223">223</th><td>      <var>0x11E69ED7</var>, <var>0x2338EA63</var>, <var>0x53C2DD94</var>, <var>0xC2C21634</var>,</td></tr>
+<tr><th id="224">224</th><td>      <var>0xBBCBEE56</var>, <var>0x90BCB6DE</var>, <var>0xEBFC7DA1</var>, <var>0xCE591D76</var>,</td></tr>
+<tr><th id="225">225</th><td>      <var>0x6F05E409</var>, <var>0x4B7C0188</var>, <var>0x39720A3D</var>, <var>0x7C927C24</var>,</td></tr>
+<tr><th id="226">226</th><td>      <var>0x86E3725F</var>, <var>0x724D9DB9</var>, <var>0x1AC15BB4</var>, <var>0xD39EB8FC</var>,</td></tr>
+<tr><th id="227">227</th><td>      <var>0xED545578</var>, <var>0x08FCA5B5</var>, <var>0xD83D7CD3</var>, <var>0x4DAD0FC4</var>,</td></tr>
+<tr><th id="228">228</th><td>      <var>0x1E50EF5E</var>, <var>0xB161E6F8</var>, <var>0xA28514D9</var>, <var>0x6C51133C</var>,</td></tr>
+<tr><th id="229">229</th><td>      <var>0x6FD5C7E7</var>, <var>0x56E14EC4</var>, <var>0x362ABFCE</var>, <var>0xDDC6C837</var>,</td></tr>
+<tr><th id="230">230</th><td>      <var>0xD79A3234</var>, <var>0x92638212</var>, <var>0x670EFA8E</var>, <var>0x406000E0</var> },</td></tr>
+<tr><th id="231">231</th><td>    { <var>0x3A39CE37</var>, <var>0xD3FAF5CF</var>, <var>0xABC27737</var>, <var>0x5AC52D1B</var>,</td></tr>
+<tr><th id="232">232</th><td>      <var>0x5CB0679E</var>, <var>0x4FA33742</var>, <var>0xD3822740</var>, <var>0x99BC9BBE</var>,</td></tr>
+<tr><th id="233">233</th><td>      <var>0xD5118E9D</var>, <var>0xBF0F7315</var>, <var>0xD62D1C7E</var>, <var>0xC700C47B</var>,</td></tr>
+<tr><th id="234">234</th><td>      <var>0xB78C1B6B</var>, <var>0x21A19045</var>, <var>0xB26EB1BE</var>, <var>0x6A366EB4</var>,</td></tr>
+<tr><th id="235">235</th><td>      <var>0x5748AB2F</var>, <var>0xBC946E79</var>, <var>0xC6A376D2</var>, <var>0x6549C2C8</var>,</td></tr>
+<tr><th id="236">236</th><td>      <var>0x530FF8EE</var>, <var>0x468DDE7D</var>, <var>0xD5730A1D</var>, <var>0x4CD04DC6</var>,</td></tr>
+<tr><th id="237">237</th><td>      <var>0x2939BBDB</var>, <var>0xA9BA4650</var>, <var>0xAC9526E8</var>, <var>0xBE5EE304</var>,</td></tr>
+<tr><th id="238">238</th><td>      <var>0xA1FAD5F0</var>, <var>0x6A2D519A</var>, <var>0x63EF8CE2</var>, <var>0x9A86EE22</var>,</td></tr>
+<tr><th id="239">239</th><td>      <var>0xC089C2B8</var>, <var>0x43242EF6</var>, <var>0xA51E03AA</var>, <var>0x9CF2D0A4</var>,</td></tr>
+<tr><th id="240">240</th><td>      <var>0x83C061BA</var>, <var>0x9BE96A4D</var>, <var>0x8FE51550</var>, <var>0xBA645BD6</var>,</td></tr>
+<tr><th id="241">241</th><td>      <var>0x2826A2F9</var>, <var>0xA73A3AE1</var>, <var>0x4BA99586</var>, <var>0xEF5562E9</var>,</td></tr>
+<tr><th id="242">242</th><td>      <var>0xC72FEFD3</var>, <var>0xF752F7DA</var>, <var>0x3F046F69</var>, <var>0x77FA0A59</var>,</td></tr>
+<tr><th id="243">243</th><td>      <var>0x80E4A915</var>, <var>0x87B08601</var>, <var>0x9B09E6AD</var>, <var>0x3B3EE593</var>,</td></tr>
+<tr><th id="244">244</th><td>      <var>0xE990FD5A</var>, <var>0x9E34D797</var>, <var>0x2CF0B7D9</var>, <var>0x022B8B51</var>,</td></tr>
+<tr><th id="245">245</th><td>      <var>0x96D5AC3A</var>, <var>0x017DA67D</var>, <var>0xD1CF3ED6</var>, <var>0x7C7D2D28</var>,</td></tr>
+<tr><th id="246">246</th><td>      <var>0x1F9F25CF</var>, <var>0xADF2B89B</var>, <var>0x5AD6B472</var>, <var>0x5A88F54C</var>,</td></tr>
+<tr><th id="247">247</th><td>      <var>0xE029AC71</var>, <var>0xE019A5E6</var>, <var>0x47B0ACFD</var>, <var>0xED93FA9B</var>,</td></tr>
+<tr><th id="248">248</th><td>      <var>0xE8D3C48D</var>, <var>0x283B57CC</var>, <var>0xF8D56629</var>, <var>0x79132E28</var>,</td></tr>
+<tr><th id="249">249</th><td>      <var>0x785F0191</var>, <var>0xED756055</var>, <var>0xF7960E44</var>, <var>0xE3D35E8C</var>,</td></tr>
+<tr><th id="250">250</th><td>      <var>0x15056DD4</var>, <var>0x88F46DBA</var>, <var>0x03A16125</var>, <var>0x0564F0BD</var>,</td></tr>
+<tr><th id="251">251</th><td>      <var>0xC3EB9E15</var>, <var>0x3C9057A2</var>, <var>0x97271AEC</var>, <var>0xA93A072A</var>,</td></tr>
+<tr><th id="252">252</th><td>      <var>0x1B3F6D9B</var>, <var>0x1E6321F5</var>, <var>0xF59C66FB</var>, <var>0x26DCF319</var>,</td></tr>
+<tr><th id="253">253</th><td>      <var>0x7533D928</var>, <var>0xB155FDF5</var>, <var>0x03563482</var>, <var>0x8ABA3CBB</var>,</td></tr>
+<tr><th id="254">254</th><td>      <var>0x28517711</var>, <var>0xC20AD9F8</var>, <var>0xABCC5167</var>, <var>0xCCAD925F</var>,</td></tr>
+<tr><th id="255">255</th><td>      <var>0x4DE81751</var>, <var>0x3830DC8E</var>, <var>0x379D5862</var>, <var>0x9320F991</var>,</td></tr>
+<tr><th id="256">256</th><td>      <var>0xEA7A90C2</var>, <var>0xFB3E7BCE</var>, <var>0x5121CE64</var>, <var>0x774FBE32</var>,</td></tr>
+<tr><th id="257">257</th><td>      <var>0xA8B6E37E</var>, <var>0xC3293D46</var>, <var>0x48DE5369</var>, <var>0x6413E680</var>,</td></tr>
+<tr><th id="258">258</th><td>      <var>0xA2AE0810</var>, <var>0xDD6DB224</var>, <var>0x69852DFD</var>, <var>0x09072166</var>,</td></tr>
+<tr><th id="259">259</th><td>      <var>0xB39A460A</var>, <var>0x6445C0DD</var>, <var>0x586CDECF</var>, <var>0x1C20C8AE</var>,</td></tr>
+<tr><th id="260">260</th><td>      <var>0x5BBEF7DD</var>, <var>0x1B588D40</var>, <var>0xCCD2017F</var>, <var>0x6BB4E3BB</var>,</td></tr>
+<tr><th id="261">261</th><td>      <var>0xDDA26A7E</var>, <var>0x3A59FF45</var>, <var>0x3E350A44</var>, <var>0xBCB4CDD5</var>,</td></tr>
+<tr><th id="262">262</th><td>      <var>0x72EACEA8</var>, <var>0xFA6484BB</var>, <var>0x8D6612AE</var>, <var>0xBF3C6F47</var>,</td></tr>
+<tr><th id="263">263</th><td>      <var>0xD29BE463</var>, <var>0x542F5D9E</var>, <var>0xAEC2771B</var>, <var>0xF64E6370</var>,</td></tr>
+<tr><th id="264">264</th><td>      <var>0x740E0D8D</var>, <var>0xE75B1357</var>, <var>0xF8721671</var>, <var>0xAF537D5D</var>,</td></tr>
+<tr><th id="265">265</th><td>      <var>0x4040CB08</var>, <var>0x4EB4E2CC</var>, <var>0x34D2466A</var>, <var>0x0115AF84</var>,</td></tr>
+<tr><th id="266">266</th><td>      <var>0xE1B00428</var>, <var>0x95983A1D</var>, <var>0x06B89FB4</var>, <var>0xCE6EA048</var>,</td></tr>
+<tr><th id="267">267</th><td>      <var>0x6F3F3B82</var>, <var>0x3520AB82</var>, <var>0x011A1D4B</var>, <var>0x277227F8</var>,</td></tr>
+<tr><th id="268">268</th><td>      <var>0x611560B1</var>, <var>0xE7933FDC</var>, <var>0xBB3A792B</var>, <var>0x344525BD</var>,</td></tr>
+<tr><th id="269">269</th><td>      <var>0xA08839E1</var>, <var>0x51CE794B</var>, <var>0x2F32C9B7</var>, <var>0xA01FBAC9</var>,</td></tr>
+<tr><th id="270">270</th><td>      <var>0xE01CC87E</var>, <var>0xBCC7D1F6</var>, <var>0xCF0111C3</var>, <var>0xA1E8AAC7</var>,</td></tr>
+<tr><th id="271">271</th><td>      <var>0x1A908749</var>, <var>0xD44FBD9A</var>, <var>0xD0DADECB</var>, <var>0xD50ADA38</var>,</td></tr>
+<tr><th id="272">272</th><td>      <var>0x0339C32A</var>, <var>0xC6913667</var>, <var>0x8DF9317C</var>, <var>0xE0B12B4F</var>,</td></tr>
+<tr><th id="273">273</th><td>      <var>0xF79E59B7</var>, <var>0x43F5BB3A</var>, <var>0xF2D519FF</var>, <var>0x27D9459C</var>,</td></tr>
+<tr><th id="274">274</th><td>      <var>0xBF97222C</var>, <var>0x15E6FC2A</var>, <var>0x0F91FC71</var>, <var>0x9B941525</var>,</td></tr>
+<tr><th id="275">275</th><td>      <var>0xFAE59361</var>, <var>0xCEB69CEB</var>, <var>0xC2A86459</var>, <var>0x12BAA8D1</var>,</td></tr>
+<tr><th id="276">276</th><td>      <var>0xB6C1075E</var>, <var>0xE3056A0C</var>, <var>0x10D25065</var>, <var>0xCB03A442</var>,</td></tr>
+<tr><th id="277">277</th><td>      <var>0xE0EC6E0E</var>, <var>0x1698DB3B</var>, <var>0x4C98A0BE</var>, <var>0x3278E964</var>,</td></tr>
+<tr><th id="278">278</th><td>      <var>0x9F1F9532</var>, <var>0xE0D392DF</var>, <var>0xD3A0342B</var>, <var>0x8971F21E</var>,</td></tr>
+<tr><th id="279">279</th><td>      <var>0x1B0A7441</var>, <var>0x4BA3348C</var>, <var>0xC5BE7120</var>, <var>0xC37632D8</var>,</td></tr>
+<tr><th id="280">280</th><td>      <var>0xDF359F8D</var>, <var>0x9B992F2E</var>, <var>0xE60B6F47</var>, <var>0x0FE3F11D</var>,</td></tr>
+<tr><th id="281">281</th><td>      <var>0xE54CDA54</var>, <var>0x1EDAD891</var>, <var>0xCE6279CF</var>, <var>0xCD3E7E6F</var>,</td></tr>
+<tr><th id="282">282</th><td>      <var>0x1618B166</var>, <var>0xFD2C1D05</var>, <var>0x848FD2C5</var>, <var>0xF6FB2299</var>,</td></tr>
+<tr><th id="283">283</th><td>      <var>0xF523F357</var>, <var>0xA6327623</var>, <var>0x93A83531</var>, <var>0x56CCCD02</var>,</td></tr>
+<tr><th id="284">284</th><td>      <var>0xACF08162</var>, <var>0x5A75EBB5</var>, <var>0x6E163697</var>, <var>0x88D273CC</var>,</td></tr>
+<tr><th id="285">285</th><td>      <var>0xDE966292</var>, <var>0x81B949D0</var>, <var>0x4C50901B</var>, <var>0x71C65614</var>,</td></tr>
+<tr><th id="286">286</th><td>      <var>0xE6C6C7BD</var>, <var>0x327A140A</var>, <var>0x45E1D006</var>, <var>0xC3F27B9A</var>,</td></tr>
+<tr><th id="287">287</th><td>      <var>0xC9AA53FD</var>, <var>0x62A80F00</var>, <var>0xBB25BFE2</var>, <var>0x35BDD2F6</var>,</td></tr>
+<tr><th id="288">288</th><td>      <var>0x71126905</var>, <var>0xB2040222</var>, <var>0xB6CBCF7C</var>, <var>0xCD769C2B</var>,</td></tr>
+<tr><th id="289">289</th><td>      <var>0x53113EC0</var>, <var>0x1640E3D3</var>, <var>0x38ABBD60</var>, <var>0x2547ADF0</var>,</td></tr>
+<tr><th id="290">290</th><td>      <var>0xBA38209C</var>, <var>0xF746CE76</var>, <var>0x77AFA1C5</var>, <var>0x20756060</var>,</td></tr>
+<tr><th id="291">291</th><td>      <var>0x85CBFE4E</var>, <var>0x8AE88DD8</var>, <var>0x7AAAF9B0</var>, <var>0x4CF9AA7E</var>,</td></tr>
+<tr><th id="292">292</th><td>      <var>0x1948C25C</var>, <var>0x02FB8A8C</var>, <var>0x01C36AE4</var>, <var>0xD6EBE1F9</var>,</td></tr>
+<tr><th id="293">293</th><td>      <var>0x90D4F869</var>, <var>0xA65CDEA0</var>, <var>0x3F09252D</var>, <var>0xC208E69F</var>,</td></tr>
+<tr><th id="294">294</th><td>      <var>0xB74E6132</var>, <var>0xCE77E25B</var>, <var>0x578FDFE3</var>, <var>0x3AC372E6</var> }</td></tr>
+<tr><th id="295">295</th><td>};</td></tr>
+<tr><th id="296">296</th><td></td></tr>
+<tr><th id="297">297</th><td><u>#define <dfn class="macro" id="_M/F" data-ref="_M/F">F</dfn>(Xl, Xr, P) \</u></td></tr>
+<tr><th id="298">298</th><td><u>    Xr ^=((( <a class="local col3 ref" href="#23ctx" title='ctx' data-ref="23ctx">ctx</a>-&gt;<a class="ref" href="blowfish.h.html#AVBlowfish::s" title='AVBlowfish::s' data-ref="AVBlowfish::s">s</a>[0][ Xl &gt;&gt; 24        ] \</u></td></tr>
+<tr><th id="299">299</th><td><u>           + <a class="local col3 ref" href="#23ctx" title='ctx' data-ref="23ctx">ctx</a>-&gt;<a class="ref" href="blowfish.h.html#AVBlowfish::s" title='AVBlowfish::s' data-ref="AVBlowfish::s">s</a>[1][(Xl &gt;&gt; 16) &amp; 0xFF])\</u></td></tr>
+<tr><th id="300">300</th><td><u>           ^ <a class="local col3 ref" href="#23ctx" title='ctx' data-ref="23ctx">ctx</a>-&gt;<a class="ref" href="blowfish.h.html#AVBlowfish::s" title='AVBlowfish::s' data-ref="AVBlowfish::s">s</a>[2][(Xl &gt;&gt;  8) &amp; 0xFF])\</u></td></tr>
+<tr><th id="301">301</th><td><u>           + <a class="local col3 ref" href="#23ctx" title='ctx' data-ref="23ctx">ctx</a>-&gt;<a class="ref" href="blowfish.h.html#AVBlowfish::s" title='AVBlowfish::s' data-ref="AVBlowfish::s">s</a>[3][ Xl        &amp; 0xFF])\</u></td></tr>
+<tr><th id="302">302</th><td><u>           ^ P;</u></td></tr>
+<tr><th id="303">303</th><td></td></tr>
+<tr><th id="304">304</th><td><a class="typedef" href="blowfish.h.html#AVBlowfish" title='AVBlowfish' data-type='struct AVBlowfish' data-ref="AVBlowfish">AVBlowfish</a> *<dfn class="decl def" id="av_blowfish_alloc" title='av_blowfish_alloc' data-ref="av_blowfish_alloc">av_blowfish_alloc</dfn>(<em>void</em>)</td></tr>
+<tr><th id="305">305</th><td>{</td></tr>
+<tr><th id="306">306</th><td>    <b>return</b> <a class="ref" href="mem.h.html#av_mallocz" title='av_mallocz' data-ref="av_mallocz">av_mallocz</a>(<b>sizeof</b>(<b>struct</b> <a class="type" href="blowfish.h.html#AVBlowfish" title='AVBlowfish' data-ref="AVBlowfish">AVBlowfish</a>));</td></tr>
+<tr><th id="307">307</th><td>}</td></tr>
+<tr><th id="308">308</th><td></td></tr>
+<tr><th id="309">309</th><td><a class="macro" href="attributes.h.html#84" title="" data-ref="_M/av_cold">av_cold</a> <em>void</em> <dfn class="decl def" id="av_blowfish_init" title='av_blowfish_init' data-ref="av_blowfish_init">av_blowfish_init</dfn>(<a class="typedef" href="blowfish.h.html#AVBlowfish" title='AVBlowfish' data-type='struct AVBlowfish' data-ref="AVBlowfish">AVBlowfish</a> *<dfn class="local col4 decl" id="14ctx" title='ctx' data-type='AVBlowfish *' data-ref="14ctx">ctx</dfn>, <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col5 decl" id="15key" title='key' data-type='const uint8_t *' data-ref="15key">key</dfn>, <em>int</em> <dfn class="local col6 decl" id="16key_len" title='key_len' data-type='int' data-ref="16key_len">key_len</dfn>)</td></tr>
+<tr><th id="310">310</th><td>{</td></tr>
+<tr><th id="311">311</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a> <dfn class="local col7 decl" id="17data" title='data' data-type='uint32_t' data-ref="17data">data</dfn>, <dfn class="local col8 decl" id="18data_l" title='data_l' data-type='uint32_t' data-ref="18data_l">data_l</dfn>, <dfn class="local col9 decl" id="19data_r" title='data_r' data-type='uint32_t' data-ref="19data_r">data_r</dfn>;</td></tr>
+<tr><th id="312">312</th><td>    <em>int</em> <dfn class="local col0 decl" id="20i" title='i' data-type='int' data-ref="20i">i</dfn>, <dfn class="local col1 decl" id="21j" title='j' data-type='int' data-ref="21j">j</dfn>, <dfn class="local col2 decl" id="22k" title='k' data-type='int' data-ref="22k">k</dfn>;</td></tr>
+<tr><th id="313">313</th><td></td></tr>
+<tr><th id="314">314</th><td>    <a class="ref" href="../../include/string.h.html#memcpy" title='memcpy' data-ref="memcpy">memcpy</a>(<a class="local col4 ref" href="#14ctx" title='ctx' data-ref="14ctx">ctx</a>-&gt;<a class="ref" href="blowfish.h.html#AVBlowfish::s" title='AVBlowfish::s' data-ref="AVBlowfish::s">s</a>, <a class="tu ref" href="#orig_s" title='orig_s' data-use='r' data-ref="orig_s">orig_s</a>, <b>sizeof</b>(<a class="tu ref" href="#orig_s" title='orig_s' data-use='r' data-ref="orig_s">orig_s</a>));</td></tr>
+<tr><th id="315">315</th><td></td></tr>
+<tr><th id="316">316</th><td>    <a class="local col1 ref" href="#21j" title='j' data-ref="21j">j</a> = <var>0</var>;</td></tr>
+<tr><th id="317">317</th><td>    <b>for</b> (<a class="local col0 ref" href="#20i" title='i' data-ref="20i">i</a> = <var>0</var>; <a class="local col0 ref" href="#20i" title='i' data-ref="20i">i</a> &lt; <a class="macro" href="blowfish.h.html#33" title="16" data-ref="_M/AV_BF_ROUNDS">AV_BF_ROUNDS</a> + <var>2</var>; ++<a class="local col0 ref" href="#20i" title='i' data-ref="20i">i</a>) {</td></tr>
+<tr><th id="318">318</th><td>        <a class="local col7 ref" href="#17data" title='data' data-ref="17data">data</a> = <var>0</var>;</td></tr>
+<tr><th id="319">319</th><td>        <b>for</b> (<a class="local col2 ref" href="#22k" title='k' data-ref="22k">k</a> = <var>0</var>; <a class="local col2 ref" href="#22k" title='k' data-ref="22k">k</a> &lt; <var>4</var>; <a class="local col2 ref" href="#22k" title='k' data-ref="22k">k</a>++) {</td></tr>
+<tr><th id="320">320</th><td>            <a class="local col7 ref" href="#17data" title='data' data-ref="17data">data</a> = (<a class="local col7 ref" href="#17data" title='data' data-ref="17data">data</a> &lt;&lt; <var>8</var>) | <a class="local col5 ref" href="#15key" title='key' data-ref="15key">key</a>[<a class="local col1 ref" href="#21j" title='j' data-ref="21j">j</a>];</td></tr>
+<tr><th id="321">321</th><td>            <b>if</b> (++<a class="local col1 ref" href="#21j" title='j' data-ref="21j">j</a> &gt;= <a class="local col6 ref" href="#16key_len" title='key_len' data-ref="16key_len">key_len</a>)</td></tr>
+<tr><th id="322">322</th><td>                <a class="local col1 ref" href="#21j" title='j' data-ref="21j">j</a> = <var>0</var>;</td></tr>
+<tr><th id="323">323</th><td>        }</td></tr>
+<tr><th id="324">324</th><td>        <a class="local col4 ref" href="#14ctx" title='ctx' data-ref="14ctx">ctx</a>-&gt;<a class="ref" href="blowfish.h.html#AVBlowfish::p" title='AVBlowfish::p' data-ref="AVBlowfish::p">p</a>[<a class="local col0 ref" href="#20i" title='i' data-ref="20i">i</a>] = <a class="tu ref" href="#orig_p" title='orig_p' data-use='r' data-ref="orig_p">orig_p</a>[<a class="local col0 ref" href="#20i" title='i' data-ref="20i">i</a>] ^ <a class="local col7 ref" href="#17data" title='data' data-ref="17data">data</a>;</td></tr>
+<tr><th id="325">325</th><td>    }</td></tr>
+<tr><th id="326">326</th><td></td></tr>
+<tr><th id="327">327</th><td>    <a class="local col8 ref" href="#18data_l" title='data_l' data-ref="18data_l">data_l</a> = <a class="local col9 ref" href="#19data_r" title='data_r' data-ref="19data_r">data_r</a> = <var>0</var>;</td></tr>
+<tr><th id="328">328</th><td></td></tr>
+<tr><th id="329">329</th><td>    <b>for</b> (<a class="local col0 ref" href="#20i" title='i' data-ref="20i">i</a> = <var>0</var>; <a class="local col0 ref" href="#20i" title='i' data-ref="20i">i</a> &lt; <a class="macro" href="blowfish.h.html#33" title="16" data-ref="_M/AV_BF_ROUNDS">AV_BF_ROUNDS</a> + <var>2</var>; <a class="local col0 ref" href="#20i" title='i' data-ref="20i">i</a> += <var>2</var>) {</td></tr>
+<tr><th id="330">330</th><td>        <a class="ref" href="#av_blowfish_crypt_ecb" title='av_blowfish_crypt_ecb' data-ref="av_blowfish_crypt_ecb">av_blowfish_crypt_ecb</a>(<a class="local col4 ref" href="#14ctx" title='ctx' data-ref="14ctx">ctx</a>, &amp;<a class="local col8 ref" href="#18data_l" title='data_l' data-ref="18data_l">data_l</a>, &amp;<a class="local col9 ref" href="#19data_r" title='data_r' data-ref="19data_r">data_r</a>, <var>0</var>);</td></tr>
+<tr><th id="331">331</th><td>        <a class="local col4 ref" href="#14ctx" title='ctx' data-ref="14ctx">ctx</a>-&gt;<a class="ref" href="blowfish.h.html#AVBlowfish::p" title='AVBlowfish::p' data-ref="AVBlowfish::p">p</a>[<a class="local col0 ref" href="#20i" title='i' data-ref="20i">i</a>]     = <a class="local col8 ref" href="#18data_l" title='data_l' data-ref="18data_l">data_l</a>;</td></tr>
+<tr><th id="332">332</th><td>        <a class="local col4 ref" href="#14ctx" title='ctx' data-ref="14ctx">ctx</a>-&gt;<a class="ref" href="blowfish.h.html#AVBlowfish::p" title='AVBlowfish::p' data-ref="AVBlowfish::p">p</a>[<a class="local col0 ref" href="#20i" title='i' data-ref="20i">i</a> + <var>1</var>] = <a class="local col9 ref" href="#19data_r" title='data_r' data-ref="19data_r">data_r</a>;</td></tr>
+<tr><th id="333">333</th><td>    }</td></tr>
+<tr><th id="334">334</th><td></td></tr>
+<tr><th id="335">335</th><td>    <b>for</b> (<a class="local col0 ref" href="#20i" title='i' data-ref="20i">i</a> = <var>0</var>; <a class="local col0 ref" href="#20i" title='i' data-ref="20i">i</a> &lt; <var>4</var>; ++<a class="local col0 ref" href="#20i" title='i' data-ref="20i">i</a>) {</td></tr>
+<tr><th id="336">336</th><td>        <b>for</b> (<a class="local col1 ref" href="#21j" title='j' data-ref="21j">j</a> = <var>0</var>; <a class="local col1 ref" href="#21j" title='j' data-ref="21j">j</a> &lt; <var>256</var>; <a class="local col1 ref" href="#21j" title='j' data-ref="21j">j</a> += <var>2</var>) {</td></tr>
+<tr><th id="337">337</th><td>            <a class="ref" href="#av_blowfish_crypt_ecb" title='av_blowfish_crypt_ecb' data-ref="av_blowfish_crypt_ecb">av_blowfish_crypt_ecb</a>(<a class="local col4 ref" href="#14ctx" title='ctx' data-ref="14ctx">ctx</a>, &amp;<a class="local col8 ref" href="#18data_l" title='data_l' data-ref="18data_l">data_l</a>, &amp;<a class="local col9 ref" href="#19data_r" title='data_r' data-ref="19data_r">data_r</a>, <var>0</var>);</td></tr>
+<tr><th id="338">338</th><td>            <a class="local col4 ref" href="#14ctx" title='ctx' data-ref="14ctx">ctx</a>-&gt;<a class="ref" href="blowfish.h.html#AVBlowfish::s" title='AVBlowfish::s' data-ref="AVBlowfish::s">s</a>[<a class="local col0 ref" href="#20i" title='i' data-ref="20i">i</a>][<a class="local col1 ref" href="#21j" title='j' data-ref="21j">j</a>]     = <a class="local col8 ref" href="#18data_l" title='data_l' data-ref="18data_l">data_l</a>;</td></tr>
+<tr><th id="339">339</th><td>            <a class="local col4 ref" href="#14ctx" title='ctx' data-ref="14ctx">ctx</a>-&gt;<a class="ref" href="blowfish.h.html#AVBlowfish::s" title='AVBlowfish::s' data-ref="AVBlowfish::s">s</a>[<a class="local col0 ref" href="#20i" title='i' data-ref="20i">i</a>][<a class="local col1 ref" href="#21j" title='j' data-ref="21j">j</a> + <var>1</var>] = <a class="local col9 ref" href="#19data_r" title='data_r' data-ref="19data_r">data_r</a>;</td></tr>
+<tr><th id="340">340</th><td>        }</td></tr>
+<tr><th id="341">341</th><td>    }</td></tr>
+<tr><th id="342">342</th><td>}</td></tr>
+<tr><th id="343">343</th><td></td></tr>
+<tr><th id="344">344</th><td><em>void</em> <dfn class="decl def" id="av_blowfish_crypt_ecb" title='av_blowfish_crypt_ecb' data-ref="av_blowfish_crypt_ecb">av_blowfish_crypt_ecb</dfn>(<a class="typedef" href="blowfish.h.html#AVBlowfish" title='AVBlowfish' data-type='struct AVBlowfish' data-ref="AVBlowfish">AVBlowfish</a> *<dfn class="local col3 decl" id="23ctx" title='ctx' data-type='AVBlowfish *' data-ref="23ctx">ctx</dfn>, <a class="typedef" href="../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a> *<dfn class="local col4 decl" id="24xl" title='xl' data-type='uint32_t *' data-ref="24xl">xl</dfn>, <a class="typedef" href="../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a> *<dfn class="local col5 decl" id="25xr" title='xr' data-type='uint32_t *' data-ref="25xr">xr</dfn>,</td></tr>
+<tr><th id="345">345</th><td>                           <em>int</em> <dfn class="local col6 decl" id="26decrypt" title='decrypt' data-type='int' data-ref="26decrypt">decrypt</dfn>)</td></tr>
+<tr><th id="346">346</th><td>{</td></tr>
+<tr><th id="347">347</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a> <dfn class="local col7 decl" id="27Xl" title='Xl' data-type='uint32_t' data-ref="27Xl">Xl</dfn>, <dfn class="local col8 decl" id="28Xr" title='Xr' data-type='uint32_t' data-ref="28Xr">Xr</dfn>;</td></tr>
+<tr><th id="348">348</th><td>    <em>int</em> <dfn class="local col9 decl" id="29i" title='i' data-type='int' data-ref="29i">i</dfn>;</td></tr>
+<tr><th id="349">349</th><td></td></tr>
+<tr><th id="350">350</th><td>    <a class="local col7 ref" href="#27Xl" title='Xl' data-ref="27Xl">Xl</a> = *<a class="local col4 ref" href="#24xl" title='xl' data-ref="24xl">xl</a>;</td></tr>
+<tr><th id="351">351</th><td>    <a class="local col8 ref" href="#28Xr" title='Xr' data-ref="28Xr">Xr</a> = *<a class="local col5 ref" href="#25xr" title='xr' data-ref="25xr">xr</a>;</td></tr>
+<tr><th id="352">352</th><td></td></tr>
+<tr><th id="353">353</th><td>    <b>if</b> (<a class="local col6 ref" href="#26decrypt" title='decrypt' data-ref="26decrypt">decrypt</a>) {</td></tr>
+<tr><th id="354">354</th><td>        <a class="local col7 ref" href="#27Xl" title='Xl' data-ref="27Xl">Xl</a> ^= <a class="local col3 ref" href="#23ctx" title='ctx' data-ref="23ctx">ctx</a>-&gt;<a class="ref" href="blowfish.h.html#AVBlowfish::p" title='AVBlowfish::p' data-ref="AVBlowfish::p">p</a>[<a class="macro" href="blowfish.h.html#33" title="16" data-ref="_M/AV_BF_ROUNDS">AV_BF_ROUNDS</a> + <var>1</var>];</td></tr>
+<tr><th id="355">355</th><td>        <b>for</b> (<a class="local col9 ref" href="#29i" title='i' data-ref="29i">i</a> = <a class="macro" href="blowfish.h.html#33" title="16" data-ref="_M/AV_BF_ROUNDS">AV_BF_ROUNDS</a>; <a class="local col9 ref" href="#29i" title='i' data-ref="29i">i</a> &gt; <var>0</var>; <a class="local col9 ref" href="#29i" title='i' data-ref="29i">i</a>-=<var>2</var>) {</td></tr>
+<tr><th id="356">356</th><td>            <a class="macro" href="#297" title="Xr ^=((( ctx-&gt;s[0][ Xl &gt;&gt; 24 ] + ctx-&gt;s[1][(Xl &gt;&gt; 16) &amp; 0xFF]) ^ ctx-&gt;s[2][(Xl &gt;&gt; 8) &amp; 0xFF]) + ctx-&gt;s[3][ Xl &amp; 0xFF]) ^ ctx-&gt;p[i ];" data-ref="_M/F">F</a>(<a class="local col7 ref" href="#27Xl" title='Xl' data-ref="27Xl">Xl</a>, <a class="local col8 ref" href="#28Xr" title='Xr' data-ref="28Xr">Xr</a>, <a class="local col3 ref" href="#23ctx" title='ctx' data-ref="23ctx">ctx</a>-&gt;<a class="ref" href="blowfish.h.html#AVBlowfish::p" title='AVBlowfish::p' data-ref="AVBlowfish::p">p</a>[<a class="local col9 ref" href="#29i" title='i' data-ref="29i">i</a>  ]);</td></tr>
+<tr><th id="357">357</th><td>            <a class="macro" href="#297" title="Xl ^=((( ctx-&gt;s[0][ Xr &gt;&gt; 24 ] + ctx-&gt;s[1][(Xr &gt;&gt; 16) &amp; 0xFF]) ^ ctx-&gt;s[2][(Xr &gt;&gt; 8) &amp; 0xFF]) + ctx-&gt;s[3][ Xr &amp; 0xFF]) ^ ctx-&gt;p[i-1];" data-ref="_M/F">F</a>(<a class="local col8 ref" href="#28Xr" title='Xr' data-ref="28Xr">Xr</a>, <a class="local col7 ref" href="#27Xl" title='Xl' data-ref="27Xl">Xl</a>, <a class="local col3 ref" href="#23ctx" title='ctx' data-ref="23ctx">ctx</a>-&gt;<a class="ref" href="blowfish.h.html#AVBlowfish::p" title='AVBlowfish::p' data-ref="AVBlowfish::p">p</a>[<a class="local col9 ref" href="#29i" title='i' data-ref="29i">i</a>-<var>1</var>]);</td></tr>
+<tr><th id="358">358</th><td>        }</td></tr>
+<tr><th id="359">359</th><td></td></tr>
+<tr><th id="360">360</th><td>        <a class="local col8 ref" href="#28Xr" title='Xr' data-ref="28Xr">Xr</a> ^= <a class="local col3 ref" href="#23ctx" title='ctx' data-ref="23ctx">ctx</a>-&gt;<a class="ref" href="blowfish.h.html#AVBlowfish::p" title='AVBlowfish::p' data-ref="AVBlowfish::p">p</a>[<var>0</var>];</td></tr>
+<tr><th id="361">361</th><td>    } <b>else</b> {</td></tr>
+<tr><th id="362">362</th><td>        <a class="local col7 ref" href="#27Xl" title='Xl' data-ref="27Xl">Xl</a> ^= <a class="local col3 ref" href="#23ctx" title='ctx' data-ref="23ctx">ctx</a>-&gt;<a class="ref" href="blowfish.h.html#AVBlowfish::p" title='AVBlowfish::p' data-ref="AVBlowfish::p">p</a>[<var>0</var>];</td></tr>
+<tr><th id="363">363</th><td>        <b>for</b> (<a class="local col9 ref" href="#29i" title='i' data-ref="29i">i</a> = <var>1</var>; <a class="local col9 ref" href="#29i" title='i' data-ref="29i">i</a> &lt; <a class="macro" href="blowfish.h.html#33" title="16" data-ref="_M/AV_BF_ROUNDS">AV_BF_ROUNDS</a>+<var>1</var>; <a class="local col9 ref" href="#29i" title='i' data-ref="29i">i</a>+=<var>2</var>){</td></tr>
+<tr><th id="364">364</th><td>            <a class="macro" href="#297" title="Xr ^=((( ctx-&gt;s[0][ Xl &gt;&gt; 24 ] + ctx-&gt;s[1][(Xl &gt;&gt; 16) &amp; 0xFF]) ^ ctx-&gt;s[2][(Xl &gt;&gt; 8) &amp; 0xFF]) + ctx-&gt;s[3][ Xl &amp; 0xFF]) ^ ctx-&gt;p[i ];" data-ref="_M/F">F</a>(<a class="local col7 ref" href="#27Xl" title='Xl' data-ref="27Xl">Xl</a>, <a class="local col8 ref" href="#28Xr" title='Xr' data-ref="28Xr">Xr</a>, <a class="local col3 ref" href="#23ctx" title='ctx' data-ref="23ctx">ctx</a>-&gt;<a class="ref" href="blowfish.h.html#AVBlowfish::p" title='AVBlowfish::p' data-ref="AVBlowfish::p">p</a>[<a class="local col9 ref" href="#29i" title='i' data-ref="29i">i</a>  ]);</td></tr>
+<tr><th id="365">365</th><td>            <a class="macro" href="#297" title="Xl ^=((( ctx-&gt;s[0][ Xr &gt;&gt; 24 ] + ctx-&gt;s[1][(Xr &gt;&gt; 16) &amp; 0xFF]) ^ ctx-&gt;s[2][(Xr &gt;&gt; 8) &amp; 0xFF]) + ctx-&gt;s[3][ Xr &amp; 0xFF]) ^ ctx-&gt;p[i+1];" data-ref="_M/F">F</a>(<a class="local col8 ref" href="#28Xr" title='Xr' data-ref="28Xr">Xr</a>, <a class="local col7 ref" href="#27Xl" title='Xl' data-ref="27Xl">Xl</a>, <a class="local col3 ref" href="#23ctx" title='ctx' data-ref="23ctx">ctx</a>-&gt;<a class="ref" href="blowfish.h.html#AVBlowfish::p" title='AVBlowfish::p' data-ref="AVBlowfish::p">p</a>[<a class="local col9 ref" href="#29i" title='i' data-ref="29i">i</a>+<var>1</var>]);</td></tr>
+<tr><th id="366">366</th><td>        }</td></tr>
+<tr><th id="367">367</th><td></td></tr>
+<tr><th id="368">368</th><td>        <a class="local col8 ref" href="#28Xr" title='Xr' data-ref="28Xr">Xr</a> ^= <a class="local col3 ref" href="#23ctx" title='ctx' data-ref="23ctx">ctx</a>-&gt;<a class="ref" href="blowfish.h.html#AVBlowfish::p" title='AVBlowfish::p' data-ref="AVBlowfish::p">p</a>[<a class="macro" href="blowfish.h.html#33" title="16" data-ref="_M/AV_BF_ROUNDS">AV_BF_ROUNDS</a> + <var>1</var>];</td></tr>
+<tr><th id="369">369</th><td>    }</td></tr>
+<tr><th id="370">370</th><td></td></tr>
+<tr><th id="371">371</th><td>    *<a class="local col4 ref" href="#24xl" title='xl' data-ref="24xl">xl</a> = <a class="local col8 ref" href="#28Xr" title='Xr' data-ref="28Xr">Xr</a>;</td></tr>
+<tr><th id="372">372</th><td>    *<a class="local col5 ref" href="#25xr" title='xr' data-ref="25xr">xr</a> = <a class="local col7 ref" href="#27Xl" title='Xl' data-ref="27Xl">Xl</a>;</td></tr>
+<tr><th id="373">373</th><td>}</td></tr>
+<tr><th id="374">374</th><td></td></tr>
+<tr><th id="375">375</th><td><em>void</em> <dfn class="decl def" id="av_blowfish_crypt" title='av_blowfish_crypt' data-ref="av_blowfish_crypt">av_blowfish_crypt</dfn>(<a class="typedef" href="blowfish.h.html#AVBlowfish" title='AVBlowfish' data-type='struct AVBlowfish' data-ref="AVBlowfish">AVBlowfish</a> *<dfn class="local col0 decl" id="30ctx" title='ctx' data-type='AVBlowfish *' data-ref="30ctx">ctx</dfn>, <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col1 decl" id="31dst" title='dst' data-type='uint8_t *' data-ref="31dst">dst</dfn>, <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col2 decl" id="32src" title='src' data-type='const uint8_t *' data-ref="32src">src</dfn>,</td></tr>
+<tr><th id="376">376</th><td>                       <em>int</em> <dfn class="local col3 decl" id="33count" title='count' data-type='int' data-ref="33count">count</dfn>, <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col4 decl" id="34iv" title='iv' data-type='uint8_t *' data-ref="34iv">iv</dfn>, <em>int</em> <dfn class="local col5 decl" id="35decrypt" title='decrypt' data-type='int' data-ref="35decrypt">decrypt</dfn>)</td></tr>
+<tr><th id="377">377</th><td>{</td></tr>
+<tr><th id="378">378</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a> <dfn class="local col6 decl" id="36v0" title='v0' data-type='uint32_t' data-ref="36v0">v0</dfn>, <dfn class="local col7 decl" id="37v1" title='v1' data-type='uint32_t' data-ref="37v1">v1</dfn>;</td></tr>
+<tr><th id="379">379</th><td>    <em>int</em> <dfn class="local col8 decl" id="38i" title='i' data-type='int' data-ref="38i">i</dfn>;</td></tr>
+<tr><th id="380">380</th><td></td></tr>
+<tr><th id="381">381</th><td>    <b>if</b> (<a class="local col5 ref" href="#35decrypt" title='decrypt' data-ref="35decrypt">decrypt</a>) {</td></tr>
+<tr><th id="382">382</th><td>        <b>while</b> (<a class="local col3 ref" href="#33count" title='count' data-ref="33count">count</a>--) {</td></tr>
+<tr><th id="383">383</th><td>            <a class="local col6 ref" href="#36v0" title='v0' data-ref="36v0">v0</a> = <a class="macro" href="intreadwrite.h.html#416" title="av_bswap32((((const union unaligned_32 *) (src))-&gt;l))" data-ref="_M/AV_RB32">AV_RB32</a>(<a class="local col2 ref" href="#32src" title='src' data-ref="32src">src</a>);</td></tr>
+<tr><th id="384">384</th><td>            <a class="local col7 ref" href="#37v1" title='v1' data-ref="37v1">v1</a> = <a class="macro" href="intreadwrite.h.html#416" title="av_bswap32((((const union unaligned_32 *) (src + 4))-&gt;l))" data-ref="_M/AV_RB32">AV_RB32</a>(<a class="local col2 ref" href="#32src" title='src' data-ref="32src">src</a> + <var>4</var>);</td></tr>
+<tr><th id="385">385</th><td></td></tr>
+<tr><th id="386">386</th><td>            <a class="ref" href="#av_blowfish_crypt_ecb" title='av_blowfish_crypt_ecb' data-ref="av_blowfish_crypt_ecb">av_blowfish_crypt_ecb</a>(<a class="local col0 ref" href="#30ctx" title='ctx' data-ref="30ctx">ctx</a>, &amp;<a class="local col6 ref" href="#36v0" title='v0' data-ref="36v0">v0</a>, &amp;<a class="local col7 ref" href="#37v1" title='v1' data-ref="37v1">v1</a>, <a class="local col5 ref" href="#35decrypt" title='decrypt' data-ref="35decrypt">decrypt</a>);</td></tr>
+<tr><th id="387">387</th><td></td></tr>
+<tr><th id="388">388</th><td>            <b>if</b> (<a class="local col4 ref" href="#34iv" title='iv' data-ref="34iv">iv</a>) {</td></tr>
+<tr><th id="389">389</th><td>                <a class="local col6 ref" href="#36v0" title='v0' data-ref="36v0">v0</a> ^= <a class="macro" href="intreadwrite.h.html#416" title="av_bswap32((((const union unaligned_32 *) (iv))-&gt;l))" data-ref="_M/AV_RB32">AV_RB32</a>(<a class="local col4 ref" href="#34iv" title='iv' data-ref="34iv">iv</a>);</td></tr>
+<tr><th id="390">390</th><td>                <a class="local col7 ref" href="#37v1" title='v1' data-ref="37v1">v1</a> ^= <a class="macro" href="intreadwrite.h.html#416" title="av_bswap32((((const union unaligned_32 *) (iv + 4))-&gt;l))" data-ref="_M/AV_RB32">AV_RB32</a>(<a class="local col4 ref" href="#34iv" title='iv' data-ref="34iv">iv</a> + <var>4</var>);</td></tr>
+<tr><th id="391">391</th><td>                <a class="ref" href="../../include/string.h.html#memcpy" title='memcpy' data-ref="memcpy">memcpy</a>(<a class="local col4 ref" href="#34iv" title='iv' data-ref="34iv">iv</a>, <a class="local col2 ref" href="#32src" title='src' data-ref="32src">src</a>, <var>8</var>);</td></tr>
+<tr><th id="392">392</th><td>            }</td></tr>
+<tr><th id="393">393</th><td></td></tr>
+<tr><th id="394">394</th><td>            <a class="macro" href="intreadwrite.h.html#419" title="((((union unaligned_32 *) (dst))-&gt;l) = (av_bswap32(v0)))" data-ref="_M/AV_WB32">AV_WB32</a>(<a class="local col1 ref" href="#31dst" title='dst' data-ref="31dst">dst</a>, <a class="local col6 ref" href="#36v0" title='v0' data-ref="36v0">v0</a>);</td></tr>
+<tr><th id="395">395</th><td>            <a class="macro" href="intreadwrite.h.html#419" title="((((union unaligned_32 *) (dst + 4))-&gt;l) = (av_bswap32(v1)))" data-ref="_M/AV_WB32">AV_WB32</a>(<a class="local col1 ref" href="#31dst" title='dst' data-ref="31dst">dst</a> + <var>4</var>, <a class="local col7 ref" href="#37v1" title='v1' data-ref="37v1">v1</a>);</td></tr>
+<tr><th id="396">396</th><td></td></tr>
+<tr><th id="397">397</th><td>            <a class="local col2 ref" href="#32src" title='src' data-ref="32src">src</a>   += <var>8</var>;</td></tr>
+<tr><th id="398">398</th><td>            <a class="local col1 ref" href="#31dst" title='dst' data-ref="31dst">dst</a>   += <var>8</var>;</td></tr>
+<tr><th id="399">399</th><td>        }</td></tr>
+<tr><th id="400">400</th><td>    } <b>else</b> {</td></tr>
+<tr><th id="401">401</th><td>        <b>while</b> (<a class="local col3 ref" href="#33count" title='count' data-ref="33count">count</a>--) {</td></tr>
+<tr><th id="402">402</th><td>            <b>if</b> (<a class="local col4 ref" href="#34iv" title='iv' data-ref="34iv">iv</a>) {</td></tr>
+<tr><th id="403">403</th><td>                <b>for</b> (<a class="local col8 ref" href="#38i" title='i' data-ref="38i">i</a> = <var>0</var>; <a class="local col8 ref" href="#38i" title='i' data-ref="38i">i</a> &lt; <var>8</var>; <a class="local col8 ref" href="#38i" title='i' data-ref="38i">i</a>++)</td></tr>
+<tr><th id="404">404</th><td>                    <a class="local col1 ref" href="#31dst" title='dst' data-ref="31dst">dst</a>[<a class="local col8 ref" href="#38i" title='i' data-ref="38i">i</a>] = <a class="local col2 ref" href="#32src" title='src' data-ref="32src">src</a>[<a class="local col8 ref" href="#38i" title='i' data-ref="38i">i</a>] ^ <a class="local col4 ref" href="#34iv" title='iv' data-ref="34iv">iv</a>[<a class="local col8 ref" href="#38i" title='i' data-ref="38i">i</a>];</td></tr>
+<tr><th id="405">405</th><td>                <a class="local col6 ref" href="#36v0" title='v0' data-ref="36v0">v0</a> = <a class="macro" href="intreadwrite.h.html#416" title="av_bswap32((((const union unaligned_32 *) (dst))-&gt;l))" data-ref="_M/AV_RB32">AV_RB32</a>(<a class="local col1 ref" href="#31dst" title='dst' data-ref="31dst">dst</a>);</td></tr>
+<tr><th id="406">406</th><td>                <a class="local col7 ref" href="#37v1" title='v1' data-ref="37v1">v1</a> = <a class="macro" href="intreadwrite.h.html#416" title="av_bswap32((((const union unaligned_32 *) (dst + 4))-&gt;l))" data-ref="_M/AV_RB32">AV_RB32</a>(<a class="local col1 ref" href="#31dst" title='dst' data-ref="31dst">dst</a> + <var>4</var>);</td></tr>
+<tr><th id="407">407</th><td>            } <b>else</b> {</td></tr>
+<tr><th id="408">408</th><td>                <a class="local col6 ref" href="#36v0" title='v0' data-ref="36v0">v0</a> = <a class="macro" href="intreadwrite.h.html#416" title="av_bswap32((((const union unaligned_32 *) (src))-&gt;l))" data-ref="_M/AV_RB32">AV_RB32</a>(<a class="local col2 ref" href="#32src" title='src' data-ref="32src">src</a>);</td></tr>
+<tr><th id="409">409</th><td>                <a class="local col7 ref" href="#37v1" title='v1' data-ref="37v1">v1</a> = <a class="macro" href="intreadwrite.h.html#416" title="av_bswap32((((const union unaligned_32 *) (src + 4))-&gt;l))" data-ref="_M/AV_RB32">AV_RB32</a>(<a class="local col2 ref" href="#32src" title='src' data-ref="32src">src</a> + <var>4</var>);</td></tr>
+<tr><th id="410">410</th><td>            }</td></tr>
+<tr><th id="411">411</th><td></td></tr>
+<tr><th id="412">412</th><td>            <a class="ref" href="#av_blowfish_crypt_ecb" title='av_blowfish_crypt_ecb' data-ref="av_blowfish_crypt_ecb">av_blowfish_crypt_ecb</a>(<a class="local col0 ref" href="#30ctx" title='ctx' data-ref="30ctx">ctx</a>, &amp;<a class="local col6 ref" href="#36v0" title='v0' data-ref="36v0">v0</a>, &amp;<a class="local col7 ref" href="#37v1" title='v1' data-ref="37v1">v1</a>, <a class="local col5 ref" href="#35decrypt" title='decrypt' data-ref="35decrypt">decrypt</a>);</td></tr>
+<tr><th id="413">413</th><td></td></tr>
+<tr><th id="414">414</th><td>            <a class="macro" href="intreadwrite.h.html#419" title="((((union unaligned_32 *) (dst))-&gt;l) = (av_bswap32(v0)))" data-ref="_M/AV_WB32">AV_WB32</a>(<a class="local col1 ref" href="#31dst" title='dst' data-ref="31dst">dst</a>, <a class="local col6 ref" href="#36v0" title='v0' data-ref="36v0">v0</a>);</td></tr>
+<tr><th id="415">415</th><td>            <a class="macro" href="intreadwrite.h.html#419" title="((((union unaligned_32 *) (dst + 4))-&gt;l) = (av_bswap32(v1)))" data-ref="_M/AV_WB32">AV_WB32</a>(<a class="local col1 ref" href="#31dst" title='dst' data-ref="31dst">dst</a> + <var>4</var>, <a class="local col7 ref" href="#37v1" title='v1' data-ref="37v1">v1</a>);</td></tr>
+<tr><th id="416">416</th><td></td></tr>
+<tr><th id="417">417</th><td>            <b>if</b> (<a class="local col4 ref" href="#34iv" title='iv' data-ref="34iv">iv</a>)</td></tr>
+<tr><th id="418">418</th><td>                <a class="ref" href="../../include/string.h.html#memcpy" title='memcpy' data-ref="memcpy">memcpy</a>(<a class="local col4 ref" href="#34iv" title='iv' data-ref="34iv">iv</a>, <a class="local col1 ref" href="#31dst" title='dst' data-ref="31dst">dst</a>, <var>8</var>);</td></tr>
+<tr><th id="419">419</th><td></td></tr>
+<tr><th id="420">420</th><td>            <a class="local col2 ref" href="#32src" title='src' data-ref="32src">src</a>   += <var>8</var>;</td></tr>
+<tr><th id="421">421</th><td>            <a class="local col1 ref" href="#31dst" title='dst' data-ref="31dst">dst</a>   += <var>8</var>;</td></tr>
+<tr><th id="422">422</th><td>        }</td></tr>
+<tr><th id="423">423</th><td>    }</td></tr>
+<tr><th id="424">424</th><td>}</td></tr>
+<tr><th id="425">425</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

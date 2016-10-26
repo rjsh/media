@@ -1,0 +1,271 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>movenc.h source code [ffmpeg/libavformat/movenc.h] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="HintSample,HintSampleQueue,MOVFragmentInfo,MOVIentry,MOVMuxContext,MOVTrack "/>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavformat/movenc.h'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavformat</a>/<a href='movenc.h.html'>movenc.h</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * MOV, 3GP, MP4 muxer</i></td></tr>
+<tr><th id="3">3</th><td><i> * Copyright (c) 2003 Thomas Raivio</i></td></tr>
+<tr><th id="4">4</th><td><i> * Copyright (c) 2004 Gildas Bazin &lt;gbazin at videolan dot org&gt;</i></td></tr>
+<tr><th id="5">5</th><td><i> * Copyright (c) 2009 Baptiste Coudurier &lt;baptiste dot coudurier at gmail dot com&gt;</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="8">8</th><td><i> *</i></td></tr>
+<tr><th id="9">9</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="10">10</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="11">11</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="12">12</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="13">13</th><td><i> *</i></td></tr>
+<tr><th id="14">14</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="15">15</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="16">16</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="17">17</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="18">18</th><td><i> *</i></td></tr>
+<tr><th id="19">19</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="20">20</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="21">21</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="22">22</th><td><i> */</i></td></tr>
+<tr><th id="23">23</th><td></td></tr>
+<tr><th id="24">24</th><td><u>#<span data-ppcond="24">ifndef</span> <span class="macro" data-ref="_M/AVFORMAT_MOVENC_H">AVFORMAT_MOVENC_H</span></u></td></tr>
+<tr><th id="25">25</th><td><u>#define <dfn class="macro" id="_M/AVFORMAT_MOVENC_H" data-ref="_M/AVFORMAT_MOVENC_H">AVFORMAT_MOVENC_H</dfn></u></td></tr>
+<tr><th id="26">26</th><td></td></tr>
+<tr><th id="27">27</th><td><u>#include <a href="avformat.h.html">"avformat.h"</a></u></td></tr>
+<tr><th id="28">28</th><td><u>#include <a href="movenccenc.h.html">"movenccenc.h"</a></u></td></tr>
+<tr><th id="29">29</th><td></td></tr>
+<tr><th id="30">30</th><td><u>#define <dfn class="macro" id="_M/MOV_FRAG_INFO_ALLOC_INCREMENT" data-ref="_M/MOV_FRAG_INFO_ALLOC_INCREMENT">MOV_FRAG_INFO_ALLOC_INCREMENT</dfn> 64</u></td></tr>
+<tr><th id="31">31</th><td><u>#define <dfn class="macro" id="_M/MOV_INDEX_CLUSTER_SIZE" data-ref="_M/MOV_INDEX_CLUSTER_SIZE">MOV_INDEX_CLUSTER_SIZE</dfn> 1024</u></td></tr>
+<tr><th id="32">32</th><td><u>#define <dfn class="macro" id="_M/MOV_TIMESCALE" data-ref="_M/MOV_TIMESCALE">MOV_TIMESCALE</dfn> 1000</u></td></tr>
+<tr><th id="33">33</th><td></td></tr>
+<tr><th id="34">34</th><td><u>#define <dfn class="macro" id="_M/RTP_MAX_PACKET_SIZE" data-ref="_M/RTP_MAX_PACKET_SIZE">RTP_MAX_PACKET_SIZE</dfn> 1450</u></td></tr>
+<tr><th id="35">35</th><td></td></tr>
+<tr><th id="36">36</th><td><u>#define <dfn class="macro" id="_M/MODE_MP4" data-ref="_M/MODE_MP4">MODE_MP4</dfn>  0x01</u></td></tr>
+<tr><th id="37">37</th><td><u>#define <dfn class="macro" id="_M/MODE_MOV" data-ref="_M/MODE_MOV">MODE_MOV</dfn>  0x02</u></td></tr>
+<tr><th id="38">38</th><td><u>#define <dfn class="macro" id="_M/MODE_3GP" data-ref="_M/MODE_3GP">MODE_3GP</dfn>  0x04</u></td></tr>
+<tr><th id="39">39</th><td><u>#define <dfn class="macro" id="_M/MODE_PSP" data-ref="_M/MODE_PSP">MODE_PSP</dfn>  0x08 // example working PSP command line:</u></td></tr>
+<tr><th id="40">40</th><td><i>// ffmpeg -i testinput.avi  -f psp -r 14.985 -s 320x240 -b 768 -ar 24000 -ab 32 M4V00001.MP4</i></td></tr>
+<tr><th id="41">41</th><td><u>#define <dfn class="macro" id="_M/MODE_3G2" data-ref="_M/MODE_3G2">MODE_3G2</dfn>  0x10</u></td></tr>
+<tr><th id="42">42</th><td><u>#define <dfn class="macro" id="_M/MODE_IPOD" data-ref="_M/MODE_IPOD">MODE_IPOD</dfn> 0x20</u></td></tr>
+<tr><th id="43">43</th><td><u>#define <dfn class="macro" id="_M/MODE_ISM" data-ref="_M/MODE_ISM">MODE_ISM</dfn>  0x40</u></td></tr>
+<tr><th id="44">44</th><td><u>#define <dfn class="macro" id="_M/MODE_F4V" data-ref="_M/MODE_F4V">MODE_F4V</dfn>  0x80</u></td></tr>
+<tr><th id="45">45</th><td></td></tr>
+<tr><th id="46">46</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="MOVIentry" title='MOVIentry' data-ref="MOVIentry"><a class="type" href="#MOVIentry" title='MOVIentry' data-ref="MOVIentry">MOVIentry</a></dfn> {</td></tr>
+<tr><th id="47">47</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint64_t" title='uint64_t' data-type='unsigned long' data-ref="uint64_t">uint64_t</a>     <dfn class="decl" id="MOVIentry::pos" title='MOVIentry::pos' data-ref="MOVIentry::pos">pos</dfn>;</td></tr>
+<tr><th id="48">48</th><td>    <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a>      <dfn class="decl" id="MOVIentry::dts" title='MOVIentry::dts' data-ref="MOVIentry::dts">dts</dfn>;</td></tr>
+<tr><th id="49">49</th><td>    <em>unsigned</em> <em>int</em> <dfn class="decl" id="MOVIentry::size" title='MOVIentry::size' data-ref="MOVIentry::size">size</dfn>;</td></tr>
+<tr><th id="50">50</th><td>    <em>unsigned</em> <em>int</em> <dfn class="decl" id="MOVIentry::samples_in_chunk" title='MOVIentry::samples_in_chunk' data-ref="MOVIentry::samples_in_chunk">samples_in_chunk</dfn>;</td></tr>
+<tr><th id="51">51</th><td>    <em>unsigned</em> <em>int</em> <dfn class="decl" id="MOVIentry::chunkNum" title='MOVIentry::chunkNum' data-ref="MOVIentry::chunkNum">chunkNum</dfn>;              <i class="doc">///&lt; Chunk number if the current entry is a chunk start otherwise 0</i></td></tr>
+<tr><th id="52">52</th><td>    <em>unsigned</em> <em>int</em> <dfn class="decl" id="MOVIentry::entries" title='MOVIentry::entries' data-ref="MOVIentry::entries">entries</dfn>;</td></tr>
+<tr><th id="53">53</th><td>    <em>int</em>          <dfn class="decl" id="MOVIentry::cts" title='MOVIentry::cts' data-ref="MOVIentry::cts">cts</dfn>;</td></tr>
+<tr><th id="54">54</th><td><u>#define <dfn class="macro" id="_M/MOV_SYNC_SAMPLE" data-ref="_M/MOV_SYNC_SAMPLE">MOV_SYNC_SAMPLE</dfn>         0x0001</u></td></tr>
+<tr><th id="55">55</th><td><u>#define <dfn class="macro" id="_M/MOV_PARTIAL_SYNC_SAMPLE" data-ref="_M/MOV_PARTIAL_SYNC_SAMPLE">MOV_PARTIAL_SYNC_SAMPLE</dfn> 0x0002</u></td></tr>
+<tr><th id="56">56</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a>     <dfn class="decl" id="MOVIentry::flags" title='MOVIentry::flags' data-ref="MOVIentry::flags">flags</dfn>;</td></tr>
+<tr><th id="57">57</th><td>} <dfn class="typedef" id="MOVIentry" title='MOVIentry' data-type='struct MOVIentry' data-ref="MOVIentry">MOVIentry</dfn>;</td></tr>
+<tr><th id="58">58</th><td></td></tr>
+<tr><th id="59">59</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="HintSample" title='HintSample' data-ref="HintSample"><a class="type" href="#HintSample" title='HintSample' data-ref="HintSample">HintSample</a></dfn> {</td></tr>
+<tr><th id="60">60</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="decl" id="HintSample::data" title='HintSample::data' data-ref="HintSample::data">data</dfn>;</td></tr>
+<tr><th id="61">61</th><td>    <em>int</em> <dfn class="decl" id="HintSample::size" title='HintSample::size' data-ref="HintSample::size">size</dfn>;</td></tr>
+<tr><th id="62">62</th><td>    <em>int</em> <dfn class="decl" id="HintSample::sample_number" title='HintSample::sample_number' data-ref="HintSample::sample_number">sample_number</dfn>;</td></tr>
+<tr><th id="63">63</th><td>    <em>int</em> <dfn class="decl" id="HintSample::offset" title='HintSample::offset' data-ref="HintSample::offset">offset</dfn>;</td></tr>
+<tr><th id="64">64</th><td>    <em>int</em> <dfn class="decl" id="HintSample::own_data" title='HintSample::own_data' data-ref="HintSample::own_data">own_data</dfn>;</td></tr>
+<tr><th id="65">65</th><td>} <dfn class="typedef" id="HintSample" title='HintSample' data-type='struct HintSample' data-ref="HintSample">HintSample</dfn>;</td></tr>
+<tr><th id="66">66</th><td></td></tr>
+<tr><th id="67">67</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="HintSampleQueue" title='HintSampleQueue' data-ref="HintSampleQueue"><a class="type" href="#HintSampleQueue" title='HintSampleQueue' data-ref="HintSampleQueue">HintSampleQueue</a></dfn> {</td></tr>
+<tr><th id="68">68</th><td>    <em>int</em> <dfn class="decl" id="HintSampleQueue::size" title='HintSampleQueue::size' data-ref="HintSampleQueue::size">size</dfn>;</td></tr>
+<tr><th id="69">69</th><td>    <em>int</em> <dfn class="decl" id="HintSampleQueue::len" title='HintSampleQueue::len' data-ref="HintSampleQueue::len">len</dfn>;</td></tr>
+<tr><th id="70">70</th><td>    <a class="typedef" href="#HintSample" title='HintSample' data-type='struct HintSample' data-ref="HintSample">HintSample</a> *<dfn class="decl" id="HintSampleQueue::samples" title='HintSampleQueue::samples' data-ref="HintSampleQueue::samples">samples</dfn>;</td></tr>
+<tr><th id="71">71</th><td>} <dfn class="typedef" id="HintSampleQueue" title='HintSampleQueue' data-type='struct HintSampleQueue' data-ref="HintSampleQueue">HintSampleQueue</dfn>;</td></tr>
+<tr><th id="72">72</th><td></td></tr>
+<tr><th id="73">73</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="MOVFragmentInfo" title='MOVFragmentInfo' data-ref="MOVFragmentInfo"><a class="type" href="#MOVFragmentInfo" title='MOVFragmentInfo' data-ref="MOVFragmentInfo">MOVFragmentInfo</a></dfn> {</td></tr>
+<tr><th id="74">74</th><td>    <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="decl" id="MOVFragmentInfo::offset" title='MOVFragmentInfo::offset' data-ref="MOVFragmentInfo::offset">offset</dfn>;</td></tr>
+<tr><th id="75">75</th><td>    <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="decl" id="MOVFragmentInfo::time" title='MOVFragmentInfo::time' data-ref="MOVFragmentInfo::time">time</dfn>;</td></tr>
+<tr><th id="76">76</th><td>    <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="decl" id="MOVFragmentInfo::duration" title='MOVFragmentInfo::duration' data-ref="MOVFragmentInfo::duration">duration</dfn>;</td></tr>
+<tr><th id="77">77</th><td>    <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="decl" id="MOVFragmentInfo::tfrf_offset" title='MOVFragmentInfo::tfrf_offset' data-ref="MOVFragmentInfo::tfrf_offset">tfrf_offset</dfn>;</td></tr>
+<tr><th id="78">78</th><td>    <em>int</em> <dfn class="decl" id="MOVFragmentInfo::size" title='MOVFragmentInfo::size' data-ref="MOVFragmentInfo::size">size</dfn>;</td></tr>
+<tr><th id="79">79</th><td>} <dfn class="typedef" id="MOVFragmentInfo" title='MOVFragmentInfo' data-type='struct MOVFragmentInfo' data-ref="MOVFragmentInfo">MOVFragmentInfo</dfn>;</td></tr>
+<tr><th id="80">80</th><td></td></tr>
+<tr><th id="81">81</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="MOVTrack" title='MOVTrack' data-ref="MOVTrack"><a class="type" href="#MOVTrack" title='MOVTrack' data-ref="MOVTrack">MOVTrack</a></dfn> {</td></tr>
+<tr><th id="82">82</th><td>    <em>int</em>         <dfn class="decl" id="MOVTrack::mode" title='MOVTrack::mode' data-ref="MOVTrack::mode">mode</dfn>;</td></tr>
+<tr><th id="83">83</th><td>    <em>int</em>         <dfn class="decl" id="MOVTrack::entry" title='MOVTrack::entry' data-ref="MOVTrack::entry">entry</dfn>;</td></tr>
+<tr><th id="84">84</th><td>    <em>unsigned</em>    <dfn class="decl" id="MOVTrack::timescale" title='MOVTrack::timescale' data-ref="MOVTrack::timescale">timescale</dfn>;</td></tr>
+<tr><th id="85">85</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint64_t" title='uint64_t' data-type='unsigned long' data-ref="uint64_t">uint64_t</a>    <dfn class="decl" id="MOVTrack::time" title='MOVTrack::time' data-ref="MOVTrack::time">time</dfn>;</td></tr>
+<tr><th id="86">86</th><td>    <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a>     <dfn class="decl" id="MOVTrack::track_duration" title='MOVTrack::track_duration' data-ref="MOVTrack::track_duration">track_duration</dfn>;</td></tr>
+<tr><th id="87">87</th><td>    <em>int</em>         <dfn class="decl" id="MOVTrack::last_sample_is_subtitle_end" title='MOVTrack::last_sample_is_subtitle_end' data-ref="MOVTrack::last_sample_is_subtitle_end">last_sample_is_subtitle_end</dfn>;</td></tr>
+<tr><th id="88">88</th><td>    <em>long</em>        <dfn class="decl" id="MOVTrack::sample_count" title='MOVTrack::sample_count' data-ref="MOVTrack::sample_count">sample_count</dfn>;</td></tr>
+<tr><th id="89">89</th><td>    <em>long</em>        <dfn class="decl" id="MOVTrack::sample_size" title='MOVTrack::sample_size' data-ref="MOVTrack::sample_size">sample_size</dfn>;</td></tr>
+<tr><th id="90">90</th><td>    <em>long</em>        <dfn class="decl" id="MOVTrack::chunkCount" title='MOVTrack::chunkCount' data-ref="MOVTrack::chunkCount">chunkCount</dfn>;</td></tr>
+<tr><th id="91">91</th><td>    <em>int</em>         <dfn class="decl" id="MOVTrack::has_keyframes" title='MOVTrack::has_keyframes' data-ref="MOVTrack::has_keyframes">has_keyframes</dfn>;</td></tr>
+<tr><th id="92">92</th><td><u>#define <dfn class="macro" id="_M/MOV_TRACK_CTTS" data-ref="_M/MOV_TRACK_CTTS">MOV_TRACK_CTTS</dfn>         0x0001</u></td></tr>
+<tr><th id="93">93</th><td><u>#define <dfn class="macro" id="_M/MOV_TRACK_STPS" data-ref="_M/MOV_TRACK_STPS">MOV_TRACK_STPS</dfn>         0x0002</u></td></tr>
+<tr><th id="94">94</th><td><u>#define <dfn class="macro" id="_M/MOV_TRACK_ENABLED" data-ref="_M/MOV_TRACK_ENABLED">MOV_TRACK_ENABLED</dfn>      0x0004</u></td></tr>
+<tr><th id="95">95</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a>    <dfn class="decl" id="MOVTrack::flags" title='MOVTrack::flags' data-ref="MOVTrack::flags">flags</dfn>;</td></tr>
+<tr><th id="96">96</th><td><u>#define <dfn class="macro" id="_M/MOV_TIMECODE_FLAG_DROPFRAME" data-ref="_M/MOV_TIMECODE_FLAG_DROPFRAME">MOV_TIMECODE_FLAG_DROPFRAME</dfn>     0x0001</u></td></tr>
+<tr><th id="97">97</th><td><u>#define <dfn class="macro" id="_M/MOV_TIMECODE_FLAG_24HOURSMAX" data-ref="_M/MOV_TIMECODE_FLAG_24HOURSMAX">MOV_TIMECODE_FLAG_24HOURSMAX</dfn>    0x0002</u></td></tr>
+<tr><th id="98">98</th><td><u>#define <dfn class="macro" id="_M/MOV_TIMECODE_FLAG_ALLOWNEGATIVE" data-ref="_M/MOV_TIMECODE_FLAG_ALLOWNEGATIVE">MOV_TIMECODE_FLAG_ALLOWNEGATIVE</dfn> 0x0004</u></td></tr>
+<tr><th id="99">99</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a>    <dfn class="decl" id="MOVTrack::timecode_flags" title='MOVTrack::timecode_flags' data-ref="MOVTrack::timecode_flags">timecode_flags</dfn>;</td></tr>
+<tr><th id="100">100</th><td>    <em>int</em>         <dfn class="decl" id="MOVTrack::language" title='MOVTrack::language' data-ref="MOVTrack::language">language</dfn>;</td></tr>
+<tr><th id="101">101</th><td>    <em>int</em>         <dfn class="decl" id="MOVTrack::track_id" title='MOVTrack::track_id' data-ref="MOVTrack::track_id">track_id</dfn>;</td></tr>
+<tr><th id="102">102</th><td>    <em>int</em>         <dfn class="decl" id="MOVTrack::tag" title='MOVTrack::tag' data-ref="MOVTrack::tag">tag</dfn>; <i class="doc">///&lt; stsd fourcc</i></td></tr>
+<tr><th id="103">103</th><td>    <a class="typedef" href="avformat.h.html#AVStream" title='AVStream' data-type='struct AVStream' data-ref="AVStream">AVStream</a>        *<dfn class="decl" id="MOVTrack::st" title='MOVTrack::st' data-ref="MOVTrack::st">st</dfn>;</td></tr>
+<tr><th id="104">104</th><td>    <a class="typedef" href="../libavcodec/avcodec.h.html#AVCodecParameters" title='AVCodecParameters' data-type='struct AVCodecParameters' data-ref="AVCodecParameters">AVCodecParameters</a> *<dfn class="decl" id="MOVTrack::par" title='MOVTrack::par' data-ref="MOVTrack::par">par</dfn>;</td></tr>
+<tr><th id="105">105</th><td>    <em>int</em> <dfn class="decl" id="MOVTrack::multichannel_as_mono" title='MOVTrack::multichannel_as_mono' data-ref="MOVTrack::multichannel_as_mono">multichannel_as_mono</dfn>;</td></tr>
+<tr><th id="106">106</th><td></td></tr>
+<tr><th id="107">107</th><td>    <em>int</em>         <dfn class="decl" id="MOVTrack::vos_len" title='MOVTrack::vos_len' data-ref="MOVTrack::vos_len">vos_len</dfn>;</td></tr>
+<tr><th id="108">108</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a>     *<dfn class="decl" id="MOVTrack::vos_data" title='MOVTrack::vos_data' data-ref="MOVTrack::vos_data">vos_data</dfn>;</td></tr>
+<tr><th id="109">109</th><td>    <a class="typedef" href="#MOVIentry" title='MOVIentry' data-type='struct MOVIentry' data-ref="MOVIentry">MOVIentry</a>   *<dfn class="decl" id="MOVTrack::cluster" title='MOVTrack::cluster' data-ref="MOVTrack::cluster">cluster</dfn>;</td></tr>
+<tr><th id="110">110</th><td>    <em>unsigned</em>    <dfn class="decl" id="MOVTrack::cluster_capacity" title='MOVTrack::cluster_capacity' data-ref="MOVTrack::cluster_capacity">cluster_capacity</dfn>;</td></tr>
+<tr><th id="111">111</th><td>    <em>int</em>         <dfn class="decl" id="MOVTrack::audio_vbr" title='MOVTrack::audio_vbr' data-ref="MOVTrack::audio_vbr">audio_vbr</dfn>;</td></tr>
+<tr><th id="112">112</th><td>    <em>int</em>         <dfn class="decl" id="MOVTrack::height" title='MOVTrack::height' data-ref="MOVTrack::height">height</dfn>; <i class="doc">///&lt; active picture (w/o VBI) height for D-10/IMX</i></td></tr>
+<tr><th id="113">113</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a>    <dfn class="decl" id="MOVTrack::tref_tag" title='MOVTrack::tref_tag' data-ref="MOVTrack::tref_tag">tref_tag</dfn>;</td></tr>
+<tr><th id="114">114</th><td>    <em>int</em>         <dfn class="decl" id="MOVTrack::tref_id" title='MOVTrack::tref_id' data-ref="MOVTrack::tref_id">tref_id</dfn>; <i class="doc">///&lt; trackID of the referenced track</i></td></tr>
+<tr><th id="115">115</th><td>    <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a>     <dfn class="decl" id="MOVTrack::start_dts" title='MOVTrack::start_dts' data-ref="MOVTrack::start_dts">start_dts</dfn>;</td></tr>
+<tr><th id="116">116</th><td>    <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a>     <dfn class="decl" id="MOVTrack::start_cts" title='MOVTrack::start_cts' data-ref="MOVTrack::start_cts">start_cts</dfn>;</td></tr>
+<tr><th id="117">117</th><td>    <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a>     <dfn class="decl" id="MOVTrack::end_pts" title='MOVTrack::end_pts' data-ref="MOVTrack::end_pts">end_pts</dfn>;</td></tr>
+<tr><th id="118">118</th><td>    <em>int</em>         <dfn class="decl" id="MOVTrack::end_reliable" title='MOVTrack::end_reliable' data-ref="MOVTrack::end_reliable">end_reliable</dfn>;</td></tr>
+<tr><th id="119">119</th><td></td></tr>
+<tr><th id="120">120</th><td>    <em>int</em>         <dfn class="decl" id="MOVTrack::hint_track" title='MOVTrack::hint_track' data-ref="MOVTrack::hint_track">hint_track</dfn>;   <i class="doc">///&lt; the track that hints this track, -1 if no hint track is set</i></td></tr>
+<tr><th id="121">121</th><td>    <em>int</em>         <dfn class="decl" id="MOVTrack::src_track" title='MOVTrack::src_track' data-ref="MOVTrack::src_track">src_track</dfn>;    <i class="doc">///&lt; the track that this hint (or tmcd) track describes</i></td></tr>
+<tr><th id="122">122</th><td>    <a class="typedef" href="avformat.h.html#AVFormatContext" title='AVFormatContext' data-type='struct AVFormatContext' data-ref="AVFormatContext">AVFormatContext</a> *<dfn class="decl" id="MOVTrack::rtp_ctx" title='MOVTrack::rtp_ctx' data-ref="MOVTrack::rtp_ctx">rtp_ctx</dfn>; <i class="doc">///&lt; the format context for the hinting rtp muxer</i></td></tr>
+<tr><th id="123">123</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a>    <dfn class="decl" id="MOVTrack::prev_rtp_ts" title='MOVTrack::prev_rtp_ts' data-ref="MOVTrack::prev_rtp_ts">prev_rtp_ts</dfn>;</td></tr>
+<tr><th id="124">124</th><td>    <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a>     <dfn class="decl" id="MOVTrack::cur_rtp_ts_unwrapped" title='MOVTrack::cur_rtp_ts_unwrapped' data-ref="MOVTrack::cur_rtp_ts_unwrapped">cur_rtp_ts_unwrapped</dfn>;</td></tr>
+<tr><th id="125">125</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a>    <dfn class="decl" id="MOVTrack::max_packet_size" title='MOVTrack::max_packet_size' data-ref="MOVTrack::max_packet_size">max_packet_size</dfn>;</td></tr>
+<tr><th id="126">126</th><td></td></tr>
+<tr><th id="127">127</th><td>    <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a>     <dfn class="decl" id="MOVTrack::default_duration" title='MOVTrack::default_duration' data-ref="MOVTrack::default_duration">default_duration</dfn>;</td></tr>
+<tr><th id="128">128</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a>    <dfn class="decl" id="MOVTrack::default_sample_flags" title='MOVTrack::default_sample_flags' data-ref="MOVTrack::default_sample_flags">default_sample_flags</dfn>;</td></tr>
+<tr><th id="129">129</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a>    <dfn class="decl" id="MOVTrack::default_size" title='MOVTrack::default_size' data-ref="MOVTrack::default_size">default_size</dfn>;</td></tr>
+<tr><th id="130">130</th><td></td></tr>
+<tr><th id="131">131</th><td>    <a class="typedef" href="#HintSampleQueue" title='HintSampleQueue' data-type='struct HintSampleQueue' data-ref="HintSampleQueue">HintSampleQueue</a> <dfn class="decl" id="MOVTrack::sample_queue" title='MOVTrack::sample_queue' data-ref="MOVTrack::sample_queue">sample_queue</dfn>;</td></tr>
+<tr><th id="132">132</th><td></td></tr>
+<tr><th id="133">133</th><td>    <a class="typedef" href="avio.h.html#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> *<dfn class="decl" id="MOVTrack::mdat_buf" title='MOVTrack::mdat_buf' data-ref="MOVTrack::mdat_buf">mdat_buf</dfn>;</td></tr>
+<tr><th id="134">134</th><td>    <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a>     <dfn class="decl" id="MOVTrack::data_offset" title='MOVTrack::data_offset' data-ref="MOVTrack::data_offset">data_offset</dfn>;</td></tr>
+<tr><th id="135">135</th><td>    <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a>     <dfn class="decl" id="MOVTrack::frag_start" title='MOVTrack::frag_start' data-ref="MOVTrack::frag_start">frag_start</dfn>;</td></tr>
+<tr><th id="136">136</th><td>    <em>int</em>         <dfn class="decl" id="MOVTrack::frag_discont" title='MOVTrack::frag_discont' data-ref="MOVTrack::frag_discont">frag_discont</dfn>;</td></tr>
+<tr><th id="137">137</th><td>    <em>int</em>         <dfn class="decl" id="MOVTrack::entries_flushed" title='MOVTrack::entries_flushed' data-ref="MOVTrack::entries_flushed">entries_flushed</dfn>;</td></tr>
+<tr><th id="138">138</th><td></td></tr>
+<tr><th id="139">139</th><td>    <em>int</em>         <dfn class="decl" id="MOVTrack::nb_frag_info" title='MOVTrack::nb_frag_info' data-ref="MOVTrack::nb_frag_info">nb_frag_info</dfn>;</td></tr>
+<tr><th id="140">140</th><td>    <a class="typedef" href="#MOVFragmentInfo" title='MOVFragmentInfo' data-type='struct MOVFragmentInfo' data-ref="MOVFragmentInfo">MOVFragmentInfo</a> *<dfn class="decl" id="MOVTrack::frag_info" title='MOVTrack::frag_info' data-ref="MOVTrack::frag_info">frag_info</dfn>;</td></tr>
+<tr><th id="141">141</th><td>    <em>unsigned</em>    <dfn class="decl" id="MOVTrack::frag_info_capacity" title='MOVTrack::frag_info_capacity' data-ref="MOVTrack::frag_info_capacity">frag_info_capacity</dfn>;</td></tr>
+<tr><th id="142">142</th><td></td></tr>
+<tr><th id="143">143</th><td>    <b>struct</b> {</td></tr>
+<tr><th id="144">144</th><td>        <em>int</em>     <dfn class="decl" id="MOVTrack::{anonymous}::first_packet_seq" title='MOVTrack::&lt;anonymous struct&gt;::first_packet_seq' data-ref="MOVTrack::{anonymous}::first_packet_seq">first_packet_seq</dfn>;</td></tr>
+<tr><th id="145">145</th><td>        <em>int</em>     <dfn class="decl" id="MOVTrack::{anonymous}::first_packet_entry" title='MOVTrack::&lt;anonymous struct&gt;::first_packet_entry' data-ref="MOVTrack::{anonymous}::first_packet_entry">first_packet_entry</dfn>;</td></tr>
+<tr><th id="146">146</th><td>        <em>int</em>     <dfn class="decl" id="MOVTrack::{anonymous}::first_packet_seen" title='MOVTrack::&lt;anonymous struct&gt;::first_packet_seen' data-ref="MOVTrack::{anonymous}::first_packet_seen">first_packet_seen</dfn>;</td></tr>
+<tr><th id="147">147</th><td>        <em>int</em>     <dfn class="decl" id="MOVTrack::{anonymous}::first_frag_written" title='MOVTrack::&lt;anonymous struct&gt;::first_frag_written' data-ref="MOVTrack::{anonymous}::first_frag_written">first_frag_written</dfn>;</td></tr>
+<tr><th id="148">148</th><td>        <em>int</em>     <dfn class="decl" id="MOVTrack::{anonymous}::packet_seq" title='MOVTrack::&lt;anonymous struct&gt;::packet_seq' data-ref="MOVTrack::{anonymous}::packet_seq">packet_seq</dfn>;</td></tr>
+<tr><th id="149">149</th><td>        <em>int</em>     <dfn class="decl" id="MOVTrack::{anonymous}::packet_entry" title='MOVTrack::&lt;anonymous struct&gt;::packet_entry' data-ref="MOVTrack::{anonymous}::packet_entry">packet_entry</dfn>;</td></tr>
+<tr><th id="150">150</th><td>        <em>int</em>     <dfn class="decl" id="MOVTrack::{anonymous}::slices" title='MOVTrack::&lt;anonymous struct&gt;::slices' data-ref="MOVTrack::{anonymous}::slices">slices</dfn>;</td></tr>
+<tr><th id="151">151</th><td>    } <dfn class="decl" id="MOVTrack::vc1_info" title='MOVTrack::vc1_info' data-ref="MOVTrack::vc1_info">vc1_info</dfn>;</td></tr>
+<tr><th id="152">152</th><td></td></tr>
+<tr><th id="153">153</th><td>    <em>void</em>       *<dfn class="decl" id="MOVTrack::eac3_priv" title='MOVTrack::eac3_priv' data-ref="MOVTrack::eac3_priv">eac3_priv</dfn>;</td></tr>
+<tr><th id="154">154</th><td></td></tr>
+<tr><th id="155">155</th><td>    <a class="typedef" href="movenccenc.h.html#MOVMuxCencContext" title='MOVMuxCencContext' data-type='struct MOVMuxCencContext' data-ref="MOVMuxCencContext">MOVMuxCencContext</a> <dfn class="decl" id="MOVTrack::cenc" title='MOVTrack::cenc' data-ref="MOVTrack::cenc">cenc</dfn>;</td></tr>
+<tr><th id="156">156</th><td></td></tr>
+<tr><th id="157">157</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a> <dfn class="decl" id="MOVTrack::palette" title='MOVTrack::palette' data-ref="MOVTrack::palette">palette</dfn>[<a class="macro" href="../libavutil/pixfmt.h.html#33" title="256" data-ref="_M/AVPALETTE_COUNT">AVPALETTE_COUNT</a>];</td></tr>
+<tr><th id="158">158</th><td>    <em>int</em> <dfn class="decl" id="MOVTrack::pal_done" title='MOVTrack::pal_done' data-ref="MOVTrack::pal_done">pal_done</dfn>;</td></tr>
+<tr><th id="159">159</th><td></td></tr>
+<tr><th id="160">160</th><td>    <em>int</em> <dfn class="decl" id="MOVTrack::is_unaligned_qt_rgb" title='MOVTrack::is_unaligned_qt_rgb' data-ref="MOVTrack::is_unaligned_qt_rgb">is_unaligned_qt_rgb</dfn>;</td></tr>
+<tr><th id="161">161</th><td>} <dfn class="typedef" id="MOVTrack" title='MOVTrack' data-type='struct MOVTrack' data-ref="MOVTrack">MOVTrack</dfn>;</td></tr>
+<tr><th id="162">162</th><td></td></tr>
+<tr><th id="163">163</th><td><b>typedef</b> <b>enum</b> {</td></tr>
+<tr><th id="164">164</th><td>    <dfn class="enum" id="::MOV_ENC_NONE" title='::MOV_ENC_NONE' data-ref="::MOV_ENC_NONE">MOV_ENC_NONE</dfn> = <var>0</var>,</td></tr>
+<tr><th id="165">165</th><td>    <dfn class="enum" id="::MOV_ENC_CENC_AES_CTR" title='::MOV_ENC_CENC_AES_CTR' data-ref="::MOV_ENC_CENC_AES_CTR">MOV_ENC_CENC_AES_CTR</dfn>,</td></tr>
+<tr><th id="166">166</th><td>} <dfn class="typedef" id="MOVEncryptionScheme" title='MOVEncryptionScheme' data-type='enum MOVEncryptionScheme' data-ref="MOVEncryptionScheme">MOVEncryptionScheme</dfn>;</td></tr>
+<tr><th id="167">167</th><td></td></tr>
+<tr><th id="168">168</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="MOVMuxContext" title='MOVMuxContext' data-ref="MOVMuxContext"><a class="type" href="#MOVMuxContext" title='MOVMuxContext' data-ref="MOVMuxContext">MOVMuxContext</a></dfn> {</td></tr>
+<tr><th id="169">169</th><td>    <em>const</em> <a class="typedef" href="../libavutil/log.h.html#AVClass" title='AVClass' data-type='struct AVClass' data-ref="AVClass">AVClass</a> *<dfn class="decl" id="MOVMuxContext::av_class" title='MOVMuxContext::av_class' data-ref="MOVMuxContext::av_class">av_class</dfn>;</td></tr>
+<tr><th id="170">170</th><td>    <em>int</em>     <dfn class="decl" id="MOVMuxContext::mode" title='MOVMuxContext::mode' data-ref="MOVMuxContext::mode">mode</dfn>;</td></tr>
+<tr><th id="171">171</th><td>    <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="decl" id="MOVMuxContext::time" title='MOVMuxContext::time' data-ref="MOVMuxContext::time">time</dfn>;</td></tr>
+<tr><th id="172">172</th><td>    <em>int</em>     <dfn class="decl" id="MOVMuxContext::nb_streams" title='MOVMuxContext::nb_streams' data-ref="MOVMuxContext::nb_streams">nb_streams</dfn>;</td></tr>
+<tr><th id="173">173</th><td>    <em>int</em>     <dfn class="decl" id="MOVMuxContext::nb_meta_tmcd" title='MOVMuxContext::nb_meta_tmcd' data-ref="MOVMuxContext::nb_meta_tmcd">nb_meta_tmcd</dfn>;  <i class="doc">///&lt; number of new created tmcd track based on metadata (aka not data copy)</i></td></tr>
+<tr><th id="174">174</th><td>    <em>int</em>     <dfn class="decl" id="MOVMuxContext::chapter_track" title='MOVMuxContext::chapter_track' data-ref="MOVMuxContext::chapter_track">chapter_track</dfn>; <i class="doc">///&lt; qt chapter track number</i></td></tr>
+<tr><th id="175">175</th><td>    <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="decl" id="MOVMuxContext::mdat_pos" title='MOVMuxContext::mdat_pos' data-ref="MOVMuxContext::mdat_pos">mdat_pos</dfn>;</td></tr>
+<tr><th id="176">176</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint64_t" title='uint64_t' data-type='unsigned long' data-ref="uint64_t">uint64_t</a> <dfn class="decl" id="MOVMuxContext::mdat_size" title='MOVMuxContext::mdat_size' data-ref="MOVMuxContext::mdat_size">mdat_size</dfn>;</td></tr>
+<tr><th id="177">177</th><td>    <a class="typedef" href="#MOVTrack" title='MOVTrack' data-type='struct MOVTrack' data-ref="MOVTrack">MOVTrack</a> *<dfn class="decl" id="MOVMuxContext::tracks" title='MOVMuxContext::tracks' data-ref="MOVMuxContext::tracks">tracks</dfn>;</td></tr>
+<tr><th id="178">178</th><td></td></tr>
+<tr><th id="179">179</th><td>    <em>int</em> <dfn class="decl" id="MOVMuxContext::flags" title='MOVMuxContext::flags' data-ref="MOVMuxContext::flags">flags</dfn>;</td></tr>
+<tr><th id="180">180</th><td>    <em>int</em> <dfn class="decl" id="MOVMuxContext::rtp_flags" title='MOVMuxContext::rtp_flags' data-ref="MOVMuxContext::rtp_flags">rtp_flags</dfn>;</td></tr>
+<tr><th id="181">181</th><td></td></tr>
+<tr><th id="182">182</th><td>    <em>int</em> <dfn class="decl" id="MOVMuxContext::iods_skip" title='MOVMuxContext::iods_skip' data-ref="MOVMuxContext::iods_skip">iods_skip</dfn>;</td></tr>
+<tr><th id="183">183</th><td>    <em>int</em> <dfn class="decl" id="MOVMuxContext::iods_video_profile" title='MOVMuxContext::iods_video_profile' data-ref="MOVMuxContext::iods_video_profile">iods_video_profile</dfn>;</td></tr>
+<tr><th id="184">184</th><td>    <em>int</em> <dfn class="decl" id="MOVMuxContext::iods_audio_profile" title='MOVMuxContext::iods_audio_profile' data-ref="MOVMuxContext::iods_audio_profile">iods_audio_profile</dfn>;</td></tr>
+<tr><th id="185">185</th><td></td></tr>
+<tr><th id="186">186</th><td>    <em>int</em> <dfn class="decl" id="MOVMuxContext::moov_written" title='MOVMuxContext::moov_written' data-ref="MOVMuxContext::moov_written">moov_written</dfn>;</td></tr>
+<tr><th id="187">187</th><td>    <em>int</em> <dfn class="decl" id="MOVMuxContext::fragments" title='MOVMuxContext::fragments' data-ref="MOVMuxContext::fragments">fragments</dfn>;</td></tr>
+<tr><th id="188">188</th><td>    <em>int</em> <dfn class="decl" id="MOVMuxContext::max_fragment_duration" title='MOVMuxContext::max_fragment_duration' data-ref="MOVMuxContext::max_fragment_duration">max_fragment_duration</dfn>;</td></tr>
+<tr><th id="189">189</th><td>    <em>int</em> <dfn class="decl" id="MOVMuxContext::min_fragment_duration" title='MOVMuxContext::min_fragment_duration' data-ref="MOVMuxContext::min_fragment_duration">min_fragment_duration</dfn>;</td></tr>
+<tr><th id="190">190</th><td>    <em>int</em> <dfn class="decl" id="MOVMuxContext::max_fragment_size" title='MOVMuxContext::max_fragment_size' data-ref="MOVMuxContext::max_fragment_size">max_fragment_size</dfn>;</td></tr>
+<tr><th id="191">191</th><td>    <em>int</em> <dfn class="decl" id="MOVMuxContext::ism_lookahead" title='MOVMuxContext::ism_lookahead' data-ref="MOVMuxContext::ism_lookahead">ism_lookahead</dfn>;</td></tr>
+<tr><th id="192">192</th><td>    <a class="typedef" href="avio.h.html#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> *<dfn class="decl" id="MOVMuxContext::mdat_buf" title='MOVMuxContext::mdat_buf' data-ref="MOVMuxContext::mdat_buf">mdat_buf</dfn>;</td></tr>
+<tr><th id="193">193</th><td>    <em>int</em> <dfn class="decl" id="MOVMuxContext::first_trun" title='MOVMuxContext::first_trun' data-ref="MOVMuxContext::first_trun">first_trun</dfn>;</td></tr>
+<tr><th id="194">194</th><td></td></tr>
+<tr><th id="195">195</th><td>    <em>int</em> <dfn class="decl" id="MOVMuxContext::video_track_timescale" title='MOVMuxContext::video_track_timescale' data-ref="MOVMuxContext::video_track_timescale">video_track_timescale</dfn>;</td></tr>
+<tr><th id="196">196</th><td></td></tr>
+<tr><th id="197">197</th><td>    <em>int</em> <dfn class="decl" id="MOVMuxContext::reserved_moov_size" title='MOVMuxContext::reserved_moov_size' data-ref="MOVMuxContext::reserved_moov_size">reserved_moov_size</dfn>; <i class="doc">///&lt; 0 for disabled, -1 for automatic, size otherwise</i></td></tr>
+<tr><th id="198">198</th><td>    <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="decl" id="MOVMuxContext::reserved_header_pos" title='MOVMuxContext::reserved_header_pos' data-ref="MOVMuxContext::reserved_header_pos">reserved_header_pos</dfn>;</td></tr>
+<tr><th id="199">199</th><td></td></tr>
+<tr><th id="200">200</th><td>    <em>char</em> *<dfn class="decl" id="MOVMuxContext::major_brand" title='MOVMuxContext::major_brand' data-ref="MOVMuxContext::major_brand">major_brand</dfn>;</td></tr>
+<tr><th id="201">201</th><td></td></tr>
+<tr><th id="202">202</th><td>    <em>int</em> <dfn class="decl" id="MOVMuxContext::per_stream_grouping" title='MOVMuxContext::per_stream_grouping' data-ref="MOVMuxContext::per_stream_grouping">per_stream_grouping</dfn>;</td></tr>
+<tr><th id="203">203</th><td>    <a class="typedef" href="avformat.h.html#AVFormatContext" title='AVFormatContext' data-type='struct AVFormatContext' data-ref="AVFormatContext">AVFormatContext</a> *<dfn class="decl" id="MOVMuxContext::fc" title='MOVMuxContext::fc' data-ref="MOVMuxContext::fc">fc</dfn>;</td></tr>
+<tr><th id="204">204</th><td></td></tr>
+<tr><th id="205">205</th><td>    <em>int</em> <dfn class="decl" id="MOVMuxContext::use_editlist" title='MOVMuxContext::use_editlist' data-ref="MOVMuxContext::use_editlist">use_editlist</dfn>;</td></tr>
+<tr><th id="206">206</th><td>    <em>float</em> <dfn class="decl" id="MOVMuxContext::gamma" title='MOVMuxContext::gamma' data-ref="MOVMuxContext::gamma">gamma</dfn>;</td></tr>
+<tr><th id="207">207</th><td></td></tr>
+<tr><th id="208">208</th><td>    <em>int</em> <dfn class="decl" id="MOVMuxContext::frag_interleave" title='MOVMuxContext::frag_interleave' data-ref="MOVMuxContext::frag_interleave">frag_interleave</dfn>;</td></tr>
+<tr><th id="209">209</th><td>    <em>int</em> <dfn class="decl" id="MOVMuxContext::missing_duration_warned" title='MOVMuxContext::missing_duration_warned' data-ref="MOVMuxContext::missing_duration_warned">missing_duration_warned</dfn>;</td></tr>
+<tr><th id="210">210</th><td></td></tr>
+<tr><th id="211">211</th><td>    <em>char</em> *<dfn class="decl" id="MOVMuxContext::encryption_scheme_str" title='MOVMuxContext::encryption_scheme_str' data-ref="MOVMuxContext::encryption_scheme_str">encryption_scheme_str</dfn>;</td></tr>
+<tr><th id="212">212</th><td>    <a class="typedef" href="#MOVEncryptionScheme" title='MOVEncryptionScheme' data-type='enum MOVEncryptionScheme' data-ref="MOVEncryptionScheme">MOVEncryptionScheme</a> <dfn class="decl" id="MOVMuxContext::encryption_scheme" title='MOVMuxContext::encryption_scheme' data-ref="MOVMuxContext::encryption_scheme">encryption_scheme</dfn>;</td></tr>
+<tr><th id="213">213</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="decl" id="MOVMuxContext::encryption_key" title='MOVMuxContext::encryption_key' data-ref="MOVMuxContext::encryption_key">encryption_key</dfn>;</td></tr>
+<tr><th id="214">214</th><td>    <em>int</em> <dfn class="decl" id="MOVMuxContext::encryption_key_len" title='MOVMuxContext::encryption_key_len' data-ref="MOVMuxContext::encryption_key_len">encryption_key_len</dfn>;</td></tr>
+<tr><th id="215">215</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="decl" id="MOVMuxContext::encryption_kid" title='MOVMuxContext::encryption_kid' data-ref="MOVMuxContext::encryption_kid">encryption_kid</dfn>;</td></tr>
+<tr><th id="216">216</th><td>    <em>int</em> <dfn class="decl" id="MOVMuxContext::encryption_kid_len" title='MOVMuxContext::encryption_kid_len' data-ref="MOVMuxContext::encryption_kid_len">encryption_kid_len</dfn>;</td></tr>
+<tr><th id="217">217</th><td></td></tr>
+<tr><th id="218">218</th><td>    <em>int</em> <dfn class="decl" id="MOVMuxContext::need_rewrite_extradata" title='MOVMuxContext::need_rewrite_extradata' data-ref="MOVMuxContext::need_rewrite_extradata">need_rewrite_extradata</dfn>;</td></tr>
+<tr><th id="219">219</th><td></td></tr>
+<tr><th id="220">220</th><td>    <em>int</em> <dfn class="decl" id="MOVMuxContext::use_stream_ids_as_track_ids" title='MOVMuxContext::use_stream_ids_as_track_ids' data-ref="MOVMuxContext::use_stream_ids_as_track_ids">use_stream_ids_as_track_ids</dfn>;</td></tr>
+<tr><th id="221">221</th><td>    <em>int</em> <dfn class="decl" id="MOVMuxContext::track_ids_ok" title='MOVMuxContext::track_ids_ok' data-ref="MOVMuxContext::track_ids_ok">track_ids_ok</dfn>;</td></tr>
+<tr><th id="222">222</th><td>    <em>int</em> <dfn class="decl" id="MOVMuxContext::write_tmcd" title='MOVMuxContext::write_tmcd' data-ref="MOVMuxContext::write_tmcd">write_tmcd</dfn>;</td></tr>
+<tr><th id="223">223</th><td>} <dfn class="typedef" id="MOVMuxContext" title='MOVMuxContext' data-type='struct MOVMuxContext' data-ref="MOVMuxContext">MOVMuxContext</dfn>;</td></tr>
+<tr><th id="224">224</th><td></td></tr>
+<tr><th id="225">225</th><td><u>#define <dfn class="macro" id="_M/FF_MOV_FLAG_RTP_HINT" data-ref="_M/FF_MOV_FLAG_RTP_HINT">FF_MOV_FLAG_RTP_HINT</dfn>              (1 &lt;&lt;  0)</u></td></tr>
+<tr><th id="226">226</th><td><u>#define <dfn class="macro" id="_M/FF_MOV_FLAG_FRAGMENT" data-ref="_M/FF_MOV_FLAG_FRAGMENT">FF_MOV_FLAG_FRAGMENT</dfn>              (1 &lt;&lt;  1)</u></td></tr>
+<tr><th id="227">227</th><td><u>#define <dfn class="macro" id="_M/FF_MOV_FLAG_EMPTY_MOOV" data-ref="_M/FF_MOV_FLAG_EMPTY_MOOV">FF_MOV_FLAG_EMPTY_MOOV</dfn>            (1 &lt;&lt;  2)</u></td></tr>
+<tr><th id="228">228</th><td><u>#define <dfn class="macro" id="_M/FF_MOV_FLAG_FRAG_KEYFRAME" data-ref="_M/FF_MOV_FLAG_FRAG_KEYFRAME">FF_MOV_FLAG_FRAG_KEYFRAME</dfn>         (1 &lt;&lt;  3)</u></td></tr>
+<tr><th id="229">229</th><td><u>#define <dfn class="macro" id="_M/FF_MOV_FLAG_SEPARATE_MOOF" data-ref="_M/FF_MOV_FLAG_SEPARATE_MOOF">FF_MOV_FLAG_SEPARATE_MOOF</dfn>         (1 &lt;&lt;  4)</u></td></tr>
+<tr><th id="230">230</th><td><u>#define <dfn class="macro" id="_M/FF_MOV_FLAG_FRAG_CUSTOM" data-ref="_M/FF_MOV_FLAG_FRAG_CUSTOM">FF_MOV_FLAG_FRAG_CUSTOM</dfn>           (1 &lt;&lt;  5)</u></td></tr>
+<tr><th id="231">231</th><td><u>#define <dfn class="macro" id="_M/FF_MOV_FLAG_ISML" data-ref="_M/FF_MOV_FLAG_ISML">FF_MOV_FLAG_ISML</dfn>                  (1 &lt;&lt;  6)</u></td></tr>
+<tr><th id="232">232</th><td><u>#define <dfn class="macro" id="_M/FF_MOV_FLAG_FASTSTART" data-ref="_M/FF_MOV_FLAG_FASTSTART">FF_MOV_FLAG_FASTSTART</dfn>             (1 &lt;&lt;  7)</u></td></tr>
+<tr><th id="233">233</th><td><u>#define <dfn class="macro" id="_M/FF_MOV_FLAG_OMIT_TFHD_OFFSET" data-ref="_M/FF_MOV_FLAG_OMIT_TFHD_OFFSET">FF_MOV_FLAG_OMIT_TFHD_OFFSET</dfn>      (1 &lt;&lt;  8)</u></td></tr>
+<tr><th id="234">234</th><td><u>#define <dfn class="macro" id="_M/FF_MOV_FLAG_DISABLE_CHPL" data-ref="_M/FF_MOV_FLAG_DISABLE_CHPL">FF_MOV_FLAG_DISABLE_CHPL</dfn>          (1 &lt;&lt;  9)</u></td></tr>
+<tr><th id="235">235</th><td><u>#define <dfn class="macro" id="_M/FF_MOV_FLAG_DEFAULT_BASE_MOOF" data-ref="_M/FF_MOV_FLAG_DEFAULT_BASE_MOOF">FF_MOV_FLAG_DEFAULT_BASE_MOOF</dfn>     (1 &lt;&lt; 10)</u></td></tr>
+<tr><th id="236">236</th><td><u>#define <dfn class="macro" id="_M/FF_MOV_FLAG_DASH" data-ref="_M/FF_MOV_FLAG_DASH">FF_MOV_FLAG_DASH</dfn>                  (1 &lt;&lt; 11)</u></td></tr>
+<tr><th id="237">237</th><td><u>#define <dfn class="macro" id="_M/FF_MOV_FLAG_FRAG_DISCONT" data-ref="_M/FF_MOV_FLAG_FRAG_DISCONT">FF_MOV_FLAG_FRAG_DISCONT</dfn>          (1 &lt;&lt; 12)</u></td></tr>
+<tr><th id="238">238</th><td><u>#define <dfn class="macro" id="_M/FF_MOV_FLAG_DELAY_MOOV" data-ref="_M/FF_MOV_FLAG_DELAY_MOOV">FF_MOV_FLAG_DELAY_MOOV</dfn>            (1 &lt;&lt; 13)</u></td></tr>
+<tr><th id="239">239</th><td><u>#define <dfn class="macro" id="_M/FF_MOV_FLAG_GLOBAL_SIDX" data-ref="_M/FF_MOV_FLAG_GLOBAL_SIDX">FF_MOV_FLAG_GLOBAL_SIDX</dfn>           (1 &lt;&lt; 14)</u></td></tr>
+<tr><th id="240">240</th><td><u>#define <dfn class="macro" id="_M/FF_MOV_FLAG_WRITE_COLR" data-ref="_M/FF_MOV_FLAG_WRITE_COLR">FF_MOV_FLAG_WRITE_COLR</dfn>            (1 &lt;&lt; 15)</u></td></tr>
+<tr><th id="241">241</th><td><u>#define <dfn class="macro" id="_M/FF_MOV_FLAG_WRITE_GAMA" data-ref="_M/FF_MOV_FLAG_WRITE_GAMA">FF_MOV_FLAG_WRITE_GAMA</dfn>            (1 &lt;&lt; 16)</u></td></tr>
+<tr><th id="242">242</th><td><u>#define <dfn class="macro" id="_M/FF_MOV_FLAG_USE_MDTA" data-ref="_M/FF_MOV_FLAG_USE_MDTA">FF_MOV_FLAG_USE_MDTA</dfn>              (1 &lt;&lt; 17)</u></td></tr>
+<tr><th id="243">243</th><td></td></tr>
+<tr><th id="244">244</th><td><em>int</em> <a class="decl" href="movenc.c.html#ff_mov_write_packet" title='ff_mov_write_packet' data-ref="ff_mov_write_packet" id="ff_mov_write_packet">ff_mov_write_packet</a>(<a class="typedef" href="avformat.h.html#AVFormatContext" title='AVFormatContext' data-type='struct AVFormatContext' data-ref="AVFormatContext">AVFormatContext</a> *<dfn class="local col5 decl" id="25s" title='s' data-type='AVFormatContext *' data-ref="25s">s</dfn>, <a class="typedef" href="../libavcodec/avcodec.h.html#AVPacket" title='AVPacket' data-type='struct AVPacket' data-ref="AVPacket">AVPacket</a> *<dfn class="local col6 decl" id="26pkt" title='pkt' data-type='AVPacket *' data-ref="26pkt">pkt</dfn>);</td></tr>
+<tr><th id="245">245</th><td></td></tr>
+<tr><th id="246">246</th><td><em>int</em> <dfn class="decl" id="ff_mov_init_hinting" title='ff_mov_init_hinting' data-ref="ff_mov_init_hinting">ff_mov_init_hinting</dfn>(<a class="typedef" href="avformat.h.html#AVFormatContext" title='AVFormatContext' data-type='struct AVFormatContext' data-ref="AVFormatContext">AVFormatContext</a> *<dfn class="local col7 decl" id="27s" title='s' data-type='AVFormatContext *' data-ref="27s">s</dfn>, <em>int</em> <dfn class="local col8 decl" id="28index" title='index' data-type='int' data-ref="28index">index</dfn>, <em>int</em> <dfn class="local col9 decl" id="29src_index" title='src_index' data-type='int' data-ref="29src_index">src_index</dfn>);</td></tr>
+<tr><th id="247">247</th><td><em>int</em> <dfn class="decl" id="ff_mov_add_hinted_packet" title='ff_mov_add_hinted_packet' data-ref="ff_mov_add_hinted_packet">ff_mov_add_hinted_packet</dfn>(<a class="typedef" href="avformat.h.html#AVFormatContext" title='AVFormatContext' data-type='struct AVFormatContext' data-ref="AVFormatContext">AVFormatContext</a> *<dfn class="local col0 decl" id="30s" title='s' data-type='AVFormatContext *' data-ref="30s">s</dfn>, <a class="typedef" href="../libavcodec/avcodec.h.html#AVPacket" title='AVPacket' data-type='struct AVPacket' data-ref="AVPacket">AVPacket</a> *<dfn class="local col1 decl" id="31pkt" title='pkt' data-type='AVPacket *' data-ref="31pkt">pkt</dfn>,</td></tr>
+<tr><th id="248">248</th><td>                             <em>int</em> <dfn class="local col2 decl" id="32track_index" title='track_index' data-type='int' data-ref="32track_index">track_index</dfn>, <em>int</em> <dfn class="local col3 decl" id="33sample" title='sample' data-type='int' data-ref="33sample">sample</dfn>,</td></tr>
+<tr><th id="249">249</th><td>                             <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col4 decl" id="34sample_data" title='sample_data' data-type='uint8_t *' data-ref="34sample_data">sample_data</dfn>, <em>int</em> <dfn class="local col5 decl" id="35sample_size" title='sample_size' data-type='int' data-ref="35sample_size">sample_size</dfn>);</td></tr>
+<tr><th id="250">250</th><td><em>void</em> <dfn class="decl" id="ff_mov_close_hinting" title='ff_mov_close_hinting' data-ref="ff_mov_close_hinting">ff_mov_close_hinting</dfn>(<a class="typedef" href="#MOVTrack" title='MOVTrack' data-type='struct MOVTrack' data-ref="MOVTrack">MOVTrack</a> *<dfn class="local col6 decl" id="36track" title='track' data-type='MOVTrack *' data-ref="36track">track</dfn>);</td></tr>
+<tr><th id="251">251</th><td></td></tr>
+<tr><th id="252">252</th><td><u>#<span data-ppcond="24">endif</span> /* AVFORMAT_MOVENC_H */</u></td></tr>
+<tr><th id="253">253</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated while processing <a href='movenc.c.html'>ffmpeg/libavformat/movenc.c</a><br/>Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

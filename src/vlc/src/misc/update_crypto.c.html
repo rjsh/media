@@ -1,0 +1,1008 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>update_crypto.c source code [vlc/src/misc/update_crypto.c] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'vlc/src/misc/update_crypto.c'; var root_path = '../../..'; var data_path = '../../../../data';</script>
+<script src='../../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='../..'>vlc</a>/<a href='..'>src</a>/<a href='./'>misc</a>/<a href='update_crypto.c.html'>update_crypto.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*****************************************************************************</i></td></tr>
+<tr><th id="2">2</th><td><i> * update_crypto.c: DSA related functions used for updating</i></td></tr>
+<tr><th id="3">3</th><td><i> *****************************************************************************</i></td></tr>
+<tr><th id="4">4</th><td><i> * Copyright © 2008-2009 VLC authors and VideoLAN</i></td></tr>
+<tr><th id="5">5</th><td><i> * $Id: e7b11fb646218134782a7b35af49bfbac8d2b48f $</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * Authors: Rafaël Carré &lt;funman@videolanorg&gt;</i></td></tr>
+<tr><th id="8">8</th><td><i> *</i></td></tr>
+<tr><th id="9">9</th><td><i> * This program is free software; you can redistribute it and/or modify it</i></td></tr>
+<tr><th id="10">10</th><td><i> * under the terms of the GNU Lesser General Public License as published by</i></td></tr>
+<tr><th id="11">11</th><td><i> * the Free Software Foundation; either release 2 of the License, or</i></td></tr>
+<tr><th id="12">12</th><td><i> * (at your option) any later release.</i></td></tr>
+<tr><th id="13">13</th><td><i> *</i></td></tr>
+<tr><th id="14">14</th><td><i> * This program is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="15">15</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="16">16</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</i></td></tr>
+<tr><th id="17">17</th><td><i> * GNU Lesser General Public License for more details.</i></td></tr>
+<tr><th id="18">18</th><td><i> *</i></td></tr>
+<tr><th id="19">19</th><td><i> * You should have received a copy of the GNU Lesser General Public License</i></td></tr>
+<tr><th id="20">20</th><td><i> * along with this program; if not, write to the Free Software Foundation,</i></td></tr>
+<tr><th id="21">21</th><td><i> * Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.</i></td></tr>
+<tr><th id="22">22</th><td><i> *****************************************************************************/</i></td></tr>
+<tr><th id="23">23</th><td></td></tr>
+<tr><th id="24">24</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="25">25</th><td><i class="doc"> *  <span class="command"> \file</span></i></td></tr>
+<tr><th id="26">26</th><td><i class="doc"> *   This file contains functions related to OpenPGP in VLC update management</i></td></tr>
+<tr><th id="27">27</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="28">28</th><td></td></tr>
+<tr><th id="29">29</th><td><i>/*****************************************************************************</i></td></tr>
+<tr><th id="30">30</th><td><i> * Preamble</i></td></tr>
+<tr><th id="31">31</th><td><i> *****************************************************************************/</i></td></tr>
+<tr><th id="32">32</th><td></td></tr>
+<tr><th id="33">33</th><td><u>#<span data-ppcond="33">ifdef</span> <span class="macro" data-ref="_M/HAVE_CONFIG_H">HAVE_CONFIG_H</span></u></td></tr>
+<tr><th id="34">34</th><td><u># include <a href="../../config.h.html">"config.h"</a></u></td></tr>
+<tr><th id="35">35</th><td><u>#<span data-ppcond="33">endif</span></u></td></tr>
+<tr><th id="36">36</th><td></td></tr>
+<tr><th id="37">37</th><td><u>#<span data-ppcond="37">ifdef</span> <span class="macro" data-ref="_M/UPDATE_CHECK">UPDATE_CHECK</span></u></td></tr>
+<tr><th id="38">38</th><td></td></tr>
+<tr><th id="39">39</th><td><u>#include &lt;gcrypt.h&gt;</u></td></tr>
+<tr><th id="40">40</th><td><u>#include &lt;assert.h&gt;</u></td></tr>
+<tr><th id="41">41</th><td></td></tr>
+<tr><th id="42">42</th><td><u>#include "vlc_common.h"</u></td></tr>
+<tr><th id="43">43</th><td><u>#include &lt;vlc_stream.h&gt;</u></td></tr>
+<tr><th id="44">44</th><td><u>#include &lt;vlc_strings.h&gt;</u></td></tr>
+<tr><th id="45">45</th><td><u>#include &lt;vlc_fs.h&gt;</u></td></tr>
+<tr><th id="46">46</th><td></td></tr>
+<tr><th id="47">47</th><td><u>#include "update.h"</u></td></tr>
+<tr><th id="48">48</th><td></td></tr>
+<tr><th id="49">49</th><td></td></tr>
+<tr><th id="50">50</th><td><i>/*****************************************************************************</i></td></tr>
+<tr><th id="51">51</th><td><i> * OpenPGP functions</i></td></tr>
+<tr><th id="52">52</th><td><i> *****************************************************************************/</i></td></tr>
+<tr><th id="53">53</th><td></td></tr>
+<tr><th id="54">54</th><td><u>#define packet_type( c ) ( ( c &amp; 0x3c ) &gt;&gt; 2 )      /* 0x3C = 00111100 */</u></td></tr>
+<tr><th id="55">55</th><td><u>#define packet_header_len( c ) ( ( c &amp; 0x03 ) + 1 ) /* number of bytes in a packet header */</u></td></tr>
+<tr><th id="56">56</th><td></td></tr>
+<tr><th id="57">57</th><td></td></tr>
+<tr><th id="58">58</th><td><em>static</em> <b>inline</b> <em>int</em> scalar_number( <em>const</em> uint8_t *p, <em>int</em> header_len )</td></tr>
+<tr><th id="59">59</th><td>{</td></tr>
+<tr><th id="60">60</th><td>    assert( header_len == <var>1</var> || header_len == <var>2</var> || header_len == <var>4</var> );</td></tr>
+<tr><th id="61">61</th><td></td></tr>
+<tr><th id="62">62</th><td>    <b>if</b>( header_len == <var>1</var> )</td></tr>
+<tr><th id="63">63</th><td>        <b>return</b>( p[<var>0</var>] );</td></tr>
+<tr><th id="64">64</th><td>    <b>else</b> <b>if</b>( header_len == <var>2</var> )</td></tr>
+<tr><th id="65">65</th><td>        <b>return</b>( (p[<var>0</var>] &lt;&lt; <var>8</var>) + p[<var>1</var>] );</td></tr>
+<tr><th id="66">66</th><td>    <b>else</b> <b>if</b>( header_len == <var>4</var> )</td></tr>
+<tr><th id="67">67</th><td>        <b>return</b>( (p[<var>0</var>] &lt;&lt; <var>24</var>) + (p[<var>1</var>] &lt;&lt; <var>16</var>) + (p[<var>2</var>] &lt;&lt; <var>8</var>) + p[<var>3</var>] );</td></tr>
+<tr><th id="68">68</th><td>    <b>else</b></td></tr>
+<tr><th id="69">69</th><td>        abort();</td></tr>
+<tr><th id="70">70</th><td>}</td></tr>
+<tr><th id="71">71</th><td></td></tr>
+<tr><th id="72">72</th><td></td></tr>
+<tr><th id="73">73</th><td><i>/* number of data bytes in a MPI */</i></td></tr>
+<tr><th id="74">74</th><td><em>static</em> <em>int</em> mpi_len(<em>const</em> uint8_t *mpi)</td></tr>
+<tr><th id="75">75</th><td>{</td></tr>
+<tr><th id="76">76</th><td>    <b>return</b> (scalar_number(mpi, <var>2</var>) + <var>7</var>) / <var>8</var>;</td></tr>
+<tr><th id="77">77</th><td>}</td></tr>
+<tr><th id="78">78</th><td></td></tr>
+<tr><th id="79">79</th><td><em>static</em> size_t read_mpi(uint8_t *dst, <em>const</em> uint8_t *buf, size_t buflen, size_t bits)</td></tr>
+<tr><th id="80">80</th><td>{</td></tr>
+<tr><th id="81">81</th><td>    <b>if</b> (buflen &lt; <var>2</var>)</td></tr>
+<tr><th id="82">82</th><td>        <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="83">83</th><td></td></tr>
+<tr><th id="84">84</th><td>    size_t n = mpi_len(buf);</td></tr>
+<tr><th id="85">85</th><td></td></tr>
+<tr><th id="86">86</th><td>    <b>if</b> (n * <var>8</var> &gt; bits)</td></tr>
+<tr><th id="87">87</th><td>        <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="88">88</th><td></td></tr>
+<tr><th id="89">89</th><td>    n += <var>2</var>;</td></tr>
+<tr><th id="90">90</th><td></td></tr>
+<tr><th id="91">91</th><td>    <b>if</b> (buflen &lt; n)</td></tr>
+<tr><th id="92">92</th><td>        <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="93">93</th><td></td></tr>
+<tr><th id="94">94</th><td>    memcpy(dst, buf, n);</td></tr>
+<tr><th id="95">95</th><td>    <b>return</b> n;</td></tr>
+<tr><th id="96">96</th><td>}</td></tr>
+<tr><th id="97">97</th><td></td></tr>
+<tr><th id="98">98</th><td><u>#define READ_MPI(d, bits) do { \</u></td></tr>
+<tr><th id="99">99</th><td><u>    size_t n = read_mpi(d, p_buf, i_packet_len - i_read, bits); \</u></td></tr>
+<tr><th id="100">100</th><td><u>    if (!n) goto error; \</u></td></tr>
+<tr><th id="101">101</th><td><u>    p_buf += n; \</u></td></tr>
+<tr><th id="102">102</th><td><u>    i_read += n; \</u></td></tr>
+<tr><th id="103">103</th><td><u>} while(0)</u></td></tr>
+<tr><th id="104">104</th><td></td></tr>
+<tr><th id="105">105</th><td><i>/*</i></td></tr>
+<tr><th id="106">106</th><td><i> * fill a public_key_packet_t structure from public key packet data</i></td></tr>
+<tr><th id="107">107</th><td><i> * verify that it is a version 4 public key packet, using DSA</i></td></tr>
+<tr><th id="108">108</th><td><i> */</i></td></tr>
+<tr><th id="109">109</th><td><em>static</em> <em>int</em> parse_public_key_packet( public_key_packet_t *p_key,</td></tr>
+<tr><th id="110">110</th><td>                                    <em>const</em> uint8_t *p_buf, size_t i_packet_len )</td></tr>
+<tr><th id="111">111</th><td>{</td></tr>
+<tr><th id="112">112</th><td>    <b>if</b>( i_packet_len &lt; <var>6</var> )</td></tr>
+<tr><th id="113">113</th><td>        <b>return</b> VLC_EGENERIC;</td></tr>
+<tr><th id="114">114</th><td></td></tr>
+<tr><th id="115">115</th><td>    size_t i_read = <var>0</var>;</td></tr>
+<tr><th id="116">116</th><td></td></tr>
+<tr><th id="117">117</th><td>    p_key-&gt;version   = *p_buf++; i_read++;</td></tr>
+<tr><th id="118">118</th><td>    <b>if</b>( p_key-&gt;version != <var>4</var> )</td></tr>
+<tr><th id="119">119</th><td>        <b>return</b> VLC_EGENERIC;</td></tr>
+<tr><th id="120">120</th><td></td></tr>
+<tr><th id="121">121</th><td>    <i>/* XXX: warn when timestamp is &gt; date ? */</i></td></tr>
+<tr><th id="122">122</th><td>    memcpy( p_key-&gt;timestamp, p_buf, <var>4</var> ); p_buf += <var>4</var>; i_read += <var>4</var>;</td></tr>
+<tr><th id="123">123</th><td></td></tr>
+<tr><th id="124">124</th><td>    p_key-&gt;algo      = *p_buf++; i_read++;</td></tr>
+<tr><th id="125">125</th><td>    <b>if</b>( p_key-&gt;algo != GCRY_PK_DSA )</td></tr>
+<tr><th id="126">126</th><td>        <b>return</b> VLC_EGENERIC;</td></tr>
+<tr><th id="127">127</th><td></td></tr>
+<tr><th id="128">128</th><td>    READ_MPI(p_key-&gt;p, <var>3072</var>);</td></tr>
+<tr><th id="129">129</th><td>    READ_MPI(p_key-&gt;q, <var>256</var>);</td></tr>
+<tr><th id="130">130</th><td>    READ_MPI(p_key-&gt;g, <var>3072</var>);</td></tr>
+<tr><th id="131">131</th><td>    READ_MPI(p_key-&gt;y, <var>3072</var>);</td></tr>
+<tr><th id="132">132</th><td></td></tr>
+<tr><th id="133">133</th><td>    <b>if</b>( i_read == i_packet_len )</td></tr>
+<tr><th id="134">134</th><td>        <b>return</b> VLC_SUCCESS;</td></tr>
+<tr><th id="135">135</th><td></td></tr>
+<tr><th id="136">136</th><td>    <i>/* some extra data eh ? */</i></td></tr>
+<tr><th id="137">137</th><td></td></tr>
+<tr><th id="138">138</th><td>error:</td></tr>
+<tr><th id="139">139</th><td>    <b>return</b> VLC_EGENERIC;</td></tr>
+<tr><th id="140">140</th><td>}</td></tr>
+<tr><th id="141">141</th><td></td></tr>
+<tr><th id="142">142</th><td></td></tr>
+<tr><th id="143">143</th><td><em>static</em> size_t parse_signature_v3_packet( signature_packet_t *p_sig,</td></tr>
+<tr><th id="144">144</th><td>                                      <em>const</em> uint8_t *p_buf, size_t i_sig_len )</td></tr>
+<tr><th id="145">145</th><td>{</td></tr>
+<tr><th id="146">146</th><td>    size_t i_read = <var>1</var>; <i>/* we already read the version byte */</i></td></tr>
+<tr><th id="147">147</th><td></td></tr>
+<tr><th id="148">148</th><td>    <b>if</b>( i_sig_len &lt; <var>19</var> ) <i>/* signature is at least 19 bytes + the 2 MPIs */</i></td></tr>
+<tr><th id="149">149</th><td>        <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="150">150</th><td></td></tr>
+<tr><th id="151">151</th><td>    p_sig-&gt;specific.v3.hashed_data_len = *p_buf++; i_read++;</td></tr>
+<tr><th id="152">152</th><td>    <b>if</b>( p_sig-&gt;specific.v3.hashed_data_len != <var>5</var> )</td></tr>
+<tr><th id="153">153</th><td>        <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="154">154</th><td></td></tr>
+<tr><th id="155">155</th><td>    p_sig-&gt;type = *p_buf++; i_read++;</td></tr>
+<tr><th id="156">156</th><td></td></tr>
+<tr><th id="157">157</th><td>    memcpy( p_sig-&gt;specific.v3.timestamp, p_buf, <var>4</var> );</td></tr>
+<tr><th id="158">158</th><td>    p_buf += <var>4</var>; i_read += <var>4</var>;</td></tr>
+<tr><th id="159">159</th><td></td></tr>
+<tr><th id="160">160</th><td>    memcpy( p_sig-&gt;issuer_longid, p_buf, <var>8</var> );</td></tr>
+<tr><th id="161">161</th><td>    p_buf += <var>8</var>; i_read += <var>8</var>;</td></tr>
+<tr><th id="162">162</th><td></td></tr>
+<tr><th id="163">163</th><td>    p_sig-&gt;public_key_algo = *p_buf++; i_read++;</td></tr>
+<tr><th id="164">164</th><td></td></tr>
+<tr><th id="165">165</th><td>    p_sig-&gt;digest_algo = *p_buf++; i_read++;</td></tr>
+<tr><th id="166">166</th><td></td></tr>
+<tr><th id="167">167</th><td>    p_sig-&gt;hash_verification[<var>0</var>] = *p_buf++; i_read++;</td></tr>
+<tr><th id="168">168</th><td>    p_sig-&gt;hash_verification[<var>1</var>] = *p_buf++; i_read++;</td></tr>
+<tr><th id="169">169</th><td></td></tr>
+<tr><th id="170">170</th><td>    assert( i_read == <var>19</var> );</td></tr>
+<tr><th id="171">171</th><td></td></tr>
+<tr><th id="172">172</th><td>    <b>return</b> i_read;</td></tr>
+<tr><th id="173">173</th><td>}</td></tr>
+<tr><th id="174">174</th><td></td></tr>
+<tr><th id="175">175</th><td></td></tr>
+<tr><th id="176">176</th><td><i>/*</i></td></tr>
+<tr><th id="177">177</th><td><i> * fill a signature_packet_v4_t from signature packet data</i></td></tr>
+<tr><th id="178">178</th><td><i> * verify that it was used with a DSA public key</i></td></tr>
+<tr><th id="179">179</th><td><i> */</i></td></tr>
+<tr><th id="180">180</th><td><em>static</em> size_t parse_signature_v4_packet( signature_packet_t *p_sig,</td></tr>
+<tr><th id="181">181</th><td>                                      <em>const</em> uint8_t *p_buf, size_t i_sig_len )</td></tr>
+<tr><th id="182">182</th><td>{</td></tr>
+<tr><th id="183">183</th><td>    size_t i_read = <var>1</var>; <i>/* we already read the version byte */</i></td></tr>
+<tr><th id="184">184</th><td></td></tr>
+<tr><th id="185">185</th><td>    <b>if</b>( i_sig_len &lt; <var>10</var> ) <i>/* signature is at least 10 bytes + the 2 MPIs */</i></td></tr>
+<tr><th id="186">186</th><td>        <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="187">187</th><td></td></tr>
+<tr><th id="188">188</th><td>    p_sig-&gt;type = *p_buf++; i_read++;</td></tr>
+<tr><th id="189">189</th><td></td></tr>
+<tr><th id="190">190</th><td>    p_sig-&gt;public_key_algo = *p_buf++; i_read++;</td></tr>
+<tr><th id="191">191</th><td></td></tr>
+<tr><th id="192">192</th><td>    p_sig-&gt;digest_algo = *p_buf++; i_read++;</td></tr>
+<tr><th id="193">193</th><td></td></tr>
+<tr><th id="194">194</th><td>    memcpy( p_sig-&gt;specific.v4.hashed_data_len, p_buf, <var>2</var> );</td></tr>
+<tr><th id="195">195</th><td>    p_buf += <var>2</var>; i_read += <var>2</var>;</td></tr>
+<tr><th id="196">196</th><td></td></tr>
+<tr><th id="197">197</th><td>    size_t i_hashed_data_len =</td></tr>
+<tr><th id="198">198</th><td>        scalar_number( p_sig-&gt;specific.v4.hashed_data_len, <var>2</var> );</td></tr>
+<tr><th id="199">199</th><td>    i_read += i_hashed_data_len;</td></tr>
+<tr><th id="200">200</th><td>    <b>if</b>( i_read + <var>4</var> &gt; i_sig_len )</td></tr>
+<tr><th id="201">201</th><td>        <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="202">202</th><td></td></tr>
+<tr><th id="203">203</th><td>    p_sig-&gt;specific.v4.hashed_data = (uint8_t*) malloc( i_hashed_data_len );</td></tr>
+<tr><th id="204">204</th><td>    <b>if</b>( !p_sig-&gt;specific.v4.hashed_data )</td></tr>
+<tr><th id="205">205</th><td>        <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="206">206</th><td>    memcpy( p_sig-&gt;specific.v4.hashed_data, p_buf, i_hashed_data_len );</td></tr>
+<tr><th id="207">207</th><td>    p_buf += i_hashed_data_len;</td></tr>
+<tr><th id="208">208</th><td></td></tr>
+<tr><th id="209">209</th><td>    memcpy( p_sig-&gt;specific.v4.unhashed_data_len, p_buf, <var>2</var> );</td></tr>
+<tr><th id="210">210</th><td>    p_buf += <var>2</var>; i_read += <var>2</var>;</td></tr>
+<tr><th id="211">211</th><td></td></tr>
+<tr><th id="212">212</th><td>    size_t i_unhashed_data_len =</td></tr>
+<tr><th id="213">213</th><td>        scalar_number( p_sig-&gt;specific.v4.unhashed_data_len, <var>2</var> );</td></tr>
+<tr><th id="214">214</th><td>    i_read += i_unhashed_data_len;</td></tr>
+<tr><th id="215">215</th><td>    <b>if</b>( i_read + <var>2</var> &gt; i_sig_len )</td></tr>
+<tr><th id="216">216</th><td>        <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="217">217</th><td></td></tr>
+<tr><th id="218">218</th><td>    p_sig-&gt;specific.v4.unhashed_data = (uint8_t*) malloc( i_unhashed_data_len );</td></tr>
+<tr><th id="219">219</th><td>    <b>if</b>( !p_sig-&gt;specific.v4.unhashed_data )</td></tr>
+<tr><th id="220">220</th><td>        <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="221">221</th><td></td></tr>
+<tr><th id="222">222</th><td>    memcpy( p_sig-&gt;specific.v4.unhashed_data, p_buf, i_unhashed_data_len );</td></tr>
+<tr><th id="223">223</th><td>    p_buf += i_unhashed_data_len;</td></tr>
+<tr><th id="224">224</th><td></td></tr>
+<tr><th id="225">225</th><td>    memcpy( p_sig-&gt;hash_verification, p_buf, <var>2</var> );</td></tr>
+<tr><th id="226">226</th><td>    p_buf += <var>2</var>; i_read += <var>2</var>;</td></tr>
+<tr><th id="227">227</th><td></td></tr>
+<tr><th id="228">228</th><td>    uint8_t *p, *max_pos;</td></tr>
+<tr><th id="229">229</th><td>    p = p_sig-&gt;specific.v4.unhashed_data;</td></tr>
+<tr><th id="230">230</th><td>    max_pos = p + scalar_number( p_sig-&gt;specific.v4.unhashed_data_len, <var>2</var> );</td></tr>
+<tr><th id="231">231</th><td></td></tr>
+<tr><th id="232">232</th><td>    <b>for</b>( ;; )</td></tr>
+<tr><th id="233">233</th><td>    {</td></tr>
+<tr><th id="234">234</th><td>        <b>if</b>( p &gt; max_pos )</td></tr>
+<tr><th id="235">235</th><td>            <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="236">236</th><td></td></tr>
+<tr><th id="237">237</th><td>        size_t i_subpacket_len;</td></tr>
+<tr><th id="238">238</th><td>        <b>if</b>( *p &lt; <var>192</var> )</td></tr>
+<tr><th id="239">239</th><td>        {</td></tr>
+<tr><th id="240">240</th><td>            <b>if</b>( p + <var>1</var> &gt; max_pos )</td></tr>
+<tr><th id="241">241</th><td>                <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="242">242</th><td>            i_subpacket_len = *p++;</td></tr>
+<tr><th id="243">243</th><td>        }</td></tr>
+<tr><th id="244">244</th><td>        <b>else</b> <b>if</b>( *p &lt; <var>255</var> )</td></tr>
+<tr><th id="245">245</th><td>        {</td></tr>
+<tr><th id="246">246</th><td>            <b>if</b>( p + <var>2</var> &gt; max_pos )</td></tr>
+<tr><th id="247">247</th><td>                <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="248">248</th><td>            i_subpacket_len = (*p++ - <var>192</var>) &lt;&lt; <var>8</var>;</td></tr>
+<tr><th id="249">249</th><td>            i_subpacket_len += *p++ + <var>192</var>;</td></tr>
+<tr><th id="250">250</th><td>        }</td></tr>
+<tr><th id="251">251</th><td>        <b>else</b></td></tr>
+<tr><th id="252">252</th><td>        {</td></tr>
+<tr><th id="253">253</th><td>            <b>if</b>( p + <var>4</var> &gt; max_pos )</td></tr>
+<tr><th id="254">254</th><td>                <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="255">255</th><td>            i_subpacket_len = *++p &lt;&lt; <var>24</var>;</td></tr>
+<tr><th id="256">256</th><td>            i_subpacket_len += *++p &lt;&lt; <var>16</var>;</td></tr>
+<tr><th id="257">257</th><td>            i_subpacket_len += *++p &lt;&lt; <var>8</var>;</td></tr>
+<tr><th id="258">258</th><td>            i_subpacket_len += *++p;</td></tr>
+<tr><th id="259">259</th><td>        }</td></tr>
+<tr><th id="260">260</th><td></td></tr>
+<tr><th id="261">261</th><td>        <b>if</b>( *p == ISSUER_SUBPACKET )</td></tr>
+<tr><th id="262">262</th><td>        {</td></tr>
+<tr><th id="263">263</th><td>            <b>if</b>( p + <var>9</var> &gt; max_pos )</td></tr>
+<tr><th id="264">264</th><td>                <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="265">265</th><td></td></tr>
+<tr><th id="266">266</th><td>            memcpy( &amp;p_sig-&gt;issuer_longid, p+<var>1</var>, <var>8</var> );</td></tr>
+<tr><th id="267">267</th><td></td></tr>
+<tr><th id="268">268</th><td>            <b>return</b> i_read;</td></tr>
+<tr><th id="269">269</th><td>        }</td></tr>
+<tr><th id="270">270</th><td></td></tr>
+<tr><th id="271">271</th><td>        p += i_subpacket_len;</td></tr>
+<tr><th id="272">272</th><td>    }</td></tr>
+<tr><th id="273">273</th><td>}</td></tr>
+<tr><th id="274">274</th><td></td></tr>
+<tr><th id="275">275</th><td></td></tr>
+<tr><th id="276">276</th><td><em>static</em> <em>int</em> parse_signature_packet( signature_packet_t *p_sig,</td></tr>
+<tr><th id="277">277</th><td>                                   <em>const</em> uint8_t *p_buf, size_t i_packet_len )</td></tr>
+<tr><th id="278">278</th><td>{</td></tr>
+<tr><th id="279">279</th><td>    <b>if</b>( !i_packet_len ) <i>/* 1st sanity check, we need at least the version */</i></td></tr>
+<tr><th id="280">280</th><td>        <b>return</b> VLC_EGENERIC;</td></tr>
+<tr><th id="281">281</th><td></td></tr>
+<tr><th id="282">282</th><td>    p_sig-&gt;version = *p_buf++;</td></tr>
+<tr><th id="283">283</th><td></td></tr>
+<tr><th id="284">284</th><td>    size_t i_read;</td></tr>
+<tr><th id="285">285</th><td>    <b>switch</b>( p_sig-&gt;version )</td></tr>
+<tr><th id="286">286</th><td>    {</td></tr>
+<tr><th id="287">287</th><td>        <b>case</b> <var>3</var>:</td></tr>
+<tr><th id="288">288</th><td>            i_read = parse_signature_v3_packet( p_sig, p_buf, i_packet_len );</td></tr>
+<tr><th id="289">289</th><td>            <b>break</b>;</td></tr>
+<tr><th id="290">290</th><td>        <b>case</b> <var>4</var>:</td></tr>
+<tr><th id="291">291</th><td>            p_sig-&gt;specific.v4.hashed_data = NULL;</td></tr>
+<tr><th id="292">292</th><td>            p_sig-&gt;specific.v4.unhashed_data = NULL;</td></tr>
+<tr><th id="293">293</th><td>            i_read = parse_signature_v4_packet( p_sig, p_buf, i_packet_len );</td></tr>
+<tr><th id="294">294</th><td>            <b>break</b>;</td></tr>
+<tr><th id="295">295</th><td>        <b>default</b>:</td></tr>
+<tr><th id="296">296</th><td>            <b>return</b> VLC_EGENERIC;</td></tr>
+<tr><th id="297">297</th><td>    }</td></tr>
+<tr><th id="298">298</th><td></td></tr>
+<tr><th id="299">299</th><td>    <b>if</b>( i_read == <var>0</var> ) <i>/* signature packet parsing has failed */</i></td></tr>
+<tr><th id="300">300</th><td>        <b>goto</b> error;</td></tr>
+<tr><th id="301">301</th><td></td></tr>
+<tr><th id="302">302</th><td>    <b>if</b>( p_sig-&gt;public_key_algo != GCRY_PK_DSA )</td></tr>
+<tr><th id="303">303</th><td>        <b>goto</b> error;</td></tr>
+<tr><th id="304">304</th><td></td></tr>
+<tr><th id="305">305</th><td>    <b>switch</b>( p_sig-&gt;type )</td></tr>
+<tr><th id="306">306</th><td>    {</td></tr>
+<tr><th id="307">307</th><td>        <b>case</b> BINARY_SIGNATURE:</td></tr>
+<tr><th id="308">308</th><td>        <b>case</b> TEXT_SIGNATURE:</td></tr>
+<tr><th id="309">309</th><td>        <b>case</b> GENERIC_KEY_SIGNATURE:</td></tr>
+<tr><th id="310">310</th><td>        <b>case</b> PERSONA_KEY_SIGNATURE:</td></tr>
+<tr><th id="311">311</th><td>        <b>case</b> CASUAL_KEY_SIGNATURE:</td></tr>
+<tr><th id="312">312</th><td>        <b>case</b> POSITIVE_KEY_SIGNATURE:</td></tr>
+<tr><th id="313">313</th><td>            <b>break</b>;</td></tr>
+<tr><th id="314">314</th><td>        <b>default</b>:</td></tr>
+<tr><th id="315">315</th><td>            <b>goto</b> error;</td></tr>
+<tr><th id="316">316</th><td>    }</td></tr>
+<tr><th id="317">317</th><td></td></tr>
+<tr><th id="318">318</th><td>    p_buf--; <i>/* rewind to the version byte */</i></td></tr>
+<tr><th id="319">319</th><td>    p_buf += i_read;</td></tr>
+<tr><th id="320">320</th><td></td></tr>
+<tr><th id="321">321</th><td>    READ_MPI(p_sig-&gt;r, <var>256</var>);</td></tr>
+<tr><th id="322">322</th><td>    READ_MPI(p_sig-&gt;s, <var>256</var>);</td></tr>
+<tr><th id="323">323</th><td></td></tr>
+<tr><th id="324">324</th><td>    assert( i_read == i_packet_len );</td></tr>
+<tr><th id="325">325</th><td>    <b>if</b>( i_read &lt; i_packet_len ) <i>/* some extra data, hm ? */</i></td></tr>
+<tr><th id="326">326</th><td>        <b>goto</b> error;</td></tr>
+<tr><th id="327">327</th><td></td></tr>
+<tr><th id="328">328</th><td>    <b>return</b> VLC_SUCCESS;</td></tr>
+<tr><th id="329">329</th><td></td></tr>
+<tr><th id="330">330</th><td>error:</td></tr>
+<tr><th id="331">331</th><td></td></tr>
+<tr><th id="332">332</th><td>    <b>if</b>( p_sig-&gt;version == <var>4</var> )</td></tr>
+<tr><th id="333">333</th><td>    {</td></tr>
+<tr><th id="334">334</th><td>        free( p_sig-&gt;specific.v4.hashed_data );</td></tr>
+<tr><th id="335">335</th><td>        free( p_sig-&gt;specific.v4.unhashed_data );</td></tr>
+<tr><th id="336">336</th><td>    }</td></tr>
+<tr><th id="337">337</th><td></td></tr>
+<tr><th id="338">338</th><td>    <b>return</b> VLC_EGENERIC;</td></tr>
+<tr><th id="339">339</th><td>}</td></tr>
+<tr><th id="340">340</th><td></td></tr>
+<tr><th id="341">341</th><td></td></tr>
+<tr><th id="342">342</th><td><i>/*</i></td></tr>
+<tr><th id="343">343</th><td><i> * crc_octets() was lamely copied from rfc 2440</i></td></tr>
+<tr><th id="344">344</th><td><i> * Copyright (C) The Internet Society (1998).  All Rights Reserved.</i></td></tr>
+<tr><th id="345">345</th><td><i> */</i></td></tr>
+<tr><th id="346">346</th><td><u>#define CRC24_INIT 0xB704CEL</u></td></tr>
+<tr><th id="347">347</th><td><u>#define CRC24_POLY 0x1864CFBL</u></td></tr>
+<tr><th id="348">348</th><td></td></tr>
+<tr><th id="349">349</th><td><em>static</em> <em>long</em> crc_octets( uint8_t *octets, size_t len )</td></tr>
+<tr><th id="350">350</th><td>{</td></tr>
+<tr><th id="351">351</th><td>    <em>long</em> crc = CRC24_INIT;</td></tr>
+<tr><th id="352">352</th><td>    <em>int</em> i;</td></tr>
+<tr><th id="353">353</th><td>    <b>while</b> (len--)</td></tr>
+<tr><th id="354">354</th><td>    {</td></tr>
+<tr><th id="355">355</th><td>        crc ^= (*octets++) &lt;&lt; <var>16</var>;</td></tr>
+<tr><th id="356">356</th><td>        <b>for</b> (i = <var>0</var>; i &lt; <var>8</var>; i++)</td></tr>
+<tr><th id="357">357</th><td>        {</td></tr>
+<tr><th id="358">358</th><td>            crc &lt;&lt;= <var>1</var>;</td></tr>
+<tr><th id="359">359</th><td>            <b>if</b> (crc &amp; <var>0x1000000</var>)</td></tr>
+<tr><th id="360">360</th><td>                crc ^= CRC24_POLY;</td></tr>
+<tr><th id="361">361</th><td>        }</td></tr>
+<tr><th id="362">362</th><td>    }</td></tr>
+<tr><th id="363">363</th><td>    <b>return</b> crc &amp; <var>0xFFFFFFL</var>;</td></tr>
+<tr><th id="364">364</th><td>}</td></tr>
+<tr><th id="365">365</th><td></td></tr>
+<tr><th id="366">366</th><td></td></tr>
+<tr><th id="367">367</th><td><i>/*</i></td></tr>
+<tr><th id="368">368</th><td><i> * Transform an armored document in binary format</i></td></tr>
+<tr><th id="369">369</th><td><i> * Used on public keys and signatures</i></td></tr>
+<tr><th id="370">370</th><td><i> */</i></td></tr>
+<tr><th id="371">371</th><td><em>static</em> <em>int</em> pgp_unarmor( <em>const</em> <em>char</em> *p_ibuf, size_t i_ibuf_len,</td></tr>
+<tr><th id="372">372</th><td>                        uint8_t *p_obuf, size_t i_obuf_len )</td></tr>
+<tr><th id="373">373</th><td>{</td></tr>
+<tr><th id="374">374</th><td>    <em>const</em> <em>char</em> *p_ipos = p_ibuf;</td></tr>
+<tr><th id="375">375</th><td>    uint8_t *p_opos = p_obuf;</td></tr>
+<tr><th id="376">376</th><td>    <em>int</em> i_end = <var>0</var>;</td></tr>
+<tr><th id="377">377</th><td>    <em>int</em> i_header_skipped = <var>0</var>;</td></tr>
+<tr><th id="378">378</th><td></td></tr>
+<tr><th id="379">379</th><td>    <b>while</b>( !i_end &amp;&amp; p_ipos &lt; p_ibuf + i_ibuf_len &amp;&amp; *p_ipos != <kbd>'='</kbd> )</td></tr>
+<tr><th id="380">380</th><td>    {</td></tr>
+<tr><th id="381">381</th><td>        <b>if</b>( *p_ipos == <kbd>'\r'</kbd> || *p_ipos == <kbd>'\n'</kbd> )</td></tr>
+<tr><th id="382">382</th><td>        {</td></tr>
+<tr><th id="383">383</th><td>            p_ipos++;</td></tr>
+<tr><th id="384">384</th><td>            <b>continue</b>;</td></tr>
+<tr><th id="385">385</th><td>        }</td></tr>
+<tr><th id="386">386</th><td></td></tr>
+<tr><th id="387">387</th><td>        size_t i_line_len = strcspn( p_ipos, <q>"\r\n"</q> );</td></tr>
+<tr><th id="388">388</th><td>        <b>if</b>( i_line_len == <var>0</var> )</td></tr>
+<tr><th id="389">389</th><td>            <b>continue</b>;</td></tr>
+<tr><th id="390">390</th><td></td></tr>
+<tr><th id="391">391</th><td>        <b>if</b>( !i_header_skipped )</td></tr>
+<tr><th id="392">392</th><td>        {</td></tr>
+<tr><th id="393">393</th><td>            <b>if</b>( !strncmp( p_ipos, <q>"-----BEGIN PGP"</q>, <var>14</var> ) )</td></tr>
+<tr><th id="394">394</th><td>                i_header_skipped = <var>1</var>;</td></tr>
+<tr><th id="395">395</th><td></td></tr>
+<tr><th id="396">396</th><td>            p_ipos += i_line_len + <var>1</var>;</td></tr>
+<tr><th id="397">397</th><td>            <b>continue</b>;</td></tr>
+<tr><th id="398">398</th><td>        }</td></tr>
+<tr><th id="399">399</th><td></td></tr>
+<tr><th id="400">400</th><td>        <b>if</b>( !strncmp( p_ipos, <q>"Version:"</q>, <var>8</var> ) )</td></tr>
+<tr><th id="401">401</th><td>        {</td></tr>
+<tr><th id="402">402</th><td>            p_ipos += i_line_len + <var>1</var>;</td></tr>
+<tr><th id="403">403</th><td>            <b>continue</b>;</td></tr>
+<tr><th id="404">404</th><td>        }</td></tr>
+<tr><th id="405">405</th><td></td></tr>
+<tr><th id="406">406</th><td>        <b>if</b>( p_ipos[i_line_len - <var>1</var>] == <kbd>'='</kbd> )</td></tr>
+<tr><th id="407">407</th><td>        {</td></tr>
+<tr><th id="408">408</th><td>            i_end = <var>1</var>;</td></tr>
+<tr><th id="409">409</th><td>        }</td></tr>
+<tr><th id="410">410</th><td></td></tr>
+<tr><th id="411">411</th><td>        p_opos += vlc_b64_decode_binary_to_buffer(  p_opos,</td></tr>
+<tr><th id="412">412</th><td>                        p_obuf - p_opos + i_obuf_len, p_ipos );</td></tr>
+<tr><th id="413">413</th><td>        p_ipos += i_line_len + <var>1</var>;</td></tr>
+<tr><th id="414">414</th><td>    }</td></tr>
+<tr><th id="415">415</th><td></td></tr>
+<tr><th id="416">416</th><td>    <i>/* XXX: the CRC is OPTIONAL, really require it ? */</i></td></tr>
+<tr><th id="417">417</th><td>    <b>if</b>( p_ipos + <var>5</var> &gt; p_ibuf + i_ibuf_len || *p_ipos++ != <kbd>'='</kbd> )</td></tr>
+<tr><th id="418">418</th><td>        <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="419">419</th><td></td></tr>
+<tr><th id="420">420</th><td>    uint8_t p_crc[<var>3</var>];</td></tr>
+<tr><th id="421">421</th><td>    <b>if</b>( vlc_b64_decode_binary_to_buffer( p_crc, <var>3</var>, p_ipos ) != <var>3</var> )</td></tr>
+<tr><th id="422">422</th><td>        <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="423">423</th><td></td></tr>
+<tr><th id="424">424</th><td>    <em>long</em> l_crc = crc_octets( p_obuf, p_opos - p_obuf );</td></tr>
+<tr><th id="425">425</th><td>    <em>long</em> l_crc2 = ( <var>0</var> &lt;&lt; <var>24</var> ) + ( p_crc[<var>0</var>] &lt;&lt; <var>16</var> ) + ( p_crc[<var>1</var>] &lt;&lt; <var>8</var> ) + p_crc[<var>2</var>];</td></tr>
+<tr><th id="426">426</th><td></td></tr>
+<tr><th id="427">427</th><td>    <b>return</b> l_crc2 == l_crc ? p_opos - p_obuf : <var>0</var>;</td></tr>
+<tr><th id="428">428</th><td>}</td></tr>
+<tr><th id="429">429</th><td></td></tr>
+<tr><th id="430">430</th><td></td></tr>
+<tr><th id="431">431</th><td><i>/*</i></td></tr>
+<tr><th id="432">432</th><td><i> * Verify an OpenPGP signature made with some DSA public key</i></td></tr>
+<tr><th id="433">433</th><td><i> */</i></td></tr>
+<tr><th id="434">434</th><td><em>int</em> verify_signature( signature_packet_t *sign, public_key_packet_t *p_key,</td></tr>
+<tr><th id="435">435</th><td>                      uint8_t *p_hash )</td></tr>
+<tr><th id="436">436</th><td>{</td></tr>
+<tr><th id="437">437</th><td>    <i>/* the data to be verified (a hash) */</i></td></tr>
+<tr><th id="438">438</th><td>    <em>const</em> <em>char</em> *hash_sexp_s = <q>"(data(flags raw)(value %m))"</q>;</td></tr>
+<tr><th id="439">439</th><td>    <i>/* the public key */</i></td></tr>
+<tr><th id="440">440</th><td>    <em>const</em> <em>char</em> *key_sexp_s = <q>"(public-key(dsa(p %m)(q %m)(g %m)(y %m)))"</q>;</td></tr>
+<tr><th id="441">441</th><td>    <i>/* the signature */</i></td></tr>
+<tr><th id="442">442</th><td>    <em>const</em> <em>char</em> *sig_sexp_s = <q>"(sig-val(dsa(r %m )(s %m )))"</q>;</td></tr>
+<tr><th id="443">443</th><td></td></tr>
+<tr><th id="444">444</th><td>    size_t erroff;</td></tr>
+<tr><th id="445">445</th><td>    gcry_mpi_t p, q, g, y, r, s, hash;</td></tr>
+<tr><th id="446">446</th><td>    p = q = g = y = r = s = hash = NULL;</td></tr>
+<tr><th id="447">447</th><td>    gcry_sexp_t key_sexp, hash_sexp, sig_sexp;</td></tr>
+<tr><th id="448">448</th><td>    key_sexp = hash_sexp = sig_sexp = NULL;</td></tr>
+<tr><th id="449">449</th><td></td></tr>
+<tr><th id="450">450</th><td>    <em>int</em> i_p_len = mpi_len( p_key-&gt;p );</td></tr>
+<tr><th id="451">451</th><td>    <em>int</em> i_q_len = mpi_len( p_key-&gt;q );</td></tr>
+<tr><th id="452">452</th><td>    <em>int</em> i_g_len = mpi_len( p_key-&gt;g );</td></tr>
+<tr><th id="453">453</th><td>    <em>int</em> i_y_len = mpi_len( p_key-&gt;y );</td></tr>
+<tr><th id="454">454</th><td>    <b>if</b>( gcry_mpi_scan( &amp;p, GCRYMPI_FMT_USG, p_key-&gt;p + <var>2</var>, i_p_len, NULL ) ||</td></tr>
+<tr><th id="455">455</th><td>        gcry_mpi_scan( &amp;q, GCRYMPI_FMT_USG, p_key-&gt;q + <var>2</var>, i_q_len, NULL ) ||</td></tr>
+<tr><th id="456">456</th><td>        gcry_mpi_scan( &amp;g, GCRYMPI_FMT_USG, p_key-&gt;g + <var>2</var>, i_g_len, NULL ) ||</td></tr>
+<tr><th id="457">457</th><td>        gcry_mpi_scan( &amp;y, GCRYMPI_FMT_USG, p_key-&gt;y + <var>2</var>, i_y_len, NULL ) ||</td></tr>
+<tr><th id="458">458</th><td>        gcry_sexp_build( &amp;key_sexp, &amp;erroff, key_sexp_s, p, q, g, y ) )</td></tr>
+<tr><th id="459">459</th><td>        <b>goto</b> problem;</td></tr>
+<tr><th id="460">460</th><td></td></tr>
+<tr><th id="461">461</th><td>    uint8_t *p_r = sign-&gt;r;</td></tr>
+<tr><th id="462">462</th><td>    uint8_t *p_s = sign-&gt;s;</td></tr>
+<tr><th id="463">463</th><td>    <em>int</em> i_r_len = mpi_len( p_r );</td></tr>
+<tr><th id="464">464</th><td>    <em>int</em> i_s_len = mpi_len( p_s );</td></tr>
+<tr><th id="465">465</th><td>    <b>if</b>( gcry_mpi_scan( &amp;r, GCRYMPI_FMT_USG, p_r + <var>2</var>, i_r_len, NULL ) ||</td></tr>
+<tr><th id="466">466</th><td>        gcry_mpi_scan( &amp;s, GCRYMPI_FMT_USG, p_s + <var>2</var>, i_s_len, NULL ) ||</td></tr>
+<tr><th id="467">467</th><td>        gcry_sexp_build( &amp;sig_sexp, &amp;erroff, sig_sexp_s, r, s ) )</td></tr>
+<tr><th id="468">468</th><td>        <b>goto</b> problem;</td></tr>
+<tr><th id="469">469</th><td></td></tr>
+<tr><th id="470">470</th><td>    <em>int</em> i_hash_len = gcry_md_get_algo_dlen (sign-&gt;digest_algo);</td></tr>
+<tr><th id="471">471</th><td>    <b>if</b> (sign-&gt;public_key_algo == GCRY_PK_DSA) {</td></tr>
+<tr><th id="472">472</th><td>        <b>if</b> (i_hash_len &gt; i_q_len)</td></tr>
+<tr><th id="473">473</th><td>            i_hash_len = i_q_len;</td></tr>
+<tr><th id="474">474</th><td>    }</td></tr>
+<tr><th id="475">475</th><td>    <b>if</b>( gcry_mpi_scan( &amp;hash, GCRYMPI_FMT_USG, p_hash, i_hash_len, NULL ) ||</td></tr>
+<tr><th id="476">476</th><td>        gcry_sexp_build( &amp;hash_sexp, &amp;erroff, hash_sexp_s, hash ) )</td></tr>
+<tr><th id="477">477</th><td>        <b>goto</b> problem;</td></tr>
+<tr><th id="478">478</th><td></td></tr>
+<tr><th id="479">479</th><td>    <b>if</b>( gcry_pk_verify( sig_sexp, hash_sexp, key_sexp ) )</td></tr>
+<tr><th id="480">480</th><td>        <b>goto</b> problem;</td></tr>
+<tr><th id="481">481</th><td></td></tr>
+<tr><th id="482">482</th><td>    <b>return</b> VLC_SUCCESS;</td></tr>
+<tr><th id="483">483</th><td></td></tr>
+<tr><th id="484">484</th><td>problem:</td></tr>
+<tr><th id="485">485</th><td>    <b>if</b>( p ) gcry_mpi_release( p );</td></tr>
+<tr><th id="486">486</th><td>    <b>if</b>( q ) gcry_mpi_release( q );</td></tr>
+<tr><th id="487">487</th><td>    <b>if</b>( g ) gcry_mpi_release( g );</td></tr>
+<tr><th id="488">488</th><td>    <b>if</b>( y ) gcry_mpi_release( y );</td></tr>
+<tr><th id="489">489</th><td>    <b>if</b>( r ) gcry_mpi_release( r );</td></tr>
+<tr><th id="490">490</th><td>    <b>if</b>( s ) gcry_mpi_release( s );</td></tr>
+<tr><th id="491">491</th><td>    <b>if</b>( hash ) gcry_mpi_release( hash );</td></tr>
+<tr><th id="492">492</th><td>    <b>if</b>( key_sexp ) gcry_sexp_release( key_sexp );</td></tr>
+<tr><th id="493">493</th><td>    <b>if</b>( sig_sexp ) gcry_sexp_release( sig_sexp );</td></tr>
+<tr><th id="494">494</th><td>    <b>if</b>( hash_sexp ) gcry_sexp_release( hash_sexp );</td></tr>
+<tr><th id="495">495</th><td>    <b>return</b> VLC_EGENERIC;</td></tr>
+<tr><th id="496">496</th><td>}</td></tr>
+<tr><th id="497">497</th><td></td></tr>
+<tr><th id="498">498</th><td></td></tr>
+<tr><th id="499">499</th><td><i>/*</i></td></tr>
+<tr><th id="500">500</th><td><i> * fill a public_key_t with public key data, including:</i></td></tr>
+<tr><th id="501">501</th><td><i> *   * public key packet</i></td></tr>
+<tr><th id="502">502</th><td><i> *   * signature packet issued by key which long id is p_sig_issuer</i></td></tr>
+<tr><th id="503">503</th><td><i> *   * user id packet</i></td></tr>
+<tr><th id="504">504</th><td><i> */</i></td></tr>
+<tr><th id="505">505</th><td><em>int</em> parse_public_key( <em>const</em> uint8_t *p_key_data, size_t i_key_len,</td></tr>
+<tr><th id="506">506</th><td>                      public_key_t *p_key, <em>const</em> uint8_t *p_sig_issuer )</td></tr>
+<tr><th id="507">507</th><td>{</td></tr>
+<tr><th id="508">508</th><td>    <em>const</em> uint8_t *pos = p_key_data;</td></tr>
+<tr><th id="509">509</th><td>    <em>const</em> uint8_t *max_pos = pos + i_key_len;</td></tr>
+<tr><th id="510">510</th><td></td></tr>
+<tr><th id="511">511</th><td>    <em>int</em> i_status = <var>0</var>;</td></tr>
+<tr><th id="512">512</th><td><u>#define PUBLIC_KEY_FOUND    0x01</u></td></tr>
+<tr><th id="513">513</th><td><u>#define USER_ID_FOUND       0x02</u></td></tr>
+<tr><th id="514">514</th><td><u>#define SIGNATURE_FOUND     0X04</u></td></tr>
+<tr><th id="515">515</th><td></td></tr>
+<tr><th id="516">516</th><td>    uint8_t *p_key_unarmored = NULL;</td></tr>
+<tr><th id="517">517</th><td></td></tr>
+<tr><th id="518">518</th><td>    p_key-&gt;psz_username = NULL;</td></tr>
+<tr><th id="519">519</th><td>    p_key-&gt;sig.specific.v4.hashed_data = NULL;</td></tr>
+<tr><th id="520">520</th><td>    p_key-&gt;sig.specific.v4.unhashed_data = NULL;</td></tr>
+<tr><th id="521">521</th><td></td></tr>
+<tr><th id="522">522</th><td>    <b>if</b>( !( *pos &amp; <var>0x80</var> ) )</td></tr>
+<tr><th id="523">523</th><td>    {   <i>/* first byte is ASCII, unarmoring */</i></td></tr>
+<tr><th id="524">524</th><td>        p_key_unarmored = (uint8_t*)malloc( i_key_len );</td></tr>
+<tr><th id="525">525</th><td>        <b>if</b>( !p_key_unarmored )</td></tr>
+<tr><th id="526">526</th><td>            <b>return</b> VLC_ENOMEM;</td></tr>
+<tr><th id="527">527</th><td>        <em>int</em> i_len = pgp_unarmor( (<em>char</em>*)p_key_data, i_key_len,</td></tr>
+<tr><th id="528">528</th><td>                                 p_key_unarmored, i_key_len );</td></tr>
+<tr><th id="529">529</th><td></td></tr>
+<tr><th id="530">530</th><td>        <b>if</b>( i_len == <var>0</var> )</td></tr>
+<tr><th id="531">531</th><td>            <b>goto</b> error;</td></tr>
+<tr><th id="532">532</th><td></td></tr>
+<tr><th id="533">533</th><td>        pos = p_key_unarmored;</td></tr>
+<tr><th id="534">534</th><td>        max_pos = pos + i_len;</td></tr>
+<tr><th id="535">535</th><td>    }</td></tr>
+<tr><th id="536">536</th><td></td></tr>
+<tr><th id="537">537</th><td>    <b>while</b>( pos &lt; max_pos )</td></tr>
+<tr><th id="538">538</th><td>    {</td></tr>
+<tr><th id="539">539</th><td>        <b>if</b>( !(*pos &amp; <var>0x80</var>) || *pos &amp; <var>0x40</var> )</td></tr>
+<tr><th id="540">540</th><td>            <b>goto</b> error;</td></tr>
+<tr><th id="541">541</th><td></td></tr>
+<tr><th id="542">542</th><td>        <em>int</em> i_type = packet_type( *pos );</td></tr>
+<tr><th id="543">543</th><td></td></tr>
+<tr><th id="544">544</th><td>        <em>int</em> i_header_len = packet_header_len( *pos++ );</td></tr>
+<tr><th id="545">545</th><td>        <b>if</b>( pos + i_header_len &gt; max_pos ||</td></tr>
+<tr><th id="546">546</th><td>            ( i_header_len != <var>1</var> &amp;&amp; i_header_len != <var>2</var> &amp;&amp; i_header_len != <var>4</var> ) )</td></tr>
+<tr><th id="547">547</th><td>            <b>goto</b> error;</td></tr>
+<tr><th id="548">548</th><td></td></tr>
+<tr><th id="549">549</th><td>        <em>int</em> i_packet_len = scalar_number( pos, i_header_len );</td></tr>
+<tr><th id="550">550</th><td>        pos += i_header_len;</td></tr>
+<tr><th id="551">551</th><td></td></tr>
+<tr><th id="552">552</th><td>        <b>if</b>( pos + i_packet_len &gt; max_pos )</td></tr>
+<tr><th id="553">553</th><td>            <b>goto</b> error;</td></tr>
+<tr><th id="554">554</th><td></td></tr>
+<tr><th id="555">555</th><td>        <b>switch</b>( i_type )</td></tr>
+<tr><th id="556">556</th><td>        {</td></tr>
+<tr><th id="557">557</th><td>            <b>case</b> PUBLIC_KEY_PACKET:</td></tr>
+<tr><th id="558">558</th><td>                i_status |= PUBLIC_KEY_FOUND;</td></tr>
+<tr><th id="559">559</th><td>                <b>if</b>( parse_public_key_packet( &amp;p_key-&gt;key, pos, i_packet_len ) != VLC_SUCCESS )</td></tr>
+<tr><th id="560">560</th><td>                    <b>goto</b> error;</td></tr>
+<tr><th id="561">561</th><td>                <b>break</b>;</td></tr>
+<tr><th id="562">562</th><td></td></tr>
+<tr><th id="563">563</th><td>            <b>case</b> SIGNATURE_PACKET: <i>/* we accept only v4 signatures here */</i></td></tr>
+<tr><th id="564">564</th><td>                <b>if</b>( i_status &amp; SIGNATURE_FOUND || !p_sig_issuer )</td></tr>
+<tr><th id="565">565</th><td>                    <b>break</b>;</td></tr>
+<tr><th id="566">566</th><td>                <em>int</em> i_ret = parse_signature_packet( &amp;p_key-&gt;sig, pos,</td></tr>
+<tr><th id="567">567</th><td>                                                    i_packet_len );</td></tr>
+<tr><th id="568">568</th><td>                <b>if</b>( i_ret == VLC_SUCCESS )</td></tr>
+<tr><th id="569">569</th><td>                {</td></tr>
+<tr><th id="570">570</th><td>                    <b>if</b>( p_key-&gt;sig.version != <var>4</var> )</td></tr>
+<tr><th id="571">571</th><td>                        <b>break</b>;</td></tr>
+<tr><th id="572">572</th><td>                    <b>if</b>( memcmp( p_key-&gt;sig.issuer_longid, p_sig_issuer, <var>8</var> ) )</td></tr>
+<tr><th id="573">573</th><td>                    {</td></tr>
+<tr><th id="574">574</th><td>                        free( p_key-&gt;sig.specific.v4.hashed_data );</td></tr>
+<tr><th id="575">575</th><td>                        free( p_key-&gt;sig.specific.v4.unhashed_data );</td></tr>
+<tr><th id="576">576</th><td>                        p_key-&gt;sig.specific.v4.hashed_data = NULL;</td></tr>
+<tr><th id="577">577</th><td>                        p_key-&gt;sig.specific.v4.unhashed_data = NULL;</td></tr>
+<tr><th id="578">578</th><td>                        <b>break</b>;</td></tr>
+<tr><th id="579">579</th><td>                    }</td></tr>
+<tr><th id="580">580</th><td>                    i_status |= SIGNATURE_FOUND;</td></tr>
+<tr><th id="581">581</th><td>                }</td></tr>
+<tr><th id="582">582</th><td>                <b>break</b>;</td></tr>
+<tr><th id="583">583</th><td></td></tr>
+<tr><th id="584">584</th><td>            <b>case</b> USER_ID_PACKET:</td></tr>
+<tr><th id="585">585</th><td>                <b>if</b>( p_key-&gt;psz_username ) <i>/* save only the first User ID */</i></td></tr>
+<tr><th id="586">586</th><td>                    <b>break</b>;</td></tr>
+<tr><th id="587">587</th><td>                i_status |= USER_ID_FOUND;</td></tr>
+<tr><th id="588">588</th><td>                p_key-&gt;psz_username = (uint8_t*)malloc( i_packet_len + <var>1</var>);</td></tr>
+<tr><th id="589">589</th><td>                <b>if</b>( !p_key-&gt;psz_username )</td></tr>
+<tr><th id="590">590</th><td>                    <b>goto</b> error;</td></tr>
+<tr><th id="591">591</th><td></td></tr>
+<tr><th id="592">592</th><td>                memcpy( p_key-&gt;psz_username, pos, i_packet_len );</td></tr>
+<tr><th id="593">593</th><td>                p_key-&gt;psz_username[i_packet_len] = <kbd>'\0'</kbd>;</td></tr>
+<tr><th id="594">594</th><td>                <b>break</b>;</td></tr>
+<tr><th id="595">595</th><td></td></tr>
+<tr><th id="596">596</th><td>            <b>default</b>:</td></tr>
+<tr><th id="597">597</th><td>                <b>break</b>;</td></tr>
+<tr><th id="598">598</th><td>        }</td></tr>
+<tr><th id="599">599</th><td>        pos += i_packet_len;</td></tr>
+<tr><th id="600">600</th><td>    }</td></tr>
+<tr><th id="601">601</th><td>    free( p_key_unarmored );</td></tr>
+<tr><th id="602">602</th><td></td></tr>
+<tr><th id="603">603</th><td>    <b>if</b>( !( i_status &amp; ( PUBLIC_KEY_FOUND | USER_ID_FOUND ) ) )</td></tr>
+<tr><th id="604">604</th><td>        <b>return</b> VLC_EGENERIC;</td></tr>
+<tr><th id="605">605</th><td></td></tr>
+<tr><th id="606">606</th><td>    <b>if</b>( p_sig_issuer &amp;&amp; !( i_status &amp; SIGNATURE_FOUND ) )</td></tr>
+<tr><th id="607">607</th><td>        <b>return</b> VLC_EGENERIC;</td></tr>
+<tr><th id="608">608</th><td></td></tr>
+<tr><th id="609">609</th><td>    <b>return</b> VLC_SUCCESS;</td></tr>
+<tr><th id="610">610</th><td></td></tr>
+<tr><th id="611">611</th><td>error:</td></tr>
+<tr><th id="612">612</th><td>    <b>if</b>( p_key-&gt;sig.version == <var>4</var> )</td></tr>
+<tr><th id="613">613</th><td>    {</td></tr>
+<tr><th id="614">614</th><td>        free( p_key-&gt;sig.specific.v4.hashed_data );</td></tr>
+<tr><th id="615">615</th><td>        free( p_key-&gt;sig.specific.v4.unhashed_data );</td></tr>
+<tr><th id="616">616</th><td>    }</td></tr>
+<tr><th id="617">617</th><td>    free( p_key-&gt;psz_username );</td></tr>
+<tr><th id="618">618</th><td>    free( p_key_unarmored );</td></tr>
+<tr><th id="619">619</th><td>    <b>return</b> VLC_EGENERIC;</td></tr>
+<tr><th id="620">620</th><td>}</td></tr>
+<tr><th id="621">621</th><td></td></tr>
+<tr><th id="622">622</th><td></td></tr>
+<tr><th id="623">623</th><td><i>/* hash a binary file */</i></td></tr>
+<tr><th id="624">624</th><td><em>static</em> <em>int</em> hash_from_binary_file( <em>const</em> <em>char</em> *psz_file, gcry_md_hd_t hd )</td></tr>
+<tr><th id="625">625</th><td>{</td></tr>
+<tr><th id="626">626</th><td>    uint8_t buffer[<var>4096</var>];</td></tr>
+<tr><th id="627">627</th><td>    size_t i_read;</td></tr>
+<tr><th id="628">628</th><td></td></tr>
+<tr><th id="629">629</th><td>    FILE *f = vlc_fopen( psz_file, <q>"r"</q> );</td></tr>
+<tr><th id="630">630</th><td>    <b>if</b>( !f )</td></tr>
+<tr><th id="631">631</th><td>        <b>return</b> -<var>1</var>;</td></tr>
+<tr><th id="632">632</th><td></td></tr>
+<tr><th id="633">633</th><td>    <b>while</b>( ( i_read = fread( buffer, <var>1</var>, <b>sizeof</b>(buffer), f ) ) &gt; <var>0</var> )</td></tr>
+<tr><th id="634">634</th><td>        gcry_md_write( hd, buffer, i_read );</td></tr>
+<tr><th id="635">635</th><td></td></tr>
+<tr><th id="636">636</th><td>    fclose( f );</td></tr>
+<tr><th id="637">637</th><td></td></tr>
+<tr><th id="638">638</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="639">639</th><td>}</td></tr>
+<tr><th id="640">640</th><td></td></tr>
+<tr><th id="641">641</th><td></td></tr>
+<tr><th id="642">642</th><td><i>/* final part of the hash */</i></td></tr>
+<tr><th id="643">643</th><td><em>static</em> uint8_t *hash_finish( gcry_md_hd_t hd, signature_packet_t *p_sig )</td></tr>
+<tr><th id="644">644</th><td>{</td></tr>
+<tr><th id="645">645</th><td>    <b>if</b>( p_sig-&gt;version == <var>3</var> )</td></tr>
+<tr><th id="646">646</th><td>    {</td></tr>
+<tr><th id="647">647</th><td>        gcry_md_putc( hd, p_sig-&gt;type );</td></tr>
+<tr><th id="648">648</th><td>        gcry_md_write( hd, &amp;p_sig-&gt;specific.v3.timestamp, <var>4</var> );</td></tr>
+<tr><th id="649">649</th><td>    }</td></tr>
+<tr><th id="650">650</th><td>    <b>else</b> <b>if</b>( p_sig-&gt;version == <var>4</var> )</td></tr>
+<tr><th id="651">651</th><td>    {</td></tr>
+<tr><th id="652">652</th><td>        gcry_md_putc( hd, p_sig-&gt;version );</td></tr>
+<tr><th id="653">653</th><td>        gcry_md_putc( hd, p_sig-&gt;type );</td></tr>
+<tr><th id="654">654</th><td>        gcry_md_putc( hd, p_sig-&gt;public_key_algo );</td></tr>
+<tr><th id="655">655</th><td>        gcry_md_putc( hd, p_sig-&gt;digest_algo );</td></tr>
+<tr><th id="656">656</th><td>        gcry_md_write( hd, p_sig-&gt;specific.v4.hashed_data_len, <var>2</var> );</td></tr>
+<tr><th id="657">657</th><td>        size_t i_len = scalar_number( p_sig-&gt;specific.v4.hashed_data_len, <var>2</var> );</td></tr>
+<tr><th id="658">658</th><td>        gcry_md_write( hd, p_sig-&gt;specific.v4.hashed_data, i_len );</td></tr>
+<tr><th id="659">659</th><td></td></tr>
+<tr><th id="660">660</th><td>        gcry_md_putc( hd, <var>0x04</var> );</td></tr>
+<tr><th id="661">661</th><td>        gcry_md_putc( hd, <var>0xFF</var> );</td></tr>
+<tr><th id="662">662</th><td></td></tr>
+<tr><th id="663">663</th><td>        i_len += <var>6</var>; <i>/* hashed data + 6 bytes header */</i></td></tr>
+<tr><th id="664">664</th><td></td></tr>
+<tr><th id="665">665</th><td>        gcry_md_putc( hd, (i_len &gt;&gt; <var>24</var>) &amp; <var>0xff</var> );</td></tr>
+<tr><th id="666">666</th><td>        gcry_md_putc( hd, (i_len &gt;&gt; <var>16</var>) &amp; <var>0xff</var> );</td></tr>
+<tr><th id="667">667</th><td>        gcry_md_putc( hd, (i_len &gt;&gt; <var>8</var>) &amp; <var>0xff</var> );</td></tr>
+<tr><th id="668">668</th><td>        gcry_md_putc( hd, (i_len) &amp; <var>0xff</var> );</td></tr>
+<tr><th id="669">669</th><td>    }</td></tr>
+<tr><th id="670">670</th><td>    <b>else</b></td></tr>
+<tr><th id="671">671</th><td>    {   <i>/* RFC 4880 only tells about versions 3 and 4 */</i></td></tr>
+<tr><th id="672">672</th><td>        <b>return</b> NULL;</td></tr>
+<tr><th id="673">673</th><td>    }</td></tr>
+<tr><th id="674">674</th><td></td></tr>
+<tr><th id="675">675</th><td>    gcry_md_final( hd );</td></tr>
+<tr><th id="676">676</th><td></td></tr>
+<tr><th id="677">677</th><td>    uint8_t *p_tmp = (uint8_t*) gcry_md_read( hd, p_sig-&gt;digest_algo) ;</td></tr>
+<tr><th id="678">678</th><td>    <em>unsigned</em> <em>int</em> hash_len = gcry_md_get_algo_dlen (p_sig-&gt;digest_algo);</td></tr>
+<tr><th id="679">679</th><td>    uint8_t *p_hash = malloc(hash_len);</td></tr>
+<tr><th id="680">680</th><td>    <b>if</b>( p_hash )</td></tr>
+<tr><th id="681">681</th><td>        memcpy(p_hash, p_tmp, hash_len);</td></tr>
+<tr><th id="682">682</th><td>    gcry_md_close( hd );</td></tr>
+<tr><th id="683">683</th><td>    <b>return</b> p_hash;</td></tr>
+<tr><th id="684">684</th><td>}</td></tr>
+<tr><th id="685">685</th><td></td></tr>
+<tr><th id="686">686</th><td></td></tr>
+<tr><th id="687">687</th><td><i>/*</i></td></tr>
+<tr><th id="688">688</th><td><i> * return a hash of a text</i></td></tr>
+<tr><th id="689">689</th><td><i> */</i></td></tr>
+<tr><th id="690">690</th><td>uint8_t *hash_from_text( <em>const</em> <em>char</em> *psz_string,</td></tr>
+<tr><th id="691">691</th><td>        signature_packet_t *p_sig )</td></tr>
+<tr><th id="692">692</th><td>{</td></tr>
+<tr><th id="693">693</th><td>    gcry_md_hd_t hd;</td></tr>
+<tr><th id="694">694</th><td>    <b>if</b>( gcry_md_open( &amp;hd, p_sig-&gt;digest_algo, <var>0</var> ) )</td></tr>
+<tr><th id="695">695</th><td>        <b>return</b> NULL;</td></tr>
+<tr><th id="696">696</th><td></td></tr>
+<tr><th id="697">697</th><td>    <b>if</b>( p_sig-&gt;type == TEXT_SIGNATURE )</td></tr>
+<tr><th id="698">698</th><td>    <b>while</b>( *psz_string )</td></tr>
+<tr><th id="699">699</th><td>    {</td></tr>
+<tr><th id="700">700</th><td>        size_t i_len = strcspn( psz_string, <q>"\r\n"</q> );</td></tr>
+<tr><th id="701">701</th><td></td></tr>
+<tr><th id="702">702</th><td>        <b>if</b>( i_len )</td></tr>
+<tr><th id="703">703</th><td>        {</td></tr>
+<tr><th id="704">704</th><td>            gcry_md_write( hd, psz_string, i_len );</td></tr>
+<tr><th id="705">705</th><td>            psz_string += i_len;</td></tr>
+<tr><th id="706">706</th><td>        }</td></tr>
+<tr><th id="707">707</th><td>        gcry_md_putc( hd, <kbd>'\r'</kbd> );</td></tr>
+<tr><th id="708">708</th><td>        gcry_md_putc( hd, <kbd>'\n'</kbd> );</td></tr>
+<tr><th id="709">709</th><td></td></tr>
+<tr><th id="710">710</th><td>        <b>if</b>( *psz_string == <kbd>'\r'</kbd> )</td></tr>
+<tr><th id="711">711</th><td>            psz_string++;</td></tr>
+<tr><th id="712">712</th><td>        <b>if</b>( *psz_string == <kbd>'\n'</kbd> )</td></tr>
+<tr><th id="713">713</th><td>            psz_string++;</td></tr>
+<tr><th id="714">714</th><td>    }</td></tr>
+<tr><th id="715">715</th><td>    <b>else</b></td></tr>
+<tr><th id="716">716</th><td>        gcry_md_write( hd, psz_string, strlen( psz_string ) );</td></tr>
+<tr><th id="717">717</th><td></td></tr>
+<tr><th id="718">718</th><td>    <b>return</b> hash_finish( hd, p_sig );</td></tr>
+<tr><th id="719">719</th><td>}</td></tr>
+<tr><th id="720">720</th><td></td></tr>
+<tr><th id="721">721</th><td></td></tr>
+<tr><th id="722">722</th><td><i>/*</i></td></tr>
+<tr><th id="723">723</th><td><i> * return a hash of a file</i></td></tr>
+<tr><th id="724">724</th><td><i> */</i></td></tr>
+<tr><th id="725">725</th><td>uint8_t *hash_from_file( <em>const</em> <em>char</em> *psz_file, signature_packet_t *p_sig )</td></tr>
+<tr><th id="726">726</th><td>{</td></tr>
+<tr><th id="727">727</th><td>    gcry_md_hd_t hd;</td></tr>
+<tr><th id="728">728</th><td>    <b>if</b>( gcry_md_open( &amp;hd, p_sig-&gt;digest_algo, <var>0</var> ) )</td></tr>
+<tr><th id="729">729</th><td>        <b>return</b> NULL;</td></tr>
+<tr><th id="730">730</th><td></td></tr>
+<tr><th id="731">731</th><td>    <b>if</b>( hash_from_binary_file( psz_file, hd ) &lt; <var>0</var> )</td></tr>
+<tr><th id="732">732</th><td>    {</td></tr>
+<tr><th id="733">733</th><td>        gcry_md_close( hd );</td></tr>
+<tr><th id="734">734</th><td>        <b>return</b> NULL;</td></tr>
+<tr><th id="735">735</th><td>    }</td></tr>
+<tr><th id="736">736</th><td></td></tr>
+<tr><th id="737">737</th><td>    <b>return</b> hash_finish( hd, p_sig );</td></tr>
+<tr><th id="738">738</th><td>}</td></tr>
+<tr><th id="739">739</th><td></td></tr>
+<tr><th id="740">740</th><td></td></tr>
+<tr><th id="741">741</th><td><i>/*</i></td></tr>
+<tr><th id="742">742</th><td><i> * Generate a hash on a public key, to verify a signature made on that hash</i></td></tr>
+<tr><th id="743">743</th><td><i> * Note that we need the signature (v4) to compute the hash</i></td></tr>
+<tr><th id="744">744</th><td><i> */</i></td></tr>
+<tr><th id="745">745</th><td>uint8_t *hash_from_public_key( public_key_t *p_pkey )</td></tr>
+<tr><th id="746">746</th><td>{</td></tr>
+<tr><th id="747">747</th><td>    <b>if</b>( p_pkey-&gt;sig.version != <var>4</var> )</td></tr>
+<tr><th id="748">748</th><td>        <b>return</b> NULL;</td></tr>
+<tr><th id="749">749</th><td></td></tr>
+<tr><th id="750">750</th><td>    <b>if</b>( p_pkey-&gt;sig.type &lt; GENERIC_KEY_SIGNATURE ||</td></tr>
+<tr><th id="751">751</th><td>        p_pkey-&gt;sig.type &gt; POSITIVE_KEY_SIGNATURE )</td></tr>
+<tr><th id="752">752</th><td>        <b>return</b> NULL;</td></tr>
+<tr><th id="753">753</th><td></td></tr>
+<tr><th id="754">754</th><td>    gcry_error_t error = <var>0</var>;</td></tr>
+<tr><th id="755">755</th><td>    gcry_md_hd_t hd;</td></tr>
+<tr><th id="756">756</th><td></td></tr>
+<tr><th id="757">757</th><td>    error = gcry_md_open( &amp;hd, p_pkey-&gt;sig.digest_algo, <var>0</var> );</td></tr>
+<tr><th id="758">758</th><td>    <b>if</b>( error )</td></tr>
+<tr><th id="759">759</th><td>        <b>return</b> NULL;</td></tr>
+<tr><th id="760">760</th><td></td></tr>
+<tr><th id="761">761</th><td>    gcry_md_putc( hd, <var>0x99</var> );</td></tr>
+<tr><th id="762">762</th><td></td></tr>
+<tr><th id="763">763</th><td>    size_t i_p_len = mpi_len( p_pkey-&gt;key.p );</td></tr>
+<tr><th id="764">764</th><td>    size_t i_g_len = mpi_len( p_pkey-&gt;key.g );</td></tr>
+<tr><th id="765">765</th><td>    size_t i_q_len = mpi_len( p_pkey-&gt;key.q );</td></tr>
+<tr><th id="766">766</th><td>    size_t i_y_len = mpi_len( p_pkey-&gt;key.y );</td></tr>
+<tr><th id="767">767</th><td></td></tr>
+<tr><th id="768">768</th><td>    size_t i_size = <var>6</var> + <var>2</var>*<var>4</var> + i_p_len + i_g_len + i_q_len + i_y_len;</td></tr>
+<tr><th id="769">769</th><td></td></tr>
+<tr><th id="770">770</th><td>    gcry_md_putc( hd, (i_size &gt;&gt; <var>8</var>) &amp; <var>0xff</var> );</td></tr>
+<tr><th id="771">771</th><td>    gcry_md_putc( hd, i_size &amp; <var>0xff</var> );</td></tr>
+<tr><th id="772">772</th><td></td></tr>
+<tr><th id="773">773</th><td>    gcry_md_putc( hd, p_pkey-&gt;key.version );</td></tr>
+<tr><th id="774">774</th><td>    gcry_md_write( hd, p_pkey-&gt;key.timestamp, <var>4</var> );</td></tr>
+<tr><th id="775">775</th><td>    gcry_md_putc( hd, p_pkey-&gt;key.algo );</td></tr>
+<tr><th id="776">776</th><td></td></tr>
+<tr><th id="777">777</th><td>    gcry_md_write( hd, (uint8_t*)&amp;p_pkey-&gt;key.p, <var>2</var> );</td></tr>
+<tr><th id="778">778</th><td>    gcry_md_write( hd, (uint8_t*)&amp;p_pkey-&gt;key.p + <var>2</var>, i_p_len );</td></tr>
+<tr><th id="779">779</th><td></td></tr>
+<tr><th id="780">780</th><td>    gcry_md_write( hd, (uint8_t*)&amp;p_pkey-&gt;key.q, <var>2</var> );</td></tr>
+<tr><th id="781">781</th><td>    gcry_md_write( hd, (uint8_t*)&amp;p_pkey-&gt;key.q + <var>2</var>, i_q_len );</td></tr>
+<tr><th id="782">782</th><td></td></tr>
+<tr><th id="783">783</th><td>    gcry_md_write( hd, (uint8_t*)&amp;p_pkey-&gt;key.g, <var>2</var> );</td></tr>
+<tr><th id="784">784</th><td>    gcry_md_write( hd, (uint8_t*)&amp;p_pkey-&gt;key.g + <var>2</var>, i_g_len );</td></tr>
+<tr><th id="785">785</th><td></td></tr>
+<tr><th id="786">786</th><td>    gcry_md_write( hd, (uint8_t*)&amp;p_pkey-&gt;key.y, <var>2</var> );</td></tr>
+<tr><th id="787">787</th><td>    gcry_md_write( hd, (uint8_t*)&amp;p_pkey-&gt;key.y + <var>2</var>, i_y_len );</td></tr>
+<tr><th id="788">788</th><td></td></tr>
+<tr><th id="789">789</th><td>    gcry_md_putc( hd, <var>0xb4</var> );</td></tr>
+<tr><th id="790">790</th><td></td></tr>
+<tr><th id="791">791</th><td>    size_t i_len = strlen((<em>char</em>*)p_pkey-&gt;psz_username);</td></tr>
+<tr><th id="792">792</th><td></td></tr>
+<tr><th id="793">793</th><td>    gcry_md_putc( hd, (i_len &gt;&gt; <var>24</var>) &amp; <var>0xff</var> );</td></tr>
+<tr><th id="794">794</th><td>    gcry_md_putc( hd, (i_len &gt;&gt; <var>16</var>) &amp; <var>0xff</var> );</td></tr>
+<tr><th id="795">795</th><td>    gcry_md_putc( hd, (i_len &gt;&gt; <var>8</var>) &amp; <var>0xff</var> );</td></tr>
+<tr><th id="796">796</th><td>    gcry_md_putc( hd, (i_len) &amp; <var>0xff</var> );</td></tr>
+<tr><th id="797">797</th><td></td></tr>
+<tr><th id="798">798</th><td>    gcry_md_write( hd, p_pkey-&gt;psz_username, i_len );</td></tr>
+<tr><th id="799">799</th><td></td></tr>
+<tr><th id="800">800</th><td>    uint8_t *p_hash = hash_finish( hd, &amp;p_pkey-&gt;sig );</td></tr>
+<tr><th id="801">801</th><td>    <b>if</b>( !p_hash ||</td></tr>
+<tr><th id="802">802</th><td>        p_hash[<var>0</var>] != p_pkey-&gt;sig.hash_verification[<var>0</var>] ||</td></tr>
+<tr><th id="803">803</th><td>        p_hash[<var>1</var>] != p_pkey-&gt;sig.hash_verification[<var>1</var>] )</td></tr>
+<tr><th id="804">804</th><td>    {</td></tr>
+<tr><th id="805">805</th><td>        free(p_hash);</td></tr>
+<tr><th id="806">806</th><td>        <b>return</b> NULL;</td></tr>
+<tr><th id="807">807</th><td>    }</td></tr>
+<tr><th id="808">808</th><td></td></tr>
+<tr><th id="809">809</th><td>    <b>return</b> p_hash;</td></tr>
+<tr><th id="810">810</th><td>}</td></tr>
+<tr><th id="811">811</th><td></td></tr>
+<tr><th id="812">812</th><td></td></tr>
+<tr><th id="813">813</th><td><i>/*</i></td></tr>
+<tr><th id="814">814</th><td><i> * download a public key (the last one) from videolan server, and parse it</i></td></tr>
+<tr><th id="815">815</th><td><i> */</i></td></tr>
+<tr><th id="816">816</th><td>public_key_t *download_key( vlc_object_t *p_this,</td></tr>
+<tr><th id="817">817</th><td>                    <em>const</em> uint8_t *p_longid, <em>const</em> uint8_t *p_signature_issuer )</td></tr>
+<tr><th id="818">818</th><td>{</td></tr>
+<tr><th id="819">819</th><td>    <em>char</em> *psz_url;</td></tr>
+<tr><th id="820">820</th><td>    <b>if</b>( asprintf( &amp;psz_url, <q>"http://download.videolan.org/pub/keys/%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X.asc"</q>,</td></tr>
+<tr><th id="821">821</th><td>                    p_longid[<var>0</var>], p_longid[<var>1</var>], p_longid[<var>2</var>], p_longid[<var>3</var>],</td></tr>
+<tr><th id="822">822</th><td>                    p_longid[<var>4</var>], p_longid[<var>5</var>], p_longid[<var>6</var>], p_longid[<var>7</var>] ) == -<var>1</var> )</td></tr>
+<tr><th id="823">823</th><td>        <b>return</b> NULL;</td></tr>
+<tr><th id="824">824</th><td></td></tr>
+<tr><th id="825">825</th><td>    stream_t *p_stream = stream_UrlNew( p_this, psz_url );</td></tr>
+<tr><th id="826">826</th><td>    free( psz_url );</td></tr>
+<tr><th id="827">827</th><td>    <b>if</b>( !p_stream )</td></tr>
+<tr><th id="828">828</th><td>        <b>return</b> NULL;</td></tr>
+<tr><th id="829">829</th><td></td></tr>
+<tr><th id="830">830</th><td>    int64_t i_size = stream_Size( p_stream );</td></tr>
+<tr><th id="831">831</th><td>    <b>if</b>( i_size &lt; <var>0</var> )</td></tr>
+<tr><th id="832">832</th><td>    {</td></tr>
+<tr><th id="833">833</th><td>        stream_Delete( p_stream );</td></tr>
+<tr><th id="834">834</th><td>        <b>return</b> NULL;</td></tr>
+<tr><th id="835">835</th><td>    }</td></tr>
+<tr><th id="836">836</th><td></td></tr>
+<tr><th id="837">837</th><td>    uint8_t *p_buf = (uint8_t*)malloc( i_size );</td></tr>
+<tr><th id="838">838</th><td>    <b>if</b>( !p_buf )</td></tr>
+<tr><th id="839">839</th><td>    {</td></tr>
+<tr><th id="840">840</th><td>        stream_Delete( p_stream );</td></tr>
+<tr><th id="841">841</th><td>        <b>return</b> NULL;</td></tr>
+<tr><th id="842">842</th><td>    }</td></tr>
+<tr><th id="843">843</th><td></td></tr>
+<tr><th id="844">844</th><td>    <em>int</em> i_read = stream_Read( p_stream, p_buf, (<em>int</em>)i_size );</td></tr>
+<tr><th id="845">845</th><td>    stream_Delete( p_stream );</td></tr>
+<tr><th id="846">846</th><td></td></tr>
+<tr><th id="847">847</th><td>    <b>if</b>( i_read != (<em>int</em>)i_size )</td></tr>
+<tr><th id="848">848</th><td>    {</td></tr>
+<tr><th id="849">849</th><td>        msg_Dbg( p_this, <q>"Couldn't read full GPG key"</q> );</td></tr>
+<tr><th id="850">850</th><td>        free( p_buf );</td></tr>
+<tr><th id="851">851</th><td>        <b>return</b> NULL;</td></tr>
+<tr><th id="852">852</th><td>    }</td></tr>
+<tr><th id="853">853</th><td></td></tr>
+<tr><th id="854">854</th><td>    public_key_t *p_pkey = (public_key_t*) malloc( <b>sizeof</b>( public_key_t ) );</td></tr>
+<tr><th id="855">855</th><td>    <b>if</b>( !p_pkey )</td></tr>
+<tr><th id="856">856</th><td>    {</td></tr>
+<tr><th id="857">857</th><td>        free( p_buf );</td></tr>
+<tr><th id="858">858</th><td>        <b>return</b> NULL;</td></tr>
+<tr><th id="859">859</th><td>    }</td></tr>
+<tr><th id="860">860</th><td></td></tr>
+<tr><th id="861">861</th><td>    memcpy( p_pkey-&gt;longid, p_longid, <var>8</var> );</td></tr>
+<tr><th id="862">862</th><td></td></tr>
+<tr><th id="863">863</th><td>    <em>int</em> i_error = parse_public_key( p_buf, i_read, p_pkey, p_signature_issuer );</td></tr>
+<tr><th id="864">864</th><td>    free( p_buf );</td></tr>
+<tr><th id="865">865</th><td></td></tr>
+<tr><th id="866">866</th><td>    <b>if</b>( i_error != VLC_SUCCESS )</td></tr>
+<tr><th id="867">867</th><td>    {</td></tr>
+<tr><th id="868">868</th><td>        msg_Dbg( p_this, <q>"Couldn't parse GPG key"</q> );</td></tr>
+<tr><th id="869">869</th><td>        free( p_pkey );</td></tr>
+<tr><th id="870">870</th><td>        <b>return</b> NULL;</td></tr>
+<tr><th id="871">871</th><td>    }</td></tr>
+<tr><th id="872">872</th><td></td></tr>
+<tr><th id="873">873</th><td>    <b>return</b> p_pkey;</td></tr>
+<tr><th id="874">874</th><td>}</td></tr>
+<tr><th id="875">875</th><td></td></tr>
+<tr><th id="876">876</th><td></td></tr>
+<tr><th id="877">877</th><td><i>/*</i></td></tr>
+<tr><th id="878">878</th><td><i> * Download the signature associated to a document or a binary file.</i></td></tr>
+<tr><th id="879">879</th><td><i> * We're given the file's url, we just append ".asc" to it and download</i></td></tr>
+<tr><th id="880">880</th><td><i> */</i></td></tr>
+<tr><th id="881">881</th><td><em>int</em> download_signature( vlc_object_t *p_this, signature_packet_t *p_sig,</td></tr>
+<tr><th id="882">882</th><td>                        <em>const</em> <em>char</em> *psz_url )</td></tr>
+<tr><th id="883">883</th><td>{</td></tr>
+<tr><th id="884">884</th><td>    <em>char</em> *psz_sig = (<em>char</em>*) malloc( strlen( psz_url ) + <var>4</var> + <var>1</var> ); <i>/* ".asc" + \0 */</i></td></tr>
+<tr><th id="885">885</th><td>    <b>if</b>( !psz_sig )</td></tr>
+<tr><th id="886">886</th><td>        <b>return</b> VLC_ENOMEM;</td></tr>
+<tr><th id="887">887</th><td></td></tr>
+<tr><th id="888">888</th><td>    strcpy( psz_sig, psz_url );</td></tr>
+<tr><th id="889">889</th><td>    strcat( psz_sig, <q>".asc"</q> );</td></tr>
+<tr><th id="890">890</th><td></td></tr>
+<tr><th id="891">891</th><td>    stream_t *p_stream = stream_UrlNew( p_this, psz_sig );</td></tr>
+<tr><th id="892">892</th><td>    free( psz_sig );</td></tr>
+<tr><th id="893">893</th><td></td></tr>
+<tr><th id="894">894</th><td>    <b>if</b>( !p_stream )</td></tr>
+<tr><th id="895">895</th><td>        <b>return</b> VLC_ENOMEM;</td></tr>
+<tr><th id="896">896</th><td></td></tr>
+<tr><th id="897">897</th><td>    int64_t i_size = stream_Size( p_stream );</td></tr>
+<tr><th id="898">898</th><td></td></tr>
+<tr><th id="899">899</th><td>    msg_Dbg( p_this, <q>"Downloading signature (%"</q>PRId64<q>" bytes)"</q>, i_size );</td></tr>
+<tr><th id="900">900</th><td>    uint8_t *p_buf = (uint8_t*)malloc( i_size );</td></tr>
+<tr><th id="901">901</th><td>    <b>if</b>( !p_buf )</td></tr>
+<tr><th id="902">902</th><td>    {</td></tr>
+<tr><th id="903">903</th><td>        stream_Delete( p_stream );</td></tr>
+<tr><th id="904">904</th><td>        <b>return</b> VLC_ENOMEM;</td></tr>
+<tr><th id="905">905</th><td>    }</td></tr>
+<tr><th id="906">906</th><td></td></tr>
+<tr><th id="907">907</th><td>    <em>int</em> i_read = stream_Read( p_stream, p_buf, (<em>int</em>)i_size );</td></tr>
+<tr><th id="908">908</th><td></td></tr>
+<tr><th id="909">909</th><td>    stream_Delete( p_stream );</td></tr>
+<tr><th id="910">910</th><td></td></tr>
+<tr><th id="911">911</th><td>    <b>if</b>( i_read != (<em>int</em>)i_size )</td></tr>
+<tr><th id="912">912</th><td>    {</td></tr>
+<tr><th id="913">913</th><td>        msg_Dbg( p_this,</td></tr>
+<tr><th id="914">914</th><td>            <q>"Couldn't download full signature (only %d bytes)"</q>, i_read );</td></tr>
+<tr><th id="915">915</th><td>        free( p_buf );</td></tr>
+<tr><th id="916">916</th><td>        <b>return</b> VLC_EGENERIC;</td></tr>
+<tr><th id="917">917</th><td>    }</td></tr>
+<tr><th id="918">918</th><td></td></tr>
+<tr><th id="919">919</th><td>    <b>if</b>( (uint8_t)*p_buf &lt; <var>0x80</var> ) <i>/* ASCII */</i></td></tr>
+<tr><th id="920">920</th><td>    {</td></tr>
+<tr><th id="921">921</th><td>        msg_Dbg( p_this, <q>"Unarmoring signature"</q> );</td></tr>
+<tr><th id="922">922</th><td></td></tr>
+<tr><th id="923">923</th><td>        uint8_t* p_unarmored = (uint8_t*) malloc( ( i_size * <var>3</var> ) / <var>4</var> + <var>1</var> );</td></tr>
+<tr><th id="924">924</th><td>        <b>if</b>( !p_unarmored )</td></tr>
+<tr><th id="925">925</th><td>        {</td></tr>
+<tr><th id="926">926</th><td>            free( p_buf );</td></tr>
+<tr><th id="927">927</th><td>            <b>return</b> VLC_EGENERIC;</td></tr>
+<tr><th id="928">928</th><td>        }</td></tr>
+<tr><th id="929">929</th><td></td></tr>
+<tr><th id="930">930</th><td>        <em>int</em> i_bytes = pgp_unarmor( (<em>char</em>*)p_buf, i_size, p_unarmored, i_size );</td></tr>
+<tr><th id="931">931</th><td>        free( p_buf );</td></tr>
+<tr><th id="932">932</th><td></td></tr>
+<tr><th id="933">933</th><td>        p_buf = p_unarmored;</td></tr>
+<tr><th id="934">934</th><td>        i_size = i_bytes;</td></tr>
+<tr><th id="935">935</th><td></td></tr>
+<tr><th id="936">936</th><td>        <b>if</b>( i_bytes &lt; <var>2</var> )</td></tr>
+<tr><th id="937">937</th><td>        {</td></tr>
+<tr><th id="938">938</th><td>            free( p_buf );</td></tr>
+<tr><th id="939">939</th><td>            msg_Dbg( p_this, <q>"Unarmoring failed : corrupted signature ?"</q> );</td></tr>
+<tr><th id="940">940</th><td>            <b>return</b> VLC_EGENERIC;</td></tr>
+<tr><th id="941">941</th><td>        }</td></tr>
+<tr><th id="942">942</th><td>    }</td></tr>
+<tr><th id="943">943</th><td></td></tr>
+<tr><th id="944">944</th><td>    <b>if</b>( packet_type( *p_buf ) != SIGNATURE_PACKET )</td></tr>
+<tr><th id="945">945</th><td>    {</td></tr>
+<tr><th id="946">946</th><td>        msg_Dbg( p_this, <q>"Not a signature: %d"</q>, *p_buf );</td></tr>
+<tr><th id="947">947</th><td>        free( p_buf );</td></tr>
+<tr><th id="948">948</th><td>        <b>return</b> VLC_EGENERIC;</td></tr>
+<tr><th id="949">949</th><td>    }</td></tr>
+<tr><th id="950">950</th><td></td></tr>
+<tr><th id="951">951</th><td>    size_t i_header_len = packet_header_len( *p_buf );</td></tr>
+<tr><th id="952">952</th><td>    <b>if</b>( ( i_header_len != <var>1</var> &amp;&amp; i_header_len != <var>2</var> &amp;&amp; i_header_len != <var>4</var> ) ||</td></tr>
+<tr><th id="953">953</th><td>        i_header_len + <var>1</var> &gt; (size_t)i_size )</td></tr>
+<tr><th id="954">954</th><td>    {</td></tr>
+<tr><th id="955">955</th><td>        free( p_buf );</td></tr>
+<tr><th id="956">956</th><td>        msg_Dbg( p_this, <q>"Invalid signature packet header"</q> );</td></tr>
+<tr><th id="957">957</th><td>        <b>return</b> VLC_EGENERIC;</td></tr>
+<tr><th id="958">958</th><td>    }</td></tr>
+<tr><th id="959">959</th><td></td></tr>
+<tr><th id="960">960</th><td>    size_t i_len = scalar_number( p_buf+<var>1</var>, i_header_len );</td></tr>
+<tr><th id="961">961</th><td>    <b>if</b>( i_len + i_header_len + <var>1</var> != (size_t)i_size )</td></tr>
+<tr><th id="962">962</th><td>    {</td></tr>
+<tr><th id="963">963</th><td>        free( p_buf );</td></tr>
+<tr><th id="964">964</th><td>        msg_Dbg( p_this, <q>"Invalid signature packet"</q> );</td></tr>
+<tr><th id="965">965</th><td>        <b>return</b> VLC_EGENERIC;</td></tr>
+<tr><th id="966">966</th><td>    }</td></tr>
+<tr><th id="967">967</th><td></td></tr>
+<tr><th id="968">968</th><td>    <em>int</em> i_ret = parse_signature_packet( p_sig, p_buf+<var>1</var>+i_header_len, i_len );</td></tr>
+<tr><th id="969">969</th><td>    free( p_buf );</td></tr>
+<tr><th id="970">970</th><td>    <b>if</b>( i_ret != VLC_SUCCESS )</td></tr>
+<tr><th id="971">971</th><td>    {</td></tr>
+<tr><th id="972">972</th><td>        msg_Dbg( p_this, <q>"Couldn't parse signature"</q> );</td></tr>
+<tr><th id="973">973</th><td>        <b>return</b> i_ret;</td></tr>
+<tr><th id="974">974</th><td>    }</td></tr>
+<tr><th id="975">975</th><td></td></tr>
+<tr><th id="976">976</th><td>    <b>if</b>( p_sig-&gt;type != BINARY_SIGNATURE &amp;&amp; p_sig-&gt;type != TEXT_SIGNATURE )</td></tr>
+<tr><th id="977">977</th><td>    {</td></tr>
+<tr><th id="978">978</th><td>        msg_Dbg( p_this, <q>"Invalid signature type: %d"</q>, p_sig-&gt;type );</td></tr>
+<tr><th id="979">979</th><td>        <b>if</b>( p_sig-&gt;version == <var>4</var> )</td></tr>
+<tr><th id="980">980</th><td>        {</td></tr>
+<tr><th id="981">981</th><td>            free( p_sig-&gt;specific.v4.hashed_data );</td></tr>
+<tr><th id="982">982</th><td>            free( p_sig-&gt;specific.v4.unhashed_data );</td></tr>
+<tr><th id="983">983</th><td>        }</td></tr>
+<tr><th id="984">984</th><td>        <b>return</b> VLC_EGENERIC;</td></tr>
+<tr><th id="985">985</th><td>    }</td></tr>
+<tr><th id="986">986</th><td></td></tr>
+<tr><th id="987">987</th><td>    <b>return</b> VLC_SUCCESS;</td></tr>
+<tr><th id="988">988</th><td>}</td></tr>
+<tr><th id="989">989</th><td></td></tr>
+<tr><th id="990">990</th><td><u>#<span data-ppcond="37">endif</span> /* UPDATE_CHECK */</u></td></tr>
+<tr><th id="991">991</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project vlc revision <em>2.2.0-git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

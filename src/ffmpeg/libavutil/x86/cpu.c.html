@@ -1,0 +1,247 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>cpu.c source code [ffmpeg/libavutil/x86/cpu.c] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavutil/x86/cpu.c'; var root_path = '../../..'; var data_path = '../../../../data';</script>
+<script src='../../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='../..'>ffmpeg</a>/<a href='..'>libavutil</a>/<a href='./'>x86</a>/<a href='cpu.c.html'>cpu.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * CPU detection code, extracted from mmx.h</i></td></tr>
+<tr><th id="3">3</th><td><i> * (c)1997-99 by H. Dietz and R. Fisher</i></td></tr>
+<tr><th id="4">4</th><td><i> * Converted to C and improved by Fabrice Bellard.</i></td></tr>
+<tr><th id="5">5</th><td><i> *</i></td></tr>
+<tr><th id="6">6</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="7">7</th><td><i> *</i></td></tr>
+<tr><th id="8">8</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="9">9</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="10">10</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="11">11</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="12">12</th><td><i> *</i></td></tr>
+<tr><th id="13">13</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="14">14</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="15">15</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="16">16</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="17">17</th><td><i> *</i></td></tr>
+<tr><th id="18">18</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="19">19</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="20">20</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="21">21</th><td><i> */</i></td></tr>
+<tr><th id="22">22</th><td></td></tr>
+<tr><th id="23">23</th><td><u>#include <a href="../../../include/stdlib.h.html">&lt;stdlib.h&gt;</a></u></td></tr>
+<tr><th id="24">24</th><td><u>#include <a href="../../../include/string.h.html">&lt;string.h&gt;</a></u></td></tr>
+<tr><th id="25">25</th><td></td></tr>
+<tr><th id="26">26</th><td><u>#include <a href="asm.h.html">"libavutil/x86/asm.h"</a></u></td></tr>
+<tr><th id="27">27</th><td><u>#include <a href="cpu.h.html">"libavutil/x86/cpu.h"</a></u></td></tr>
+<tr><th id="28">28</th><td><u>#include <a href="../cpu.h.html">"libavutil/cpu.h"</a></u></td></tr>
+<tr><th id="29">29</th><td><u>#include <a href="../cpu_internal.h.html">"libavutil/cpu_internal.h"</a></u></td></tr>
+<tr><th id="30">30</th><td></td></tr>
+<tr><th id="31">31</th><td><u>#<span data-ppcond="31">if</span> <a class="macro" href="../../config.h.html#197" title="1" data-ref="_M/HAVE_YASM">HAVE_YASM</a></u></td></tr>
+<tr><th id="32">32</th><td></td></tr>
+<tr><th id="33">33</th><td><u>#define <dfn class="macro" id="_M/cpuid" data-ref="_M/cpuid">cpuid</dfn>(index, eax, ebx, ecx, edx)        \</u></td></tr>
+<tr><th id="34">34</th><td><u>    <a class="ref" href="cpu.h.html#ff_cpu_cpuid" title='ff_cpu_cpuid' data-ref="ff_cpu_cpuid">ff_cpu_cpuid</a>(index, &amp;eax, &amp;ebx, &amp;ecx, &amp;edx)</u></td></tr>
+<tr><th id="35">35</th><td></td></tr>
+<tr><th id="36">36</th><td><u>#define <dfn class="macro" id="_M/xgetbv" data-ref="_M/xgetbv">xgetbv</dfn>(index, eax, edx)                 \</u></td></tr>
+<tr><th id="37">37</th><td><u>    <a class="ref" href="cpu.h.html#ff_cpu_xgetbv" title='ff_cpu_xgetbv' data-ref="ff_cpu_xgetbv">ff_cpu_xgetbv</a>(index, &amp;eax, &amp;edx)</u></td></tr>
+<tr><th id="38">38</th><td></td></tr>
+<tr><th id="39">39</th><td><u>#<span data-ppcond="31">elif</span> HAVE_INLINE_ASM</u></td></tr>
+<tr><th id="40">40</th><td></td></tr>
+<tr><th id="41">41</th><td><i>/* ebx saving is necessary for PIC. gcc seems unable to see it alone */</i></td></tr>
+<tr><th id="42">42</th><td><u>#define cpuid(index, eax, ebx, ecx, edx)                        \</u></td></tr>
+<tr><th id="43">43</th><td><u>    __asm__ volatile (                                          \</u></td></tr>
+<tr><th id="44">44</th><td><u>        "mov    %%"FF_REG_b", %%"FF_REG_S" \n\t"                \</u></td></tr>
+<tr><th id="45">45</th><td><u>        "cpuid                       \n\t"                      \</u></td></tr>
+<tr><th id="46">46</th><td><u>        "xchg   %%"FF_REG_b", %%"FF_REG_S                       \</u></td></tr>
+<tr><th id="47">47</th><td><u>        : "=a" (eax), "=S" (ebx), "=c" (ecx), "=d" (edx)        \</u></td></tr>
+<tr><th id="48">48</th><td><u>        : "0" (index), "2"(0))</u></td></tr>
+<tr><th id="49">49</th><td></td></tr>
+<tr><th id="50">50</th><td><u>#define xgetbv(index, eax, edx)                                 \</u></td></tr>
+<tr><th id="51">51</th><td><u>    __asm__ (".byte 0x0f, 0x01, 0xd0" : "=a"(eax), "=d"(edx) : "c" (index))</u></td></tr>
+<tr><th id="52">52</th><td></td></tr>
+<tr><th id="53">53</th><td><u>#define get_eflags(x)                           \</u></td></tr>
+<tr><th id="54">54</th><td><u>    __asm__ volatile ("pushfl     \n"           \</u></td></tr>
+<tr><th id="55">55</th><td><u>                      "pop    %0  \n"           \</u></td></tr>
+<tr><th id="56">56</th><td><u>                      : "=r"(x))</u></td></tr>
+<tr><th id="57">57</th><td></td></tr>
+<tr><th id="58">58</th><td><u>#define set_eflags(x)                           \</u></td></tr>
+<tr><th id="59">59</th><td><u>    __asm__ volatile ("push    %0 \n"           \</u></td></tr>
+<tr><th id="60">60</th><td><u>                      "popfl      \n"           \</u></td></tr>
+<tr><th id="61">61</th><td><u>                      :: "r"(x))</u></td></tr>
+<tr><th id="62">62</th><td></td></tr>
+<tr><th id="63">63</th><td><u>#<span data-ppcond="31">endif</span> /* HAVE_INLINE_ASM */</u></td></tr>
+<tr><th id="64">64</th><td></td></tr>
+<tr><th id="65">65</th><td><u>#<span data-ppcond="65">if</span> <a class="macro" href="../../config.h.html#40" title="1" data-ref="_M/ARCH_X86_64">ARCH_X86_64</a></u></td></tr>
+<tr><th id="66">66</th><td></td></tr>
+<tr><th id="67">67</th><td><u>#define <dfn class="macro" id="_M/cpuid_test" data-ref="_M/cpuid_test">cpuid_test</dfn>() 1</u></td></tr>
+<tr><th id="68">68</th><td></td></tr>
+<tr><th id="69">69</th><td><u>#<span data-ppcond="65">elif</span> HAVE_YASM</u></td></tr>
+<tr><th id="70">70</th><td></td></tr>
+<tr><th id="71">71</th><td><u>#define cpuid_test ff_cpu_cpuid_test</u></td></tr>
+<tr><th id="72">72</th><td></td></tr>
+<tr><th id="73">73</th><td><u>#elif HAVE_INLINE_ASM</u></td></tr>
+<tr><th id="74">74</th><td></td></tr>
+<tr><th id="75">75</th><td><em>static</em> <em>int</em> cpuid_test(<em>void</em>)</td></tr>
+<tr><th id="76">76</th><td>{</td></tr>
+<tr><th id="77">77</th><td>    x86_reg a, c;</td></tr>
+<tr><th id="78">78</th><td></td></tr>
+<tr><th id="79">79</th><td>    <i>/* Check if CPUID is supported by attempting to toggle the ID bit in</i></td></tr>
+<tr><th id="80">80</th><td><i>     * the EFLAGS register. */</i></td></tr>
+<tr><th id="81">81</th><td>    get_eflags(a);</td></tr>
+<tr><th id="82">82</th><td>    set_eflags(a ^ <var>0x200000</var>);</td></tr>
+<tr><th id="83">83</th><td>    get_eflags(c);</td></tr>
+<tr><th id="84">84</th><td></td></tr>
+<tr><th id="85">85</th><td>    <b>return</b> a != c;</td></tr>
+<tr><th id="86">86</th><td>}</td></tr>
+<tr><th id="87">87</th><td><u>#<span data-ppcond="65">endif</span></u></td></tr>
+<tr><th id="88">88</th><td></td></tr>
+<tr><th id="89">89</th><td><i>/* Function to test if multimedia instructions are supported...  */</i></td></tr>
+<tr><th id="90">90</th><td><em>int</em> <dfn class="decl def" id="ff_get_cpu_flags_x86" title='ff_get_cpu_flags_x86' data-ref="ff_get_cpu_flags_x86">ff_get_cpu_flags_x86</dfn>(<em>void</em>)</td></tr>
+<tr><th id="91">91</th><td>{</td></tr>
+<tr><th id="92">92</th><td>    <em>int</em> <dfn class="local col1 decl" id="1rval" title='rval' data-type='int' data-ref="1rval">rval</dfn> = <var>0</var>;</td></tr>
+<tr><th id="93">93</th><td></td></tr>
+<tr><th id="94">94</th><td><u>#<span data-ppcond="94">ifdef</span> <a class="macro" href="#33" data-ref="_M/cpuid">cpuid</a></u></td></tr>
+<tr><th id="95">95</th><td></td></tr>
+<tr><th id="96">96</th><td>    <em>int</em> <dfn class="local col2 decl" id="2eax" title='eax' data-type='int' data-ref="2eax">eax</dfn>, <dfn class="local col3 decl" id="3ebx" title='ebx' data-type='int' data-ref="3ebx">ebx</dfn>, <dfn class="local col4 decl" id="4ecx" title='ecx' data-type='int' data-ref="4ecx">ecx</dfn>, <dfn class="local col5 decl" id="5edx" title='edx' data-type='int' data-ref="5edx">edx</dfn>;</td></tr>
+<tr><th id="97">97</th><td>    <em>int</em> <dfn class="local col6 decl" id="6max_std_level" title='max_std_level' data-type='int' data-ref="6max_std_level">max_std_level</dfn>, <dfn class="local col7 decl" id="7max_ext_level" title='max_ext_level' data-type='int' data-ref="7max_ext_level">max_ext_level</dfn>, <dfn class="local col8 decl" id="8std_caps" title='std_caps' data-type='int' data-ref="8std_caps">std_caps</dfn> = <var>0</var>, <dfn class="local col9 decl" id="9ext_caps" title='ext_caps' data-type='int' data-ref="9ext_caps">ext_caps</dfn> = <var>0</var>;</td></tr>
+<tr><th id="98">98</th><td>    <em>int</em> <dfn class="local col0 decl" id="10family" title='family' data-type='int' data-ref="10family">family</dfn> = <var>0</var>, <dfn class="local col1 decl" id="11model" title='model' data-type='int' data-ref="11model">model</dfn> = <var>0</var>;</td></tr>
+<tr><th id="99">99</th><td>    <b>union</b> { <em>int</em> <dfn class="local col2 decl" id="12i" title='i' data-type='int [3]' data-ref="12i">i</dfn>[<var>3</var>]; <em>char</em> <dfn class="local col3 decl" id="13c" title='c' data-type='char [12]' data-ref="13c">c</dfn>[<var>12</var>]; } <dfn class="local col4 decl" id="14vendor" title='vendor' data-type='union &lt;anonymous union at /usr/local/google/home/robertshih/ffmpeg/src/ffmpeg/libavutil/x86/cpu.c:99:5&gt;' data-ref="14vendor">vendor</dfn>;</td></tr>
+<tr><th id="100">100</th><td></td></tr>
+<tr><th id="101">101</th><td>    <b>if</b> (!<a class="macro" href="#67" title="1" data-ref="_M/cpuid_test">cpuid_test</a>())</td></tr>
+<tr><th id="102">102</th><td>        <b>return</b> <var>0</var>; <i>/* CPUID not supported */</i></td></tr>
+<tr><th id="103">103</th><td></td></tr>
+<tr><th id="104">104</th><td>    <a class="macro" href="#33" title="ff_cpu_cpuid(0, &amp;max_std_level, &amp;vendor.i[0], &amp;vendor.i[2], &amp;vendor.i[1])" data-ref="_M/cpuid">cpuid</a>(<var>0</var>, <a class="local col6 ref" href="#6max_std_level" title='max_std_level' data-ref="6max_std_level">max_std_level</a>, <a class="local col4 ref" href="#14vendor" title='vendor' data-ref="14vendor">vendor</a>.<a class="local col2 ref" href="#12i" title='i' data-ref="12i">i</a>[<var>0</var>], <a class="local col4 ref" href="#14vendor" title='vendor' data-ref="14vendor">vendor</a>.<a class="local col2 ref" href="#12i" title='i' data-ref="12i">i</a>[<var>2</var>], <a class="local col4 ref" href="#14vendor" title='vendor' data-ref="14vendor">vendor</a>.<a class="local col2 ref" href="#12i" title='i' data-ref="12i">i</a>[<var>1</var>]);</td></tr>
+<tr><th id="105">105</th><td></td></tr>
+<tr><th id="106">106</th><td>    <b>if</b> (<a class="local col6 ref" href="#6max_std_level" title='max_std_level' data-ref="6max_std_level">max_std_level</a> &gt;= <var>1</var>) {</td></tr>
+<tr><th id="107">107</th><td>        <a class="macro" href="#33" title="ff_cpu_cpuid(1, &amp;eax, &amp;ebx, &amp;ecx, &amp;std_caps)" data-ref="_M/cpuid">cpuid</a>(<var>1</var>, <a class="local col2 ref" href="#2eax" title='eax' data-ref="2eax">eax</a>, <a class="local col3 ref" href="#3ebx" title='ebx' data-ref="3ebx">ebx</a>, <a class="local col4 ref" href="#4ecx" title='ecx' data-ref="4ecx">ecx</a>, <a class="local col8 ref" href="#8std_caps" title='std_caps' data-ref="8std_caps">std_caps</a>);</td></tr>
+<tr><th id="108">108</th><td>        <a class="local col0 ref" href="#10family" title='family' data-ref="10family">family</a> = ((<a class="local col2 ref" href="#2eax" title='eax' data-ref="2eax">eax</a> &gt;&gt; <var>8</var>) &amp; <var>0xf</var>) + ((<a class="local col2 ref" href="#2eax" title='eax' data-ref="2eax">eax</a> &gt;&gt; <var>20</var>) &amp; <var>0xff</var>);</td></tr>
+<tr><th id="109">109</th><td>        <a class="local col1 ref" href="#11model" title='model' data-ref="11model">model</a>  = ((<a class="local col2 ref" href="#2eax" title='eax' data-ref="2eax">eax</a> &gt;&gt; <var>4</var>) &amp; <var>0xf</var>) + ((<a class="local col2 ref" href="#2eax" title='eax' data-ref="2eax">eax</a> &gt;&gt; <var>12</var>) &amp; <var>0xf0</var>);</td></tr>
+<tr><th id="110">110</th><td>        <b>if</b> (<a class="local col8 ref" href="#8std_caps" title='std_caps' data-ref="8std_caps">std_caps</a> &amp; (<var>1</var> &lt;&lt; <var>15</var>))</td></tr>
+<tr><th id="111">111</th><td>            <a class="local col1 ref" href="#1rval" title='rval' data-ref="1rval">rval</a> |= <a class="macro" href="../cpu.h.html#50" title="0x1000" data-ref="_M/AV_CPU_FLAG_CMOV">AV_CPU_FLAG_CMOV</a>;</td></tr>
+<tr><th id="112">112</th><td>        <b>if</b> (<a class="local col8 ref" href="#8std_caps" title='std_caps' data-ref="8std_caps">std_caps</a> &amp; (<var>1</var> &lt;&lt; <var>23</var>))</td></tr>
+<tr><th id="113">113</th><td>            <a class="local col1 ref" href="#1rval" title='rval' data-ref="1rval">rval</a> |= <a class="macro" href="../cpu.h.html#29" title="0x0001" data-ref="_M/AV_CPU_FLAG_MMX">AV_CPU_FLAG_MMX</a>;</td></tr>
+<tr><th id="114">114</th><td>        <b>if</b> (<a class="local col8 ref" href="#8std_caps" title='std_caps' data-ref="8std_caps">std_caps</a> &amp; (<var>1</var> &lt;&lt; <var>25</var>))</td></tr>
+<tr><th id="115">115</th><td>            <a class="local col1 ref" href="#1rval" title='rval' data-ref="1rval">rval</a> |= <a class="macro" href="../cpu.h.html#30" title="0x0002" data-ref="_M/AV_CPU_FLAG_MMXEXT">AV_CPU_FLAG_MMXEXT</a>;</td></tr>
+<tr><th id="116">116</th><td><u>#<span data-ppcond="116">if</span> <a class="macro" href="../../config.h.html#64" title="1" data-ref="_M/HAVE_SSE">HAVE_SSE</a></u></td></tr>
+<tr><th id="117">117</th><td>        <b>if</b> (<a class="local col8 ref" href="#8std_caps" title='std_caps' data-ref="8std_caps">std_caps</a> &amp; (<var>1</var> &lt;&lt; <var>25</var>))</td></tr>
+<tr><th id="118">118</th><td>            <a class="local col1 ref" href="#1rval" title='rval' data-ref="1rval">rval</a> |= <a class="macro" href="../cpu.h.html#33" title="0x0008" data-ref="_M/AV_CPU_FLAG_SSE">AV_CPU_FLAG_SSE</a>;</td></tr>
+<tr><th id="119">119</th><td>        <b>if</b> (<a class="local col8 ref" href="#8std_caps" title='std_caps' data-ref="8std_caps">std_caps</a> &amp; (<var>1</var> &lt;&lt; <var>26</var>))</td></tr>
+<tr><th id="120">120</th><td>            <a class="local col1 ref" href="#1rval" title='rval' data-ref="1rval">rval</a> |= <a class="macro" href="../cpu.h.html#34" title="0x0010" data-ref="_M/AV_CPU_FLAG_SSE2">AV_CPU_FLAG_SSE2</a>;</td></tr>
+<tr><th id="121">121</th><td>        <b>if</b> (<a class="local col4 ref" href="#4ecx" title='ecx' data-ref="4ecx">ecx</a> &amp; <var>1</var>)</td></tr>
+<tr><th id="122">122</th><td>            <a class="local col1 ref" href="#1rval" title='rval' data-ref="1rval">rval</a> |= <a class="macro" href="../cpu.h.html#38" title="0x0040" data-ref="_M/AV_CPU_FLAG_SSE3">AV_CPU_FLAG_SSE3</a>;</td></tr>
+<tr><th id="123">123</th><td>        <b>if</b> (<a class="local col4 ref" href="#4ecx" title='ecx' data-ref="4ecx">ecx</a> &amp; <var>0x00000200</var> )</td></tr>
+<tr><th id="124">124</th><td>            <a class="local col1 ref" href="#1rval" title='rval' data-ref="1rval">rval</a> |= <a class="macro" href="../cpu.h.html#41" title="0x0080" data-ref="_M/AV_CPU_FLAG_SSSE3">AV_CPU_FLAG_SSSE3</a>;</td></tr>
+<tr><th id="125">125</th><td>        <b>if</b> (<a class="local col4 ref" href="#4ecx" title='ecx' data-ref="4ecx">ecx</a> &amp; <var>0x00080000</var> )</td></tr>
+<tr><th id="126">126</th><td>            <a class="local col1 ref" href="#1rval" title='rval' data-ref="1rval">rval</a> |= <a class="macro" href="../cpu.h.html#43" title="0x0100" data-ref="_M/AV_CPU_FLAG_SSE4">AV_CPU_FLAG_SSE4</a>;</td></tr>
+<tr><th id="127">127</th><td>        <b>if</b> (<a class="local col4 ref" href="#4ecx" title='ecx' data-ref="4ecx">ecx</a> &amp; <var>0x00100000</var> )</td></tr>
+<tr><th id="128">128</th><td>            <a class="local col1 ref" href="#1rval" title='rval' data-ref="1rval">rval</a> |= <a class="macro" href="../cpu.h.html#44" title="0x0200" data-ref="_M/AV_CPU_FLAG_SSE42">AV_CPU_FLAG_SSE42</a>;</td></tr>
+<tr><th id="129">129</th><td>        <b>if</b> (<a class="local col4 ref" href="#4ecx" title='ecx' data-ref="4ecx">ecx</a> &amp; <var>0x01000000</var> )</td></tr>
+<tr><th id="130">130</th><td>            <a class="local col1 ref" href="#1rval" title='rval' data-ref="1rval">rval</a> |= <a class="macro" href="../cpu.h.html#45" title="0x80000" data-ref="_M/AV_CPU_FLAG_AESNI">AV_CPU_FLAG_AESNI</a>;</td></tr>
+<tr><th id="131">131</th><td><u>#<span data-ppcond="131">if</span> <a class="macro" href="../../config.h.html#58" title="1" data-ref="_M/HAVE_AVX">HAVE_AVX</a></u></td></tr>
+<tr><th id="132">132</th><td>        <i>/* Check OXSAVE and AVX bits */</i></td></tr>
+<tr><th id="133">133</th><td>        <b>if</b> ((<a class="local col4 ref" href="#4ecx" title='ecx' data-ref="4ecx">ecx</a> &amp; <var>0x18000000</var>) == <var>0x18000000</var>) {</td></tr>
+<tr><th id="134">134</th><td>            <i>/* Check for OS support */</i></td></tr>
+<tr><th id="135">135</th><td>            <a class="macro" href="#36" title="ff_cpu_xgetbv(0, &amp;eax, &amp;edx)" data-ref="_M/xgetbv">xgetbv</a>(<var>0</var>, <a class="local col2 ref" href="#2eax" title='eax' data-ref="2eax">eax</a>, <a class="local col5 ref" href="#5edx" title='edx' data-ref="5edx">edx</a>);</td></tr>
+<tr><th id="136">136</th><td>            <b>if</b> ((<a class="local col2 ref" href="#2eax" title='eax' data-ref="2eax">eax</a> &amp; <var>0x6</var>) == <var>0x6</var>) {</td></tr>
+<tr><th id="137">137</th><td>                <a class="local col1 ref" href="#1rval" title='rval' data-ref="1rval">rval</a> |= <a class="macro" href="../cpu.h.html#46" title="0x4000" data-ref="_M/AV_CPU_FLAG_AVX">AV_CPU_FLAG_AVX</a>;</td></tr>
+<tr><th id="138">138</th><td>                <b>if</b> (<a class="local col4 ref" href="#4ecx" title='ecx' data-ref="4ecx">ecx</a> &amp; <var>0x00001000</var>)</td></tr>
+<tr><th id="139">139</th><td>                    <a class="local col1 ref" href="#1rval" title='rval' data-ref="1rval">rval</a> |= <a class="macro" href="../cpu.h.html#52" title="0x10000" data-ref="_M/AV_CPU_FLAG_FMA3">AV_CPU_FLAG_FMA3</a>;</td></tr>
+<tr><th id="140">140</th><td>            }</td></tr>
+<tr><th id="141">141</th><td>        }</td></tr>
+<tr><th id="142">142</th><td><u>#<span data-ppcond="131">endif</span> /* HAVE_AVX */</u></td></tr>
+<tr><th id="143">143</th><td><u>#<span data-ppcond="116">endif</span> /* HAVE_SSE */</u></td></tr>
+<tr><th id="144">144</th><td>    }</td></tr>
+<tr><th id="145">145</th><td>    <b>if</b> (<a class="local col6 ref" href="#6max_std_level" title='max_std_level' data-ref="6max_std_level">max_std_level</a> &gt;= <var>7</var>) {</td></tr>
+<tr><th id="146">146</th><td>        <a class="macro" href="#33" title="ff_cpu_cpuid(7, &amp;eax, &amp;ebx, &amp;ecx, &amp;edx)" data-ref="_M/cpuid">cpuid</a>(<var>7</var>, <a class="local col2 ref" href="#2eax" title='eax' data-ref="2eax">eax</a>, <a class="local col3 ref" href="#3ebx" title='ebx' data-ref="3ebx">ebx</a>, <a class="local col4 ref" href="#4ecx" title='ecx' data-ref="4ecx">ecx</a>, <a class="local col5 ref" href="#5edx" title='edx' data-ref="5edx">edx</a>);</td></tr>
+<tr><th id="147">147</th><td><u>#<span data-ppcond="147">if</span> <a class="macro" href="../../config.h.html#59" title="1" data-ref="_M/HAVE_AVX2">HAVE_AVX2</a></u></td></tr>
+<tr><th id="148">148</th><td>        <b>if</b> ((<a class="local col1 ref" href="#1rval" title='rval' data-ref="1rval">rval</a> &amp; <a class="macro" href="../cpu.h.html#46" title="0x4000" data-ref="_M/AV_CPU_FLAG_AVX">AV_CPU_FLAG_AVX</a>) &amp;&amp; (<a class="local col3 ref" href="#3ebx" title='ebx' data-ref="3ebx">ebx</a> &amp; <var>0x00000020</var>))</td></tr>
+<tr><th id="149">149</th><td>            <a class="local col1 ref" href="#1rval" title='rval' data-ref="1rval">rval</a> |= <a class="macro" href="../cpu.h.html#51" title="0x8000" data-ref="_M/AV_CPU_FLAG_AVX2">AV_CPU_FLAG_AVX2</a>;</td></tr>
+<tr><th id="150">150</th><td><u>#<span data-ppcond="147">endif</span> /* HAVE_AVX2 */</u></td></tr>
+<tr><th id="151">151</th><td>        <i>/* BMI1/2 don't need OS support */</i></td></tr>
+<tr><th id="152">152</th><td>        <b>if</b> (<a class="local col3 ref" href="#3ebx" title='ebx' data-ref="3ebx">ebx</a> &amp; <var>0x00000008</var>) {</td></tr>
+<tr><th id="153">153</th><td>            <a class="local col1 ref" href="#1rval" title='rval' data-ref="1rval">rval</a> |= <a class="macro" href="../cpu.h.html#53" title="0x20000" data-ref="_M/AV_CPU_FLAG_BMI1">AV_CPU_FLAG_BMI1</a>;</td></tr>
+<tr><th id="154">154</th><td>            <b>if</b> (<a class="local col3 ref" href="#3ebx" title='ebx' data-ref="3ebx">ebx</a> &amp; <var>0x00000100</var>)</td></tr>
+<tr><th id="155">155</th><td>                <a class="local col1 ref" href="#1rval" title='rval' data-ref="1rval">rval</a> |= <a class="macro" href="../cpu.h.html#54" title="0x40000" data-ref="_M/AV_CPU_FLAG_BMI2">AV_CPU_FLAG_BMI2</a>;</td></tr>
+<tr><th id="156">156</th><td>        }</td></tr>
+<tr><th id="157">157</th><td>    }</td></tr>
+<tr><th id="158">158</th><td></td></tr>
+<tr><th id="159">159</th><td>    <a class="macro" href="#33" title="ff_cpu_cpuid(0x80000000, &amp;max_ext_level, &amp;ebx, &amp;ecx, &amp;edx)" data-ref="_M/cpuid">cpuid</a>(<var>0x80000000</var>, <a class="local col7 ref" href="#7max_ext_level" title='max_ext_level' data-ref="7max_ext_level">max_ext_level</a>, <a class="local col3 ref" href="#3ebx" title='ebx' data-ref="3ebx">ebx</a>, <a class="local col4 ref" href="#4ecx" title='ecx' data-ref="4ecx">ecx</a>, <a class="local col5 ref" href="#5edx" title='edx' data-ref="5edx">edx</a>);</td></tr>
+<tr><th id="160">160</th><td></td></tr>
+<tr><th id="161">161</th><td>    <b>if</b> (<a class="local col7 ref" href="#7max_ext_level" title='max_ext_level' data-ref="7max_ext_level">max_ext_level</a> &gt;= <var>0x80000001</var>) {</td></tr>
+<tr><th id="162">162</th><td>        <a class="macro" href="#33" title="ff_cpu_cpuid(0x80000001, &amp;eax, &amp;ebx, &amp;ecx, &amp;ext_caps)" data-ref="_M/cpuid">cpuid</a>(<var>0x80000001</var>, <a class="local col2 ref" href="#2eax" title='eax' data-ref="2eax">eax</a>, <a class="local col3 ref" href="#3ebx" title='ebx' data-ref="3ebx">ebx</a>, <a class="local col4 ref" href="#4ecx" title='ecx' data-ref="4ecx">ecx</a>, <a class="local col9 ref" href="#9ext_caps" title='ext_caps' data-ref="9ext_caps">ext_caps</a>);</td></tr>
+<tr><th id="163">163</th><td>        <b>if</b> (<a class="local col9 ref" href="#9ext_caps" title='ext_caps' data-ref="9ext_caps">ext_caps</a> &amp; (<var>1U</var> &lt;&lt; <var>31</var>))</td></tr>
+<tr><th id="164">164</th><td>            <a class="local col1 ref" href="#1rval" title='rval' data-ref="1rval">rval</a> |= <a class="macro" href="../cpu.h.html#32" title="0x0004" data-ref="_M/AV_CPU_FLAG_3DNOW">AV_CPU_FLAG_3DNOW</a>;</td></tr>
+<tr><th id="165">165</th><td>        <b>if</b> (<a class="local col9 ref" href="#9ext_caps" title='ext_caps' data-ref="9ext_caps">ext_caps</a> &amp; (<var>1</var> &lt;&lt; <var>30</var>))</td></tr>
+<tr><th id="166">166</th><td>            <a class="local col1 ref" href="#1rval" title='rval' data-ref="1rval">rval</a> |= <a class="macro" href="../cpu.h.html#37" title="0x0020" data-ref="_M/AV_CPU_FLAG_3DNOWEXT">AV_CPU_FLAG_3DNOWEXT</a>;</td></tr>
+<tr><th id="167">167</th><td>        <b>if</b> (<a class="local col9 ref" href="#9ext_caps" title='ext_caps' data-ref="9ext_caps">ext_caps</a> &amp; (<var>1</var> &lt;&lt; <var>23</var>))</td></tr>
+<tr><th id="168">168</th><td>            <a class="local col1 ref" href="#1rval" title='rval' data-ref="1rval">rval</a> |= <a class="macro" href="../cpu.h.html#29" title="0x0001" data-ref="_M/AV_CPU_FLAG_MMX">AV_CPU_FLAG_MMX</a>;</td></tr>
+<tr><th id="169">169</th><td>        <b>if</b> (<a class="local col9 ref" href="#9ext_caps" title='ext_caps' data-ref="9ext_caps">ext_caps</a> &amp; (<var>1</var> &lt;&lt; <var>22</var>))</td></tr>
+<tr><th id="170">170</th><td>            <a class="local col1 ref" href="#1rval" title='rval' data-ref="1rval">rval</a> |= <a class="macro" href="../cpu.h.html#30" title="0x0002" data-ref="_M/AV_CPU_FLAG_MMXEXT">AV_CPU_FLAG_MMXEXT</a>;</td></tr>
+<tr><th id="171">171</th><td></td></tr>
+<tr><th id="172">172</th><td>        <b>if</b> (!<a class="ref" href="../../../include/string.h.html#strncmp" title='strncmp' data-ref="strncmp">strncmp</a>(<a class="local col4 ref" href="#14vendor" title='vendor' data-ref="14vendor">vendor</a>.<a class="local col3 ref" href="#13c" title='c' data-ref="13c">c</a>, <q>"AuthenticAMD"</q>, <var>12</var>)) {</td></tr>
+<tr><th id="173">173</th><td>        <i>/* Allow for selectively disabling SSE2 functions on AMD processors</i></td></tr>
+<tr><th id="174">174</th><td><i>           with SSE2 support but not SSE4a. This includes Athlon64, some</i></td></tr>
+<tr><th id="175">175</th><td><i>           Opteron, and some Sempron processors. MMX, SSE, or 3DNow! are faster</i></td></tr>
+<tr><th id="176">176</th><td><i>           than SSE2 often enough to utilize this special-case flag.</i></td></tr>
+<tr><th id="177">177</th><td><i>           AV_CPU_FLAG_SSE2 and AV_CPU_FLAG_SSE2SLOW are both set in this case</i></td></tr>
+<tr><th id="178">178</th><td><i>           so that SSE2 is used unless explicitly disabled by checking</i></td></tr>
+<tr><th id="179">179</th><td><i>           AV_CPU_FLAG_SSE2SLOW. */</i></td></tr>
+<tr><th id="180">180</th><td>            <b>if</b> (<a class="local col1 ref" href="#1rval" title='rval' data-ref="1rval">rval</a> &amp; <a class="macro" href="../cpu.h.html#34" title="0x0010" data-ref="_M/AV_CPU_FLAG_SSE2">AV_CPU_FLAG_SSE2</a> &amp;&amp; !(<a class="local col4 ref" href="#4ecx" title='ecx' data-ref="4ecx">ecx</a> &amp; <var>0x00000040</var>))</td></tr>
+<tr><th id="181">181</th><td>                <a class="local col1 ref" href="#1rval" title='rval' data-ref="1rval">rval</a> |= <a class="macro" href="../cpu.h.html#35" title="0x40000000" data-ref="_M/AV_CPU_FLAG_SSE2SLOW">AV_CPU_FLAG_SSE2SLOW</a>;</td></tr>
+<tr><th id="182">182</th><td></td></tr>
+<tr><th id="183">183</th><td>        <i>/* Similar to the above but for AVX functions on AMD processors.</i></td></tr>
+<tr><th id="184">184</th><td><i>           This is necessary only for functions using YMM registers on Bulldozer</i></td></tr>
+<tr><th id="185">185</th><td><i>           and Jaguar based CPUs as they lack 256-bit execution units. SSE/AVX</i></td></tr>
+<tr><th id="186">186</th><td><i>           functions using XMM registers are always faster on them.</i></td></tr>
+<tr><th id="187">187</th><td><i>           AV_CPU_FLAG_AVX and AV_CPU_FLAG_AVXSLOW are both set so that AVX is</i></td></tr>
+<tr><th id="188">188</th><td><i>           used unless explicitly disabled by checking AV_CPU_FLAG_AVXSLOW. */</i></td></tr>
+<tr><th id="189">189</th><td>            <b>if</b> ((<a class="local col0 ref" href="#10family" title='family' data-ref="10family">family</a> == <var>0x15</var> || <a class="local col0 ref" href="#10family" title='family' data-ref="10family">family</a> == <var>0x16</var>) &amp;&amp; (<a class="local col1 ref" href="#1rval" title='rval' data-ref="1rval">rval</a> &amp; <a class="macro" href="../cpu.h.html#46" title="0x4000" data-ref="_M/AV_CPU_FLAG_AVX">AV_CPU_FLAG_AVX</a>))</td></tr>
+<tr><th id="190">190</th><td>                <a class="local col1 ref" href="#1rval" title='rval' data-ref="1rval">rval</a> |= <a class="macro" href="../cpu.h.html#47" title="0x8000000" data-ref="_M/AV_CPU_FLAG_AVXSLOW">AV_CPU_FLAG_AVXSLOW</a>;</td></tr>
+<tr><th id="191">191</th><td>        }</td></tr>
+<tr><th id="192">192</th><td></td></tr>
+<tr><th id="193">193</th><td>        <i>/* XOP and FMA4 use the AVX instruction coding scheme, so they can't be</i></td></tr>
+<tr><th id="194">194</th><td><i>         * used unless the OS has AVX support. */</i></td></tr>
+<tr><th id="195">195</th><td>        <b>if</b> (<a class="local col1 ref" href="#1rval" title='rval' data-ref="1rval">rval</a> &amp; <a class="macro" href="../cpu.h.html#46" title="0x4000" data-ref="_M/AV_CPU_FLAG_AVX">AV_CPU_FLAG_AVX</a>) {</td></tr>
+<tr><th id="196">196</th><td>            <b>if</b> (<a class="local col4 ref" href="#4ecx" title='ecx' data-ref="4ecx">ecx</a> &amp; <var>0x00000800</var>)</td></tr>
+<tr><th id="197">197</th><td>                <a class="local col1 ref" href="#1rval" title='rval' data-ref="1rval">rval</a> |= <a class="macro" href="../cpu.h.html#48" title="0x0400" data-ref="_M/AV_CPU_FLAG_XOP">AV_CPU_FLAG_XOP</a>;</td></tr>
+<tr><th id="198">198</th><td>            <b>if</b> (<a class="local col4 ref" href="#4ecx" title='ecx' data-ref="4ecx">ecx</a> &amp; <var>0x00010000</var>)</td></tr>
+<tr><th id="199">199</th><td>                <a class="local col1 ref" href="#1rval" title='rval' data-ref="1rval">rval</a> |= <a class="macro" href="../cpu.h.html#49" title="0x0800" data-ref="_M/AV_CPU_FLAG_FMA4">AV_CPU_FLAG_FMA4</a>;</td></tr>
+<tr><th id="200">200</th><td>        }</td></tr>
+<tr><th id="201">201</th><td>    }</td></tr>
+<tr><th id="202">202</th><td></td></tr>
+<tr><th id="203">203</th><td>    <b>if</b> (!<a class="ref" href="../../../include/string.h.html#strncmp" title='strncmp' data-ref="strncmp">strncmp</a>(<a class="local col4 ref" href="#14vendor" title='vendor' data-ref="14vendor">vendor</a>.<a class="local col3 ref" href="#13c" title='c' data-ref="13c">c</a>, <q>"GenuineIntel"</q>, <var>12</var>)) {</td></tr>
+<tr><th id="204">204</th><td>        <b>if</b> (<a class="local col0 ref" href="#10family" title='family' data-ref="10family">family</a> == <var>6</var> &amp;&amp; (<a class="local col1 ref" href="#11model" title='model' data-ref="11model">model</a> == <var>9</var> || <a class="local col1 ref" href="#11model" title='model' data-ref="11model">model</a> == <var>13</var> || <a class="local col1 ref" href="#11model" title='model' data-ref="11model">model</a> == <var>14</var>)) {</td></tr>
+<tr><th id="205">205</th><td>            <i>/* 6/9 (pentium-m "banias"), 6/13 (pentium-m "dothan"), and</i></td></tr>
+<tr><th id="206">206</th><td><i>             * 6/14 (core1 "yonah") theoretically support sse2, but it's</i></td></tr>
+<tr><th id="207">207</th><td><i>             * usually slower than mmx, so let's just pretend they don't.</i></td></tr>
+<tr><th id="208">208</th><td><i>             * AV_CPU_FLAG_SSE2 is disabled and AV_CPU_FLAG_SSE2SLOW is</i></td></tr>
+<tr><th id="209">209</th><td><i>             * enabled so that SSE2 is not used unless explicitly enabled</i></td></tr>
+<tr><th id="210">210</th><td><i>             * by checking AV_CPU_FLAG_SSE2SLOW. The same situation</i></td></tr>
+<tr><th id="211">211</th><td><i>             * applies for AV_CPU_FLAG_SSE3 and AV_CPU_FLAG_SSE3SLOW. */</i></td></tr>
+<tr><th id="212">212</th><td>            <b>if</b> (<a class="local col1 ref" href="#1rval" title='rval' data-ref="1rval">rval</a> &amp; <a class="macro" href="../cpu.h.html#34" title="0x0010" data-ref="_M/AV_CPU_FLAG_SSE2">AV_CPU_FLAG_SSE2</a>)</td></tr>
+<tr><th id="213">213</th><td>                <a class="local col1 ref" href="#1rval" title='rval' data-ref="1rval">rval</a> ^= <a class="macro" href="../cpu.h.html#35" title="0x40000000" data-ref="_M/AV_CPU_FLAG_SSE2SLOW">AV_CPU_FLAG_SSE2SLOW</a> | <a class="macro" href="../cpu.h.html#34" title="0x0010" data-ref="_M/AV_CPU_FLAG_SSE2">AV_CPU_FLAG_SSE2</a>;</td></tr>
+<tr><th id="214">214</th><td>            <b>if</b> (<a class="local col1 ref" href="#1rval" title='rval' data-ref="1rval">rval</a> &amp; <a class="macro" href="../cpu.h.html#38" title="0x0040" data-ref="_M/AV_CPU_FLAG_SSE3">AV_CPU_FLAG_SSE3</a>)</td></tr>
+<tr><th id="215">215</th><td>                <a class="local col1 ref" href="#1rval" title='rval' data-ref="1rval">rval</a> ^= <a class="macro" href="../cpu.h.html#39" title="0x20000000" data-ref="_M/AV_CPU_FLAG_SSE3SLOW">AV_CPU_FLAG_SSE3SLOW</a> | <a class="macro" href="../cpu.h.html#38" title="0x0040" data-ref="_M/AV_CPU_FLAG_SSE3">AV_CPU_FLAG_SSE3</a>;</td></tr>
+<tr><th id="216">216</th><td>        }</td></tr>
+<tr><th id="217">217</th><td>        <i>/* The Atom processor has SSSE3 support, which is useful in many cases,</i></td></tr>
+<tr><th id="218">218</th><td><i>         * but sometimes the SSSE3 version is slower than the SSE2 equivalent</i></td></tr>
+<tr><th id="219">219</th><td><i>         * on the Atom, but is generally faster on other processors supporting</i></td></tr>
+<tr><th id="220">220</th><td><i>         * SSSE3. This flag allows for selectively disabling certain SSSE3</i></td></tr>
+<tr><th id="221">221</th><td><i>         * functions on the Atom. */</i></td></tr>
+<tr><th id="222">222</th><td>        <b>if</b> (<a class="local col0 ref" href="#10family" title='family' data-ref="10family">family</a> == <var>6</var> &amp;&amp; <a class="local col1 ref" href="#11model" title='model' data-ref="11model">model</a> == <var>28</var>)</td></tr>
+<tr><th id="223">223</th><td>            <a class="local col1 ref" href="#1rval" title='rval' data-ref="1rval">rval</a> |= <a class="macro" href="../cpu.h.html#42" title="0x10000000" data-ref="_M/AV_CPU_FLAG_ATOM">AV_CPU_FLAG_ATOM</a>;</td></tr>
+<tr><th id="224">224</th><td>    }</td></tr>
+<tr><th id="225">225</th><td></td></tr>
+<tr><th id="226">226</th><td><u>#<span data-ppcond="94">endif</span> /* cpuid */</u></td></tr>
+<tr><th id="227">227</th><td></td></tr>
+<tr><th id="228">228</th><td>    <b>return</b> <a class="local col1 ref" href="#1rval" title='rval' data-ref="1rval">rval</a>;</td></tr>
+<tr><th id="229">229</th><td>}</td></tr>
+<tr><th id="230">230</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

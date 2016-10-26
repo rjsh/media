@@ -1,0 +1,110 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>noise_bsf.c source code [ffmpeg/libavcodec/noise_bsf.c] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="NoiseContext "/>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavcodec/noise_bsf.c'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavcodec</a>/<a href='noise_bsf.c.html'>noise_bsf.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * copyright (c) 2006 Michael Niedermayer &lt;michaelni@gmx.at&gt;</i></td></tr>
+<tr><th id="3">3</th><td><i> *</i></td></tr>
+<tr><th id="4">4</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="5">5</th><td><i> *</i></td></tr>
+<tr><th id="6">6</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="7">7</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="8">8</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="9">9</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="10">10</th><td><i> *</i></td></tr>
+<tr><th id="11">11</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="12">12</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="13">13</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="14">14</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="15">15</th><td><i> *</i></td></tr>
+<tr><th id="16">16</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="17">17</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="18">18</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="19">19</th><td><i> */</i></td></tr>
+<tr><th id="20">20</th><td></td></tr>
+<tr><th id="21">21</th><td><u>#include <a href="../../include/stdlib.h.html">&lt;stdlib.h&gt;</a></u></td></tr>
+<tr><th id="22">22</th><td><u>#include <a href="../../include/string.h.html">&lt;string.h&gt;</a></u></td></tr>
+<tr><th id="23">23</th><td></td></tr>
+<tr><th id="24">24</th><td><u>#include <a href="avcodec.h.html">"avcodec.h"</a></u></td></tr>
+<tr><th id="25">25</th><td><u>#include <a href="bsf.h.html">"bsf.h"</a></u></td></tr>
+<tr><th id="26">26</th><td></td></tr>
+<tr><th id="27">27</th><td><u>#include <a href="../libavutil/log.h.html">"libavutil/log.h"</a></u></td></tr>
+<tr><th id="28">28</th><td><u>#include <a href="../libavutil/mem.h.html">"libavutil/mem.h"</a></u></td></tr>
+<tr><th id="29">29</th><td><u>#include <a href="../libavutil/opt.h.html">"libavutil/opt.h"</a></u></td></tr>
+<tr><th id="30">30</th><td></td></tr>
+<tr><th id="31">31</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="NoiseContext" title='NoiseContext' data-ref="NoiseContext"><a class="type" href="#NoiseContext" title='NoiseContext' data-ref="NoiseContext">NoiseContext</a></dfn> {</td></tr>
+<tr><th id="32">32</th><td>    <em>const</em> <a class="typedef" href="../libavutil/log.h.html#AVClass" title='AVClass' data-type='struct AVClass' data-ref="AVClass">AVClass</a> *<dfn class="tu decl" id="NoiseContext::class" title='NoiseContext::class' data-type='const AVClass *' data-ref="NoiseContext::class">class</dfn>;</td></tr>
+<tr><th id="33">33</th><td>    <em>int</em> <dfn class="tu decl" id="NoiseContext::amount" title='NoiseContext::amount' data-type='int' data-ref="NoiseContext::amount">amount</dfn>;</td></tr>
+<tr><th id="34">34</th><td>    <em>unsigned</em> <em>int</em> <dfn class="tu decl" id="NoiseContext::state" title='NoiseContext::state' data-type='unsigned int' data-ref="NoiseContext::state">state</dfn>;</td></tr>
+<tr><th id="35">35</th><td>} <dfn class="typedef" id="NoiseContext" title='NoiseContext' data-type='struct NoiseContext' data-ref="NoiseContext">NoiseContext</dfn>;</td></tr>
+<tr><th id="36">36</th><td></td></tr>
+<tr><th id="37">37</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="noise" title='noise' data-type='int noise(AVBSFContext * ctx, AVPacket * out)' data-ref="noise">noise</dfn>(<a class="typedef" href="avcodec.h.html#AVBSFContext" title='AVBSFContext' data-type='struct AVBSFContext' data-ref="AVBSFContext">AVBSFContext</a> *<dfn class="local col1 decl" id="1ctx" title='ctx' data-type='AVBSFContext *' data-ref="1ctx">ctx</dfn>, <a class="typedef" href="avcodec.h.html#AVPacket" title='AVPacket' data-type='struct AVPacket' data-ref="AVPacket">AVPacket</a> *<dfn class="local col2 decl" id="2out" title='out' data-type='AVPacket *' data-ref="2out">out</dfn>)</td></tr>
+<tr><th id="38">38</th><td>{</td></tr>
+<tr><th id="39">39</th><td>    <a class="typedef" href="#NoiseContext" title='NoiseContext' data-type='struct NoiseContext' data-ref="NoiseContext">NoiseContext</a> *<dfn class="local col3 decl" id="3s" title='s' data-type='NoiseContext *' data-ref="3s">s</dfn> = <a class="local col1 ref" href="#1ctx" title='ctx' data-ref="1ctx">ctx</a>-&gt;<a class="ref" href="avcodec.h.html#AVBSFContext::priv_data" title='AVBSFContext::priv_data' data-ref="AVBSFContext::priv_data">priv_data</a>;</td></tr>
+<tr><th id="40">40</th><td>    <a class="typedef" href="avcodec.h.html#AVPacket" title='AVPacket' data-type='struct AVPacket' data-ref="AVPacket">AVPacket</a> *<dfn class="local col4 decl" id="4in" title='in' data-type='AVPacket *' data-ref="4in">in</dfn>;</td></tr>
+<tr><th id="41">41</th><td>    <em>int</em> <dfn class="local col5 decl" id="5amount" title='amount' data-type='int' data-ref="5amount">amount</dfn> = <a class="local col3 ref" href="#3s" title='s' data-ref="3s">s</a>-&gt;<a class="tu ref" href="#NoiseContext::amount" title='NoiseContext::amount' data-use='r' data-ref="NoiseContext::amount">amount</a> &gt; <var>0</var> ? <a class="local col3 ref" href="#3s" title='s' data-ref="3s">s</a>-&gt;<a class="tu ref" href="#NoiseContext::amount" title='NoiseContext::amount' data-use='r' data-ref="NoiseContext::amount">amount</a> : (<a class="local col3 ref" href="#3s" title='s' data-ref="3s">s</a>-&gt;<a class="tu ref" href="#NoiseContext::state" title='NoiseContext::state' data-use='r' data-ref="NoiseContext::state">state</a> % <var>10001</var> + <var>1</var>);</td></tr>
+<tr><th id="42">42</th><td>    <em>int</em> <dfn class="local col6 decl" id="6i" title='i' data-type='int' data-ref="6i">i</dfn>, <dfn class="local col7 decl" id="7ret" title='ret' data-type='int' data-ref="7ret">ret</dfn> = <var>0</var>;</td></tr>
+<tr><th id="43">43</th><td></td></tr>
+<tr><th id="44">44</th><td>    <b>if</b> (<a class="local col5 ref" href="#5amount" title='amount' data-ref="5amount">amount</a> &lt;= <var>0</var>)</td></tr>
+<tr><th id="45">45</th><td>        <b>return</b> <a class="macro" href="../libavutil/error.h.html#39" title="(-(22))" data-ref="_M/AVERROR">AVERROR</a>(<a class="macro" href="../../include/asm-generic/errno-base.h.html#25" title="22" data-ref="_M/EINVAL">EINVAL</a>);</td></tr>
+<tr><th id="46">46</th><td></td></tr>
+<tr><th id="47">47</th><td>    <a class="local col7 ref" href="#7ret" title='ret' data-ref="7ret">ret</a> = <a class="ref" href="bsf.h.html#ff_bsf_get_packet" title='ff_bsf_get_packet' data-ref="ff_bsf_get_packet">ff_bsf_get_packet</a>(<a class="local col1 ref" href="#1ctx" title='ctx' data-ref="1ctx">ctx</a>, &amp;<a class="local col4 ref" href="#4in" title='in' data-ref="4in">in</a>);</td></tr>
+<tr><th id="48">48</th><td>    <b>if</b> (<a class="local col7 ref" href="#7ret" title='ret' data-ref="7ret">ret</a> &lt; <var>0</var>)</td></tr>
+<tr><th id="49">49</th><td>        <b>return</b> <a class="local col7 ref" href="#7ret" title='ret' data-ref="7ret">ret</a>;</td></tr>
+<tr><th id="50">50</th><td></td></tr>
+<tr><th id="51">51</th><td>    <a class="local col7 ref" href="#7ret" title='ret' data-ref="7ret">ret</a> = <a class="ref" href="avcodec.h.html#av_new_packet" title='av_new_packet' data-ref="av_new_packet">av_new_packet</a>(<a class="local col2 ref" href="#2out" title='out' data-ref="2out">out</a>, <a class="local col4 ref" href="#4in" title='in' data-ref="4in">in</a>-&gt;<a class="ref" href="avcodec.h.html#AVPacket::size" title='AVPacket::size' data-ref="AVPacket::size">size</a>);</td></tr>
+<tr><th id="52">52</th><td>    <b>if</b> (<a class="local col7 ref" href="#7ret" title='ret' data-ref="7ret">ret</a> &lt; <var>0</var>)</td></tr>
+<tr><th id="53">53</th><td>        <b>goto</b> <a class="lbl" href="#8fail" data-ref="8fail">fail</a>;</td></tr>
+<tr><th id="54">54</th><td></td></tr>
+<tr><th id="55">55</th><td>    <a class="local col7 ref" href="#7ret" title='ret' data-ref="7ret">ret</a> = <a class="ref" href="avcodec.h.html#av_packet_copy_props" title='av_packet_copy_props' data-ref="av_packet_copy_props">av_packet_copy_props</a>(<a class="local col2 ref" href="#2out" title='out' data-ref="2out">out</a>, <a class="local col4 ref" href="#4in" title='in' data-ref="4in">in</a>);</td></tr>
+<tr><th id="56">56</th><td>    <b>if</b> (<a class="local col7 ref" href="#7ret" title='ret' data-ref="7ret">ret</a> &lt; <var>0</var>)</td></tr>
+<tr><th id="57">57</th><td>        <b>goto</b> <a class="lbl" href="#8fail" data-ref="8fail">fail</a>;</td></tr>
+<tr><th id="58">58</th><td></td></tr>
+<tr><th id="59">59</th><td>    <a class="ref" href="../../include/string.h.html#memcpy" title='memcpy' data-ref="memcpy">memcpy</a>(<a class="local col2 ref" href="#2out" title='out' data-ref="2out">out</a>-&gt;<a class="ref" href="avcodec.h.html#AVPacket::data" title='AVPacket::data' data-ref="AVPacket::data">data</a>, <a class="local col4 ref" href="#4in" title='in' data-ref="4in">in</a>-&gt;<a class="ref" href="avcodec.h.html#AVPacket::data" title='AVPacket::data' data-ref="AVPacket::data">data</a>, <a class="local col4 ref" href="#4in" title='in' data-ref="4in">in</a>-&gt;<a class="ref" href="avcodec.h.html#AVPacket::size" title='AVPacket::size' data-ref="AVPacket::size">size</a>);</td></tr>
+<tr><th id="60">60</th><td></td></tr>
+<tr><th id="61">61</th><td>    <b>for</b> (<a class="local col6 ref" href="#6i" title='i' data-ref="6i">i</a> = <var>0</var>; <a class="local col6 ref" href="#6i" title='i' data-ref="6i">i</a> &lt; <a class="local col2 ref" href="#2out" title='out' data-ref="2out">out</a>-&gt;<a class="ref" href="avcodec.h.html#AVPacket::size" title='AVPacket::size' data-ref="AVPacket::size">size</a>; <a class="local col6 ref" href="#6i" title='i' data-ref="6i">i</a>++) {</td></tr>
+<tr><th id="62">62</th><td>        <a class="local col3 ref" href="#3s" title='s' data-ref="3s">s</a>-&gt;<a class="tu ref" href="#NoiseContext::state" title='NoiseContext::state' data-use='w' data-ref="NoiseContext::state">state</a> += <a class="local col2 ref" href="#2out" title='out' data-ref="2out">out</a>-&gt;<a class="ref" href="avcodec.h.html#AVPacket::data" title='AVPacket::data' data-ref="AVPacket::data">data</a>[<a class="local col6 ref" href="#6i" title='i' data-ref="6i">i</a>] + <var>1</var>;</td></tr>
+<tr><th id="63">63</th><td>        <b>if</b> (<a class="local col3 ref" href="#3s" title='s' data-ref="3s">s</a>-&gt;<a class="tu ref" href="#NoiseContext::state" title='NoiseContext::state' data-use='r' data-ref="NoiseContext::state">state</a> % <a class="local col5 ref" href="#5amount" title='amount' data-ref="5amount">amount</a> == <var>0</var>)</td></tr>
+<tr><th id="64">64</th><td>            <a class="local col2 ref" href="#2out" title='out' data-ref="2out">out</a>-&gt;<a class="ref" href="avcodec.h.html#AVPacket::data" title='AVPacket::data' data-ref="AVPacket::data">data</a>[<a class="local col6 ref" href="#6i" title='i' data-ref="6i">i</a>] = <a class="local col3 ref" href="#3s" title='s' data-ref="3s">s</a>-&gt;<a class="tu ref" href="#NoiseContext::state" title='NoiseContext::state' data-use='r' data-ref="NoiseContext::state">state</a>;</td></tr>
+<tr><th id="65">65</th><td>    }</td></tr>
+<tr><th id="66">66</th><td><dfn class="lbl" id="8fail" data-ref="8fail">fail</dfn>:</td></tr>
+<tr><th id="67">67</th><td>    <b>if</b> (<a class="local col7 ref" href="#7ret" title='ret' data-ref="7ret">ret</a> &lt; <var>0</var>)</td></tr>
+<tr><th id="68">68</th><td>        <a class="ref" href="avcodec.h.html#av_packet_unref" title='av_packet_unref' data-ref="av_packet_unref">av_packet_unref</a>(<a class="local col2 ref" href="#2out" title='out' data-ref="2out">out</a>);</td></tr>
+<tr><th id="69">69</th><td>    <a class="ref" href="avcodec.h.html#av_packet_free" title='av_packet_free' data-ref="av_packet_free">av_packet_free</a>(&amp;<a class="local col4 ref" href="#4in" title='in' data-ref="4in">in</a>);</td></tr>
+<tr><th id="70">70</th><td>    <b>return</b> <a class="local col7 ref" href="#7ret" title='ret' data-ref="7ret">ret</a>;</td></tr>
+<tr><th id="71">71</th><td>}</td></tr>
+<tr><th id="72">72</th><td></td></tr>
+<tr><th id="73">73</th><td><u>#define <dfn class="macro" id="_M/OFFSET" data-ref="_M/OFFSET">OFFSET</dfn>(x) offsetof(<a class="typedef" href="#NoiseContext" title='NoiseContext' data-type='struct NoiseContext' data-ref="NoiseContext">NoiseContext</a>, x)</u></td></tr>
+<tr><th id="74">74</th><td><em>static</em> <em>const</em> <a class="typedef" href="../libavutil/opt.h.html#AVOption" title='AVOption' data-type='struct AVOption' data-ref="AVOption">AVOption</a> <dfn class="tu decl def" id="options" title='options' data-type='const AVOption [2]' data-ref="options">options</dfn>[] = {</td></tr>
+<tr><th id="75">75</th><td>    { <q>"amount"</q>, <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>, <a class="macro" href="#73" title="__builtin_offsetof(NoiseContext, amount)" data-ref="_M/OFFSET">OFFSET</a>(amount), <a class="enum" href="../libavutil/opt.h.html#AVOptionType::AV_OPT_TYPE_INT" title='AVOptionType::AV_OPT_TYPE_INT' data-ref="AVOptionType::AV_OPT_TYPE_INT">AV_OPT_TYPE_INT</a>, { .<a class="ref" href="../libavutil/opt.h.html#AVOption::{anonymous}::i64" title='AVOption::&lt;anonymous union&gt;::i64' data-ref="AVOption::{anonymous}::i64">i64</a> = <var>0</var> }, <var>0</var>, <span class="macro" title="2147483647" data-ref="_M/INT_MAX">INT_MAX</span> },</td></tr>
+<tr><th id="76">76</th><td>    { <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span> },</td></tr>
+<tr><th id="77">77</th><td>};</td></tr>
+<tr><th id="78">78</th><td></td></tr>
+<tr><th id="79">79</th><td><em>static</em> <em>const</em> <a class="typedef" href="../libavutil/log.h.html#AVClass" title='AVClass' data-type='struct AVClass' data-ref="AVClass">AVClass</a> <dfn class="tu decl def" id="noise_class" title='noise_class' data-type='const AVClass' data-ref="noise_class">noise_class</dfn> = {</td></tr>
+<tr><th id="80">80</th><td>    .<a class="ref" href="../libavutil/log.h.html#AVClass::class_name" title='AVClass::class_name' data-ref="AVClass::class_name">class_name</a> = <q>"noise"</q>,</td></tr>
+<tr><th id="81">81</th><td>    .<a class="ref" href="../libavutil/log.h.html#AVClass::item_name" title='AVClass::item_name' data-ref="AVClass::item_name">item_name</a>  = <a class="ref" href="../libavutil/log.h.html#av_default_item_name" title='av_default_item_name' data-ref="av_default_item_name">av_default_item_name</a>,</td></tr>
+<tr><th id="82">82</th><td>    .<a class="ref" href="../libavutil/log.h.html#AVClass::option" title='AVClass::option' data-ref="AVClass::option">option</a>     = <a class="tu ref" href="#options" title='options' data-ref="options">options</a>,</td></tr>
+<tr><th id="83">83</th><td>    .<a class="ref" href="../libavutil/log.h.html#AVClass::version" title='AVClass::version' data-ref="AVClass::version">version</a>    = <a class="macro" href="../libavutil/version.h.html#85" title="((55)&lt;&lt;16 | (33)&lt;&lt;8 | (100))" data-ref="_M/LIBAVUTIL_VERSION_INT">LIBAVUTIL_VERSION_INT</a>,</td></tr>
+<tr><th id="84">84</th><td>};</td></tr>
+<tr><th id="85">85</th><td></td></tr>
+<tr><th id="86">86</th><td><em>const</em> <a class="typedef" href="avcodec.h.html#AVBitStreamFilter" title='AVBitStreamFilter' data-type='struct AVBitStreamFilter' data-ref="AVBitStreamFilter">AVBitStreamFilter</a> <dfn class="decl def" id="ff_noise_bsf" title='ff_noise_bsf' data-ref="ff_noise_bsf">ff_noise_bsf</dfn> = {</td></tr>
+<tr><th id="87">87</th><td>    .<a class="ref" href="avcodec.h.html#AVBitStreamFilter::name" title='AVBitStreamFilter::name' data-ref="AVBitStreamFilter::name">name</a>           = <q>"noise"</q>,</td></tr>
+<tr><th id="88">88</th><td>    .<a class="ref" href="avcodec.h.html#AVBitStreamFilter::priv_data_size" title='AVBitStreamFilter::priv_data_size' data-ref="AVBitStreamFilter::priv_data_size">priv_data_size</a> = <b>sizeof</b>(<a class="typedef" href="#NoiseContext" title='NoiseContext' data-type='struct NoiseContext' data-ref="NoiseContext">NoiseContext</a>),</td></tr>
+<tr><th id="89">89</th><td>    .<a class="ref" href="avcodec.h.html#AVBitStreamFilter::priv_class" title='AVBitStreamFilter::priv_class' data-ref="AVBitStreamFilter::priv_class">priv_class</a>     = &amp;<a class="tu ref" href="#noise_class" title='noise_class' data-use='a' data-ref="noise_class">noise_class</a>,</td></tr>
+<tr><th id="90">90</th><td>    .<a class="ref" href="avcodec.h.html#AVBitStreamFilter::filter" title='AVBitStreamFilter::filter' data-ref="AVBitStreamFilter::filter">filter</a>         = <a class="tu ref" href="#noise" title='noise' data-ref="noise">noise</a>,</td></tr>
+<tr><th id="91">91</th><td>};</td></tr>
+<tr><th id="92">92</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

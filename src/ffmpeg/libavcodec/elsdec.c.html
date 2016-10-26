@@ -1,0 +1,441 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>elsdec.c source code [ffmpeg/libavcodec/elsdec.c] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="Ladder "/>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavcodec/elsdec.c'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavcodec</a>/<a href='elsdec.c.html'>elsdec.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * ELS (Entropy Logarithmic-Scale) decoder</i></td></tr>
+<tr><th id="3">3</th><td><i> *</i></td></tr>
+<tr><th id="4">4</th><td><i> * Copyright (c) 2013 Maxim Poliakovski</i></td></tr>
+<tr><th id="5">5</th><td><i> *</i></td></tr>
+<tr><th id="6">6</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="7">7</th><td><i> *</i></td></tr>
+<tr><th id="8">8</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="9">9</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="10">10</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="11">11</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="12">12</th><td><i> *</i></td></tr>
+<tr><th id="13">13</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="14">14</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="15">15</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="16">16</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="17">17</th><td><i> *</i></td></tr>
+<tr><th id="18">18</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="19">19</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="20">20</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="21">21</th><td><i> */</i></td></tr>
+<tr><th id="22">22</th><td></td></tr>
+<tr><th id="23">23</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="24">24</th><td><i class="doc"> *<span class="command"> @file</span></i></td></tr>
+<tr><th id="25">25</th><td><i class="doc"> * Entropy Logarithmic-Scale binary arithmetic decoder</i></td></tr>
+<tr><th id="26">26</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="27">27</th><td></td></tr>
+<tr><th id="28">28</th><td><u>#include <a href="../../include/math.h.html">&lt;math.h&gt;</a></u></td></tr>
+<tr><th id="29">29</th><td><u>#include &lt;stdint.h&gt;</u></td></tr>
+<tr><th id="30">30</th><td></td></tr>
+<tr><th id="31">31</th><td><u>#include <a href="../libavutil/common.h.html">"libavutil/common.h"</a></u></td></tr>
+<tr><th id="32">32</th><td><u>#include <a href="../libavutil/intreadwrite.h.html">"libavutil/intreadwrite.h"</a></u></td></tr>
+<tr><th id="33">33</th><td></td></tr>
+<tr><th id="34">34</th><td><u>#include <a href="avcodec.h.html">"avcodec.h"</a></u></td></tr>
+<tr><th id="35">35</th><td><u>#include <a href="elsdec.h.html">"elsdec.h"</a></u></td></tr>
+<tr><th id="36">36</th><td></td></tr>
+<tr><th id="37">37</th><td><i>/* ELS coder constants and structures. */</i></td></tr>
+<tr><th id="38">38</th><td><u>#define <dfn class="macro" id="_M/ELS_JOTS_PER_BYTE" data-ref="_M/ELS_JOTS_PER_BYTE">ELS_JOTS_PER_BYTE</dfn>   36</u></td></tr>
+<tr><th id="39">39</th><td><u>#define <dfn class="macro" id="_M/ELS_MAX" data-ref="_M/ELS_MAX">ELS_MAX</dfn>             (1 &lt;&lt; 24)</u></td></tr>
+<tr><th id="40">40</th><td><u>#define <dfn class="macro" id="_M/RUNG_SPACE" data-ref="_M/RUNG_SPACE">RUNG_SPACE</dfn>          (64 * sizeof(<a class="typedef" href="elsdec.h.html#ElsRungNode" title='ElsRungNode' data-type='struct ElsRungNode' data-ref="ElsRungNode">ElsRungNode</a>))</u></td></tr>
+<tr><th id="41">41</th><td></td></tr>
+<tr><th id="42">42</th><td><i>/* ELS coder tables. */</i></td></tr>
+<tr><th id="43">43</th><td><em>static</em> <em>const</em> <b>struct</b> <dfn class="type def" id="Ladder" title='Ladder' data-ref="Ladder"><a class="type" href="#Ladder" title='Ladder' data-ref="Ladder">Ladder</a></dfn> {</td></tr>
+<tr><th id="44">44</th><td>    <a class="typedef" href="../../include/stdint.h.html#int8_t" title='int8_t' data-type='signed char' data-ref="int8_t">int8_t</a>  <dfn class="tu decl" id="Ladder::AMps" title='Ladder::AMps' data-type='int8_t' data-ref="Ladder::AMps">AMps</dfn>;</td></tr>
+<tr><th id="45">45</th><td>    <a class="typedef" href="../../include/stdint.h.html#int8_t" title='int8_t' data-type='signed char' data-ref="int8_t">int8_t</a>  <dfn class="tu decl" id="Ladder::ALps" title='Ladder::ALps' data-type='int8_t' data-ref="Ladder::ALps">ALps</dfn>;</td></tr>
+<tr><th id="46">46</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="tu decl" id="Ladder::next0" title='Ladder::next0' data-type='uint8_t' data-ref="Ladder::next0">next0</dfn>;</td></tr>
+<tr><th id="47">47</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="tu decl" id="Ladder::next1" title='Ladder::next1' data-type='uint8_t' data-ref="Ladder::next1">next1</dfn>;</td></tr>
+<tr><th id="48">48</th><td>} <dfn class="tu decl def" id="Ladder" title='Ladder' data-type='const struct Ladder [174]' data-ref="Ladder">Ladder</dfn>[<var>174</var>] = {</td></tr>
+<tr><th id="49">49</th><td>    { -<var>6</var>,   -<var>5</var>,   <var>2</var>,   <var>1</var> },</td></tr>
+<tr><th id="50">50</th><td>    { -<var>2</var>,  -<var>12</var>,   <var>3</var>,   <var>6</var> },</td></tr>
+<tr><th id="51">51</th><td>    { -<var>2</var>,  -<var>12</var>,   <var>4</var>,   <var>6</var> },</td></tr>
+<tr><th id="52">52</th><td>    { -<var>1</var>,  -<var>16</var>,   <var>7</var>,   <var>5</var> },</td></tr>
+<tr><th id="53">53</th><td>    { -<var>1</var>,  -<var>16</var>,   <var>8</var>,  <var>10</var> },</td></tr>
+<tr><th id="54">54</th><td>    { -<var>5</var>,   -<var>6</var>,  <var>11</var>,   <var>9</var> },</td></tr>
+<tr><th id="55">55</th><td>    { -<var>6</var>,   -<var>5</var>,  <var>10</var>,   <var>5</var> },</td></tr>
+<tr><th id="56">56</th><td>    { -<var>1</var>,  -<var>18</var>,  <var>13</var>,  <var>11</var> },</td></tr>
+<tr><th id="57">57</th><td>    { -<var>1</var>,  -<var>18</var>,  <var>12</var>,  <var>14</var> },</td></tr>
+<tr><th id="58">58</th><td>    { -<var>6</var>,   -<var>5</var>,  <var>15</var>,  <var>18</var> },</td></tr>
+<tr><th id="59">59</th><td>    { -<var>5</var>,   -<var>6</var>,  <var>14</var>,   <var>9</var> },</td></tr>
+<tr><th id="60">60</th><td>    { -<var>3</var>,   -<var>8</var>,  <var>17</var>,  <var>15</var> },</td></tr>
+<tr><th id="61">61</th><td>    { -<var>1</var>,  -<var>20</var>,  <var>20</var>,  <var>16</var> },</td></tr>
+<tr><th id="62">62</th><td>    { -<var>1</var>,  -<var>20</var>,  <var>23</var>,  <var>17</var> },</td></tr>
+<tr><th id="63">63</th><td>    { -<var>3</var>,   -<var>8</var>,  <var>16</var>,  <var>18</var> },</td></tr>
+<tr><th id="64">64</th><td>    { -<var>5</var>,   -<var>6</var>,  <var>19</var>,  <var>26</var> },</td></tr>
+<tr><th id="65">65</th><td>    { -<var>3</var>,   -<var>9</var>,  <var>22</var>,  <var>24</var> },</td></tr>
+<tr><th id="66">66</th><td>    { -<var>3</var>,   -<var>9</var>,  <var>21</var>,  <var>19</var> },</td></tr>
+<tr><th id="67">67</th><td>    { -<var>5</var>,   -<var>6</var>,  <var>24</var>,  <var>26</var> },</td></tr>
+<tr><th id="68">68</th><td>    { -<var>4</var>,   -<var>7</var>,  <var>27</var>,  <var>25</var> },</td></tr>
+<tr><th id="69">69</th><td>    { -<var>1</var>,  -<var>22</var>,  <var>34</var>,  <var>28</var> },</td></tr>
+<tr><th id="70">70</th><td>    { -<var>2</var>,  -<var>11</var>,  <var>29</var>,  <var>27</var> },</td></tr>
+<tr><th id="71">71</th><td>    { -<var>2</var>,  -<var>11</var>,  <var>28</var>,  <var>30</var> },</td></tr>
+<tr><th id="72">72</th><td>    { -<var>1</var>,  -<var>22</var>,  <var>39</var>,  <var>29</var> },</td></tr>
+<tr><th id="73">73</th><td>    { -<var>4</var>,   -<var>7</var>,  <var>30</var>,  <var>32</var> },</td></tr>
+<tr><th id="74">74</th><td>    { -<var>6</var>,   -<var>5</var>,  <var>33</var>,  <var>31</var> },</td></tr>
+<tr><th id="75">75</th><td>    { -<var>6</var>,   -<var>5</var>,  <var>32</var>,  <var>25</var> },</td></tr>
+<tr><th id="76">76</th><td>    { -<var>3</var>,   -<var>8</var>,  <var>35</var>,  <var>33</var> },</td></tr>
+<tr><th id="77">77</th><td>    { -<var>2</var>,  -<var>12</var>,  <var>36</var>,  <var>38</var> },</td></tr>
+<tr><th id="78">78</th><td>    { -<var>2</var>,  -<var>12</var>,  <var>37</var>,  <var>35</var> },</td></tr>
+<tr><th id="79">79</th><td>    { -<var>3</var>,   -<var>8</var>,  <var>38</var>,  <var>40</var> },</td></tr>
+<tr><th id="80">80</th><td>    { -<var>6</var>,   -<var>5</var>,  <var>41</var>,  <var>48</var> },</td></tr>
+<tr><th id="81">81</th><td>    { -<var>6</var>,   -<var>5</var>,  <var>40</var>,  <var>31</var> },</td></tr>
+<tr><th id="82">82</th><td>    { -<var>5</var>,   -<var>6</var>,  <var>43</var>,  <var>41</var> },</td></tr>
+<tr><th id="83">83</th><td>    { -<var>1</var>,  -<var>24</var>,  <var>94</var>,  <var>42</var> },</td></tr>
+<tr><th id="84">84</th><td>    { -<var>3</var>,   -<var>8</var>,  <var>45</var>,  <var>43</var> },</td></tr>
+<tr><th id="85">85</th><td>    { -<var>2</var>,  -<var>12</var>,  <var>42</var>,  <var>44</var> },</td></tr>
+<tr><th id="86">86</th><td>    { -<var>2</var>,  -<var>12</var>,  <var>47</var>,  <var>45</var> },</td></tr>
+<tr><th id="87">87</th><td>    { -<var>3</var>,   -<var>8</var>,  <var>44</var>,  <var>46</var> },</td></tr>
+<tr><th id="88">88</th><td>    { -<var>1</var>,  -<var>24</var>, <var>125</var>,  <var>47</var> },</td></tr>
+<tr><th id="89">89</th><td>    { -<var>5</var>,   -<var>6</var>,  <var>46</var>,  <var>48</var> },</td></tr>
+<tr><th id="90">90</th><td>    { -<var>6</var>,   -<var>5</var>,  <var>49</var>,  <var>49</var> },</td></tr>
+<tr><th id="91">91</th><td>    { -<var>2</var>,  -<var>13</var>, <var>152</var>, <var>164</var> },</td></tr>
+<tr><th id="92">92</th><td>    { -<var>4</var>,   -<var>7</var>,  <var>51</var>,  <var>49</var> },</td></tr>
+<tr><th id="93">93</th><td>    { -<var>3</var>,   -<var>9</var>, <var>164</var>, <var>168</var> },</td></tr>
+<tr><th id="94">94</th><td>    { -<var>3</var>,   -<var>9</var>,  <var>55</var>,  <var>51</var> },</td></tr>
+<tr><th id="95">95</th><td>    { -<var>4</var>,   -<var>7</var>, <var>168</var>, <var>170</var> },</td></tr>
+<tr><th id="96">96</th><td>    { -<var>2</var>,  -<var>13</var>,  <var>67</var>,  <var>55</var> },</td></tr>
+<tr><th id="97">97</th><td>    { -<var>6</var>,   -<var>5</var>, <var>170</var>,  <var>49</var> },</td></tr>
+<tr><th id="98">98</th><td>    { -<var>6</var>,   -<var>5</var>,  <var>51</var>, <var>170</var> },</td></tr>
+<tr><th id="99">99</th><td>    { -<var>1</var>,  -<var>72</var>,  <var>50</var>,  <var>74</var> },</td></tr>
+<tr><th id="100">100</th><td>    { -<var>4</var>,   -<var>7</var>,  <var>53</var>,  <var>49</var> },</td></tr>
+<tr><th id="101">101</th><td>    { -<var>1</var>,  -<var>61</var>,  <var>50</var>,  <var>74</var> },</td></tr>
+<tr><th id="102">102</th><td>    { -<var>3</var>,   -<var>8</var>,  <var>55</var>,  <var>49</var> },</td></tr>
+<tr><th id="103">103</th><td>    { -<var>1</var>,  -<var>51</var>,  <var>52</var>,  <var>76</var> },</td></tr>
+<tr><th id="104">104</th><td>    { -<var>3</var>,   -<var>9</var>,  <var>57</var>,  <var>51</var> },</td></tr>
+<tr><th id="105">105</th><td>    { -<var>1</var>,  -<var>46</var>,  <var>54</var>,  <var>76</var> },</td></tr>
+<tr><th id="106">106</th><td>    { -<var>2</var>,  -<var>10</var>,  <var>59</var>,  <var>53</var> },</td></tr>
+<tr><th id="107">107</th><td>    { -<var>1</var>,  -<var>43</var>,  <var>56</var>,  <var>78</var> },</td></tr>
+<tr><th id="108">108</th><td>    { -<var>2</var>,  -<var>11</var>,  <var>61</var>,  <var>53</var> },</td></tr>
+<tr><th id="109">109</th><td>    { -<var>1</var>,  -<var>41</var>,  <var>58</var>,  <var>80</var> },</td></tr>
+<tr><th id="110">110</th><td>    { -<var>2</var>,  -<var>12</var>,  <var>63</var>,  <var>55</var> },</td></tr>
+<tr><th id="111">111</th><td>    { -<var>1</var>,  -<var>39</var>,  <var>60</var>,  <var>82</var> },</td></tr>
+<tr><th id="112">112</th><td>    { -<var>2</var>,  -<var>12</var>,  <var>65</var>,  <var>55</var> },</td></tr>
+<tr><th id="113">113</th><td>    { -<var>1</var>,  -<var>37</var>,  <var>62</var>,  <var>84</var> },</td></tr>
+<tr><th id="114">114</th><td>    { -<var>2</var>,  -<var>13</var>,  <var>67</var>,  <var>57</var> },</td></tr>
+<tr><th id="115">115</th><td>    { -<var>1</var>,  -<var>36</var>,  <var>64</var>,  <var>86</var> },</td></tr>
+<tr><th id="116">116</th><td>    { -<var>1</var>,  -<var>14</var>,  <var>69</var>,  <var>59</var> },</td></tr>
+<tr><th id="117">117</th><td>    { -<var>1</var>,  -<var>35</var>,  <var>66</var>,  <var>88</var> },</td></tr>
+<tr><th id="118">118</th><td>    { -<var>1</var>,  -<var>14</var>,  <var>71</var>,  <var>59</var> },</td></tr>
+<tr><th id="119">119</th><td>    { -<var>1</var>,  -<var>34</var>,  <var>68</var>,  <var>90</var> },</td></tr>
+<tr><th id="120">120</th><td>    { -<var>1</var>,  -<var>15</var>,  <var>73</var>,  <var>61</var> },</td></tr>
+<tr><th id="121">121</th><td>    { -<var>1</var>,  -<var>33</var>,  <var>70</var>,  <var>92</var> },</td></tr>
+<tr><th id="122">122</th><td>    { -<var>1</var>,  -<var>15</var>,  <var>75</var>,  <var>61</var> },</td></tr>
+<tr><th id="123">123</th><td>    { -<var>1</var>,  -<var>32</var>,  <var>72</var>,  <var>94</var> },</td></tr>
+<tr><th id="124">124</th><td>    { -<var>1</var>,  -<var>15</var>,  <var>77</var>,  <var>63</var> },</td></tr>
+<tr><th id="125">125</th><td>    { -<var>1</var>,  -<var>31</var>,  <var>74</var>,  <var>96</var> },</td></tr>
+<tr><th id="126">126</th><td>    { -<var>1</var>,  -<var>16</var>,  <var>79</var>,  <var>65</var> },</td></tr>
+<tr><th id="127">127</th><td>    { -<var>1</var>,  -<var>31</var>,  <var>76</var>,  <var>98</var> },</td></tr>
+<tr><th id="128">128</th><td>    { -<var>1</var>,  -<var>16</var>,  <var>81</var>,  <var>67</var> },</td></tr>
+<tr><th id="129">129</th><td>    { -<var>1</var>,  -<var>30</var>,  <var>78</var>, <var>100</var> },</td></tr>
+<tr><th id="130">130</th><td>    { -<var>1</var>,  -<var>17</var>,  <var>83</var>,  <var>67</var> },</td></tr>
+<tr><th id="131">131</th><td>    { -<var>1</var>,  -<var>29</var>,  <var>80</var>, <var>102</var> },</td></tr>
+<tr><th id="132">132</th><td>    { -<var>1</var>,  -<var>17</var>,  <var>85</var>,  <var>69</var> },</td></tr>
+<tr><th id="133">133</th><td>    { -<var>1</var>,  -<var>29</var>,  <var>82</var>, <var>104</var> },</td></tr>
+<tr><th id="134">134</th><td>    { -<var>1</var>,  -<var>18</var>,  <var>87</var>,  <var>71</var> },</td></tr>
+<tr><th id="135">135</th><td>    { -<var>1</var>,  -<var>28</var>,  <var>84</var>, <var>104</var> },</td></tr>
+<tr><th id="136">136</th><td>    { -<var>1</var>,  -<var>18</var>,  <var>89</var>,  <var>73</var> },</td></tr>
+<tr><th id="137">137</th><td>    { -<var>1</var>,  -<var>28</var>,  <var>86</var>, <var>108</var> },</td></tr>
+<tr><th id="138">138</th><td>    { -<var>1</var>,  -<var>18</var>,  <var>91</var>,  <var>73</var> },</td></tr>
+<tr><th id="139">139</th><td>    { -<var>1</var>,  -<var>27</var>,  <var>88</var>, <var>108</var> },</td></tr>
+<tr><th id="140">140</th><td>    { -<var>1</var>,  -<var>19</var>,  <var>93</var>,  <var>75</var> },</td></tr>
+<tr><th id="141">141</th><td>    { -<var>1</var>,  -<var>27</var>,  <var>90</var>, <var>112</var> },</td></tr>
+<tr><th id="142">142</th><td>    { -<var>1</var>,  -<var>19</var>,  <var>95</var>,  <var>77</var> },</td></tr>
+<tr><th id="143">143</th><td>    { -<var>1</var>,  -<var>26</var>,  <var>92</var>, <var>112</var> },</td></tr>
+<tr><th id="144">144</th><td>    { -<var>1</var>,  -<var>20</var>,  <var>97</var>,  <var>79</var> },</td></tr>
+<tr><th id="145">145</th><td>    { -<var>1</var>,  -<var>26</var>,  <var>94</var>, <var>114</var> },</td></tr>
+<tr><th id="146">146</th><td>    { -<var>1</var>,  -<var>20</var>,  <var>99</var>,  <var>81</var> },</td></tr>
+<tr><th id="147">147</th><td>    { -<var>1</var>,  -<var>25</var>,  <var>96</var>, <var>116</var> },</td></tr>
+<tr><th id="148">148</th><td>    { -<var>1</var>,  -<var>20</var>, <var>101</var>,  <var>83</var> },</td></tr>
+<tr><th id="149">149</th><td>    { -<var>1</var>,  -<var>25</var>,  <var>98</var>, <var>118</var> },</td></tr>
+<tr><th id="150">150</th><td>    { -<var>1</var>,  -<var>21</var>, <var>103</var>,  <var>83</var> },</td></tr>
+<tr><th id="151">151</th><td>    { -<var>1</var>,  -<var>24</var>, <var>100</var>, <var>120</var> },</td></tr>
+<tr><th id="152">152</th><td>    { -<var>1</var>,  -<var>21</var>, <var>105</var>,  <var>85</var> },</td></tr>
+<tr><th id="153">153</th><td>    { -<var>1</var>,  -<var>24</var>, <var>102</var>, <var>122</var> },</td></tr>
+<tr><th id="154">154</th><td>    { -<var>1</var>,  -<var>22</var>, <var>107</var>,  <var>87</var> },</td></tr>
+<tr><th id="155">155</th><td>    { -<var>1</var>,  -<var>23</var>, <var>104</var>, <var>124</var> },</td></tr>
+<tr><th id="156">156</th><td>    { -<var>1</var>,  -<var>22</var>, <var>109</var>,  <var>89</var> },</td></tr>
+<tr><th id="157">157</th><td>    { -<var>1</var>,  -<var>23</var>, <var>106</var>, <var>126</var> },</td></tr>
+<tr><th id="158">158</th><td>    { -<var>1</var>,  -<var>22</var>, <var>111</var>,  <var>91</var> },</td></tr>
+<tr><th id="159">159</th><td>    { -<var>1</var>,  -<var>22</var>, <var>108</var>, <var>128</var> },</td></tr>
+<tr><th id="160">160</th><td>    { -<var>1</var>,  -<var>23</var>, <var>113</var>,  <var>93</var> },</td></tr>
+<tr><th id="161">161</th><td>    { -<var>1</var>,  -<var>22</var>, <var>110</var>, <var>130</var> },</td></tr>
+<tr><th id="162">162</th><td>    { -<var>1</var>,  -<var>23</var>, <var>115</var>,  <var>95</var> },</td></tr>
+<tr><th id="163">163</th><td>    { -<var>1</var>,  -<var>22</var>, <var>112</var>, <var>132</var> },</td></tr>
+<tr><th id="164">164</th><td>    { -<var>1</var>,  -<var>24</var>, <var>117</var>,  <var>97</var> },</td></tr>
+<tr><th id="165">165</th><td>    { -<var>1</var>,  -<var>21</var>, <var>114</var>, <var>134</var> },</td></tr>
+<tr><th id="166">166</th><td>    { -<var>1</var>,  -<var>24</var>, <var>119</var>,  <var>99</var> },</td></tr>
+<tr><th id="167">167</th><td>    { -<var>1</var>,  -<var>21</var>, <var>116</var>, <var>136</var> },</td></tr>
+<tr><th id="168">168</th><td>    { -<var>1</var>,  -<var>25</var>, <var>121</var>, <var>101</var> },</td></tr>
+<tr><th id="169">169</th><td>    { -<var>1</var>,  -<var>20</var>, <var>118</var>, <var>136</var> },</td></tr>
+<tr><th id="170">170</th><td>    { -<var>1</var>,  -<var>25</var>, <var>123</var>, <var>103</var> },</td></tr>
+<tr><th id="171">171</th><td>    { -<var>1</var>,  -<var>20</var>, <var>120</var>, <var>138</var> },</td></tr>
+<tr><th id="172">172</th><td>    { -<var>1</var>,  -<var>26</var>, <var>125</var>, <var>105</var> },</td></tr>
+<tr><th id="173">173</th><td>    { -<var>1</var>,  -<var>20</var>, <var>122</var>, <var>140</var> },</td></tr>
+<tr><th id="174">174</th><td>    { -<var>1</var>,  -<var>26</var>, <var>127</var>, <var>107</var> },</td></tr>
+<tr><th id="175">175</th><td>    { -<var>1</var>,  -<var>19</var>, <var>124</var>, <var>142</var> },</td></tr>
+<tr><th id="176">176</th><td>    { -<var>1</var>,  -<var>27</var>, <var>129</var>, <var>107</var> },</td></tr>
+<tr><th id="177">177</th><td>    { -<var>1</var>,  -<var>19</var>, <var>126</var>, <var>144</var> },</td></tr>
+<tr><th id="178">178</th><td>    { -<var>1</var>,  -<var>27</var>, <var>131</var>, <var>111</var> },</td></tr>
+<tr><th id="179">179</th><td>    { -<var>1</var>,  -<var>18</var>, <var>128</var>, <var>146</var> },</td></tr>
+<tr><th id="180">180</th><td>    { -<var>1</var>,  -<var>28</var>, <var>133</var>, <var>111</var> },</td></tr>
+<tr><th id="181">181</th><td>    { -<var>1</var>,  -<var>18</var>, <var>130</var>, <var>146</var> },</td></tr>
+<tr><th id="182">182</th><td>    { -<var>1</var>,  -<var>28</var>, <var>135</var>, <var>115</var> },</td></tr>
+<tr><th id="183">183</th><td>    { -<var>1</var>,  -<var>18</var>, <var>132</var>, <var>148</var> },</td></tr>
+<tr><th id="184">184</th><td>    { -<var>1</var>,  -<var>29</var>, <var>137</var>, <var>115</var> },</td></tr>
+<tr><th id="185">185</th><td>    { -<var>1</var>,  -<var>17</var>, <var>134</var>, <var>150</var> },</td></tr>
+<tr><th id="186">186</th><td>    { -<var>1</var>,  -<var>29</var>, <var>139</var>, <var>117</var> },</td></tr>
+<tr><th id="187">187</th><td>    { -<var>1</var>,  -<var>17</var>, <var>136</var>, <var>152</var> },</td></tr>
+<tr><th id="188">188</th><td>    { -<var>1</var>,  -<var>30</var>, <var>141</var>, <var>119</var> },</td></tr>
+<tr><th id="189">189</th><td>    { -<var>1</var>,  -<var>16</var>, <var>138</var>, <var>152</var> },</td></tr>
+<tr><th id="190">190</th><td>    { -<var>1</var>,  -<var>31</var>, <var>143</var>, <var>121</var> },</td></tr>
+<tr><th id="191">191</th><td>    { -<var>1</var>,  -<var>16</var>, <var>140</var>, <var>154</var> },</td></tr>
+<tr><th id="192">192</th><td>    { -<var>1</var>,  -<var>31</var>, <var>145</var>, <var>123</var> },</td></tr>
+<tr><th id="193">193</th><td>    { -<var>1</var>,  -<var>15</var>, <var>142</var>, <var>156</var> },</td></tr>
+<tr><th id="194">194</th><td>    { -<var>1</var>,  -<var>32</var>, <var>147</var>, <var>125</var> },</td></tr>
+<tr><th id="195">195</th><td>    { -<var>1</var>,  -<var>15</var>, <var>144</var>, <var>158</var> },</td></tr>
+<tr><th id="196">196</th><td>    { -<var>1</var>,  -<var>33</var>, <var>149</var>, <var>127</var> },</td></tr>
+<tr><th id="197">197</th><td>    { -<var>1</var>,  -<var>15</var>, <var>146</var>, <var>158</var> },</td></tr>
+<tr><th id="198">198</th><td>    { -<var>1</var>,  -<var>34</var>, <var>151</var>, <var>129</var> },</td></tr>
+<tr><th id="199">199</th><td>    { -<var>1</var>,  -<var>14</var>, <var>148</var>, <var>160</var> },</td></tr>
+<tr><th id="200">200</th><td>    { -<var>1</var>,  -<var>35</var>, <var>153</var>, <var>131</var> },</td></tr>
+<tr><th id="201">201</th><td>    { -<var>1</var>,  -<var>14</var>, <var>150</var>, <var>160</var> },</td></tr>
+<tr><th id="202">202</th><td>    { -<var>1</var>,  -<var>36</var>, <var>155</var>, <var>133</var> },</td></tr>
+<tr><th id="203">203</th><td>    { -<var>2</var>,  -<var>13</var>, <var>152</var>, <var>162</var> },</td></tr>
+<tr><th id="204">204</th><td>    { -<var>1</var>,  -<var>37</var>, <var>157</var>, <var>135</var> },</td></tr>
+<tr><th id="205">205</th><td>    { -<var>2</var>,  -<var>12</var>, <var>154</var>, <var>164</var> },</td></tr>
+<tr><th id="206">206</th><td>    { -<var>1</var>,  -<var>39</var>, <var>159</var>, <var>137</var> },</td></tr>
+<tr><th id="207">207</th><td>    { -<var>2</var>,  -<var>12</var>, <var>156</var>, <var>164</var> },</td></tr>
+<tr><th id="208">208</th><td>    { -<var>1</var>,  -<var>41</var>, <var>161</var>, <var>139</var> },</td></tr>
+<tr><th id="209">209</th><td>    { -<var>2</var>,  -<var>11</var>, <var>158</var>, <var>166</var> },</td></tr>
+<tr><th id="210">210</th><td>    { -<var>1</var>,  -<var>43</var>, <var>163</var>, <var>141</var> },</td></tr>
+<tr><th id="211">211</th><td>    { -<var>2</var>,  -<var>10</var>, <var>160</var>, <var>166</var> },</td></tr>
+<tr><th id="212">212</th><td>    { -<var>1</var>,  -<var>46</var>, <var>165</var>, <var>143</var> },</td></tr>
+<tr><th id="213">213</th><td>    { -<var>3</var>,   -<var>9</var>, <var>162</var>, <var>168</var> },</td></tr>
+<tr><th id="214">214</th><td>    { -<var>1</var>,  -<var>51</var>, <var>167</var>, <var>143</var> },</td></tr>
+<tr><th id="215">215</th><td>    { -<var>3</var>,   -<var>8</var>, <var>164</var>, <var>170</var> },</td></tr>
+<tr><th id="216">216</th><td>    { -<var>1</var>,  -<var>61</var>, <var>169</var>, <var>145</var> },</td></tr>
+<tr><th id="217">217</th><td>    { -<var>4</var>,   -<var>7</var>, <var>166</var>, <var>170</var> },</td></tr>
+<tr><th id="218">218</th><td>    { -<var>1</var>,  -<var>72</var>, <var>169</var>, <var>145</var> },</td></tr>
+<tr><th id="219">219</th><td>    { -<var>6</var>,   -<var>5</var>, <var>168</var>,  <var>49</var> },</td></tr>
+<tr><th id="220">220</th><td>    {  <var>0</var>, -<var>108</var>, <var>171</var>, <var>171</var> },</td></tr>
+<tr><th id="221">221</th><td>    {  <var>0</var>, -<var>108</var>, <var>172</var>, <var>172</var> },</td></tr>
+<tr><th id="222">222</th><td>    { -<var>6</var>,   -<var>5</var>, <var>173</var>, <var>173</var> },</td></tr>
+<tr><th id="223">223</th><td>};</td></tr>
+<tr><th id="224">224</th><td></td></tr>
+<tr><th id="225">225</th><td><em>static</em> <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a> <dfn class="tu decl def" id="els_exp_tab" title='els_exp_tab' data-type='const uint32_t [145]' data-ref="els_exp_tab">els_exp_tab</dfn>[<a class="macro" href="#38" title="36" data-ref="_M/ELS_JOTS_PER_BYTE">ELS_JOTS_PER_BYTE</a> * <var>4</var> + <var>1</var>] = {</td></tr>
+<tr><th id="226">226</th><td>           <var>0</var>,        <var>0</var>,       <var>0</var>,       <var>0</var>,       <var>0</var>,       <var>0</var>,         <var>0</var>,        <var>0</var>,</td></tr>
+<tr><th id="227">227</th><td>           <var>0</var>,        <var>0</var>,       <var>0</var>,       <var>0</var>,       <var>0</var>,       <var>0</var>,         <var>0</var>,        <var>0</var>,</td></tr>
+<tr><th id="228">228</th><td>           <var>0</var>,        <var>0</var>,       <var>0</var>,       <var>0</var>,       <var>0</var>,       <var>0</var>,         <var>0</var>,        <var>0</var>,</td></tr>
+<tr><th id="229">229</th><td>           <var>0</var>,        <var>0</var>,       <var>0</var>,       <var>0</var>,       <var>0</var>,       <var>0</var>,         <var>0</var>,        <var>0</var>,</td></tr>
+<tr><th id="230">230</th><td>           <var>0</var>,        <var>0</var>,       <var>0</var>,       <var>0</var>,       <var>1</var>,       <var>1</var>,         <var>1</var>,        <var>1</var>,</td></tr>
+<tr><th id="231">231</th><td>           <var>1</var>,        <var>2</var>,       <var>2</var>,       <var>2</var>,       <var>3</var>,       <var>4</var>,         <var>4</var>,        <var>5</var>,</td></tr>
+<tr><th id="232">232</th><td>           <var>6</var>,        <var>7</var>,       <var>8</var>,      <var>10</var>,      <var>11</var>,      <var>13</var>,        <var>16</var>,       <var>18</var>,</td></tr>
+<tr><th id="233">233</th><td>          <var>21</var>,       <var>25</var>,      <var>29</var>,      <var>34</var>,      <var>40</var>,      <var>47</var>,        <var>54</var>,       <var>64</var>,</td></tr>
+<tr><th id="234">234</th><td>          <var>74</var>,       <var>87</var>,     <var>101</var>,     <var>118</var>,     <var>138</var>,      <var>161</var>,      <var>188</var>,      <var>219</var>,</td></tr>
+<tr><th id="235">235</th><td>         <var>256</var>,      <var>298</var>,     <var>348</var>,     <var>406</var>,     <var>474</var>,      <var>552</var>,      <var>645</var>,      <var>752</var>,</td></tr>
+<tr><th id="236">236</th><td>         <var>877</var>,     <var>1024</var>,    <var>1194</var>,    <var>1393</var>,    <var>1625</var>,     <var>1896</var>,     <var>2211</var>,     <var>2580</var>,</td></tr>
+<tr><th id="237">237</th><td>        <var>3010</var>,     <var>3511</var>,    <var>4096</var>,    <var>4778</var>,    <var>5573</var>,     <var>6501</var>,     <var>7584</var>,     <var>8847</var>,</td></tr>
+<tr><th id="238">238</th><td>       <var>10321</var>,    <var>12040</var>,   <var>14045</var>,   <var>16384</var>,   <var>19112</var>,    <var>22295</var>,    <var>26007</var>,    <var>30339</var>,</td></tr>
+<tr><th id="239">239</th><td>       <var>35391</var>,    <var>41285</var>,   <var>48160</var>,   <var>56180</var>,   <var>65536</var>,    <var>76288</var>,    <var>89088</var>,   <var>103936</var>,</td></tr>
+<tr><th id="240">240</th><td>      <var>121344</var>,   <var>141312</var>,  <var>165120</var>,  <var>192512</var>,  <var>224512</var>,   <var>262144</var>,   <var>305664</var>,   <var>356608</var>,</td></tr>
+<tr><th id="241">241</th><td>      <var>416000</var>,   <var>485376</var>,  <var>566016</var>,  <var>660480</var>,  <var>770560</var>,   <var>898816</var>,  <var>1048576</var>,  <var>1223168</var>,</td></tr>
+<tr><th id="242">242</th><td>     <var>1426688</var>,  <var>1664256</var>, <var>1941504</var>, <var>2264832</var>, <var>2642176</var>,  <var>3082240</var>,  <var>3595520</var>,  <var>4194304</var>,</td></tr>
+<tr><th id="243">243</th><td>     <var>4892672</var>,  <var>5707520</var>, <var>6657792</var>, <var>7766784</var>, <var>9060096</var>, <var>10568960</var>, <var>12328960</var>, <var>14382080</var>,</td></tr>
+<tr><th id="244">244</th><td>    <var>16777216</var>,</td></tr>
+<tr><th id="245">245</th><td>};</td></tr>
+<tr><th id="246">246</th><td></td></tr>
+<tr><th id="247">247</th><td><em>void</em> <dfn class="decl def" id="ff_els_decoder_init" title='ff_els_decoder_init' data-ref="ff_els_decoder_init">ff_els_decoder_init</dfn>(<a class="typedef" href="elsdec.h.html#ElsDecCtx" title='ElsDecCtx' data-type='struct ElsDecCtx' data-ref="ElsDecCtx">ElsDecCtx</a> *<dfn class="local col9 decl" id="9ctx" title='ctx' data-type='ElsDecCtx *' data-ref="9ctx">ctx</dfn>, <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col0 decl" id="10in" title='in' data-type='const uint8_t *' data-ref="10in">in</dfn>, <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="local col1 decl" id="11data_size" title='data_size' data-type='size_t' data-ref="11data_size">data_size</dfn>)</td></tr>
+<tr><th id="248">248</th><td>{</td></tr>
+<tr><th id="249">249</th><td>    <em>int</em> <dfn class="local col2 decl" id="12nbytes" title='nbytes' data-type='int' data-ref="12nbytes">nbytes</dfn>;</td></tr>
+<tr><th id="250">250</th><td></td></tr>
+<tr><th id="251">251</th><td>    <i>/* consume up to 3 bytes from the input data */</i></td></tr>
+<tr><th id="252">252</th><td>    <b>if</b> (<a class="local col1 ref" href="#11data_size" title='data_size' data-ref="11data_size">data_size</a> &gt;= <var>3</var>) {</td></tr>
+<tr><th id="253">253</th><td>        <a class="local col9 ref" href="#9ctx" title='ctx' data-ref="9ctx">ctx</a>-&gt;<a class="ref" href="elsdec.h.html#ElsDecCtx::x" title='ElsDecCtx::x' data-ref="ElsDecCtx::x">x</a> = <a class="macro" href="../libavutil/intreadwrite.h.html#444" title="((((const uint8_t*)(in))[0] &lt;&lt; 16) | (((const uint8_t*)(in))[1] &lt;&lt; 8) | ((const uint8_t*)(in))[2])" data-ref="_M/AV_RB24">AV_RB24</a>(<a class="local col0 ref" href="#10in" title='in' data-ref="10in">in</a>);</td></tr>
+<tr><th id="254">254</th><td>        <a class="local col2 ref" href="#12nbytes" title='nbytes' data-ref="12nbytes">nbytes</a> = <var>3</var>;</td></tr>
+<tr><th id="255">255</th><td>    } <b>else</b> <b>if</b> (<a class="local col1 ref" href="#11data_size" title='data_size' data-ref="11data_size">data_size</a> == <var>2</var>) {</td></tr>
+<tr><th id="256">256</th><td>        <a class="local col9 ref" href="#9ctx" title='ctx' data-ref="9ctx">ctx</a>-&gt;<a class="ref" href="elsdec.h.html#ElsDecCtx::x" title='ElsDecCtx::x' data-ref="ElsDecCtx::x">x</a> = <a class="macro" href="../libavutil/intreadwrite.h.html#402" title="av_bswap16((((const union unaligned_16 *) (in))-&gt;l))" data-ref="_M/AV_RB16">AV_RB16</a>(<a class="local col0 ref" href="#10in" title='in' data-ref="10in">in</a>);</td></tr>
+<tr><th id="257">257</th><td>        <a class="local col2 ref" href="#12nbytes" title='nbytes' data-ref="12nbytes">nbytes</a> = <var>2</var>;</td></tr>
+<tr><th id="258">258</th><td>    } <b>else</b> {</td></tr>
+<tr><th id="259">259</th><td>        <a class="local col9 ref" href="#9ctx" title='ctx' data-ref="9ctx">ctx</a>-&gt;<a class="ref" href="elsdec.h.html#ElsDecCtx::x" title='ElsDecCtx::x' data-ref="ElsDecCtx::x">x</a> = *<a class="local col0 ref" href="#10in" title='in' data-ref="10in">in</a>;</td></tr>
+<tr><th id="260">260</th><td>        <a class="local col2 ref" href="#12nbytes" title='nbytes' data-ref="12nbytes">nbytes</a> = <var>1</var>;</td></tr>
+<tr><th id="261">261</th><td>    }</td></tr>
+<tr><th id="262">262</th><td></td></tr>
+<tr><th id="263">263</th><td>    <a class="local col9 ref" href="#9ctx" title='ctx' data-ref="9ctx">ctx</a>-&gt;<a class="ref" href="elsdec.h.html#ElsDecCtx::in_buf" title='ElsDecCtx::in_buf' data-ref="ElsDecCtx::in_buf">in_buf</a>    = <a class="local col0 ref" href="#10in" title='in' data-ref="10in">in</a> + <a class="local col2 ref" href="#12nbytes" title='nbytes' data-ref="12nbytes">nbytes</a>;</td></tr>
+<tr><th id="264">264</th><td>    <a class="local col9 ref" href="#9ctx" title='ctx' data-ref="9ctx">ctx</a>-&gt;<a class="ref" href="elsdec.h.html#ElsDecCtx::data_size" title='ElsDecCtx::data_size' data-ref="ElsDecCtx::data_size">data_size</a> = <a class="local col1 ref" href="#11data_size" title='data_size' data-ref="11data_size">data_size</a> - <a class="local col2 ref" href="#12nbytes" title='nbytes' data-ref="12nbytes">nbytes</a>;</td></tr>
+<tr><th id="265">265</th><td>    <a class="local col9 ref" href="#9ctx" title='ctx' data-ref="9ctx">ctx</a>-&gt;<a class="ref" href="elsdec.h.html#ElsDecCtx::err" title='ElsDecCtx::err' data-ref="ElsDecCtx::err">err</a>       = <var>0</var>;</td></tr>
+<tr><th id="266">266</th><td>    <a class="local col9 ref" href="#9ctx" title='ctx' data-ref="9ctx">ctx</a>-&gt;<a class="ref" href="elsdec.h.html#ElsDecCtx::j" title='ElsDecCtx::j' data-ref="ElsDecCtx::j">j</a>         = <a class="macro" href="#38" title="36" data-ref="_M/ELS_JOTS_PER_BYTE">ELS_JOTS_PER_BYTE</a>;</td></tr>
+<tr><th id="267">267</th><td>    <a class="local col9 ref" href="#9ctx" title='ctx' data-ref="9ctx">ctx</a>-&gt;<a class="ref" href="elsdec.h.html#ElsDecCtx::t" title='ElsDecCtx::t' data-ref="ElsDecCtx::t">t</a>         = <a class="macro" href="#39" title="(1 &lt;&lt; 24)" data-ref="_M/ELS_MAX">ELS_MAX</a>;</td></tr>
+<tr><th id="268">268</th><td>    <a class="local col9 ref" href="#9ctx" title='ctx' data-ref="9ctx">ctx</a>-&gt;<a class="ref" href="elsdec.h.html#ElsDecCtx::diff" title='ElsDecCtx::diff' data-ref="ElsDecCtx::diff">diff</a>      = <a class="macro" href="../libavutil/common.h.html#96" title="(((1 &lt;&lt; 24) - ctx-&gt;x) &gt; ((1 &lt;&lt; 24) - els_exp_tab[36 * 4 - 1]) ? ((1 &lt;&lt; 24) - els_exp_tab[36 * 4 - 1]) : ((1 &lt;&lt; 24) - ctx-&gt;x))" data-ref="_M/FFMIN">FFMIN</a>(<a class="macro" href="#39" title="(1 &lt;&lt; 24)" data-ref="_M/ELS_MAX">ELS_MAX</a> - <a class="local col9 ref" href="#9ctx" title='ctx' data-ref="9ctx">ctx</a>-&gt;<a class="ref" href="elsdec.h.html#ElsDecCtx::x" title='ElsDecCtx::x' data-ref="ElsDecCtx::x">x</a>,</td></tr>
+<tr><th id="269">269</th><td>                           <a class="macro" href="#39" title="(1 &lt;&lt; 24)" data-ref="_M/ELS_MAX">ELS_MAX</a> - <a class="tu ref" href="#els_exp_tab" title='els_exp_tab' data-use='r' data-ref="els_exp_tab">els_exp_tab</a>[<a class="macro" href="#38" title="36" data-ref="_M/ELS_JOTS_PER_BYTE">ELS_JOTS_PER_BYTE</a> * <var>4</var> - <var>1</var>]);</td></tr>
+<tr><th id="270">270</th><td>}</td></tr>
+<tr><th id="271">271</th><td></td></tr>
+<tr><th id="272">272</th><td><em>void</em> <dfn class="decl def" id="ff_els_decoder_uninit" title='ff_els_decoder_uninit' data-ref="ff_els_decoder_uninit">ff_els_decoder_uninit</dfn>(<a class="typedef" href="elsdec.h.html#ElsUnsignedRung" title='ElsUnsignedRung' data-type='struct ElsUnsignedRung' data-ref="ElsUnsignedRung">ElsUnsignedRung</a> *<dfn class="local col3 decl" id="13rung" title='rung' data-type='ElsUnsignedRung *' data-ref="13rung">rung</dfn>)</td></tr>
+<tr><th id="273">273</th><td>{</td></tr>
+<tr><th id="274">274</th><td>    <a class="ref" href="../libavutil/mem.h.html#av_free" title='av_free' data-ref="av_free">av_free</a>(<a class="local col3 ref" href="#13rung" title='rung' data-ref="13rung">rung</a>-&gt;<a class="ref" href="elsdec.h.html#ElsUnsignedRung::rem_rung_list" title='ElsUnsignedRung::rem_rung_list' data-ref="ElsUnsignedRung::rem_rung_list">rem_rung_list</a>);</td></tr>
+<tr><th id="275">275</th><td>}</td></tr>
+<tr><th id="276">276</th><td></td></tr>
+<tr><th id="277">277</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="els_import_byte" title='els_import_byte' data-type='int els_import_byte(ElsDecCtx * ctx)' data-ref="els_import_byte">els_import_byte</dfn>(<a class="typedef" href="elsdec.h.html#ElsDecCtx" title='ElsDecCtx' data-type='struct ElsDecCtx' data-ref="ElsDecCtx">ElsDecCtx</a> *<dfn class="local col4 decl" id="14ctx" title='ctx' data-type='ElsDecCtx *' data-ref="14ctx">ctx</dfn>)</td></tr>
+<tr><th id="278">278</th><td>{</td></tr>
+<tr><th id="279">279</th><td>    <b>if</b> (!<a class="local col4 ref" href="#14ctx" title='ctx' data-ref="14ctx">ctx</a>-&gt;<a class="ref" href="elsdec.h.html#ElsDecCtx::data_size" title='ElsDecCtx::data_size' data-ref="ElsDecCtx::data_size">data_size</a>) {</td></tr>
+<tr><th id="280">280</th><td>        <a class="local col4 ref" href="#14ctx" title='ctx' data-ref="14ctx">ctx</a>-&gt;<a class="ref" href="elsdec.h.html#ElsDecCtx::err" title='ElsDecCtx::err' data-ref="ElsDecCtx::err">err</a> = <a class="macro" href="../libavutil/error.h.html#55" title="(-(int)((&apos;E&apos;) | ((&apos;O&apos;) &lt;&lt; 8) | ((&apos;F&apos;) &lt;&lt; 16) | ((unsigned)(&apos; &apos;) &lt;&lt; 24)))" data-ref="_M/AVERROR_EOF">AVERROR_EOF</a>;</td></tr>
+<tr><th id="281">281</th><td>        <b>return</b> <a class="macro" href="../libavutil/error.h.html#55" title="(-(int)((&apos;E&apos;) | ((&apos;O&apos;) &lt;&lt; 8) | ((&apos;F&apos;) &lt;&lt; 16) | ((unsigned)(&apos; &apos;) &lt;&lt; 24)))" data-ref="_M/AVERROR_EOF">AVERROR_EOF</a>;</td></tr>
+<tr><th id="282">282</th><td>    }</td></tr>
+<tr><th id="283">283</th><td>    <a class="local col4 ref" href="#14ctx" title='ctx' data-ref="14ctx">ctx</a>-&gt;<a class="ref" href="elsdec.h.html#ElsDecCtx::x" title='ElsDecCtx::x' data-ref="ElsDecCtx::x">x</a>   = (<a class="local col4 ref" href="#14ctx" title='ctx' data-ref="14ctx">ctx</a>-&gt;<a class="ref" href="elsdec.h.html#ElsDecCtx::x" title='ElsDecCtx::x' data-ref="ElsDecCtx::x">x</a> &lt;&lt; <var>8</var>) | *<a class="local col4 ref" href="#14ctx" title='ctx' data-ref="14ctx">ctx</a>-&gt;<a class="ref" href="elsdec.h.html#ElsDecCtx::in_buf" title='ElsDecCtx::in_buf' data-ref="ElsDecCtx::in_buf">in_buf</a>++;</td></tr>
+<tr><th id="284">284</th><td>    <a class="local col4 ref" href="#14ctx" title='ctx' data-ref="14ctx">ctx</a>-&gt;<a class="ref" href="elsdec.h.html#ElsDecCtx::data_size" title='ElsDecCtx::data_size' data-ref="ElsDecCtx::data_size">data_size</a>--;</td></tr>
+<tr><th id="285">285</th><td>    <a class="local col4 ref" href="#14ctx" title='ctx' data-ref="14ctx">ctx</a>-&gt;<a class="ref" href="elsdec.h.html#ElsDecCtx::j" title='ElsDecCtx::j' data-ref="ElsDecCtx::j">j</a>  += <a class="macro" href="#38" title="36" data-ref="_M/ELS_JOTS_PER_BYTE">ELS_JOTS_PER_BYTE</a>;</td></tr>
+<tr><th id="286">286</th><td>    <a class="local col4 ref" href="#14ctx" title='ctx' data-ref="14ctx">ctx</a>-&gt;<a class="ref" href="elsdec.h.html#ElsDecCtx::t" title='ElsDecCtx::t' data-ref="ElsDecCtx::t">t</a> &lt;&lt;= <var>8</var>;</td></tr>
+<tr><th id="287">287</th><td></td></tr>
+<tr><th id="288">288</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="289">289</th><td>}</td></tr>
+<tr><th id="290">290</th><td></td></tr>
+<tr><th id="291">291</th><td><em>int</em> <dfn class="decl def" id="ff_els_decode_bit" title='ff_els_decode_bit' data-ref="ff_els_decode_bit">ff_els_decode_bit</dfn>(<a class="typedef" href="elsdec.h.html#ElsDecCtx" title='ElsDecCtx' data-type='struct ElsDecCtx' data-ref="ElsDecCtx">ElsDecCtx</a> *<dfn class="local col5 decl" id="15ctx" title='ctx' data-type='ElsDecCtx *' data-ref="15ctx">ctx</dfn>, <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col6 decl" id="16rung" title='rung' data-type='uint8_t *' data-ref="16rung">rung</dfn>)</td></tr>
+<tr><th id="292">292</th><td>{</td></tr>
+<tr><th id="293">293</th><td>    <em>int</em> <dfn class="local col7 decl" id="17z" title='z' data-type='int' data-ref="17z">z</dfn>, <dfn class="local col8 decl" id="18bit" title='bit' data-type='int' data-ref="18bit">bit</dfn>, <dfn class="local col9 decl" id="19ret" title='ret' data-type='int' data-ref="19ret">ret</dfn>;</td></tr>
+<tr><th id="294">294</th><td>    <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a> *<dfn class="local col0 decl" id="20pAllowable" title='pAllowable' data-type='const uint32_t *' data-ref="20pAllowable">pAllowable</dfn> = &amp;<a class="tu ref" href="#els_exp_tab" title='els_exp_tab' data-use='a' data-ref="els_exp_tab">els_exp_tab</a>[<a class="macro" href="#38" title="36" data-ref="_M/ELS_JOTS_PER_BYTE">ELS_JOTS_PER_BYTE</a> * <var>3</var>];</td></tr>
+<tr><th id="295">295</th><td></td></tr>
+<tr><th id="296">296</th><td>    <b>if</b> (<a class="local col5 ref" href="#15ctx" title='ctx' data-ref="15ctx">ctx</a>-&gt;<a class="ref" href="elsdec.h.html#ElsDecCtx::err" title='ElsDecCtx::err' data-ref="ElsDecCtx::err">err</a>)</td></tr>
+<tr><th id="297">297</th><td>        <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="298">298</th><td></td></tr>
+<tr><th id="299">299</th><td>    <a class="local col7 ref" href="#17z" title='z' data-ref="17z">z</a>          = <a class="local col0 ref" href="#20pAllowable" title='pAllowable' data-ref="20pAllowable">pAllowable</a>[<a class="local col5 ref" href="#15ctx" title='ctx' data-ref="15ctx">ctx</a>-&gt;<a class="ref" href="elsdec.h.html#ElsDecCtx::j" title='ElsDecCtx::j' data-ref="ElsDecCtx::j">j</a> + <a class="tu ref" href="#Ladder" title='Ladder' data-use='m' data-ref="Ladder">Ladder</a>[*<a class="local col6 ref" href="#16rung" title='rung' data-ref="16rung">rung</a>].<a class="tu ref" href="#Ladder::ALps" title='Ladder::ALps' data-use='r' data-ref="Ladder::ALps">ALps</a>];</td></tr>
+<tr><th id="300">300</th><td>    <a class="local col5 ref" href="#15ctx" title='ctx' data-ref="15ctx">ctx</a>-&gt;<a class="ref" href="elsdec.h.html#ElsDecCtx::t" title='ElsDecCtx::t' data-ref="ElsDecCtx::t">t</a>    -= <a class="local col7 ref" href="#17z" title='z' data-ref="17z">z</a>;</td></tr>
+<tr><th id="301">301</th><td>    <a class="local col5 ref" href="#15ctx" title='ctx' data-ref="15ctx">ctx</a>-&gt;<a class="ref" href="elsdec.h.html#ElsDecCtx::diff" title='ElsDecCtx::diff' data-ref="ElsDecCtx::diff">diff</a> -= <a class="local col7 ref" href="#17z" title='z' data-ref="17z">z</a>;</td></tr>
+<tr><th id="302">302</th><td>    <b>if</b> (<a class="local col5 ref" href="#15ctx" title='ctx' data-ref="15ctx">ctx</a>-&gt;<a class="ref" href="elsdec.h.html#ElsDecCtx::diff" title='ElsDecCtx::diff' data-ref="ElsDecCtx::diff">diff</a> &gt; <var>0</var>)</td></tr>
+<tr><th id="303">303</th><td>        <b>return</b> *<a class="local col6 ref" href="#16rung" title='rung' data-ref="16rung">rung</a> &amp; <var>1</var>;   <i>/* shortcut for x &lt; t &gt; pAllowable[j - 1] */</i></td></tr>
+<tr><th id="304">304</th><td></td></tr>
+<tr><th id="305">305</th><td>    <b>if</b> (<a class="local col5 ref" href="#15ctx" title='ctx' data-ref="15ctx">ctx</a>-&gt;<a class="ref" href="elsdec.h.html#ElsDecCtx::t" title='ElsDecCtx::t' data-ref="ElsDecCtx::t">t</a> &gt; <a class="local col5 ref" href="#15ctx" title='ctx' data-ref="15ctx">ctx</a>-&gt;<a class="ref" href="elsdec.h.html#ElsDecCtx::x" title='ElsDecCtx::x' data-ref="ElsDecCtx::x">x</a>) {  <i>/* decode most probable symbol (MPS) */</i></td></tr>
+<tr><th id="306">306</th><td>        <a class="local col5 ref" href="#15ctx" title='ctx' data-ref="15ctx">ctx</a>-&gt;<a class="ref" href="elsdec.h.html#ElsDecCtx::j" title='ElsDecCtx::j' data-ref="ElsDecCtx::j">j</a> += <a class="tu ref" href="#Ladder" title='Ladder' data-use='m' data-ref="Ladder">Ladder</a>[*<a class="local col6 ref" href="#16rung" title='rung' data-ref="16rung">rung</a>].<a class="tu ref" href="#Ladder::AMps" title='Ladder::AMps' data-use='r' data-ref="Ladder::AMps">AMps</a>;</td></tr>
+<tr><th id="307">307</th><td>        <b>while</b> (<a class="local col5 ref" href="#15ctx" title='ctx' data-ref="15ctx">ctx</a>-&gt;<a class="ref" href="elsdec.h.html#ElsDecCtx::t" title='ElsDecCtx::t' data-ref="ElsDecCtx::t">t</a> &gt; <a class="local col0 ref" href="#20pAllowable" title='pAllowable' data-ref="20pAllowable">pAllowable</a>[<a class="local col5 ref" href="#15ctx" title='ctx' data-ref="15ctx">ctx</a>-&gt;<a class="ref" href="elsdec.h.html#ElsDecCtx::j" title='ElsDecCtx::j' data-ref="ElsDecCtx::j">j</a>])</td></tr>
+<tr><th id="308">308</th><td>            <a class="local col5 ref" href="#15ctx" title='ctx' data-ref="15ctx">ctx</a>-&gt;<a class="ref" href="elsdec.h.html#ElsDecCtx::j" title='ElsDecCtx::j' data-ref="ElsDecCtx::j">j</a>++;</td></tr>
+<tr><th id="309">309</th><td></td></tr>
+<tr><th id="310">310</th><td>        <b>if</b> (<a class="local col5 ref" href="#15ctx" title='ctx' data-ref="15ctx">ctx</a>-&gt;<a class="ref" href="elsdec.h.html#ElsDecCtx::j" title='ElsDecCtx::j' data-ref="ElsDecCtx::j">j</a> &lt;= <var>0</var>) { <i>/* MPS: import one byte from bytestream. */</i></td></tr>
+<tr><th id="311">311</th><td>            <a class="local col9 ref" href="#19ret" title='ret' data-ref="19ret">ret</a> = <a class="tu ref" href="#els_import_byte" title='els_import_byte' data-use='c' data-ref="els_import_byte">els_import_byte</a>(<a class="local col5 ref" href="#15ctx" title='ctx' data-ref="15ctx">ctx</a>);</td></tr>
+<tr><th id="312">312</th><td>            <b>if</b> (<a class="local col9 ref" href="#19ret" title='ret' data-ref="19ret">ret</a> &lt; <var>0</var>)</td></tr>
+<tr><th id="313">313</th><td>                <b>return</b> <a class="local col9 ref" href="#19ret" title='ret' data-ref="19ret">ret</a>;</td></tr>
+<tr><th id="314">314</th><td>        }</td></tr>
+<tr><th id="315">315</th><td></td></tr>
+<tr><th id="316">316</th><td>        <a class="local col7 ref" href="#17z" title='z' data-ref="17z">z</a>     = <a class="local col5 ref" href="#15ctx" title='ctx' data-ref="15ctx">ctx</a>-&gt;<a class="ref" href="elsdec.h.html#ElsDecCtx::t" title='ElsDecCtx::t' data-ref="ElsDecCtx::t">t</a>;</td></tr>
+<tr><th id="317">317</th><td>        <a class="local col8 ref" href="#18bit" title='bit' data-ref="18bit">bit</a>   = *<a class="local col6 ref" href="#16rung" title='rung' data-ref="16rung">rung</a> &amp; <var>1</var>;</td></tr>
+<tr><th id="318">318</th><td>        *<a class="local col6 ref" href="#16rung" title='rung' data-ref="16rung">rung</a> = <a class="tu ref" href="#Ladder" title='Ladder' data-use='m' data-ref="Ladder">Ladder</a>[*<a class="local col6 ref" href="#16rung" title='rung' data-ref="16rung">rung</a>].<a class="tu ref" href="#Ladder::next0" title='Ladder::next0' data-use='r' data-ref="Ladder::next0">next0</a>;</td></tr>
+<tr><th id="319">319</th><td>    } <b>else</b> { <i>/* decode less probable symbol (LPS) */</i></td></tr>
+<tr><th id="320">320</th><td>        <a class="local col5 ref" href="#15ctx" title='ctx' data-ref="15ctx">ctx</a>-&gt;<a class="ref" href="elsdec.h.html#ElsDecCtx::x" title='ElsDecCtx::x' data-ref="ElsDecCtx::x">x</a> -= <a class="local col5 ref" href="#15ctx" title='ctx' data-ref="15ctx">ctx</a>-&gt;<a class="ref" href="elsdec.h.html#ElsDecCtx::t" title='ElsDecCtx::t' data-ref="ElsDecCtx::t">t</a>;</td></tr>
+<tr><th id="321">321</th><td>        <a class="local col5 ref" href="#15ctx" title='ctx' data-ref="15ctx">ctx</a>-&gt;<a class="ref" href="elsdec.h.html#ElsDecCtx::t" title='ElsDecCtx::t' data-ref="ElsDecCtx::t">t</a>  = <a class="local col7 ref" href="#17z" title='z' data-ref="17z">z</a>;</td></tr>
+<tr><th id="322">322</th><td></td></tr>
+<tr><th id="323">323</th><td>        <a class="local col5 ref" href="#15ctx" title='ctx' data-ref="15ctx">ctx</a>-&gt;<a class="ref" href="elsdec.h.html#ElsDecCtx::j" title='ElsDecCtx::j' data-ref="ElsDecCtx::j">j</a> += <a class="tu ref" href="#Ladder" title='Ladder' data-use='m' data-ref="Ladder">Ladder</a>[*<a class="local col6 ref" href="#16rung" title='rung' data-ref="16rung">rung</a>].<a class="tu ref" href="#Ladder::ALps" title='Ladder::ALps' data-use='r' data-ref="Ladder::ALps">ALps</a>;</td></tr>
+<tr><th id="324">324</th><td>        <b>if</b> (<a class="local col5 ref" href="#15ctx" title='ctx' data-ref="15ctx">ctx</a>-&gt;<a class="ref" href="elsdec.h.html#ElsDecCtx::j" title='ElsDecCtx::j' data-ref="ElsDecCtx::j">j</a> &lt;= <var>0</var>) {</td></tr>
+<tr><th id="325">325</th><td>            <i>/* LPS: import one byte from bytestream. */</i></td></tr>
+<tr><th id="326">326</th><td>            <a class="local col7 ref" href="#17z" title='z' data-ref="17z">z</a> &lt;&lt;= <var>8</var>;</td></tr>
+<tr><th id="327">327</th><td>            <a class="local col9 ref" href="#19ret" title='ret' data-ref="19ret">ret</a> = <a class="tu ref" href="#els_import_byte" title='els_import_byte' data-use='c' data-ref="els_import_byte">els_import_byte</a>(<a class="local col5 ref" href="#15ctx" title='ctx' data-ref="15ctx">ctx</a>);</td></tr>
+<tr><th id="328">328</th><td>            <b>if</b> (<a class="local col9 ref" href="#19ret" title='ret' data-ref="19ret">ret</a> &lt; <var>0</var>)</td></tr>
+<tr><th id="329">329</th><td>                <b>return</b> <a class="local col9 ref" href="#19ret" title='ret' data-ref="19ret">ret</a>;</td></tr>
+<tr><th id="330">330</th><td>            <b>if</b> (<a class="local col5 ref" href="#15ctx" title='ctx' data-ref="15ctx">ctx</a>-&gt;<a class="ref" href="elsdec.h.html#ElsDecCtx::j" title='ElsDecCtx::j' data-ref="ElsDecCtx::j">j</a> &lt;= <var>0</var>) {</td></tr>
+<tr><th id="331">331</th><td>                <i>/* LPS: import second byte from bytestream. */</i></td></tr>
+<tr><th id="332">332</th><td>                <a class="local col7 ref" href="#17z" title='z' data-ref="17z">z</a> &lt;&lt;= <var>8</var>;</td></tr>
+<tr><th id="333">333</th><td>                <a class="local col9 ref" href="#19ret" title='ret' data-ref="19ret">ret</a> = <a class="tu ref" href="#els_import_byte" title='els_import_byte' data-use='c' data-ref="els_import_byte">els_import_byte</a>(<a class="local col5 ref" href="#15ctx" title='ctx' data-ref="15ctx">ctx</a>);</td></tr>
+<tr><th id="334">334</th><td>                <b>if</b> (<a class="local col9 ref" href="#19ret" title='ret' data-ref="19ret">ret</a> &lt; <var>0</var>)</td></tr>
+<tr><th id="335">335</th><td>                    <b>return</b> <a class="local col9 ref" href="#19ret" title='ret' data-ref="19ret">ret</a>;</td></tr>
+<tr><th id="336">336</th><td>                <b>while</b> (<a class="local col0 ref" href="#20pAllowable" title='pAllowable' data-ref="20pAllowable">pAllowable</a>[<a class="local col5 ref" href="#15ctx" title='ctx' data-ref="15ctx">ctx</a>-&gt;<a class="ref" href="elsdec.h.html#ElsDecCtx::j" title='ElsDecCtx::j' data-ref="ElsDecCtx::j">j</a> - <var>1</var>] &gt;= <a class="local col7 ref" href="#17z" title='z' data-ref="17z">z</a>)</td></tr>
+<tr><th id="337">337</th><td>                    <a class="local col5 ref" href="#15ctx" title='ctx' data-ref="15ctx">ctx</a>-&gt;<a class="ref" href="elsdec.h.html#ElsDecCtx::j" title='ElsDecCtx::j' data-ref="ElsDecCtx::j">j</a>--;</td></tr>
+<tr><th id="338">338</th><td>            }</td></tr>
+<tr><th id="339">339</th><td>        }</td></tr>
+<tr><th id="340">340</th><td></td></tr>
+<tr><th id="341">341</th><td>        <a class="local col8 ref" href="#18bit" title='bit' data-ref="18bit">bit</a>   = !(*<a class="local col6 ref" href="#16rung" title='rung' data-ref="16rung">rung</a> &amp; <var>1</var>);</td></tr>
+<tr><th id="342">342</th><td>        *<a class="local col6 ref" href="#16rung" title='rung' data-ref="16rung">rung</a> = <a class="tu ref" href="#Ladder" title='Ladder' data-use='m' data-ref="Ladder">Ladder</a>[*<a class="local col6 ref" href="#16rung" title='rung' data-ref="16rung">rung</a>].<a class="tu ref" href="#Ladder::next1" title='Ladder::next1' data-use='r' data-ref="Ladder::next1">next1</a>;</td></tr>
+<tr><th id="343">343</th><td>    }</td></tr>
+<tr><th id="344">344</th><td></td></tr>
+<tr><th id="345">345</th><td>    <a class="local col5 ref" href="#15ctx" title='ctx' data-ref="15ctx">ctx</a>-&gt;<a class="ref" href="elsdec.h.html#ElsDecCtx::diff" title='ElsDecCtx::diff' data-ref="ElsDecCtx::diff">diff</a> = <a class="macro" href="../libavutil/common.h.html#96" title="((z - ctx-&gt;x) &gt; (z - pAllowable[ctx-&gt;j - 1]) ? (z - pAllowable[ctx-&gt;j - 1]) : (z - ctx-&gt;x))" data-ref="_M/FFMIN">FFMIN</a>(<a class="local col7 ref" href="#17z" title='z' data-ref="17z">z</a> - <a class="local col5 ref" href="#15ctx" title='ctx' data-ref="15ctx">ctx</a>-&gt;<a class="ref" href="elsdec.h.html#ElsDecCtx::x" title='ElsDecCtx::x' data-ref="ElsDecCtx::x">x</a>, <a class="local col7 ref" href="#17z" title='z' data-ref="17z">z</a> - <a class="local col0 ref" href="#20pAllowable" title='pAllowable' data-ref="20pAllowable">pAllowable</a>[<a class="local col5 ref" href="#15ctx" title='ctx' data-ref="15ctx">ctx</a>-&gt;<a class="ref" href="elsdec.h.html#ElsDecCtx::j" title='ElsDecCtx::j' data-ref="ElsDecCtx::j">j</a> - <var>1</var>]);</td></tr>
+<tr><th id="346">346</th><td></td></tr>
+<tr><th id="347">347</th><td>    <b>return</b> <a class="local col8 ref" href="#18bit" title='bit' data-ref="18bit">bit</a>;</td></tr>
+<tr><th id="348">348</th><td>}</td></tr>
+<tr><th id="349">349</th><td></td></tr>
+<tr><th id="350">350</th><td><em>unsigned</em> <dfn class="decl def" id="ff_els_decode_unsigned" title='ff_els_decode_unsigned' data-ref="ff_els_decode_unsigned">ff_els_decode_unsigned</dfn>(<a class="typedef" href="elsdec.h.html#ElsDecCtx" title='ElsDecCtx' data-type='struct ElsDecCtx' data-ref="ElsDecCtx">ElsDecCtx</a> *<dfn class="local col1 decl" id="21ctx" title='ctx' data-type='ElsDecCtx *' data-ref="21ctx">ctx</dfn>, <a class="typedef" href="elsdec.h.html#ElsUnsignedRung" title='ElsUnsignedRung' data-type='struct ElsUnsignedRung' data-ref="ElsUnsignedRung">ElsUnsignedRung</a> *<dfn class="local col2 decl" id="22ur" title='ur' data-type='ElsUnsignedRung *' data-ref="22ur">ur</dfn>)</td></tr>
+<tr><th id="351">351</th><td>{</td></tr>
+<tr><th id="352">352</th><td>    <em>int</em> <dfn class="local col3 decl" id="23i" title='i' data-type='int' data-ref="23i">i</dfn>, <dfn class="local col4 decl" id="24n" title='n' data-type='int' data-ref="24n">n</dfn>, <dfn class="local col5 decl" id="25r" title='r' data-type='int' data-ref="25r">r</dfn>, <dfn class="local col6 decl" id="26bit" title='bit' data-type='int' data-ref="26bit">bit</dfn>;</td></tr>
+<tr><th id="353">353</th><td>    <a class="typedef" href="elsdec.h.html#ElsRungNode" title='ElsRungNode' data-type='struct ElsRungNode' data-ref="ElsRungNode">ElsRungNode</a> *<dfn class="local col7 decl" id="27rung_node" title='rung_node' data-type='ElsRungNode *' data-ref="27rung_node">rung_node</dfn>;</td></tr>
+<tr><th id="354">354</th><td></td></tr>
+<tr><th id="355">355</th><td>    <b>if</b> (<a class="local col1 ref" href="#21ctx" title='ctx' data-ref="21ctx">ctx</a>-&gt;<a class="ref" href="elsdec.h.html#ElsDecCtx::err" title='ElsDecCtx::err' data-ref="ElsDecCtx::err">err</a>)</td></tr>
+<tr><th id="356">356</th><td>        <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="357">357</th><td></td></tr>
+<tr><th id="358">358</th><td>    <i>/* decode unary prefix */</i></td></tr>
+<tr><th id="359">359</th><td>    <b>for</b> (<a class="local col4 ref" href="#24n" title='n' data-ref="24n">n</a> = <var>0</var>; <a class="local col4 ref" href="#24n" title='n' data-ref="24n">n</a> &lt; <a class="macro" href="elsdec.h.html#34" title="10" data-ref="_M/ELS_EXPGOLOMB_LEN">ELS_EXPGOLOMB_LEN</a> + <var>1</var>; <a class="local col4 ref" href="#24n" title='n' data-ref="24n">n</a>++)</td></tr>
+<tr><th id="360">360</th><td>        <b>if</b> (<a class="ref" href="#ff_els_decode_bit" title='ff_els_decode_bit' data-ref="ff_els_decode_bit">ff_els_decode_bit</a>(<a class="local col1 ref" href="#21ctx" title='ctx' data-ref="21ctx">ctx</a>, &amp;<a class="local col2 ref" href="#22ur" title='ur' data-ref="22ur">ur</a>-&gt;<a class="ref" href="elsdec.h.html#ElsUnsignedRung::prefix_rung" title='ElsUnsignedRung::prefix_rung' data-ref="ElsUnsignedRung::prefix_rung">prefix_rung</a>[<a class="local col4 ref" href="#24n" title='n' data-ref="24n">n</a>]))</td></tr>
+<tr><th id="361">361</th><td>            <b>break</b>;</td></tr>
+<tr><th id="362">362</th><td></td></tr>
+<tr><th id="363">363</th><td>    <i>/* handle the error/overflow case */</i></td></tr>
+<tr><th id="364">364</th><td>    <b>if</b> (<a class="local col1 ref" href="#21ctx" title='ctx' data-ref="21ctx">ctx</a>-&gt;<a class="ref" href="elsdec.h.html#ElsDecCtx::err" title='ElsDecCtx::err' data-ref="ElsDecCtx::err">err</a> || <a class="local col4 ref" href="#24n" title='n' data-ref="24n">n</a> &gt;= <a class="macro" href="elsdec.h.html#34" title="10" data-ref="_M/ELS_EXPGOLOMB_LEN">ELS_EXPGOLOMB_LEN</a>) {</td></tr>
+<tr><th id="365">365</th><td>        <a class="local col1 ref" href="#21ctx" title='ctx' data-ref="21ctx">ctx</a>-&gt;<a class="ref" href="elsdec.h.html#ElsDecCtx::err" title='ElsDecCtx::err' data-ref="ElsDecCtx::err">err</a> = <a class="macro" href="../libavutil/error.h.html#59" title="(-(int)((&apos;I&apos;) | ((&apos;N&apos;) &lt;&lt; 8) | ((&apos;D&apos;) &lt;&lt; 16) | ((unsigned)(&apos;A&apos;) &lt;&lt; 24)))" data-ref="_M/AVERROR_INVALIDDATA">AVERROR_INVALIDDATA</a>;</td></tr>
+<tr><th id="366">366</th><td>        <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="367">367</th><td>    }</td></tr>
+<tr><th id="368">368</th><td></td></tr>
+<tr><th id="369">369</th><td>    <i>/* handle the zero case */</i></td></tr>
+<tr><th id="370">370</th><td>    <b>if</b> (!<a class="local col4 ref" href="#24n" title='n' data-ref="24n">n</a>)</td></tr>
+<tr><th id="371">371</th><td>        <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="372">372</th><td></td></tr>
+<tr><th id="373">373</th><td>    <i>/* initialize probability tree */</i></td></tr>
+<tr><th id="374">374</th><td>    <b>if</b> (!<a class="local col2 ref" href="#22ur" title='ur' data-ref="22ur">ur</a>-&gt;<a class="ref" href="elsdec.h.html#ElsUnsignedRung::rem_rung_list" title='ElsUnsignedRung::rem_rung_list' data-ref="ElsUnsignedRung::rem_rung_list">rem_rung_list</a>) {</td></tr>
+<tr><th id="375">375</th><td>        <a class="local col2 ref" href="#22ur" title='ur' data-ref="22ur">ur</a>-&gt;<a class="ref" href="elsdec.h.html#ElsUnsignedRung::rem_rung_list" title='ElsUnsignedRung::rem_rung_list' data-ref="ElsUnsignedRung::rem_rung_list">rem_rung_list</a> = <a class="ref" href="../libavutil/mem.h.html#av_realloc" title='av_realloc' data-ref="av_realloc">av_realloc</a>(<span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>, <a class="macro" href="#40" title="(64 * sizeof(ElsRungNode))" data-ref="_M/RUNG_SPACE">RUNG_SPACE</a>);</td></tr>
+<tr><th id="376">376</th><td>        <b>if</b> (!<a class="local col2 ref" href="#22ur" title='ur' data-ref="22ur">ur</a>-&gt;<a class="ref" href="elsdec.h.html#ElsUnsignedRung::rem_rung_list" title='ElsUnsignedRung::rem_rung_list' data-ref="ElsUnsignedRung::rem_rung_list">rem_rung_list</a>) {</td></tr>
+<tr><th id="377">377</th><td>            <a class="local col1 ref" href="#21ctx" title='ctx' data-ref="21ctx">ctx</a>-&gt;<a class="ref" href="elsdec.h.html#ElsDecCtx::err" title='ElsDecCtx::err' data-ref="ElsDecCtx::err">err</a> = <a class="macro" href="../libavutil/error.h.html#39" title="(-(12))" data-ref="_M/AVERROR">AVERROR</a>(<a class="macro" href="../../include/asm-generic/errno-base.h.html#15" title="12" data-ref="_M/ENOMEM">ENOMEM</a>);</td></tr>
+<tr><th id="378">378</th><td>            <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="379">379</th><td>        }</td></tr>
+<tr><th id="380">380</th><td>        <a class="ref" href="../../include/string.h.html#memset" title='memset' data-ref="memset">memset</a>(<a class="local col2 ref" href="#22ur" title='ur' data-ref="22ur">ur</a>-&gt;<a class="ref" href="elsdec.h.html#ElsUnsignedRung::rem_rung_list" title='ElsUnsignedRung::rem_rung_list' data-ref="ElsUnsignedRung::rem_rung_list">rem_rung_list</a>, <var>0</var>, <a class="macro" href="#40" title="(64 * sizeof(ElsRungNode))" data-ref="_M/RUNG_SPACE">RUNG_SPACE</a>);</td></tr>
+<tr><th id="381">381</th><td>        <a class="local col2 ref" href="#22ur" title='ur' data-ref="22ur">ur</a>-&gt;<a class="ref" href="elsdec.h.html#ElsUnsignedRung::rung_list_size" title='ElsUnsignedRung::rung_list_size' data-ref="ElsUnsignedRung::rung_list_size">rung_list_size</a> = <a class="macro" href="#40" title="(64 * sizeof(ElsRungNode))" data-ref="_M/RUNG_SPACE">RUNG_SPACE</a>;</td></tr>
+<tr><th id="382">382</th><td>        <a class="local col2 ref" href="#22ur" title='ur' data-ref="22ur">ur</a>-&gt;<a class="ref" href="elsdec.h.html#ElsUnsignedRung::avail_index" title='ElsUnsignedRung::avail_index' data-ref="ElsUnsignedRung::avail_index">avail_index</a>    = <a class="macro" href="elsdec.h.html#34" title="10" data-ref="_M/ELS_EXPGOLOMB_LEN">ELS_EXPGOLOMB_LEN</a>;</td></tr>
+<tr><th id="383">383</th><td>    }</td></tr>
+<tr><th id="384">384</th><td></td></tr>
+<tr><th id="385">385</th><td>    <i>/* decode the remainder */</i></td></tr>
+<tr><th id="386">386</th><td>    <b>for</b> (<a class="local col3 ref" href="#23i" title='i' data-ref="23i">i</a> = <var>0</var>, <a class="local col5 ref" href="#25r" title='r' data-ref="25r">r</a> = <var>0</var>, <a class="local col6 ref" href="#26bit" title='bit' data-ref="26bit">bit</a> = <var>0</var>; <a class="local col3 ref" href="#23i" title='i' data-ref="23i">i</a> &lt; <a class="local col4 ref" href="#24n" title='n' data-ref="24n">n</a>; <a class="local col3 ref" href="#23i" title='i' data-ref="23i">i</a>++) {</td></tr>
+<tr><th id="387">387</th><td>        <b>if</b> (!<a class="local col3 ref" href="#23i" title='i' data-ref="23i">i</a>)</td></tr>
+<tr><th id="388">388</th><td>            <a class="local col7 ref" href="#27rung_node" title='rung_node' data-ref="27rung_node">rung_node</a> = &amp;<a class="local col2 ref" href="#22ur" title='ur' data-ref="22ur">ur</a>-&gt;<a class="ref" href="elsdec.h.html#ElsUnsignedRung::rem_rung_list" title='ElsUnsignedRung::rem_rung_list' data-ref="ElsUnsignedRung::rem_rung_list">rem_rung_list</a>[<a class="local col4 ref" href="#24n" title='n' data-ref="24n">n</a>];</td></tr>
+<tr><th id="389">389</th><td>        <b>else</b> {</td></tr>
+<tr><th id="390">390</th><td>            <b>if</b> (!<a class="local col7 ref" href="#27rung_node" title='rung_node' data-ref="27rung_node">rung_node</a>-&gt;<a class="ref" href="elsdec.h.html#ElsRungNode::next_index" title='ElsRungNode::next_index' data-ref="ElsRungNode::next_index">next_index</a>) {</td></tr>
+<tr><th id="391">391</th><td>                <b>if</b> (<a class="local col2 ref" href="#22ur" title='ur' data-ref="22ur">ur</a>-&gt;<a class="ref" href="elsdec.h.html#ElsUnsignedRung::rung_list_size" title='ElsUnsignedRung::rung_list_size' data-ref="ElsUnsignedRung::rung_list_size">rung_list_size</a> &lt;= (<a class="local col2 ref" href="#22ur" title='ur' data-ref="22ur">ur</a>-&gt;<a class="ref" href="elsdec.h.html#ElsUnsignedRung::avail_index" title='ElsUnsignedRung::avail_index' data-ref="ElsUnsignedRung::avail_index">avail_index</a> + <var>2</var>) * <b>sizeof</b>(<a class="typedef" href="elsdec.h.html#ElsRungNode" title='ElsRungNode' data-type='struct ElsRungNode' data-ref="ElsRungNode">ElsRungNode</a>)) {</td></tr>
+<tr><th id="392">392</th><td>                    <i>// remember rung_node position</i></td></tr>
+<tr><th id="393">393</th><td>                    <span class='typedef' title='ptrdiff_t' data-type='long' data-ref="ptrdiff_t">ptrdiff_t</span> <dfn class="local col8 decl" id="28pos" title='pos' data-type='ptrdiff_t' data-ref="28pos">pos</dfn>     = <a class="local col7 ref" href="#27rung_node" title='rung_node' data-ref="27rung_node">rung_node</a> - <a class="local col2 ref" href="#22ur" title='ur' data-ref="22ur">ur</a>-&gt;<a class="ref" href="elsdec.h.html#ElsUnsignedRung::rem_rung_list" title='ElsUnsignedRung::rem_rung_list' data-ref="ElsUnsignedRung::rem_rung_list">rem_rung_list</a>;</td></tr>
+<tr><th id="394">394</th><td>                    <a class="local col2 ref" href="#22ur" title='ur' data-ref="22ur">ur</a>-&gt;<a class="ref" href="elsdec.h.html#ElsUnsignedRung::rem_rung_list" title='ElsUnsignedRung::rem_rung_list' data-ref="ElsUnsignedRung::rem_rung_list">rem_rung_list</a> = <a class="ref" href="../libavutil/mem.h.html#av_realloc" title='av_realloc' data-ref="av_realloc">av_realloc</a>(<a class="local col2 ref" href="#22ur" title='ur' data-ref="22ur">ur</a>-&gt;<a class="ref" href="elsdec.h.html#ElsUnsignedRung::rem_rung_list" title='ElsUnsignedRung::rem_rung_list' data-ref="ElsUnsignedRung::rem_rung_list">rem_rung_list</a>,</td></tr>
+<tr><th id="395">395</th><td>                                                   <a class="local col2 ref" href="#22ur" title='ur' data-ref="22ur">ur</a>-&gt;<a class="ref" href="elsdec.h.html#ElsUnsignedRung::rung_list_size" title='ElsUnsignedRung::rung_list_size' data-ref="ElsUnsignedRung::rung_list_size">rung_list_size</a> +</td></tr>
+<tr><th id="396">396</th><td>                                                   <a class="macro" href="#40" title="(64 * sizeof(ElsRungNode))" data-ref="_M/RUNG_SPACE">RUNG_SPACE</a>);</td></tr>
+<tr><th id="397">397</th><td>                    <b>if</b> (!<a class="local col2 ref" href="#22ur" title='ur' data-ref="22ur">ur</a>-&gt;<a class="ref" href="elsdec.h.html#ElsUnsignedRung::rem_rung_list" title='ElsUnsignedRung::rem_rung_list' data-ref="ElsUnsignedRung::rem_rung_list">rem_rung_list</a>) {</td></tr>
+<tr><th id="398">398</th><td>                        <a class="ref" href="../libavutil/mem.h.html#av_free" title='av_free' data-ref="av_free">av_free</a>(<a class="local col2 ref" href="#22ur" title='ur' data-ref="22ur">ur</a>-&gt;<a class="ref" href="elsdec.h.html#ElsUnsignedRung::rem_rung_list" title='ElsUnsignedRung::rem_rung_list' data-ref="ElsUnsignedRung::rem_rung_list">rem_rung_list</a>);</td></tr>
+<tr><th id="399">399</th><td>                        <a class="local col1 ref" href="#21ctx" title='ctx' data-ref="21ctx">ctx</a>-&gt;<a class="ref" href="elsdec.h.html#ElsDecCtx::err" title='ElsDecCtx::err' data-ref="ElsDecCtx::err">err</a> = <a class="macro" href="../libavutil/error.h.html#39" title="(-(12))" data-ref="_M/AVERROR">AVERROR</a>(<a class="macro" href="../../include/asm-generic/errno-base.h.html#15" title="12" data-ref="_M/ENOMEM">ENOMEM</a>);</td></tr>
+<tr><th id="400">400</th><td>                        <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="401">401</th><td>                    }</td></tr>
+<tr><th id="402">402</th><td>                    <a class="ref" href="../../include/string.h.html#memset" title='memset' data-ref="memset">memset</a>((<a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *) <a class="local col2 ref" href="#22ur" title='ur' data-ref="22ur">ur</a>-&gt;<a class="ref" href="elsdec.h.html#ElsUnsignedRung::rem_rung_list" title='ElsUnsignedRung::rem_rung_list' data-ref="ElsUnsignedRung::rem_rung_list">rem_rung_list</a> + <a class="local col2 ref" href="#22ur" title='ur' data-ref="22ur">ur</a>-&gt;<a class="ref" href="elsdec.h.html#ElsUnsignedRung::rung_list_size" title='ElsUnsignedRung::rung_list_size' data-ref="ElsUnsignedRung::rung_list_size">rung_list_size</a>, <var>0</var>,</td></tr>
+<tr><th id="403">403</th><td>                           <a class="macro" href="#40" title="(64 * sizeof(ElsRungNode))" data-ref="_M/RUNG_SPACE">RUNG_SPACE</a>);</td></tr>
+<tr><th id="404">404</th><td>                    <a class="local col2 ref" href="#22ur" title='ur' data-ref="22ur">ur</a>-&gt;<a class="ref" href="elsdec.h.html#ElsUnsignedRung::rung_list_size" title='ElsUnsignedRung::rung_list_size' data-ref="ElsUnsignedRung::rung_list_size">rung_list_size</a> += <a class="macro" href="#40" title="(64 * sizeof(ElsRungNode))" data-ref="_M/RUNG_SPACE">RUNG_SPACE</a>;</td></tr>
+<tr><th id="405">405</th><td>                    <i>// restore rung_node position in the new list</i></td></tr>
+<tr><th id="406">406</th><td>                    <a class="local col7 ref" href="#27rung_node" title='rung_node' data-ref="27rung_node">rung_node</a> = &amp;<a class="local col2 ref" href="#22ur" title='ur' data-ref="22ur">ur</a>-&gt;<a class="ref" href="elsdec.h.html#ElsUnsignedRung::rem_rung_list" title='ElsUnsignedRung::rem_rung_list' data-ref="ElsUnsignedRung::rem_rung_list">rem_rung_list</a>[<a class="local col8 ref" href="#28pos" title='pos' data-ref="28pos">pos</a>];</td></tr>
+<tr><th id="407">407</th><td>                }</td></tr>
+<tr><th id="408">408</th><td>                <a class="local col7 ref" href="#27rung_node" title='rung_node' data-ref="27rung_node">rung_node</a>-&gt;<a class="ref" href="elsdec.h.html#ElsRungNode::next_index" title='ElsRungNode::next_index' data-ref="ElsRungNode::next_index">next_index</a> = <a class="local col2 ref" href="#22ur" title='ur' data-ref="22ur">ur</a>-&gt;<a class="ref" href="elsdec.h.html#ElsUnsignedRung::avail_index" title='ElsUnsignedRung::avail_index' data-ref="ElsUnsignedRung::avail_index">avail_index</a>;</td></tr>
+<tr><th id="409">409</th><td>                <a class="local col2 ref" href="#22ur" title='ur' data-ref="22ur">ur</a>-&gt;<a class="ref" href="elsdec.h.html#ElsUnsignedRung::avail_index" title='ElsUnsignedRung::avail_index' data-ref="ElsUnsignedRung::avail_index">avail_index</a>      += <var>2</var>;</td></tr>
+<tr><th id="410">410</th><td>            }</td></tr>
+<tr><th id="411">411</th><td>            <a class="local col7 ref" href="#27rung_node" title='rung_node' data-ref="27rung_node">rung_node</a> = &amp;<a class="local col2 ref" href="#22ur" title='ur' data-ref="22ur">ur</a>-&gt;<a class="ref" href="elsdec.h.html#ElsUnsignedRung::rem_rung_list" title='ElsUnsignedRung::rem_rung_list' data-ref="ElsUnsignedRung::rem_rung_list">rem_rung_list</a>[<a class="local col7 ref" href="#27rung_node" title='rung_node' data-ref="27rung_node">rung_node</a>-&gt;<a class="ref" href="elsdec.h.html#ElsRungNode::next_index" title='ElsRungNode::next_index' data-ref="ElsRungNode::next_index">next_index</a> + <a class="local col6 ref" href="#26bit" title='bit' data-ref="26bit">bit</a>];</td></tr>
+<tr><th id="412">412</th><td>        }</td></tr>
+<tr><th id="413">413</th><td></td></tr>
+<tr><th id="414">414</th><td>        <a class="local col6 ref" href="#26bit" title='bit' data-ref="26bit">bit</a> = <a class="ref" href="#ff_els_decode_bit" title='ff_els_decode_bit' data-ref="ff_els_decode_bit">ff_els_decode_bit</a>(<a class="local col1 ref" href="#21ctx" title='ctx' data-ref="21ctx">ctx</a>, &amp;<a class="local col7 ref" href="#27rung_node" title='rung_node' data-ref="27rung_node">rung_node</a>-&gt;<a class="ref" href="elsdec.h.html#ElsRungNode::rung" title='ElsRungNode::rung' data-ref="ElsRungNode::rung">rung</a>);</td></tr>
+<tr><th id="415">415</th><td>        <b>if</b> (<a class="local col1 ref" href="#21ctx" title='ctx' data-ref="21ctx">ctx</a>-&gt;<a class="ref" href="elsdec.h.html#ElsDecCtx::err" title='ElsDecCtx::err' data-ref="ElsDecCtx::err">err</a>)</td></tr>
+<tr><th id="416">416</th><td>            <b>return</b> <a class="local col6 ref" href="#26bit" title='bit' data-ref="26bit">bit</a>;</td></tr>
+<tr><th id="417">417</th><td></td></tr>
+<tr><th id="418">418</th><td>        <a class="local col5 ref" href="#25r" title='r' data-ref="25r">r</a> = (<a class="local col5 ref" href="#25r" title='r' data-ref="25r">r</a> &lt;&lt; <var>1</var>) + <a class="local col6 ref" href="#26bit" title='bit' data-ref="26bit">bit</a>;</td></tr>
+<tr><th id="419">419</th><td>    }</td></tr>
+<tr><th id="420">420</th><td></td></tr>
+<tr><th id="421">421</th><td>    <b>return</b> (<var>1</var> &lt;&lt; <a class="local col4 ref" href="#24n" title='n' data-ref="24n">n</a>) - <var>1</var> + <a class="local col5 ref" href="#25r" title='r' data-ref="25r">r</a>; <i>/* make value from exp golomb code */</i></td></tr>
+<tr><th id="422">422</th><td>}</td></tr>
+<tr><th id="423">423</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

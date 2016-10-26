@@ -1,0 +1,166 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>sol.c source code [ffmpeg/libavformat/sol.c] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavformat/sol.c'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavformat</a>/<a href='sol.c.html'>sol.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * Sierra SOL demuxer</i></td></tr>
+<tr><th id="3">3</th><td><i> * Copyright Konstantin Shishkov</i></td></tr>
+<tr><th id="4">4</th><td><i> *</i></td></tr>
+<tr><th id="5">5</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="8">8</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="9">9</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="10">10</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="11">11</th><td><i> *</i></td></tr>
+<tr><th id="12">12</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="13">13</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="14">14</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="15">15</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="16">16</th><td><i> *</i></td></tr>
+<tr><th id="17">17</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="18">18</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="19">19</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="20">20</th><td><i> */</i></td></tr>
+<tr><th id="21">21</th><td></td></tr>
+<tr><th id="22">22</th><td><i>/*</i></td></tr>
+<tr><th id="23">23</th><td><i> * Based on documents from Game Audio Player and own research</i></td></tr>
+<tr><th id="24">24</th><td><i> */</i></td></tr>
+<tr><th id="25">25</th><td></td></tr>
+<tr><th id="26">26</th><td><u>#include <a href="../libavutil/channel_layout.h.html">"libavutil/channel_layout.h"</a></u></td></tr>
+<tr><th id="27">27</th><td><u>#include <a href="../libavutil/intreadwrite.h.html">"libavutil/intreadwrite.h"</a></u></td></tr>
+<tr><th id="28">28</th><td><u>#include <a href="avformat.h.html">"avformat.h"</a></u></td></tr>
+<tr><th id="29">29</th><td><u>#include <a href="internal.h.html">"internal.h"</a></u></td></tr>
+<tr><th id="30">30</th><td><u>#include <a href="pcm.h.html">"pcm.h"</a></u></td></tr>
+<tr><th id="31">31</th><td></td></tr>
+<tr><th id="32">32</th><td><i>/* if we don't know the size in advance */</i></td></tr>
+<tr><th id="33">33</th><td><u>#define <dfn class="macro" id="_M/AU_UNKNOWN_SIZE" data-ref="_M/AU_UNKNOWN_SIZE">AU_UNKNOWN_SIZE</dfn> ((uint32_t)(~0))</u></td></tr>
+<tr><th id="34">34</th><td></td></tr>
+<tr><th id="35">35</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="sol_probe" title='sol_probe' data-type='int sol_probe(AVProbeData * p)' data-ref="sol_probe">sol_probe</dfn>(<a class="typedef" href="avformat.h.html#AVProbeData" title='AVProbeData' data-type='struct AVProbeData' data-ref="AVProbeData">AVProbeData</a> *<dfn class="local col1 decl" id="1p" title='p' data-type='AVProbeData *' data-ref="1p">p</dfn>)</td></tr>
+<tr><th id="36">36</th><td>{</td></tr>
+<tr><th id="37">37</th><td>    <i>/* check file header */</i></td></tr>
+<tr><th id="38">38</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> <dfn class="local col2 decl" id="2magic" title='magic' data-type='uint16_t' data-ref="2magic">magic</dfn> = <a class="macro" href="../libavutil/intreadwrite.h.html#423" title="(((const union unaligned_32 *) (p-&gt;buf))-&gt;l)" data-ref="_M/AV_RL32">AV_RL32</a>(<a class="local col1 ref" href="#1p" title='p' data-ref="1p">p</a>-&gt;<a class="ref" href="avformat.h.html#AVProbeData::buf" title='AVProbeData::buf' data-ref="AVProbeData::buf">buf</a>);</td></tr>
+<tr><th id="39">39</th><td>    <b>if</b> ((<a class="local col2 ref" href="#2magic" title='magic' data-ref="2magic">magic</a> == <var>0x0B8D</var> || <a class="local col2 ref" href="#2magic" title='magic' data-ref="2magic">magic</a> == <var>0x0C0D</var> || <a class="local col2 ref" href="#2magic" title='magic' data-ref="2magic">magic</a> == <var>0x0C8D</var>) &amp;&amp;</td></tr>
+<tr><th id="40">40</th><td>        <a class="local col1 ref" href="#1p" title='p' data-ref="1p">p</a>-&gt;<a class="ref" href="avformat.h.html#AVProbeData::buf" title='AVProbeData::buf' data-ref="AVProbeData::buf">buf</a>[<var>2</var>] == <kbd>'S'</kbd> &amp;&amp; <a class="local col1 ref" href="#1p" title='p' data-ref="1p">p</a>-&gt;<a class="ref" href="avformat.h.html#AVProbeData::buf" title='AVProbeData::buf' data-ref="AVProbeData::buf">buf</a>[<var>3</var>] == <kbd>'O'</kbd> &amp;&amp;</td></tr>
+<tr><th id="41">41</th><td>        <a class="local col1 ref" href="#1p" title='p' data-ref="1p">p</a>-&gt;<a class="ref" href="avformat.h.html#AVProbeData::buf" title='AVProbeData::buf' data-ref="AVProbeData::buf">buf</a>[<var>4</var>] == <kbd>'L'</kbd> &amp;&amp; <a class="local col1 ref" href="#1p" title='p' data-ref="1p">p</a>-&gt;<a class="ref" href="avformat.h.html#AVProbeData::buf" title='AVProbeData::buf' data-ref="AVProbeData::buf">buf</a>[<var>5</var>] == <var>0</var>)</td></tr>
+<tr><th id="42">42</th><td>        <b>return</b> <a class="macro" href="avformat.h.html#473" title="100" data-ref="_M/AVPROBE_SCORE_MAX">AVPROBE_SCORE_MAX</a>;</td></tr>
+<tr><th id="43">43</th><td>    <b>else</b></td></tr>
+<tr><th id="44">44</th><td>        <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="45">45</th><td>}</td></tr>
+<tr><th id="46">46</th><td></td></tr>
+<tr><th id="47">47</th><td><u>#define <dfn class="macro" id="_M/SOL_DPCM" data-ref="_M/SOL_DPCM">SOL_DPCM</dfn>    1</u></td></tr>
+<tr><th id="48">48</th><td><u>#define <dfn class="macro" id="_M/SOL_16BIT" data-ref="_M/SOL_16BIT">SOL_16BIT</dfn>   4</u></td></tr>
+<tr><th id="49">49</th><td><u>#define <dfn class="macro" id="_M/SOL_STEREO" data-ref="_M/SOL_STEREO">SOL_STEREO</dfn> 16</u></td></tr>
+<tr><th id="50">50</th><td></td></tr>
+<tr><th id="51">51</th><td><em>static</em> <b>enum</b> <a class="type" href="../libavcodec/avcodec.h.html#AVCodecID" title='AVCodecID' data-ref="AVCodecID">AVCodecID</a> <dfn class="tu decl def" id="sol_codec_id" title='sol_codec_id' data-type='enum AVCodecID sol_codec_id(int magic, int type)' data-ref="sol_codec_id">sol_codec_id</dfn>(<em>int</em> <dfn class="local col3 decl" id="3magic" title='magic' data-type='int' data-ref="3magic">magic</dfn>, <em>int</em> <dfn class="local col4 decl" id="4type" title='type' data-type='int' data-ref="4type">type</dfn>)</td></tr>
+<tr><th id="52">52</th><td>{</td></tr>
+<tr><th id="53">53</th><td>    <b>if</b> (<a class="local col4 ref" href="#4type" title='type' data-ref="4type">type</a> &amp; <a class="macro" href="#47" title="1" data-ref="_M/SOL_DPCM">SOL_DPCM</a>)</td></tr>
+<tr><th id="54">54</th><td>        <b>return</b> <a class="enum" href="../libavcodec/avcodec.h.html#AVCodecID::AV_CODEC_ID_SOL_DPCM" title='AVCodecID::AV_CODEC_ID_SOL_DPCM' data-ref="AVCodecID::AV_CODEC_ID_SOL_DPCM">AV_CODEC_ID_SOL_DPCM</a>;</td></tr>
+<tr><th id="55">55</th><td></td></tr>
+<tr><th id="56">56</th><td>    <b>if</b> (<a class="local col3 ref" href="#3magic" title='magic' data-ref="3magic">magic</a> == <var>0x0B8D</var>)</td></tr>
+<tr><th id="57">57</th><td>        <b>return</b> <a class="enum" href="../libavcodec/avcodec.h.html#AVCodecID::AV_CODEC_ID_PCM_U8" title='AVCodecID::AV_CODEC_ID_PCM_U8' data-ref="AVCodecID::AV_CODEC_ID_PCM_U8">AV_CODEC_ID_PCM_U8</a>;</td></tr>
+<tr><th id="58">58</th><td></td></tr>
+<tr><th id="59">59</th><td>    <b>if</b> (<a class="local col4 ref" href="#4type" title='type' data-ref="4type">type</a> &amp; <a class="macro" href="#48" title="4" data-ref="_M/SOL_16BIT">SOL_16BIT</a>)</td></tr>
+<tr><th id="60">60</th><td>        <b>return</b> <a class="enum" href="../libavcodec/avcodec.h.html#AVCodecID::AV_CODEC_ID_PCM_S16LE" title='AVCodecID::AV_CODEC_ID_PCM_S16LE' data-ref="AVCodecID::AV_CODEC_ID_PCM_S16LE">AV_CODEC_ID_PCM_S16LE</a>;</td></tr>
+<tr><th id="61">61</th><td></td></tr>
+<tr><th id="62">62</th><td>    <b>return</b> <a class="enum" href="../libavcodec/avcodec.h.html#AVCodecID::AV_CODEC_ID_PCM_U8" title='AVCodecID::AV_CODEC_ID_PCM_U8' data-ref="AVCodecID::AV_CODEC_ID_PCM_U8">AV_CODEC_ID_PCM_U8</a>;</td></tr>
+<tr><th id="63">63</th><td>}</td></tr>
+<tr><th id="64">64</th><td></td></tr>
+<tr><th id="65">65</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="sol_codec_type" title='sol_codec_type' data-type='int sol_codec_type(int magic, int type)' data-ref="sol_codec_type">sol_codec_type</dfn>(<em>int</em> <dfn class="local col5 decl" id="5magic" title='magic' data-type='int' data-ref="5magic">magic</dfn>, <em>int</em> <dfn class="local col6 decl" id="6type" title='type' data-type='int' data-ref="6type">type</dfn>)</td></tr>
+<tr><th id="66">66</th><td>{</td></tr>
+<tr><th id="67">67</th><td>    <b>if</b> (<a class="local col5 ref" href="#5magic" title='magic' data-ref="5magic">magic</a> == <var>0x0B8D</var>) <b>return</b> <var>1</var>;<i>//SOL_DPCM_OLD;</i></td></tr>
+<tr><th id="68">68</th><td>    <b>if</b> (<a class="local col6 ref" href="#6type" title='type' data-ref="6type">type</a> &amp; <a class="macro" href="#47" title="1" data-ref="_M/SOL_DPCM">SOL_DPCM</a>)</td></tr>
+<tr><th id="69">69</th><td>    {</td></tr>
+<tr><th id="70">70</th><td>        <b>if</b> (<a class="local col6 ref" href="#6type" title='type' data-ref="6type">type</a> &amp; <a class="macro" href="#48" title="4" data-ref="_M/SOL_16BIT">SOL_16BIT</a>) <b>return</b> <var>3</var>;<i>//SOL_DPCM_NEW16;</i></td></tr>
+<tr><th id="71">71</th><td>        <b>else</b> <b>if</b> (<a class="local col5 ref" href="#5magic" title='magic' data-ref="5magic">magic</a> == <var>0x0C8D</var>) <b>return</b> <var>1</var>;<i>//SOL_DPCM_OLD;</i></td></tr>
+<tr><th id="72">72</th><td>        <b>else</b> <b>return</b> <var>2</var>;<i>//SOL_DPCM_NEW8;</i></td></tr>
+<tr><th id="73">73</th><td>    }</td></tr>
+<tr><th id="74">74</th><td>    <b>return</b> -<var>1</var>;</td></tr>
+<tr><th id="75">75</th><td>}</td></tr>
+<tr><th id="76">76</th><td></td></tr>
+<tr><th id="77">77</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="sol_channels" title='sol_channels' data-type='int sol_channels(int magic, int type)' data-ref="sol_channels">sol_channels</dfn>(<em>int</em> <dfn class="local col7 decl" id="7magic" title='magic' data-type='int' data-ref="7magic">magic</dfn>, <em>int</em> <dfn class="local col8 decl" id="8type" title='type' data-type='int' data-ref="8type">type</dfn>)</td></tr>
+<tr><th id="78">78</th><td>{</td></tr>
+<tr><th id="79">79</th><td>    <b>if</b> (<a class="local col7 ref" href="#7magic" title='magic' data-ref="7magic">magic</a> == <var>0x0B8D</var> || !(<a class="local col8 ref" href="#8type" title='type' data-ref="8type">type</a> &amp; <a class="macro" href="#49" title="16" data-ref="_M/SOL_STEREO">SOL_STEREO</a>)) <b>return</b> <var>1</var>;</td></tr>
+<tr><th id="80">80</th><td>    <b>return</b> <var>2</var>;</td></tr>
+<tr><th id="81">81</th><td>}</td></tr>
+<tr><th id="82">82</th><td></td></tr>
+<tr><th id="83">83</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="sol_read_header" title='sol_read_header' data-type='int sol_read_header(AVFormatContext * s)' data-ref="sol_read_header">sol_read_header</dfn>(<a class="typedef" href="avformat.h.html#AVFormatContext" title='AVFormatContext' data-type='struct AVFormatContext' data-ref="AVFormatContext">AVFormatContext</a> *<dfn class="local col9 decl" id="9s" title='s' data-type='AVFormatContext *' data-ref="9s">s</dfn>)</td></tr>
+<tr><th id="84">84</th><td>{</td></tr>
+<tr><th id="85">85</th><td>    <em>unsigned</em> <em>int</em> <dfn class="local col0 decl" id="10magic" title='magic' data-type='unsigned int' data-ref="10magic">magic</dfn>,<dfn class="local col1 decl" id="11tag" title='tag' data-type='unsigned int' data-ref="11tag">tag</dfn>;</td></tr>
+<tr><th id="86">86</th><td>    <a class="typedef" href="avio.h.html#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> *<dfn class="local col2 decl" id="12pb" title='pb' data-type='AVIOContext *' data-ref="12pb">pb</dfn> = <a class="local col9 ref" href="#9s" title='s' data-ref="9s">s</a>-&gt;<a class="ref" href="avformat.h.html#AVFormatContext::pb" title='AVFormatContext::pb' data-ref="AVFormatContext::pb">pb</a>;</td></tr>
+<tr><th id="87">87</th><td>    <em>unsigned</em> <em>int</em> <dfn class="local col3 decl" id="13id" title='id' data-type='unsigned int' data-ref="13id">id</dfn>, <dfn class="local col4 decl" id="14channels" title='channels' data-type='unsigned int' data-ref="14channels">channels</dfn>, <dfn class="local col5 decl" id="15rate" title='rate' data-type='unsigned int' data-ref="15rate">rate</dfn>, <dfn class="local col6 decl" id="16type" title='type' data-type='unsigned int' data-ref="16type">type</dfn>;</td></tr>
+<tr><th id="88">88</th><td>    <b>enum</b> <a class="type" href="../libavcodec/avcodec.h.html#AVCodecID" title='AVCodecID' data-ref="AVCodecID">AVCodecID</a> <dfn class="local col7 decl" id="17codec" title='codec' data-type='enum AVCodecID' data-ref="17codec">codec</dfn>;</td></tr>
+<tr><th id="89">89</th><td>    <a class="typedef" href="avformat.h.html#AVStream" title='AVStream' data-type='struct AVStream' data-ref="AVStream">AVStream</a> *<dfn class="local col8 decl" id="18st" title='st' data-type='AVStream *' data-ref="18st">st</dfn>;</td></tr>
+<tr><th id="90">90</th><td></td></tr>
+<tr><th id="91">91</th><td>    <i>/* check ".snd" header */</i></td></tr>
+<tr><th id="92">92</th><td>    <a class="local col0 ref" href="#10magic" title='magic' data-ref="10magic">magic</a> = <a class="ref" href="avio.h.html#avio_rl16" title='avio_rl16' data-ref="avio_rl16">avio_rl16</a>(<a class="local col2 ref" href="#12pb" title='pb' data-ref="12pb">pb</a>);</td></tr>
+<tr><th id="93">93</th><td>    <a class="local col1 ref" href="#11tag" title='tag' data-ref="11tag">tag</a> = <a class="ref" href="avio.h.html#avio_rl32" title='avio_rl32' data-ref="avio_rl32">avio_rl32</a>(<a class="local col2 ref" href="#12pb" title='pb' data-ref="12pb">pb</a>);</td></tr>
+<tr><th id="94">94</th><td>    <b>if</b> (<a class="local col1 ref" href="#11tag" title='tag' data-ref="11tag">tag</a> != <a class="macro" href="../libavutil/common.h.html#342" title="((&apos;S&apos;) | ((&apos;O&apos;) &lt;&lt; 8) | ((&apos;L&apos;) &lt;&lt; 16) | ((unsigned)(0) &lt;&lt; 24))" data-ref="_M/MKTAG">MKTAG</a>(<kbd>'S'</kbd>, <kbd>'O'</kbd>, <kbd>'L'</kbd>, <var>0</var>))</td></tr>
+<tr><th id="95">95</th><td>        <b>return</b> -<var>1</var>;</td></tr>
+<tr><th id="96">96</th><td>    <a class="local col5 ref" href="#15rate" title='rate' data-ref="15rate">rate</a> = <a class="ref" href="avio.h.html#avio_rl16" title='avio_rl16' data-ref="avio_rl16">avio_rl16</a>(<a class="local col2 ref" href="#12pb" title='pb' data-ref="12pb">pb</a>);</td></tr>
+<tr><th id="97">97</th><td>    <a class="local col6 ref" href="#16type" title='type' data-ref="16type">type</a> = <a class="ref" href="avio.h.html#avio_r8" title='avio_r8' data-ref="avio_r8">avio_r8</a>(<a class="local col2 ref" href="#12pb" title='pb' data-ref="12pb">pb</a>);</td></tr>
+<tr><th id="98">98</th><td>    <a class="ref" href="avio.h.html#avio_skip" title='avio_skip' data-ref="avio_skip">avio_skip</a>(<a class="local col2 ref" href="#12pb" title='pb' data-ref="12pb">pb</a>, <var>4</var>); <i>/* size */</i></td></tr>
+<tr><th id="99">99</th><td>    <b>if</b> (<a class="local col0 ref" href="#10magic" title='magic' data-ref="10magic">magic</a> != <var>0x0B8D</var>)</td></tr>
+<tr><th id="100">100</th><td>        <a class="ref" href="avio.h.html#avio_r8" title='avio_r8' data-ref="avio_r8">avio_r8</a>(<a class="local col2 ref" href="#12pb" title='pb' data-ref="12pb">pb</a>); <i>/* newer SOLs contain padding byte */</i></td></tr>
+<tr><th id="101">101</th><td></td></tr>
+<tr><th id="102">102</th><td>    <a class="local col7 ref" href="#17codec" title='codec' data-ref="17codec">codec</a> = <a class="tu ref" href="#sol_codec_id" title='sol_codec_id' data-use='c' data-ref="sol_codec_id">sol_codec_id</a>(<a class="local col0 ref" href="#10magic" title='magic' data-ref="10magic">magic</a>, <a class="local col6 ref" href="#16type" title='type' data-ref="16type">type</a>);</td></tr>
+<tr><th id="103">103</th><td>    <a class="local col4 ref" href="#14channels" title='channels' data-ref="14channels">channels</a> = <a class="tu ref" href="#sol_channels" title='sol_channels' data-use='c' data-ref="sol_channels">sol_channels</a>(<a class="local col0 ref" href="#10magic" title='magic' data-ref="10magic">magic</a>, <a class="local col6 ref" href="#16type" title='type' data-ref="16type">type</a>);</td></tr>
+<tr><th id="104">104</th><td></td></tr>
+<tr><th id="105">105</th><td>    <b>if</b> (<a class="local col7 ref" href="#17codec" title='codec' data-ref="17codec">codec</a> == <a class="enum" href="../libavcodec/avcodec.h.html#AVCodecID::AV_CODEC_ID_SOL_DPCM" title='AVCodecID::AV_CODEC_ID_SOL_DPCM' data-ref="AVCodecID::AV_CODEC_ID_SOL_DPCM">AV_CODEC_ID_SOL_DPCM</a>)</td></tr>
+<tr><th id="106">106</th><td>        <a class="local col3 ref" href="#13id" title='id' data-ref="13id">id</a> = <a class="tu ref" href="#sol_codec_type" title='sol_codec_type' data-use='c' data-ref="sol_codec_type">sol_codec_type</a>(<a class="local col0 ref" href="#10magic" title='magic' data-ref="10magic">magic</a>, <a class="local col6 ref" href="#16type" title='type' data-ref="16type">type</a>);</td></tr>
+<tr><th id="107">107</th><td>    <b>else</b> <a class="local col3 ref" href="#13id" title='id' data-ref="13id">id</a> = <var>0</var>;</td></tr>
+<tr><th id="108">108</th><td></td></tr>
+<tr><th id="109">109</th><td>    <i>/* now we are ready: build format streams */</i></td></tr>
+<tr><th id="110">110</th><td>    <a class="local col8 ref" href="#18st" title='st' data-ref="18st">st</a> = <a class="ref" href="avformat.h.html#avformat_new_stream" title='avformat_new_stream' data-ref="avformat_new_stream">avformat_new_stream</a>(<a class="local col9 ref" href="#9s" title='s' data-ref="9s">s</a>, <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>);</td></tr>
+<tr><th id="111">111</th><td>    <b>if</b> (!<a class="local col8 ref" href="#18st" title='st' data-ref="18st">st</a>)</td></tr>
+<tr><th id="112">112</th><td>        <b>return</b> -<var>1</var>;</td></tr>
+<tr><th id="113">113</th><td>    <a class="local col8 ref" href="#18st" title='st' data-ref="18st">st</a>-&gt;<a class="ref" href="avformat.h.html#AVStream::codecpar" title='AVStream::codecpar' data-ref="AVStream::codecpar">codecpar</a>-&gt;<a class="ref" href="../libavcodec/avcodec.h.html#AVCodecParameters::codec_type" title='AVCodecParameters::codec_type' data-ref="AVCodecParameters::codec_type">codec_type</a> = <a class="enum" href="../libavutil/avutil.h.html#AVMediaType::AVMEDIA_TYPE_AUDIO" title='AVMediaType::AVMEDIA_TYPE_AUDIO' data-ref="AVMediaType::AVMEDIA_TYPE_AUDIO">AVMEDIA_TYPE_AUDIO</a>;</td></tr>
+<tr><th id="114">114</th><td>    <a class="local col8 ref" href="#18st" title='st' data-ref="18st">st</a>-&gt;<a class="ref" href="avformat.h.html#AVStream::codecpar" title='AVStream::codecpar' data-ref="AVStream::codecpar">codecpar</a>-&gt;<a class="ref" href="../libavcodec/avcodec.h.html#AVCodecParameters::codec_tag" title='AVCodecParameters::codec_tag' data-ref="AVCodecParameters::codec_tag">codec_tag</a> = <a class="local col3 ref" href="#13id" title='id' data-ref="13id">id</a>;</td></tr>
+<tr><th id="115">115</th><td>    <a class="local col8 ref" href="#18st" title='st' data-ref="18st">st</a>-&gt;<a class="ref" href="avformat.h.html#AVStream::codecpar" title='AVStream::codecpar' data-ref="AVStream::codecpar">codecpar</a>-&gt;<a class="ref" href="../libavcodec/avcodec.h.html#AVCodecParameters::codec_id" title='AVCodecParameters::codec_id' data-ref="AVCodecParameters::codec_id">codec_id</a> = <a class="local col7 ref" href="#17codec" title='codec' data-ref="17codec">codec</a>;</td></tr>
+<tr><th id="116">116</th><td>    <a class="local col8 ref" href="#18st" title='st' data-ref="18st">st</a>-&gt;<a class="ref" href="avformat.h.html#AVStream::codecpar" title='AVStream::codecpar' data-ref="AVStream::codecpar">codecpar</a>-&gt;<a class="ref" href="../libavcodec/avcodec.h.html#AVCodecParameters::channels" title='AVCodecParameters::channels' data-ref="AVCodecParameters::channels">channels</a> = <a class="local col4 ref" href="#14channels" title='channels' data-ref="14channels">channels</a>;</td></tr>
+<tr><th id="117">117</th><td>    <a class="local col8 ref" href="#18st" title='st' data-ref="18st">st</a>-&gt;<a class="ref" href="avformat.h.html#AVStream::codecpar" title='AVStream::codecpar' data-ref="AVStream::codecpar">codecpar</a>-&gt;<a class="ref" href="../libavcodec/avcodec.h.html#AVCodecParameters::channel_layout" title='AVCodecParameters::channel_layout' data-ref="AVCodecParameters::channel_layout">channel_layout</a> = <a class="local col4 ref" href="#14channels" title='channels' data-ref="14channels">channels</a> == <var>1</var> ? <a class="macro" href="../libavutil/channel_layout.h.html#85" title="(0x00000004)" data-ref="_M/AV_CH_LAYOUT_MONO">AV_CH_LAYOUT_MONO</a> :</td></tr>
+<tr><th id="118">118</th><td>                                                   <a class="macro" href="../libavutil/channel_layout.h.html#86" title="(0x00000001|0x00000002)" data-ref="_M/AV_CH_LAYOUT_STEREO">AV_CH_LAYOUT_STEREO</a>;</td></tr>
+<tr><th id="119">119</th><td>    <a class="local col8 ref" href="#18st" title='st' data-ref="18st">st</a>-&gt;<a class="ref" href="avformat.h.html#AVStream::codecpar" title='AVStream::codecpar' data-ref="AVStream::codecpar">codecpar</a>-&gt;<a class="ref" href="../libavcodec/avcodec.h.html#AVCodecParameters::sample_rate" title='AVCodecParameters::sample_rate' data-ref="AVCodecParameters::sample_rate">sample_rate</a> = <a class="local col5 ref" href="#15rate" title='rate' data-ref="15rate">rate</a>;</td></tr>
+<tr><th id="120">120</th><td>    <a class="ref" href="internal.h.html#avpriv_set_pts_info" title='avpriv_set_pts_info' data-ref="avpriv_set_pts_info">avpriv_set_pts_info</a>(<a class="local col8 ref" href="#18st" title='st' data-ref="18st">st</a>, <var>64</var>, <var>1</var>, <a class="local col5 ref" href="#15rate" title='rate' data-ref="15rate">rate</a>);</td></tr>
+<tr><th id="121">121</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="122">122</th><td>}</td></tr>
+<tr><th id="123">123</th><td></td></tr>
+<tr><th id="124">124</th><td><u>#define <dfn class="macro" id="_M/MAX_SIZE" data-ref="_M/MAX_SIZE">MAX_SIZE</dfn> 4096</u></td></tr>
+<tr><th id="125">125</th><td></td></tr>
+<tr><th id="126">126</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="sol_read_packet" title='sol_read_packet' data-type='int sol_read_packet(AVFormatContext * s, AVPacket * pkt)' data-ref="sol_read_packet">sol_read_packet</dfn>(<a class="typedef" href="avformat.h.html#AVFormatContext" title='AVFormatContext' data-type='struct AVFormatContext' data-ref="AVFormatContext">AVFormatContext</a> *<dfn class="local col9 decl" id="19s" title='s' data-type='AVFormatContext *' data-ref="19s">s</dfn>,</td></tr>
+<tr><th id="127">127</th><td>                          <a class="typedef" href="../libavcodec/avcodec.h.html#AVPacket" title='AVPacket' data-type='struct AVPacket' data-ref="AVPacket">AVPacket</a> *<dfn class="local col0 decl" id="20pkt" title='pkt' data-type='AVPacket *' data-ref="20pkt">pkt</dfn>)</td></tr>
+<tr><th id="128">128</th><td>{</td></tr>
+<tr><th id="129">129</th><td>    <em>int</em> <dfn class="local col1 decl" id="21ret" title='ret' data-type='int' data-ref="21ret">ret</dfn>;</td></tr>
+<tr><th id="130">130</th><td></td></tr>
+<tr><th id="131">131</th><td>    <b>if</b> (<a class="ref" href="avio.h.html#avio_feof" title='avio_feof' data-ref="avio_feof">avio_feof</a>(<a class="local col9 ref" href="#19s" title='s' data-ref="19s">s</a>-&gt;<a class="ref" href="avformat.h.html#AVFormatContext::pb" title='AVFormatContext::pb' data-ref="AVFormatContext::pb">pb</a>))</td></tr>
+<tr><th id="132">132</th><td>        <b>return</b> <a class="macro" href="../libavutil/error.h.html#39" title="(-(5))" data-ref="_M/AVERROR">AVERROR</a>(<a class="macro" href="../../include/asm-generic/errno-base.h.html#8" title="5" data-ref="_M/EIO">EIO</a>);</td></tr>
+<tr><th id="133">133</th><td>    <a class="local col1 ref" href="#21ret" title='ret' data-ref="21ret">ret</a>= <a class="ref" href="avformat.h.html#av_get_packet" title='av_get_packet' data-ref="av_get_packet">av_get_packet</a>(<a class="local col9 ref" href="#19s" title='s' data-ref="19s">s</a>-&gt;<a class="ref" href="avformat.h.html#AVFormatContext::pb" title='AVFormatContext::pb' data-ref="AVFormatContext::pb">pb</a>, <a class="local col0 ref" href="#20pkt" title='pkt' data-ref="20pkt">pkt</a>, <a class="macro" href="#124" title="4096" data-ref="_M/MAX_SIZE">MAX_SIZE</a>);</td></tr>
+<tr><th id="134">134</th><td>    <b>if</b> (<a class="local col1 ref" href="#21ret" title='ret' data-ref="21ret">ret</a> &lt; <var>0</var>)</td></tr>
+<tr><th id="135">135</th><td>        <b>return</b> <a class="local col1 ref" href="#21ret" title='ret' data-ref="21ret">ret</a>;</td></tr>
+<tr><th id="136">136</th><td>    <a class="local col0 ref" href="#20pkt" title='pkt' data-ref="20pkt">pkt</a>-&gt;<a class="ref" href="../libavcodec/avcodec.h.html#AVPacket::flags" title='AVPacket::flags' data-ref="AVPacket::flags">flags</a> &amp;= ~<a class="macro" href="../libavcodec/avcodec.h.html#1634" title="0x0002" data-ref="_M/AV_PKT_FLAG_CORRUPT">AV_PKT_FLAG_CORRUPT</a>;</td></tr>
+<tr><th id="137">137</th><td>    <a class="local col0 ref" href="#20pkt" title='pkt' data-ref="20pkt">pkt</a>-&gt;<a class="ref" href="../libavcodec/avcodec.h.html#AVPacket::stream_index" title='AVPacket::stream_index' data-ref="AVPacket::stream_index">stream_index</a> = <var>0</var>;</td></tr>
+<tr><th id="138">138</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="139">139</th><td>}</td></tr>
+<tr><th id="140">140</th><td></td></tr>
+<tr><th id="141">141</th><td><a class="typedef" href="avformat.h.html#AVInputFormat" title='AVInputFormat' data-type='struct AVInputFormat' data-ref="AVInputFormat">AVInputFormat</a> <dfn class="decl def" id="ff_sol_demuxer" title='ff_sol_demuxer' data-ref="ff_sol_demuxer">ff_sol_demuxer</dfn> = {</td></tr>
+<tr><th id="142">142</th><td>    .<a class="ref" href="avformat.h.html#AVInputFormat::name" title='AVInputFormat::name' data-ref="AVInputFormat::name">name</a>           = <q>"sol"</q>,</td></tr>
+<tr><th id="143">143</th><td>    .<a class="ref" href="avformat.h.html#AVInputFormat::long_name" title='AVInputFormat::long_name' data-ref="AVInputFormat::long_name">long_name</a>      = <a class="macro" href="../libavutil/internal.h.html#176" title="&quot;Sierra SOL&quot;" data-ref="_M/NULL_IF_CONFIG_SMALL">NULL_IF_CONFIG_SMALL</a>(<q>"Sierra SOL"</q>),</td></tr>
+<tr><th id="144">144</th><td>    .<a class="ref" href="avformat.h.html#AVInputFormat::read_probe" title='AVInputFormat::read_probe' data-ref="AVInputFormat::read_probe">read_probe</a>     = <a class="tu ref" href="#sol_probe" title='sol_probe' data-use='r' data-ref="sol_probe">sol_probe</a>,</td></tr>
+<tr><th id="145">145</th><td>    .<a class="ref" href="avformat.h.html#AVInputFormat::read_header" title='AVInputFormat::read_header' data-ref="AVInputFormat::read_header">read_header</a>    = <a class="tu ref" href="#sol_read_header" title='sol_read_header' data-use='r' data-ref="sol_read_header">sol_read_header</a>,</td></tr>
+<tr><th id="146">146</th><td>    .<a class="ref" href="avformat.h.html#AVInputFormat::read_packet" title='AVInputFormat::read_packet' data-ref="AVInputFormat::read_packet">read_packet</a>    = <a class="tu ref" href="#sol_read_packet" title='sol_read_packet' data-use='r' data-ref="sol_read_packet">sol_read_packet</a>,</td></tr>
+<tr><th id="147">147</th><td>    .<a class="ref" href="avformat.h.html#AVInputFormat::read_seek" title='AVInputFormat::read_seek' data-ref="AVInputFormat::read_seek">read_seek</a>      = <a class="ref" href="pcm.h.html#ff_pcm_read_seek" title='ff_pcm_read_seek' data-ref="ff_pcm_read_seek">ff_pcm_read_seek</a>,</td></tr>
+<tr><th id="148">148</th><td>};</td></tr>
+<tr><th id="149">149</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

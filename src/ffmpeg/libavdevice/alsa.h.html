@@ -1,0 +1,127 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>alsa.h source code [ffmpeg/libavdevice/alsa.h] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="AlsaData "/>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavdevice/alsa.h'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavdevice</a>/<a href='alsa.h.html'>alsa.h</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * ALSA input and output</i></td></tr>
+<tr><th id="3">3</th><td><i> * Copyright (c) 2007 Luca Abeni ( lucabe72 email it )</i></td></tr>
+<tr><th id="4">4</th><td><i> * Copyright (c) 2007 Benoit Fouet ( benoit fouet free fr )</i></td></tr>
+<tr><th id="5">5</th><td><i> *</i></td></tr>
+<tr><th id="6">6</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="7">7</th><td><i> *</i></td></tr>
+<tr><th id="8">8</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="9">9</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="10">10</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="11">11</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="12">12</th><td><i> *</i></td></tr>
+<tr><th id="13">13</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="14">14</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="15">15</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="16">16</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="17">17</th><td><i> *</i></td></tr>
+<tr><th id="18">18</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="19">19</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="20">20</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="21">21</th><td><i> */</i></td></tr>
+<tr><th id="22">22</th><td></td></tr>
+<tr><th id="23">23</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="24">24</th><td><i class="doc"> *<span class="command"> @file</span></i></td></tr>
+<tr><th id="25">25</th><td><i class="doc"> * ALSA input and output: definitions and structures</i></td></tr>
+<tr><th id="26">26</th><td><i class="doc"> * <span class="command">@author</span> Luca Abeni ( lucabe72 email it )</i></td></tr>
+<tr><th id="27">27</th><td><i class="doc"> * <span class="command">@author</span> Benoit Fouet ( benoit fouet free fr )</i></td></tr>
+<tr><th id="28">28</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="29">29</th><td></td></tr>
+<tr><th id="30">30</th><td><u>#<span data-ppcond="30">ifndef</span> <span class="macro" data-ref="_M/AVDEVICE_ALSA_H">AVDEVICE_ALSA_H</span></u></td></tr>
+<tr><th id="31">31</th><td><u>#define <dfn class="macro" id="_M/AVDEVICE_ALSA_H" data-ref="_M/AVDEVICE_ALSA_H">AVDEVICE_ALSA_H</dfn></u></td></tr>
+<tr><th id="32">32</th><td></td></tr>
+<tr><th id="33">33</th><td><u>#include <a href="../../include/alsa/asoundlib.h.html">&lt;alsa/asoundlib.h&gt;</a></u></td></tr>
+<tr><th id="34">34</th><td><u>#include <a href="../config.h.html">"config.h"</a></u></td></tr>
+<tr><th id="35">35</th><td><u>#include <a href="../libavutil/log.h.html">"libavutil/log.h"</a></u></td></tr>
+<tr><th id="36">36</th><td><u>#include <a href="timefilter.h.html">"timefilter.h"</a></u></td></tr>
+<tr><th id="37">37</th><td><u>#include <a href="avdevice.h.html">"avdevice.h"</a></u></td></tr>
+<tr><th id="38">38</th><td></td></tr>
+<tr><th id="39">39</th><td><i>/* XXX: we make the assumption that the soundcard accepts this format */</i></td></tr>
+<tr><th id="40">40</th><td><i>/* XXX: find better solution with "preinit" method, needed also in</i></td></tr>
+<tr><th id="41">41</th><td><i>        other formats */</i></td></tr>
+<tr><th id="42">42</th><td><u>#define <dfn class="macro" id="_M/DEFAULT_CODEC_ID" data-ref="_M/DEFAULT_CODEC_ID">DEFAULT_CODEC_ID</dfn> AV_NE(AV_CODEC_ID_PCM_S16BE, AV_CODEC_ID_PCM_S16LE)</u></td></tr>
+<tr><th id="43">43</th><td></td></tr>
+<tr><th id="44">44</th><td><b>typedef</b> <em>void</em> (*<dfn class="typedef" id="ff_reorder_func" title='ff_reorder_func' data-type='void (*)(const void *, void *, int)' data-ref="ff_reorder_func">ff_reorder_func</dfn>)(<em>const</em> <em>void</em> *, <em>void</em> *, <em>int</em>);</td></tr>
+<tr><th id="45">45</th><td></td></tr>
+<tr><th id="46">46</th><td><u>#define <dfn class="macro" id="_M/ALSA_BUFFER_SIZE_MAX" data-ref="_M/ALSA_BUFFER_SIZE_MAX">ALSA_BUFFER_SIZE_MAX</dfn> 65536</u></td></tr>
+<tr><th id="47">47</th><td></td></tr>
+<tr><th id="48">48</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="AlsaData" title='AlsaData' data-ref="AlsaData"><a class="type" href="#AlsaData" title='AlsaData' data-ref="AlsaData">AlsaData</a></dfn> {</td></tr>
+<tr><th id="49">49</th><td>    <a class="typedef" href="../libavutil/log.h.html#AVClass" title='AVClass' data-type='struct AVClass' data-ref="AVClass">AVClass</a> *<dfn class="decl" id="AlsaData::class" title='AlsaData::class' data-ref="AlsaData::class">class</dfn>;</td></tr>
+<tr><th id="50">50</th><td>    <a class="typedef" href="../../include/alsa/pcm.h.html#snd_pcm_t" title='snd_pcm_t' data-type='struct _snd_pcm' data-ref="snd_pcm_t">snd_pcm_t</a> *<dfn class="decl" id="AlsaData::h" title='AlsaData::h' data-ref="AlsaData::h">h</dfn>;</td></tr>
+<tr><th id="51">51</th><td>    <em>int</em> <dfn class="decl" id="AlsaData::frame_size" title='AlsaData::frame_size' data-ref="AlsaData::frame_size">frame_size</dfn>;  <i class="doc">///&lt; bytes per sample * channels</i></td></tr>
+<tr><th id="52">52</th><td>    <em>int</em> <dfn class="decl" id="AlsaData::period_size" title='AlsaData::period_size' data-ref="AlsaData::period_size">period_size</dfn>; <i class="doc">///&lt; preferred size for reads and writes, in frames</i></td></tr>
+<tr><th id="53">53</th><td>    <em>int</em> <dfn class="decl" id="AlsaData::sample_rate" title='AlsaData::sample_rate' data-ref="AlsaData::sample_rate">sample_rate</dfn>; <i class="doc">///&lt; sample rate set by user</i></td></tr>
+<tr><th id="54">54</th><td>    <em>int</em> <dfn class="decl" id="AlsaData::channels" title='AlsaData::channels' data-ref="AlsaData::channels">channels</dfn>;    <i class="doc">///&lt; number of channels set by user</i></td></tr>
+<tr><th id="55">55</th><td>    <em>int</em> <dfn class="decl" id="AlsaData::last_period" title='AlsaData::last_period' data-ref="AlsaData::last_period">last_period</dfn>;</td></tr>
+<tr><th id="56">56</th><td>    <a class="typedef" href="timefilter.h.html#TimeFilter" title='TimeFilter' data-type='struct TimeFilter' data-ref="TimeFilter">TimeFilter</a> *<dfn class="decl" id="AlsaData::timefilter" title='AlsaData::timefilter' data-ref="AlsaData::timefilter">timefilter</dfn>;</td></tr>
+<tr><th id="57">57</th><td>    <em>void</em> (*<dfn class="decl" id="AlsaData::reorder_func" title='AlsaData::reorder_func' data-ref="AlsaData::reorder_func">reorder_func</dfn>)(<em>const</em> <em>void</em> *, <em>void</em> *, <em>int</em>);</td></tr>
+<tr><th id="58">58</th><td>    <em>void</em> *<dfn class="decl" id="AlsaData::reorder_buf" title='AlsaData::reorder_buf' data-ref="AlsaData::reorder_buf">reorder_buf</dfn>;</td></tr>
+<tr><th id="59">59</th><td>    <em>int</em> <dfn class="decl" id="AlsaData::reorder_buf_size" title='AlsaData::reorder_buf_size' data-ref="AlsaData::reorder_buf_size">reorder_buf_size</dfn>; <i class="doc">///&lt; in frames</i></td></tr>
+<tr><th id="60">60</th><td>    <a class="typedef" href="../../include/x86_64-linux-gnu/sys/types.h.html#197" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="decl" id="AlsaData::timestamp" title='AlsaData::timestamp' data-ref="AlsaData::timestamp">timestamp</dfn>; <i class="doc">///&lt; current timestamp, without latency applied.</i></td></tr>
+<tr><th id="61">61</th><td>} <dfn class="typedef" id="AlsaData" title='AlsaData' data-type='struct AlsaData' data-ref="AlsaData">AlsaData</dfn>;</td></tr>
+<tr><th id="62">62</th><td></td></tr>
+<tr><th id="63">63</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="64">64</th><td><i class="doc"> * Open an ALSA PCM.</i></td></tr>
+<tr><th id="65">65</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="66">66</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">s</span> media file handle</i></td></tr>
+<tr><th id="67">67</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">mode</span> either SND_PCM_STREAM_CAPTURE or SND_PCM_STREAM_PLAYBACK</i></td></tr>
+<tr><th id="68">68</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">sample_rate</span> in: requested sample rate;</i></td></tr>
+<tr><th id="69">69</th><td><i class="doc"> *                    out: actually selected sample rate</i></td></tr>
+<tr><th id="70">70</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">channels</span> number of channels</i></td></tr>
+<tr><th id="71">71</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">codec_id</span> in: requested AVCodecID or AV_CODEC_ID_NONE;</i></td></tr>
+<tr><th id="72">72</th><td><i class="doc"> *                 out: actually selected AVCodecID, changed only if</i></td></tr>
+<tr><th id="73">73</th><td><i class="doc"> *                 AV_CODEC_ID_NONE was requested</i></td></tr>
+<tr><th id="74">74</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="75">75</th><td><i class="doc"> * <span class="command">@return</span> 0 if OK, AVERROR_xxx on error</i></td></tr>
+<tr><th id="76">76</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="77">77</th><td><a class="macro" href="../libavutil/attributes.h.html#56" title="__attribute__((warn_unused_result))" data-ref="_M/av_warn_unused_result">av_warn_unused_result</a></td></tr>
+<tr><th id="78">78</th><td><em>int</em> <a class="decl" href="alsa.c.html#ff_alsa_open" title='ff_alsa_open' data-ref="ff_alsa_open" id="ff_alsa_open">ff_alsa_open</a>(<a class="typedef" href="../libavformat/avformat.h.html#AVFormatContext" title='AVFormatContext' data-type='struct AVFormatContext' data-ref="AVFormatContext">AVFormatContext</a> *<dfn class="local col0 decl" id="2540s" title='s' data-type='AVFormatContext *' data-ref="2540s">s</dfn>, <a class="typedef" href="../../include/alsa/pcm.h.html#snd_pcm_stream_t" title='snd_pcm_stream_t' data-type='enum _snd_pcm_stream' data-ref="snd_pcm_stream_t">snd_pcm_stream_t</a> <dfn class="local col1 decl" id="2541mode" title='mode' data-type='snd_pcm_stream_t' data-ref="2541mode">mode</dfn>,</td></tr>
+<tr><th id="79">79</th><td>                 <em>unsigned</em> <em>int</em> *<dfn class="local col2 decl" id="2542sample_rate" title='sample_rate' data-type='unsigned int *' data-ref="2542sample_rate">sample_rate</dfn>,</td></tr>
+<tr><th id="80">80</th><td>                 <em>int</em> <dfn class="local col3 decl" id="2543channels" title='channels' data-type='int' data-ref="2543channels">channels</dfn>, <b>enum</b> <a class="type" href="../libavcodec/avcodec.h.html#AVCodecID" title='AVCodecID' data-ref="AVCodecID">AVCodecID</a> *<dfn class="local col4 decl" id="2544codec_id" title='codec_id' data-type='enum AVCodecID *' data-ref="2544codec_id">codec_id</dfn>);</td></tr>
+<tr><th id="81">81</th><td></td></tr>
+<tr><th id="82">82</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="83">83</th><td><i class="doc"> * Close the ALSA PCM.</i></td></tr>
+<tr><th id="84">84</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="85">85</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">s1</span> media file handle</i></td></tr>
+<tr><th id="86">86</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="87">87</th><td><i class="doc"> * <span class="command">@return</span> 0</i></td></tr>
+<tr><th id="88">88</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="89">89</th><td><em>int</em> <a class="decl" href="alsa.c.html#ff_alsa_close" title='ff_alsa_close' data-ref="ff_alsa_close" id="ff_alsa_close">ff_alsa_close</a>(<a class="typedef" href="../libavformat/avformat.h.html#AVFormatContext" title='AVFormatContext' data-type='struct AVFormatContext' data-ref="AVFormatContext">AVFormatContext</a> *<dfn class="local col5 decl" id="2545s1" title='s1' data-type='AVFormatContext *' data-ref="2545s1">s1</dfn>);</td></tr>
+<tr><th id="90">90</th><td></td></tr>
+<tr><th id="91">91</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="92">92</th><td><i class="doc"> * Try to recover from ALSA buffer underrun.</i></td></tr>
+<tr><th id="93">93</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="94">94</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">s1</span> media file handle</i></td></tr>
+<tr><th id="95">95</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">err</span> error code reported by the previous ALSA call</i></td></tr>
+<tr><th id="96">96</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="97">97</th><td><i class="doc"> * <span class="command">@return</span> 0 if OK, AVERROR_xxx on error</i></td></tr>
+<tr><th id="98">98</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="99">99</th><td><a class="macro" href="../libavutil/attributes.h.html#56" title="__attribute__((warn_unused_result))" data-ref="_M/av_warn_unused_result">av_warn_unused_result</a></td></tr>
+<tr><th id="100">100</th><td><em>int</em> <a class="decl" href="alsa.c.html#ff_alsa_xrun_recover" title='ff_alsa_xrun_recover' data-ref="ff_alsa_xrun_recover" id="ff_alsa_xrun_recover">ff_alsa_xrun_recover</a>(<a class="typedef" href="../libavformat/avformat.h.html#AVFormatContext" title='AVFormatContext' data-type='struct AVFormatContext' data-ref="AVFormatContext">AVFormatContext</a> *<dfn class="local col6 decl" id="2546s1" title='s1' data-type='AVFormatContext *' data-ref="2546s1">s1</dfn>, <em>int</em> <dfn class="local col7 decl" id="2547err" title='err' data-type='int' data-ref="2547err">err</dfn>);</td></tr>
+<tr><th id="101">101</th><td></td></tr>
+<tr><th id="102">102</th><td><a class="macro" href="../libavutil/attributes.h.html#56" title="__attribute__((warn_unused_result))" data-ref="_M/av_warn_unused_result">av_warn_unused_result</a></td></tr>
+<tr><th id="103">103</th><td><em>int</em> <a class="decl" href="alsa.c.html#ff_alsa_extend_reorder_buf" title='ff_alsa_extend_reorder_buf' data-ref="ff_alsa_extend_reorder_buf" id="ff_alsa_extend_reorder_buf">ff_alsa_extend_reorder_buf</a>(<a class="typedef" href="#AlsaData" title='AlsaData' data-type='struct AlsaData' data-ref="AlsaData">AlsaData</a> *<dfn class="local col8 decl" id="2548s" title='s' data-type='AlsaData *' data-ref="2548s">s</dfn>, <em>int</em> <dfn class="local col9 decl" id="2549size" title='size' data-type='int' data-ref="2549size">size</dfn>);</td></tr>
+<tr><th id="104">104</th><td></td></tr>
+<tr><th id="105">105</th><td><a class="macro" href="../libavutil/attributes.h.html#56" title="__attribute__((warn_unused_result))" data-ref="_M/av_warn_unused_result">av_warn_unused_result</a></td></tr>
+<tr><th id="106">106</th><td><em>int</em> <a class="decl" href="alsa.c.html#ff_alsa_get_device_list" title='ff_alsa_get_device_list' data-ref="ff_alsa_get_device_list" id="ff_alsa_get_device_list">ff_alsa_get_device_list</a>(<a class="typedef" href="avdevice.h.html#AVDeviceInfoList" title='AVDeviceInfoList' data-type='struct AVDeviceInfoList' data-ref="AVDeviceInfoList">AVDeviceInfoList</a> *<dfn class="local col0 decl" id="2550device_list" title='device_list' data-type='AVDeviceInfoList *' data-ref="2550device_list">device_list</dfn>, <a class="typedef" href="../../include/alsa/pcm.h.html#snd_pcm_stream_t" title='snd_pcm_stream_t' data-type='enum _snd_pcm_stream' data-ref="snd_pcm_stream_t">snd_pcm_stream_t</a> <dfn class="local col1 decl" id="2551stream_type" title='stream_type' data-type='snd_pcm_stream_t' data-ref="2551stream_type">stream_type</dfn>);</td></tr>
+<tr><th id="107">107</th><td></td></tr>
+<tr><th id="108">108</th><td><u>#<span data-ppcond="30">endif</span> /* AVDEVICE_ALSA_H */</u></td></tr>
+<tr><th id="109">109</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated while processing <a href='alsa.c.html'>ffmpeg/libavdevice/alsa.c</a><br/>Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

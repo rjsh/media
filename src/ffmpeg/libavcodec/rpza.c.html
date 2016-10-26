@@ -1,0 +1,313 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>rpza.c source code [ffmpeg/libavcodec/rpza.c] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="RpzaContext "/>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavcodec/rpza.c'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavcodec</a>/<a href='rpza.c.html'>rpza.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * Quicktime Video (RPZA) Video Decoder</i></td></tr>
+<tr><th id="3">3</th><td><i> * Copyright (C) 2003 The FFmpeg project</i></td></tr>
+<tr><th id="4">4</th><td><i> *</i></td></tr>
+<tr><th id="5">5</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="8">8</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="9">9</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="10">10</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="11">11</th><td><i> *</i></td></tr>
+<tr><th id="12">12</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="13">13</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="14">14</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="15">15</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="16">16</th><td><i> *</i></td></tr>
+<tr><th id="17">17</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="18">18</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="19">19</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="20">20</th><td><i> */</i></td></tr>
+<tr><th id="21">21</th><td></td></tr>
+<tr><th id="22">22</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="23">23</th><td><i class="doc"> *<span class="command"> @file</span></i></td></tr>
+<tr><th id="24">24</th><td><i class="doc"> * QT RPZA Video Decoder by Roberto Togni</i></td></tr>
+<tr><th id="25">25</th><td><i class="doc"> * For more information about the RPZA format, visit:</i></td></tr>
+<tr><th id="26">26</th><td><i class="doc"> *   <a href="http://www.pcisys.net/~melanson/codecs/">http://www.pcisys.net/~melanson/codecs/</a></i></td></tr>
+<tr><th id="27">27</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="28">28</th><td><i class="doc"> * The RPZA decoder outputs RGB555 colorspace data.</i></td></tr>
+<tr><th id="29">29</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="30">30</th><td><i class="doc"> * Note that this decoder reads big endian RGB555 pixel values from the</i></td></tr>
+<tr><th id="31">31</th><td><i class="doc"> * bytestream, arranges them in the host's endian order, and outputs</i></td></tr>
+<tr><th id="32">32</th><td><i class="doc"> * them to the final rendered map in the same host endian order. This is</i></td></tr>
+<tr><th id="33">33</th><td><i class="doc"> * intended behavior as the libavcodec documentation states that RGB555</i></td></tr>
+<tr><th id="34">34</th><td><i class="doc"> * pixels shall be stored in native CPU endianness.</i></td></tr>
+<tr><th id="35">35</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="36">36</th><td></td></tr>
+<tr><th id="37">37</th><td><u>#include &lt;stdint.h&gt;</u></td></tr>
+<tr><th id="38">38</th><td><u>#include <a href="../../include/stdio.h.html">&lt;stdio.h&gt;</a></u></td></tr>
+<tr><th id="39">39</th><td><u>#include <a href="../../include/stdlib.h.html">&lt;stdlib.h&gt;</a></u></td></tr>
+<tr><th id="40">40</th><td><u>#include <a href="../../include/string.h.html">&lt;string.h&gt;</a></u></td></tr>
+<tr><th id="41">41</th><td></td></tr>
+<tr><th id="42">42</th><td><u>#include <a href="../libavutil/internal.h.html">"libavutil/internal.h"</a></u></td></tr>
+<tr><th id="43">43</th><td><u>#include <a href="avcodec.h.html">"avcodec.h"</a></u></td></tr>
+<tr><th id="44">44</th><td><u>#include <a href="bytestream.h.html">"bytestream.h"</a></u></td></tr>
+<tr><th id="45">45</th><td><u>#include <a href="internal.h.html">"internal.h"</a></u></td></tr>
+<tr><th id="46">46</th><td></td></tr>
+<tr><th id="47">47</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="RpzaContext" title='RpzaContext' data-ref="RpzaContext"><a class="type" href="#RpzaContext" title='RpzaContext' data-ref="RpzaContext">RpzaContext</a></dfn> {</td></tr>
+<tr><th id="48">48</th><td></td></tr>
+<tr><th id="49">49</th><td>    <a class="typedef" href="avcodec.h.html#AVCodecContext" title='AVCodecContext' data-type='struct AVCodecContext' data-ref="AVCodecContext">AVCodecContext</a> *<dfn class="tu decl" id="RpzaContext::avctx" title='RpzaContext::avctx' data-type='AVCodecContext *' data-ref="RpzaContext::avctx">avctx</dfn>;</td></tr>
+<tr><th id="50">50</th><td>    <a class="typedef" href="../libavutil/frame.h.html#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="tu decl" id="RpzaContext::frame" title='RpzaContext::frame' data-type='AVFrame *' data-ref="RpzaContext::frame">frame</dfn>;</td></tr>
+<tr><th id="51">51</th><td></td></tr>
+<tr><th id="52">52</th><td>    <a class="typedef" href="bytestream.h.html#GetByteContext" title='GetByteContext' data-type='struct GetByteContext' data-ref="GetByteContext">GetByteContext</a> <dfn class="tu decl" id="RpzaContext::gb" title='RpzaContext::gb' data-type='GetByteContext' data-ref="RpzaContext::gb">gb</dfn>;</td></tr>
+<tr><th id="53">53</th><td>} <dfn class="typedef" id="RpzaContext" title='RpzaContext' data-type='struct RpzaContext' data-ref="RpzaContext">RpzaContext</dfn>;</td></tr>
+<tr><th id="54">54</th><td></td></tr>
+<tr><th id="55">55</th><td><u>#define <dfn class="macro" id="_M/CHECK_BLOCK" data-ref="_M/CHECK_BLOCK">CHECK_BLOCK</dfn>()                                                         \</u></td></tr>
+<tr><th id="56">56</th><td><u>    if (<a class="local col7 ref" href="#17total_blocks" title='total_blocks' data-ref="17total_blocks">total_blocks</a> &lt; 1) {                                                    \</u></td></tr>
+<tr><th id="57">57</th><td><u>        <a class="ref" href="../libavutil/log.h.html#av_log" title='av_log' data-ref="av_log">av_log</a>(<a class="local col1 ref" href="#1s" title='s' data-ref="1s">s</a>-&gt;<a class="tu ref" href="#RpzaContext::avctx" title='RpzaContext::avctx' data-use='r' data-ref="RpzaContext::avctx">avctx</a>, AV_LOG_ERROR,                                         \</u></td></tr>
+<tr><th id="58">58</th><td><u>               "Block counter just went negative (this should not happen)\n"); \</u></td></tr>
+<tr><th id="59">59</th><td><u>        return AVERROR_INVALIDDATA;                                            \</u></td></tr>
+<tr><th id="60">60</th><td><u>    }</u>                                                                          \</td></tr>
+<tr><th id="61">61</th><td></td></tr>
+<tr><th id="62">62</th><td><u>#define <dfn class="macro" id="_M/ADVANCE_BLOCK" data-ref="_M/ADVANCE_BLOCK">ADVANCE_BLOCK</dfn>()             \</u></td></tr>
+<tr><th id="63">63</th><td><u>    {                               \</u></td></tr>
+<tr><th id="64">64</th><td><u>        <a class="local col3 ref" href="#13pixel_ptr" title='pixel_ptr' data-ref="13pixel_ptr">pixel_ptr</a> += 4;             \</u></td></tr>
+<tr><th id="65">65</th><td><u>        if (<a class="local col3 ref" href="#13pixel_ptr" title='pixel_ptr' data-ref="13pixel_ptr">pixel_ptr</a> &gt;= <a class="local col2 ref" href="#2width" title='width' data-ref="2width">width</a>)     \</u></td></tr>
+<tr><th id="66">66</th><td><u>        {                           \</u></td></tr>
+<tr><th id="67">67</th><td><u>            <a class="local col3 ref" href="#13pixel_ptr" title='pixel_ptr' data-ref="13pixel_ptr">pixel_ptr</a> = 0;          \</u></td></tr>
+<tr><th id="68">68</th><td><u>            <a class="local col2 ref" href="#12row_ptr" title='row_ptr' data-ref="12row_ptr">row_ptr</a>  += <a class="local col3 ref" href="#3stride" title='stride' data-ref="3stride">stride</a> * 4; \</u></td></tr>
+<tr><th id="69">69</th><td><u>        }                           \</u></td></tr>
+<tr><th id="70">70</th><td><u>        <a class="local col7 ref" href="#17total_blocks" title='total_blocks' data-ref="17total_blocks">total_blocks</a>--;             \</u></td></tr>
+<tr><th id="71">71</th><td><u>    }</u></td></tr>
+<tr><th id="72">72</th><td></td></tr>
+<tr><th id="73">73</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="rpza_decode_stream" title='rpza_decode_stream' data-type='int rpza_decode_stream(RpzaContext * s)' data-ref="rpza_decode_stream">rpza_decode_stream</dfn>(<a class="typedef" href="#RpzaContext" title='RpzaContext' data-type='struct RpzaContext' data-ref="RpzaContext">RpzaContext</a> *<dfn class="local col1 decl" id="1s" title='s' data-type='RpzaContext *' data-ref="1s">s</dfn>)</td></tr>
+<tr><th id="74">74</th><td>{</td></tr>
+<tr><th id="75">75</th><td>    <em>int</em> <dfn class="local col2 decl" id="2width" title='width' data-type='int' data-ref="2width">width</dfn> = <a class="local col1 ref" href="#1s" title='s' data-ref="1s">s</a>-&gt;<a class="tu ref" href="#RpzaContext::avctx" title='RpzaContext::avctx' data-use='r' data-ref="RpzaContext::avctx">avctx</a>-&gt;<a class="ref" href="avcodec.h.html#AVCodecContext::width" title='AVCodecContext::width' data-ref="AVCodecContext::width">width</a>;</td></tr>
+<tr><th id="76">76</th><td>    <em>int</em> <dfn class="local col3 decl" id="3stride" title='stride' data-type='int' data-ref="3stride">stride</dfn> = <a class="local col1 ref" href="#1s" title='s' data-ref="1s">s</a>-&gt;<a class="tu ref" href="#RpzaContext::frame" title='RpzaContext::frame' data-use='r' data-ref="RpzaContext::frame">frame</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::linesize" title='AVFrame::linesize' data-ref="AVFrame::linesize">linesize</a>[<var>0</var>] / <var>2</var>;</td></tr>
+<tr><th id="77">77</th><td>    <em>int</em> <dfn class="local col4 decl" id="4row_inc" title='row_inc' data-type='int' data-ref="4row_inc">row_inc</dfn> = <a class="local col3 ref" href="#3stride" title='stride' data-ref="3stride">stride</a> - <var>4</var>;</td></tr>
+<tr><th id="78">78</th><td>    <em>int</em> <dfn class="local col5 decl" id="5chunk_size" title='chunk_size' data-type='int' data-ref="5chunk_size">chunk_size</dfn>;</td></tr>
+<tr><th id="79">79</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> <dfn class="local col6 decl" id="6colorA" title='colorA' data-type='uint16_t' data-ref="6colorA">colorA</dfn> = <var>0</var>, <dfn class="local col7 decl" id="7colorB" title='colorB' data-type='uint16_t' data-ref="7colorB">colorB</dfn>;</td></tr>
+<tr><th id="80">80</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> <dfn class="local col8 decl" id="8color4" title='color4' data-type='uint16_t [4]' data-ref="8color4">color4</dfn>[<var>4</var>];</td></tr>
+<tr><th id="81">81</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> <dfn class="local col9 decl" id="9ta" title='ta' data-type='uint16_t' data-ref="9ta">ta</dfn>, <dfn class="local col0 decl" id="10tb" title='tb' data-type='uint16_t' data-ref="10tb">tb</dfn>;</td></tr>
+<tr><th id="82">82</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> *<dfn class="local col1 decl" id="11pixels" title='pixels' data-type='uint16_t *' data-ref="11pixels">pixels</dfn> = (<a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> *)<a class="local col1 ref" href="#1s" title='s' data-ref="1s">s</a>-&gt;<a class="tu ref" href="#RpzaContext::frame" title='RpzaContext::frame' data-use='r' data-ref="RpzaContext::frame">frame</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::data" title='AVFrame::data' data-ref="AVFrame::data">data</a>[<var>0</var>];</td></tr>
+<tr><th id="83">83</th><td></td></tr>
+<tr><th id="84">84</th><td>    <em>int</em> <dfn class="local col2 decl" id="12row_ptr" title='row_ptr' data-type='int' data-ref="12row_ptr">row_ptr</dfn> = <var>0</var>;</td></tr>
+<tr><th id="85">85</th><td>    <em>int</em> <dfn class="local col3 decl" id="13pixel_ptr" title='pixel_ptr' data-type='int' data-ref="13pixel_ptr">pixel_ptr</dfn> = <var>0</var>;</td></tr>
+<tr><th id="86">86</th><td>    <em>int</em> <dfn class="local col4 decl" id="14block_ptr" title='block_ptr' data-type='int' data-ref="14block_ptr">block_ptr</dfn>;</td></tr>
+<tr><th id="87">87</th><td>    <em>int</em> <dfn class="local col5 decl" id="15pixel_x" title='pixel_x' data-type='int' data-ref="15pixel_x">pixel_x</dfn>, <dfn class="local col6 decl" id="16pixel_y" title='pixel_y' data-type='int' data-ref="16pixel_y">pixel_y</dfn>;</td></tr>
+<tr><th id="88">88</th><td>    <em>int</em> <dfn class="local col7 decl" id="17total_blocks" title='total_blocks' data-type='int' data-ref="17total_blocks">total_blocks</dfn>;</td></tr>
+<tr><th id="89">89</th><td></td></tr>
+<tr><th id="90">90</th><td>    <i>/* First byte is always 0xe1. Warn if it's different */</i></td></tr>
+<tr><th id="91">91</th><td>    <b>if</b> (<a class="ref" href="bytestream.h.html#95" title='bytestream2_peek_byte' data-ref="bytestream2_peek_byte">bytestream2_peek_byte</a>(&amp;<a class="local col1 ref" href="#1s" title='s' data-ref="1s">s</a>-&gt;<a class="tu ref" href="#RpzaContext::gb" title='RpzaContext::gb' data-use='a' data-ref="RpzaContext::gb">gb</a>) != <var>0xe1</var>)</td></tr>
+<tr><th id="92">92</th><td>        <a class="ref" href="../libavutil/log.h.html#av_log" title='av_log' data-ref="av_log">av_log</a>(<a class="local col1 ref" href="#1s" title='s' data-ref="1s">s</a>-&gt;<a class="tu ref" href="#RpzaContext::avctx" title='RpzaContext::avctx' data-use='r' data-ref="RpzaContext::avctx">avctx</a>, <a class="macro" href="../libavutil/log.h.html#176" title="16" data-ref="_M/AV_LOG_ERROR">AV_LOG_ERROR</a>, <q>"First chunk byte is 0x%02x instead of 0xe1\n"</q>,</td></tr>
+<tr><th id="93">93</th><td>               <a class="ref" href="bytestream.h.html#95" title='bytestream2_peek_byte' data-ref="bytestream2_peek_byte">bytestream2_peek_byte</a>(&amp;<a class="local col1 ref" href="#1s" title='s' data-ref="1s">s</a>-&gt;<a class="tu ref" href="#RpzaContext::gb" title='RpzaContext::gb' data-use='a' data-ref="RpzaContext::gb">gb</a>));</td></tr>
+<tr><th id="94">94</th><td></td></tr>
+<tr><th id="95">95</th><td>    <i>/* Get chunk size, ignoring first byte */</i></td></tr>
+<tr><th id="96">96</th><td>    <a class="local col5 ref" href="#5chunk_size" title='chunk_size' data-ref="5chunk_size">chunk_size</a> = <a class="ref" href="bytestream.h.html#92" title='bytestream2_get_be32' data-ref="bytestream2_get_be32">bytestream2_get_be32</a>(&amp;<a class="local col1 ref" href="#1s" title='s' data-ref="1s">s</a>-&gt;<a class="tu ref" href="#RpzaContext::gb" title='RpzaContext::gb' data-use='a' data-ref="RpzaContext::gb">gb</a>) &amp; <var>0x00FFFFFF</var>;</td></tr>
+<tr><th id="97">97</th><td></td></tr>
+<tr><th id="98">98</th><td>    <i>/* If length mismatch use size from MOV file and try to decode anyway */</i></td></tr>
+<tr><th id="99">99</th><td>    <b>if</b> (<a class="local col5 ref" href="#5chunk_size" title='chunk_size' data-ref="5chunk_size">chunk_size</a> != <a class="ref" href="bytestream.h.html#bytestream2_get_bytes_left" title='bytestream2_get_bytes_left' data-ref="bytestream2_get_bytes_left">bytestream2_get_bytes_left</a>(&amp;<a class="local col1 ref" href="#1s" title='s' data-ref="1s">s</a>-&gt;<a class="tu ref" href="#RpzaContext::gb" title='RpzaContext::gb' data-use='a' data-ref="RpzaContext::gb">gb</a>) + <var>4</var>)</td></tr>
+<tr><th id="100">100</th><td>        <a class="ref" href="../libavutil/log.h.html#av_log" title='av_log' data-ref="av_log">av_log</a>(<a class="local col1 ref" href="#1s" title='s' data-ref="1s">s</a>-&gt;<a class="tu ref" href="#RpzaContext::avctx" title='RpzaContext::avctx' data-use='r' data-ref="RpzaContext::avctx">avctx</a>, <a class="macro" href="../libavutil/log.h.html#182" title="24" data-ref="_M/AV_LOG_WARNING">AV_LOG_WARNING</a>,</td></tr>
+<tr><th id="101">101</th><td>               <q>"MOV chunk size %d != encoded chunk size %d\n"</q>,</td></tr>
+<tr><th id="102">102</th><td>               <a class="local col5 ref" href="#5chunk_size" title='chunk_size' data-ref="5chunk_size">chunk_size</a>,</td></tr>
+<tr><th id="103">103</th><td>               <a class="ref" href="bytestream.h.html#bytestream2_get_bytes_left" title='bytestream2_get_bytes_left' data-ref="bytestream2_get_bytes_left">bytestream2_get_bytes_left</a>(&amp;<a class="local col1 ref" href="#1s" title='s' data-ref="1s">s</a>-&gt;<a class="tu ref" href="#RpzaContext::gb" title='RpzaContext::gb' data-use='a' data-ref="RpzaContext::gb">gb</a>) + <var>4</var></td></tr>
+<tr><th id="104">104</th><td>              );</td></tr>
+<tr><th id="105">105</th><td></td></tr>
+<tr><th id="106">106</th><td>    <i>/* Number of 4x4 blocks in frame. */</i></td></tr>
+<tr><th id="107">107</th><td>    <a class="local col7 ref" href="#17total_blocks" title='total_blocks' data-ref="17total_blocks">total_blocks</a> = ((<a class="local col1 ref" href="#1s" title='s' data-ref="1s">s</a>-&gt;<a class="tu ref" href="#RpzaContext::avctx" title='RpzaContext::avctx' data-use='r' data-ref="RpzaContext::avctx">avctx</a>-&gt;<a class="ref" href="avcodec.h.html#AVCodecContext::width" title='AVCodecContext::width' data-ref="AVCodecContext::width">width</a> + <var>3</var>) / <var>4</var>) * ((<a class="local col1 ref" href="#1s" title='s' data-ref="1s">s</a>-&gt;<a class="tu ref" href="#RpzaContext::avctx" title='RpzaContext::avctx' data-use='r' data-ref="RpzaContext::avctx">avctx</a>-&gt;<a class="ref" href="avcodec.h.html#AVCodecContext::height" title='AVCodecContext::height' data-ref="AVCodecContext::height">height</a> + <var>3</var>) / <var>4</var>);</td></tr>
+<tr><th id="108">108</th><td></td></tr>
+<tr><th id="109">109</th><td>    <i>/* Process chunk data */</i></td></tr>
+<tr><th id="110">110</th><td>    <b>while</b> (<a class="ref" href="bytestream.h.html#bytestream2_get_bytes_left" title='bytestream2_get_bytes_left' data-ref="bytestream2_get_bytes_left">bytestream2_get_bytes_left</a>(&amp;<a class="local col1 ref" href="#1s" title='s' data-ref="1s">s</a>-&gt;<a class="tu ref" href="#RpzaContext::gb" title='RpzaContext::gb' data-use='a' data-ref="RpzaContext::gb">gb</a>)) {</td></tr>
+<tr><th id="111">111</th><td>        <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="local col8 decl" id="18opcode" title='opcode' data-type='uint8_t' data-ref="18opcode">opcode</dfn> = <a class="ref" href="bytestream.h.html#95" title='bytestream2_get_byte' data-ref="bytestream2_get_byte">bytestream2_get_byte</a>(&amp;<a class="local col1 ref" href="#1s" title='s' data-ref="1s">s</a>-&gt;<a class="tu ref" href="#RpzaContext::gb" title='RpzaContext::gb' data-use='a' data-ref="RpzaContext::gb">gb</a>); <i>/* Get opcode */</i></td></tr>
+<tr><th id="112">112</th><td></td></tr>
+<tr><th id="113">113</th><td>        <em>int</em> <dfn class="local col9 decl" id="19n_blocks" title='n_blocks' data-type='int' data-ref="19n_blocks">n_blocks</dfn> = (<a class="local col8 ref" href="#18opcode" title='opcode' data-ref="18opcode">opcode</a> &amp; <var>0x1f</var>) + <var>1</var>; <i>/* Extract block counter from opcode */</i></td></tr>
+<tr><th id="114">114</th><td></td></tr>
+<tr><th id="115">115</th><td>        <i>/* If opcode MSbit is 0, we need more data to decide what to do */</i></td></tr>
+<tr><th id="116">116</th><td>        <b>if</b> ((<a class="local col8 ref" href="#18opcode" title='opcode' data-ref="18opcode">opcode</a> &amp; <var>0x80</var>) == <var>0</var>) {</td></tr>
+<tr><th id="117">117</th><td>            <a class="local col6 ref" href="#6colorA" title='colorA' data-ref="6colorA">colorA</a> = (<a class="local col8 ref" href="#18opcode" title='opcode' data-ref="18opcode">opcode</a> &lt;&lt; <var>8</var>) | <a class="ref" href="bytestream.h.html#95" title='bytestream2_get_byte' data-ref="bytestream2_get_byte">bytestream2_get_byte</a>(&amp;<a class="local col1 ref" href="#1s" title='s' data-ref="1s">s</a>-&gt;<a class="tu ref" href="#RpzaContext::gb" title='RpzaContext::gb' data-use='a' data-ref="RpzaContext::gb">gb</a>);</td></tr>
+<tr><th id="118">118</th><td>            <a class="local col8 ref" href="#18opcode" title='opcode' data-ref="18opcode">opcode</a> = <var>0</var>;</td></tr>
+<tr><th id="119">119</th><td>            <b>if</b> ((<a class="ref" href="bytestream.h.html#95" title='bytestream2_peek_byte' data-ref="bytestream2_peek_byte">bytestream2_peek_byte</a>(&amp;<a class="local col1 ref" href="#1s" title='s' data-ref="1s">s</a>-&gt;<a class="tu ref" href="#RpzaContext::gb" title='RpzaContext::gb' data-use='a' data-ref="RpzaContext::gb">gb</a>) &amp; <var>0x80</var>) != <var>0</var>) {</td></tr>
+<tr><th id="120">120</th><td>                <i>/* Must behave as opcode 110xxxxx, using colorA computed</i></td></tr>
+<tr><th id="121">121</th><td><i>                 * above. Use fake opcode 0x20 to enter switch block at</i></td></tr>
+<tr><th id="122">122</th><td><i>                 * the right place */</i></td></tr>
+<tr><th id="123">123</th><td>                <a class="local col8 ref" href="#18opcode" title='opcode' data-ref="18opcode">opcode</a> = <var>0x20</var>;</td></tr>
+<tr><th id="124">124</th><td>                <a class="local col9 ref" href="#19n_blocks" title='n_blocks' data-ref="19n_blocks">n_blocks</a> = <var>1</var>;</td></tr>
+<tr><th id="125">125</th><td>            }</td></tr>
+<tr><th id="126">126</th><td>        }</td></tr>
+<tr><th id="127">127</th><td></td></tr>
+<tr><th id="128">128</th><td>        <a class="local col9 ref" href="#19n_blocks" title='n_blocks' data-ref="19n_blocks">n_blocks</a> = <a class="macro" href="../libavutil/common.h.html#96" title="((n_blocks) &gt; (total_blocks) ? (total_blocks) : (n_blocks))" data-ref="_M/FFMIN">FFMIN</a>(<a class="local col9 ref" href="#19n_blocks" title='n_blocks' data-ref="19n_blocks">n_blocks</a>, <a class="local col7 ref" href="#17total_blocks" title='total_blocks' data-ref="17total_blocks">total_blocks</a>);</td></tr>
+<tr><th id="129">129</th><td></td></tr>
+<tr><th id="130">130</th><td>        <b>switch</b> (<a class="local col8 ref" href="#18opcode" title='opcode' data-ref="18opcode">opcode</a> &amp; <var>0xe0</var>) {</td></tr>
+<tr><th id="131">131</th><td></td></tr>
+<tr><th id="132">132</th><td>        <i>/* Skip blocks */</i></td></tr>
+<tr><th id="133">133</th><td>        <b>case</b> <var>0x80</var>:</td></tr>
+<tr><th id="134">134</th><td>            <b>while</b> (<a class="local col9 ref" href="#19n_blocks" title='n_blocks' data-ref="19n_blocks">n_blocks</a>--) {</td></tr>
+<tr><th id="135">135</th><td>                <a class="macro" href="#55" title="if (total_blocks &lt; 1) { av_log(s-&gt;avctx, 16, &quot;Block counter just went negative (this should not happen)\n&quot;); return (-(int)((&apos;I&apos;) | ((&apos;N&apos;) &lt;&lt; 8) | ((&apos;D&apos;) &lt;&lt; 16) | ((unsigned)(&apos;A&apos;) &lt;&lt; 24))); }" data-ref="_M/CHECK_BLOCK">CHECK_BLOCK</a>();</td></tr>
+<tr><th id="136">136</th><td>                <a class="macro" href="#62" title="{ pixel_ptr += 4; if (pixel_ptr &gt;= width) { pixel_ptr = 0; row_ptr += stride * 4; } total_blocks--; }" data-ref="_M/ADVANCE_BLOCK">ADVANCE_BLOCK</a>();</td></tr>
+<tr><th id="137">137</th><td>            }</td></tr>
+<tr><th id="138">138</th><td>            <b>break</b>;</td></tr>
+<tr><th id="139">139</th><td></td></tr>
+<tr><th id="140">140</th><td>        <i>/* Fill blocks with one color */</i></td></tr>
+<tr><th id="141">141</th><td>        <b>case</b> <var>0xa0</var>:</td></tr>
+<tr><th id="142">142</th><td>            <a class="local col6 ref" href="#6colorA" title='colorA' data-ref="6colorA">colorA</a> = <a class="ref" href="bytestream.h.html#94" title='bytestream2_get_be16' data-ref="bytestream2_get_be16">bytestream2_get_be16</a>(&amp;<a class="local col1 ref" href="#1s" title='s' data-ref="1s">s</a>-&gt;<a class="tu ref" href="#RpzaContext::gb" title='RpzaContext::gb' data-use='a' data-ref="RpzaContext::gb">gb</a>);</td></tr>
+<tr><th id="143">143</th><td>            <b>while</b> (<a class="local col9 ref" href="#19n_blocks" title='n_blocks' data-ref="19n_blocks">n_blocks</a>--) {</td></tr>
+<tr><th id="144">144</th><td>                <a class="macro" href="#55" title="if (total_blocks &lt; 1) { av_log(s-&gt;avctx, 16, &quot;Block counter just went negative (this should not happen)\n&quot;); return (-(int)((&apos;I&apos;) | ((&apos;N&apos;) &lt;&lt; 8) | ((&apos;D&apos;) &lt;&lt; 16) | ((unsigned)(&apos;A&apos;) &lt;&lt; 24))); }" data-ref="_M/CHECK_BLOCK">CHECK_BLOCK</a>();</td></tr>
+<tr><th id="145">145</th><td>                <a class="local col4 ref" href="#14block_ptr" title='block_ptr' data-ref="14block_ptr">block_ptr</a> = <a class="local col2 ref" href="#12row_ptr" title='row_ptr' data-ref="12row_ptr">row_ptr</a> + <a class="local col3 ref" href="#13pixel_ptr" title='pixel_ptr' data-ref="13pixel_ptr">pixel_ptr</a>;</td></tr>
+<tr><th id="146">146</th><td>                <b>for</b> (<a class="local col6 ref" href="#16pixel_y" title='pixel_y' data-ref="16pixel_y">pixel_y</a> = <var>0</var>; <a class="local col6 ref" href="#16pixel_y" title='pixel_y' data-ref="16pixel_y">pixel_y</a> &lt; <var>4</var>; <a class="local col6 ref" href="#16pixel_y" title='pixel_y' data-ref="16pixel_y">pixel_y</a>++) {</td></tr>
+<tr><th id="147">147</th><td>                    <b>for</b> (<a class="local col5 ref" href="#15pixel_x" title='pixel_x' data-ref="15pixel_x">pixel_x</a> = <var>0</var>; <a class="local col5 ref" href="#15pixel_x" title='pixel_x' data-ref="15pixel_x">pixel_x</a> &lt; <var>4</var>; <a class="local col5 ref" href="#15pixel_x" title='pixel_x' data-ref="15pixel_x">pixel_x</a>++){</td></tr>
+<tr><th id="148">148</th><td>                        <a class="local col1 ref" href="#11pixels" title='pixels' data-ref="11pixels">pixels</a>[<a class="local col4 ref" href="#14block_ptr" title='block_ptr' data-ref="14block_ptr">block_ptr</a>] = <a class="local col6 ref" href="#6colorA" title='colorA' data-ref="6colorA">colorA</a>;</td></tr>
+<tr><th id="149">149</th><td>                        <a class="local col4 ref" href="#14block_ptr" title='block_ptr' data-ref="14block_ptr">block_ptr</a>++;</td></tr>
+<tr><th id="150">150</th><td>                    }</td></tr>
+<tr><th id="151">151</th><td>                    <a class="local col4 ref" href="#14block_ptr" title='block_ptr' data-ref="14block_ptr">block_ptr</a> += <a class="local col4 ref" href="#4row_inc" title='row_inc' data-ref="4row_inc">row_inc</a>;</td></tr>
+<tr><th id="152">152</th><td>                }</td></tr>
+<tr><th id="153">153</th><td>                <a class="macro" href="#62" title="{ pixel_ptr += 4; if (pixel_ptr &gt;= width) { pixel_ptr = 0; row_ptr += stride * 4; } total_blocks--; }" data-ref="_M/ADVANCE_BLOCK">ADVANCE_BLOCK</a>();</td></tr>
+<tr><th id="154">154</th><td>            }</td></tr>
+<tr><th id="155">155</th><td>            <b>break</b>;</td></tr>
+<tr><th id="156">156</th><td></td></tr>
+<tr><th id="157">157</th><td>        <i>/* Fill blocks with 4 colors */</i></td></tr>
+<tr><th id="158">158</th><td>        <b>case</b> <var>0xc0</var>:</td></tr>
+<tr><th id="159">159</th><td>            <a class="local col6 ref" href="#6colorA" title='colorA' data-ref="6colorA">colorA</a> = <a class="ref" href="bytestream.h.html#94" title='bytestream2_get_be16' data-ref="bytestream2_get_be16">bytestream2_get_be16</a>(&amp;<a class="local col1 ref" href="#1s" title='s' data-ref="1s">s</a>-&gt;<a class="tu ref" href="#RpzaContext::gb" title='RpzaContext::gb' data-use='a' data-ref="RpzaContext::gb">gb</a>);</td></tr>
+<tr><th id="160">160</th><td>        <b>case</b> <var>0x20</var>:</td></tr>
+<tr><th id="161">161</th><td>            <a class="local col7 ref" href="#7colorB" title='colorB' data-ref="7colorB">colorB</a> = <a class="ref" href="bytestream.h.html#94" title='bytestream2_get_be16' data-ref="bytestream2_get_be16">bytestream2_get_be16</a>(&amp;<a class="local col1 ref" href="#1s" title='s' data-ref="1s">s</a>-&gt;<a class="tu ref" href="#RpzaContext::gb" title='RpzaContext::gb' data-use='a' data-ref="RpzaContext::gb">gb</a>);</td></tr>
+<tr><th id="162">162</th><td></td></tr>
+<tr><th id="163">163</th><td>            <i>/* sort out the colors */</i></td></tr>
+<tr><th id="164">164</th><td>            <a class="local col8 ref" href="#8color4" title='color4' data-ref="8color4">color4</a>[<var>0</var>] = <a class="local col7 ref" href="#7colorB" title='colorB' data-ref="7colorB">colorB</a>;</td></tr>
+<tr><th id="165">165</th><td>            <a class="local col8 ref" href="#8color4" title='color4' data-ref="8color4">color4</a>[<var>1</var>] = <var>0</var>;</td></tr>
+<tr><th id="166">166</th><td>            <a class="local col8 ref" href="#8color4" title='color4' data-ref="8color4">color4</a>[<var>2</var>] = <var>0</var>;</td></tr>
+<tr><th id="167">167</th><td>            <a class="local col8 ref" href="#8color4" title='color4' data-ref="8color4">color4</a>[<var>3</var>] = <a class="local col6 ref" href="#6colorA" title='colorA' data-ref="6colorA">colorA</a>;</td></tr>
+<tr><th id="168">168</th><td></td></tr>
+<tr><th id="169">169</th><td>            <i>/* red components */</i></td></tr>
+<tr><th id="170">170</th><td>            <a class="local col9 ref" href="#9ta" title='ta' data-ref="9ta">ta</a> = (<a class="local col6 ref" href="#6colorA" title='colorA' data-ref="6colorA">colorA</a> &gt;&gt; <var>10</var>) &amp; <var>0x1F</var>;</td></tr>
+<tr><th id="171">171</th><td>            <a class="local col0 ref" href="#10tb" title='tb' data-ref="10tb">tb</a> = (<a class="local col7 ref" href="#7colorB" title='colorB' data-ref="7colorB">colorB</a> &gt;&gt; <var>10</var>) &amp; <var>0x1F</var>;</td></tr>
+<tr><th id="172">172</th><td>            <a class="local col8 ref" href="#8color4" title='color4' data-ref="8color4">color4</a>[<var>1</var>] |= ((<var>11</var> * <a class="local col9 ref" href="#9ta" title='ta' data-ref="9ta">ta</a> + <var>21</var> * <a class="local col0 ref" href="#10tb" title='tb' data-ref="10tb">tb</a>) &gt;&gt; <var>5</var>) &lt;&lt; <var>10</var>;</td></tr>
+<tr><th id="173">173</th><td>            <a class="local col8 ref" href="#8color4" title='color4' data-ref="8color4">color4</a>[<var>2</var>] |= ((<var>21</var> * <a class="local col9 ref" href="#9ta" title='ta' data-ref="9ta">ta</a> + <var>11</var> * <a class="local col0 ref" href="#10tb" title='tb' data-ref="10tb">tb</a>) &gt;&gt; <var>5</var>) &lt;&lt; <var>10</var>;</td></tr>
+<tr><th id="174">174</th><td></td></tr>
+<tr><th id="175">175</th><td>            <i>/* green components */</i></td></tr>
+<tr><th id="176">176</th><td>            <a class="local col9 ref" href="#9ta" title='ta' data-ref="9ta">ta</a> = (<a class="local col6 ref" href="#6colorA" title='colorA' data-ref="6colorA">colorA</a> &gt;&gt; <var>5</var>) &amp; <var>0x1F</var>;</td></tr>
+<tr><th id="177">177</th><td>            <a class="local col0 ref" href="#10tb" title='tb' data-ref="10tb">tb</a> = (<a class="local col7 ref" href="#7colorB" title='colorB' data-ref="7colorB">colorB</a> &gt;&gt; <var>5</var>) &amp; <var>0x1F</var>;</td></tr>
+<tr><th id="178">178</th><td>            <a class="local col8 ref" href="#8color4" title='color4' data-ref="8color4">color4</a>[<var>1</var>] |= ((<var>11</var> * <a class="local col9 ref" href="#9ta" title='ta' data-ref="9ta">ta</a> + <var>21</var> * <a class="local col0 ref" href="#10tb" title='tb' data-ref="10tb">tb</a>) &gt;&gt; <var>5</var>) &lt;&lt; <var>5</var>;</td></tr>
+<tr><th id="179">179</th><td>            <a class="local col8 ref" href="#8color4" title='color4' data-ref="8color4">color4</a>[<var>2</var>] |= ((<var>21</var> * <a class="local col9 ref" href="#9ta" title='ta' data-ref="9ta">ta</a> + <var>11</var> * <a class="local col0 ref" href="#10tb" title='tb' data-ref="10tb">tb</a>) &gt;&gt; <var>5</var>) &lt;&lt; <var>5</var>;</td></tr>
+<tr><th id="180">180</th><td></td></tr>
+<tr><th id="181">181</th><td>            <i>/* blue components */</i></td></tr>
+<tr><th id="182">182</th><td>            <a class="local col9 ref" href="#9ta" title='ta' data-ref="9ta">ta</a> = <a class="local col6 ref" href="#6colorA" title='colorA' data-ref="6colorA">colorA</a> &amp; <var>0x1F</var>;</td></tr>
+<tr><th id="183">183</th><td>            <a class="local col0 ref" href="#10tb" title='tb' data-ref="10tb">tb</a> = <a class="local col7 ref" href="#7colorB" title='colorB' data-ref="7colorB">colorB</a> &amp; <var>0x1F</var>;</td></tr>
+<tr><th id="184">184</th><td>            <a class="local col8 ref" href="#8color4" title='color4' data-ref="8color4">color4</a>[<var>1</var>] |= ((<var>11</var> * <a class="local col9 ref" href="#9ta" title='ta' data-ref="9ta">ta</a> + <var>21</var> * <a class="local col0 ref" href="#10tb" title='tb' data-ref="10tb">tb</a>) &gt;&gt; <var>5</var>);</td></tr>
+<tr><th id="185">185</th><td>            <a class="local col8 ref" href="#8color4" title='color4' data-ref="8color4">color4</a>[<var>2</var>] |= ((<var>21</var> * <a class="local col9 ref" href="#9ta" title='ta' data-ref="9ta">ta</a> + <var>11</var> * <a class="local col0 ref" href="#10tb" title='tb' data-ref="10tb">tb</a>) &gt;&gt; <var>5</var>);</td></tr>
+<tr><th id="186">186</th><td></td></tr>
+<tr><th id="187">187</th><td>            <b>if</b> (<a class="ref" href="bytestream.h.html#bytestream2_get_bytes_left" title='bytestream2_get_bytes_left' data-ref="bytestream2_get_bytes_left">bytestream2_get_bytes_left</a>(&amp;<a class="local col1 ref" href="#1s" title='s' data-ref="1s">s</a>-&gt;<a class="tu ref" href="#RpzaContext::gb" title='RpzaContext::gb' data-use='a' data-ref="RpzaContext::gb">gb</a>) &lt; <a class="local col9 ref" href="#19n_blocks" title='n_blocks' data-ref="19n_blocks">n_blocks</a> * <var>4</var>)</td></tr>
+<tr><th id="188">188</th><td>                <b>return</b> <a class="macro" href="../libavutil/error.h.html#59" title="(-(int)((&apos;I&apos;) | ((&apos;N&apos;) &lt;&lt; 8) | ((&apos;D&apos;) &lt;&lt; 16) | ((unsigned)(&apos;A&apos;) &lt;&lt; 24)))" data-ref="_M/AVERROR_INVALIDDATA">AVERROR_INVALIDDATA</a>;</td></tr>
+<tr><th id="189">189</th><td>            <b>while</b> (<a class="local col9 ref" href="#19n_blocks" title='n_blocks' data-ref="19n_blocks">n_blocks</a>--) {</td></tr>
+<tr><th id="190">190</th><td>                <a class="macro" href="#55" title="if (total_blocks &lt; 1) { av_log(s-&gt;avctx, 16, &quot;Block counter just went negative (this should not happen)\n&quot;); return (-(int)((&apos;I&apos;) | ((&apos;N&apos;) &lt;&lt; 8) | ((&apos;D&apos;) &lt;&lt; 16) | ((unsigned)(&apos;A&apos;) &lt;&lt; 24))); }" data-ref="_M/CHECK_BLOCK">CHECK_BLOCK</a>();</td></tr>
+<tr><th id="191">191</th><td>                <a class="local col4 ref" href="#14block_ptr" title='block_ptr' data-ref="14block_ptr">block_ptr</a> = <a class="local col2 ref" href="#12row_ptr" title='row_ptr' data-ref="12row_ptr">row_ptr</a> + <a class="local col3 ref" href="#13pixel_ptr" title='pixel_ptr' data-ref="13pixel_ptr">pixel_ptr</a>;</td></tr>
+<tr><th id="192">192</th><td>                <b>for</b> (<a class="local col6 ref" href="#16pixel_y" title='pixel_y' data-ref="16pixel_y">pixel_y</a> = <var>0</var>; <a class="local col6 ref" href="#16pixel_y" title='pixel_y' data-ref="16pixel_y">pixel_y</a> &lt; <var>4</var>; <a class="local col6 ref" href="#16pixel_y" title='pixel_y' data-ref="16pixel_y">pixel_y</a>++) {</td></tr>
+<tr><th id="193">193</th><td>                    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="local col0 decl" id="20index" title='index' data-type='uint8_t' data-ref="20index">index</dfn> = <a class="ref" href="bytestream.h.html#95" title='bytestream2_get_byteu' data-ref="bytestream2_get_byteu">bytestream2_get_byteu</a>(&amp;<a class="local col1 ref" href="#1s" title='s' data-ref="1s">s</a>-&gt;<a class="tu ref" href="#RpzaContext::gb" title='RpzaContext::gb' data-use='a' data-ref="RpzaContext::gb">gb</a>);</td></tr>
+<tr><th id="194">194</th><td>                    <b>for</b> (<a class="local col5 ref" href="#15pixel_x" title='pixel_x' data-ref="15pixel_x">pixel_x</a> = <var>0</var>; <a class="local col5 ref" href="#15pixel_x" title='pixel_x' data-ref="15pixel_x">pixel_x</a> &lt; <var>4</var>; <a class="local col5 ref" href="#15pixel_x" title='pixel_x' data-ref="15pixel_x">pixel_x</a>++){</td></tr>
+<tr><th id="195">195</th><td>                        <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="local col1 decl" id="21idx" title='idx' data-type='uint8_t' data-ref="21idx">idx</dfn> = (<a class="local col0 ref" href="#20index" title='index' data-ref="20index">index</a> &gt;&gt; (<var>2</var> * (<var>3</var> - <a class="local col5 ref" href="#15pixel_x" title='pixel_x' data-ref="15pixel_x">pixel_x</a>))) &amp; <var>0x03</var>;</td></tr>
+<tr><th id="196">196</th><td>                        <a class="local col1 ref" href="#11pixels" title='pixels' data-ref="11pixels">pixels</a>[<a class="local col4 ref" href="#14block_ptr" title='block_ptr' data-ref="14block_ptr">block_ptr</a>] = <a class="local col8 ref" href="#8color4" title='color4' data-ref="8color4">color4</a>[<a class="local col1 ref" href="#21idx" title='idx' data-ref="21idx">idx</a>];</td></tr>
+<tr><th id="197">197</th><td>                        <a class="local col4 ref" href="#14block_ptr" title='block_ptr' data-ref="14block_ptr">block_ptr</a>++;</td></tr>
+<tr><th id="198">198</th><td>                    }</td></tr>
+<tr><th id="199">199</th><td>                    <a class="local col4 ref" href="#14block_ptr" title='block_ptr' data-ref="14block_ptr">block_ptr</a> += <a class="local col4 ref" href="#4row_inc" title='row_inc' data-ref="4row_inc">row_inc</a>;</td></tr>
+<tr><th id="200">200</th><td>                }</td></tr>
+<tr><th id="201">201</th><td>                <a class="macro" href="#62" title="{ pixel_ptr += 4; if (pixel_ptr &gt;= width) { pixel_ptr = 0; row_ptr += stride * 4; } total_blocks--; }" data-ref="_M/ADVANCE_BLOCK">ADVANCE_BLOCK</a>();</td></tr>
+<tr><th id="202">202</th><td>            }</td></tr>
+<tr><th id="203">203</th><td>            <b>break</b>;</td></tr>
+<tr><th id="204">204</th><td></td></tr>
+<tr><th id="205">205</th><td>        <i>/* Fill block with 16 colors */</i></td></tr>
+<tr><th id="206">206</th><td>        <b>case</b> <var>0x00</var>:</td></tr>
+<tr><th id="207">207</th><td>            <b>if</b> (<a class="ref" href="bytestream.h.html#bytestream2_get_bytes_left" title='bytestream2_get_bytes_left' data-ref="bytestream2_get_bytes_left">bytestream2_get_bytes_left</a>(&amp;<a class="local col1 ref" href="#1s" title='s' data-ref="1s">s</a>-&gt;<a class="tu ref" href="#RpzaContext::gb" title='RpzaContext::gb' data-use='a' data-ref="RpzaContext::gb">gb</a>) &lt; <var>30</var>)</td></tr>
+<tr><th id="208">208</th><td>                <b>return</b> <a class="macro" href="../libavutil/error.h.html#59" title="(-(int)((&apos;I&apos;) | ((&apos;N&apos;) &lt;&lt; 8) | ((&apos;D&apos;) &lt;&lt; 16) | ((unsigned)(&apos;A&apos;) &lt;&lt; 24)))" data-ref="_M/AVERROR_INVALIDDATA">AVERROR_INVALIDDATA</a>;</td></tr>
+<tr><th id="209">209</th><td>            <a class="macro" href="#55" title="if (total_blocks &lt; 1) { av_log(s-&gt;avctx, 16, &quot;Block counter just went negative (this should not happen)\n&quot;); return (-(int)((&apos;I&apos;) | ((&apos;N&apos;) &lt;&lt; 8) | ((&apos;D&apos;) &lt;&lt; 16) | ((unsigned)(&apos;A&apos;) &lt;&lt; 24))); }" data-ref="_M/CHECK_BLOCK">CHECK_BLOCK</a>();</td></tr>
+<tr><th id="210">210</th><td>            <a class="local col4 ref" href="#14block_ptr" title='block_ptr' data-ref="14block_ptr">block_ptr</a> = <a class="local col2 ref" href="#12row_ptr" title='row_ptr' data-ref="12row_ptr">row_ptr</a> + <a class="local col3 ref" href="#13pixel_ptr" title='pixel_ptr' data-ref="13pixel_ptr">pixel_ptr</a>;</td></tr>
+<tr><th id="211">211</th><td>            <b>for</b> (<a class="local col6 ref" href="#16pixel_y" title='pixel_y' data-ref="16pixel_y">pixel_y</a> = <var>0</var>; <a class="local col6 ref" href="#16pixel_y" title='pixel_y' data-ref="16pixel_y">pixel_y</a> &lt; <var>4</var>; <a class="local col6 ref" href="#16pixel_y" title='pixel_y' data-ref="16pixel_y">pixel_y</a>++) {</td></tr>
+<tr><th id="212">212</th><td>                <b>for</b> (<a class="local col5 ref" href="#15pixel_x" title='pixel_x' data-ref="15pixel_x">pixel_x</a> = <var>0</var>; <a class="local col5 ref" href="#15pixel_x" title='pixel_x' data-ref="15pixel_x">pixel_x</a> &lt; <var>4</var>; <a class="local col5 ref" href="#15pixel_x" title='pixel_x' data-ref="15pixel_x">pixel_x</a>++){</td></tr>
+<tr><th id="213">213</th><td>                    <i>/* We already have color of upper left pixel */</i></td></tr>
+<tr><th id="214">214</th><td>                    <b>if</b> ((<a class="local col6 ref" href="#16pixel_y" title='pixel_y' data-ref="16pixel_y">pixel_y</a> != <var>0</var>) || (<a class="local col5 ref" href="#15pixel_x" title='pixel_x' data-ref="15pixel_x">pixel_x</a> != <var>0</var>))</td></tr>
+<tr><th id="215">215</th><td>                        <a class="local col6 ref" href="#6colorA" title='colorA' data-ref="6colorA">colorA</a> = <a class="ref" href="bytestream.h.html#94" title='bytestream2_get_be16u' data-ref="bytestream2_get_be16u">bytestream2_get_be16u</a>(&amp;<a class="local col1 ref" href="#1s" title='s' data-ref="1s">s</a>-&gt;<a class="tu ref" href="#RpzaContext::gb" title='RpzaContext::gb' data-use='a' data-ref="RpzaContext::gb">gb</a>);</td></tr>
+<tr><th id="216">216</th><td>                    <a class="local col1 ref" href="#11pixels" title='pixels' data-ref="11pixels">pixels</a>[<a class="local col4 ref" href="#14block_ptr" title='block_ptr' data-ref="14block_ptr">block_ptr</a>] = <a class="local col6 ref" href="#6colorA" title='colorA' data-ref="6colorA">colorA</a>;</td></tr>
+<tr><th id="217">217</th><td>                    <a class="local col4 ref" href="#14block_ptr" title='block_ptr' data-ref="14block_ptr">block_ptr</a>++;</td></tr>
+<tr><th id="218">218</th><td>                }</td></tr>
+<tr><th id="219">219</th><td>                <a class="local col4 ref" href="#14block_ptr" title='block_ptr' data-ref="14block_ptr">block_ptr</a> += <a class="local col4 ref" href="#4row_inc" title='row_inc' data-ref="4row_inc">row_inc</a>;</td></tr>
+<tr><th id="220">220</th><td>            }</td></tr>
+<tr><th id="221">221</th><td>            <a class="macro" href="#62" title="{ pixel_ptr += 4; if (pixel_ptr &gt;= width) { pixel_ptr = 0; row_ptr += stride * 4; } total_blocks--; }" data-ref="_M/ADVANCE_BLOCK">ADVANCE_BLOCK</a>();</td></tr>
+<tr><th id="222">222</th><td>            <b>break</b>;</td></tr>
+<tr><th id="223">223</th><td></td></tr>
+<tr><th id="224">224</th><td>        <i>/* Unknown opcode */</i></td></tr>
+<tr><th id="225">225</th><td>        <b>default</b>:</td></tr>
+<tr><th id="226">226</th><td>            <a class="ref" href="../libavutil/log.h.html#av_log" title='av_log' data-ref="av_log">av_log</a>(<a class="local col1 ref" href="#1s" title='s' data-ref="1s">s</a>-&gt;<a class="tu ref" href="#RpzaContext::avctx" title='RpzaContext::avctx' data-use='r' data-ref="RpzaContext::avctx">avctx</a>, <a class="macro" href="../libavutil/log.h.html#176" title="16" data-ref="_M/AV_LOG_ERROR">AV_LOG_ERROR</a>, <q>"Unknown opcode %d in rpza chunk."</q></td></tr>
+<tr><th id="227">227</th><td>                 <q>" Skip remaining %d bytes of chunk data.\n"</q>, <a class="local col8 ref" href="#18opcode" title='opcode' data-ref="18opcode">opcode</a>,</td></tr>
+<tr><th id="228">228</th><td>                 <a class="ref" href="bytestream.h.html#bytestream2_get_bytes_left" title='bytestream2_get_bytes_left' data-ref="bytestream2_get_bytes_left">bytestream2_get_bytes_left</a>(&amp;<a class="local col1 ref" href="#1s" title='s' data-ref="1s">s</a>-&gt;<a class="tu ref" href="#RpzaContext::gb" title='RpzaContext::gb' data-use='a' data-ref="RpzaContext::gb">gb</a>));</td></tr>
+<tr><th id="229">229</th><td>            <b>return</b> <a class="macro" href="../libavutil/error.h.html#59" title="(-(int)((&apos;I&apos;) | ((&apos;N&apos;) &lt;&lt; 8) | ((&apos;D&apos;) &lt;&lt; 16) | ((unsigned)(&apos;A&apos;) &lt;&lt; 24)))" data-ref="_M/AVERROR_INVALIDDATA">AVERROR_INVALIDDATA</a>;</td></tr>
+<tr><th id="230">230</th><td>        } <i>/* Opcode switch */</i></td></tr>
+<tr><th id="231">231</th><td>    }</td></tr>
+<tr><th id="232">232</th><td></td></tr>
+<tr><th id="233">233</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="234">234</th><td>}</td></tr>
+<tr><th id="235">235</th><td></td></tr>
+<tr><th id="236">236</th><td><em>static</em> <a class="macro" href="../libavutil/attributes.h.html#84" title="" data-ref="_M/av_cold">av_cold</a> <em>int</em> <dfn class="tu decl def" id="rpza_decode_init" title='rpza_decode_init' data-type='int rpza_decode_init(AVCodecContext * avctx)' data-ref="rpza_decode_init">rpza_decode_init</dfn>(<a class="typedef" href="avcodec.h.html#AVCodecContext" title='AVCodecContext' data-type='struct AVCodecContext' data-ref="AVCodecContext">AVCodecContext</a> *<dfn class="local col2 decl" id="22avctx" title='avctx' data-type='AVCodecContext *' data-ref="22avctx">avctx</dfn>)</td></tr>
+<tr><th id="237">237</th><td>{</td></tr>
+<tr><th id="238">238</th><td>    <a class="typedef" href="#RpzaContext" title='RpzaContext' data-type='struct RpzaContext' data-ref="RpzaContext">RpzaContext</a> *<dfn class="local col3 decl" id="23s" title='s' data-type='RpzaContext *' data-ref="23s">s</dfn> = <a class="local col2 ref" href="#22avctx" title='avctx' data-ref="22avctx">avctx</a>-&gt;<a class="ref" href="avcodec.h.html#AVCodecContext::priv_data" title='AVCodecContext::priv_data' data-ref="AVCodecContext::priv_data">priv_data</a>;</td></tr>
+<tr><th id="239">239</th><td></td></tr>
+<tr><th id="240">240</th><td>    <a class="local col3 ref" href="#23s" title='s' data-ref="23s">s</a>-&gt;<a class="tu ref" href="#RpzaContext::avctx" title='RpzaContext::avctx' data-use='w' data-ref="RpzaContext::avctx">avctx</a> = <a class="local col2 ref" href="#22avctx" title='avctx' data-ref="22avctx">avctx</a>;</td></tr>
+<tr><th id="241">241</th><td>    <a class="local col2 ref" href="#22avctx" title='avctx' data-ref="22avctx">avctx</a>-&gt;<a class="ref" href="avcodec.h.html#AVCodecContext::pix_fmt" title='AVCodecContext::pix_fmt' data-ref="AVCodecContext::pix_fmt">pix_fmt</a> = <a class="macro" href="../libavutil/pixfmt.h.html#329" title="AV_PIX_FMT_RGB555LE" data-ref="_M/AV_PIX_FMT_RGB555">AV_PIX_FMT_RGB555</a>;</td></tr>
+<tr><th id="242">242</th><td></td></tr>
+<tr><th id="243">243</th><td>    <a class="local col3 ref" href="#23s" title='s' data-ref="23s">s</a>-&gt;<a class="tu ref" href="#RpzaContext::frame" title='RpzaContext::frame' data-use='w' data-ref="RpzaContext::frame">frame</a> = <a class="ref" href="../libavutil/frame.h.html#av_frame_alloc" title='av_frame_alloc' data-ref="av_frame_alloc">av_frame_alloc</a>();</td></tr>
+<tr><th id="244">244</th><td>    <b>if</b> (!<a class="local col3 ref" href="#23s" title='s' data-ref="23s">s</a>-&gt;<a class="tu ref" href="#RpzaContext::frame" title='RpzaContext::frame' data-use='r' data-ref="RpzaContext::frame">frame</a>)</td></tr>
+<tr><th id="245">245</th><td>        <b>return</b> <a class="macro" href="../libavutil/error.h.html#39" title="(-(12))" data-ref="_M/AVERROR">AVERROR</a>(<a class="macro" href="../../include/asm-generic/errno-base.h.html#15" title="12" data-ref="_M/ENOMEM">ENOMEM</a>);</td></tr>
+<tr><th id="246">246</th><td></td></tr>
+<tr><th id="247">247</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="248">248</th><td>}</td></tr>
+<tr><th id="249">249</th><td></td></tr>
+<tr><th id="250">250</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="rpza_decode_frame" title='rpza_decode_frame' data-type='int rpza_decode_frame(AVCodecContext * avctx, void * data, int * got_frame, AVPacket * avpkt)' data-ref="rpza_decode_frame">rpza_decode_frame</dfn>(<a class="typedef" href="avcodec.h.html#AVCodecContext" title='AVCodecContext' data-type='struct AVCodecContext' data-ref="AVCodecContext">AVCodecContext</a> *<dfn class="local col4 decl" id="24avctx" title='avctx' data-type='AVCodecContext *' data-ref="24avctx">avctx</dfn>,</td></tr>
+<tr><th id="251">251</th><td>                             <em>void</em> *<dfn class="local col5 decl" id="25data" title='data' data-type='void *' data-ref="25data">data</dfn>, <em>int</em> *<dfn class="local col6 decl" id="26got_frame" title='got_frame' data-type='int *' data-ref="26got_frame">got_frame</dfn>,</td></tr>
+<tr><th id="252">252</th><td>                             <a class="typedef" href="avcodec.h.html#AVPacket" title='AVPacket' data-type='struct AVPacket' data-ref="AVPacket">AVPacket</a> *<dfn class="local col7 decl" id="27avpkt" title='avpkt' data-type='AVPacket *' data-ref="27avpkt">avpkt</dfn>)</td></tr>
+<tr><th id="253">253</th><td>{</td></tr>
+<tr><th id="254">254</th><td>    <a class="typedef" href="#RpzaContext" title='RpzaContext' data-type='struct RpzaContext' data-ref="RpzaContext">RpzaContext</a> *<dfn class="local col8 decl" id="28s" title='s' data-type='RpzaContext *' data-ref="28s">s</dfn> = <a class="local col4 ref" href="#24avctx" title='avctx' data-ref="24avctx">avctx</a>-&gt;<a class="ref" href="avcodec.h.html#AVCodecContext::priv_data" title='AVCodecContext::priv_data' data-ref="AVCodecContext::priv_data">priv_data</a>;</td></tr>
+<tr><th id="255">255</th><td>    <em>int</em> <dfn class="local col9 decl" id="29ret" title='ret' data-type='int' data-ref="29ret">ret</dfn>;</td></tr>
+<tr><th id="256">256</th><td></td></tr>
+<tr><th id="257">257</th><td>    <a class="ref" href="bytestream.h.html#bytestream2_init" title='bytestream2_init' data-ref="bytestream2_init">bytestream2_init</a>(&amp;<a class="local col8 ref" href="#28s" title='s' data-ref="28s">s</a>-&gt;<a class="tu ref" href="#RpzaContext::gb" title='RpzaContext::gb' data-use='a' data-ref="RpzaContext::gb">gb</a>, <a class="local col7 ref" href="#27avpkt" title='avpkt' data-ref="27avpkt">avpkt</a>-&gt;<a class="ref" href="avcodec.h.html#AVPacket::data" title='AVPacket::data' data-ref="AVPacket::data">data</a>, <a class="local col7 ref" href="#27avpkt" title='avpkt' data-ref="27avpkt">avpkt</a>-&gt;<a class="ref" href="avcodec.h.html#AVPacket::size" title='AVPacket::size' data-ref="AVPacket::size">size</a>);</td></tr>
+<tr><th id="258">258</th><td></td></tr>
+<tr><th id="259">259</th><td>    <b>if</b> ((<a class="local col9 ref" href="#29ret" title='ret' data-ref="29ret">ret</a> = <a class="ref" href="internal.h.html#ff_reget_buffer" title='ff_reget_buffer' data-ref="ff_reget_buffer">ff_reget_buffer</a>(<a class="local col4 ref" href="#24avctx" title='avctx' data-ref="24avctx">avctx</a>, <a class="local col8 ref" href="#28s" title='s' data-ref="28s">s</a>-&gt;<a class="tu ref" href="#RpzaContext::frame" title='RpzaContext::frame' data-use='r' data-ref="RpzaContext::frame">frame</a>)) &lt; <var>0</var>)</td></tr>
+<tr><th id="260">260</th><td>        <b>return</b> <a class="local col9 ref" href="#29ret" title='ret' data-ref="29ret">ret</a>;</td></tr>
+<tr><th id="261">261</th><td></td></tr>
+<tr><th id="262">262</th><td>    <a class="local col9 ref" href="#29ret" title='ret' data-ref="29ret">ret</a> = <a class="tu ref" href="#rpza_decode_stream" title='rpza_decode_stream' data-use='c' data-ref="rpza_decode_stream">rpza_decode_stream</a>(<a class="local col8 ref" href="#28s" title='s' data-ref="28s">s</a>);</td></tr>
+<tr><th id="263">263</th><td>    <b>if</b> (<a class="local col9 ref" href="#29ret" title='ret' data-ref="29ret">ret</a> &lt; <var>0</var>)</td></tr>
+<tr><th id="264">264</th><td>        <b>return</b> <a class="local col9 ref" href="#29ret" title='ret' data-ref="29ret">ret</a>;</td></tr>
+<tr><th id="265">265</th><td></td></tr>
+<tr><th id="266">266</th><td>    <b>if</b> ((<a class="local col9 ref" href="#29ret" title='ret' data-ref="29ret">ret</a> = <a class="ref" href="../libavutil/frame.h.html#av_frame_ref" title='av_frame_ref' data-ref="av_frame_ref">av_frame_ref</a>(<a class="local col5 ref" href="#25data" title='data' data-ref="25data">data</a>, <a class="local col8 ref" href="#28s" title='s' data-ref="28s">s</a>-&gt;<a class="tu ref" href="#RpzaContext::frame" title='RpzaContext::frame' data-use='r' data-ref="RpzaContext::frame">frame</a>)) &lt; <var>0</var>)</td></tr>
+<tr><th id="267">267</th><td>        <b>return</b> <a class="local col9 ref" href="#29ret" title='ret' data-ref="29ret">ret</a>;</td></tr>
+<tr><th id="268">268</th><td></td></tr>
+<tr><th id="269">269</th><td>    *<a class="local col6 ref" href="#26got_frame" title='got_frame' data-ref="26got_frame">got_frame</a>      = <var>1</var>;</td></tr>
+<tr><th id="270">270</th><td></td></tr>
+<tr><th id="271">271</th><td>    <i>/* always report that the buffer was completely consumed */</i></td></tr>
+<tr><th id="272">272</th><td>    <b>return</b> <a class="local col7 ref" href="#27avpkt" title='avpkt' data-ref="27avpkt">avpkt</a>-&gt;<a class="ref" href="avcodec.h.html#AVPacket::size" title='AVPacket::size' data-ref="AVPacket::size">size</a>;</td></tr>
+<tr><th id="273">273</th><td>}</td></tr>
+<tr><th id="274">274</th><td></td></tr>
+<tr><th id="275">275</th><td><em>static</em> <a class="macro" href="../libavutil/attributes.h.html#84" title="" data-ref="_M/av_cold">av_cold</a> <em>int</em> <dfn class="tu decl def" id="rpza_decode_end" title='rpza_decode_end' data-type='int rpza_decode_end(AVCodecContext * avctx)' data-ref="rpza_decode_end">rpza_decode_end</dfn>(<a class="typedef" href="avcodec.h.html#AVCodecContext" title='AVCodecContext' data-type='struct AVCodecContext' data-ref="AVCodecContext">AVCodecContext</a> *<dfn class="local col0 decl" id="30avctx" title='avctx' data-type='AVCodecContext *' data-ref="30avctx">avctx</dfn>)</td></tr>
+<tr><th id="276">276</th><td>{</td></tr>
+<tr><th id="277">277</th><td>    <a class="typedef" href="#RpzaContext" title='RpzaContext' data-type='struct RpzaContext' data-ref="RpzaContext">RpzaContext</a> *<dfn class="local col1 decl" id="31s" title='s' data-type='RpzaContext *' data-ref="31s">s</dfn> = <a class="local col0 ref" href="#30avctx" title='avctx' data-ref="30avctx">avctx</a>-&gt;<a class="ref" href="avcodec.h.html#AVCodecContext::priv_data" title='AVCodecContext::priv_data' data-ref="AVCodecContext::priv_data">priv_data</a>;</td></tr>
+<tr><th id="278">278</th><td></td></tr>
+<tr><th id="279">279</th><td>    <a class="ref" href="../libavutil/frame.h.html#av_frame_free" title='av_frame_free' data-ref="av_frame_free">av_frame_free</a>(&amp;<a class="local col1 ref" href="#31s" title='s' data-ref="31s">s</a>-&gt;<a class="tu ref" href="#RpzaContext::frame" title='RpzaContext::frame' data-use='a' data-ref="RpzaContext::frame">frame</a>);</td></tr>
+<tr><th id="280">280</th><td></td></tr>
+<tr><th id="281">281</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="282">282</th><td>}</td></tr>
+<tr><th id="283">283</th><td></td></tr>
+<tr><th id="284">284</th><td><a class="typedef" href="avcodec.h.html#AVCodec" title='AVCodec' data-type='struct AVCodec' data-ref="AVCodec">AVCodec</a> <dfn class="decl def" id="ff_rpza_decoder" title='ff_rpza_decoder' data-ref="ff_rpza_decoder">ff_rpza_decoder</dfn> = {</td></tr>
+<tr><th id="285">285</th><td>    .<a class="ref" href="avcodec.h.html#AVCodec::name" title='AVCodec::name' data-ref="AVCodec::name">name</a>           = <q>"rpza"</q>,</td></tr>
+<tr><th id="286">286</th><td>    .<a class="ref" href="avcodec.h.html#AVCodec::long_name" title='AVCodec::long_name' data-ref="AVCodec::long_name">long_name</a>      = <a class="macro" href="../libavutil/internal.h.html#176" title="&quot;QuickTime video (RPZA)&quot;" data-ref="_M/NULL_IF_CONFIG_SMALL">NULL_IF_CONFIG_SMALL</a>(<q>"QuickTime video (RPZA)"</q>),</td></tr>
+<tr><th id="287">287</th><td>    .<a class="ref" href="avcodec.h.html#AVCodec::type" title='AVCodec::type' data-ref="AVCodec::type">type</a>           = <a class="enum" href="../libavutil/avutil.h.html#AVMediaType::AVMEDIA_TYPE_VIDEO" title='AVMediaType::AVMEDIA_TYPE_VIDEO' data-ref="AVMediaType::AVMEDIA_TYPE_VIDEO">AVMEDIA_TYPE_VIDEO</a>,</td></tr>
+<tr><th id="288">288</th><td>    .<a class="ref" href="avcodec.h.html#AVCodec::id" title='AVCodec::id' data-ref="AVCodec::id">id</a>             = <a class="enum" href="avcodec.h.html#AVCodecID::AV_CODEC_ID_RPZA" title='AVCodecID::AV_CODEC_ID_RPZA' data-ref="AVCodecID::AV_CODEC_ID_RPZA">AV_CODEC_ID_RPZA</a>,</td></tr>
+<tr><th id="289">289</th><td>    .<a class="ref" href="avcodec.h.html#AVCodec::priv_data_size" title='AVCodec::priv_data_size' data-ref="AVCodec::priv_data_size">priv_data_size</a> = <b>sizeof</b>(<a class="typedef" href="#RpzaContext" title='RpzaContext' data-type='struct RpzaContext' data-ref="RpzaContext">RpzaContext</a>),</td></tr>
+<tr><th id="290">290</th><td>    .<a class="ref" href="avcodec.h.html#AVCodec::init" title='AVCodec::init' data-ref="AVCodec::init">init</a>           = <a class="tu ref" href="#rpza_decode_init" title='rpza_decode_init' data-use='r' data-ref="rpza_decode_init">rpza_decode_init</a>,</td></tr>
+<tr><th id="291">291</th><td>    .<a class="ref" href="avcodec.h.html#AVCodec::close" title='AVCodec::close' data-ref="AVCodec::close">close</a>          = <a class="tu ref" href="#rpza_decode_end" title='rpza_decode_end' data-use='r' data-ref="rpza_decode_end">rpza_decode_end</a>,</td></tr>
+<tr><th id="292">292</th><td>    .<a class="ref" href="avcodec.h.html#AVCodec::decode" title='AVCodec::decode' data-ref="AVCodec::decode">decode</a>         = <a class="tu ref" href="#rpza_decode_frame" title='rpza_decode_frame' data-use='r' data-ref="rpza_decode_frame">rpza_decode_frame</a>,</td></tr>
+<tr><th id="293">293</th><td>    .<a class="ref" href="avcodec.h.html#AVCodec::capabilities" title='AVCodec::capabilities' data-ref="AVCodec::capabilities">capabilities</a>   = <a class="macro" href="avcodec.h.html#959" title="(1 &lt;&lt; 1)" data-ref="_M/AV_CODEC_CAP_DR1">AV_CODEC_CAP_DR1</a>,</td></tr>
+<tr><th id="294">294</th><td>};</td></tr>
+<tr><th id="295">295</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

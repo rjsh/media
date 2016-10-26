@@ -1,0 +1,236 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>vima.c source code [ffmpeg/libavcodec/vima.c] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavcodec/vima.c'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavcodec</a>/<a href='vima.c.html'>vima.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * LucasArts VIMA decoder</i></td></tr>
+<tr><th id="3">3</th><td><i> * Copyright (c) 2012 Paul B Mahol</i></td></tr>
+<tr><th id="4">4</th><td><i> *</i></td></tr>
+<tr><th id="5">5</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="8">8</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="9">9</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="10">10</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="11">11</th><td><i> *</i></td></tr>
+<tr><th id="12">12</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="13">13</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="14">14</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="15">15</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="16">16</th><td><i> *</i></td></tr>
+<tr><th id="17">17</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="18">18</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="19">19</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="20">20</th><td><i> */</i></td></tr>
+<tr><th id="21">21</th><td></td></tr>
+<tr><th id="22">22</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="23">23</th><td><i class="doc"> *<span class="command"> @file</span></i></td></tr>
+<tr><th id="24">24</th><td><i class="doc"> * LucasArts VIMA audio decoder</i></td></tr>
+<tr><th id="25">25</th><td><i class="doc"> * <span class="command">@author</span> Paul B Mahol</i></td></tr>
+<tr><th id="26">26</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="27">27</th><td></td></tr>
+<tr><th id="28">28</th><td><u>#include <a href="../libavutil/channel_layout.h.html">"libavutil/channel_layout.h"</a></u></td></tr>
+<tr><th id="29">29</th><td></td></tr>
+<tr><th id="30">30</th><td><u>#include <a href="adpcm_data.h.html">"adpcm_data.h"</a></u></td></tr>
+<tr><th id="31">31</th><td><u>#include <a href="avcodec.h.html">"avcodec.h"</a></u></td></tr>
+<tr><th id="32">32</th><td><u>#include <a href="get_bits.h.html">"get_bits.h"</a></u></td></tr>
+<tr><th id="33">33</th><td><u>#include <a href="internal.h.html">"internal.h"</a></u></td></tr>
+<tr><th id="34">34</th><td></td></tr>
+<tr><th id="35">35</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="predict_table_init" title='predict_table_init' data-type='int' data-ref="predict_table_init">predict_table_init</dfn> = <var>0</var>;</td></tr>
+<tr><th id="36">36</th><td><em>static</em> <a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> <dfn class="tu decl def" id="predict_table" title='predict_table' data-type='uint16_t [11572]' data-ref="predict_table">predict_table</dfn>[<var>5786</var> * <var>2</var>];</td></tr>
+<tr><th id="37">37</th><td></td></tr>
+<tr><th id="38">38</th><td><em>static</em> <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="tu decl def" id="size_table" title='size_table' data-type='const uint8_t [89]' data-ref="size_table">size_table</dfn>[] = {</td></tr>
+<tr><th id="39">39</th><td>    <var>4</var>, <var>4</var>, <var>4</var>, <var>4</var>, <var>4</var>, <var>4</var>, <var>4</var>, <var>4</var>, <var>4</var>, <var>4</var>, <var>4</var>, <var>4</var>, <var>4</var>, <var>4</var>, <var>4</var>,</td></tr>
+<tr><th id="40">40</th><td>    <var>4</var>, <var>4</var>, <var>4</var>, <var>4</var>, <var>4</var>, <var>4</var>, <var>4</var>, <var>4</var>, <var>4</var>, <var>4</var>, <var>4</var>, <var>4</var>, <var>4</var>, <var>4</var>, <var>4</var>,</td></tr>
+<tr><th id="41">41</th><td>    <var>4</var>, <var>4</var>, <var>4</var>, <var>4</var>, <var>4</var>, <var>4</var>, <var>4</var>, <var>4</var>, <var>4</var>, <var>4</var>, <var>4</var>, <var>4</var>, <var>4</var>, <var>4</var>, <var>4</var>,</td></tr>
+<tr><th id="42">42</th><td>    <var>5</var>, <var>5</var>, <var>5</var>, <var>5</var>, <var>5</var>, <var>5</var>, <var>5</var>, <var>5</var>, <var>5</var>, <var>5</var>, <var>5</var>, <var>5</var>, <var>5</var>, <var>5</var>,</td></tr>
+<tr><th id="43">43</th><td>    <var>6</var>, <var>6</var>, <var>6</var>, <var>6</var>, <var>6</var>, <var>6</var>, <var>6</var>, <var>6</var>, <var>6</var>, <var>6</var>, <var>6</var>, <var>6</var>, <var>6</var>, <var>6</var>, <var>6</var>,</td></tr>
+<tr><th id="44">44</th><td>    <var>7</var>, <var>7</var>, <var>7</var>, <var>7</var>, <var>7</var>, <var>7</var>, <var>7</var>, <var>7</var>, <var>7</var>, <var>7</var>, <var>7</var>, <var>7</var>, <var>7</var>, <var>7</var>, <var>7</var></td></tr>
+<tr><th id="45">45</th><td>};</td></tr>
+<tr><th id="46">46</th><td></td></tr>
+<tr><th id="47">47</th><td><em>static</em> <em>const</em> <a class="typedef" href="../../include/stdint.h.html#int8_t" title='int8_t' data-type='signed char' data-ref="int8_t">int8_t</a> <dfn class="tu decl def" id="index_table1" title='index_table1' data-type='const int8_t [4]' data-ref="index_table1">index_table1</dfn>[] = {</td></tr>
+<tr><th id="48">48</th><td>    -<var>1</var>, <var>4</var>, -<var>1</var>, <var>4</var></td></tr>
+<tr><th id="49">49</th><td>};</td></tr>
+<tr><th id="50">50</th><td></td></tr>
+<tr><th id="51">51</th><td><em>static</em> <em>const</em> <a class="typedef" href="../../include/stdint.h.html#int8_t" title='int8_t' data-type='signed char' data-ref="int8_t">int8_t</a> <dfn class="tu decl def" id="index_table2" title='index_table2' data-type='const int8_t [8]' data-ref="index_table2">index_table2</dfn>[] = {</td></tr>
+<tr><th id="52">52</th><td>    -<var>1</var>, -<var>1</var>, <var>2</var>, <var>6</var>, -<var>1</var>, -<var>1</var>, <var>2</var>, <var>6</var></td></tr>
+<tr><th id="53">53</th><td>};</td></tr>
+<tr><th id="54">54</th><td></td></tr>
+<tr><th id="55">55</th><td><em>static</em> <em>const</em> <a class="typedef" href="../../include/stdint.h.html#int8_t" title='int8_t' data-type='signed char' data-ref="int8_t">int8_t</a> <dfn class="tu decl def" id="index_table3" title='index_table3' data-type='const int8_t [16]' data-ref="index_table3">index_table3</dfn>[] = {</td></tr>
+<tr><th id="56">56</th><td>    -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, <var>1</var>, <var>2</var>, <var>4</var>, <var>6</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, <var>1</var>, <var>2</var>, <var>4</var>, <var>6</var></td></tr>
+<tr><th id="57">57</th><td>};</td></tr>
+<tr><th id="58">58</th><td></td></tr>
+<tr><th id="59">59</th><td><em>static</em> <em>const</em> <a class="typedef" href="../../include/stdint.h.html#int8_t" title='int8_t' data-type='signed char' data-ref="int8_t">int8_t</a> <dfn class="tu decl def" id="index_table4" title='index_table4' data-type='const int8_t [32]' data-ref="index_table4">index_table4</dfn>[] = {</td></tr>
+<tr><th id="60">60</th><td>    -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, <var>1</var>,  <var>1</var>,  <var>1</var>,  <var>2</var>,  <var>2</var>,  <var>4</var>,  <var>5</var>,  <var>6</var>,</td></tr>
+<tr><th id="61">61</th><td>    -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, <var>1</var>,  <var>1</var>,  <var>1</var>,  <var>2</var>,  <var>2</var>,  <var>4</var>,  <var>5</var>,  <var>6</var></td></tr>
+<tr><th id="62">62</th><td>};</td></tr>
+<tr><th id="63">63</th><td></td></tr>
+<tr><th id="64">64</th><td><em>static</em> <em>const</em> <a class="typedef" href="../../include/stdint.h.html#int8_t" title='int8_t' data-type='signed char' data-ref="int8_t">int8_t</a> <dfn class="tu decl def" id="index_table5" title='index_table5' data-type='const int8_t [64]' data-ref="index_table5">index_table5</dfn>[] = {</td></tr>
+<tr><th id="65">65</th><td>    -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>,</td></tr>
+<tr><th id="66">66</th><td>     <var>1</var>,  <var>1</var>,  <var>1</var>,  <var>1</var>,  <var>1</var>,  <var>2</var>,  <var>2</var>,  <var>2</var>,  <var>2</var>,  <var>4</var>,  <var>4</var>,  <var>4</var>,  <var>5</var>,  <var>5</var>,  <var>6</var>,  <var>6</var>,</td></tr>
+<tr><th id="67">67</th><td>    -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>,</td></tr>
+<tr><th id="68">68</th><td>     <var>1</var>,  <var>1</var>,  <var>1</var>,  <var>1</var>,  <var>1</var>,  <var>2</var>,  <var>2</var>,  <var>2</var>,  <var>2</var>,  <var>4</var>,  <var>4</var>,  <var>4</var>,  <var>5</var>,  <var>5</var>,  <var>6</var>,  <var>6</var></td></tr>
+<tr><th id="69">69</th><td>};</td></tr>
+<tr><th id="70">70</th><td></td></tr>
+<tr><th id="71">71</th><td><em>static</em> <em>const</em> <a class="typedef" href="../../include/stdint.h.html#int8_t" title='int8_t' data-type='signed char' data-ref="int8_t">int8_t</a> <dfn class="tu decl def" id="index_table6" title='index_table6' data-type='const int8_t [128]' data-ref="index_table6">index_table6</dfn>[] = {</td></tr>
+<tr><th id="72">72</th><td>    -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>,</td></tr>
+<tr><th id="73">73</th><td>    -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>,</td></tr>
+<tr><th id="74">74</th><td>     <var>1</var>,  <var>1</var>,  <var>1</var>,  <var>1</var>,  <var>1</var>,  <var>1</var>,  <var>1</var>,  <var>1</var>,  <var>1</var>,  <var>1</var>,  <var>2</var>,  <var>2</var>,  <var>2</var>,  <var>2</var>,  <var>2</var>,  <var>2</var>,</td></tr>
+<tr><th id="75">75</th><td>     <var>2</var>,  <var>2</var>,  <var>4</var>,  <var>4</var>,  <var>4</var>,  <var>4</var>,  <var>4</var>,  <var>4</var>,  <var>5</var>,  <var>5</var>,  <var>5</var>,  <var>5</var>,  <var>6</var>,  <var>6</var>,  <var>6</var>,  <var>6</var>,</td></tr>
+<tr><th id="76">76</th><td>    -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>,</td></tr>
+<tr><th id="77">77</th><td>    -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>, -<var>1</var>,</td></tr>
+<tr><th id="78">78</th><td>     <var>1</var>,  <var>1</var>,  <var>1</var>,  <var>1</var>,  <var>1</var>,  <var>1</var>,  <var>1</var>,  <var>1</var>,  <var>1</var>,  <var>1</var>,  <var>2</var>,  <var>2</var>,  <var>2</var>,  <var>2</var>,  <var>2</var>,  <var>2</var>,</td></tr>
+<tr><th id="79">79</th><td>     <var>2</var>,  <var>2</var>,  <var>4</var>,  <var>4</var>,  <var>4</var>,  <var>4</var>,  <var>4</var>,  <var>4</var>,  <var>5</var>,  <var>5</var>,  <var>5</var>,  <var>5</var>,  <var>6</var>,  <var>6</var>,  <var>6</var>,  <var>6</var></td></tr>
+<tr><th id="80">80</th><td>};</td></tr>
+<tr><th id="81">81</th><td></td></tr>
+<tr><th id="82">82</th><td><em>static</em> <em>const</em> <a class="typedef" href="../../include/stdint.h.html#int8_t" title='int8_t' data-type='signed char' data-ref="int8_t">int8_t</a> *<em>const</em> <dfn class="tu decl def" id="step_index_tables" title='step_index_tables' data-type='const int8_t *const [6]' data-ref="step_index_tables">step_index_tables</dfn>[] = {</td></tr>
+<tr><th id="83">83</th><td>    <a class="tu ref" href="#index_table1" title='index_table1' data-ref="index_table1">index_table1</a>, <a class="tu ref" href="#index_table2" title='index_table2' data-ref="index_table2">index_table2</a>, <a class="tu ref" href="#index_table3" title='index_table3' data-ref="index_table3">index_table3</a>,</td></tr>
+<tr><th id="84">84</th><td>    <a class="tu ref" href="#index_table4" title='index_table4' data-ref="index_table4">index_table4</a>, <a class="tu ref" href="#index_table5" title='index_table5' data-ref="index_table5">index_table5</a>, <a class="tu ref" href="#index_table6" title='index_table6' data-ref="index_table6">index_table6</a></td></tr>
+<tr><th id="85">85</th><td>};</td></tr>
+<tr><th id="86">86</th><td></td></tr>
+<tr><th id="87">87</th><td><em>static</em> <a class="macro" href="../libavutil/attributes.h.html#84" title="" data-ref="_M/av_cold">av_cold</a> <em>int</em> <dfn class="tu decl def" id="decode_init" title='decode_init' data-type='int decode_init(AVCodecContext * avctx)' data-ref="decode_init">decode_init</dfn>(<a class="typedef" href="avcodec.h.html#AVCodecContext" title='AVCodecContext' data-type='struct AVCodecContext' data-ref="AVCodecContext">AVCodecContext</a> *<dfn class="local col1 decl" id="1avctx" title='avctx' data-type='AVCodecContext *' data-ref="1avctx">avctx</dfn>)</td></tr>
+<tr><th id="88">88</th><td>{</td></tr>
+<tr><th id="89">89</th><td>    <em>int</em> <dfn class="local col2 decl" id="2start_pos" title='start_pos' data-type='int' data-ref="2start_pos">start_pos</dfn>;</td></tr>
+<tr><th id="90">90</th><td></td></tr>
+<tr><th id="91">91</th><td>    <a class="local col1 ref" href="#1avctx" title='avctx' data-ref="1avctx">avctx</a>-&gt;<a class="ref" href="avcodec.h.html#AVCodecContext::sample_fmt" title='AVCodecContext::sample_fmt' data-ref="AVCodecContext::sample_fmt">sample_fmt</a> = <a class="enum" href="../libavutil/samplefmt.h.html#AVSampleFormat::AV_SAMPLE_FMT_S16" title='AVSampleFormat::AV_SAMPLE_FMT_S16' data-ref="AVSampleFormat::AV_SAMPLE_FMT_S16">AV_SAMPLE_FMT_S16</a>;</td></tr>
+<tr><th id="92">92</th><td></td></tr>
+<tr><th id="93">93</th><td>    <b>if</b> (<a class="tu ref" href="#predict_table_init" title='predict_table_init' data-use='r' data-ref="predict_table_init">predict_table_init</a>)</td></tr>
+<tr><th id="94">94</th><td>        <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="95">95</th><td></td></tr>
+<tr><th id="96">96</th><td>    <b>for</b> (<a class="local col2 ref" href="#2start_pos" title='start_pos' data-ref="2start_pos">start_pos</a> = <var>0</var>; <a class="local col2 ref" href="#2start_pos" title='start_pos' data-ref="2start_pos">start_pos</a> &lt; <var>64</var>; <a class="local col2 ref" href="#2start_pos" title='start_pos' data-ref="2start_pos">start_pos</a>++) {</td></tr>
+<tr><th id="97">97</th><td>        <em>unsigned</em> <em>int</em> <dfn class="local col3 decl" id="3dest_pos" title='dest_pos' data-type='unsigned int' data-ref="3dest_pos">dest_pos</dfn>, <dfn class="local col4 decl" id="4table_pos" title='table_pos' data-type='unsigned int' data-ref="4table_pos">table_pos</dfn>;</td></tr>
+<tr><th id="98">98</th><td></td></tr>
+<tr><th id="99">99</th><td>        <b>for</b> (<a class="local col4 ref" href="#4table_pos" title='table_pos' data-ref="4table_pos">table_pos</a> = <var>0</var>, <a class="local col3 ref" href="#3dest_pos" title='dest_pos' data-ref="3dest_pos">dest_pos</a> = <a class="local col2 ref" href="#2start_pos" title='start_pos' data-ref="2start_pos">start_pos</a>;</td></tr>
+<tr><th id="100">100</th><td>             <a class="local col4 ref" href="#4table_pos" title='table_pos' data-ref="4table_pos">table_pos</a> &lt; <a class="macro" href="../libavutil/common.h.html#100" title="(sizeof(ff_adpcm_step_table) / sizeof((ff_adpcm_step_table)[0]))" data-ref="_M/FF_ARRAY_ELEMS">FF_ARRAY_ELEMS</a>(<a class="ref" href="adpcm_data.h.html#ff_adpcm_step_table" title='ff_adpcm_step_table' data-ref="ff_adpcm_step_table">ff_adpcm_step_table</a>);</td></tr>
+<tr><th id="101">101</th><td>             <a class="local col4 ref" href="#4table_pos" title='table_pos' data-ref="4table_pos">table_pos</a>++, <a class="local col3 ref" href="#3dest_pos" title='dest_pos' data-ref="3dest_pos">dest_pos</a> += <var>64</var>) {</td></tr>
+<tr><th id="102">102</th><td>            <em>int</em> <dfn class="local col5 decl" id="5put" title='put' data-type='int' data-ref="5put">put</dfn> = <var>0</var>, <dfn class="local col6 decl" id="6count" title='count' data-type='int' data-ref="6count">count</dfn>, <dfn class="local col7 decl" id="7table_value" title='table_value' data-type='int' data-ref="7table_value">table_value</dfn>;</td></tr>
+<tr><th id="103">103</th><td></td></tr>
+<tr><th id="104">104</th><td>            <a class="local col7 ref" href="#7table_value" title='table_value' data-ref="7table_value">table_value</a> = <a class="ref" href="adpcm_data.h.html#ff_adpcm_step_table" title='ff_adpcm_step_table' data-ref="ff_adpcm_step_table">ff_adpcm_step_table</a>[<a class="local col4 ref" href="#4table_pos" title='table_pos' data-ref="4table_pos">table_pos</a>];</td></tr>
+<tr><th id="105">105</th><td>            <b>for</b> (<a class="local col6 ref" href="#6count" title='count' data-ref="6count">count</a> = <var>32</var>; <a class="local col6 ref" href="#6count" title='count' data-ref="6count">count</a> != <var>0</var>; <a class="local col6 ref" href="#6count" title='count' data-ref="6count">count</a> &gt;&gt;= <var>1</var>) {</td></tr>
+<tr><th id="106">106</th><td>                <b>if</b> (<a class="local col2 ref" href="#2start_pos" title='start_pos' data-ref="2start_pos">start_pos</a> &amp; <a class="local col6 ref" href="#6count" title='count' data-ref="6count">count</a>)</td></tr>
+<tr><th id="107">107</th><td>                    <a class="local col5 ref" href="#5put" title='put' data-ref="5put">put</a> += <a class="local col7 ref" href="#7table_value" title='table_value' data-ref="7table_value">table_value</a>;</td></tr>
+<tr><th id="108">108</th><td>                <a class="local col7 ref" href="#7table_value" title='table_value' data-ref="7table_value">table_value</a> &gt;&gt;= <var>1</var>;</td></tr>
+<tr><th id="109">109</th><td>            }</td></tr>
+<tr><th id="110">110</th><td>            <a class="tu ref" href="#predict_table" title='predict_table' data-use='w' data-ref="predict_table">predict_table</a>[<a class="local col3 ref" href="#3dest_pos" title='dest_pos' data-ref="3dest_pos">dest_pos</a>] = <a class="local col5 ref" href="#5put" title='put' data-ref="5put">put</a>;</td></tr>
+<tr><th id="111">111</th><td>        }</td></tr>
+<tr><th id="112">112</th><td>    }</td></tr>
+<tr><th id="113">113</th><td>    <a class="tu ref" href="#predict_table_init" title='predict_table_init' data-use='w' data-ref="predict_table_init">predict_table_init</a> = <var>1</var>;</td></tr>
+<tr><th id="114">114</th><td></td></tr>
+<tr><th id="115">115</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="116">116</th><td>}</td></tr>
+<tr><th id="117">117</th><td></td></tr>
+<tr><th id="118">118</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="decode_frame" title='decode_frame' data-type='int decode_frame(AVCodecContext * avctx, void * data, int * got_frame_ptr, AVPacket * pkt)' data-ref="decode_frame">decode_frame</dfn>(<a class="typedef" href="avcodec.h.html#AVCodecContext" title='AVCodecContext' data-type='struct AVCodecContext' data-ref="AVCodecContext">AVCodecContext</a> *<dfn class="local col8 decl" id="8avctx" title='avctx' data-type='AVCodecContext *' data-ref="8avctx">avctx</dfn>, <em>void</em> *<dfn class="local col9 decl" id="9data" title='data' data-type='void *' data-ref="9data">data</dfn>,</td></tr>
+<tr><th id="119">119</th><td>                        <em>int</em> *<dfn class="local col0 decl" id="10got_frame_ptr" title='got_frame_ptr' data-type='int *' data-ref="10got_frame_ptr">got_frame_ptr</dfn>, <a class="typedef" href="avcodec.h.html#AVPacket" title='AVPacket' data-type='struct AVPacket' data-ref="AVPacket">AVPacket</a> *<dfn class="local col1 decl" id="11pkt" title='pkt' data-type='AVPacket *' data-ref="11pkt">pkt</dfn>)</td></tr>
+<tr><th id="120">120</th><td>{</td></tr>
+<tr><th id="121">121</th><td>    <a class="typedef" href="get_bits.h.html#GetBitContext" title='GetBitContext' data-type='struct GetBitContext' data-ref="GetBitContext">GetBitContext</a> <dfn class="local col2 decl" id="12gb" title='gb' data-type='GetBitContext' data-ref="12gb">gb</dfn>;</td></tr>
+<tr><th id="122">122</th><td>    <a class="typedef" href="../libavutil/frame.h.html#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col3 decl" id="13frame" title='frame' data-type='AVFrame *' data-ref="13frame">frame</dfn> = <a class="local col9 ref" href="#9data" title='data' data-ref="9data">data</a>;</td></tr>
+<tr><th id="123">123</th><td>    <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> <dfn class="local col4 decl" id="14pcm_data" title='pcm_data' data-type='int16_t [2]' data-ref="14pcm_data">pcm_data</dfn>[<var>2</var>];</td></tr>
+<tr><th id="124">124</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a> <dfn class="local col5 decl" id="15samples" title='samples' data-type='uint32_t' data-ref="15samples">samples</dfn>;</td></tr>
+<tr><th id="125">125</th><td>    <a class="typedef" href="../../include/stdint.h.html#int8_t" title='int8_t' data-type='signed char' data-ref="int8_t">int8_t</a> <dfn class="local col6 decl" id="16channel_hint" title='channel_hint' data-type='int8_t [2]' data-ref="16channel_hint">channel_hint</dfn>[<var>2</var>];</td></tr>
+<tr><th id="126">126</th><td>    <em>int</em> <dfn class="local col7 decl" id="17ret" title='ret' data-type='int' data-ref="17ret">ret</dfn>, <dfn class="local col8 decl" id="18chan" title='chan' data-type='int' data-ref="18chan">chan</dfn>;</td></tr>
+<tr><th id="127">127</th><td>    <em>int</em> <dfn class="local col9 decl" id="19channels" title='channels' data-type='int' data-ref="19channels">channels</dfn> = <var>1</var>;</td></tr>
+<tr><th id="128">128</th><td></td></tr>
+<tr><th id="129">129</th><td>    <b>if</b> (<a class="local col1 ref" href="#11pkt" title='pkt' data-ref="11pkt">pkt</a>-&gt;<a class="ref" href="avcodec.h.html#AVPacket::size" title='AVPacket::size' data-ref="AVPacket::size">size</a> &lt; <var>13</var>)</td></tr>
+<tr><th id="130">130</th><td>        <b>return</b> <a class="macro" href="../libavutil/error.h.html#59" title="(-(int)((&apos;I&apos;) | ((&apos;N&apos;) &lt;&lt; 8) | ((&apos;D&apos;) &lt;&lt; 16) | ((unsigned)(&apos;A&apos;) &lt;&lt; 24)))" data-ref="_M/AVERROR_INVALIDDATA">AVERROR_INVALIDDATA</a>;</td></tr>
+<tr><th id="131">131</th><td></td></tr>
+<tr><th id="132">132</th><td>    <b>if</b> ((<a class="local col7 ref" href="#17ret" title='ret' data-ref="17ret">ret</a> = <a class="ref" href="get_bits.h.html#init_get_bits8" title='init_get_bits8' data-ref="init_get_bits8">init_get_bits8</a>(&amp;<a class="local col2 ref" href="#12gb" title='gb' data-ref="12gb">gb</a>, <a class="local col1 ref" href="#11pkt" title='pkt' data-ref="11pkt">pkt</a>-&gt;<a class="ref" href="avcodec.h.html#AVPacket::data" title='AVPacket::data' data-ref="AVPacket::data">data</a>, <a class="local col1 ref" href="#11pkt" title='pkt' data-ref="11pkt">pkt</a>-&gt;<a class="ref" href="avcodec.h.html#AVPacket::size" title='AVPacket::size' data-ref="AVPacket::size">size</a>)) &lt; <var>0</var>)</td></tr>
+<tr><th id="133">133</th><td>        <b>return</b> <a class="local col7 ref" href="#17ret" title='ret' data-ref="17ret">ret</a>;</td></tr>
+<tr><th id="134">134</th><td></td></tr>
+<tr><th id="135">135</th><td>    <a class="local col5 ref" href="#15samples" title='samples' data-ref="15samples">samples</a> = <a class="ref" href="get_bits.h.html#get_bits_long" title='get_bits_long' data-ref="get_bits_long">get_bits_long</a>(&amp;<a class="local col2 ref" href="#12gb" title='gb' data-ref="12gb">gb</a>, <var>32</var>);</td></tr>
+<tr><th id="136">136</th><td>    <b>if</b> (<a class="local col5 ref" href="#15samples" title='samples' data-ref="15samples">samples</a> == <var>0xffffffff</var>) {</td></tr>
+<tr><th id="137">137</th><td>        <a class="ref" href="get_bits.h.html#skip_bits_long" title='skip_bits_long' data-ref="skip_bits_long">skip_bits_long</a>(&amp;<a class="local col2 ref" href="#12gb" title='gb' data-ref="12gb">gb</a>, <var>32</var>);</td></tr>
+<tr><th id="138">138</th><td>        <a class="local col5 ref" href="#15samples" title='samples' data-ref="15samples">samples</a> = <a class="ref" href="get_bits.h.html#get_bits_long" title='get_bits_long' data-ref="get_bits_long">get_bits_long</a>(&amp;<a class="local col2 ref" href="#12gb" title='gb' data-ref="12gb">gb</a>, <var>32</var>);</td></tr>
+<tr><th id="139">139</th><td>    }</td></tr>
+<tr><th id="140">140</th><td></td></tr>
+<tr><th id="141">141</th><td>    <b>if</b> (<a class="local col5 ref" href="#15samples" title='samples' data-ref="15samples">samples</a> &gt; <a class="local col1 ref" href="#11pkt" title='pkt' data-ref="11pkt">pkt</a>-&gt;<a class="ref" href="avcodec.h.html#AVPacket::size" title='AVPacket::size' data-ref="AVPacket::size">size</a> * <var>2</var>)</td></tr>
+<tr><th id="142">142</th><td>        <b>return</b> <a class="macro" href="../libavutil/error.h.html#59" title="(-(int)((&apos;I&apos;) | ((&apos;N&apos;) &lt;&lt; 8) | ((&apos;D&apos;) &lt;&lt; 16) | ((unsigned)(&apos;A&apos;) &lt;&lt; 24)))" data-ref="_M/AVERROR_INVALIDDATA">AVERROR_INVALIDDATA</a>;</td></tr>
+<tr><th id="143">143</th><td></td></tr>
+<tr><th id="144">144</th><td>    <a class="local col6 ref" href="#16channel_hint" title='channel_hint' data-ref="16channel_hint">channel_hint</a>[<var>0</var>] = <a class="ref" href="get_bits.h.html#get_sbits" title='get_sbits' data-ref="get_sbits">get_sbits</a>(&amp;<a class="local col2 ref" href="#12gb" title='gb' data-ref="12gb">gb</a>, <var>8</var>);</td></tr>
+<tr><th id="145">145</th><td>    <b>if</b> (<a class="local col6 ref" href="#16channel_hint" title='channel_hint' data-ref="16channel_hint">channel_hint</a>[<var>0</var>] &amp; <var>0x80</var>) {</td></tr>
+<tr><th id="146">146</th><td>        <a class="local col6 ref" href="#16channel_hint" title='channel_hint' data-ref="16channel_hint">channel_hint</a>[<var>0</var>] = ~<a class="local col6 ref" href="#16channel_hint" title='channel_hint' data-ref="16channel_hint">channel_hint</a>[<var>0</var>];</td></tr>
+<tr><th id="147">147</th><td>        <a class="local col9 ref" href="#19channels" title='channels' data-ref="19channels">channels</a> = <var>2</var>;</td></tr>
+<tr><th id="148">148</th><td>    }</td></tr>
+<tr><th id="149">149</th><td>    <a class="local col8 ref" href="#8avctx" title='avctx' data-ref="8avctx">avctx</a>-&gt;<a class="ref" href="avcodec.h.html#AVCodecContext::channels" title='AVCodecContext::channels' data-ref="AVCodecContext::channels">channels</a> = <a class="local col9 ref" href="#19channels" title='channels' data-ref="19channels">channels</a>;</td></tr>
+<tr><th id="150">150</th><td>    <a class="local col8 ref" href="#8avctx" title='avctx' data-ref="8avctx">avctx</a>-&gt;<a class="ref" href="avcodec.h.html#AVCodecContext::channel_layout" title='AVCodecContext::channel_layout' data-ref="AVCodecContext::channel_layout">channel_layout</a> = (<a class="local col9 ref" href="#19channels" title='channels' data-ref="19channels">channels</a> == <var>2</var>) ? <a class="macro" href="../libavutil/channel_layout.h.html#86" title="(0x00000001|0x00000002)" data-ref="_M/AV_CH_LAYOUT_STEREO">AV_CH_LAYOUT_STEREO</a></td></tr>
+<tr><th id="151">151</th><td>                                            : <a class="macro" href="../libavutil/channel_layout.h.html#85" title="(0x00000004)" data-ref="_M/AV_CH_LAYOUT_MONO">AV_CH_LAYOUT_MONO</a>;</td></tr>
+<tr><th id="152">152</th><td>    <a class="local col4 ref" href="#14pcm_data" title='pcm_data' data-ref="14pcm_data">pcm_data</a>[<var>0</var>] = <a class="ref" href="get_bits.h.html#get_sbits" title='get_sbits' data-ref="get_sbits">get_sbits</a>(&amp;<a class="local col2 ref" href="#12gb" title='gb' data-ref="12gb">gb</a>, <var>16</var>);</td></tr>
+<tr><th id="153">153</th><td>    <b>if</b> (<a class="local col9 ref" href="#19channels" title='channels' data-ref="19channels">channels</a> &gt; <var>1</var>) {</td></tr>
+<tr><th id="154">154</th><td>        <a class="local col6 ref" href="#16channel_hint" title='channel_hint' data-ref="16channel_hint">channel_hint</a>[<var>1</var>] = <a class="ref" href="get_bits.h.html#get_sbits" title='get_sbits' data-ref="get_sbits">get_sbits</a>(&amp;<a class="local col2 ref" href="#12gb" title='gb' data-ref="12gb">gb</a>, <var>8</var>);</td></tr>
+<tr><th id="155">155</th><td>        <a class="local col4 ref" href="#14pcm_data" title='pcm_data' data-ref="14pcm_data">pcm_data</a>[<var>1</var>]     = <a class="ref" href="get_bits.h.html#get_sbits" title='get_sbits' data-ref="get_sbits">get_sbits</a>(&amp;<a class="local col2 ref" href="#12gb" title='gb' data-ref="12gb">gb</a>, <var>16</var>);</td></tr>
+<tr><th id="156">156</th><td>    }</td></tr>
+<tr><th id="157">157</th><td></td></tr>
+<tr><th id="158">158</th><td>    <a class="local col3 ref" href="#13frame" title='frame' data-ref="13frame">frame</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::nb_samples" title='AVFrame::nb_samples' data-ref="AVFrame::nb_samples">nb_samples</a> = <a class="local col5 ref" href="#15samples" title='samples' data-ref="15samples">samples</a>;</td></tr>
+<tr><th id="159">159</th><td>    <b>if</b> ((<a class="local col7 ref" href="#17ret" title='ret' data-ref="17ret">ret</a> = <a class="ref" href="internal.h.html#ff_get_buffer" title='ff_get_buffer' data-ref="ff_get_buffer">ff_get_buffer</a>(<a class="local col8 ref" href="#8avctx" title='avctx' data-ref="8avctx">avctx</a>, <a class="local col3 ref" href="#13frame" title='frame' data-ref="13frame">frame</a>, <var>0</var>)) &lt; <var>0</var>)</td></tr>
+<tr><th id="160">160</th><td>        <b>return</b> <a class="local col7 ref" href="#17ret" title='ret' data-ref="17ret">ret</a>;</td></tr>
+<tr><th id="161">161</th><td></td></tr>
+<tr><th id="162">162</th><td>    <b>for</b> (<a class="local col8 ref" href="#18chan" title='chan' data-ref="18chan">chan</a> = <var>0</var>; <a class="local col8 ref" href="#18chan" title='chan' data-ref="18chan">chan</a> &lt; <a class="local col9 ref" href="#19channels" title='channels' data-ref="19channels">channels</a>; <a class="local col8 ref" href="#18chan" title='chan' data-ref="18chan">chan</a>++) {</td></tr>
+<tr><th id="163">163</th><td>        <a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> *<dfn class="local col0 decl" id="20dest" title='dest' data-type='uint16_t *' data-ref="20dest">dest</dfn> = (<a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> *)<a class="local col3 ref" href="#13frame" title='frame' data-ref="13frame">frame</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::data" title='AVFrame::data' data-ref="AVFrame::data">data</a>[<var>0</var>] + <a class="local col8 ref" href="#18chan" title='chan' data-ref="18chan">chan</a>;</td></tr>
+<tr><th id="164">164</th><td>        <em>int</em> <dfn class="local col1 decl" id="21step_index" title='step_index' data-type='int' data-ref="21step_index">step_index</dfn> = <a class="local col6 ref" href="#16channel_hint" title='channel_hint' data-ref="16channel_hint">channel_hint</a>[<a class="local col8 ref" href="#18chan" title='chan' data-ref="18chan">chan</a>];</td></tr>
+<tr><th id="165">165</th><td>        <em>int</em> <dfn class="local col2 decl" id="22output" title='output' data-type='int' data-ref="22output">output</dfn> = <a class="local col4 ref" href="#14pcm_data" title='pcm_data' data-ref="14pcm_data">pcm_data</a>[<a class="local col8 ref" href="#18chan" title='chan' data-ref="18chan">chan</a>];</td></tr>
+<tr><th id="166">166</th><td>        <em>int</em> <dfn class="local col3 decl" id="23sample" title='sample' data-type='int' data-ref="23sample">sample</dfn>;</td></tr>
+<tr><th id="167">167</th><td></td></tr>
+<tr><th id="168">168</th><td>        <b>for</b> (<a class="local col3 ref" href="#23sample" title='sample' data-ref="23sample">sample</a> = <var>0</var>; <a class="local col3 ref" href="#23sample" title='sample' data-ref="23sample">sample</a> &lt; <a class="local col5 ref" href="#15samples" title='samples' data-ref="15samples">samples</a>; <a class="local col3 ref" href="#23sample" title='sample' data-ref="23sample">sample</a>++) {</td></tr>
+<tr><th id="169">169</th><td>            <em>int</em> <dfn class="local col4 decl" id="24lookup_size" title='lookup_size' data-type='int' data-ref="24lookup_size">lookup_size</dfn>, <dfn class="local col5 decl" id="25lookup" title='lookup' data-type='int' data-ref="25lookup">lookup</dfn>, <dfn class="local col6 decl" id="26highbit" title='highbit' data-type='int' data-ref="26highbit">highbit</dfn>, <dfn class="local col7 decl" id="27lowbits" title='lowbits' data-type='int' data-ref="27lowbits">lowbits</dfn>;</td></tr>
+<tr><th id="170">170</th><td></td></tr>
+<tr><th id="171">171</th><td>            <a class="local col1 ref" href="#21step_index" title='step_index' data-ref="21step_index">step_index</a>  = <a class="macro" href="../libavutil/common.h.html#481" title="av_clip_c" data-ref="_M/av_clip">av_clip</a>(<a class="local col1 ref" href="#21step_index" title='step_index' data-ref="21step_index">step_index</a>, <var>0</var>, <var>88</var>);</td></tr>
+<tr><th id="172">172</th><td>            <a class="local col4 ref" href="#24lookup_size" title='lookup_size' data-ref="24lookup_size">lookup_size</a> = <a class="tu ref" href="#size_table" title='size_table' data-use='r' data-ref="size_table">size_table</a>[<a class="local col1 ref" href="#21step_index" title='step_index' data-ref="21step_index">step_index</a>];</td></tr>
+<tr><th id="173">173</th><td>            <a class="local col5 ref" href="#25lookup" title='lookup' data-ref="25lookup">lookup</a>      = <a class="ref" href="get_bits.h.html#get_bits" title='get_bits' data-ref="get_bits">get_bits</a>(&amp;<a class="local col2 ref" href="#12gb" title='gb' data-ref="12gb">gb</a>, <a class="local col4 ref" href="#24lookup_size" title='lookup_size' data-ref="24lookup_size">lookup_size</a>);</td></tr>
+<tr><th id="174">174</th><td>            <a class="local col6 ref" href="#26highbit" title='highbit' data-ref="26highbit">highbit</a>     = <var>1</var> &lt;&lt; (<a class="local col4 ref" href="#24lookup_size" title='lookup_size' data-ref="24lookup_size">lookup_size</a> - <var>1</var>);</td></tr>
+<tr><th id="175">175</th><td>            <a class="local col7 ref" href="#27lowbits" title='lowbits' data-ref="27lowbits">lowbits</a>     = <a class="local col6 ref" href="#26highbit" title='highbit' data-ref="26highbit">highbit</a> - <var>1</var>;</td></tr>
+<tr><th id="176">176</th><td></td></tr>
+<tr><th id="177">177</th><td>            <b>if</b> (<a class="local col5 ref" href="#25lookup" title='lookup' data-ref="25lookup">lookup</a> &amp; <a class="local col6 ref" href="#26highbit" title='highbit' data-ref="26highbit">highbit</a>)</td></tr>
+<tr><th id="178">178</th><td>                <a class="local col5 ref" href="#25lookup" title='lookup' data-ref="25lookup">lookup</a> ^= <a class="local col6 ref" href="#26highbit" title='highbit' data-ref="26highbit">highbit</a>;</td></tr>
+<tr><th id="179">179</th><td>            <b>else</b></td></tr>
+<tr><th id="180">180</th><td>                <a class="local col6 ref" href="#26highbit" title='highbit' data-ref="26highbit">highbit</a> = <var>0</var>;</td></tr>
+<tr><th id="181">181</th><td></td></tr>
+<tr><th id="182">182</th><td>            <b>if</b> (<a class="local col5 ref" href="#25lookup" title='lookup' data-ref="25lookup">lookup</a> == <a class="local col7 ref" href="#27lowbits" title='lowbits' data-ref="27lowbits">lowbits</a>) {</td></tr>
+<tr><th id="183">183</th><td>                <a class="local col2 ref" href="#22output" title='output' data-ref="22output">output</a> = <a class="ref" href="get_bits.h.html#get_sbits" title='get_sbits' data-ref="get_sbits">get_sbits</a>(&amp;<a class="local col2 ref" href="#12gb" title='gb' data-ref="12gb">gb</a>, <var>16</var>);</td></tr>
+<tr><th id="184">184</th><td>            } <b>else</b> {</td></tr>
+<tr><th id="185">185</th><td>                <em>int</em> <dfn class="local col8 decl" id="28predict_index" title='predict_index' data-type='int' data-ref="28predict_index">predict_index</dfn>, <dfn class="local col9 decl" id="29diff" title='diff' data-type='int' data-ref="29diff">diff</dfn>;</td></tr>
+<tr><th id="186">186</th><td></td></tr>
+<tr><th id="187">187</th><td>                <a class="local col8 ref" href="#28predict_index" title='predict_index' data-ref="28predict_index">predict_index</a> = (<a class="local col5 ref" href="#25lookup" title='lookup' data-ref="25lookup">lookup</a> &lt;&lt; (<var>7</var> - <a class="local col4 ref" href="#24lookup_size" title='lookup_size' data-ref="24lookup_size">lookup_size</a>)) | (<a class="local col1 ref" href="#21step_index" title='step_index' data-ref="21step_index">step_index</a> &lt;&lt; <var>6</var>);</td></tr>
+<tr><th id="188">188</th><td>                <a class="local col8 ref" href="#28predict_index" title='predict_index' data-ref="28predict_index">predict_index</a> = <a class="macro" href="../libavutil/common.h.html#481" title="av_clip_c" data-ref="_M/av_clip">av_clip</a>(<a class="local col8 ref" href="#28predict_index" title='predict_index' data-ref="28predict_index">predict_index</a>, <var>0</var>, <var>5785</var>);</td></tr>
+<tr><th id="189">189</th><td>                <a class="local col9 ref" href="#29diff" title='diff' data-ref="29diff">diff</a>          = <a class="tu ref" href="#predict_table" title='predict_table' data-use='r' data-ref="predict_table">predict_table</a>[<a class="local col8 ref" href="#28predict_index" title='predict_index' data-ref="28predict_index">predict_index</a>];</td></tr>
+<tr><th id="190">190</th><td>                <b>if</b> (<a class="local col5 ref" href="#25lookup" title='lookup' data-ref="25lookup">lookup</a>)</td></tr>
+<tr><th id="191">191</th><td>                    <a class="local col9 ref" href="#29diff" title='diff' data-ref="29diff">diff</a> += <a class="ref" href="adpcm_data.h.html#ff_adpcm_step_table" title='ff_adpcm_step_table' data-ref="ff_adpcm_step_table">ff_adpcm_step_table</a>[<a class="local col1 ref" href="#21step_index" title='step_index' data-ref="21step_index">step_index</a>] &gt;&gt; (<a class="local col4 ref" href="#24lookup_size" title='lookup_size' data-ref="24lookup_size">lookup_size</a> - <var>1</var>);</td></tr>
+<tr><th id="192">192</th><td>                <b>if</b> (<a class="local col6 ref" href="#26highbit" title='highbit' data-ref="26highbit">highbit</a>)</td></tr>
+<tr><th id="193">193</th><td>                    <a class="local col9 ref" href="#29diff" title='diff' data-ref="29diff">diff</a> = -<a class="local col9 ref" href="#29diff" title='diff' data-ref="29diff">diff</a>;</td></tr>
+<tr><th id="194">194</th><td></td></tr>
+<tr><th id="195">195</th><td>                <a class="local col2 ref" href="#22output" title='output' data-ref="22output">output</a> = <a class="macro" href="../libavutil/common.h.html#496" title="av_clip_int16_c" data-ref="_M/av_clip_int16">av_clip_int16</a>(<a class="local col2 ref" href="#22output" title='output' data-ref="22output">output</a> + <a class="local col9 ref" href="#29diff" title='diff' data-ref="29diff">diff</a>);</td></tr>
+<tr><th id="196">196</th><td>            }</td></tr>
+<tr><th id="197">197</th><td></td></tr>
+<tr><th id="198">198</th><td>            *<a class="local col0 ref" href="#20dest" title='dest' data-ref="20dest">dest</a> = <a class="local col2 ref" href="#22output" title='output' data-ref="22output">output</a>;</td></tr>
+<tr><th id="199">199</th><td>            <a class="local col0 ref" href="#20dest" title='dest' data-ref="20dest">dest</a> += <a class="local col9 ref" href="#19channels" title='channels' data-ref="19channels">channels</a>;</td></tr>
+<tr><th id="200">200</th><td></td></tr>
+<tr><th id="201">201</th><td>            <a class="local col1 ref" href="#21step_index" title='step_index' data-ref="21step_index">step_index</a> += <a class="tu ref" href="#step_index_tables" title='step_index_tables' data-use='r' data-ref="step_index_tables">step_index_tables</a>[<a class="local col4 ref" href="#24lookup_size" title='lookup_size' data-ref="24lookup_size">lookup_size</a> - <var>2</var>][<a class="local col5 ref" href="#25lookup" title='lookup' data-ref="25lookup">lookup</a>];</td></tr>
+<tr><th id="202">202</th><td>        }</td></tr>
+<tr><th id="203">203</th><td>    }</td></tr>
+<tr><th id="204">204</th><td></td></tr>
+<tr><th id="205">205</th><td>    *<a class="local col0 ref" href="#10got_frame_ptr" title='got_frame_ptr' data-ref="10got_frame_ptr">got_frame_ptr</a> = <var>1</var>;</td></tr>
+<tr><th id="206">206</th><td></td></tr>
+<tr><th id="207">207</th><td>    <b>return</b> <a class="local col1 ref" href="#11pkt" title='pkt' data-ref="11pkt">pkt</a>-&gt;<a class="ref" href="avcodec.h.html#AVPacket::size" title='AVPacket::size' data-ref="AVPacket::size">size</a>;</td></tr>
+<tr><th id="208">208</th><td>}</td></tr>
+<tr><th id="209">209</th><td></td></tr>
+<tr><th id="210">210</th><td><a class="typedef" href="avcodec.h.html#AVCodec" title='AVCodec' data-type='struct AVCodec' data-ref="AVCodec">AVCodec</a> <dfn class="decl def" id="ff_adpcm_vima_decoder" title='ff_adpcm_vima_decoder' data-ref="ff_adpcm_vima_decoder">ff_adpcm_vima_decoder</dfn> = {</td></tr>
+<tr><th id="211">211</th><td>    .<a class="ref" href="avcodec.h.html#AVCodec::name" title='AVCodec::name' data-ref="AVCodec::name">name</a>         = <q>"adpcm_vima"</q>,</td></tr>
+<tr><th id="212">212</th><td>    .<a class="ref" href="avcodec.h.html#AVCodec::long_name" title='AVCodec::long_name' data-ref="AVCodec::long_name">long_name</a>    = <a class="macro" href="../libavutil/internal.h.html#176" title="&quot;LucasArts VIMA audio&quot;" data-ref="_M/NULL_IF_CONFIG_SMALL">NULL_IF_CONFIG_SMALL</a>(<q>"LucasArts VIMA audio"</q>),</td></tr>
+<tr><th id="213">213</th><td>    .<a class="ref" href="avcodec.h.html#AVCodec::type" title='AVCodec::type' data-ref="AVCodec::type">type</a>         = <a class="enum" href="../libavutil/avutil.h.html#AVMediaType::AVMEDIA_TYPE_AUDIO" title='AVMediaType::AVMEDIA_TYPE_AUDIO' data-ref="AVMediaType::AVMEDIA_TYPE_AUDIO">AVMEDIA_TYPE_AUDIO</a>,</td></tr>
+<tr><th id="214">214</th><td>    .<a class="ref" href="avcodec.h.html#AVCodec::id" title='AVCodec::id' data-ref="AVCodec::id">id</a>           = <a class="enum" href="avcodec.h.html#AVCodecID::AV_CODEC_ID_ADPCM_VIMA" title='AVCodecID::AV_CODEC_ID_ADPCM_VIMA' data-ref="AVCodecID::AV_CODEC_ID_ADPCM_VIMA">AV_CODEC_ID_ADPCM_VIMA</a>,</td></tr>
+<tr><th id="215">215</th><td>    .<a class="ref" href="avcodec.h.html#AVCodec::init" title='AVCodec::init' data-ref="AVCodec::init">init</a>         = <a class="tu ref" href="#decode_init" title='decode_init' data-ref="decode_init">decode_init</a>,</td></tr>
+<tr><th id="216">216</th><td>    .<a class="ref" href="avcodec.h.html#AVCodec::decode" title='AVCodec::decode' data-ref="AVCodec::decode">decode</a>       = <a class="tu ref" href="#decode_frame" title='decode_frame' data-ref="decode_frame">decode_frame</a>,</td></tr>
+<tr><th id="217">217</th><td>    .<a class="ref" href="avcodec.h.html#AVCodec::capabilities" title='AVCodec::capabilities' data-ref="AVCodec::capabilities">capabilities</a> = <a class="macro" href="avcodec.h.html#959" title="(1 &lt;&lt; 1)" data-ref="_M/AV_CODEC_CAP_DR1">AV_CODEC_CAP_DR1</a>,</td></tr>
+<tr><th id="218">218</th><td>};</td></tr>
+<tr><th id="219">219</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

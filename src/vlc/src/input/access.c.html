@@ -1,0 +1,143 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>access.c source code [vlc/src/input/access.c] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'vlc/src/input/access.c'; var root_path = '../../..'; var data_path = '../../../../data';</script>
+<script src='../../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='../..'>vlc</a>/<a href='..'>src</a>/<a href='./'>input</a>/<a href='access.c.html'>access.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*****************************************************************************</i></td></tr>
+<tr><th id="2">2</th><td><i> * access.c</i></td></tr>
+<tr><th id="3">3</th><td><i> *****************************************************************************</i></td></tr>
+<tr><th id="4">4</th><td><i> * Copyright (C) 1999-2008 VLC authors and VideoLAN</i></td></tr>
+<tr><th id="5">5</th><td><i> * $Id: 850fccd363c516b5a2979d582e2d23522ccdf597 $</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * Author: Laurent Aimar &lt;fenrir _AT_ videolan _DOT_ org&gt;</i></td></tr>
+<tr><th id="8">8</th><td><i> *</i></td></tr>
+<tr><th id="9">9</th><td><i> * This program is free software; you can redistribute it and/or modify it</i></td></tr>
+<tr><th id="10">10</th><td><i> * under the terms of the GNU Lesser General Public License as published by</i></td></tr>
+<tr><th id="11">11</th><td><i> * the Free Software Foundation; either version 2.1 of the License, or</i></td></tr>
+<tr><th id="12">12</th><td><i> * (at your option) any later version.</i></td></tr>
+<tr><th id="13">13</th><td><i> *</i></td></tr>
+<tr><th id="14">14</th><td><i> * This program is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="15">15</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="16">16</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</i></td></tr>
+<tr><th id="17">17</th><td><i> * GNU Lesser General Public License for more details.</i></td></tr>
+<tr><th id="18">18</th><td><i> *</i></td></tr>
+<tr><th id="19">19</th><td><i> * You should have received a copy of the GNU Lesser General Public License</i></td></tr>
+<tr><th id="20">20</th><td><i> * along with this program; if not, write to the Free Software Foundation,</i></td></tr>
+<tr><th id="21">21</th><td><i> * Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.</i></td></tr>
+<tr><th id="22">22</th><td><i> *****************************************************************************/</i></td></tr>
+<tr><th id="23">23</th><td></td></tr>
+<tr><th id="24">24</th><td><u>#<span data-ppcond="24">ifdef</span> <span class="macro" data-ref="_M/HAVE_CONFIG_H">HAVE_CONFIG_H</span></u></td></tr>
+<tr><th id="25">25</th><td><u># include <a href="../../config.h.html">"config.h"</a></u></td></tr>
+<tr><th id="26">26</th><td><u>#<span data-ppcond="24">endif</span></u></td></tr>
+<tr><th id="27">27</th><td></td></tr>
+<tr><th id="28">28</th><td><u>#include <a href="access.h.html">"access.h"</a></u></td></tr>
+<tr><th id="29">29</th><td><u>#include <a href="../libvlc.h.html">&lt;libvlc.h&gt;</a></u></td></tr>
+<tr><th id="30">30</th><td><u>#include <a href="../../include/vlc_url.h.html">&lt;vlc_url.h&gt;</a></u></td></tr>
+<tr><th id="31">31</th><td><u>#include <a href="../../include/vlc_modules.h.html">&lt;vlc_modules.h&gt;</a></u></td></tr>
+<tr><th id="32">32</th><td></td></tr>
+<tr><th id="33">33</th><td><i>/* Decode URL (which has had its scheme stripped earlier) to a file path. */</i></td></tr>
+<tr><th id="34">34</th><td><em>char</em> *<dfn class="decl def" id="get_path" title='get_path' data-ref="get_path">get_path</dfn>(<em>const</em> <em>char</em> *<dfn class="local col7 decl" id="7location" title='location' data-type='const char *' data-ref="7location">location</dfn>)</td></tr>
+<tr><th id="35">35</th><td>{</td></tr>
+<tr><th id="36">36</th><td>    <em>char</em> *<dfn class="local col8 decl" id="8url" title='url' data-type='char *' data-ref="8url">url</dfn>, *<dfn class="local col9 decl" id="9path" title='path' data-type='char *' data-ref="9path">path</dfn>;</td></tr>
+<tr><th id="37">37</th><td></td></tr>
+<tr><th id="38">38</th><td>    <i>/* Prepending "file://" is a bit hackish. But then again, we do not want</i></td></tr>
+<tr><th id="39">39</th><td><i>     * to hard-code the list of schemes that use file paths in make_path().</i></td></tr>
+<tr><th id="40">40</th><td><i>     */</i></td></tr>
+<tr><th id="41">41</th><td>    <b>if</b> (<a class="macro" href="../../../include/x86_64-linux-gnu/bits/stdio2.h.html#198" title="__asprintf_chk (&amp;url, 2 - 1, &quot;file://%s&quot;, location)" data-ref="_M/asprintf">asprintf</a>(&amp;<a class="local col8 ref" href="#8url" title='url' data-ref="8url">url</a>, <q>"file://%s"</q>, <a class="local col7 ref" href="#7location" title='location' data-ref="7location">location</a>) == -<var>1</var>)</td></tr>
+<tr><th id="42">42</th><td>        <b>return</b> <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="43">43</th><td></td></tr>
+<tr><th id="44">44</th><td>    <a class="local col9 ref" href="#9path" title='path' data-ref="9path">path</a> = <a class="ref" href="../../include/vlc_url.h.html#make_path" title='make_path' data-ref="make_path">make_path</a> (<a class="local col8 ref" href="#8url" title='url' data-ref="8url">url</a>);</td></tr>
+<tr><th id="45">45</th><td>    <a class="ref" href="../../../include/stdlib.h.html#free" title='free' data-ref="free">free</a> (<a class="local col8 ref" href="#8url" title='url' data-ref="8url">url</a>);</td></tr>
+<tr><th id="46">46</th><td>    <b>return</b> <a class="local col9 ref" href="#9path" title='path' data-ref="9path">path</a>;</td></tr>
+<tr><th id="47">47</th><td>}</td></tr>
+<tr><th id="48">48</th><td></td></tr>
+<tr><th id="49">49</th><td><u>#undef <a class="macro" href="access.h.html#34" data-ref="_M/access_New">access_New</a></u></td></tr>
+<tr><th id="50">50</th><td><i>/*****************************************************************************</i></td></tr>
+<tr><th id="51">51</th><td><i> * access_New:</i></td></tr>
+<tr><th id="52">52</th><td><i> *****************************************************************************/</i></td></tr>
+<tr><th id="53">53</th><td><a class="typedef" href="../../include/vlc_common.h.html#access_t" title='access_t' data-type='struct access_t' data-ref="access_t">access_t</a> *<dfn class="decl def" id="access_New" title='access_New' data-ref="access_New">access_New</dfn>( <a class="typedef" href="../../include/vlc_common.h.html#vlc_object_t" title='vlc_object_t' data-type='struct vlc_object_t' data-ref="vlc_object_t">vlc_object_t</a> *<dfn class="local col0 decl" id="10p_obj" title='p_obj' data-type='vlc_object_t *' data-ref="10p_obj">p_obj</dfn>, <a class="typedef" href="../../include/vlc_common.h.html#input_thread_t" title='input_thread_t' data-type='struct input_thread_t' data-ref="input_thread_t">input_thread_t</a> *<dfn class="local col1 decl" id="11p_parent_input" title='p_parent_input' data-type='input_thread_t *' data-ref="11p_parent_input">p_parent_input</dfn>,</td></tr>
+<tr><th id="54">54</th><td>                      <em>const</em> <em>char</em> *<dfn class="local col2 decl" id="12psz_access" title='psz_access' data-type='const char *' data-ref="12psz_access">psz_access</dfn>, <em>const</em> <em>char</em> *<dfn class="local col3 decl" id="13psz_demux" title='psz_demux' data-type='const char *' data-ref="13psz_demux">psz_demux</dfn>,</td></tr>
+<tr><th id="55">55</th><td>                      <em>const</em> <em>char</em> *<dfn class="local col4 decl" id="14psz_location" title='psz_location' data-type='const char *' data-ref="14psz_location">psz_location</dfn> )</td></tr>
+<tr><th id="56">56</th><td>{</td></tr>
+<tr><th id="57">57</th><td>    <a class="typedef" href="../../include/vlc_common.h.html#access_t" title='access_t' data-type='struct access_t' data-ref="access_t">access_t</a> *<dfn class="local col5 decl" id="15p_access" title='p_access' data-type='access_t *' data-ref="15p_access">p_access</dfn> = <a class="macro" href="../libvlc.h.html#114" title="vlc_custom_create(__builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_obj)), psz_object_type), (void)0 , (vlc_object_t *)(p_obj)), sizeof (*p_access), &quot;access&quot;)" data-ref="_M/vlc_custom_create">vlc_custom_create</a>( <a class="local col0 ref" href="#10p_obj" title='p_obj' data-ref="10p_obj">p_obj</a>, <b>sizeof</b> (*<a class="local col5 ref" href="#15p_access" title='p_access' data-ref="15p_access">p_access</a>),</td></tr>
+<tr><th id="58">58</th><td>                                            <q>"access"</q> );</td></tr>
+<tr><th id="59">59</th><td></td></tr>
+<tr><th id="60">60</th><td>    <b>if</b>( <a class="local col5 ref" href="#15p_access" title='p_access' data-ref="15p_access">p_access</a> == <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span> )</td></tr>
+<tr><th id="61">61</th><td>        <b>return</b> <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="62">62</th><td></td></tr>
+<tr><th id="63">63</th><td>    <i>/* */</i></td></tr>
+<tr><th id="64">64</th><td></td></tr>
+<tr><th id="65">65</th><td>    <a class="local col5 ref" href="#15p_access" title='p_access' data-ref="15p_access">p_access</a>-&gt;<a class="ref" href="../../include/vlc_access.h.html#access_t::p_input" title='access_t::p_input' data-ref="access_t::p_input">p_input</a> = <a class="local col1 ref" href="#11p_parent_input" title='p_parent_input' data-ref="11p_parent_input">p_parent_input</a>;</td></tr>
+<tr><th id="66">66</th><td></td></tr>
+<tr><th id="67">67</th><td>    <a class="local col5 ref" href="#15p_access" title='p_access' data-ref="15p_access">p_access</a>-&gt;<a class="ref" href="../../include/vlc_access.h.html#access_t::psz_access" title='access_t::psz_access' data-ref="access_t::psz_access">psz_access</a> = <a class="macro" href="../../../include/x86_64-linux-gnu/bits/string2.h.html#1291" title="(__extension__ (__builtin_constant_p (psz_access) &amp;&amp; ((size_t)(const void *)((psz_access) + 1) - (size_t)(const void *)(psz_access) == 1) ? (((const char *) (psz_access))[0] == &apos;\0&apos; ? (char *) calloc ((size_t) 1, (size_t) 1) : ({ size_t __len = strlen (psz_access) + 1; char *__retval = (char *) malloc (__len); if (__retval != ((void*)0)) __retval = (char *) memcpy (__retval, psz_access, __len); __retval; })) : __strdup (psz_access)))" data-ref="_M/strdup">strdup</a>( <a class="local col2 ref" href="#12psz_access" title='psz_access' data-ref="12psz_access">psz_access</a> );</td></tr>
+<tr><th id="68">68</th><td>    <a class="local col5 ref" href="#15p_access" title='p_access' data-ref="15p_access">p_access</a>-&gt;<a class="ref" href="../../include/vlc_access.h.html#access_t::psz_location" title='access_t::psz_location' data-ref="access_t::psz_location">psz_location</a> = <a class="macro" href="../../../include/x86_64-linux-gnu/bits/string2.h.html#1291" title="(__extension__ (__builtin_constant_p (psz_location) &amp;&amp; ((size_t)(const void *)((psz_location) + 1) - (size_t)(const void *)(psz_location) == 1) ? (((const char *) (psz_location))[0] == &apos;\0&apos; ? (char *) calloc ((size_t) 1, (size_t) 1) : ({ size_t __len = strlen (psz_location) + 1; char *__retval = (char *) malloc (__len); if (__retval != ((void*)0)) __retval = (char *) memcpy (__retval, psz_location, __len); __retval; })) : __strdup (psz_location)))" data-ref="_M/strdup">strdup</a>( <a class="local col4 ref" href="#14psz_location" title='psz_location' data-ref="14psz_location">psz_location</a> );</td></tr>
+<tr><th id="69">69</th><td>    <a class="local col5 ref" href="#15p_access" title='p_access' data-ref="15p_access">p_access</a>-&gt;<a class="ref" href="../../include/vlc_access.h.html#access_t::psz_filepath" title='access_t::psz_filepath' data-ref="access_t::psz_filepath">psz_filepath</a> = <a class="ref" href="#get_path" title='get_path' data-ref="get_path">get_path</a>( <a class="local col4 ref" href="#14psz_location" title='psz_location' data-ref="14psz_location">psz_location</a> );</td></tr>
+<tr><th id="70">70</th><td>    <a class="local col5 ref" href="#15p_access" title='p_access' data-ref="15p_access">p_access</a>-&gt;<a class="ref" href="../../include/vlc_access.h.html#access_t::psz_demux" title='access_t::psz_demux' data-ref="access_t::psz_demux">psz_demux</a>  = <a class="macro" href="../../../include/x86_64-linux-gnu/bits/string2.h.html#1291" title="(__extension__ (__builtin_constant_p (psz_demux) &amp;&amp; ((size_t)(const void *)((psz_demux) + 1) - (size_t)(const void *)(psz_demux) == 1) ? (((const char *) (psz_demux))[0] == &apos;\0&apos; ? (char *) calloc ((size_t) 1, (size_t) 1) : ({ size_t __len = strlen (psz_demux) + 1; char *__retval = (char *) malloc (__len); if (__retval != ((void*)0)) __retval = (char *) memcpy (__retval, psz_demux, __len); __retval; })) : __strdup (psz_demux)))" data-ref="_M/strdup">strdup</a>( <a class="local col3 ref" href="#13psz_demux" title='psz_demux' data-ref="13psz_demux">psz_demux</a> );</td></tr>
+<tr><th id="71">71</th><td>    <b>if</b>( <a class="local col5 ref" href="#15p_access" title='p_access' data-ref="15p_access">p_access</a>-&gt;<a class="ref" href="../../include/vlc_access.h.html#access_t::psz_access" title='access_t::psz_access' data-ref="access_t::psz_access">psz_access</a> == <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span> || <a class="local col5 ref" href="#15p_access" title='p_access' data-ref="15p_access">p_access</a>-&gt;<a class="ref" href="../../include/vlc_access.h.html#access_t::psz_location" title='access_t::psz_location' data-ref="access_t::psz_location">psz_location</a> == <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span></td></tr>
+<tr><th id="72">72</th><td>     || <a class="local col5 ref" href="#15p_access" title='p_access' data-ref="15p_access">p_access</a>-&gt;<a class="ref" href="../../include/vlc_access.h.html#access_t::psz_demux" title='access_t::psz_demux' data-ref="access_t::psz_demux">psz_demux</a> == <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span> )</td></tr>
+<tr><th id="73">73</th><td>        <b>goto</b> <a class="lbl" href="#16error" data-ref="16error">error</a>;</td></tr>
+<tr><th id="74">74</th><td></td></tr>
+<tr><th id="75">75</th><td>    <a class="macro" href="../../include/vlc_messages.h.html#77" title="vlc_Log( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_obj)), psz_object_type), (void)0 , (vlc_object_t *)(p_obj)), VLC_MSG_DBG, core, &quot;creating access &apos;%s&apos; location=&apos;%s&apos;, path=&apos;%s&apos;&quot;, psz_access, psz_location, p_access-&gt;psz_filepath ? p_access-&gt;psz_filepath : &quot;(null)&quot; )" data-ref="_M/msg_Dbg">msg_Dbg</a>( p_obj, <q>"creating access '%s' location='%s', path='%s'"</q>,</td></tr>
+<tr><th id="76">76</th><td>             psz_access, psz_location,</td></tr>
+<tr><th id="77">77</th><td>             p_access-&gt;psz_filepath ? p_access-&gt;psz_filepath : <q>"(null)"</q> );</td></tr>
+<tr><th id="78">78</th><td></td></tr>
+<tr><th id="79">79</th><td>    <a class="local col5 ref" href="#15p_access" title='p_access' data-ref="15p_access">p_access</a>-&gt;<a class="ref" href="../../include/vlc_access.h.html#access_t::pf_read" title='access_t::pf_read' data-ref="access_t::pf_read">pf_read</a>    = <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="80">80</th><td>    <a class="local col5 ref" href="#15p_access" title='p_access' data-ref="15p_access">p_access</a>-&gt;<a class="ref" href="../../include/vlc_access.h.html#access_t::pf_block" title='access_t::pf_block' data-ref="access_t::pf_block">pf_block</a>   = <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="81">81</th><td>    <a class="local col5 ref" href="#15p_access" title='p_access' data-ref="15p_access">p_access</a>-&gt;<a class="ref" href="../../include/vlc_access.h.html#access_t::pf_seek" title='access_t::pf_seek' data-ref="access_t::pf_seek">pf_seek</a>    = <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="82">82</th><td>    <a class="local col5 ref" href="#15p_access" title='p_access' data-ref="15p_access">p_access</a>-&gt;<a class="ref" href="../../include/vlc_access.h.html#access_t::pf_control" title='access_t::pf_control' data-ref="access_t::pf_control">pf_control</a> = <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="83">83</th><td>    <a class="local col5 ref" href="#15p_access" title='p_access' data-ref="15p_access">p_access</a>-&gt;<a class="ref" href="../../include/vlc_access.h.html#access_t::p_sys" title='access_t::p_sys' data-ref="access_t::p_sys">p_sys</a>      = <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="84">84</th><td></td></tr>
+<tr><th id="85">85</th><td>    <a class="ref" href="../../include/vlc_access.h.html#access_InitFields" title='access_InitFields' data-ref="access_InitFields">access_InitFields</a>( <a class="local col5 ref" href="#15p_access" title='p_access' data-ref="15p_access">p_access</a> );</td></tr>
+<tr><th id="86">86</th><td></td></tr>
+<tr><th id="87">87</th><td>    <a class="local col5 ref" href="#15p_access" title='p_access' data-ref="15p_access">p_access</a>-&gt;<a class="ref" href="../../include/vlc_access.h.html#access_t::p_module" title='access_t::p_module' data-ref="access_t::p_module">p_module</a> = <a class="macro" href="../../include/vlc_modules.h.html#42" title="module_need(__builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_access)), psz_object_type), (void)0 , (vlc_object_t *)(p_access)),&quot;access&quot;,psz_access,1)" data-ref="_M/module_need">module_need</a>( <a class="local col5 ref" href="#15p_access" title='p_access' data-ref="15p_access">p_access</a>, <q>"access"</q>, <a class="local col2 ref" href="#12psz_access" title='psz_access' data-ref="12psz_access">psz_access</a>, <span class="macro" title="1" data-ref="_M/true">true</span> );</td></tr>
+<tr><th id="88">88</th><td>    <b>if</b>( <a class="local col5 ref" href="#15p_access" title='p_access' data-ref="15p_access">p_access</a>-&gt;<a class="ref" href="../../include/vlc_access.h.html#access_t::p_module" title='access_t::p_module' data-ref="access_t::p_module">p_module</a> == <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span> )</td></tr>
+<tr><th id="89">89</th><td>        <b>goto</b> <a class="lbl" href="#16error" data-ref="16error">error</a>;</td></tr>
+<tr><th id="90">90</th><td></td></tr>
+<tr><th id="91">91</th><td>    <b>return</b> <a class="local col5 ref" href="#15p_access" title='p_access' data-ref="15p_access">p_access</a>;</td></tr>
+<tr><th id="92">92</th><td></td></tr>
+<tr><th id="93">93</th><td><dfn class="lbl" id="16error" data-ref="16error">error</dfn>:</td></tr>
+<tr><th id="94">94</th><td>    <a class="ref" href="../../../include/stdlib.h.html#free" title='free' data-ref="free">free</a>( <a class="local col5 ref" href="#15p_access" title='p_access' data-ref="15p_access">p_access</a>-&gt;<a class="ref" href="../../include/vlc_access.h.html#access_t::psz_access" title='access_t::psz_access' data-ref="access_t::psz_access">psz_access</a> );</td></tr>
+<tr><th id="95">95</th><td>    <a class="ref" href="../../../include/stdlib.h.html#free" title='free' data-ref="free">free</a>( <a class="local col5 ref" href="#15p_access" title='p_access' data-ref="15p_access">p_access</a>-&gt;<a class="ref" href="../../include/vlc_access.h.html#access_t::psz_location" title='access_t::psz_location' data-ref="access_t::psz_location">psz_location</a> );</td></tr>
+<tr><th id="96">96</th><td>    <a class="ref" href="../../../include/stdlib.h.html#free" title='free' data-ref="free">free</a>( <a class="local col5 ref" href="#15p_access" title='p_access' data-ref="15p_access">p_access</a>-&gt;<a class="ref" href="../../include/vlc_access.h.html#access_t::psz_filepath" title='access_t::psz_filepath' data-ref="access_t::psz_filepath">psz_filepath</a> );</td></tr>
+<tr><th id="97">97</th><td>    <a class="ref" href="../../../include/stdlib.h.html#free" title='free' data-ref="free">free</a>( <a class="local col5 ref" href="#15p_access" title='p_access' data-ref="15p_access">p_access</a>-&gt;<a class="ref" href="../../include/vlc_access.h.html#access_t::psz_demux" title='access_t::psz_demux' data-ref="access_t::psz_demux">psz_demux</a> );</td></tr>
+<tr><th id="98">98</th><td>    <a class="macro" href="../../include/vlc_objects.h.html#69" title="vlc_object_release( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_access)), psz_object_type), (void)0 , (vlc_object_t *)(p_access)) )" data-ref="_M/vlc_object_release">vlc_object_release</a>( <a class="local col5 ref" href="#15p_access" title='p_access' data-ref="15p_access">p_access</a> );</td></tr>
+<tr><th id="99">99</th><td>    <b>return</b> <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="100">100</th><td>}</td></tr>
+<tr><th id="101">101</th><td></td></tr>
+<tr><th id="102">102</th><td><i>/*****************************************************************************</i></td></tr>
+<tr><th id="103">103</th><td><i> * access_Delete:</i></td></tr>
+<tr><th id="104">104</th><td><i> *****************************************************************************/</i></td></tr>
+<tr><th id="105">105</th><td><em>void</em> <dfn class="decl def" id="access_Delete" title='access_Delete' data-ref="access_Delete">access_Delete</dfn>( <a class="typedef" href="../../include/vlc_common.h.html#access_t" title='access_t' data-type='struct access_t' data-ref="access_t">access_t</a> *<dfn class="local col7 decl" id="17p_access" title='p_access' data-type='access_t *' data-ref="17p_access">p_access</dfn> )</td></tr>
+<tr><th id="106">106</th><td>{</td></tr>
+<tr><th id="107">107</th><td>    <a class="macro" href="../../include/vlc_modules.h.html#44" title="module_unneed(__builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_access)), psz_object_type), (void)0 , (vlc_object_t *)(p_access)),p_access-&gt;p_module)" data-ref="_M/module_unneed">module_unneed</a>( <a class="local col7 ref" href="#17p_access" title='p_access' data-ref="17p_access">p_access</a>, <a class="local col7 ref" href="#17p_access" title='p_access' data-ref="17p_access">p_access</a>-&gt;<a class="ref" href="../../include/vlc_access.h.html#access_t::p_module" title='access_t::p_module' data-ref="access_t::p_module">p_module</a> );</td></tr>
+<tr><th id="108">108</th><td></td></tr>
+<tr><th id="109">109</th><td>    <a class="ref" href="../../../include/stdlib.h.html#free" title='free' data-ref="free">free</a>( <a class="local col7 ref" href="#17p_access" title='p_access' data-ref="17p_access">p_access</a>-&gt;<a class="ref" href="../../include/vlc_access.h.html#access_t::psz_access" title='access_t::psz_access' data-ref="access_t::psz_access">psz_access</a> );</td></tr>
+<tr><th id="110">110</th><td>    <a class="ref" href="../../../include/stdlib.h.html#free" title='free' data-ref="free">free</a>( <a class="local col7 ref" href="#17p_access" title='p_access' data-ref="17p_access">p_access</a>-&gt;<a class="ref" href="../../include/vlc_access.h.html#access_t::psz_location" title='access_t::psz_location' data-ref="access_t::psz_location">psz_location</a> );</td></tr>
+<tr><th id="111">111</th><td>    <a class="ref" href="../../../include/stdlib.h.html#free" title='free' data-ref="free">free</a>( <a class="local col7 ref" href="#17p_access" title='p_access' data-ref="17p_access">p_access</a>-&gt;<a class="ref" href="../../include/vlc_access.h.html#access_t::psz_filepath" title='access_t::psz_filepath' data-ref="access_t::psz_filepath">psz_filepath</a> );</td></tr>
+<tr><th id="112">112</th><td>    <a class="ref" href="../../../include/stdlib.h.html#free" title='free' data-ref="free">free</a>( <a class="local col7 ref" href="#17p_access" title='p_access' data-ref="17p_access">p_access</a>-&gt;<a class="ref" href="../../include/vlc_access.h.html#access_t::psz_demux" title='access_t::psz_demux' data-ref="access_t::psz_demux">psz_demux</a> );</td></tr>
+<tr><th id="113">113</th><td></td></tr>
+<tr><th id="114">114</th><td>    <a class="macro" href="../../include/vlc_objects.h.html#69" title="vlc_object_release( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(p_access)), psz_object_type), (void)0 , (vlc_object_t *)(p_access)) )" data-ref="_M/vlc_object_release">vlc_object_release</a>( <a class="local col7 ref" href="#17p_access" title='p_access' data-ref="17p_access">p_access</a> );</td></tr>
+<tr><th id="115">115</th><td>}</td></tr>
+<tr><th id="116">116</th><td></td></tr>
+<tr><th id="117">117</th><td></td></tr>
+<tr><th id="118">118</th><td><i>/*****************************************************************************</i></td></tr>
+<tr><th id="119">119</th><td><i> * access_GetParentInput:</i></td></tr>
+<tr><th id="120">120</th><td><i> *****************************************************************************/</i></td></tr>
+<tr><th id="121">121</th><td><a class="typedef" href="../../include/vlc_common.h.html#input_thread_t" title='input_thread_t' data-type='struct input_thread_t' data-ref="input_thread_t">input_thread_t</a> * <dfn class="decl def" id="access_GetParentInput" title='access_GetParentInput' data-ref="access_GetParentInput">access_GetParentInput</dfn>( <a class="typedef" href="../../include/vlc_common.h.html#access_t" title='access_t' data-type='struct access_t' data-ref="access_t">access_t</a> *<dfn class="local col8 decl" id="18p_access" title='p_access' data-type='access_t *' data-ref="18p_access">p_access</dfn> )</td></tr>
+<tr><th id="122">122</th><td>{</td></tr>
+<tr><th id="123">123</th><td>    <b>return</b> <a class="local col8 ref" href="#18p_access" title='p_access' data-ref="18p_access">p_access</a>-&gt;<a class="ref" href="../../include/vlc_access.h.html#access_t::p_input" title='access_t::p_input' data-ref="access_t::p_input">p_input</a> ? <a class="macro" href="../../include/vlc_objects.h.html#66" title="vlc_object_hold( __builtin_choose_expr( __builtin_offsetof(__typeof__(*((vlc_object_t *)p_access-&gt;p_input)), psz_object_type), (void)0 , (vlc_object_t *)((vlc_object_t *)p_access-&gt;p_input)) )" data-ref="_M/vlc_object_hold">vlc_object_hold</a>((<a class="typedef" href="../../include/vlc_common.h.html#vlc_object_t" title='vlc_object_t' data-type='struct vlc_object_t' data-ref="vlc_object_t">vlc_object_t</a> *)<a class="local col8 ref" href="#18p_access" title='p_access' data-ref="18p_access">p_access</a>-&gt;<a class="ref" href="../../include/vlc_access.h.html#access_t::p_input" title='access_t::p_input' data-ref="access_t::p_input">p_input</a>) : <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="124">124</th><td>}</td></tr>
+<tr><th id="125">125</th><td></td></tr>
+<tr><th id="126">126</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project vlc revision <em>2.2.0-git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

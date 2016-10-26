@@ -1,0 +1,94 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>imx_dump_header_bsf.c source code [ffmpeg/libavcodec/imx_dump_header_bsf.c] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavcodec/imx_dump_header_bsf.c'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavcodec</a>/<a href='imx_dump_header_bsf.c.html'>imx_dump_header_bsf.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * imx dump header bitstream filter</i></td></tr>
+<tr><th id="3">3</th><td><i> * Copyright (c) 2007 Baptiste Coudurier</i></td></tr>
+<tr><th id="4">4</th><td><i> *</i></td></tr>
+<tr><th id="5">5</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="8">8</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="9">9</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="10">10</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="11">11</th><td><i> *</i></td></tr>
+<tr><th id="12">12</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="13">13</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="14">14</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="15">15</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="16">16</th><td><i> *</i></td></tr>
+<tr><th id="17">17</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="18">18</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="19">19</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="20">20</th><td><i> */</i></td></tr>
+<tr><th id="21">21</th><td></td></tr>
+<tr><th id="22">22</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="23">23</th><td><i class="doc"> *<span class="command"> @file</span></i></td></tr>
+<tr><th id="24">24</th><td><i class="doc"> * imx dump header bitstream filter</i></td></tr>
+<tr><th id="25">25</th><td><i class="doc"> * modifies bitstream to fit in mov and be decoded by final cut pro decoder</i></td></tr>
+<tr><th id="26">26</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="27">27</th><td></td></tr>
+<tr><th id="28">28</th><td><u>#include <a href="avcodec.h.html">"avcodec.h"</a></u></td></tr>
+<tr><th id="29">29</th><td><u>#include <a href="bsf.h.html">"bsf.h"</a></u></td></tr>
+<tr><th id="30">30</th><td><u>#include <a href="bytestream.h.html">"bytestream.h"</a></u></td></tr>
+<tr><th id="31">31</th><td></td></tr>
+<tr><th id="32">32</th><td></td></tr>
+<tr><th id="33">33</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="imx_dump_header" title='imx_dump_header' data-type='int imx_dump_header(AVBSFContext * ctx, AVPacket * out)' data-ref="imx_dump_header">imx_dump_header</dfn>(<a class="typedef" href="avcodec.h.html#AVBSFContext" title='AVBSFContext' data-type='struct AVBSFContext' data-ref="AVBSFContext">AVBSFContext</a> *<dfn class="local col1 decl" id="1ctx" title='ctx' data-type='AVBSFContext *' data-ref="1ctx">ctx</dfn>, <a class="typedef" href="avcodec.h.html#AVPacket" title='AVPacket' data-type='struct AVPacket' data-ref="AVPacket">AVPacket</a> *<dfn class="local col2 decl" id="2out" title='out' data-type='AVPacket *' data-ref="2out">out</dfn>)</td></tr>
+<tr><th id="34">34</th><td>{</td></tr>
+<tr><th id="35">35</th><td>    <i>/* MXF essence element key */</i></td></tr>
+<tr><th id="36">36</th><td>    <em>static</em> <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="local col3 decl" id="3imx_header" title='imx_header' data-type='const uint8_t [16]' data-ref="3imx_header">imx_header</dfn>[<var>16</var>] = { <var>0x06</var>,<var>0x0e</var>,<var>0x2b</var>,<var>0x34</var>,<var>0x01</var>,<var>0x02</var>,<var>0x01</var>,<var>0x01</var>,<var>0x0d</var>,<var>0x01</var>,<var>0x03</var>,<var>0x01</var>,<var>0x05</var>,<var>0x01</var>,<var>0x01</var>,<var>0x00</var> };</td></tr>
+<tr><th id="37">37</th><td></td></tr>
+<tr><th id="38">38</th><td>    <a class="typedef" href="avcodec.h.html#AVPacket" title='AVPacket' data-type='struct AVPacket' data-ref="AVPacket">AVPacket</a> *<dfn class="local col4 decl" id="4in" title='in' data-type='AVPacket *' data-ref="4in">in</dfn>;</td></tr>
+<tr><th id="39">39</th><td>    <em>int</em> <dfn class="local col5 decl" id="5ret" title='ret' data-type='int' data-ref="5ret">ret</dfn> = <var>0</var>;</td></tr>
+<tr><th id="40">40</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col6 decl" id="6out_buf" title='out_buf' data-type='uint8_t *' data-ref="6out_buf">out_buf</dfn>;</td></tr>
+<tr><th id="41">41</th><td></td></tr>
+<tr><th id="42">42</th><td>    <a class="local col5 ref" href="#5ret" title='ret' data-ref="5ret">ret</a> = <a class="ref" href="bsf.h.html#ff_bsf_get_packet" title='ff_bsf_get_packet' data-ref="ff_bsf_get_packet">ff_bsf_get_packet</a>(<a class="local col1 ref" href="#1ctx" title='ctx' data-ref="1ctx">ctx</a>, &amp;<a class="local col4 ref" href="#4in" title='in' data-ref="4in">in</a>);</td></tr>
+<tr><th id="43">43</th><td>    <b>if</b> (<a class="local col5 ref" href="#5ret" title='ret' data-ref="5ret">ret</a> &lt; <var>0</var>)</td></tr>
+<tr><th id="44">44</th><td>        <b>return</b> <a class="local col5 ref" href="#5ret" title='ret' data-ref="5ret">ret</a>;</td></tr>
+<tr><th id="45">45</th><td></td></tr>
+<tr><th id="46">46</th><td>    <a class="local col5 ref" href="#5ret" title='ret' data-ref="5ret">ret</a> = <a class="ref" href="avcodec.h.html#av_new_packet" title='av_new_packet' data-ref="av_new_packet">av_new_packet</a>(<a class="local col2 ref" href="#2out" title='out' data-ref="2out">out</a>, <a class="local col4 ref" href="#4in" title='in' data-ref="4in">in</a>-&gt;<a class="ref" href="avcodec.h.html#AVPacket::size" title='AVPacket::size' data-ref="AVPacket::size">size</a> + <var>20</var>);</td></tr>
+<tr><th id="47">47</th><td>    <b>if</b> (<a class="local col5 ref" href="#5ret" title='ret' data-ref="5ret">ret</a> &lt; <var>0</var>)</td></tr>
+<tr><th id="48">48</th><td>        <b>goto</b> <a class="lbl" href="#7fail" data-ref="7fail">fail</a>;</td></tr>
+<tr><th id="49">49</th><td></td></tr>
+<tr><th id="50">50</th><td>    <a class="local col6 ref" href="#6out_buf" title='out_buf' data-ref="6out_buf">out_buf</a> = <a class="local col2 ref" href="#2out" title='out' data-ref="2out">out</a>-&gt;<a class="ref" href="avcodec.h.html#AVPacket::data" title='AVPacket::data' data-ref="AVPacket::data">data</a>;</td></tr>
+<tr><th id="51">51</th><td></td></tr>
+<tr><th id="52">52</th><td>    <a class="ref" href="bytestream.h.html#bytestream_put_buffer" title='bytestream_put_buffer' data-ref="bytestream_put_buffer">bytestream_put_buffer</a>(&amp;<a class="local col6 ref" href="#6out_buf" title='out_buf' data-ref="6out_buf">out_buf</a>, <a class="local col3 ref" href="#3imx_header" title='imx_header' data-ref="3imx_header">imx_header</a>, <var>16</var>);</td></tr>
+<tr><th id="53">53</th><td>    <a class="ref" href="bytestream.h.html#95" title='bytestream_put_byte' data-ref="bytestream_put_byte">bytestream_put_byte</a>(&amp;<a class="local col6 ref" href="#6out_buf" title='out_buf' data-ref="6out_buf">out_buf</a>, <var>0x83</var>); <i>/* KLV BER long form */</i></td></tr>
+<tr><th id="54">54</th><td>    <a class="ref" href="bytestream.h.html#93" title='bytestream_put_be24' data-ref="bytestream_put_be24">bytestream_put_be24</a>(&amp;<a class="local col6 ref" href="#6out_buf" title='out_buf' data-ref="6out_buf">out_buf</a>, <a class="local col4 ref" href="#4in" title='in' data-ref="4in">in</a>-&gt;<a class="ref" href="avcodec.h.html#AVPacket::size" title='AVPacket::size' data-ref="AVPacket::size">size</a>);</td></tr>
+<tr><th id="55">55</th><td>    <a class="ref" href="bytestream.h.html#bytestream_put_buffer" title='bytestream_put_buffer' data-ref="bytestream_put_buffer">bytestream_put_buffer</a>(&amp;<a class="local col6 ref" href="#6out_buf" title='out_buf' data-ref="6out_buf">out_buf</a>, <a class="local col4 ref" href="#4in" title='in' data-ref="4in">in</a>-&gt;<a class="ref" href="avcodec.h.html#AVPacket::data" title='AVPacket::data' data-ref="AVPacket::data">data</a>, <a class="local col4 ref" href="#4in" title='in' data-ref="4in">in</a>-&gt;<a class="ref" href="avcodec.h.html#AVPacket::size" title='AVPacket::size' data-ref="AVPacket::size">size</a>);</td></tr>
+<tr><th id="56">56</th><td></td></tr>
+<tr><th id="57">57</th><td>    <a class="local col5 ref" href="#5ret" title='ret' data-ref="5ret">ret</a> = <a class="ref" href="avcodec.h.html#av_packet_copy_props" title='av_packet_copy_props' data-ref="av_packet_copy_props">av_packet_copy_props</a>(<a class="local col2 ref" href="#2out" title='out' data-ref="2out">out</a>, <a class="local col4 ref" href="#4in" title='in' data-ref="4in">in</a>);</td></tr>
+<tr><th id="58">58</th><td>    <b>if</b> (<a class="local col5 ref" href="#5ret" title='ret' data-ref="5ret">ret</a> &lt; <var>0</var>)</td></tr>
+<tr><th id="59">59</th><td>        <b>goto</b> <a class="lbl" href="#7fail" data-ref="7fail">fail</a>;</td></tr>
+<tr><th id="60">60</th><td></td></tr>
+<tr><th id="61">61</th><td><dfn class="lbl" id="7fail" data-ref="7fail">fail</dfn>:</td></tr>
+<tr><th id="62">62</th><td>    <b>if</b> (<a class="local col5 ref" href="#5ret" title='ret' data-ref="5ret">ret</a> &lt; <var>0</var>)</td></tr>
+<tr><th id="63">63</th><td>        <a class="ref" href="avcodec.h.html#av_packet_unref" title='av_packet_unref' data-ref="av_packet_unref">av_packet_unref</a>(<a class="local col2 ref" href="#2out" title='out' data-ref="2out">out</a>);</td></tr>
+<tr><th id="64">64</th><td>    <a class="ref" href="avcodec.h.html#av_packet_free" title='av_packet_free' data-ref="av_packet_free">av_packet_free</a>(&amp;<a class="local col4 ref" href="#4in" title='in' data-ref="4in">in</a>);</td></tr>
+<tr><th id="65">65</th><td>    <b>return</b> <a class="local col5 ref" href="#5ret" title='ret' data-ref="5ret">ret</a>;</td></tr>
+<tr><th id="66">66</th><td>}</td></tr>
+<tr><th id="67">67</th><td></td></tr>
+<tr><th id="68">68</th><td><em>static</em> <em>const</em> <b>enum</b> <a class="type" href="avcodec.h.html#AVCodecID" title='AVCodecID' data-ref="AVCodecID">AVCodecID</a> <dfn class="tu decl def" id="codec_ids" title='codec_ids' data-type='const enum AVCodecID [2]' data-ref="codec_ids">codec_ids</dfn>[] = {</td></tr>
+<tr><th id="69">69</th><td>    <a class="enum" href="avcodec.h.html#AVCodecID::AV_CODEC_ID_MPEG2VIDEO" title='AVCodecID::AV_CODEC_ID_MPEG2VIDEO' data-ref="AVCodecID::AV_CODEC_ID_MPEG2VIDEO">AV_CODEC_ID_MPEG2VIDEO</a>, <a class="enum" href="avcodec.h.html#AVCodecID::AV_CODEC_ID_NONE" title='AVCodecID::AV_CODEC_ID_NONE' data-ref="AVCodecID::AV_CODEC_ID_NONE">AV_CODEC_ID_NONE</a>,</td></tr>
+<tr><th id="70">70</th><td>};</td></tr>
+<tr><th id="71">71</th><td></td></tr>
+<tr><th id="72">72</th><td><em>const</em> <a class="typedef" href="avcodec.h.html#AVBitStreamFilter" title='AVBitStreamFilter' data-type='struct AVBitStreamFilter' data-ref="AVBitStreamFilter">AVBitStreamFilter</a> <dfn class="decl def" id="ff_imx_dump_header_bsf" title='ff_imx_dump_header_bsf' data-ref="ff_imx_dump_header_bsf">ff_imx_dump_header_bsf</dfn> = {</td></tr>
+<tr><th id="73">73</th><td>    .<a class="ref" href="avcodec.h.html#AVBitStreamFilter::name" title='AVBitStreamFilter::name' data-ref="AVBitStreamFilter::name">name</a>      = <q>"imxdump"</q>,</td></tr>
+<tr><th id="74">74</th><td>    .<a class="ref" href="avcodec.h.html#AVBitStreamFilter::filter" title='AVBitStreamFilter::filter' data-ref="AVBitStreamFilter::filter">filter</a>    = <a class="tu ref" href="#imx_dump_header" title='imx_dump_header' data-ref="imx_dump_header">imx_dump_header</a>,</td></tr>
+<tr><th id="75">75</th><td>    .<a class="ref" href="avcodec.h.html#AVBitStreamFilter::codec_ids" title='AVBitStreamFilter::codec_ids' data-ref="AVBitStreamFilter::codec_ids">codec_ids</a> = <a class="tu ref" href="#codec_ids" title='codec_ids' data-ref="codec_ids">codec_ids</a>,</td></tr>
+<tr><th id="76">76</th><td>};</td></tr>
+<tr><th id="77">77</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

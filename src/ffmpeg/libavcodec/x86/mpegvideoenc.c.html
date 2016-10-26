@@ -1,0 +1,257 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>mpegvideoenc.c source code [ffmpeg/libavcodec/x86/mpegvideoenc.c] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavcodec/x86/mpegvideoenc.c'; var root_path = '../../..'; var data_path = '../../../../data';</script>
+<script src='../../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='../..'>ffmpeg</a>/<a href='..'>libavcodec</a>/<a href='./'>x86</a>/<a href='mpegvideoenc.c.html'>mpegvideoenc.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * The simplest mpeg encoder (well, it was the simplest!)</i></td></tr>
+<tr><th id="3">3</th><td><i> * Copyright (c) 2000,2001 Fabrice Bellard</i></td></tr>
+<tr><th id="4">4</th><td><i> *</i></td></tr>
+<tr><th id="5">5</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="8">8</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="9">9</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="10">10</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="11">11</th><td><i> *</i></td></tr>
+<tr><th id="12">12</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="13">13</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="14">14</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="15">15</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="16">16</th><td><i> *</i></td></tr>
+<tr><th id="17">17</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="18">18</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="19">19</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="20">20</th><td><i> */</i></td></tr>
+<tr><th id="21">21</th><td></td></tr>
+<tr><th id="22">22</th><td><u>#include <a href="../../libavutil/attributes.h.html">"libavutil/attributes.h"</a></u></td></tr>
+<tr><th id="23">23</th><td><u>#include <a href="../../libavutil/cpu.h.html">"libavutil/cpu.h"</a></u></td></tr>
+<tr><th id="24">24</th><td><u>#include <a href="../../libavutil/x86/asm.h.html">"libavutil/x86/asm.h"</a></u></td></tr>
+<tr><th id="25">25</th><td><u>#include <a href="../../libavutil/x86/cpu.h.html">"libavutil/x86/cpu.h"</a></u></td></tr>
+<tr><th id="26">26</th><td><u>#include <a href="../avcodec.h.html">"libavcodec/avcodec.h"</a></u></td></tr>
+<tr><th id="27">27</th><td><u>#include <a href="../dct.h.html">"libavcodec/dct.h"</a></u></td></tr>
+<tr><th id="28">28</th><td><u>#include <a href="../mpegvideo.h.html">"libavcodec/mpegvideo.h"</a></u></td></tr>
+<tr><th id="29">29</th><td></td></tr>
+<tr><th id="30">30</th><td><i>/* not permutated inverse zigzag_direct + 1 for MMX quantizer */</i></td></tr>
+<tr><th id="31">31</th><td><a class="macro" href="../../libavutil/mem.h.html#101" title="static uint16_t __attribute__ ((aligned (16))) inv_zigzag_direct16" data-ref="_M/DECLARE_ALIGNED">DECLARE_ALIGNED</a>(<var>16</var>, <em>static</em> <a class="typedef" href="../../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a>, <dfn class="tu decl def" id="inv_zigzag_direct16" title='inv_zigzag_direct16' data-type='uint16_t [64]' data-ref="inv_zigzag_direct16">inv_zigzag_direct16</dfn>)[<var>64</var>];</td></tr>
+<tr><th id="32">32</th><td></td></tr>
+<tr><th id="33">33</th><td><u>#<span data-ppcond="33">if</span> <a class="macro" href="../../libavutil/x86/asm.h.html#76" title="(1 || (1 || 0))" data-ref="_M/HAVE_6REGS">HAVE_6REGS</a></u></td></tr>
+<tr><th id="34">34</th><td></td></tr>
+<tr><th id="35">35</th><td><u>#<span data-ppcond="35">if</span> <a class="macro" href="../../config.h.html#150" title="1" data-ref="_M/HAVE_MMX_INLINE">HAVE_MMX_INLINE</a></u></td></tr>
+<tr><th id="36">36</th><td><u>#define <dfn class="macro" id="_M/COMPILE_TEMPLATE_MMXEXT" data-ref="_M/COMPILE_TEMPLATE_MMXEXT">COMPILE_TEMPLATE_MMXEXT</dfn> 0</u></td></tr>
+<tr><th id="37">37</th><td><u>#define <dfn class="macro" id="_M/COMPILE_TEMPLATE_SSE2" data-ref="_M/COMPILE_TEMPLATE_SSE2">COMPILE_TEMPLATE_SSE2</dfn>   0</u></td></tr>
+<tr><th id="38">38</th><td><u>#define <dfn class="macro" id="_M/COMPILE_TEMPLATE_SSSE3" data-ref="_M/COMPILE_TEMPLATE_SSSE3">COMPILE_TEMPLATE_SSSE3</dfn>  0</u></td></tr>
+<tr><th id="39">39</th><td><u>#define <dfn class="macro" id="_M/RENAME" data-ref="_M/RENAME">RENAME</dfn>(a)      a ## _mmx</u></td></tr>
+<tr><th id="40">40</th><td><u>#define <dfn class="macro" id="_M/RENAME_FDCT" data-ref="_M/RENAME_FDCT">RENAME_FDCT</dfn>(a) a ## _mmx</u></td></tr>
+<tr><th id="41">41</th><td><u>#include <a href="mpegvideoenc_template.c.html">"mpegvideoenc_template.c"</a></u></td></tr>
+<tr><th id="42">42</th><td><u>#<span data-ppcond="35">endif</span> /* HAVE_MMX_INLINE */</u></td></tr>
+<tr><th id="43">43</th><td></td></tr>
+<tr><th id="44">44</th><td><u>#<span data-ppcond="44">if</span> <a class="macro" href="../../config.h.html#151" title="1" data-ref="_M/HAVE_MMXEXT_INLINE">HAVE_MMXEXT_INLINE</a></u></td></tr>
+<tr><th id="45">45</th><td><u>#undef <a class="macro" href="#38" data-ref="_M/COMPILE_TEMPLATE_SSSE3">COMPILE_TEMPLATE_SSSE3</a></u></td></tr>
+<tr><th id="46">46</th><td><u>#undef <a class="macro" href="#37" data-ref="_M/COMPILE_TEMPLATE_SSE2">COMPILE_TEMPLATE_SSE2</a></u></td></tr>
+<tr><th id="47">47</th><td><u>#undef <a class="macro" href="#36" data-ref="_M/COMPILE_TEMPLATE_MMXEXT">COMPILE_TEMPLATE_MMXEXT</a></u></td></tr>
+<tr><th id="48">48</th><td><u>#define <dfn class="macro" id="_M/COMPILE_TEMPLATE_MMXEXT" data-ref="_M/COMPILE_TEMPLATE_MMXEXT">COMPILE_TEMPLATE_MMXEXT</dfn> 1</u></td></tr>
+<tr><th id="49">49</th><td><u>#define <dfn class="macro" id="_M/COMPILE_TEMPLATE_SSE2" data-ref="_M/COMPILE_TEMPLATE_SSE2">COMPILE_TEMPLATE_SSE2</dfn>   0</u></td></tr>
+<tr><th id="50">50</th><td><u>#define <dfn class="macro" id="_M/COMPILE_TEMPLATE_SSSE3" data-ref="_M/COMPILE_TEMPLATE_SSSE3">COMPILE_TEMPLATE_SSSE3</dfn>  0</u></td></tr>
+<tr><th id="51">51</th><td><u>#undef <a class="macro" href="#39" data-ref="_M/RENAME">RENAME</a></u></td></tr>
+<tr><th id="52">52</th><td><u>#undef <a class="macro" href="#40" data-ref="_M/RENAME_FDCT">RENAME_FDCT</a></u></td></tr>
+<tr><th id="53">53</th><td><u>#define <dfn class="macro" id="_M/RENAME" data-ref="_M/RENAME">RENAME</dfn>(a)      a ## _mmxext</u></td></tr>
+<tr><th id="54">54</th><td><u>#define <dfn class="macro" id="_M/RENAME_FDCT" data-ref="_M/RENAME_FDCT">RENAME_FDCT</dfn>(a) a ## _mmxext</u></td></tr>
+<tr><th id="55">55</th><td><u>#include <a href="mpegvideoenc_template.c.html">"mpegvideoenc_template.c"</a></u></td></tr>
+<tr><th id="56">56</th><td><u>#<span data-ppcond="44">endif</span> /* HAVE_MMXEXT_INLINE */</u></td></tr>
+<tr><th id="57">57</th><td></td></tr>
+<tr><th id="58">58</th><td><u>#<span data-ppcond="58">if</span> <a class="macro" href="../../config.h.html#153" title="1" data-ref="_M/HAVE_SSE2_INLINE">HAVE_SSE2_INLINE</a></u></td></tr>
+<tr><th id="59">59</th><td><u>#undef <a class="macro" href="#48" data-ref="_M/COMPILE_TEMPLATE_MMXEXT">COMPILE_TEMPLATE_MMXEXT</a></u></td></tr>
+<tr><th id="60">60</th><td><u>#undef <a class="macro" href="#49" data-ref="_M/COMPILE_TEMPLATE_SSE2">COMPILE_TEMPLATE_SSE2</a></u></td></tr>
+<tr><th id="61">61</th><td><u>#undef <a class="macro" href="#50" data-ref="_M/COMPILE_TEMPLATE_SSSE3">COMPILE_TEMPLATE_SSSE3</a></u></td></tr>
+<tr><th id="62">62</th><td><u>#define <dfn class="macro" id="_M/COMPILE_TEMPLATE_MMXEXT" data-ref="_M/COMPILE_TEMPLATE_MMXEXT">COMPILE_TEMPLATE_MMXEXT</dfn> 0</u></td></tr>
+<tr><th id="63">63</th><td><u>#define <dfn class="macro" id="_M/COMPILE_TEMPLATE_SSE2" data-ref="_M/COMPILE_TEMPLATE_SSE2">COMPILE_TEMPLATE_SSE2</dfn>   1</u></td></tr>
+<tr><th id="64">64</th><td><u>#define <dfn class="macro" id="_M/COMPILE_TEMPLATE_SSSE3" data-ref="_M/COMPILE_TEMPLATE_SSSE3">COMPILE_TEMPLATE_SSSE3</dfn>  0</u></td></tr>
+<tr><th id="65">65</th><td><u>#undef <a class="macro" href="#53" data-ref="_M/RENAME">RENAME</a></u></td></tr>
+<tr><th id="66">66</th><td><u>#undef <a class="macro" href="#54" data-ref="_M/RENAME_FDCT">RENAME_FDCT</a></u></td></tr>
+<tr><th id="67">67</th><td><u>#define <dfn class="macro" id="_M/RENAME" data-ref="_M/RENAME">RENAME</dfn>(a)      a ## _sse2</u></td></tr>
+<tr><th id="68">68</th><td><u>#define <dfn class="macro" id="_M/RENAME_FDCT" data-ref="_M/RENAME_FDCT">RENAME_FDCT</dfn>(a) a ## _sse2</u></td></tr>
+<tr><th id="69">69</th><td><u>#include <a href="mpegvideoenc_template.c.html">"mpegvideoenc_template.c"</a></u></td></tr>
+<tr><th id="70">70</th><td><u>#<span data-ppcond="58">endif</span> /* HAVE_SSE2_INLINE */</u></td></tr>
+<tr><th id="71">71</th><td></td></tr>
+<tr><th id="72">72</th><td><u>#<span data-ppcond="72">if</span> <a class="macro" href="../../config.h.html#157" title="1" data-ref="_M/HAVE_SSSE3_INLINE">HAVE_SSSE3_INLINE</a></u></td></tr>
+<tr><th id="73">73</th><td><u>#undef <a class="macro" href="#62" data-ref="_M/COMPILE_TEMPLATE_MMXEXT">COMPILE_TEMPLATE_MMXEXT</a></u></td></tr>
+<tr><th id="74">74</th><td><u>#undef <a class="macro" href="#63" data-ref="_M/COMPILE_TEMPLATE_SSE2">COMPILE_TEMPLATE_SSE2</a></u></td></tr>
+<tr><th id="75">75</th><td><u>#undef <a class="macro" href="#64" data-ref="_M/COMPILE_TEMPLATE_SSSE3">COMPILE_TEMPLATE_SSSE3</a></u></td></tr>
+<tr><th id="76">76</th><td><u>#define <dfn class="macro" id="_M/COMPILE_TEMPLATE_MMXEXT" data-ref="_M/COMPILE_TEMPLATE_MMXEXT">COMPILE_TEMPLATE_MMXEXT</dfn> 0</u></td></tr>
+<tr><th id="77">77</th><td><u>#define <dfn class="macro" id="_M/COMPILE_TEMPLATE_SSE2" data-ref="_M/COMPILE_TEMPLATE_SSE2">COMPILE_TEMPLATE_SSE2</dfn>   1</u></td></tr>
+<tr><th id="78">78</th><td><u>#define <dfn class="macro" id="_M/COMPILE_TEMPLATE_SSSE3" data-ref="_M/COMPILE_TEMPLATE_SSSE3">COMPILE_TEMPLATE_SSSE3</dfn>  1</u></td></tr>
+<tr><th id="79">79</th><td><u>#undef <a class="macro" href="#67" data-ref="_M/RENAME">RENAME</a></u></td></tr>
+<tr><th id="80">80</th><td><u>#undef <a class="macro" href="#68" data-ref="_M/RENAME_FDCT">RENAME_FDCT</a></u></td></tr>
+<tr><th id="81">81</th><td><u>#define <dfn class="macro" id="_M/RENAME" data-ref="_M/RENAME">RENAME</dfn>(a)      a ## _ssse3</u></td></tr>
+<tr><th id="82">82</th><td><u>#define <dfn class="macro" id="_M/RENAME_FDCT" data-ref="_M/RENAME_FDCT">RENAME_FDCT</dfn>(a) a ## _sse2</u></td></tr>
+<tr><th id="83">83</th><td><u>#include <a href="mpegvideoenc_template.c.html">"mpegvideoenc_template.c"</a></u></td></tr>
+<tr><th id="84">84</th><td><u>#<span data-ppcond="72">endif</span> /* HAVE_SSSE3_INLINE */</u></td></tr>
+<tr><th id="85">85</th><td></td></tr>
+<tr><th id="86">86</th><td><u>#<span data-ppcond="33">endif</span> /* HAVE_6REGS */</u></td></tr>
+<tr><th id="87">87</th><td></td></tr>
+<tr><th id="88">88</th><td><u>#<span data-ppcond="88">if</span> <a class="macro" href="../../config.h.html#195" title="1" data-ref="_M/HAVE_INLINE_ASM">HAVE_INLINE_ASM</a></u></td></tr>
+<tr><th id="89">89</th><td><u>#<span data-ppcond="89">if</span> <a class="macro" href="../../config.h.html#150" title="1" data-ref="_M/HAVE_MMX_INLINE">HAVE_MMX_INLINE</a></u></td></tr>
+<tr><th id="90">90</th><td><em>static</em> <em>void</em>  <dfn class="tu decl def" id="denoise_dct_mmx" title='denoise_dct_mmx' data-type='void denoise_dct_mmx(MpegEncContext * s, int16_t * block)' data-ref="denoise_dct_mmx">denoise_dct_mmx</dfn>(<a class="typedef" href="../mpegvideo.h.html#MpegEncContext" title='MpegEncContext' data-type='struct MpegEncContext' data-ref="MpegEncContext">MpegEncContext</a> *<dfn class="local col3 decl" id="53s" title='s' data-type='MpegEncContext *' data-ref="53s">s</dfn>, <a class="typedef" href="../../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> *<dfn class="local col4 decl" id="54block" title='block' data-type='int16_t *' data-ref="54block">block</dfn>){</td></tr>
+<tr><th id="91">91</th><td>    <em>const</em> <em>int</em> <dfn class="local col5 decl" id="55intra" title='intra' data-type='const int' data-ref="55intra">intra</dfn>= <a class="local col3 ref" href="#53s" title='s' data-ref="53s">s</a>-&gt;<a class="ref" href="../mpegvideo.h.html#MpegEncContext::mb_intra" title='MpegEncContext::mb_intra' data-ref="MpegEncContext::mb_intra">mb_intra</a>;</td></tr>
+<tr><th id="92">92</th><td>    <em>int</em> *<dfn class="local col6 decl" id="56sum" title='sum' data-type='int *' data-ref="56sum">sum</dfn>= <a class="local col3 ref" href="#53s" title='s' data-ref="53s">s</a>-&gt;<a class="ref" href="../mpegvideo.h.html#MpegEncContext::dct_error_sum" title='MpegEncContext::dct_error_sum' data-ref="MpegEncContext::dct_error_sum">dct_error_sum</a>[<a class="local col5 ref" href="#55intra" title='intra' data-ref="55intra">intra</a>];</td></tr>
+<tr><th id="93">93</th><td>    <a class="typedef" href="../../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> *<dfn class="local col7 decl" id="57offset" title='offset' data-type='uint16_t *' data-ref="57offset">offset</dfn>= <a class="local col3 ref" href="#53s" title='s' data-ref="53s">s</a>-&gt;<a class="ref" href="../mpegvideo.h.html#MpegEncContext::dct_offset" title='MpegEncContext::dct_offset' data-ref="MpegEncContext::dct_offset">dct_offset</a>[<a class="local col5 ref" href="#55intra" title='intra' data-ref="55intra">intra</a>];</td></tr>
+<tr><th id="94">94</th><td></td></tr>
+<tr><th id="95">95</th><td>    <a class="local col3 ref" href="#53s" title='s' data-ref="53s">s</a>-&gt;<a class="ref" href="../mpegvideo.h.html#MpegEncContext::dct_count" title='MpegEncContext::dct_count' data-ref="MpegEncContext::dct_count">dct_count</a>[<a class="local col5 ref" href="#55intra" title='intra' data-ref="55intra">intra</a>]++;</td></tr>
+<tr><th id="96">96</th><td></td></tr>
+<tr><th id="97">97</th><td>    <b>__asm__</b> <em>volatile</em>(</td></tr>
+<tr><th id="98">98</th><td>        <q>"pxor %%mm7, %%mm7                      \n\t"</q></td></tr>
+<tr><th id="99">99</th><td>        <q>"1:                                     \n\t"</q></td></tr>
+<tr><th id="100">100</th><td>        <q>"pxor %%mm0, %%mm0                      \n\t"</q></td></tr>
+<tr><th id="101">101</th><td>        <q>"pxor %%mm1, %%mm1                      \n\t"</q></td></tr>
+<tr><th id="102">102</th><td>        <q>"movq (%0), %%mm2                       \n\t"</q></td></tr>
+<tr><th id="103">103</th><td>        <q>"movq 8(%0), %%mm3                      \n\t"</q></td></tr>
+<tr><th id="104">104</th><td>        <q>"pcmpgtw %%mm2, %%mm0                   \n\t"</q></td></tr>
+<tr><th id="105">105</th><td>        <q>"pcmpgtw %%mm3, %%mm1                   \n\t"</q></td></tr>
+<tr><th id="106">106</th><td>        <q>"pxor %%mm0, %%mm2                      \n\t"</q></td></tr>
+<tr><th id="107">107</th><td>        <q>"pxor %%mm1, %%mm3                      \n\t"</q></td></tr>
+<tr><th id="108">108</th><td>        <q>"psubw %%mm0, %%mm2                     \n\t"</q></td></tr>
+<tr><th id="109">109</th><td>        <q>"psubw %%mm1, %%mm3                     \n\t"</q></td></tr>
+<tr><th id="110">110</th><td>        <q>"movq %%mm2, %%mm4                      \n\t"</q></td></tr>
+<tr><th id="111">111</th><td>        <q>"movq %%mm3, %%mm5                      \n\t"</q></td></tr>
+<tr><th id="112">112</th><td>        <q>"psubusw (%2), %%mm2                    \n\t"</q></td></tr>
+<tr><th id="113">113</th><td>        <q>"psubusw 8(%2), %%mm3                   \n\t"</q></td></tr>
+<tr><th id="114">114</th><td>        <q>"pxor %%mm0, %%mm2                      \n\t"</q></td></tr>
+<tr><th id="115">115</th><td>        <q>"pxor %%mm1, %%mm3                      \n\t"</q></td></tr>
+<tr><th id="116">116</th><td>        <q>"psubw %%mm0, %%mm2                     \n\t"</q></td></tr>
+<tr><th id="117">117</th><td>        <q>"psubw %%mm1, %%mm3                     \n\t"</q></td></tr>
+<tr><th id="118">118</th><td>        <q>"movq %%mm2, (%0)                       \n\t"</q></td></tr>
+<tr><th id="119">119</th><td>        <q>"movq %%mm3, 8(%0)                      \n\t"</q></td></tr>
+<tr><th id="120">120</th><td>        <q>"movq %%mm4, %%mm2                      \n\t"</q></td></tr>
+<tr><th id="121">121</th><td>        <q>"movq %%mm5, %%mm3                      \n\t"</q></td></tr>
+<tr><th id="122">122</th><td>        <q>"punpcklwd %%mm7, %%mm4                 \n\t"</q></td></tr>
+<tr><th id="123">123</th><td>        <q>"punpckhwd %%mm7, %%mm2                 \n\t"</q></td></tr>
+<tr><th id="124">124</th><td>        <q>"punpcklwd %%mm7, %%mm5                 \n\t"</q></td></tr>
+<tr><th id="125">125</th><td>        <q>"punpckhwd %%mm7, %%mm3                 \n\t"</q></td></tr>
+<tr><th id="126">126</th><td>        <q>"paddd (%1), %%mm4                      \n\t"</q></td></tr>
+<tr><th id="127">127</th><td>        <q>"paddd 8(%1), %%mm2                     \n\t"</q></td></tr>
+<tr><th id="128">128</th><td>        <q>"paddd 16(%1), %%mm5                    \n\t"</q></td></tr>
+<tr><th id="129">129</th><td>        <q>"paddd 24(%1), %%mm3                    \n\t"</q></td></tr>
+<tr><th id="130">130</th><td>        <q>"movq %%mm4, (%1)                       \n\t"</q></td></tr>
+<tr><th id="131">131</th><td>        <q>"movq %%mm2, 8(%1)                      \n\t"</q></td></tr>
+<tr><th id="132">132</th><td>        <q>"movq %%mm5, 16(%1)                     \n\t"</q></td></tr>
+<tr><th id="133">133</th><td>        <q>"movq %%mm3, 24(%1)                     \n\t"</q></td></tr>
+<tr><th id="134">134</th><td>        <q>"add $16, %0                            \n\t"</q></td></tr>
+<tr><th id="135">135</th><td>        <q>"add $32, %1                            \n\t"</q></td></tr>
+<tr><th id="136">136</th><td>        <q>"add $16, %2                            \n\t"</q></td></tr>
+<tr><th id="137">137</th><td>        <q>"cmp %3, %0                             \n\t"</q></td></tr>
+<tr><th id="138">138</th><td>            <q>" jb 1b                             \n\t"</q></td></tr>
+<tr><th id="139">139</th><td>        : <q>"+r"</q> (<a class="local col4 ref" href="#54block" title='block' data-ref="54block">block</a>), <q>"+r"</q> (<a class="local col6 ref" href="#56sum" title='sum' data-ref="56sum">sum</a>), <q>"+r"</q> (<a class="local col7 ref" href="#57offset" title='offset' data-ref="57offset">offset</a>)</td></tr>
+<tr><th id="140">140</th><td>        : <q>"r"</q>(<a class="local col4 ref" href="#54block" title='block' data-ref="54block">block</a>+<var>64</var>)</td></tr>
+<tr><th id="141">141</th><td>    );</td></tr>
+<tr><th id="142">142</th><td>}</td></tr>
+<tr><th id="143">143</th><td><u>#<span data-ppcond="89">endif</span> /* HAVE_MMX_INLINE */</u></td></tr>
+<tr><th id="144">144</th><td></td></tr>
+<tr><th id="145">145</th><td><u>#<span data-ppcond="145">if</span> <a class="macro" href="../../config.h.html#153" title="1" data-ref="_M/HAVE_SSE2_INLINE">HAVE_SSE2_INLINE</a></u></td></tr>
+<tr><th id="146">146</th><td><em>static</em> <em>void</em>  <dfn class="tu decl def" id="denoise_dct_sse2" title='denoise_dct_sse2' data-type='void denoise_dct_sse2(MpegEncContext * s, int16_t * block)' data-ref="denoise_dct_sse2">denoise_dct_sse2</dfn>(<a class="typedef" href="../mpegvideo.h.html#MpegEncContext" title='MpegEncContext' data-type='struct MpegEncContext' data-ref="MpegEncContext">MpegEncContext</a> *<dfn class="local col8 decl" id="58s" title='s' data-type='MpegEncContext *' data-ref="58s">s</dfn>, <a class="typedef" href="../../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> *<dfn class="local col9 decl" id="59block" title='block' data-type='int16_t *' data-ref="59block">block</dfn>){</td></tr>
+<tr><th id="147">147</th><td>    <em>const</em> <em>int</em> <dfn class="local col0 decl" id="60intra" title='intra' data-type='const int' data-ref="60intra">intra</dfn>= <a class="local col8 ref" href="#58s" title='s' data-ref="58s">s</a>-&gt;<a class="ref" href="../mpegvideo.h.html#MpegEncContext::mb_intra" title='MpegEncContext::mb_intra' data-ref="MpegEncContext::mb_intra">mb_intra</a>;</td></tr>
+<tr><th id="148">148</th><td>    <em>int</em> *<dfn class="local col1 decl" id="61sum" title='sum' data-type='int *' data-ref="61sum">sum</dfn>= <a class="local col8 ref" href="#58s" title='s' data-ref="58s">s</a>-&gt;<a class="ref" href="../mpegvideo.h.html#MpegEncContext::dct_error_sum" title='MpegEncContext::dct_error_sum' data-ref="MpegEncContext::dct_error_sum">dct_error_sum</a>[<a class="local col0 ref" href="#60intra" title='intra' data-ref="60intra">intra</a>];</td></tr>
+<tr><th id="149">149</th><td>    <a class="typedef" href="../../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> *<dfn class="local col2 decl" id="62offset" title='offset' data-type='uint16_t *' data-ref="62offset">offset</dfn>= <a class="local col8 ref" href="#58s" title='s' data-ref="58s">s</a>-&gt;<a class="ref" href="../mpegvideo.h.html#MpegEncContext::dct_offset" title='MpegEncContext::dct_offset' data-ref="MpegEncContext::dct_offset">dct_offset</a>[<a class="local col0 ref" href="#60intra" title='intra' data-ref="60intra">intra</a>];</td></tr>
+<tr><th id="150">150</th><td></td></tr>
+<tr><th id="151">151</th><td>    <a class="local col8 ref" href="#58s" title='s' data-ref="58s">s</a>-&gt;<a class="ref" href="../mpegvideo.h.html#MpegEncContext::dct_count" title='MpegEncContext::dct_count' data-ref="MpegEncContext::dct_count">dct_count</a>[<a class="local col0 ref" href="#60intra" title='intra' data-ref="60intra">intra</a>]++;</td></tr>
+<tr><th id="152">152</th><td></td></tr>
+<tr><th id="153">153</th><td>    <b>__asm__</b> <em>volatile</em>(</td></tr>
+<tr><th id="154">154</th><td>        <q>"pxor %%xmm7, %%xmm7                    \n\t"</q></td></tr>
+<tr><th id="155">155</th><td>        <q>"1:                                     \n\t"</q></td></tr>
+<tr><th id="156">156</th><td>        <q>"pxor %%xmm0, %%xmm0                    \n\t"</q></td></tr>
+<tr><th id="157">157</th><td>        <q>"pxor %%xmm1, %%xmm1                    \n\t"</q></td></tr>
+<tr><th id="158">158</th><td>        <q>"movdqa (%0), %%xmm2                    \n\t"</q></td></tr>
+<tr><th id="159">159</th><td>        <q>"movdqa 16(%0), %%xmm3                  \n\t"</q></td></tr>
+<tr><th id="160">160</th><td>        <q>"pcmpgtw %%xmm2, %%xmm0                 \n\t"</q></td></tr>
+<tr><th id="161">161</th><td>        <q>"pcmpgtw %%xmm3, %%xmm1                 \n\t"</q></td></tr>
+<tr><th id="162">162</th><td>        <q>"pxor %%xmm0, %%xmm2                    \n\t"</q></td></tr>
+<tr><th id="163">163</th><td>        <q>"pxor %%xmm1, %%xmm3                    \n\t"</q></td></tr>
+<tr><th id="164">164</th><td>        <q>"psubw %%xmm0, %%xmm2                   \n\t"</q></td></tr>
+<tr><th id="165">165</th><td>        <q>"psubw %%xmm1, %%xmm3                   \n\t"</q></td></tr>
+<tr><th id="166">166</th><td>        <q>"movdqa %%xmm2, %%xmm4                  \n\t"</q></td></tr>
+<tr><th id="167">167</th><td>        <q>"movdqa %%xmm3, %%xmm5                  \n\t"</q></td></tr>
+<tr><th id="168">168</th><td>        <q>"psubusw (%2), %%xmm2                   \n\t"</q></td></tr>
+<tr><th id="169">169</th><td>        <q>"psubusw 16(%2), %%xmm3                 \n\t"</q></td></tr>
+<tr><th id="170">170</th><td>        <q>"pxor %%xmm0, %%xmm2                    \n\t"</q></td></tr>
+<tr><th id="171">171</th><td>        <q>"pxor %%xmm1, %%xmm3                    \n\t"</q></td></tr>
+<tr><th id="172">172</th><td>        <q>"psubw %%xmm0, %%xmm2                   \n\t"</q></td></tr>
+<tr><th id="173">173</th><td>        <q>"psubw %%xmm1, %%xmm3                   \n\t"</q></td></tr>
+<tr><th id="174">174</th><td>        <q>"movdqa %%xmm2, (%0)                    \n\t"</q></td></tr>
+<tr><th id="175">175</th><td>        <q>"movdqa %%xmm3, 16(%0)                  \n\t"</q></td></tr>
+<tr><th id="176">176</th><td>        <q>"movdqa %%xmm4, %%xmm6                  \n\t"</q></td></tr>
+<tr><th id="177">177</th><td>        <q>"movdqa %%xmm5, %%xmm0                  \n\t"</q></td></tr>
+<tr><th id="178">178</th><td>        <q>"punpcklwd %%xmm7, %%xmm4               \n\t"</q></td></tr>
+<tr><th id="179">179</th><td>        <q>"punpckhwd %%xmm7, %%xmm6               \n\t"</q></td></tr>
+<tr><th id="180">180</th><td>        <q>"punpcklwd %%xmm7, %%xmm5               \n\t"</q></td></tr>
+<tr><th id="181">181</th><td>        <q>"punpckhwd %%xmm7, %%xmm0               \n\t"</q></td></tr>
+<tr><th id="182">182</th><td>        <q>"paddd (%1), %%xmm4                     \n\t"</q></td></tr>
+<tr><th id="183">183</th><td>        <q>"paddd 16(%1), %%xmm6                   \n\t"</q></td></tr>
+<tr><th id="184">184</th><td>        <q>"paddd 32(%1), %%xmm5                   \n\t"</q></td></tr>
+<tr><th id="185">185</th><td>        <q>"paddd 48(%1), %%xmm0                   \n\t"</q></td></tr>
+<tr><th id="186">186</th><td>        <q>"movdqa %%xmm4, (%1)                    \n\t"</q></td></tr>
+<tr><th id="187">187</th><td>        <q>"movdqa %%xmm6, 16(%1)                  \n\t"</q></td></tr>
+<tr><th id="188">188</th><td>        <q>"movdqa %%xmm5, 32(%1)                  \n\t"</q></td></tr>
+<tr><th id="189">189</th><td>        <q>"movdqa %%xmm0, 48(%1)                  \n\t"</q></td></tr>
+<tr><th id="190">190</th><td>        <q>"add $32, %0                            \n\t"</q></td></tr>
+<tr><th id="191">191</th><td>        <q>"add $64, %1                            \n\t"</q></td></tr>
+<tr><th id="192">192</th><td>        <q>"add $32, %2                            \n\t"</q></td></tr>
+<tr><th id="193">193</th><td>        <q>"cmp %3, %0                             \n\t"</q></td></tr>
+<tr><th id="194">194</th><td>            <q>" jb 1b                             \n\t"</q></td></tr>
+<tr><th id="195">195</th><td>        : <q>"+r"</q> (<a class="local col9 ref" href="#59block" title='block' data-ref="59block">block</a>), <q>"+r"</q> (<a class="local col1 ref" href="#61sum" title='sum' data-ref="61sum">sum</a>), <q>"+r"</q> (<a class="local col2 ref" href="#62offset" title='offset' data-ref="62offset">offset</a>)</td></tr>
+<tr><th id="196">196</th><td>        : <q>"r"</q>(<a class="local col9 ref" href="#59block" title='block' data-ref="59block">block</a>+<var>64</var>)</td></tr>
+<tr><th id="197">197</th><td>          <a class="macro" href="../../libavutil/x86/asm.h.html#96" title=": &quot;%xmm0&quot;, &quot;%xmm1&quot;, &quot;%xmm2&quot;, &quot;%xmm3&quot;, &quot;%xmm4&quot;, &quot;%xmm5&quot;, &quot;%xmm6&quot;, &quot;%xmm7&quot;" data-ref="_M/XMM_CLOBBERS_ONLY">XMM_CLOBBERS_ONLY</a>(<q>"%xmm0"</q>, <q>"%xmm1"</q>, <q>"%xmm2"</q>, <q>"%xmm3"</q>,</td></tr>
+<tr><th id="198">198</th><td>                            <q>"%xmm4"</q>, <q>"%xmm5"</q>, <q>"%xmm6"</q>, <q>"%xmm7"</q>)</td></tr>
+<tr><th id="199">199</th><td>    );</td></tr>
+<tr><th id="200">200</th><td>}</td></tr>
+<tr><th id="201">201</th><td><u>#<span data-ppcond="145">endif</span> /* HAVE_SSE2_INLINE */</u></td></tr>
+<tr><th id="202">202</th><td><u>#<span data-ppcond="88">endif</span> /* HAVE_INLINE_ASM */</u></td></tr>
+<tr><th id="203">203</th><td></td></tr>
+<tr><th id="204">204</th><td><a class="macro" href="../../libavutil/attributes.h.html#84" title="" data-ref="_M/av_cold">av_cold</a> <em>void</em> <dfn class="decl def" id="ff_dct_encode_init_x86" title='ff_dct_encode_init_x86' data-ref="ff_dct_encode_init_x86">ff_dct_encode_init_x86</dfn>(<a class="typedef" href="../mpegvideo.h.html#MpegEncContext" title='MpegEncContext' data-type='struct MpegEncContext' data-ref="MpegEncContext">MpegEncContext</a> *<dfn class="local col3 decl" id="63s" title='s' data-type='MpegEncContext *' data-ref="63s">s</dfn>)</td></tr>
+<tr><th id="205">205</th><td>{</td></tr>
+<tr><th id="206">206</th><td>    <em>const</em> <em>int</em> <dfn class="local col4 decl" id="64dct_algo" title='dct_algo' data-type='const int' data-ref="64dct_algo">dct_algo</dfn> = <a class="local col3 ref" href="#63s" title='s' data-ref="63s">s</a>-&gt;<a class="ref" href="../mpegvideo.h.html#MpegEncContext::avctx" title='MpegEncContext::avctx' data-ref="MpegEncContext::avctx">avctx</a>-&gt;<a class="ref" href="../avcodec.h.html#AVCodecContext::dct_algo" title='AVCodecContext::dct_algo' data-ref="AVCodecContext::dct_algo">dct_algo</a>;</td></tr>
+<tr><th id="207">207</th><td>    <em>int</em> <dfn class="local col5 decl" id="65i" title='i' data-type='int' data-ref="65i">i</dfn>;</td></tr>
+<tr><th id="208">208</th><td></td></tr>
+<tr><th id="209">209</th><td>    <b>for</b> (<a class="local col5 ref" href="#65i" title='i' data-ref="65i">i</a> = <var>0</var>; <a class="local col5 ref" href="#65i" title='i' data-ref="65i">i</a> &lt; <var>64</var>; <a class="local col5 ref" href="#65i" title='i' data-ref="65i">i</a>++)</td></tr>
+<tr><th id="210">210</th><td>        <a class="tu ref" href="#31" title='inv_zigzag_direct16' data-use='w' data-ref="inv_zigzag_direct16">inv_zigzag_direct16</a>[<a class="ref" href="../mathops.h.html#ff_zigzag_direct" title='ff_zigzag_direct' data-ref="ff_zigzag_direct">ff_zigzag_direct</a>[<a class="local col5 ref" href="#65i" title='i' data-ref="65i">i</a>]] = <a class="local col5 ref" href="#65i" title='i' data-ref="65i">i</a> + <var>1</var>;</td></tr>
+<tr><th id="211">211</th><td></td></tr>
+<tr><th id="212">212</th><td>    <b>if</b> (<a class="local col4 ref" href="#64dct_algo" title='dct_algo' data-ref="64dct_algo">dct_algo</a> == <a class="macro" href="../avcodec.h.html#3023" title="0" data-ref="_M/FF_DCT_AUTO">FF_DCT_AUTO</a> || <a class="local col4 ref" href="#64dct_algo" title='dct_algo' data-ref="64dct_algo">dct_algo</a> == <a class="macro" href="../avcodec.h.html#3026" title="3" data-ref="_M/FF_DCT_MMX">FF_DCT_MMX</a>) {</td></tr>
+<tr><th id="213">213</th><td><u>#<span data-ppcond="213">if</span> <a class="macro" href="../../config.h.html#150" title="1" data-ref="_M/HAVE_MMX_INLINE">HAVE_MMX_INLINE</a></u></td></tr>
+<tr><th id="214">214</th><td>        <em>int</em> <dfn class="local col6 decl" id="66cpu_flags" title='cpu_flags' data-type='int' data-ref="66cpu_flags">cpu_flags</dfn> = <a class="ref" href="../../libavutil/cpu.h.html#av_get_cpu_flags" title='av_get_cpu_flags' data-ref="av_get_cpu_flags">av_get_cpu_flags</a>();</td></tr>
+<tr><th id="215">215</th><td>        <b>if</b> (<a class="macro" href="../../libavutil/x86/cpu.h.html#81" title="(1 &amp;&amp; ((cpu_flags) &amp; 0x0001))" data-ref="_M/INLINE_MMX">INLINE_MMX</a>(<a class="local col6 ref" href="#66cpu_flags" title='cpu_flags' data-ref="66cpu_flags">cpu_flags</a>)) {</td></tr>
+<tr><th id="216">216</th><td><u>#<span data-ppcond="216">if</span> <a class="macro" href="../../libavutil/x86/asm.h.html#76" title="(1 || (1 || 0))" data-ref="_M/HAVE_6REGS">HAVE_6REGS</a></u></td></tr>
+<tr><th id="217">217</th><td>            <a class="local col3 ref" href="#63s" title='s' data-ref="63s">s</a>-&gt;<a class="ref" href="../mpegvideo.h.html#MpegEncContext::dct_quantize" title='MpegEncContext::dct_quantize' data-ref="MpegEncContext::dct_quantize">dct_quantize</a> = <a class="ref" href="mpegvideoenc_template.c.html#102" title='dct_quantize_mmx' data-ref="dct_quantize_mmx">dct_quantize_mmx</a>;</td></tr>
+<tr><th id="218">218</th><td><u>#<span data-ppcond="216">endif</span></u></td></tr>
+<tr><th id="219">219</th><td>            <a class="local col3 ref" href="#63s" title='s' data-ref="63s">s</a>-&gt;<a class="ref" href="../mpegvideo.h.html#MpegEncContext::denoise_dct" title='MpegEncContext::denoise_dct' data-ref="MpegEncContext::denoise_dct">denoise_dct</a>  = <a class="tu ref" href="#denoise_dct_mmx" title='denoise_dct_mmx' data-use='r' data-ref="denoise_dct_mmx">denoise_dct_mmx</a>;</td></tr>
+<tr><th id="220">220</th><td>        }</td></tr>
+<tr><th id="221">221</th><td><u>#<span data-ppcond="213">endif</span></u></td></tr>
+<tr><th id="222">222</th><td><u>#<span data-ppcond="222">if</span> <a class="macro" href="../../libavutil/x86/asm.h.html#76" title="(1 || (1 || 0))" data-ref="_M/HAVE_6REGS">HAVE_6REGS</a> &amp;&amp; <a class="macro" href="../../config.h.html#151" title="1" data-ref="_M/HAVE_MMXEXT_INLINE">HAVE_MMXEXT_INLINE</a></u></td></tr>
+<tr><th id="223">223</th><td>        <b>if</b> (<a class="macro" href="../../libavutil/x86/cpu.h.html#82" title="(1 &amp;&amp; ((cpu_flags) &amp; 0x0002))" data-ref="_M/INLINE_MMXEXT">INLINE_MMXEXT</a>(<a class="local col6 ref" href="#66cpu_flags" title='cpu_flags' data-ref="66cpu_flags">cpu_flags</a>))</td></tr>
+<tr><th id="224">224</th><td>            <a class="local col3 ref" href="#63s" title='s' data-ref="63s">s</a>-&gt;<a class="ref" href="../mpegvideo.h.html#MpegEncContext::dct_quantize" title='MpegEncContext::dct_quantize' data-ref="MpegEncContext::dct_quantize">dct_quantize</a> = <a class="ref" href="mpegvideoenc_template.c.html#102" title='dct_quantize_mmxext' data-ref="dct_quantize_mmxext">dct_quantize_mmxext</a>;</td></tr>
+<tr><th id="225">225</th><td><u>#<span data-ppcond="222">endif</span></u></td></tr>
+<tr><th id="226">226</th><td><u>#<span data-ppcond="226">if</span> <a class="macro" href="../../config.h.html#153" title="1" data-ref="_M/HAVE_SSE2_INLINE">HAVE_SSE2_INLINE</a></u></td></tr>
+<tr><th id="227">227</th><td>        <b>if</b> (<a class="macro" href="../../libavutil/x86/cpu.h.html#84" title="(1 &amp;&amp; ((cpu_flags) &amp; 0x0010))" data-ref="_M/INLINE_SSE2">INLINE_SSE2</a>(<a class="local col6 ref" href="#66cpu_flags" title='cpu_flags' data-ref="66cpu_flags">cpu_flags</a>)) {</td></tr>
+<tr><th id="228">228</th><td><u>#<span data-ppcond="228">if</span> <a class="macro" href="../../libavutil/x86/asm.h.html#76" title="(1 || (1 || 0))" data-ref="_M/HAVE_6REGS">HAVE_6REGS</a></u></td></tr>
+<tr><th id="229">229</th><td>            <a class="local col3 ref" href="#63s" title='s' data-ref="63s">s</a>-&gt;<a class="ref" href="../mpegvideo.h.html#MpegEncContext::dct_quantize" title='MpegEncContext::dct_quantize' data-ref="MpegEncContext::dct_quantize">dct_quantize</a> = <a class="ref" href="mpegvideoenc_template.c.html#102" title='dct_quantize_sse2' data-ref="dct_quantize_sse2">dct_quantize_sse2</a>;</td></tr>
+<tr><th id="230">230</th><td><u>#<span data-ppcond="228">endif</span></u></td></tr>
+<tr><th id="231">231</th><td>            <a class="local col3 ref" href="#63s" title='s' data-ref="63s">s</a>-&gt;<a class="ref" href="../mpegvideo.h.html#MpegEncContext::denoise_dct" title='MpegEncContext::denoise_dct' data-ref="MpegEncContext::denoise_dct">denoise_dct</a>  = <a class="tu ref" href="#denoise_dct_sse2" title='denoise_dct_sse2' data-use='r' data-ref="denoise_dct_sse2">denoise_dct_sse2</a>;</td></tr>
+<tr><th id="232">232</th><td>        }</td></tr>
+<tr><th id="233">233</th><td><u>#<span data-ppcond="226">endif</span></u></td></tr>
+<tr><th id="234">234</th><td><u>#<span data-ppcond="234">if</span> <a class="macro" href="../../libavutil/x86/asm.h.html#76" title="(1 || (1 || 0))" data-ref="_M/HAVE_6REGS">HAVE_6REGS</a> &amp;&amp; <a class="macro" href="../../config.h.html#157" title="1" data-ref="_M/HAVE_SSSE3_INLINE">HAVE_SSSE3_INLINE</a></u></td></tr>
+<tr><th id="235">235</th><td>        <b>if</b> (<a class="macro" href="../../libavutil/x86/cpu.h.html#90" title="(1 &amp;&amp; ((cpu_flags) &amp; 0x0080))" data-ref="_M/INLINE_SSSE3">INLINE_SSSE3</a>(<a class="local col6 ref" href="#66cpu_flags" title='cpu_flags' data-ref="66cpu_flags">cpu_flags</a>))</td></tr>
+<tr><th id="236">236</th><td>            <a class="local col3 ref" href="#63s" title='s' data-ref="63s">s</a>-&gt;<a class="ref" href="../mpegvideo.h.html#MpegEncContext::dct_quantize" title='MpegEncContext::dct_quantize' data-ref="MpegEncContext::dct_quantize">dct_quantize</a> = <a class="ref" href="mpegvideoenc_template.c.html#102" title='dct_quantize_ssse3' data-ref="dct_quantize_ssse3">dct_quantize_ssse3</a>;</td></tr>
+<tr><th id="237">237</th><td><u>#<span data-ppcond="234">endif</span></u></td></tr>
+<tr><th id="238">238</th><td>    }</td></tr>
+<tr><th id="239">239</th><td>}</td></tr>
+<tr><th id="240">240</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

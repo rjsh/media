@@ -1,0 +1,334 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>cpu.c source code [vlc/src/misc/cpu.c] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'vlc/src/misc/cpu.c'; var root_path = '../../..'; var data_path = '../../../../data';</script>
+<script src='../../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='../..'>vlc</a>/<a href='..'>src</a>/<a href='./'>misc</a>/<a href='cpu.c.html'>cpu.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*****************************************************************************</i></td></tr>
+<tr><th id="2">2</th><td><i> * cpu.c: CPU detection code</i></td></tr>
+<tr><th id="3">3</th><td><i> *****************************************************************************</i></td></tr>
+<tr><th id="4">4</th><td><i> * Copyright (C) 1998-2004 VLC authors and VideoLAN</i></td></tr>
+<tr><th id="5">5</th><td><i> * $Id: eca79b5911178ec05fd82c46f7c368b4c7d83ff7 $</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * Authors: Samuel Hocevar &lt;sam@zoy.org&gt;</i></td></tr>
+<tr><th id="8">8</th><td><i> *          Christophe Massiot &lt;massiot@via.ecp.fr&gt;</i></td></tr>
+<tr><th id="9">9</th><td><i> *          Eugenio Jarosiewicz &lt;ej0@cise.ufl.eduEujenio&gt;</i></td></tr>
+<tr><th id="10">10</th><td><i> *</i></td></tr>
+<tr><th id="11">11</th><td><i> * This program is free software; you can redistribute it and/or modify it</i></td></tr>
+<tr><th id="12">12</th><td><i> * under the terms of the GNU Lesser General Public License as published by</i></td></tr>
+<tr><th id="13">13</th><td><i> * the Free Software Foundation; either version 2.1 of the License, or</i></td></tr>
+<tr><th id="14">14</th><td><i> * (at your option) any later version.</i></td></tr>
+<tr><th id="15">15</th><td><i> *</i></td></tr>
+<tr><th id="16">16</th><td><i> * This program is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="17">17</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="18">18</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</i></td></tr>
+<tr><th id="19">19</th><td><i> * GNU Lesser General Public License for more details.</i></td></tr>
+<tr><th id="20">20</th><td><i> *</i></td></tr>
+<tr><th id="21">21</th><td><i> * You should have received a copy of the GNU Lesser General Public License</i></td></tr>
+<tr><th id="22">22</th><td><i> * along with this program; if not, write to the Free Software Foundation,</i></td></tr>
+<tr><th id="23">23</th><td><i> * Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.</i></td></tr>
+<tr><th id="24">24</th><td><i> *****************************************************************************/</i></td></tr>
+<tr><th id="25">25</th><td></td></tr>
+<tr><th id="26">26</th><td><i>/*****************************************************************************</i></td></tr>
+<tr><th id="27">27</th><td><i> * Preamble</i></td></tr>
+<tr><th id="28">28</th><td><i> *****************************************************************************/</i></td></tr>
+<tr><th id="29">29</th><td><u>#<span data-ppcond="29">ifdef</span> <span class="macro" data-ref="_M/HAVE_CONFIG_H">HAVE_CONFIG_H</span></u></td></tr>
+<tr><th id="30">30</th><td><u># include <a href="../../config.h.html">"config.h"</a></u></td></tr>
+<tr><th id="31">31</th><td><u>#<span data-ppcond="29">endif</span></u></td></tr>
+<tr><th id="32">32</th><td></td></tr>
+<tr><th id="33">33</th><td><u>#include <a href="../../include/vlc_common.h.html">&lt;vlc_common.h&gt;</a></u></td></tr>
+<tr><th id="34">34</th><td><u>#include <a href="../../include/vlc_cpu.h.html">&lt;vlc_cpu.h&gt;</a></u></td></tr>
+<tr><th id="35">35</th><td><u>#include <a href="../libvlc.h.html">"libvlc.h"</a></u></td></tr>
+<tr><th id="36">36</th><td></td></tr>
+<tr><th id="37">37</th><td><u>#include <a href="../../../include/assert.h.html">&lt;assert.h&gt;</a></u></td></tr>
+<tr><th id="38">38</th><td></td></tr>
+<tr><th id="39">39</th><td><u>#<span data-ppcond="39">ifndef</span> <span class="macro" data-ref="_M/__linux__">__linux__</span></u></td></tr>
+<tr><th id="40">40</th><td><u>#include &lt;sys/types.h&gt;</u></td></tr>
+<tr><th id="41">41</th><td><u>#ifndef _WIN32</u></td></tr>
+<tr><th id="42">42</th><td><u>#include &lt;unistd.h&gt;</u></td></tr>
+<tr><th id="43">43</th><td><u>#include &lt;sys/wait.h&gt;</u></td></tr>
+<tr><th id="44">44</th><td><u>#include &lt;signal.h&gt;</u></td></tr>
+<tr><th id="45">45</th><td><u>#else</u></td></tr>
+<tr><th id="46">46</th><td><u>#include &lt;errno.h&gt;</u></td></tr>
+<tr><th id="47">47</th><td><u>#endif</u></td></tr>
+<tr><th id="48">48</th><td></td></tr>
+<tr><th id="49">49</th><td><u>#ifdef __APPLE__</u></td></tr>
+<tr><th id="50">50</th><td><u>#include &lt;sys/sysctl.h&gt;</u></td></tr>
+<tr><th id="51">51</th><td><u>#endif</u></td></tr>
+<tr><th id="52">52</th><td><u>#ifdef __ANDROID__</u></td></tr>
+<tr><th id="53">53</th><td><u>#include &lt;cpu-features.h&gt;</u></td></tr>
+<tr><th id="54">54</th><td><u>#endif</u></td></tr>
+<tr><th id="55">55</th><td></td></tr>
+<tr><th id="56">56</th><td><u>#if defined(__OpenBSD__) &amp;&amp; defined(__powerpc__)</u></td></tr>
+<tr><th id="57">57</th><td><u>#include &lt;sys/param.h&gt;</u></td></tr>
+<tr><th id="58">58</th><td><u>#include &lt;sys/sysctl.h&gt;</u></td></tr>
+<tr><th id="59">59</th><td><u>#include &lt;machine/cpu.h&gt;</u></td></tr>
+<tr><th id="60">60</th><td><u>#endif</u></td></tr>
+<tr><th id="61">61</th><td></td></tr>
+<tr><th id="62">62</th><td><em>static</em> uint32_t cpu_flags;</td></tr>
+<tr><th id="63">63</th><td></td></tr>
+<tr><th id="64">64</th><td><u>#if defined (__i386__) || defined (__x86_64__) || defined (__powerpc__) \</u></td></tr>
+<tr><th id="65">65</th><td><u> || defined (__ppc__) || defined (__ppc64__) || defined (__powerpc64__)</u></td></tr>
+<tr><th id="66">66</th><td><u># if !defined (_WIN32) &amp;&amp; !defined (__OS2__)</u></td></tr>
+<tr><th id="67">67</th><td><em>static</em> bool vlc_CPU_check (<em>const</em> <em>char</em> *name, <em>void</em> (*func) (<em>void</em>))</td></tr>
+<tr><th id="68">68</th><td>{</td></tr>
+<tr><th id="69">69</th><td>    pid_t pid = fork();</td></tr>
+<tr><th id="70">70</th><td></td></tr>
+<tr><th id="71">71</th><td>    <b>switch</b> (pid)</td></tr>
+<tr><th id="72">72</th><td>    {</td></tr>
+<tr><th id="73">73</th><td>        <b>case</b> <var>0</var>:</td></tr>
+<tr><th id="74">74</th><td>            signal (SIGILL, SIG_DFL);</td></tr>
+<tr><th id="75">75</th><td>            func ();</td></tr>
+<tr><th id="76">76</th><td>            <i>//__asm__ __volatile__ ( code : : input );</i></td></tr>
+<tr><th id="77">77</th><td>            _exit (<var>0</var>);</td></tr>
+<tr><th id="78">78</th><td>        <b>case</b> -<var>1</var>:</td></tr>
+<tr><th id="79">79</th><td>            <b>return</b> false;</td></tr>
+<tr><th id="80">80</th><td>    }</td></tr>
+<tr><th id="81">81</th><td>    <i>//i_capabilities |= (flag);</i></td></tr>
+<tr><th id="82">82</th><td></td></tr>
+<tr><th id="83">83</th><td>    <em>int</em> status;</td></tr>
+<tr><th id="84">84</th><td>    <b>while</b>( waitpid( pid, &amp;status, <var>0</var> ) == -<var>1</var> );</td></tr>
+<tr><th id="85">85</th><td></td></tr>
+<tr><th id="86">86</th><td>    <b>if</b>( WIFEXITED( status ) &amp;&amp; WEXITSTATUS( status ) == <var>0</var> )</td></tr>
+<tr><th id="87">87</th><td>        <b>return</b> true;</td></tr>
+<tr><th id="88">88</th><td></td></tr>
+<tr><th id="89">89</th><td>    fprintf (stderr, <q>"Warning: your CPU has %s instructions, but not your "</q></td></tr>
+<tr><th id="90">90</th><td>                     <q>"operating system.\n"</q>, name);</td></tr>
+<tr><th id="91">91</th><td>    fprintf( stderr, <q>"         some optimizations will be disabled unless "</q></td></tr>
+<tr><th id="92">92</th><td>                     <q>"you upgrade your OS\n"</q> );</td></tr>
+<tr><th id="93">93</th><td>    <b>return</b> false;</td></tr>
+<tr><th id="94">94</th><td>}</td></tr>
+<tr><th id="95">95</th><td></td></tr>
+<tr><th id="96">96</th><td><u>#if defined (CAN_COMPILE_SSE) &amp;&amp; !defined (__SSE__)</u></td></tr>
+<tr><th id="97">97</th><td>VLC_SSE <em>static</em> <em>void</em> SSE_test (<em>void</em>)</td></tr>
+<tr><th id="98">98</th><td>{</td></tr>
+<tr><th id="99">99</th><td>    <b>asm</b> <em>volatile</em> (<q>"xorps %%xmm0,%%xmm0\n"</q> : : : <q>"xmm0"</q>, <q>"xmm1"</q>);</td></tr>
+<tr><th id="100">100</th><td>}</td></tr>
+<tr><th id="101">101</th><td><u>#endif</u></td></tr>
+<tr><th id="102">102</th><td><u>#if defined (CAN_COMPILE_3DNOW)</u></td></tr>
+<tr><th id="103">103</th><td>VLC_MMX <em>static</em> <em>void</em> ThreeD_Now_test (<em>void</em>)</td></tr>
+<tr><th id="104">104</th><td>{</td></tr>
+<tr><th id="105">105</th><td>    <b>asm</b> <em>volatile</em> (<q>"pfadd %%mm0,%%mm0\n"</q> <q>"femms\n"</q> : : : <q>"mm0"</q>);</td></tr>
+<tr><th id="106">106</th><td>}</td></tr>
+<tr><th id="107">107</th><td><u>#endif</u></td></tr>
+<tr><th id="108">108</th><td></td></tr>
+<tr><th id="109">109</th><td><u>#if defined (CAN_COMPILE_ALTIVEC)</u></td></tr>
+<tr><th id="110">110</th><td><em>static</em> <em>void</em> Altivec_test (<em>void</em>)</td></tr>
+<tr><th id="111">111</th><td>{</td></tr>
+<tr><th id="112">112</th><td>    <b>asm</b> <em>volatile</em> (<q>"mtspr 256, %0\n"</q> <q>"vand %%v0, %%v0, %%v0\n"</q> : : <q>"r"</q> (-<var>1</var>));</td></tr>
+<tr><th id="113">113</th><td>}</td></tr>
+<tr><th id="114">114</th><td><u>#endif</u></td></tr>
+<tr><th id="115">115</th><td></td></tr>
+<tr><th id="116">116</th><td><u>#else /* _WIN32 || __OS2__ */</u></td></tr>
+<tr><th id="117">117</th><td><u># define vlc_CPU_check(name, func) (1)</u></td></tr>
+<tr><th id="118">118</th><td><u>#endif</u></td></tr>
+<tr><th id="119">119</th><td><u>#endif</u></td></tr>
+<tr><th id="120">120</th><td></td></tr>
+<tr><th id="121">121</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="122">122</th><td><i class="doc"> * Determines the CPU capabilities and stores them in cpu_flags.</i></td></tr>
+<tr><th id="123">123</th><td><i class="doc"> * The result can be retrieved with vlc_CPU().</i></td></tr>
+<tr><th id="124">124</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="125">125</th><td><em>void</em> vlc_CPU_init (<em>void</em>)</td></tr>
+<tr><th id="126">126</th><td>{</td></tr>
+<tr><th id="127">127</th><td>    uint32_t i_capabilities = <var>0</var>;</td></tr>
+<tr><th id="128">128</th><td></td></tr>
+<tr><th id="129">129</th><td><u>#if defined( __i386__ ) || defined( __x86_64__ )</u></td></tr>
+<tr><th id="130">130</th><td>     <em>unsigned</em> <em>int</em> i_eax, i_ebx, i_ecx, i_edx;</td></tr>
+<tr><th id="131">131</th><td>     bool b_amd;</td></tr>
+<tr><th id="132">132</th><td></td></tr>
+<tr><th id="133">133</th><td>    <i>/* Needed for x86 CPU capabilities detection */</i></td></tr>
+<tr><th id="134">134</th><td><u># if defined (__i386__) &amp;&amp; defined (__PIC__)</u></td></tr>
+<tr><th id="135">135</th><td><u>#  define cpuid(reg) \</u></td></tr>
+<tr><th id="136">136</th><td><u>     asm volatile ("xchgl %%ebx,%1\n\t" \</u></td></tr>
+<tr><th id="137">137</th><td><u>                   "cpuid\n\t" \</u></td></tr>
+<tr><th id="138">138</th><td><u>                   "xchgl %%ebx,%1\n\t" \</u></td></tr>
+<tr><th id="139">139</th><td><u>                   : "=a" (i_eax), "=r" (i_ebx), "=c" (i_ecx), "=d" (i_edx) \</u></td></tr>
+<tr><th id="140">140</th><td><u>                   : "a" (reg) \</u></td></tr>
+<tr><th id="141">141</th><td><u>                   : "cc");</u></td></tr>
+<tr><th id="142">142</th><td><u># else</u></td></tr>
+<tr><th id="143">143</th><td><u>#  define cpuid(reg) \</u></td></tr>
+<tr><th id="144">144</th><td><u>     asm volatile ("cpuid\n\t" \</u></td></tr>
+<tr><th id="145">145</th><td><u>                   : "=a" (i_eax), "=b" (i_ebx), "=c" (i_ecx), "=d" (i_edx) \</u></td></tr>
+<tr><th id="146">146</th><td><u>                   : "a" (reg) \</u></td></tr>
+<tr><th id="147">147</th><td><u>                   : "cc");</u></td></tr>
+<tr><th id="148">148</th><td><u># endif</u></td></tr>
+<tr><th id="149">149</th><td>     <i>/* Check if the OS really supports the requested instructions */</i></td></tr>
+<tr><th id="150">150</th><td><u># if defined (__i386__) &amp;&amp; !defined (__i486__) &amp;&amp; !defined (__i586__) \</u></td></tr>
+<tr><th id="151">151</th><td><u>  &amp;&amp; !defined (__i686__) &amp;&amp; !defined (__pentium4__) \</u></td></tr>
+<tr><th id="152">152</th><td><u>  &amp;&amp; !defined (__k6__) &amp;&amp; !defined (__athlon__) &amp;&amp; !defined (__k8__)</u></td></tr>
+<tr><th id="153">153</th><td>    <i>/* check if cpuid instruction is supported */</i></td></tr>
+<tr><th id="154">154</th><td>    <b>asm</b> <em>volatile</em> ( <q>"push %%ebx\n\t"</q></td></tr>
+<tr><th id="155">155</th><td>                   <q>"pushf\n\t"</q></td></tr>
+<tr><th id="156">156</th><td>                   <q>"pop %%eax\n\t"</q></td></tr>
+<tr><th id="157">157</th><td>                   <q>"movl %%eax, %%ebx\n\t"</q></td></tr>
+<tr><th id="158">158</th><td>                   <q>"xorl $0x200000, %%eax\n\t"</q></td></tr>
+<tr><th id="159">159</th><td>                   <q>"push %%eax\n\t"</q></td></tr>
+<tr><th id="160">160</th><td>                   <q>"popf\n\t"</q></td></tr>
+<tr><th id="161">161</th><td>                   <q>"pushf\n\t"</q></td></tr>
+<tr><th id="162">162</th><td>                   <q>"pop %%eax\n\t"</q></td></tr>
+<tr><th id="163">163</th><td>                   <q>"movl %%ebx,%1\n\t"</q></td></tr>
+<tr><th id="164">164</th><td>                   <q>"pop %%ebx\n\t"</q></td></tr>
+<tr><th id="165">165</th><td>                 : <q>"=a"</q> ( i_eax ),</td></tr>
+<tr><th id="166">166</th><td>                   <q>"=r"</q> ( i_ebx )</td></tr>
+<tr><th id="167">167</th><td>                 :</td></tr>
+<tr><th id="168">168</th><td>                 : <q>"cc"</q> );</td></tr>
+<tr><th id="169">169</th><td></td></tr>
+<tr><th id="170">170</th><td>    <b>if</b>( i_eax == i_ebx )</td></tr>
+<tr><th id="171">171</th><td>        <b>goto</b> out;</td></tr>
+<tr><th id="172">172</th><td><u># endif</u></td></tr>
+<tr><th id="173">173</th><td></td></tr>
+<tr><th id="174">174</th><td>    <i>/* the CPU supports the CPUID instruction - get its level */</i></td></tr>
+<tr><th id="175">175</th><td>    cpuid( <var>0x00000000</var> );</td></tr>
+<tr><th id="176">176</th><td></td></tr>
+<tr><th id="177">177</th><td><u># if defined (__i386__) &amp;&amp; !defined (__i586__) \</u></td></tr>
+<tr><th id="178">178</th><td><u>  &amp;&amp; !defined (__i686__) &amp;&amp; !defined (__pentium4__) \</u></td></tr>
+<tr><th id="179">179</th><td><u>  &amp;&amp; !defined (__k6__) &amp;&amp; !defined (__athlon__) &amp;&amp; !defined (__k8__)</u></td></tr>
+<tr><th id="180">180</th><td>    <b>if</b>( !i_eax )</td></tr>
+<tr><th id="181">181</th><td>        <b>goto</b> out;</td></tr>
+<tr><th id="182">182</th><td><u>#endif</u></td></tr>
+<tr><th id="183">183</th><td></td></tr>
+<tr><th id="184">184</th><td>    <i>/* borrowed from mpeg2dec */</i></td></tr>
+<tr><th id="185">185</th><td>    b_amd = ( i_ebx == <var>0x68747541</var> ) &amp;&amp; ( i_ecx == <var>0x444d4163</var> )</td></tr>
+<tr><th id="186">186</th><td>                    &amp;&amp; ( i_edx == <var>0x69746e65</var> );</td></tr>
+<tr><th id="187">187</th><td></td></tr>
+<tr><th id="188">188</th><td>    <i>/* test for the MMX flag */</i></td></tr>
+<tr><th id="189">189</th><td>    cpuid( <var>0x00000001</var> );</td></tr>
+<tr><th id="190">190</th><td><u># if !defined (__MMX__)</u></td></tr>
+<tr><th id="191">191</th><td>    <b>if</b>( ! (i_edx &amp; <var>0x00800000</var>) )</td></tr>
+<tr><th id="192">192</th><td>        <b>goto</b> out;</td></tr>
+<tr><th id="193">193</th><td><u># endif</u></td></tr>
+<tr><th id="194">194</th><td>    i_capabilities |= VLC_CPU_MMX;</td></tr>
+<tr><th id="195">195</th><td></td></tr>
+<tr><th id="196">196</th><td>    <b>if</b>( i_edx &amp; <var>0x02000000</var> )</td></tr>
+<tr><th id="197">197</th><td>        i_capabilities |= VLC_CPU_MMXEXT;</td></tr>
+<tr><th id="198">198</th><td><u># if defined (CAN_COMPILE_SSE) &amp;&amp; !defined (__SSE__)</u></td></tr>
+<tr><th id="199">199</th><td>    <b>if</b> (( i_edx &amp; <var>0x02000000</var> ) &amp;&amp; vlc_CPU_check (<q>"SSE"</q>, SSE_test))</td></tr>
+<tr><th id="200">200</th><td><u># endif</u></td></tr>
+<tr><th id="201">201</th><td>    {</td></tr>
+<tr><th id="202">202</th><td>        <i>/*if( i_edx &amp; 0x02000000 )*/</i></td></tr>
+<tr><th id="203">203</th><td>            i_capabilities |= VLC_CPU_SSE;</td></tr>
+<tr><th id="204">204</th><td>        <b>if</b> (i_edx &amp; <var>0x04000000</var>)</td></tr>
+<tr><th id="205">205</th><td>            i_capabilities |= VLC_CPU_SSE2;</td></tr>
+<tr><th id="206">206</th><td>        <b>if</b> (i_ecx &amp; <var>0x00000001</var>)</td></tr>
+<tr><th id="207">207</th><td>            i_capabilities |= VLC_CPU_SSE3;</td></tr>
+<tr><th id="208">208</th><td>        <b>if</b> (i_ecx &amp; <var>0x00000200</var>)</td></tr>
+<tr><th id="209">209</th><td>            i_capabilities |= VLC_CPU_SSSE3;</td></tr>
+<tr><th id="210">210</th><td>        <b>if</b> (i_ecx &amp; <var>0x00080000</var>)</td></tr>
+<tr><th id="211">211</th><td>            i_capabilities |= VLC_CPU_SSE4_1;</td></tr>
+<tr><th id="212">212</th><td>        <b>if</b> (i_ecx &amp; <var>0x00100000</var>)</td></tr>
+<tr><th id="213">213</th><td>            i_capabilities |= VLC_CPU_SSE4_2;</td></tr>
+<tr><th id="214">214</th><td>    }</td></tr>
+<tr><th id="215">215</th><td></td></tr>
+<tr><th id="216">216</th><td>    <i>/* test for additional capabilities */</i></td></tr>
+<tr><th id="217">217</th><td>    cpuid( <var>0x80000000</var> );</td></tr>
+<tr><th id="218">218</th><td></td></tr>
+<tr><th id="219">219</th><td>    <b>if</b>( i_eax &lt; <var>0x80000001</var> )</td></tr>
+<tr><th id="220">220</th><td>        <b>goto</b> out;</td></tr>
+<tr><th id="221">221</th><td></td></tr>
+<tr><th id="222">222</th><td>    <i>/* list these additional capabilities */</i></td></tr>
+<tr><th id="223">223</th><td>    cpuid( <var>0x80000001</var> );</td></tr>
+<tr><th id="224">224</th><td></td></tr>
+<tr><th id="225">225</th><td><u># if defined (CAN_COMPILE_3DNOW) &amp;&amp; !defined (__3dNOW__)</u></td></tr>
+<tr><th id="226">226</th><td>    <b>if</b> ((i_edx &amp; <var>0x80000000</var>) &amp;&amp; vlc_CPU_check (<q>"3D Now!"</q>, ThreeD_Now_test))</td></tr>
+<tr><th id="227">227</th><td><u># endif</u></td></tr>
+<tr><th id="228">228</th><td>        i_capabilities |= VLC_CPU_3dNOW;</td></tr>
+<tr><th id="229">229</th><td></td></tr>
+<tr><th id="230">230</th><td>    <b>if</b>( b_amd &amp;&amp; ( i_edx &amp; <var>0x00400000</var> ) )</td></tr>
+<tr><th id="231">231</th><td>        i_capabilities |= VLC_CPU_MMXEXT;</td></tr>
+<tr><th id="232">232</th><td>out:</td></tr>
+<tr><th id="233">233</th><td></td></tr>
+<tr><th id="234">234</th><td><u>#elif defined( __powerpc__ ) || defined( __ppc__ ) || defined( __powerpc64__ ) \</u></td></tr>
+<tr><th id="235">235</th><td><u>    || defined( __ppc64__ )</u></td></tr>
+<tr><th id="236">236</th><td></td></tr>
+<tr><th id="237">237</th><td><u>#   if defined(__APPLE__) || defined(__OpenBSD__)</u></td></tr>
+<tr><th id="238">238</th><td><u>#   if defined(__OpenBSD__)</u></td></tr>
+<tr><th id="239">239</th><td>    <em>int</em> selectors[<var>2</var>] = { CTL_MACHDEP, CPU_ALTIVEC };</td></tr>
+<tr><th id="240">240</th><td><u>#   else</u></td></tr>
+<tr><th id="241">241</th><td>    <em>int</em> selectors[<var>2</var>] = { CTL_HW, HW_VECTORUNIT };</td></tr>
+<tr><th id="242">242</th><td><u>#   endif</u></td></tr>
+<tr><th id="243">243</th><td>    <em>int</em> i_has_altivec = <var>0</var>;</td></tr>
+<tr><th id="244">244</th><td>    size_t i_length = <b>sizeof</b>( i_has_altivec );</td></tr>
+<tr><th id="245">245</th><td>    <em>int</em> i_error = sysctl( selectors, <var>2</var>, &amp;i_has_altivec, &amp;i_length, NULL, <var>0</var>);</td></tr>
+<tr><th id="246">246</th><td></td></tr>
+<tr><th id="247">247</th><td>    <b>if</b>( i_error == <var>0</var> &amp;&amp; i_has_altivec != <var>0</var> )</td></tr>
+<tr><th id="248">248</th><td>        i_capabilities |= VLC_CPU_ALTIVEC;</td></tr>
+<tr><th id="249">249</th><td></td></tr>
+<tr><th id="250">250</th><td><u>#   elif defined( CAN_COMPILE_ALTIVEC )</u></td></tr>
+<tr><th id="251">251</th><td>    <b>if</b> (vlc_CPU_check (<q>"Altivec"</q>, Altivec_test))</td></tr>
+<tr><th id="252">252</th><td>        i_capabilities |= VLC_CPU_ALTIVEC;</td></tr>
+<tr><th id="253">253</th><td></td></tr>
+<tr><th id="254">254</th><td><u>#   endif</u></td></tr>
+<tr><th id="255">255</th><td></td></tr>
+<tr><th id="256">256</th><td><u>#elif defined ( __arm__)</u></td></tr>
+<tr><th id="257">257</th><td><u># ifdef __ANDROID__</u></td></tr>
+<tr><th id="258">258</th><td>    <b>if</b> (android_getCpuFeatures() &amp; ANDROID_CPU_ARM_FEATURE_NEON)</td></tr>
+<tr><th id="259">259</th><td>        i_capabilities |= VLC_CPU_ARM_NEON;</td></tr>
+<tr><th id="260">260</th><td><u># endif</u></td></tr>
+<tr><th id="261">261</th><td></td></tr>
+<tr><th id="262">262</th><td><u>#endif</u></td></tr>
+<tr><th id="263">263</th><td></td></tr>
+<tr><th id="264">264</th><td>    cpu_flags = i_capabilities;</td></tr>
+<tr><th id="265">265</th><td>}</td></tr>
+<tr><th id="266">266</th><td></td></tr>
+<tr><th id="267">267</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="268">268</th><td><i class="doc"> * Retrieves pre-computed CPU capability flags</i></td></tr>
+<tr><th id="269">269</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="270">270</th><td><em>unsigned</em> vlc_CPU (<em>void</em>)</td></tr>
+<tr><th id="271">271</th><td>{</td></tr>
+<tr><th id="272">272</th><td><i>/* On Windows and OS/2,</i></td></tr>
+<tr><th id="273">273</th><td><i> * initialized from DllMain() and _DLL_InitTerm() respectively, instead */</i></td></tr>
+<tr><th id="274">274</th><td><u>#if !defined(_WIN32) &amp;&amp; !defined(__OS2__)</u></td></tr>
+<tr><th id="275">275</th><td>    <em>static</em> pthread_once_t once = PTHREAD_ONCE_INIT;</td></tr>
+<tr><th id="276">276</th><td>    pthread_once (&amp;once, vlc_CPU_init);</td></tr>
+<tr><th id="277">277</th><td><u>#endif</u></td></tr>
+<tr><th id="278">278</th><td>    <b>return</b> cpu_flags;</td></tr>
+<tr><th id="279">279</th><td>}</td></tr>
+<tr><th id="280">280</th><td><u>#<span data-ppcond="39">endif</span></u></td></tr>
+<tr><th id="281">281</th><td></td></tr>
+<tr><th id="282">282</th><td><em>void</em> <dfn class="decl def" id="vlc_CPU_dump" title='vlc_CPU_dump' data-ref="vlc_CPU_dump">vlc_CPU_dump</dfn> (<a class="typedef" href="../../include/vlc_common.h.html#vlc_object_t" title='vlc_object_t' data-type='struct vlc_object_t' data-ref="vlc_object_t">vlc_object_t</a> *<dfn class="local col1 decl" id="1obj" title='obj' data-type='vlc_object_t *' data-ref="1obj">obj</dfn>)</td></tr>
+<tr><th id="283">283</th><td>{</td></tr>
+<tr><th id="284">284</th><td>    <em>char</em> <dfn class="local col2 decl" id="2buf" title='buf' data-type='char [200]' data-ref="2buf">buf</dfn>[<var>200</var>], *<dfn class="local col3 decl" id="3p" title='p' data-type='char *' data-ref="3p">p</dfn> = <a class="local col2 ref" href="#2buf" title='buf' data-ref="2buf">buf</a>;</td></tr>
+<tr><th id="285">285</th><td></td></tr>
+<tr><th id="286">286</th><td><u>#<span data-ppcond="286">if</span> defined (<span class="macro" data-ref="_M/__i386__">__i386__</span>) || defined (<span class="macro" data-ref="_M/__x86_64__">__x86_64__</span>)</u></td></tr>
+<tr><th id="287">287</th><td>    <b>if</b> (<a class="macro" href="../../include/vlc_cpu.h.html#49" title="(1)" data-ref="_M/vlc_CPU_MMX">vlc_CPU_MMX</a>()) <a class="local col3 ref" href="#3p" title='p' data-ref="3p">p</a> += <a class="macro" href="../../../include/x86_64-linux-gnu/bits/stdio2.h.html#37" title="__builtin___sprintf_chk (p, 2 - 1, __builtin_object_size (p, 2 &gt; 1), &quot;MMX &quot;)" data-ref="_M/sprintf">sprintf</a> (<a class="local col3 ref" href="#3p" title='p' data-ref="3p">p</a>, <q>"MMX "</q>);</td></tr>
+<tr><th id="288">288</th><td>    <b>if</b> (<a class="macro" href="../../include/vlc_cpu.h.html#61" title="(1)" data-ref="_M/vlc_CPU_MMXEXT">vlc_CPU_MMXEXT</a>()) <a class="local col3 ref" href="#3p" title='p' data-ref="3p">p</a> += <a class="macro" href="../../../include/x86_64-linux-gnu/bits/stdio2.h.html#37" title="__builtin___sprintf_chk (p, 2 - 1, __builtin_object_size (p, 2 &gt; 1), &quot;MMXEXT &quot;)" data-ref="_M/sprintf">sprintf</a> (<a class="local col3 ref" href="#3p" title='p' data-ref="3p">p</a>, <q>"MMXEXT "</q>);</td></tr>
+<tr><th id="289">289</th><td>    <b>if</b> (<a class="macro" href="../../include/vlc_cpu.h.html#62" title="(1)" data-ref="_M/vlc_CPU_SSE">vlc_CPU_SSE</a>()) <a class="local col3 ref" href="#3p" title='p' data-ref="3p">p</a> += <a class="macro" href="../../../include/x86_64-linux-gnu/bits/stdio2.h.html#37" title="__builtin___sprintf_chk (p, 2 - 1, __builtin_object_size (p, 2 &gt; 1), &quot;SSE &quot;)" data-ref="_M/sprintf">sprintf</a> (<a class="local col3 ref" href="#3p" title='p' data-ref="3p">p</a>, <q>"SSE "</q>);</td></tr>
+<tr><th id="290">290</th><td>    <b>if</b> (<a class="macro" href="../../include/vlc_cpu.h.html#75" title="(1)" data-ref="_M/vlc_CPU_SSE2">vlc_CPU_SSE2</a>()) <a class="local col3 ref" href="#3p" title='p' data-ref="3p">p</a> += <a class="macro" href="../../../include/x86_64-linux-gnu/bits/stdio2.h.html#37" title="__builtin___sprintf_chk (p, 2 - 1, __builtin_object_size (p, 2 &gt; 1), &quot;SSE2 &quot;)" data-ref="_M/sprintf">sprintf</a> (<a class="local col3 ref" href="#3p" title='p' data-ref="3p">p</a>, <q>"SSE2 "</q>);</td></tr>
+<tr><th id="291">291</th><td>    <b>if</b> (<a class="macro" href="../../include/vlc_cpu.h.html#83" title="((vlc_CPU() &amp; 0x00000100) != 0)" data-ref="_M/vlc_CPU_SSE3">vlc_CPU_SSE3</a>()) <a class="local col3 ref" href="#3p" title='p' data-ref="3p">p</a> += <a class="macro" href="../../../include/x86_64-linux-gnu/bits/stdio2.h.html#37" title="__builtin___sprintf_chk (p, 2 - 1, __builtin_object_size (p, 2 &gt; 1), &quot;SSE3 &quot;)" data-ref="_M/sprintf">sprintf</a> (<a class="local col3 ref" href="#3p" title='p' data-ref="3p">p</a>, <q>"SSE3 "</q>);</td></tr>
+<tr><th id="292">292</th><td>    <b>if</b> (<a class="macro" href="../../include/vlc_cpu.h.html#89" title="((vlc_CPU() &amp; 0x00000200) != 0)" data-ref="_M/vlc_CPU_SSSE3">vlc_CPU_SSSE3</a>()) <a class="local col3 ref" href="#3p" title='p' data-ref="3p">p</a> += <a class="macro" href="../../../include/x86_64-linux-gnu/bits/stdio2.h.html#37" title="__builtin___sprintf_chk (p, 2 - 1, __builtin_object_size (p, 2 &gt; 1), &quot;SSSE3 &quot;)" data-ref="_M/sprintf">sprintf</a> (<a class="local col3 ref" href="#3p" title='p' data-ref="3p">p</a>, <q>"SSSE3 "</q>);</td></tr>
+<tr><th id="293">293</th><td>    <b>if</b> (<a class="macro" href="../../include/vlc_cpu.h.html#95" title="((vlc_CPU() &amp; 0x00000400) != 0)" data-ref="_M/vlc_CPU_SSE4_1">vlc_CPU_SSE4_1</a>()) <a class="local col3 ref" href="#3p" title='p' data-ref="3p">p</a> += <a class="macro" href="../../../include/x86_64-linux-gnu/bits/stdio2.h.html#37" title="__builtin___sprintf_chk (p, 2 - 1, __builtin_object_size (p, 2 &gt; 1), &quot;SSE4.1 &quot;)" data-ref="_M/sprintf">sprintf</a> (<a class="local col3 ref" href="#3p" title='p' data-ref="3p">p</a>, <q>"SSE4.1 "</q>);</td></tr>
+<tr><th id="294">294</th><td>    <b>if</b> (<a class="macro" href="../../include/vlc_cpu.h.html#101" title="((vlc_CPU() &amp; 0x00000800) != 0)" data-ref="_M/vlc_CPU_SSE4_2">vlc_CPU_SSE4_2</a>()) <a class="local col3 ref" href="#3p" title='p' data-ref="3p">p</a> += <a class="macro" href="../../../include/x86_64-linux-gnu/bits/stdio2.h.html#37" title="__builtin___sprintf_chk (p, 2 - 1, __builtin_object_size (p, 2 &gt; 1), &quot;SSE4.2 &quot;)" data-ref="_M/sprintf">sprintf</a> (<a class="local col3 ref" href="#3p" title='p' data-ref="3p">p</a>, <q>"SSE4.2 "</q>);</td></tr>
+<tr><th id="295">295</th><td>    <b>if</b> (<a class="macro" href="../../include/vlc_cpu.h.html#107" title="((vlc_CPU() &amp; 0x00001000) != 0)" data-ref="_M/vlc_CPU_SSE4A">vlc_CPU_SSE4A</a>()) <a class="local col3 ref" href="#3p" title='p' data-ref="3p">p</a> += <a class="macro" href="../../../include/x86_64-linux-gnu/bits/stdio2.h.html#37" title="__builtin___sprintf_chk (p, 2 - 1, __builtin_object_size (p, 2 &gt; 1), &quot;SSE4A &quot;)" data-ref="_M/sprintf">sprintf</a> (<a class="local col3 ref" href="#3p" title='p' data-ref="3p">p</a>, <q>"SSE4A "</q>);</td></tr>
+<tr><th id="296">296</th><td>    <b>if</b> (<a class="macro" href="../../include/vlc_cpu.h.html#113" title="((vlc_CPU() &amp; 0x00002000) != 0)" data-ref="_M/vlc_CPU_AVX">vlc_CPU_AVX</a>()) <a class="local col3 ref" href="#3p" title='p' data-ref="3p">p</a> += <a class="macro" href="../../../include/x86_64-linux-gnu/bits/stdio2.h.html#37" title="__builtin___sprintf_chk (p, 2 - 1, __builtin_object_size (p, 2 &gt; 1), &quot;AVX &quot;)" data-ref="_M/sprintf">sprintf</a> (<a class="local col3 ref" href="#3p" title='p' data-ref="3p">p</a>, <q>"AVX "</q>);</td></tr>
+<tr><th id="297">297</th><td>    <b>if</b> (<a class="macro" href="../../include/vlc_cpu.h.html#119" title="((vlc_CPU() &amp; 0x00004000) != 0)" data-ref="_M/vlc_CPU_AVX2">vlc_CPU_AVX2</a>()) <a class="local col3 ref" href="#3p" title='p' data-ref="3p">p</a> += <a class="macro" href="../../../include/x86_64-linux-gnu/bits/stdio2.h.html#37" title="__builtin___sprintf_chk (p, 2 - 1, __builtin_object_size (p, 2 &gt; 1), &quot;AVX &quot;)" data-ref="_M/sprintf">sprintf</a> (<a class="local col3 ref" href="#3p" title='p' data-ref="3p">p</a>, <q>"AVX "</q>);</td></tr>
+<tr><th id="298">298</th><td>    <b>if</b> (<a class="macro" href="../../include/vlc_cpu.h.html#125" title="((vlc_CPU() &amp; 0x00000010) != 0)" data-ref="_M/vlc_CPU_3dNOW">vlc_CPU_3dNOW</a>()) <a class="local col3 ref" href="#3p" title='p' data-ref="3p">p</a> += <a class="macro" href="../../../include/x86_64-linux-gnu/bits/stdio2.h.html#37" title="__builtin___sprintf_chk (p, 2 - 1, __builtin_object_size (p, 2 &gt; 1), &quot;3DNow! &quot;)" data-ref="_M/sprintf">sprintf</a> (<a class="local col3 ref" href="#3p" title='p' data-ref="3p">p</a>, <q>"3DNow! "</q>);</td></tr>
+<tr><th id="299">299</th><td>    <b>if</b> (<a class="macro" href="../../include/vlc_cpu.h.html#131" title="((vlc_CPU() &amp; 0x00008000) != 0)" data-ref="_M/vlc_CPU_XOP">vlc_CPU_XOP</a>()) <a class="local col3 ref" href="#3p" title='p' data-ref="3p">p</a> += <a class="macro" href="../../../include/x86_64-linux-gnu/bits/stdio2.h.html#37" title="__builtin___sprintf_chk (p, 2 - 1, __builtin_object_size (p, 2 &gt; 1), &quot;XOP &quot;)" data-ref="_M/sprintf">sprintf</a> (<a class="local col3 ref" href="#3p" title='p' data-ref="3p">p</a>, <q>"XOP "</q>);</td></tr>
+<tr><th id="300">300</th><td>    <b>if</b> (<a class="macro" href="../../include/vlc_cpu.h.html#137" title="((vlc_CPU() &amp; 0x00010000) != 0)" data-ref="_M/vlc_CPU_FMA4">vlc_CPU_FMA4</a>()) <a class="local col3 ref" href="#3p" title='p' data-ref="3p">p</a> += <a class="macro" href="../../../include/x86_64-linux-gnu/bits/stdio2.h.html#37" title="__builtin___sprintf_chk (p, 2 - 1, __builtin_object_size (p, 2 &gt; 1), &quot;FMA4 &quot;)" data-ref="_M/sprintf">sprintf</a> (<a class="local col3 ref" href="#3p" title='p' data-ref="3p">p</a>, <q>"FMA4 "</q>);</td></tr>
+<tr><th id="301">301</th><td></td></tr>
+<tr><th id="302">302</th><td><u>#<span data-ppcond="286">elif</span> defined (__powerpc__) || defined (__ppc__) || defined (__ppc64__)</u></td></tr>
+<tr><th id="303">303</th><td>    <b>if</b> (vlc_CPU_ALTIVEC())  p += sprintf (p, <q>"AltiVec"</q>);</td></tr>
+<tr><th id="304">304</th><td></td></tr>
+<tr><th id="305">305</th><td><u>#elif defined (__arm__)</u></td></tr>
+<tr><th id="306">306</th><td>    <b>if</b> (vlc_CPU_ARM_NEON()) p += sprintf (p, <q>"ARM_NEON "</q>);</td></tr>
+<tr><th id="307">307</th><td></td></tr>
+<tr><th id="308">308</th><td><u>#<span data-ppcond="286">endif</span></u></td></tr>
+<tr><th id="309">309</th><td></td></tr>
+<tr><th id="310">310</th><td><u>#<span data-ppcond="310">if</span> <a class="macro" href="../../include/vlc_cpu.h.html#32" title="1" data-ref="_M/HAVE_FPU">HAVE_FPU</a></u></td></tr>
+<tr><th id="311">311</th><td>    <a class="local col3 ref" href="#3p" title='p' data-ref="3p">p</a> += <a class="macro" href="../../../include/x86_64-linux-gnu/bits/stdio2.h.html#37" title="__builtin___sprintf_chk (p, 2 - 1, __builtin_object_size (p, 2 &gt; 1), &quot;FPU &quot;)" data-ref="_M/sprintf">sprintf</a> (<a class="local col3 ref" href="#3p" title='p' data-ref="3p">p</a>, <q>"FPU "</q>);</td></tr>
+<tr><th id="312">312</th><td><u>#<span data-ppcond="310">endif</span></u></td></tr>
+<tr><th id="313">313</th><td></td></tr>
+<tr><th id="314">314</th><td>    <b>if</b> (p &gt; buf)</td></tr>
+<tr><th id="315">315</th><td>        <a class="macro" href="../../include/vlc_messages.h.html#77" title="vlc_Log( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(obj)), psz_object_type), (void)0 , (vlc_object_t *)(obj)), VLC_MSG_DBG, core, &quot;CPU has capabilities %s&quot;, buf )" data-ref="_M/msg_Dbg">msg_Dbg</a> (obj, <q>"CPU has capabilities %s"</q>, buf);</td></tr>
+<tr><th id="316">316</th><td>}</td></tr>
+<tr><th id="317">317</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project vlc revision <em>2.2.0-git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

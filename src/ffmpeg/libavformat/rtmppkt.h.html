@@ -1,0 +1,349 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>rtmppkt.h source code [ffmpeg/libavformat/rtmppkt.h] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="RTMPChannel,RTMPPacket,RTMPPacketSize,RTMPPacketType "/>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavformat/rtmppkt.h'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavformat</a>/<a href='rtmppkt.h.html'>rtmppkt.h</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * RTMP packet utilities</i></td></tr>
+<tr><th id="3">3</th><td><i> * Copyright (c) 2009 Konstantin Shishkov</i></td></tr>
+<tr><th id="4">4</th><td><i> *</i></td></tr>
+<tr><th id="5">5</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="8">8</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="9">9</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="10">10</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="11">11</th><td><i> *</i></td></tr>
+<tr><th id="12">12</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="13">13</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="14">14</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="15">15</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="16">16</th><td><i> *</i></td></tr>
+<tr><th id="17">17</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="18">18</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="19">19</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="20">20</th><td><i> */</i></td></tr>
+<tr><th id="21">21</th><td></td></tr>
+<tr><th id="22">22</th><td><u>#<span data-ppcond="22">ifndef</span> <span class="macro" data-ref="_M/AVFORMAT_RTMPPKT_H">AVFORMAT_RTMPPKT_H</span></u></td></tr>
+<tr><th id="23">23</th><td><u>#define <dfn class="macro" id="_M/AVFORMAT_RTMPPKT_H" data-ref="_M/AVFORMAT_RTMPPKT_H">AVFORMAT_RTMPPKT_H</dfn></u></td></tr>
+<tr><th id="24">24</th><td></td></tr>
+<tr><th id="25">25</th><td><u>#include <a href="../libavcodec/bytestream.h.html">"libavcodec/bytestream.h"</a></u></td></tr>
+<tr><th id="26">26</th><td><u>#include <a href="avformat.h.html">"avformat.h"</a></u></td></tr>
+<tr><th id="27">27</th><td><u>#include <a href="url.h.html">"url.h"</a></u></td></tr>
+<tr><th id="28">28</th><td></td></tr>
+<tr><th id="29">29</th><td><i class="doc">/** maximum possible number of different RTMP channels */</i></td></tr>
+<tr><th id="30">30</th><td><u>#define <dfn class="macro" id="_M/RTMP_CHANNELS" data-ref="_M/RTMP_CHANNELS">RTMP_CHANNELS</dfn> 65599</u></td></tr>
+<tr><th id="31">31</th><td></td></tr>
+<tr><th id="32">32</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="33">33</th><td><i class="doc"> * channels used to for RTMP packets with different purposes (i.e. data, network</i></td></tr>
+<tr><th id="34">34</th><td><i class="doc"> * control, remote procedure calls, etc.)</i></td></tr>
+<tr><th id="35">35</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="36">36</th><td><b>enum</b> <dfn class="type def" id="RTMPChannel" title='RTMPChannel' data-ref="RTMPChannel">RTMPChannel</dfn> {</td></tr>
+<tr><th id="37">37</th><td>    <dfn class="enum" id="RTMPChannel::RTMP_NETWORK_CHANNEL" title='RTMPChannel::RTMP_NETWORK_CHANNEL' data-ref="RTMPChannel::RTMP_NETWORK_CHANNEL">RTMP_NETWORK_CHANNEL</dfn> = <var>2</var>,   <i class="doc">///&lt; channel for network-related messages (bandwidth report, ping, etc)</i></td></tr>
+<tr><th id="38">38</th><td>    <dfn class="enum" id="RTMPChannel::RTMP_SYSTEM_CHANNEL" title='RTMPChannel::RTMP_SYSTEM_CHANNEL' data-ref="RTMPChannel::RTMP_SYSTEM_CHANNEL">RTMP_SYSTEM_CHANNEL</dfn>,        <i class="doc">///&lt; channel for sending server control messages</i></td></tr>
+<tr><th id="39">39</th><td>    <dfn class="enum" id="RTMPChannel::RTMP_AUDIO_CHANNEL" title='RTMPChannel::RTMP_AUDIO_CHANNEL' data-ref="RTMPChannel::RTMP_AUDIO_CHANNEL">RTMP_AUDIO_CHANNEL</dfn>,         <i class="doc">///&lt; channel for audio data</i></td></tr>
+<tr><th id="40">40</th><td>    <dfn class="enum" id="RTMPChannel::RTMP_VIDEO_CHANNEL" title='RTMPChannel::RTMP_VIDEO_CHANNEL' data-ref="RTMPChannel::RTMP_VIDEO_CHANNEL">RTMP_VIDEO_CHANNEL</dfn>   = <var>6</var>,   <i class="doc">///&lt; channel for video data</i></td></tr>
+<tr><th id="41">41</th><td>    <dfn class="enum" id="RTMPChannel::RTMP_SOURCE_CHANNEL" title='RTMPChannel::RTMP_SOURCE_CHANNEL' data-ref="RTMPChannel::RTMP_SOURCE_CHANNEL">RTMP_SOURCE_CHANNEL</dfn>  = <var>8</var>,   <i class="doc">///&lt; channel for a/v invokes</i></td></tr>
+<tr><th id="42">42</th><td>};</td></tr>
+<tr><th id="43">43</th><td></td></tr>
+<tr><th id="44">44</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="45">45</th><td><i class="doc"> * known RTMP packet types</i></td></tr>
+<tr><th id="46">46</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="47">47</th><td><b>typedef</b> <b>enum</b> <dfn class="type def" id="RTMPPacketType" title='RTMPPacketType' data-ref="RTMPPacketType"><a class="type" href="#RTMPPacketType" title='RTMPPacketType' data-ref="RTMPPacketType">RTMPPacketType</a></dfn> {</td></tr>
+<tr><th id="48">48</th><td>    <dfn class="enum" id="RTMPPacketType::RTMP_PT_CHUNK_SIZE" title='RTMPPacketType::RTMP_PT_CHUNK_SIZE' data-ref="RTMPPacketType::RTMP_PT_CHUNK_SIZE">RTMP_PT_CHUNK_SIZE</dfn>   =  <var>1</var>,  <i class="doc">///&lt; chunk size change</i></td></tr>
+<tr><th id="49">49</th><td>    <dfn class="enum" id="RTMPPacketType::RTMP_PT_BYTES_READ" title='RTMPPacketType::RTMP_PT_BYTES_READ' data-ref="RTMPPacketType::RTMP_PT_BYTES_READ">RTMP_PT_BYTES_READ</dfn>   =  <var>3</var>,  <i class="doc">///&lt; number of bytes read</i></td></tr>
+<tr><th id="50">50</th><td>    <dfn class="enum" id="RTMPPacketType::RTMP_PT_PING" title='RTMPPacketType::RTMP_PT_PING' data-ref="RTMPPacketType::RTMP_PT_PING">RTMP_PT_PING</dfn>,               <i class="doc">///&lt; ping</i></td></tr>
+<tr><th id="51">51</th><td>    <dfn class="enum" id="RTMPPacketType::RTMP_PT_SERVER_BW" title='RTMPPacketType::RTMP_PT_SERVER_BW' data-ref="RTMPPacketType::RTMP_PT_SERVER_BW">RTMP_PT_SERVER_BW</dfn>,          <i class="doc">///&lt; server bandwidth</i></td></tr>
+<tr><th id="52">52</th><td>    <dfn class="enum" id="RTMPPacketType::RTMP_PT_CLIENT_BW" title='RTMPPacketType::RTMP_PT_CLIENT_BW' data-ref="RTMPPacketType::RTMP_PT_CLIENT_BW">RTMP_PT_CLIENT_BW</dfn>,          <i class="doc">///&lt; client bandwidth</i></td></tr>
+<tr><th id="53">53</th><td>    <dfn class="enum" id="RTMPPacketType::RTMP_PT_AUDIO" title='RTMPPacketType::RTMP_PT_AUDIO' data-ref="RTMPPacketType::RTMP_PT_AUDIO">RTMP_PT_AUDIO</dfn>        =  <var>8</var>,  <i class="doc">///&lt; audio packet</i></td></tr>
+<tr><th id="54">54</th><td>    <dfn class="enum" id="RTMPPacketType::RTMP_PT_VIDEO" title='RTMPPacketType::RTMP_PT_VIDEO' data-ref="RTMPPacketType::RTMP_PT_VIDEO">RTMP_PT_VIDEO</dfn>,              <i class="doc">///&lt; video packet</i></td></tr>
+<tr><th id="55">55</th><td>    <dfn class="enum" id="RTMPPacketType::RTMP_PT_FLEX_STREAM" title='RTMPPacketType::RTMP_PT_FLEX_STREAM' data-ref="RTMPPacketType::RTMP_PT_FLEX_STREAM">RTMP_PT_FLEX_STREAM</dfn>  = <var>15</var>,  <i class="doc">///&lt; Flex shared stream</i></td></tr>
+<tr><th id="56">56</th><td>    <dfn class="enum" id="RTMPPacketType::RTMP_PT_FLEX_OBJECT" title='RTMPPacketType::RTMP_PT_FLEX_OBJECT' data-ref="RTMPPacketType::RTMP_PT_FLEX_OBJECT">RTMP_PT_FLEX_OBJECT</dfn>,        <i class="doc">///&lt; Flex shared object</i></td></tr>
+<tr><th id="57">57</th><td>    <dfn class="enum" id="RTMPPacketType::RTMP_PT_FLEX_MESSAGE" title='RTMPPacketType::RTMP_PT_FLEX_MESSAGE' data-ref="RTMPPacketType::RTMP_PT_FLEX_MESSAGE">RTMP_PT_FLEX_MESSAGE</dfn>,       <i class="doc">///&lt; Flex shared message</i></td></tr>
+<tr><th id="58">58</th><td>    <dfn class="enum" id="RTMPPacketType::RTMP_PT_NOTIFY" title='RTMPPacketType::RTMP_PT_NOTIFY' data-ref="RTMPPacketType::RTMP_PT_NOTIFY">RTMP_PT_NOTIFY</dfn>,             <i class="doc">///&lt; some notification</i></td></tr>
+<tr><th id="59">59</th><td>    <dfn class="enum" id="RTMPPacketType::RTMP_PT_SHARED_OBJ" title='RTMPPacketType::RTMP_PT_SHARED_OBJ' data-ref="RTMPPacketType::RTMP_PT_SHARED_OBJ">RTMP_PT_SHARED_OBJ</dfn>,         <i class="doc">///&lt; shared object</i></td></tr>
+<tr><th id="60">60</th><td>    <dfn class="enum" id="RTMPPacketType::RTMP_PT_INVOKE" title='RTMPPacketType::RTMP_PT_INVOKE' data-ref="RTMPPacketType::RTMP_PT_INVOKE">RTMP_PT_INVOKE</dfn>,             <i class="doc">///&lt; invoke some stream action</i></td></tr>
+<tr><th id="61">61</th><td>    <dfn class="enum" id="RTMPPacketType::RTMP_PT_METADATA" title='RTMPPacketType::RTMP_PT_METADATA' data-ref="RTMPPacketType::RTMP_PT_METADATA">RTMP_PT_METADATA</dfn>     = <var>22</var>,  <i class="doc">///&lt; FLV metadata</i></td></tr>
+<tr><th id="62">62</th><td>} <dfn class="typedef" id="RTMPPacketType" title='RTMPPacketType' data-type='enum RTMPPacketType' data-ref="RTMPPacketType">RTMPPacketType</dfn>;</td></tr>
+<tr><th id="63">63</th><td></td></tr>
+<tr><th id="64">64</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="65">65</th><td><i class="doc"> * possible RTMP packet header sizes</i></td></tr>
+<tr><th id="66">66</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="67">67</th><td><b>enum</b> <dfn class="type def" id="RTMPPacketSize" title='RTMPPacketSize' data-ref="RTMPPacketSize">RTMPPacketSize</dfn> {</td></tr>
+<tr><th id="68">68</th><td>    <dfn class="enum" id="RTMPPacketSize::RTMP_PS_TWELVEBYTES" title='RTMPPacketSize::RTMP_PS_TWELVEBYTES' data-ref="RTMPPacketSize::RTMP_PS_TWELVEBYTES">RTMP_PS_TWELVEBYTES</dfn> = <var>0</var>, <i class="doc">///&lt; packet has 12-byte header</i></td></tr>
+<tr><th id="69">69</th><td>    <dfn class="enum" id="RTMPPacketSize::RTMP_PS_EIGHTBYTES" title='RTMPPacketSize::RTMP_PS_EIGHTBYTES' data-ref="RTMPPacketSize::RTMP_PS_EIGHTBYTES">RTMP_PS_EIGHTBYTES</dfn>,      <i class="doc">///&lt; packet has 8-byte header</i></td></tr>
+<tr><th id="70">70</th><td>    <dfn class="enum" id="RTMPPacketSize::RTMP_PS_FOURBYTES" title='RTMPPacketSize::RTMP_PS_FOURBYTES' data-ref="RTMPPacketSize::RTMP_PS_FOURBYTES">RTMP_PS_FOURBYTES</dfn>,       <i class="doc">///&lt; packet has 4-byte header</i></td></tr>
+<tr><th id="71">71</th><td>    <dfn class="enum" id="RTMPPacketSize::RTMP_PS_ONEBYTE" title='RTMPPacketSize::RTMP_PS_ONEBYTE' data-ref="RTMPPacketSize::RTMP_PS_ONEBYTE">RTMP_PS_ONEBYTE</dfn>          <i class="doc">///&lt; packet is really a next chunk of a packet</i></td></tr>
+<tr><th id="72">72</th><td>};</td></tr>
+<tr><th id="73">73</th><td></td></tr>
+<tr><th id="74">74</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="75">75</th><td><i class="doc"> * structure for holding RTMP packets</i></td></tr>
+<tr><th id="76">76</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="77">77</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="RTMPPacket" title='RTMPPacket' data-ref="RTMPPacket"><a class="type" href="#RTMPPacket" title='RTMPPacket' data-ref="RTMPPacket">RTMPPacket</a></dfn> {</td></tr>
+<tr><th id="78">78</th><td>    <em>int</em>            <dfn class="decl" id="RTMPPacket::channel_id" title='RTMPPacket::channel_id' data-ref="RTMPPacket::channel_id">channel_id</dfn>; <i class="doc">///&lt; RTMP channel ID (nothing to do with audio/video channels though)</i></td></tr>
+<tr><th id="79">79</th><td>    <a class="typedef" href="#RTMPPacketType" title='RTMPPacketType' data-type='enum RTMPPacketType' data-ref="RTMPPacketType">RTMPPacketType</a> <dfn class="decl" id="RTMPPacket::type" title='RTMPPacket::type' data-ref="RTMPPacket::type">type</dfn>;       <i class="doc">///&lt; packet payload type</i></td></tr>
+<tr><th id="80">80</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a>       <dfn class="decl" id="RTMPPacket::timestamp" title='RTMPPacket::timestamp' data-ref="RTMPPacket::timestamp">timestamp</dfn>;  <i class="doc">///&lt; packet full timestamp</i></td></tr>
+<tr><th id="81">81</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a>       <dfn class="decl" id="RTMPPacket::ts_field" title='RTMPPacket::ts_field' data-ref="RTMPPacket::ts_field">ts_field</dfn>;   <i class="doc">///&lt; 24-bit timestamp or increment to the previous one, in milliseconds (latter only for media packets). Clipped to a maximum of 0xFFFFFF, indicating an extended timestamp field.</i></td></tr>
+<tr><th id="82">82</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a>       <dfn class="decl" id="RTMPPacket::extra" title='RTMPPacket::extra' data-ref="RTMPPacket::extra">extra</dfn>;      <i class="doc">///&lt; probably an additional channel ID used during streaming data</i></td></tr>
+<tr><th id="83">83</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a>        *<dfn class="decl" id="RTMPPacket::data" title='RTMPPacket::data' data-ref="RTMPPacket::data">data</dfn>;      <i class="doc">///&lt; packet payload</i></td></tr>
+<tr><th id="84">84</th><td>    <em>int</em>            <dfn class="decl" id="RTMPPacket::size" title='RTMPPacket::size' data-ref="RTMPPacket::size">size</dfn>;       <i class="doc">///&lt; packet payload size</i></td></tr>
+<tr><th id="85">85</th><td>    <em>int</em>            <dfn class="decl" id="RTMPPacket::offset" title='RTMPPacket::offset' data-ref="RTMPPacket::offset">offset</dfn>;     <i class="doc">///&lt; amount of data read so far</i></td></tr>
+<tr><th id="86">86</th><td>    <em>int</em>            <dfn class="decl" id="RTMPPacket::read" title='RTMPPacket::read' data-ref="RTMPPacket::read">read</dfn>;       <i class="doc">///&lt; amount read, including headers</i></td></tr>
+<tr><th id="87">87</th><td>} <dfn class="typedef" id="RTMPPacket" title='RTMPPacket' data-type='struct RTMPPacket' data-ref="RTMPPacket">RTMPPacket</dfn>;</td></tr>
+<tr><th id="88">88</th><td></td></tr>
+<tr><th id="89">89</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="90">90</th><td><i class="doc"> * Create new RTMP packet with given attributes.</i></td></tr>
+<tr><th id="91">91</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="92">92</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">pkt</span>        packet</i></td></tr>
+<tr><th id="93">93</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">channel_id</span> packet channel ID</i></td></tr>
+<tr><th id="94">94</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">type</span>       packet type</i></td></tr>
+<tr><th id="95">95</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">timestamp</span>  packet timestamp</i></td></tr>
+<tr><th id="96">96</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">size</span>       packet size</i></td></tr>
+<tr><th id="97">97</th><td><i class="doc"> * <span class="command">@return</span> zero on success, negative value otherwise</i></td></tr>
+<tr><th id="98">98</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="99">99</th><td><em>int</em> <a class="decl" href="rtmppkt.c.html#ff_rtmp_packet_create" title='ff_rtmp_packet_create' data-ref="ff_rtmp_packet_create" id="ff_rtmp_packet_create">ff_rtmp_packet_create</a>(<a class="typedef" href="#RTMPPacket" title='RTMPPacket' data-type='struct RTMPPacket' data-ref="RTMPPacket">RTMPPacket</a> *<dfn class="local col1 decl" id="1pkt" title='pkt' data-type='RTMPPacket *' data-ref="1pkt">pkt</dfn>, <em>int</em> <dfn class="local col2 decl" id="2channel_id" title='channel_id' data-type='int' data-ref="2channel_id">channel_id</dfn>, <a class="typedef" href="#RTMPPacketType" title='RTMPPacketType' data-type='enum RTMPPacketType' data-ref="RTMPPacketType">RTMPPacketType</a> <dfn class="local col3 decl" id="3type" title='type' data-type='RTMPPacketType' data-ref="3type">type</dfn>,</td></tr>
+<tr><th id="100">100</th><td>                          <em>int</em> <dfn class="local col4 decl" id="4timestamp" title='timestamp' data-type='int' data-ref="4timestamp">timestamp</dfn>, <em>int</em> <dfn class="local col5 decl" id="5size" title='size' data-type='int' data-ref="5size">size</dfn>);</td></tr>
+<tr><th id="101">101</th><td></td></tr>
+<tr><th id="102">102</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="103">103</th><td><i class="doc"> * Free RTMP packet.</i></td></tr>
+<tr><th id="104">104</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="105">105</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">pkt</span> packet</i></td></tr>
+<tr><th id="106">106</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="107">107</th><td><em>void</em> <a class="decl" href="rtmppkt.c.html#ff_rtmp_packet_destroy" title='ff_rtmp_packet_destroy' data-ref="ff_rtmp_packet_destroy" id="ff_rtmp_packet_destroy">ff_rtmp_packet_destroy</a>(<a class="typedef" href="#RTMPPacket" title='RTMPPacket' data-type='struct RTMPPacket' data-ref="RTMPPacket">RTMPPacket</a> *<dfn class="local col6 decl" id="6pkt" title='pkt' data-type='RTMPPacket *' data-ref="6pkt">pkt</dfn>);</td></tr>
+<tr><th id="108">108</th><td></td></tr>
+<tr><th id="109">109</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="110">110</th><td><i class="doc"> * Read RTMP packet sent by the server.</i></td></tr>
+<tr><th id="111">111</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="112">112</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">h</span>          reader context</i></td></tr>
+<tr><th id="113">113</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">p</span>          packet</i></td></tr>
+<tr><th id="114">114</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">chunk_size</span> current chunk size</i></td></tr>
+<tr><th id="115">115</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">prev_pkt</span>   previously read packet headers for all channels</i></td></tr>
+<tr><th id="116">116</th><td><i class="doc"> *                   (may be needed for restoring incomplete packet header)</i></td></tr>
+<tr><th id="117">117</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">nb_prev_pkt</span> number of allocated elements in prev_pkt</i></td></tr>
+<tr><th id="118">118</th><td><i class="doc"> * <span class="command">@return</span> number of bytes read on success, negative value otherwise</i></td></tr>
+<tr><th id="119">119</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="120">120</th><td><em>int</em> <a class="decl" href="rtmppkt.c.html#ff_rtmp_packet_read" title='ff_rtmp_packet_read' data-ref="ff_rtmp_packet_read" id="ff_rtmp_packet_read">ff_rtmp_packet_read</a>(<a class="typedef" href="url.h.html#URLContext" title='URLContext' data-type='struct URLContext' data-ref="URLContext">URLContext</a> *<dfn class="local col7 decl" id="7h" title='h' data-type='URLContext *' data-ref="7h">h</dfn>, <a class="typedef" href="#RTMPPacket" title='RTMPPacket' data-type='struct RTMPPacket' data-ref="RTMPPacket">RTMPPacket</a> *<dfn class="local col8 decl" id="8p" title='p' data-type='RTMPPacket *' data-ref="8p">p</dfn>,</td></tr>
+<tr><th id="121">121</th><td>                        <em>int</em> <dfn class="local col9 decl" id="9chunk_size" title='chunk_size' data-type='int' data-ref="9chunk_size">chunk_size</dfn>, <a class="typedef" href="#RTMPPacket" title='RTMPPacket' data-type='struct RTMPPacket' data-ref="RTMPPacket">RTMPPacket</a> **<dfn class="local col0 decl" id="10prev_pkt" title='prev_pkt' data-type='RTMPPacket **' data-ref="10prev_pkt">prev_pkt</dfn>,</td></tr>
+<tr><th id="122">122</th><td>                        <em>int</em> *<dfn class="local col1 decl" id="11nb_prev_pkt" title='nb_prev_pkt' data-type='int *' data-ref="11nb_prev_pkt">nb_prev_pkt</dfn>);</td></tr>
+<tr><th id="123">123</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="124">124</th><td><i class="doc"> * Read internal RTMP packet sent by the server.</i></td></tr>
+<tr><th id="125">125</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="126">126</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">h</span>          reader context</i></td></tr>
+<tr><th id="127">127</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">p</span>          packet</i></td></tr>
+<tr><th id="128">128</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">chunk_size</span> current chunk size</i></td></tr>
+<tr><th id="129">129</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">prev_pkt</span>   previously read packet headers for all channels</i></td></tr>
+<tr><th id="130">130</th><td><i class="doc"> *                   (may be needed for restoring incomplete packet header)</i></td></tr>
+<tr><th id="131">131</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">nb_prev_pkt</span> number of allocated elements in prev_pkt</i></td></tr>
+<tr><th id="132">132</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">c</span>          the first byte already read</i></td></tr>
+<tr><th id="133">133</th><td><i class="doc"> * <span class="command">@return</span> number of bytes read on success, negative value otherwise</i></td></tr>
+<tr><th id="134">134</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="135">135</th><td><em>int</em> <a class="decl" href="rtmppkt.c.html#ff_rtmp_packet_read_internal" title='ff_rtmp_packet_read_internal' data-ref="ff_rtmp_packet_read_internal" id="ff_rtmp_packet_read_internal">ff_rtmp_packet_read_internal</a>(<a class="typedef" href="url.h.html#URLContext" title='URLContext' data-type='struct URLContext' data-ref="URLContext">URLContext</a> *<dfn class="local col2 decl" id="12h" title='h' data-type='URLContext *' data-ref="12h">h</dfn>, <a class="typedef" href="#RTMPPacket" title='RTMPPacket' data-type='struct RTMPPacket' data-ref="RTMPPacket">RTMPPacket</a> *<dfn class="local col3 decl" id="13p" title='p' data-type='RTMPPacket *' data-ref="13p">p</dfn>, <em>int</em> <dfn class="local col4 decl" id="14chunk_size" title='chunk_size' data-type='int' data-ref="14chunk_size">chunk_size</dfn>,</td></tr>
+<tr><th id="136">136</th><td>                                 <a class="typedef" href="#RTMPPacket" title='RTMPPacket' data-type='struct RTMPPacket' data-ref="RTMPPacket">RTMPPacket</a> **<dfn class="local col5 decl" id="15prev_pkt" title='prev_pkt' data-type='RTMPPacket **' data-ref="15prev_pkt">prev_pkt</dfn>, <em>int</em> *<dfn class="local col6 decl" id="16nb_prev_pkt" title='nb_prev_pkt' data-type='int *' data-ref="16nb_prev_pkt">nb_prev_pkt</dfn>,</td></tr>
+<tr><th id="137">137</th><td>                                 <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="local col7 decl" id="17c" title='c' data-type='uint8_t' data-ref="17c">c</dfn>);</td></tr>
+<tr><th id="138">138</th><td></td></tr>
+<tr><th id="139">139</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="140">140</th><td><i class="doc"> * Send RTMP packet to the server.</i></td></tr>
+<tr><th id="141">141</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="142">142</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">h</span>          reader context</i></td></tr>
+<tr><th id="143">143</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">p</span>          packet to send</i></td></tr>
+<tr><th id="144">144</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">chunk_size</span> current chunk size</i></td></tr>
+<tr><th id="145">145</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">prev_pkt</span>   previously sent packet headers for all channels</i></td></tr>
+<tr><th id="146">146</th><td><i class="doc"> *                   (may be used for packet header compressing)</i></td></tr>
+<tr><th id="147">147</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">nb_prev_pkt</span> number of allocated elements in prev_pkt</i></td></tr>
+<tr><th id="148">148</th><td><i class="doc"> * <span class="command">@return</span> number of bytes written on success, negative value otherwise</i></td></tr>
+<tr><th id="149">149</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="150">150</th><td><em>int</em> <a class="decl" href="rtmppkt.c.html#ff_rtmp_packet_write" title='ff_rtmp_packet_write' data-ref="ff_rtmp_packet_write" id="ff_rtmp_packet_write">ff_rtmp_packet_write</a>(<a class="typedef" href="url.h.html#URLContext" title='URLContext' data-type='struct URLContext' data-ref="URLContext">URLContext</a> *<dfn class="local col8 decl" id="18h" title='h' data-type='URLContext *' data-ref="18h">h</dfn>, <a class="typedef" href="#RTMPPacket" title='RTMPPacket' data-type='struct RTMPPacket' data-ref="RTMPPacket">RTMPPacket</a> *<dfn class="local col9 decl" id="19p" title='p' data-type='RTMPPacket *' data-ref="19p">p</dfn>,</td></tr>
+<tr><th id="151">151</th><td>                         <em>int</em> <dfn class="local col0 decl" id="20chunk_size" title='chunk_size' data-type='int' data-ref="20chunk_size">chunk_size</dfn>, <a class="typedef" href="#RTMPPacket" title='RTMPPacket' data-type='struct RTMPPacket' data-ref="RTMPPacket">RTMPPacket</a> **<dfn class="local col1 decl" id="21prev_pkt" title='prev_pkt' data-type='RTMPPacket **' data-ref="21prev_pkt">prev_pkt</dfn>,</td></tr>
+<tr><th id="152">152</th><td>                         <em>int</em> *<dfn class="local col2 decl" id="22nb_prev_pkt" title='nb_prev_pkt' data-type='int *' data-ref="22nb_prev_pkt">nb_prev_pkt</dfn>);</td></tr>
+<tr><th id="153">153</th><td></td></tr>
+<tr><th id="154">154</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="155">155</th><td><i class="doc"> * Print information and contents of RTMP packet.</i></td></tr>
+<tr><th id="156">156</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="157">157</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">ctx</span>        output context</i></td></tr>
+<tr><th id="158">158</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">p</span>          packet to dump</i></td></tr>
+<tr><th id="159">159</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="160">160</th><td><em>void</em> <a class="decl" href="rtmppkt.c.html#ff_rtmp_packet_dump" title='ff_rtmp_packet_dump' data-ref="ff_rtmp_packet_dump" id="ff_rtmp_packet_dump">ff_rtmp_packet_dump</a>(<em>void</em> *<dfn class="local col3 decl" id="23ctx" title='ctx' data-type='void *' data-ref="23ctx">ctx</dfn>, <a class="typedef" href="#RTMPPacket" title='RTMPPacket' data-type='struct RTMPPacket' data-ref="RTMPPacket">RTMPPacket</a> *<dfn class="local col4 decl" id="24p" title='p' data-type='RTMPPacket *' data-ref="24p">p</dfn>);</td></tr>
+<tr><th id="161">161</th><td></td></tr>
+<tr><th id="162">162</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="163">163</th><td><i class="doc"> * Enlarge the prev_pkt array to fit the given channel</i></td></tr>
+<tr><th id="164">164</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="165">165</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">prev_pkt</span>    array with previously sent packet headers</i></td></tr>
+<tr><th id="166">166</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">nb_prev_pkt</span> number of allocated elements in prev_pkt</i></td></tr>
+<tr><th id="167">167</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">channel</span>     the channel number that needs to be allocated</i></td></tr>
+<tr><th id="168">168</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="169">169</th><td><em>int</em> <a class="decl" href="rtmppkt.c.html#ff_rtmp_check_alloc_array" title='ff_rtmp_check_alloc_array' data-ref="ff_rtmp_check_alloc_array" id="ff_rtmp_check_alloc_array">ff_rtmp_check_alloc_array</a>(<a class="typedef" href="#RTMPPacket" title='RTMPPacket' data-type='struct RTMPPacket' data-ref="RTMPPacket">RTMPPacket</a> **<dfn class="local col5 decl" id="25prev_pkt" title='prev_pkt' data-type='RTMPPacket **' data-ref="25prev_pkt">prev_pkt</dfn>, <em>int</em> *<dfn class="local col6 decl" id="26nb_prev_pkt" title='nb_prev_pkt' data-type='int *' data-ref="26nb_prev_pkt">nb_prev_pkt</dfn>,</td></tr>
+<tr><th id="170">170</th><td>                              <em>int</em> <dfn class="local col7 decl" id="27channel" title='channel' data-type='int' data-ref="27channel">channel</dfn>);</td></tr>
+<tr><th id="171">171</th><td></td></tr>
+<tr><th id="172">172</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="173">173</th><td><i class="doc"> * <span class="command">@name</span> <span class="verb">Functions used to work with the AMF format (which is also used in .flv)</span></i></td></tr>
+<tr><th id="174">174</th><td><i class="doc"> * <span class="command">@see</span> amf_* funcs in libavformat/flvdec.c</i></td></tr>
+<tr><th id="175">175</th><td><i class="doc"> * @{</i></td></tr>
+<tr><th id="176">176</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="177">177</th><td></td></tr>
+<tr><th id="178">178</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="179">179</th><td><i class="doc"> * Calculate number of bytes taken by first AMF entry in data.</i></td></tr>
+<tr><th id="180">180</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="181">181</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">data</span> input data</i></td></tr>
+<tr><th id="182">182</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">data_end</span> input buffer end</i></td></tr>
+<tr><th id="183">183</th><td><i class="doc"> * <span class="command">@return</span> number of bytes used by first AMF entry</i></td></tr>
+<tr><th id="184">184</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="185">185</th><td><em>int</em> <a class="decl" href="rtmppkt.c.html#ff_amf_tag_size" title='ff_amf_tag_size' data-ref="ff_amf_tag_size" id="ff_amf_tag_size">ff_amf_tag_size</a>(<em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col8 decl" id="28data" title='data' data-type='const uint8_t *' data-ref="28data">data</dfn>, <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col9 decl" id="29data_end" title='data_end' data-type='const uint8_t *' data-ref="29data_end">data_end</dfn>);</td></tr>
+<tr><th id="186">186</th><td></td></tr>
+<tr><th id="187">187</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="188">188</th><td><i class="doc"> * Retrieve value of given AMF object field in string form.</i></td></tr>
+<tr><th id="189">189</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="190">190</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">data</span>     AMF object data</i></td></tr>
+<tr><th id="191">191</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">data_end</span> input buffer end</i></td></tr>
+<tr><th id="192">192</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">name</span>     name of field to retrieve</i></td></tr>
+<tr><th id="193">193</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">dst</span>      buffer for storing result</i></td></tr>
+<tr><th id="194">194</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">dst_size</span> output buffer size</i></td></tr>
+<tr><th id="195">195</th><td><i class="doc"> * <span class="command">@return</span> 0 if search and retrieval succeeded, negative value otherwise</i></td></tr>
+<tr><th id="196">196</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="197">197</th><td><em>int</em> <a class="decl" href="rtmppkt.c.html#ff_amf_get_field_value" title='ff_amf_get_field_value' data-ref="ff_amf_get_field_value" id="ff_amf_get_field_value">ff_amf_get_field_value</a>(<em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col0 decl" id="30data" title='data' data-type='const uint8_t *' data-ref="30data">data</dfn>, <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col1 decl" id="31data_end" title='data_end' data-type='const uint8_t *' data-ref="31data_end">data_end</dfn>,</td></tr>
+<tr><th id="198">198</th><td>                           <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col2 decl" id="32name" title='name' data-type='const uint8_t *' data-ref="32name">name</dfn>, <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col3 decl" id="33dst" title='dst' data-type='uint8_t *' data-ref="33dst">dst</dfn>, <em>int</em> <dfn class="local col4 decl" id="34dst_size" title='dst_size' data-type='int' data-ref="34dst_size">dst_size</dfn>);</td></tr>
+<tr><th id="199">199</th><td></td></tr>
+<tr><th id="200">200</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="201">201</th><td><i class="doc"> * Write boolean value in AMF format to buffer.</i></td></tr>
+<tr><th id="202">202</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="203">203</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">dst</span> pointer to the input buffer (will be modified)</i></td></tr>
+<tr><th id="204">204</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">val</span> value to write</i></td></tr>
+<tr><th id="205">205</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="206">206</th><td><em>void</em> <a class="decl" href="rtmppkt.c.html#ff_amf_write_bool" title='ff_amf_write_bool' data-ref="ff_amf_write_bool" id="ff_amf_write_bool">ff_amf_write_bool</a>(<a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> **<dfn class="local col5 decl" id="35dst" title='dst' data-type='uint8_t **' data-ref="35dst">dst</dfn>, <em>int</em> <dfn class="local col6 decl" id="36val" title='val' data-type='int' data-ref="36val">val</dfn>);</td></tr>
+<tr><th id="207">207</th><td></td></tr>
+<tr><th id="208">208</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="209">209</th><td><i class="doc"> * Write number in AMF format to buffer.</i></td></tr>
+<tr><th id="210">210</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="211">211</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">dst</span> pointer to the input buffer (will be modified)</i></td></tr>
+<tr><th id="212">212</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">num</span> value to write</i></td></tr>
+<tr><th id="213">213</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="214">214</th><td><em>void</em> <a class="decl" href="rtmppkt.c.html#ff_amf_write_number" title='ff_amf_write_number' data-ref="ff_amf_write_number" id="ff_amf_write_number">ff_amf_write_number</a>(<a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> **<dfn class="local col7 decl" id="37dst" title='dst' data-type='uint8_t **' data-ref="37dst">dst</dfn>, <em>double</em> <dfn class="local col8 decl" id="38num" title='num' data-type='double' data-ref="38num">num</dfn>);</td></tr>
+<tr><th id="215">215</th><td></td></tr>
+<tr><th id="216">216</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="217">217</th><td><i class="doc"> * Write string in AMF format to buffer.</i></td></tr>
+<tr><th id="218">218</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="219">219</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">dst</span> pointer to the input buffer (will be modified)</i></td></tr>
+<tr><th id="220">220</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">str</span> string to write</i></td></tr>
+<tr><th id="221">221</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="222">222</th><td><em>void</em> <a class="decl" href="rtmppkt.c.html#ff_amf_write_string" title='ff_amf_write_string' data-ref="ff_amf_write_string" id="ff_amf_write_string">ff_amf_write_string</a>(<a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> **<dfn class="local col9 decl" id="39dst" title='dst' data-type='uint8_t **' data-ref="39dst">dst</dfn>, <em>const</em> <em>char</em> *<dfn class="local col0 decl" id="40str" title='str' data-type='const char *' data-ref="40str">str</dfn>);</td></tr>
+<tr><th id="223">223</th><td></td></tr>
+<tr><th id="224">224</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="225">225</th><td><i class="doc"> * Write a string consisting of two parts in AMF format to a buffer.</i></td></tr>
+<tr><th id="226">226</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="227">227</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">dst</span> pointer to the input buffer (will be modified)</i></td></tr>
+<tr><th id="228">228</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">str1</span> first string to write, may be null</i></td></tr>
+<tr><th id="229">229</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">str2</span> second string to write, may be null</i></td></tr>
+<tr><th id="230">230</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="231">231</th><td><em>void</em> <a class="decl" href="rtmppkt.c.html#ff_amf_write_string2" title='ff_amf_write_string2' data-ref="ff_amf_write_string2" id="ff_amf_write_string2">ff_amf_write_string2</a>(<a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> **<dfn class="local col1 decl" id="41dst" title='dst' data-type='uint8_t **' data-ref="41dst">dst</dfn>, <em>const</em> <em>char</em> *<dfn class="local col2 decl" id="42str1" title='str1' data-type='const char *' data-ref="42str1">str1</dfn>, <em>const</em> <em>char</em> *<dfn class="local col3 decl" id="43str2" title='str2' data-type='const char *' data-ref="43str2">str2</dfn>);</td></tr>
+<tr><th id="232">232</th><td></td></tr>
+<tr><th id="233">233</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="234">234</th><td><i class="doc"> * Write AMF NULL value to buffer.</i></td></tr>
+<tr><th id="235">235</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="236">236</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">dst</span> pointer to the input buffer (will be modified)</i></td></tr>
+<tr><th id="237">237</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="238">238</th><td><em>void</em> <a class="decl" href="rtmppkt.c.html#ff_amf_write_null" title='ff_amf_write_null' data-ref="ff_amf_write_null" id="ff_amf_write_null">ff_amf_write_null</a>(<a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> **<dfn class="local col4 decl" id="44dst" title='dst' data-type='uint8_t **' data-ref="44dst">dst</dfn>);</td></tr>
+<tr><th id="239">239</th><td></td></tr>
+<tr><th id="240">240</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="241">241</th><td><i class="doc"> * Write marker for AMF object to buffer.</i></td></tr>
+<tr><th id="242">242</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="243">243</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">dst</span> pointer to the input buffer (will be modified)</i></td></tr>
+<tr><th id="244">244</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="245">245</th><td><em>void</em> <a class="decl" href="rtmppkt.c.html#ff_amf_write_object_start" title='ff_amf_write_object_start' data-ref="ff_amf_write_object_start" id="ff_amf_write_object_start">ff_amf_write_object_start</a>(<a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> **<dfn class="local col5 decl" id="45dst" title='dst' data-type='uint8_t **' data-ref="45dst">dst</dfn>);</td></tr>
+<tr><th id="246">246</th><td></td></tr>
+<tr><th id="247">247</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="248">248</th><td><i class="doc"> * Write string used as field name in AMF object to buffer.</i></td></tr>
+<tr><th id="249">249</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="250">250</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">dst</span> pointer to the input buffer (will be modified)</i></td></tr>
+<tr><th id="251">251</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">str</span> string to write</i></td></tr>
+<tr><th id="252">252</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="253">253</th><td><em>void</em> <a class="decl" href="rtmppkt.c.html#ff_amf_write_field_name" title='ff_amf_write_field_name' data-ref="ff_amf_write_field_name" id="ff_amf_write_field_name">ff_amf_write_field_name</a>(<a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> **<dfn class="local col6 decl" id="46dst" title='dst' data-type='uint8_t **' data-ref="46dst">dst</dfn>, <em>const</em> <em>char</em> *<dfn class="local col7 decl" id="47str" title='str' data-type='const char *' data-ref="47str">str</dfn>);</td></tr>
+<tr><th id="254">254</th><td></td></tr>
+<tr><th id="255">255</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="256">256</th><td><i class="doc"> * Write marker for end of AMF object to buffer.</i></td></tr>
+<tr><th id="257">257</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="258">258</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">dst</span> pointer to the input buffer (will be modified)</i></td></tr>
+<tr><th id="259">259</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="260">260</th><td><em>void</em> <a class="decl" href="rtmppkt.c.html#ff_amf_write_object_end" title='ff_amf_write_object_end' data-ref="ff_amf_write_object_end" id="ff_amf_write_object_end">ff_amf_write_object_end</a>(<a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> **<dfn class="local col8 decl" id="48dst" title='dst' data-type='uint8_t **' data-ref="48dst">dst</dfn>);</td></tr>
+<tr><th id="261">261</th><td></td></tr>
+<tr><th id="262">262</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="263">263</th><td><i class="doc"> * Read AMF boolean value.</i></td></tr>
+<tr><th id="264">264</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="265">265</th><td><i class="doc"> *<span class="command">@param</span>[in,out] <span class="arg">gbc</span> GetByteContext initialized with AMF-formatted data</i></td></tr>
+<tr><th id="266">266</th><td><i class="doc"> *<span class="command">@param</span>[out]    <span class="arg">val</span> 0 or 1</i></td></tr>
+<tr><th id="267">267</th><td><i class="doc"> *<span class="command">@return</span> 0 on success or an AVERROR code on failure</i></td></tr>
+<tr><th id="268">268</th><td><i class="doc">*/</i></td></tr>
+<tr><th id="269">269</th><td><em>int</em> <a class="decl" href="rtmppkt.c.html#ff_amf_read_bool" title='ff_amf_read_bool' data-ref="ff_amf_read_bool" id="ff_amf_read_bool">ff_amf_read_bool</a>(<a class="typedef" href="../libavcodec/bytestream.h.html#GetByteContext" title='GetByteContext' data-type='struct GetByteContext' data-ref="GetByteContext">GetByteContext</a> *<dfn class="local col9 decl" id="49gbc" title='gbc' data-type='GetByteContext *' data-ref="49gbc">gbc</dfn>, <em>int</em> *<dfn class="local col0 decl" id="50val" title='val' data-type='int *' data-ref="50val">val</dfn>);</td></tr>
+<tr><th id="270">270</th><td></td></tr>
+<tr><th id="271">271</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="272">272</th><td><i class="doc"> * Read AMF number value.</i></td></tr>
+<tr><th id="273">273</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="274">274</th><td><i class="doc"> *<span class="command">@param</span>[in,out] <span class="arg">gbc</span> GetByteContext initialized with AMF-formatted data</i></td></tr>
+<tr><th id="275">275</th><td><i class="doc"> *<span class="command">@param</span>[out]    <span class="arg">val</span> read value</i></td></tr>
+<tr><th id="276">276</th><td><i class="doc"> *<span class="command">@return</span> 0 on success or an AVERROR code on failure</i></td></tr>
+<tr><th id="277">277</th><td><i class="doc">*/</i></td></tr>
+<tr><th id="278">278</th><td><em>int</em> <a class="decl" href="rtmppkt.c.html#ff_amf_read_number" title='ff_amf_read_number' data-ref="ff_amf_read_number" id="ff_amf_read_number">ff_amf_read_number</a>(<a class="typedef" href="../libavcodec/bytestream.h.html#GetByteContext" title='GetByteContext' data-type='struct GetByteContext' data-ref="GetByteContext">GetByteContext</a> *<dfn class="local col1 decl" id="51gbc" title='gbc' data-type='GetByteContext *' data-ref="51gbc">gbc</dfn>, <em>double</em> *<dfn class="local col2 decl" id="52val" title='val' data-type='double *' data-ref="52val">val</dfn>);</td></tr>
+<tr><th id="279">279</th><td></td></tr>
+<tr><th id="280">280</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="281">281</th><td><i class="doc"> * Get AMF string value.</i></td></tr>
+<tr><th id="282">282</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="283">283</th><td><i class="doc"> * This function behaves the same as ff_amf_read_string except that</i></td></tr>
+<tr><th id="284">284</th><td><i class="doc"> * it does not expect the AMF type prepended to the actual data.</i></td></tr>
+<tr><th id="285">285</th><td><i class="doc"> * Appends a trailing null byte to output string in order to</i></td></tr>
+<tr><th id="286">286</th><td><i class="doc"> * ease later parsing.</i></td></tr>
+<tr><th id="287">287</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="288">288</th><td><i class="doc"> *<span class="command">@param</span>[in,out] <span class="arg">gbc</span>     GetByteContext initialized with AMF-formatted data</i></td></tr>
+<tr><th id="289">289</th><td><i class="doc"> *<span class="command">@param</span>[out]    <span class="arg">str</span>     read string</i></td></tr>
+<tr><th id="290">290</th><td><i class="doc"> *<span class="command">@param</span>[in]     <span class="arg">strsize</span> buffer size available to store the read string</i></td></tr>
+<tr><th id="291">291</th><td><i class="doc"> *<span class="command">@param</span>[out]    <span class="arg">length</span>  read string length</i></td></tr>
+<tr><th id="292">292</th><td><i class="doc"> *<span class="command">@return</span> 0 on success or an AVERROR code on failure</i></td></tr>
+<tr><th id="293">293</th><td><i class="doc">*/</i></td></tr>
+<tr><th id="294">294</th><td><em>int</em> <a class="decl" href="rtmppkt.c.html#ff_amf_get_string" title='ff_amf_get_string' data-ref="ff_amf_get_string" id="ff_amf_get_string">ff_amf_get_string</a>(<a class="typedef" href="../libavcodec/bytestream.h.html#GetByteContext" title='GetByteContext' data-type='struct GetByteContext' data-ref="GetByteContext">GetByteContext</a> *<dfn class="local col3 decl" id="53bc" title='bc' data-type='GetByteContext *' data-ref="53bc">bc</dfn>, <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col4 decl" id="54str" title='str' data-type='uint8_t *' data-ref="54str">str</dfn>,</td></tr>
+<tr><th id="295">295</th><td>                      <em>int</em> <dfn class="local col5 decl" id="55strsize" title='strsize' data-type='int' data-ref="55strsize">strsize</dfn>, <em>int</em> *<dfn class="local col6 decl" id="56length" title='length' data-type='int *' data-ref="56length">length</dfn>);</td></tr>
+<tr><th id="296">296</th><td></td></tr>
+<tr><th id="297">297</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="298">298</th><td><i class="doc"> * Read AMF string value.</i></td></tr>
+<tr><th id="299">299</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="300">300</th><td><i class="doc"> * Appends a trailing null byte to output string in order to</i></td></tr>
+<tr><th id="301">301</th><td><i class="doc"> * ease later parsing.</i></td></tr>
+<tr><th id="302">302</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="303">303</th><td><i class="doc"> *<span class="command">@param</span>[in,out] <span class="arg">gbc</span>     GetByteContext initialized with AMF-formatted data</i></td></tr>
+<tr><th id="304">304</th><td><i class="doc"> *<span class="command">@param</span>[out]    <span class="arg">str</span>     read string</i></td></tr>
+<tr><th id="305">305</th><td><i class="doc"> *<span class="command">@param</span>[in]     <span class="arg">strsize</span> buffer size available to store the read string</i></td></tr>
+<tr><th id="306">306</th><td><i class="doc"> *<span class="command">@param</span>[out]    <span class="arg">length</span>  read string length</i></td></tr>
+<tr><th id="307">307</th><td><i class="doc"> *<span class="command">@return</span> 0 on success or an AVERROR code on failure</i></td></tr>
+<tr><th id="308">308</th><td><i class="doc">*/</i></td></tr>
+<tr><th id="309">309</th><td><em>int</em> <a class="decl" href="rtmppkt.c.html#ff_amf_read_string" title='ff_amf_read_string' data-ref="ff_amf_read_string" id="ff_amf_read_string">ff_amf_read_string</a>(<a class="typedef" href="../libavcodec/bytestream.h.html#GetByteContext" title='GetByteContext' data-type='struct GetByteContext' data-ref="GetByteContext">GetByteContext</a> *<dfn class="local col7 decl" id="57gbc" title='gbc' data-type='GetByteContext *' data-ref="57gbc">gbc</dfn>, <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col8 decl" id="58str" title='str' data-type='uint8_t *' data-ref="58str">str</dfn>,</td></tr>
+<tr><th id="310">310</th><td>                       <em>int</em> <dfn class="local col9 decl" id="59strsize" title='strsize' data-type='int' data-ref="59strsize">strsize</dfn>, <em>int</em> *<dfn class="local col0 decl" id="60length" title='length' data-type='int *' data-ref="60length">length</dfn>);</td></tr>
+<tr><th id="311">311</th><td></td></tr>
+<tr><th id="312">312</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="313">313</th><td><i class="doc"> * Read AMF NULL value.</i></td></tr>
+<tr><th id="314">314</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="315">315</th><td><i class="doc"> *<span class="command">@param</span>[in,out] <span class="arg">gbc</span> GetByteContext initialized with AMF-formatted data</i></td></tr>
+<tr><th id="316">316</th><td><i class="doc"> *<span class="command">@return</span> 0 on success or an AVERROR code on failure</i></td></tr>
+<tr><th id="317">317</th><td><i class="doc">*/</i></td></tr>
+<tr><th id="318">318</th><td><em>int</em> <a class="decl" href="rtmppkt.c.html#ff_amf_read_null" title='ff_amf_read_null' data-ref="ff_amf_read_null" id="ff_amf_read_null">ff_amf_read_null</a>(<a class="typedef" href="../libavcodec/bytestream.h.html#GetByteContext" title='GetByteContext' data-type='struct GetByteContext' data-ref="GetByteContext">GetByteContext</a> *<dfn class="local col1 decl" id="61gbc" title='gbc' data-type='GetByteContext *' data-ref="61gbc">gbc</dfn>);</td></tr>
+<tr><th id="319">319</th><td></td></tr>
+<tr><th id="320">320</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="321">321</th><td><i class="doc"> * Match AMF string with a NULL-terminated string.</i></td></tr>
+<tr><th id="322">322</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="323">323</th><td><i class="doc"> * <span class="command">@return</span> 0 if the strings do not match.</i></td></tr>
+<tr><th id="324">324</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="325">325</th><td></td></tr>
+<tr><th id="326">326</th><td><em>int</em> <a class="decl" href="rtmppkt.c.html#ff_amf_match_string" title='ff_amf_match_string' data-ref="ff_amf_match_string" id="ff_amf_match_string">ff_amf_match_string</a>(<em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col2 decl" id="62data" title='data' data-type='const uint8_t *' data-ref="62data">data</dfn>, <em>int</em> <dfn class="local col3 decl" id="63size" title='size' data-type='int' data-ref="63size">size</dfn>, <em>const</em> <em>char</em> *<dfn class="local col4 decl" id="64str" title='str' data-type='const char *' data-ref="64str">str</dfn>);</td></tr>
+<tr><th id="327">327</th><td></td></tr>
+<tr><th id="328">328</th><td><i class="doc">/** @} */ // AMF funcs</i></td></tr>
+<tr><th id="329">329</th><td></td></tr>
+<tr><th id="330">330</th><td><u>#<span data-ppcond="22">endif</span> /* AVFORMAT_RTMPPKT_H */</u></td></tr>
+<tr><th id="331">331</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated while processing <a href='rtmppkt.c.html'>ffmpeg/libavformat/rtmppkt.c</a><br/>Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

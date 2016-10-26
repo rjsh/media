@@ -1,0 +1,404 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>pictureflow.hpp source code [vlc/modules/gui/qt4/util/pictureflow.hpp] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="PictureFlow,PictureFlowAbstractRenderer,PictureFlowAnimator,PictureFlowPrivate,PictureFlowSoftwareRenderer,PictureFlowState,SlideInfo "/>
+<link rel="stylesheet" href="../../../../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'vlc/modules/gui/qt4/util/pictureflow.hpp'; var root_path = '../../../../..'; var data_path = '../../../../../../data';</script>
+<script src='../../../../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='../../../..'>vlc</a>/<a href='../../..'>modules</a>/<a href='../..'>gui</a>/<a href='..'>qt4</a>/<a href='./'>util</a>/<a href='pictureflow.hpp.html'>pictureflow.hpp</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i>  PictureFlow - animated image show widget</i></td></tr>
+<tr><th id="3">3</th><td><i>  <a href="http://pictureflow.googlecode.com">http://pictureflow.googlecode.com</a></i></td></tr>
+<tr><th id="4">4</th><td><i>    and</i></td></tr>
+<tr><th id="5">5</th><td><i>  <a href="http://libqxt.org">http://libqxt.org</a>  &lt;foundation@libqxt.org&gt;</i></td></tr>
+<tr><th id="6">6</th><td><i></i></td></tr>
+<tr><th id="7">7</th><td><i>  Copyright (C) 2009 Ariya Hidayat (ariya@kde.org)</i></td></tr>
+<tr><th id="8">8</th><td><i>  Copyright (C) 2008 Ariya Hidayat (ariya@kde.org)</i></td></tr>
+<tr><th id="9">9</th><td><i>  Copyright (C) 2007 Ariya Hidayat (ariya@kde.org)</i></td></tr>
+<tr><th id="10">10</th><td><i></i></td></tr>
+<tr><th id="11">11</th><td><i>  Copyright (C) Qxt Foundation. Some rights reserved.</i></td></tr>
+<tr><th id="12">12</th><td><i></i></td></tr>
+<tr><th id="13">13</th><td><i>  Permission is hereby granted, free of charge, to any person obtaining a copy</i></td></tr>
+<tr><th id="14">14</th><td><i>  of this software and associated documentation files (the "Software"), to deal</i></td></tr>
+<tr><th id="15">15</th><td><i>  in the Software without restriction, including without limitation the rights</i></td></tr>
+<tr><th id="16">16</th><td><i>  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell</i></td></tr>
+<tr><th id="17">17</th><td><i>  copies of the Software, and to permit persons to whom the Software is</i></td></tr>
+<tr><th id="18">18</th><td><i>  furnished to do so, subject to the following conditions:</i></td></tr>
+<tr><th id="19">19</th><td><i></i></td></tr>
+<tr><th id="20">20</th><td><i>  The above copyright notice and this permission notice shall be included in</i></td></tr>
+<tr><th id="21">21</th><td><i>  all copies or substantial portions of the Software.</i></td></tr>
+<tr><th id="22">22</th><td><i></i></td></tr>
+<tr><th id="23">23</th><td><i>  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR</i></td></tr>
+<tr><th id="24">24</th><td><i>  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,</i></td></tr>
+<tr><th id="25">25</th><td><i>  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE</i></td></tr>
+<tr><th id="26">26</th><td><i>  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER</i></td></tr>
+<tr><th id="27">27</th><td><i>  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,</i></td></tr>
+<tr><th id="28">28</th><td><i>  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN</i></td></tr>
+<tr><th id="29">29</th><td><i>  THE SOFTWARE.</i></td></tr>
+<tr><th id="30">30</th><td><i>*/</i></td></tr>
+<tr><th id="31">31</th><td></td></tr>
+<tr><th id="32">32</th><td><u>#<span data-ppcond="32">ifndef</span> <span class="macro" data-ref="_M/PICTUREFLOW_H">PICTUREFLOW_H</span></u></td></tr>
+<tr><th id="33">33</th><td><u>#define <dfn class="macro" id="_M/PICTUREFLOW_H" data-ref="_M/PICTUREFLOW_H">PICTUREFLOW_H</dfn></u></td></tr>
+<tr><th id="34">34</th><td></td></tr>
+<tr><th id="35">35</th><td><u>#include <a href="../../../../../include/qt4/QtGui/QApplication.html">&lt;QApplication&gt;</a></u></td></tr>
+<tr><th id="36">36</th><td><u>#include <a href="../../../../../include/qt4/QtCore/QCache.html">&lt;QCache&gt;</a></u></td></tr>
+<tr><th id="37">37</th><td><u>#include <a href="../../../../../include/qt4/QtCore/QHash.html">&lt;QHash&gt;</a></u></td></tr>
+<tr><th id="38">38</th><td><u>#include <a href="../../../../../include/qt4/QtGui/QImage.html">&lt;QImage&gt;</a></u></td></tr>
+<tr><th id="39">39</th><td><u>#include <a href="../../../../../include/qt4/QtGui/QKeyEvent.html">&lt;QKeyEvent&gt;</a></u></td></tr>
+<tr><th id="40">40</th><td><u>#include <a href="../../../../../include/qt4/QtGui/QPainter.html">&lt;QPainter&gt;</a></u></td></tr>
+<tr><th id="41">41</th><td><u>#include <a href="../../../../../include/qt4/QtGui/QPixmap.html">&lt;QPixmap&gt;</a></u></td></tr>
+<tr><th id="42">42</th><td><u>#include <a href="../../../../../include/qt4/QtCore/QTimer.html">&lt;QTimer&gt;</a></u></td></tr>
+<tr><th id="43">43</th><td><u>#include <a href="../../../../../include/qt4/QtCore/QVector.html">&lt;QVector&gt;</a></u></td></tr>
+<tr><th id="44">44</th><td><u>#include <a href="../../../../../include/qt4/QtGui/QWidget.html">&lt;QWidget&gt;</a></u></td></tr>
+<tr><th id="45">45</th><td><u>#include <a href="../../../../../include/qt4/QtCore/QAbstractItemModel.html">&lt;QAbstractItemModel&gt;</a></u></td></tr>
+<tr><th id="46">46</th><td><u>#include <a href="../../../../../include/qt4/QtCore/QPersistentModelIndex.html">&lt;QPersistentModelIndex&gt;</a></u></td></tr>
+<tr><th id="47">47</th><td><u>#include <a href="../../../../../include/qt4/QtCore/QList.html">&lt;QList&gt;</a></u></td></tr>
+<tr><th id="48">48</th><td></td></tr>
+<tr><th id="49">49</th><td><u>#include <a href="../components/playlist/playlist_model.hpp.html">"../components/playlist/playlist_model.hpp"</a> /* getArtPixmap etc */</u></td></tr>
+<tr><th id="50">50</th><td></td></tr>
+<tr><th id="51">51</th><td></td></tr>
+<tr><th id="52">52</th><td><b>class</b> <a class="type" href="#PictureFlowPrivate" title='PictureFlowPrivate' data-ref="PictureFlowPrivate">PictureFlowPrivate</a>;</td></tr>
+<tr><th id="53">53</th><td></td></tr>
+<tr><th id="54">54</th><td><i class="doc">/*!</i></td></tr>
+<tr><th id="55">55</th><td><i class="doc">  Class PictureFlow implements an image show widget with animation effect</i></td></tr>
+<tr><th id="56">56</th><td><i class="doc">  like Apple's CoverFlow (in iTunes and iPod). Images are arranged in form</i></td></tr>
+<tr><th id="57">57</th><td><i class="doc">  of slides, one main slide is shown at the center with few slides on</i></td></tr>
+<tr><th id="58">58</th><td><i class="doc">  the left and right sides of the center slide. When the next or previous</i></td></tr>
+<tr><th id="59">59</th><td><i class="doc">  slide is brought to the front, the whole slides flow to the right or</i></td></tr>
+<tr><th id="60">60</th><td><i class="doc">  the right with smooth animation effect; until the new slide is finally</i></td></tr>
+<tr><th id="61">61</th><td><i class="doc">  placed at the center.</i></td></tr>
+<tr><th id="62">62</th><td><i class="doc"></i></td></tr>
+<tr><th id="63">63</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="64">64</th><td><b>class</b> <dfn class="type def" id="PictureFlow" title='PictureFlow' data-ref="PictureFlow">PictureFlow</dfn> : <b>public</b> <a class="type" href="../../../../../include/qt4/QtGui/qwidget.h.html#QWidget" title='QWidget' data-ref="QWidget">QWidget</a></td></tr>
+<tr><th id="65">65</th><td>{</td></tr>
+<tr><th id="66">66</th><td>    <a class="macro" href="../../../../../include/qt4/QtCore/qobjectdefs.h.html#157" title="public: template &lt;typename T&gt; inline void qt_check_for_QOBJECT_macro(const T &amp;_q_argument) const { int i = qYouForgotTheQ_OBJECT_Macro(this, &amp;_q_argument); i = i + 1; } static const QMetaObject staticMetaObject; virtual const QMetaObject *metaObject() const; virtual void *qt_metacast(const char *); static inline QString tr(const char *s, const char *c = 0) { return staticMetaObject.tr(s, c); } static inline QString trUtf8(const char *s, const char *c = 0) { return staticMetaObject.trUtf8(s, c); } static inline QString tr(const char *s, const char *c, int n) { return staticMetaObject.tr(s, c, n); } static inline QString trUtf8(const char *s, const char *c, int n) { return staticMetaObject.trUtf8(s, c, n); } virtual int qt_metacall(QMetaObject::Call, int, void **); private: __attribute__((visibility(&quot;hidden&quot;))) static const QMetaObjectExtraData staticMetaObjectExtraData; __attribute__((visibility(&quot;hidden&quot;))) static void qt_static_metacall(QObject *, QMetaObject::Call, int, void **);" data-ref="_M/Q_OBJECT">Q_OBJECT</a></td></tr>
+<tr><th id="67">67</th><td></td></tr>
+<tr><th id="68">68</th><td>    <a class="macro" href="../../../../../include/qt4/QtCore/qobjectdefs.h.html#80" title="" data-ref="_M/Q_PROPERTY">Q_PROPERTY</a>(QColor backgroundColor READ backgroundColor WRITE setBackgroundColor)</td></tr>
+<tr><th id="69">69</th><td>    <a class="macro" href="../../../../../include/qt4/QtCore/qobjectdefs.h.html#80" title="" data-ref="_M/Q_PROPERTY">Q_PROPERTY</a>(QSize slideSize READ slideSize WRITE setSlideSize)</td></tr>
+<tr><th id="70">70</th><td>    <a class="macro" href="../../../../../include/qt4/QtCore/qobjectdefs.h.html#80" title="" data-ref="_M/Q_PROPERTY">Q_PROPERTY</a>(<em>int</em> slideCount READ slideCount)</td></tr>
+<tr><th id="71">71</th><td>    <a class="macro" href="../../../../../include/qt4/QtCore/qobjectdefs.h.html#80" title="" data-ref="_M/Q_PROPERTY">Q_PROPERTY</a>(<em>int</em> centerIndex READ centerIndex WRITE setCenterIndex)</td></tr>
+<tr><th id="72">72</th><td></td></tr>
+<tr><th id="73">73</th><td><b>public</b>:</td></tr>
+<tr><th id="74">74</th><td></td></tr>
+<tr><th id="75">75</th><td>    <b>enum</b> <dfn class="type def" id="PictureFlow::ReflectionEffect" title='PictureFlow::ReflectionEffect' data-ref="PictureFlow::ReflectionEffect">ReflectionEffect</dfn> {</td></tr>
+<tr><th id="76">76</th><td>        <dfn class="enum" id="PictureFlow::ReflectionEffect::NoReflection" title='PictureFlow::ReflectionEffect::NoReflection' data-ref="PictureFlow::ReflectionEffect::NoReflection">NoReflection</dfn>,</td></tr>
+<tr><th id="77">77</th><td>        <dfn class="enum" id="PictureFlow::ReflectionEffect::PlainReflection" title='PictureFlow::ReflectionEffect::PlainReflection' data-ref="PictureFlow::ReflectionEffect::PlainReflection">PlainReflection</dfn>,</td></tr>
+<tr><th id="78">78</th><td>        <dfn class="enum" id="PictureFlow::ReflectionEffect::BlurredReflection" title='PictureFlow::ReflectionEffect::BlurredReflection' data-ref="PictureFlow::ReflectionEffect::BlurredReflection">BlurredReflection</dfn></td></tr>
+<tr><th id="79">79</th><td>    };</td></tr>
+<tr><th id="80">80</th><td></td></tr>
+<tr><th id="81">81</th><td>    <i class="doc">/*!</i></td></tr>
+<tr><th id="82">82</th><td><i class="doc">      Creates a new PictureFlow widget.</i></td></tr>
+<tr><th id="83">83</th><td><i class="doc">    */</i></td></tr>
+<tr><th id="84">84</th><td>    <dfn class="decl" id="_ZN11PictureFlowC1EP7QWidgetP18QAbstractItemModel" title='PictureFlow::PictureFlow' data-ref="_ZN11PictureFlowC1EP7QWidgetP18QAbstractItemModel">PictureFlow</dfn>(<a class="type" href="../../../../../include/qt4/QtGui/qwidget.h.html#QWidget" title='QWidget' data-ref="QWidget">QWidget</a>* <dfn class="local col6 decl" id="66parent" title='parent' data-type='QWidget *' data-ref="66parent">parent</dfn> = <var>0</var>, <a class="type" href="../../../../../include/qt4/QtCore/qabstractitemmodel.h.html#QAbstractItemModel" title='QAbstractItemModel' data-ref="QAbstractItemModel">QAbstractItemModel</a> *<dfn class="local col7 decl" id="67model" title='model' data-type='QAbstractItemModel *' data-ref="67model">model</dfn> = <var>0</var>);</td></tr>
+<tr><th id="85">85</th><td></td></tr>
+<tr><th id="86">86</th><td>    <i class="doc">/*!</i></td></tr>
+<tr><th id="87">87</th><td><i class="doc">      Destroys the widget.</i></td></tr>
+<tr><th id="88">88</th><td><i class="doc">    */</i></td></tr>
+<tr><th id="89">89</th><td>    <dfn class="virtual decl" id="_ZN11PictureFlowD1Ev" title='PictureFlow::~PictureFlow' data-ref="_ZN11PictureFlowD1Ev">~</dfn>PictureFlow();</td></tr>
+<tr><th id="90">90</th><td></td></tr>
+<tr><th id="91">91</th><td>    <em>void</em> <dfn class="decl" id="_ZN11PictureFlow8setModelEP18QAbstractItemModel" title='PictureFlow::setModel' data-ref="_ZN11PictureFlow8setModelEP18QAbstractItemModel">setModel</dfn>(<a class="type" href="../../../../../include/qt4/QtCore/qabstractitemmodel.h.html#QAbstractItemModel" title='QAbstractItemModel' data-ref="QAbstractItemModel">QAbstractItemModel</a> * <dfn class="local col8 decl" id="68model" title='model' data-type='QAbstractItemModel *' data-ref="68model">model</dfn>);</td></tr>
+<tr><th id="92">92</th><td>    <a class="type" href="../../../../../include/qt4/QtCore/qabstractitemmodel.h.html#QAbstractItemModel" title='QAbstractItemModel' data-ref="QAbstractItemModel">QAbstractItemModel</a> * <dfn class="decl" id="_ZN11PictureFlow5modelEv" title='PictureFlow::model' data-ref="_ZN11PictureFlow5modelEv">model</dfn>();</td></tr>
+<tr><th id="93">93</th><td></td></tr>
+<tr><th id="94">94</th><td>    <i class="doc">/*!</i></td></tr>
+<tr><th id="95">95</th><td><i class="doc">      Returns the background color.</i></td></tr>
+<tr><th id="96">96</th><td><i class="doc">    */</i></td></tr>
+<tr><th id="97">97</th><td>    <a class="type" href="../../../../../include/qt4/QtGui/qcolor.h.html#QColor" title='QColor' data-ref="QColor">QColor</a> <dfn class="decl" id="_ZNK11PictureFlow15backgroundColorEv" title='PictureFlow::backgroundColor' data-ref="_ZNK11PictureFlow15backgroundColorEv">backgroundColor</dfn>() <em>const</em>;</td></tr>
+<tr><th id="98">98</th><td></td></tr>
+<tr><th id="99">99</th><td>    <i class="doc">/*!</i></td></tr>
+<tr><th id="100">100</th><td><i class="doc">      Sets the background color. By default it is black.</i></td></tr>
+<tr><th id="101">101</th><td><i class="doc">    */</i></td></tr>
+<tr><th id="102">102</th><td>    <em>void</em> <dfn class="decl" id="_ZN11PictureFlow18setBackgroundColorERK6QColor" title='PictureFlow::setBackgroundColor' data-ref="_ZN11PictureFlow18setBackgroundColorERK6QColor">setBackgroundColor</dfn>(<em>const</em> <a class="type" href="../../../../../include/qt4/QtGui/qcolor.h.html#QColor" title='QColor' data-ref="QColor">QColor</a>&amp; <dfn class="local col9 decl" id="69c" title='c' data-type='const QColor &amp;' data-ref="69c">c</dfn>);</td></tr>
+<tr><th id="103">103</th><td></td></tr>
+<tr><th id="104">104</th><td>    <i class="doc">/*!</i></td></tr>
+<tr><th id="105">105</th><td><i class="doc">      Returns the dimension of each slide (in pixels).</i></td></tr>
+<tr><th id="106">106</th><td><i class="doc">    */</i></td></tr>
+<tr><th id="107">107</th><td>    <a class="type" href="../../../../../include/qt4/QtCore/qsize.h.html#QSize" title='QSize' data-ref="QSize">QSize</a> <dfn class="decl" id="_ZNK11PictureFlow9slideSizeEv" title='PictureFlow::slideSize' data-ref="_ZNK11PictureFlow9slideSizeEv">slideSize</dfn>() <em>const</em>;</td></tr>
+<tr><th id="108">108</th><td></td></tr>
+<tr><th id="109">109</th><td>    <i class="doc">/*!</i></td></tr>
+<tr><th id="110">110</th><td><i class="doc">      Sets the dimension of each slide (in pixels).</i></td></tr>
+<tr><th id="111">111</th><td><i class="doc">    */</i></td></tr>
+<tr><th id="112">112</th><td>    <em>void</em> <dfn class="decl" id="_ZN11PictureFlow12setSlideSizeE5QSize" title='PictureFlow::setSlideSize' data-ref="_ZN11PictureFlow12setSlideSizeE5QSize">setSlideSize</dfn>(<a class="type" href="../../../../../include/qt4/QtCore/qsize.h.html#QSize" title='QSize' data-ref="QSize">QSize</a> <dfn class="local col0 decl" id="70size" title='size' data-type='QSize' data-ref="70size">size</dfn>);</td></tr>
+<tr><th id="113">113</th><td></td></tr>
+<tr><th id="114">114</th><td>    <i class="doc">/*!</i></td></tr>
+<tr><th id="115">115</th><td><i class="doc">      Returns the total number of slides.</i></td></tr>
+<tr><th id="116">116</th><td><i class="doc">    */</i></td></tr>
+<tr><th id="117">117</th><td>    <em>int</em> <dfn class="decl" id="_ZNK11PictureFlow10slideCountEv" title='PictureFlow::slideCount' data-ref="_ZNK11PictureFlow10slideCountEv">slideCount</dfn>() <em>const</em>;</td></tr>
+<tr><th id="118">118</th><td></td></tr>
+<tr><th id="119">119</th><td>    <i class="doc">/*!</i></td></tr>
+<tr><th id="120">120</th><td><i class="doc">      Returns the index of slide currently shown in the middle of the viewport.</i></td></tr>
+<tr><th id="121">121</th><td><i class="doc">    */</i></td></tr>
+<tr><th id="122">122</th><td>    <em>int</em> <dfn class="decl" id="_ZNK11PictureFlow11centerIndexEv" title='PictureFlow::centerIndex' data-ref="_ZNK11PictureFlow11centerIndexEv">centerIndex</dfn>() <em>const</em>;</td></tr>
+<tr><th id="123">123</th><td></td></tr>
+<tr><th id="124">124</th><td>    <i class="doc">/*!</i></td></tr>
+<tr><th id="125">125</th><td><i class="doc">      Returns the effect applied to the reflection.</i></td></tr>
+<tr><th id="126">126</th><td><i class="doc">    */</i></td></tr>
+<tr><th id="127">127</th><td>    <a class="type" href="#PictureFlow::ReflectionEffect" title='PictureFlow::ReflectionEffect' data-ref="PictureFlow::ReflectionEffect">ReflectionEffect</a> <dfn class="decl" id="_ZNK11PictureFlow16reflectionEffectEv" title='PictureFlow::reflectionEffect' data-ref="_ZNK11PictureFlow16reflectionEffectEv">reflectionEffect</dfn>() <em>const</em>;</td></tr>
+<tr><th id="128">128</th><td></td></tr>
+<tr><th id="129">129</th><td>    <i class="doc">/*!</i></td></tr>
+<tr><th id="130">130</th><td><i class="doc">      Sets the effect applied to the reflection. The default is PlainReflection.</i></td></tr>
+<tr><th id="131">131</th><td><i class="doc">    */</i></td></tr>
+<tr><th id="132">132</th><td>    <em>void</em> <dfn class="decl" id="_ZN11PictureFlow19setReflectionEffectENS_16ReflectionEffectE" title='PictureFlow::setReflectionEffect' data-ref="_ZN11PictureFlow19setReflectionEffectENS_16ReflectionEffectE">setReflectionEffect</dfn>(<a class="type" href="#PictureFlow::ReflectionEffect" title='PictureFlow::ReflectionEffect' data-ref="PictureFlow::ReflectionEffect">ReflectionEffect</a> <dfn class="local col1 decl" id="71effect" title='effect' data-type='PictureFlow::ReflectionEffect' data-ref="71effect">effect</dfn>);</td></tr>
+<tr><th id="133">133</th><td></td></tr>
+<tr><th id="134">134</th><td></td></tr>
+<tr><th id="135">135</th><td><b>public</b> <a class="macro" href="../../../../../include/qt4/QtCore/qobjectdefs.h.html#68" title="" data-ref="_M/slots">slots</a>:</td></tr>
+<tr><th id="136">136</th><td></td></tr>
+<tr><th id="137">137</th><td>    <i class="doc">/*!</i></td></tr>
+<tr><th id="138">138</th><td><i class="doc">      Sets slide to be shown in the middle of the viewport. No animation</i></td></tr>
+<tr><th id="139">139</th><td><i class="doc">      effect will be produced, unlike using showSlide.</i></td></tr>
+<tr><th id="140">140</th><td><i class="doc">    */</i></td></tr>
+<tr><th id="141">141</th><td>    <em>void</em> <dfn class="decl" id="_ZN11PictureFlow14setCenterIndexEi" title='PictureFlow::setCenterIndex' data-ref="_ZN11PictureFlow14setCenterIndexEi">setCenterIndex</dfn>(<em>int</em> <dfn class="local col2 decl" id="72index" title='index' data-type='int' data-ref="72index">index</dfn>);</td></tr>
+<tr><th id="142">142</th><td></td></tr>
+<tr><th id="143">143</th><td>    <i class="doc">/*!</i></td></tr>
+<tr><th id="144">144</th><td><i class="doc">      Clears all slides.</i></td></tr>
+<tr><th id="145">145</th><td><i class="doc">    */</i></td></tr>
+<tr><th id="146">146</th><td>    <em>void</em> <dfn class="decl" id="_ZN11PictureFlow5clearEv" title='PictureFlow::clear' data-ref="_ZN11PictureFlow5clearEv">clear</dfn>();</td></tr>
+<tr><th id="147">147</th><td></td></tr>
+<tr><th id="148">148</th><td>    <i class="doc">/*!</i></td></tr>
+<tr><th id="149">149</th><td><i class="doc">      Shows previous slide using animation effect.</i></td></tr>
+<tr><th id="150">150</th><td><i class="doc">    */</i></td></tr>
+<tr><th id="151">151</th><td>    <em>void</em> <dfn class="decl" id="_ZN11PictureFlow12showPreviousEv" title='PictureFlow::showPrevious' data-ref="_ZN11PictureFlow12showPreviousEv">showPrevious</dfn>();</td></tr>
+<tr><th id="152">152</th><td></td></tr>
+<tr><th id="153">153</th><td>    <i class="doc">/*!</i></td></tr>
+<tr><th id="154">154</th><td><i class="doc">      Shows next slide using animation effect.</i></td></tr>
+<tr><th id="155">155</th><td><i class="doc">    */</i></td></tr>
+<tr><th id="156">156</th><td>    <em>void</em> <dfn class="decl" id="_ZN11PictureFlow8showNextEv" title='PictureFlow::showNext' data-ref="_ZN11PictureFlow8showNextEv">showNext</dfn>();</td></tr>
+<tr><th id="157">157</th><td></td></tr>
+<tr><th id="158">158</th><td>    <i class="doc">/*!</i></td></tr>
+<tr><th id="159">159</th><td><i class="doc">      Go to specified slide using animation effect.</i></td></tr>
+<tr><th id="160">160</th><td><i class="doc">    */</i></td></tr>
+<tr><th id="161">161</th><td>    <em>void</em> <dfn class="decl" id="_ZN11PictureFlow9showSlideEi" title='PictureFlow::showSlide' data-ref="_ZN11PictureFlow9showSlideEi">showSlide</dfn>(<em>int</em> <dfn class="local col3 decl" id="73index" title='index' data-type='int' data-ref="73index">index</dfn>);</td></tr>
+<tr><th id="162">162</th><td></td></tr>
+<tr><th id="163">163</th><td>    <i class="doc">/*!</i></td></tr>
+<tr><th id="164">164</th><td><i class="doc">      Rerender the widget. Normally this function will be automatically invoked</i></td></tr>
+<tr><th id="165">165</th><td><i class="doc">      whenever necessary, e.g. during the transition animation.</i></td></tr>
+<tr><th id="166">166</th><td><i class="doc">    */</i></td></tr>
+<tr><th id="167">167</th><td>    <em>void</em> <dfn class="decl" id="_ZN11PictureFlow6renderEv" title='PictureFlow::render' data-ref="_ZN11PictureFlow6renderEv">render</dfn>();</td></tr>
+<tr><th id="168">168</th><td></td></tr>
+<tr><th id="169">169</th><td>    <i class="doc">/*!</i></td></tr>
+<tr><th id="170">170</th><td><i class="doc">      Schedules a rendering update. Unlike render(), this function does not cause</i></td></tr>
+<tr><th id="171">171</th><td><i class="doc">      immediate rendering.</i></td></tr>
+<tr><th id="172">172</th><td><i class="doc">    */</i></td></tr>
+<tr><th id="173">173</th><td>    <em>void</em> <dfn class="decl" id="_ZN11PictureFlow13triggerRenderEv" title='PictureFlow::triggerRender' data-ref="_ZN11PictureFlow13triggerRenderEv">triggerRender</dfn>();</td></tr>
+<tr><th id="174">174</th><td></td></tr>
+<tr><th id="175">175</th><td><a class="macro" href="../../../../../include/qt4/QtCore/qobjectdefs.h.html#69" title="protected" data-ref="_M/signals">signals</a>:</td></tr>
+<tr><th id="176">176</th><td>    <em>void</em> <dfn class="decl" id="_ZN11PictureFlow18centerIndexChangedEi" title='PictureFlow::centerIndexChanged' data-ref="_ZN11PictureFlow18centerIndexChangedEi">centerIndexChanged</dfn>(<em>int</em> <dfn class="local col4 decl" id="74index" title='index' data-type='int' data-ref="74index">index</dfn>);</td></tr>
+<tr><th id="177">177</th><td></td></tr>
+<tr><th id="178">178</th><td><b>protected</b>:</td></tr>
+<tr><th id="179">179</th><td>    <em>void</em> <dfn class="virtual decl" id="_ZN11PictureFlow10paintEventEP11QPaintEvent" title='PictureFlow::paintEvent' data-ref="_ZN11PictureFlow10paintEventEP11QPaintEvent">paintEvent</dfn>(<a class="type" href="../../../../../include/qt4/QtGui/qevent.h.html#QPaintEvent" title='QPaintEvent' data-ref="QPaintEvent">QPaintEvent</a> *<dfn class="local col5 decl" id="75event" title='event' data-type='QPaintEvent *' data-ref="75event">event</dfn>);</td></tr>
+<tr><th id="180">180</th><td>    <em>void</em> <dfn class="virtual decl" id="_ZN11PictureFlow13keyPressEventEP9QKeyEvent" title='PictureFlow::keyPressEvent' data-ref="_ZN11PictureFlow13keyPressEventEP9QKeyEvent">keyPressEvent</dfn>(<a class="type" href="../../../../../include/qt4/QtGui/qevent.h.html#QKeyEvent" title='QKeyEvent' data-ref="QKeyEvent">QKeyEvent</a>* <dfn class="local col6 decl" id="76event" title='event' data-type='QKeyEvent *' data-ref="76event">event</dfn>);</td></tr>
+<tr><th id="181">181</th><td>    <em>void</em> <dfn class="virtual decl" id="_ZN11PictureFlow15mousePressEventEP11QMouseEvent" title='PictureFlow::mousePressEvent' data-ref="_ZN11PictureFlow15mousePressEventEP11QMouseEvent">mousePressEvent</dfn>(<a class="type" href="../../../../../include/qt4/QtGui/qevent.h.html#QMouseEvent" title='QMouseEvent' data-ref="QMouseEvent">QMouseEvent</a>* <dfn class="local col7 decl" id="77event" title='event' data-type='QMouseEvent *' data-ref="77event">event</dfn>);</td></tr>
+<tr><th id="182">182</th><td>    <em>void</em> <dfn class="virtual decl" id="_ZN11PictureFlow10wheelEventEP11QWheelEvent" title='PictureFlow::wheelEvent' data-ref="_ZN11PictureFlow10wheelEventEP11QWheelEvent">wheelEvent</dfn>(<a class="type" href="../../../../../include/qt4/QtGui/qevent.h.html#QWheelEvent" title='QWheelEvent' data-ref="QWheelEvent">QWheelEvent</a>* <dfn class="local col8 decl" id="78event" title='event' data-type='QWheelEvent *' data-ref="78event">event</dfn>);</td></tr>
+<tr><th id="183">183</th><td>    <em>void</em> <dfn class="virtual decl" id="_ZN11PictureFlow11resizeEventEP12QResizeEvent" title='PictureFlow::resizeEvent' data-ref="_ZN11PictureFlow11resizeEventEP12QResizeEvent">resizeEvent</dfn>(<a class="type" href="../../../../../include/qt4/QtGui/qevent.h.html#QResizeEvent" title='QResizeEvent' data-ref="QResizeEvent">QResizeEvent</a>* <dfn class="local col9 decl" id="79event" title='event' data-type='QResizeEvent *' data-ref="79event">event</dfn>);</td></tr>
+<tr><th id="184">184</th><td></td></tr>
+<tr><th id="185">185</th><td><b>private</b> <a class="macro" href="../../../../../include/qt4/QtCore/qobjectdefs.h.html#68" title="" data-ref="_M/slots">slots</a>:</td></tr>
+<tr><th id="186">186</th><td>    <em>void</em> <dfn class="decl" id="_ZN11PictureFlow15updateAnimationEv" title='PictureFlow::updateAnimation' data-ref="_ZN11PictureFlow15updateAnimationEv">updateAnimation</dfn>();</td></tr>
+<tr><th id="187">187</th><td></td></tr>
+<tr><th id="188">188</th><td><b>private</b>:</td></tr>
+<tr><th id="189">189</th><td>    <a class="type" href="#PictureFlowPrivate" title='PictureFlowPrivate' data-ref="PictureFlowPrivate">PictureFlowPrivate</a>* <dfn class="decl" id="PictureFlow::d" title='PictureFlow::d' data-ref="PictureFlow::d">d</dfn>;</td></tr>
+<tr><th id="190">190</th><td>};</td></tr>
+<tr><th id="191">191</th><td></td></tr>
+<tr><th id="192">192</th><td><i>// for fixed-point arithmetic, we need minimum 32-bit long</i></td></tr>
+<tr><th id="193">193</th><td><i>// long long (64-bit) might be useful for multiplication and division</i></td></tr>
+<tr><th id="194">194</th><td><b>typedef</b> <em>long</em> <dfn class="typedef" id="PFreal" title='PFreal' data-type='long' data-ref="PFreal">PFreal</dfn>;</td></tr>
+<tr><th id="195">195</th><td><u>#define <dfn class="macro" id="_M/PFREAL_SHIFT" data-ref="_M/PFREAL_SHIFT">PFREAL_SHIFT</dfn> 10</u></td></tr>
+<tr><th id="196">196</th><td><u>#define <dfn class="macro" id="_M/PFREAL_ONE" data-ref="_M/PFREAL_ONE">PFREAL_ONE</dfn> (1 &lt;&lt; PFREAL_SHIFT)</u></td></tr>
+<tr><th id="197">197</th><td></td></tr>
+<tr><th id="198">198</th><td><u>#define <dfn class="macro" id="_M/IANGLE_MAX" data-ref="_M/IANGLE_MAX">IANGLE_MAX</dfn> 1024</u></td></tr>
+<tr><th id="199">199</th><td><u>#define <dfn class="macro" id="_M/IANGLE_MASK" data-ref="_M/IANGLE_MASK">IANGLE_MASK</dfn> 1023</u></td></tr>
+<tr><th id="200">200</th><td></td></tr>
+<tr><th id="201">201</th><td><b>inline</b> <a class="typedef" href="#PFreal" title='PFreal' data-type='long' data-ref="PFreal">PFreal</a> <dfn class="decl def" id="_Z4fmulll" title='fmul' data-ref="_Z4fmulll">fmul</dfn>(<a class="typedef" href="#PFreal" title='PFreal' data-type='long' data-ref="PFreal">PFreal</a> <dfn class="local col0 decl" id="80a" title='a' data-type='PFreal' data-ref="80a">a</dfn>, <a class="typedef" href="#PFreal" title='PFreal' data-type='long' data-ref="PFreal">PFreal</a> <dfn class="local col1 decl" id="81b" title='b' data-type='PFreal' data-ref="81b">b</dfn>)</td></tr>
+<tr><th id="202">202</th><td>{</td></tr>
+<tr><th id="203">203</th><td>    <b>return</b> ((<em>long</em> <em>long</em>)(<a class="local col0 ref" href="#80a" title='a' data-ref="80a">a</a>))*((<em>long</em> <em>long</em>)(<a class="local col1 ref" href="#81b" title='b' data-ref="81b">b</a>)) &gt;&gt; <a class="macro" href="#195" title="10" data-ref="_M/PFREAL_SHIFT">PFREAL_SHIFT</a>;</td></tr>
+<tr><th id="204">204</th><td>}</td></tr>
+<tr><th id="205">205</th><td></td></tr>
+<tr><th id="206">206</th><td><b>inline</b> <a class="typedef" href="#PFreal" title='PFreal' data-type='long' data-ref="PFreal">PFreal</a> <dfn class="decl def" id="_Z4fdivll" title='fdiv' data-ref="_Z4fdivll">fdiv</dfn>(<a class="typedef" href="#PFreal" title='PFreal' data-type='long' data-ref="PFreal">PFreal</a> <dfn class="local col2 decl" id="82num" title='num' data-type='PFreal' data-ref="82num">num</dfn>, <a class="typedef" href="#PFreal" title='PFreal' data-type='long' data-ref="PFreal">PFreal</a> <dfn class="local col3 decl" id="83den" title='den' data-type='PFreal' data-ref="83den">den</dfn>)</td></tr>
+<tr><th id="207">207</th><td>{</td></tr>
+<tr><th id="208">208</th><td>    <em>long</em> <em>long</em> <dfn class="local col4 decl" id="84p" title='p' data-type='long long' data-ref="84p">p</dfn> = (<em>long</em> <em>long</em>)(<a class="local col2 ref" href="#82num" title='num' data-ref="82num">num</a>) &lt;&lt; (<a class="macro" href="#195" title="10" data-ref="_M/PFREAL_SHIFT">PFREAL_SHIFT</a> * <var>2</var>);</td></tr>
+<tr><th id="209">209</th><td>    <em>long</em> <em>long</em> <dfn class="local col5 decl" id="85q" title='q' data-type='long long' data-ref="85q">q</dfn> = <a class="local col4 ref" href="#84p" title='p' data-ref="84p">p</a> / (<em>long</em> <em>long</em>)<a class="local col3 ref" href="#83den" title='den' data-ref="83den">den</a>;</td></tr>
+<tr><th id="210">210</th><td>    <em>long</em> <em>long</em> <dfn class="local col6 decl" id="86r" title='r' data-type='long long' data-ref="86r">r</dfn> = <a class="local col5 ref" href="#85q" title='q' data-ref="85q">q</a> &gt;&gt; <a class="macro" href="#195" title="10" data-ref="_M/PFREAL_SHIFT">PFREAL_SHIFT</a>;</td></tr>
+<tr><th id="211">211</th><td></td></tr>
+<tr><th id="212">212</th><td>    <b>return</b> <a class="local col6 ref" href="#86r" title='r' data-ref="86r">r</a>;</td></tr>
+<tr><th id="213">213</th><td>}</td></tr>
+<tr><th id="214">214</th><td></td></tr>
+<tr><th id="215">215</th><td><b>inline</b> <a class="typedef" href="#PFreal" title='PFreal' data-type='long' data-ref="PFreal">PFreal</a> <dfn class="decl def" id="_Z4fsini" title='fsin' data-ref="_Z4fsini">fsin</dfn>(<em>int</em> <dfn class="local col7 decl" id="87iangle" title='iangle' data-type='int' data-ref="87iangle">iangle</dfn>)</td></tr>
+<tr><th id="216">216</th><td>{</td></tr>
+<tr><th id="217">217</th><td>    <i>// warning: regenerate the table if IANGLE_MAX and PFREAL_SHIFT are changed!</i></td></tr>
+<tr><th id="218">218</th><td>    <em>static</em> <em>const</em> <a class="typedef" href="#PFreal" title='PFreal' data-type='long' data-ref="PFreal">PFreal</a> <dfn class="local col8 decl" id="88tab" title='tab' data-type='const PFreal [65]' data-ref="88tab">tab</dfn>[] = {</td></tr>
+<tr><th id="219">219</th><td>        <var>3</var>,    <var>103</var>,    <var>202</var>,    <var>300</var>,    <var>394</var>,    <var>485</var>,    <var>571</var>,    <var>652</var>,</td></tr>
+<tr><th id="220">220</th><td>        <var>726</var>,    <var>793</var>,    <var>853</var>,    <var>904</var>,    <var>947</var>,    <var>980</var>,   <var>1004</var>,   <var>1019</var>,</td></tr>
+<tr><th id="221">221</th><td>        <var>1023</var>,   <var>1018</var>,   <var>1003</var>,    <var>978</var>,    <var>944</var>,    <var>901</var>,    <var>849</var>,    <var>789</var>,</td></tr>
+<tr><th id="222">222</th><td>        <var>721</var>,    <var>647</var>,    <var>566</var>,    <var>479</var>,    <var>388</var>,    <var>294</var>,    <var>196</var>,     <var>97</var>,</td></tr>
+<tr><th id="223">223</th><td>        -<var>4</var>,   -<var>104</var>,   -<var>203</var>,   -<var>301</var>,   -<var>395</var>,   -<var>486</var>,   -<var>572</var>,   -<var>653</var>,</td></tr>
+<tr><th id="224">224</th><td>        -<var>727</var>,   -<var>794</var>,   -<var>854</var>,   -<var>905</var>,   -<var>948</var>,   -<var>981</var>,  -<var>1005</var>,  -<var>1020</var>,</td></tr>
+<tr><th id="225">225</th><td>        -<var>1024</var>,  -<var>1019</var>,  -<var>1004</var>,   -<var>979</var>,   -<var>945</var>,   -<var>902</var>,   -<var>850</var>,   -<var>790</var>,</td></tr>
+<tr><th id="226">226</th><td>        -<var>722</var>,   -<var>648</var>,   -<var>567</var>,   -<var>480</var>,   -<var>389</var>,   -<var>295</var>,   -<var>197</var>,    -<var>98</var>,</td></tr>
+<tr><th id="227">227</th><td>        <var>3</var></td></tr>
+<tr><th id="228">228</th><td>    };</td></tr>
+<tr><th id="229">229</th><td></td></tr>
+<tr><th id="230">230</th><td>    <b>while</b> (<a class="local col7 ref" href="#87iangle" title='iangle' data-ref="87iangle">iangle</a> &lt; <var>0</var>)</td></tr>
+<tr><th id="231">231</th><td>        <a class="local col7 ref" href="#87iangle" title='iangle' data-ref="87iangle">iangle</a> += <a class="macro" href="#198" title="1024" data-ref="_M/IANGLE_MAX">IANGLE_MAX</a>;</td></tr>
+<tr><th id="232">232</th><td>    <a class="local col7 ref" href="#87iangle" title='iangle' data-ref="87iangle">iangle</a> &amp;= <a class="macro" href="#199" title="1023" data-ref="_M/IANGLE_MASK">IANGLE_MASK</a>;</td></tr>
+<tr><th id="233">233</th><td></td></tr>
+<tr><th id="234">234</th><td>    <em>int</em> <dfn class="local col9 decl" id="89i" title='i' data-type='int' data-ref="89i">i</dfn> = (<a class="local col7 ref" href="#87iangle" title='iangle' data-ref="87iangle">iangle</a> &gt;&gt; <var>4</var>);</td></tr>
+<tr><th id="235">235</th><td>    <a class="typedef" href="#PFreal" title='PFreal' data-type='long' data-ref="PFreal">PFreal</a> <dfn class="local col0 decl" id="90p" title='p' data-type='PFreal' data-ref="90p">p</dfn> = <a class="local col8 ref" href="#88tab" title='tab' data-ref="88tab">tab</a>[<a class="local col9 ref" href="#89i" title='i' data-ref="89i">i</a>];</td></tr>
+<tr><th id="236">236</th><td>    <a class="typedef" href="#PFreal" title='PFreal' data-type='long' data-ref="PFreal">PFreal</a> <dfn class="local col1 decl" id="91q" title='q' data-type='PFreal' data-ref="91q">q</dfn> = <a class="local col8 ref" href="#88tab" title='tab' data-ref="88tab">tab</a>[(<a class="local col9 ref" href="#89i" title='i' data-ref="89i">i</a>+<var>1</var>)];</td></tr>
+<tr><th id="237">237</th><td>    <a class="typedef" href="#PFreal" title='PFreal' data-type='long' data-ref="PFreal">PFreal</a> <dfn class="local col2 decl" id="92g" title='g' data-type='PFreal' data-ref="92g">g</dfn> = (<a class="local col1 ref" href="#91q" title='q' data-ref="91q">q</a> - <a class="local col0 ref" href="#90p" title='p' data-ref="90p">p</a>);</td></tr>
+<tr><th id="238">238</th><td>    <b>return</b> <a class="local col0 ref" href="#90p" title='p' data-ref="90p">p</a> + <a class="local col2 ref" href="#92g" title='g' data-ref="92g">g</a> *(<a class="local col7 ref" href="#87iangle" title='iangle' data-ref="87iangle">iangle</a> - <a class="local col9 ref" href="#89i" title='i' data-ref="89i">i</a>*<var>16</var>) / <var>16</var>;</td></tr>
+<tr><th id="239">239</th><td>}</td></tr>
+<tr><th id="240">240</th><td></td></tr>
+<tr><th id="241">241</th><td><b>inline</b> <a class="typedef" href="#PFreal" title='PFreal' data-type='long' data-ref="PFreal">PFreal</a> <dfn class="decl def" id="_Z4fcosi" title='fcos' data-ref="_Z4fcosi">fcos</dfn>(<em>int</em> <dfn class="local col3 decl" id="93iangle" title='iangle' data-type='int' data-ref="93iangle">iangle</dfn>)</td></tr>
+<tr><th id="242">242</th><td>{</td></tr>
+<tr><th id="243">243</th><td>    <b>return</b> <a class="ref" href="#_Z4fsini" title='fsin' data-ref="_Z4fsini">fsin</a>(<a class="local col3 ref" href="#93iangle" title='iangle' data-ref="93iangle">iangle</a> + (<a class="macro" href="#198" title="1024" data-ref="_M/IANGLE_MAX">IANGLE_MAX</a> &gt;&gt; <var>2</var>));</td></tr>
+<tr><th id="244">244</th><td>}</td></tr>
+<tr><th id="245">245</th><td></td></tr>
+<tr><th id="246">246</th><td><b>struct</b> <dfn class="type def" id="SlideInfo" title='SlideInfo' data-ref="SlideInfo">SlideInfo</dfn> {</td></tr>
+<tr><th id="247">247</th><td>    <em>int</em> <dfn class="decl" id="SlideInfo::slideIndex" title='SlideInfo::slideIndex' data-ref="SlideInfo::slideIndex">slideIndex</dfn>;</td></tr>
+<tr><th id="248">248</th><td>    <em>int</em> <dfn class="decl" id="SlideInfo::angle" title='SlideInfo::angle' data-ref="SlideInfo::angle">angle</dfn>;</td></tr>
+<tr><th id="249">249</th><td>    <a class="typedef" href="#PFreal" title='PFreal' data-type='long' data-ref="PFreal">PFreal</a> <dfn class="decl" id="SlideInfo::cx" title='SlideInfo::cx' data-ref="SlideInfo::cx">cx</dfn>;</td></tr>
+<tr><th id="250">250</th><td>    <a class="typedef" href="#PFreal" title='PFreal' data-type='long' data-ref="PFreal">PFreal</a> <dfn class="decl" id="SlideInfo::cy" title='SlideInfo::cy' data-ref="SlideInfo::cy">cy</dfn>;</td></tr>
+<tr><th id="251">251</th><td>    <em>int</em> <dfn class="decl" id="SlideInfo::blend" title='SlideInfo::blend' data-ref="SlideInfo::blend">blend</dfn>;</td></tr>
+<tr><th id="252">252</th><td>};</td></tr>
+<tr><th id="253">253</th><td></td></tr>
+<tr><th id="254">254</th><td><b>class</b> <a class="type" href="#PictureFlow" title='PictureFlow' data-ref="PictureFlow">PictureFlow</a>;</td></tr>
+<tr><th id="255">255</th><td></td></tr>
+<tr><th id="256">256</th><td><b>class</b> <dfn class="type def" id="PictureFlowState" title='PictureFlowState' data-ref="PictureFlowState">PictureFlowState</dfn></td></tr>
+<tr><th id="257">257</th><td>{</td></tr>
+<tr><th id="258">258</th><td><b>public</b>:</td></tr>
+<tr><th id="259">259</th><td>    <dfn class="decl" id="_ZN16PictureFlowStateC1Ev" title='PictureFlowState::PictureFlowState' data-ref="_ZN16PictureFlowStateC1Ev">PictureFlowState</dfn>();</td></tr>
+<tr><th id="260">260</th><td>    <dfn class="decl" id="_ZN16PictureFlowStateD1Ev" title='PictureFlowState::~PictureFlowState' data-ref="_ZN16PictureFlowStateD1Ev">~</dfn>PictureFlowState();</td></tr>
+<tr><th id="261">261</th><td></td></tr>
+<tr><th id="262">262</th><td>    <em>void</em> <dfn class="decl" id="_ZN16PictureFlowState10repositionEv" title='PictureFlowState::reposition' data-ref="_ZN16PictureFlowState10repositionEv">reposition</dfn>();</td></tr>
+<tr><th id="263">263</th><td>    <em>void</em> <dfn class="decl" id="_ZN16PictureFlowState5resetEv" title='PictureFlowState::reset' data-ref="_ZN16PictureFlowState5resetEv">reset</dfn>();</td></tr>
+<tr><th id="264">264</th><td></td></tr>
+<tr><th id="265">265</th><td>    <a class="typedef" href="../../../../../include/qt4/QtGui/qrgb.h.html#QRgb" title='QRgb' data-type='unsigned int' data-ref="QRgb">QRgb</a> <dfn class="decl" id="PictureFlowState::backgroundColor" title='PictureFlowState::backgroundColor' data-ref="PictureFlowState::backgroundColor">backgroundColor</dfn>;</td></tr>
+<tr><th id="266">266</th><td>    <em>int</em> <dfn class="decl" id="PictureFlowState::slideWidth" title='PictureFlowState::slideWidth' data-ref="PictureFlowState::slideWidth">slideWidth</dfn>;</td></tr>
+<tr><th id="267">267</th><td>    <em>int</em> <dfn class="decl" id="PictureFlowState::slideHeight" title='PictureFlowState::slideHeight' data-ref="PictureFlowState::slideHeight">slideHeight</dfn>;</td></tr>
+<tr><th id="268">268</th><td>    <a class="type" href="#PictureFlow" title='PictureFlow' data-ref="PictureFlow">PictureFlow</a>::<a class="type" href="#PictureFlow::ReflectionEffect" title='PictureFlow::ReflectionEffect' data-ref="PictureFlow::ReflectionEffect">ReflectionEffect</a> <dfn class="decl" id="PictureFlowState::reflectionEffect" title='PictureFlowState::reflectionEffect' data-ref="PictureFlowState::reflectionEffect">reflectionEffect</dfn>;</td></tr>
+<tr><th id="269">269</th><td></td></tr>
+<tr><th id="270">270</th><td>    <em>int</em> <dfn class="decl" id="PictureFlowState::angle" title='PictureFlowState::angle' data-ref="PictureFlowState::angle">angle</dfn>;</td></tr>
+<tr><th id="271">271</th><td>    <em>int</em> <dfn class="decl" id="PictureFlowState::spacing" title='PictureFlowState::spacing' data-ref="PictureFlowState::spacing">spacing</dfn>;</td></tr>
+<tr><th id="272">272</th><td>    <a class="typedef" href="#PFreal" title='PFreal' data-type='long' data-ref="PFreal">PFreal</a> <dfn class="decl" id="PictureFlowState::offsetX" title='PictureFlowState::offsetX' data-ref="PictureFlowState::offsetX">offsetX</dfn>;</td></tr>
+<tr><th id="273">273</th><td>    <a class="typedef" href="#PFreal" title='PFreal' data-type='long' data-ref="PFreal">PFreal</a> <dfn class="decl" id="PictureFlowState::offsetY" title='PictureFlowState::offsetY' data-ref="PictureFlowState::offsetY">offsetY</dfn>;</td></tr>
+<tr><th id="274">274</th><td></td></tr>
+<tr><th id="275">275</th><td>    <a class="type" href="../components/playlist/vlc_model.hpp.html#VLCModel" title='VLCModel' data-ref="VLCModel">VLCModel</a> *<dfn class="decl" id="PictureFlowState::model" title='PictureFlowState::model' data-ref="PictureFlowState::model">model</dfn>;</td></tr>
+<tr><th id="276">276</th><td>    <a class="type" href="#SlideInfo" title='SlideInfo' data-ref="SlideInfo">SlideInfo</a> <dfn class="decl" id="PictureFlowState::centerSlide" title='PictureFlowState::centerSlide' data-ref="PictureFlowState::centerSlide">centerSlide</dfn>;</td></tr>
+<tr><th id="277">277</th><td>    <a class="type" href="../../../../../include/qt4/QtCore/qstring.h.html#QVector" title='QVector' data-ref="QVector">QVector</a>&lt;<a class="type" href="#SlideInfo" title='SlideInfo' data-ref="SlideInfo">SlideInfo</a>&gt; <dfn class="decl" id="PictureFlowState::leftSlides" title='PictureFlowState::leftSlides' data-ref="PictureFlowState::leftSlides">leftSlides</dfn>;</td></tr>
+<tr><th id="278">278</th><td>    <a class="type" href="../../../../../include/qt4/QtCore/qstring.h.html#QVector" title='QVector' data-ref="QVector">QVector</a>&lt;<a class="type" href="#SlideInfo" title='SlideInfo' data-ref="SlideInfo">SlideInfo</a>&gt; <dfn class="decl" id="PictureFlowState::rightSlides" title='PictureFlowState::rightSlides' data-ref="PictureFlowState::rightSlides">rightSlides</dfn>;</td></tr>
+<tr><th id="279">279</th><td>    <em>int</em> <dfn class="decl" id="PictureFlowState::centerIndex" title='PictureFlowState::centerIndex' data-ref="PictureFlowState::centerIndex">centerIndex</dfn>;</td></tr>
+<tr><th id="280">280</th><td>};</td></tr>
+<tr><th id="281">281</th><td></td></tr>
+<tr><th id="282">282</th><td><b>class</b> <dfn class="type def" id="PictureFlowAnimator" title='PictureFlowAnimator' data-ref="PictureFlowAnimator">PictureFlowAnimator</dfn></td></tr>
+<tr><th id="283">283</th><td>{</td></tr>
+<tr><th id="284">284</th><td><b>public</b>:</td></tr>
+<tr><th id="285">285</th><td>    <dfn class="decl" id="_ZN19PictureFlowAnimatorC1Ev" title='PictureFlowAnimator::PictureFlowAnimator' data-ref="_ZN19PictureFlowAnimatorC1Ev">PictureFlowAnimator</dfn>();</td></tr>
+<tr><th id="286">286</th><td>    <a class="type" href="#PictureFlowState" title='PictureFlowState' data-ref="PictureFlowState">PictureFlowState</a>* <dfn class="decl" id="PictureFlowAnimator::state" title='PictureFlowAnimator::state' data-ref="PictureFlowAnimator::state">state</dfn>;</td></tr>
+<tr><th id="287">287</th><td></td></tr>
+<tr><th id="288">288</th><td>    <em>void</em> <dfn class="decl" id="_ZN19PictureFlowAnimator5startEi" title='PictureFlowAnimator::start' data-ref="_ZN19PictureFlowAnimator5startEi">start</dfn>(<em>int</em> <dfn class="local col4 decl" id="94slide" title='slide' data-type='int' data-ref="94slide">slide</dfn>);</td></tr>
+<tr><th id="289">289</th><td>    <em>void</em> <dfn class="decl" id="_ZN19PictureFlowAnimator4stopEi" title='PictureFlowAnimator::stop' data-ref="_ZN19PictureFlowAnimator4stopEi">stop</dfn>(<em>int</em> <dfn class="local col5 decl" id="95slide" title='slide' data-type='int' data-ref="95slide">slide</dfn>);</td></tr>
+<tr><th id="290">290</th><td>    <em>void</em> <dfn class="decl" id="_ZN19PictureFlowAnimator6updateEv" title='PictureFlowAnimator::update' data-ref="_ZN19PictureFlowAnimator6updateEv">update</dfn>();</td></tr>
+<tr><th id="291">291</th><td></td></tr>
+<tr><th id="292">292</th><td>    <em>int</em> <dfn class="decl" id="PictureFlowAnimator::target" title='PictureFlowAnimator::target' data-ref="PictureFlowAnimator::target">target</dfn>;</td></tr>
+<tr><th id="293">293</th><td>    <em>int</em> <dfn class="decl" id="PictureFlowAnimator::step" title='PictureFlowAnimator::step' data-ref="PictureFlowAnimator::step">step</dfn>;</td></tr>
+<tr><th id="294">294</th><td>    <em>int</em> <dfn class="decl" id="PictureFlowAnimator::frame" title='PictureFlowAnimator::frame' data-ref="PictureFlowAnimator::frame">frame</dfn>;</td></tr>
+<tr><th id="295">295</th><td>    <a class="type" href="../../../../../include/qt4/QtCore/qtimer.h.html#QTimer" title='QTimer' data-ref="QTimer">QTimer</a> <dfn class="decl" id="PictureFlowAnimator::animateTimer" title='PictureFlowAnimator::animateTimer' data-ref="PictureFlowAnimator::animateTimer">animateTimer</dfn>;</td></tr>
+<tr><th id="296">296</th><td>};</td></tr>
+<tr><th id="297">297</th><td></td></tr>
+<tr><th id="298">298</th><td><b>class</b> <dfn class="type def" id="PictureFlowAbstractRenderer" title='PictureFlowAbstractRenderer' data-ref="PictureFlowAbstractRenderer">PictureFlowAbstractRenderer</dfn></td></tr>
+<tr><th id="299">299</th><td>{</td></tr>
+<tr><th id="300">300</th><td><b>public</b>:</td></tr>
+<tr><th id="301">301</th><td>    <dfn class="decl def" id="_ZN27PictureFlowAbstractRendererC1Ev" title='PictureFlowAbstractRenderer::PictureFlowAbstractRenderer' data-ref="_ZN27PictureFlowAbstractRendererC1Ev">PictureFlowAbstractRenderer</dfn>(): <a class="member" href="#PictureFlowAbstractRenderer::state" title='PictureFlowAbstractRenderer::state' data-ref="PictureFlowAbstractRenderer::state">state</a>(<var>0</var>), <a class="member" href="#PictureFlowAbstractRenderer::dirty" title='PictureFlowAbstractRenderer::dirty' data-ref="PictureFlowAbstractRenderer::dirty">dirty</a>(<b>false</b>), <a class="member" href="#PictureFlowAbstractRenderer::widget" title='PictureFlowAbstractRenderer::widget' data-ref="PictureFlowAbstractRenderer::widget">widget</a>(<var>0</var>) {}</td></tr>
+<tr><th id="302">302</th><td>    <b>virtual</b> <dfn class="virtual decl def" id="_ZN27PictureFlowAbstractRendererD1Ev" title='PictureFlowAbstractRenderer::~PictureFlowAbstractRenderer' data-ref="_ZN27PictureFlowAbstractRendererD1Ev">~</dfn>PictureFlowAbstractRenderer() {}</td></tr>
+<tr><th id="303">303</th><td></td></tr>
+<tr><th id="304">304</th><td>    <a class="type" href="#PictureFlowState" title='PictureFlowState' data-ref="PictureFlowState">PictureFlowState</a>* <dfn class="decl" id="PictureFlowAbstractRenderer::state" title='PictureFlowAbstractRenderer::state' data-ref="PictureFlowAbstractRenderer::state">state</dfn>;</td></tr>
+<tr><th id="305">305</th><td>    <em>bool</em> <dfn class="decl" id="PictureFlowAbstractRenderer::dirty" title='PictureFlowAbstractRenderer::dirty' data-ref="PictureFlowAbstractRenderer::dirty">dirty</dfn>;</td></tr>
+<tr><th id="306">306</th><td>    <a class="type" href="../../../../../include/qt4/QtGui/qwidget.h.html#QWidget" title='QWidget' data-ref="QWidget">QWidget</a>* <dfn class="decl" id="PictureFlowAbstractRenderer::widget" title='PictureFlowAbstractRenderer::widget' data-ref="PictureFlowAbstractRenderer::widget">widget</dfn>;</td></tr>
+<tr><th id="307">307</th><td></td></tr>
+<tr><th id="308">308</th><td>    <b>virtual</b> <em>void</em> <dfn class="virtual decl" id="_ZN27PictureFlowAbstractRenderer4initEv" title='PictureFlowAbstractRenderer::init' data-ref="_ZN27PictureFlowAbstractRenderer4initEv">init</dfn>() = <var>0</var>;</td></tr>
+<tr><th id="309">309</th><td>    <b>virtual</b> <em>void</em> <dfn class="virtual decl" id="_ZN27PictureFlowAbstractRenderer5paintEv" title='PictureFlowAbstractRenderer::paint' data-ref="_ZN27PictureFlowAbstractRenderer5paintEv">paint</dfn>() = <var>0</var>;</td></tr>
+<tr><th id="310">310</th><td>};</td></tr>
+<tr><th id="311">311</th><td></td></tr>
+<tr><th id="312">312</th><td><b>class</b> <dfn class="type def" id="PictureFlowSoftwareRenderer" title='PictureFlowSoftwareRenderer' data-ref="PictureFlowSoftwareRenderer">PictureFlowSoftwareRenderer</dfn>: <b>public</b> <a class="type" href="#PictureFlowAbstractRenderer" title='PictureFlowAbstractRenderer' data-ref="PictureFlowAbstractRenderer">PictureFlowAbstractRenderer</a></td></tr>
+<tr><th id="313">313</th><td>{</td></tr>
+<tr><th id="314">314</th><td><b>public</b>:</td></tr>
+<tr><th id="315">315</th><td>    <dfn class="decl" id="_ZN27PictureFlowSoftwareRendererC1Ev" title='PictureFlowSoftwareRenderer::PictureFlowSoftwareRenderer' data-ref="_ZN27PictureFlowSoftwareRendererC1Ev">PictureFlowSoftwareRenderer</dfn>();</td></tr>
+<tr><th id="316">316</th><td>    <dfn class="virtual decl" id="_ZN27PictureFlowSoftwareRendererD1Ev" title='PictureFlowSoftwareRenderer::~PictureFlowSoftwareRenderer' data-ref="_ZN27PictureFlowSoftwareRendererD1Ev">~</dfn>PictureFlowSoftwareRenderer();</td></tr>
+<tr><th id="317">317</th><td></td></tr>
+<tr><th id="318">318</th><td>    <b>virtual</b> <em>void</em> <dfn class="virtual decl" id="_ZN27PictureFlowSoftwareRenderer4initEv" title='PictureFlowSoftwareRenderer::init' data-ref="_ZN27PictureFlowSoftwareRenderer4initEv">init</dfn>();</td></tr>
+<tr><th id="319">319</th><td>    <b>virtual</b> <em>void</em> <dfn class="virtual decl" id="_ZN27PictureFlowSoftwareRenderer5paintEv" title='PictureFlowSoftwareRenderer::paint' data-ref="_ZN27PictureFlowSoftwareRenderer5paintEv">paint</dfn>();</td></tr>
+<tr><th id="320">320</th><td></td></tr>
+<tr><th id="321">321</th><td><b>private</b>:</td></tr>
+<tr><th id="322">322</th><td>    <a class="type" href="../../../../../include/qt4/QtCore/qsize.h.html#QSize" title='QSize' data-ref="QSize">QSize</a> <dfn class="decl" id="PictureFlowSoftwareRenderer::size" title='PictureFlowSoftwareRenderer::size' data-ref="PictureFlowSoftwareRenderer::size">size</dfn>;</td></tr>
+<tr><th id="323">323</th><td>    <a class="typedef" href="../../../../../include/qt4/QtGui/qrgb.h.html#QRgb" title='QRgb' data-type='unsigned int' data-ref="QRgb">QRgb</a> <dfn class="decl" id="PictureFlowSoftwareRenderer::bgcolor" title='PictureFlowSoftwareRenderer::bgcolor' data-ref="PictureFlowSoftwareRenderer::bgcolor">bgcolor</dfn>;</td></tr>
+<tr><th id="324">324</th><td>    <em>int</em> <dfn class="decl" id="PictureFlowSoftwareRenderer::effect" title='PictureFlowSoftwareRenderer::effect' data-ref="PictureFlowSoftwareRenderer::effect">effect</dfn>;</td></tr>
+<tr><th id="325">325</th><td>    <a class="type" href="../../../../../include/qt4/QtGui/qimage.h.html#QImage" title='QImage' data-ref="QImage">QImage</a> <dfn class="decl" id="PictureFlowSoftwareRenderer::buffer" title='PictureFlowSoftwareRenderer::buffer' data-ref="PictureFlowSoftwareRenderer::buffer">buffer</dfn>;</td></tr>
+<tr><th id="326">326</th><td>    <a class="type" href="../../../../../include/qt4/QtCore/qstring.h.html#QVector" title='QVector' data-ref="QVector">QVector</a>&lt;<a class="typedef" href="#PFreal" title='PFreal' data-type='long' data-ref="PFreal">PFreal</a>&gt; <dfn class="decl" id="PictureFlowSoftwareRenderer::rays" title='PictureFlowSoftwareRenderer::rays' data-ref="PictureFlowSoftwareRenderer::rays">rays</dfn>;</td></tr>
+<tr><th id="327">327</th><td>    <a class="type" href="../../../../../include/qt4/QtGui/qimage.h.html#QImage" title='QImage' data-ref="QImage">QImage</a>* <dfn class="decl" id="PictureFlowSoftwareRenderer::blankSurface" title='PictureFlowSoftwareRenderer::blankSurface' data-ref="PictureFlowSoftwareRenderer::blankSurface">blankSurface</dfn>;</td></tr>
+<tr><th id="328">328</th><td></td></tr>
+<tr><th id="329">329</th><td>    <em>void</em> <dfn class="decl" id="_ZN27PictureFlowSoftwareRenderer6renderEv" title='PictureFlowSoftwareRenderer::render' data-ref="_ZN27PictureFlowSoftwareRenderer6renderEv">render</dfn>();</td></tr>
+<tr><th id="330">330</th><td>    <em>void</em> <dfn class="decl" id="_ZN27PictureFlowSoftwareRenderer12renderSlidesEv" title='PictureFlowSoftwareRenderer::renderSlides' data-ref="_ZN27PictureFlowSoftwareRenderer12renderSlidesEv">renderSlides</dfn>();</td></tr>
+<tr><th id="331">331</th><td>    <a class="type" href="../../../../../include/qt4/QtCore/qrect.h.html#QRect" title='QRect' data-ref="QRect">QRect</a> <dfn class="decl" id="_ZN27PictureFlowSoftwareRenderer11renderSlideERK9SlideInfoii" title='PictureFlowSoftwareRenderer::renderSlide' data-ref="_ZN27PictureFlowSoftwareRenderer11renderSlideERK9SlideInfoii">renderSlide</dfn>(<em>const</em> <a class="type" href="#SlideInfo" title='SlideInfo' data-ref="SlideInfo">SlideInfo</a> &amp;<dfn class="local col6 decl" id="96slide" title='slide' data-type='const SlideInfo &amp;' data-ref="96slide">slide</dfn>, <em>int</em> <dfn class="local col7 decl" id="97col1" title='col1' data-type='int' data-ref="97col1">col1</dfn> = -<var>1</var>, <em>int</em> <dfn class="local col8 decl" id="98col2" title='col2' data-type='int' data-ref="98col2">col2</dfn> = -<var>1</var>);</td></tr>
+<tr><th id="332">332</th><td>    <a class="type" href="../../../../../include/qt4/QtGui/qimage.h.html#QImage" title='QImage' data-ref="QImage">QImage</a>* <dfn class="decl" id="_ZN27PictureFlowSoftwareRenderer7surfaceE11QModelIndex" title='PictureFlowSoftwareRenderer::surface' data-ref="_ZN27PictureFlowSoftwareRenderer7surfaceE11QModelIndex">surface</dfn>(<a class="type" href="../../../../../include/qt4/QtCore/qabstractitemmodel.h.html#QModelIndex" title='QModelIndex' data-ref="QModelIndex">QModelIndex</a>);</td></tr>
+<tr><th id="333">333</th><td>    <a class="type" href="../../../../../include/qt4/QtGui/qwindowdefs.h.html#QHash" title='QHash' data-ref="QHash">QHash</a>&lt;<a class="type" href="../../../../../include/qt4/QtCore/qstring.h.html#QString" title='QString' data-ref="QString">QString</a>, <a class="type" href="../../../../../include/qt4/QtGui/qimage.h.html#QImage" title='QImage' data-ref="QImage">QImage</a>*&gt; <dfn class="decl" id="PictureFlowSoftwareRenderer::cache" title='PictureFlowSoftwareRenderer::cache' data-ref="PictureFlowSoftwareRenderer::cache">cache</dfn>;</td></tr>
+<tr><th id="334">334</th><td>};</td></tr>
+<tr><th id="335">335</th><td></td></tr>
+<tr><th id="336">336</th><td><b>class</b> <dfn class="type def" id="PictureFlowPrivate" title='PictureFlowPrivate' data-ref="PictureFlowPrivate">PictureFlowPrivate</dfn> : <b>public</b> <a class="type" href="../../../../../include/qt4/QtCore/qobject.h.html#QObject" title='QObject' data-ref="QObject">QObject</a></td></tr>
+<tr><th id="337">337</th><td>{</td></tr>
+<tr><th id="338">338</th><td>    <a class="macro" href="../../../../../include/qt4/QtCore/qobjectdefs.h.html#157" title="public: template &lt;typename T&gt; inline void qt_check_for_QOBJECT_macro(const T &amp;_q_argument) const { int i = qYouForgotTheQ_OBJECT_Macro(this, &amp;_q_argument); i = i + 1; } static const QMetaObject staticMetaObject; virtual const QMetaObject *metaObject() const; virtual void *qt_metacast(const char *); static inline QString tr(const char *s, const char *c = 0) { return staticMetaObject.tr(s, c); } static inline QString trUtf8(const char *s, const char *c = 0) { return staticMetaObject.trUtf8(s, c); } static inline QString tr(const char *s, const char *c, int n) { return staticMetaObject.tr(s, c, n); } static inline QString trUtf8(const char *s, const char *c, int n) { return staticMetaObject.trUtf8(s, c, n); } virtual int qt_metacall(QMetaObject::Call, int, void **); private: __attribute__((visibility(&quot;hidden&quot;))) static const QMetaObjectExtraData staticMetaObjectExtraData; __attribute__((visibility(&quot;hidden&quot;))) static void qt_static_metacall(QObject *, QMetaObject::Call, int, void **);" data-ref="_M/Q_OBJECT">Q_OBJECT</a></td></tr>
+<tr><th id="339">339</th><td><b>public</b>:</td></tr>
+<tr><th id="340">340</th><td>    <a class="type" href="#PictureFlowState" title='PictureFlowState' data-ref="PictureFlowState">PictureFlowState</a>* <dfn class="decl" id="PictureFlowPrivate::state" title='PictureFlowPrivate::state' data-ref="PictureFlowPrivate::state">state</dfn>;</td></tr>
+<tr><th id="341">341</th><td>    <a class="type" href="#PictureFlowAnimator" title='PictureFlowAnimator' data-ref="PictureFlowAnimator">PictureFlowAnimator</a>* <dfn class="decl" id="PictureFlowPrivate::animator" title='PictureFlowPrivate::animator' data-ref="PictureFlowPrivate::animator">animator</dfn>;</td></tr>
+<tr><th id="342">342</th><td>    <a class="type" href="#PictureFlowAbstractRenderer" title='PictureFlowAbstractRenderer' data-ref="PictureFlowAbstractRenderer">PictureFlowAbstractRenderer</a>* <dfn class="decl" id="PictureFlowPrivate::renderer" title='PictureFlowPrivate::renderer' data-ref="PictureFlowPrivate::renderer">renderer</dfn>;</td></tr>
+<tr><th id="343">343</th><td>    <a class="type" href="../../../../../include/qt4/QtCore/qtimer.h.html#QTimer" title='QTimer' data-ref="QTimer">QTimer</a> <dfn class="decl" id="PictureFlowPrivate::triggerTimer" title='PictureFlowPrivate::triggerTimer' data-ref="PictureFlowPrivate::triggerTimer">triggerTimer</dfn>;</td></tr>
+<tr><th id="344">344</th><td>    <em>void</em> <dfn class="decl" id="_ZN18PictureFlowPrivate8setModelEP18QAbstractItemModel" title='PictureFlowPrivate::setModel' data-ref="_ZN18PictureFlowPrivate8setModelEP18QAbstractItemModel">setModel</dfn>(<a class="type" href="../../../../../include/qt4/QtCore/qabstractitemmodel.h.html#QAbstractItemModel" title='QAbstractItemModel' data-ref="QAbstractItemModel">QAbstractItemModel</a> * <dfn class="local col9 decl" id="99model" title='model' data-type='QAbstractItemModel *' data-ref="99model">model</dfn>);</td></tr>
+<tr><th id="345">345</th><td>    <em>void</em> <dfn class="decl" id="_ZN18PictureFlowPrivate5clearEv" title='PictureFlowPrivate::clear' data-ref="_ZN18PictureFlowPrivate5clearEv">clear</dfn>();</td></tr>
+<tr><th id="346">346</th><td>    <em>void</em> <dfn class="decl" id="_ZN18PictureFlowPrivate13triggerRenderEv" title='PictureFlowPrivate::triggerRender' data-ref="_ZN18PictureFlowPrivate13triggerRenderEv">triggerRender</dfn>();</td></tr>
+<tr><th id="347">347</th><td>    <em>void</em> <dfn class="decl" id="_ZN18PictureFlowPrivate11insertSlideEiRK6QImage" title='PictureFlowPrivate::insertSlide' data-ref="_ZN18PictureFlowPrivate11insertSlideEiRK6QImage">insertSlide</dfn>(<em>int</em> <dfn class="local col0 decl" id="100index" title='index' data-type='int' data-ref="100index">index</dfn>, <em>const</em> <a class="type" href="../../../../../include/qt4/QtGui/qimage.h.html#QImage" title='QImage' data-ref="QImage">QImage</a>&amp; <dfn class="local col1 decl" id="101image" title='image' data-type='const QImage &amp;' data-ref="101image">image</dfn>);</td></tr>
+<tr><th id="348">348</th><td>    <em>void</em> <dfn class="decl" id="_ZN18PictureFlowPrivate12replaceSlideEiRK6QImage" title='PictureFlowPrivate::replaceSlide' data-ref="_ZN18PictureFlowPrivate12replaceSlideEiRK6QImage">replaceSlide</dfn>(<em>int</em> <dfn class="local col2 decl" id="102index" title='index' data-type='int' data-ref="102index">index</dfn>, <em>const</em> <a class="type" href="../../../../../include/qt4/QtGui/qimage.h.html#QImage" title='QImage' data-ref="QImage">QImage</a>&amp; <dfn class="local col3 decl" id="103image" title='image' data-type='const QImage &amp;' data-ref="103image">image</dfn>);</td></tr>
+<tr><th id="349">349</th><td>    <em>void</em> <dfn class="decl" id="_ZN18PictureFlowPrivate11removeSlideEi" title='PictureFlowPrivate::removeSlide' data-ref="_ZN18PictureFlowPrivate11removeSlideEi">removeSlide</dfn>(<em>int</em> <dfn class="local col4 decl" id="104index" title='index' data-type='int' data-ref="104index">index</dfn>);</td></tr>
+<tr><th id="350">350</th><td>    <em>void</em> <dfn class="decl" id="_ZN18PictureFlowPrivate15setCurrentIndexE11QModelIndex" title='PictureFlowPrivate::setCurrentIndex' data-ref="_ZN18PictureFlowPrivate15setCurrentIndexE11QModelIndex">setCurrentIndex</dfn>(<a class="type" href="../../../../../include/qt4/QtCore/qabstractitemmodel.h.html#QModelIndex" title='QModelIndex' data-ref="QModelIndex">QModelIndex</a> <dfn class="local col5 decl" id="105index" title='index' data-type='QModelIndex' data-ref="105index">index</dfn>);</td></tr>
+<tr><th id="351">351</th><td>    <em>void</em> <dfn class="decl" id="_ZN18PictureFlowPrivate9showSlideEi" title='PictureFlowPrivate::showSlide' data-ref="_ZN18PictureFlowPrivate9showSlideEi">showSlide</dfn>(<em>int</em> <dfn class="local col6 decl" id="106index" title='index' data-type='int' data-ref="106index">index</dfn>);</td></tr>
+<tr><th id="352">352</th><td></td></tr>
+<tr><th id="353">353</th><td>    <em>int</em> <dfn class="decl" id="PictureFlowPrivate::picrole" title='PictureFlowPrivate::picrole' data-ref="PictureFlowPrivate::picrole">picrole</dfn>;</td></tr>
+<tr><th id="354">354</th><td>    <em>int</em> <dfn class="decl" id="PictureFlowPrivate::textrole" title='PictureFlowPrivate::textrole' data-ref="PictureFlowPrivate::textrole">textrole</dfn>;</td></tr>
+<tr><th id="355">355</th><td>    <em>int</em> <dfn class="decl" id="PictureFlowPrivate::piccolumn" title='PictureFlowPrivate::piccolumn' data-ref="PictureFlowPrivate::piccolumn">piccolumn</dfn>;</td></tr>
+<tr><th id="356">356</th><td>    <em>int</em> <dfn class="decl" id="PictureFlowPrivate::textcolumn" title='PictureFlowPrivate::textcolumn' data-ref="PictureFlowPrivate::textcolumn">textcolumn</dfn>;</td></tr>
+<tr><th id="357">357</th><td></td></tr>
+<tr><th id="358">358</th><td>    <em>void</em> <dfn class="decl" id="_ZN18PictureFlowPrivate5resetEv" title='PictureFlowPrivate::reset' data-ref="_ZN18PictureFlowPrivate5resetEv">reset</dfn>();</td></tr>
+<tr><th id="359">359</th><td></td></tr>
+<tr><th id="360">360</th><td>    <a class="type" href="../../../../../include/qt4/QtCore/qbytearray.h.html#QList" title='QList' data-ref="QList">QList</a>&lt;<a class="type" href="../../../../../include/qt4/QtCore/qabstractitemmodel.h.html#QPersistentModelIndex" title='QPersistentModelIndex' data-ref="QPersistentModelIndex">QPersistentModelIndex</a>&gt; <dfn class="decl" id="PictureFlowPrivate::modelmap" title='PictureFlowPrivate::modelmap' data-ref="PictureFlowPrivate::modelmap">modelmap</dfn>;</td></tr>
+<tr><th id="361">361</th><td>    <a class="type" href="../../../../../include/qt4/QtCore/qabstractitemmodel.h.html#QPersistentModelIndex" title='QPersistentModelIndex' data-ref="QPersistentModelIndex">QPersistentModelIndex</a> <dfn class="decl" id="PictureFlowPrivate::currentcenter" title='PictureFlowPrivate::currentcenter' data-ref="PictureFlowPrivate::currentcenter">currentcenter</dfn>;</td></tr>
+<tr><th id="362">362</th><td></td></tr>
+<tr><th id="363">363</th><td>    <a class="type" href="../../../../../include/qt4/QtCore/qpoint.h.html#QPoint" title='QPoint' data-ref="QPoint">QPoint</a> <dfn class="decl" id="PictureFlowPrivate::lastgrabpos" title='PictureFlowPrivate::lastgrabpos' data-ref="PictureFlowPrivate::lastgrabpos">lastgrabpos</dfn>;</td></tr>
+<tr><th id="364">364</th><td>    <a class="type" href="../../../../../include/qt4/QtCore/qabstractitemmodel.h.html#QModelIndex" title='QModelIndex' data-ref="QModelIndex">QModelIndex</a> <dfn class="decl" id="PictureFlowPrivate::rootindex" title='PictureFlowPrivate::rootindex' data-ref="PictureFlowPrivate::rootindex">rootindex</dfn>;</td></tr>
+<tr><th id="365">365</th><td></td></tr>
+<tr><th id="366">366</th><td><b>public</b> <a class="macro" href="../../../../../include/qt4/QtCore/qobjectdefs.h.html#71" title="" data-ref="_M/Q_SLOTS">Q_SLOTS</a>:</td></tr>
+<tr><th id="367">367</th><td>    <em>void</em> <dfn class="decl" id="_ZN18PictureFlowPrivate24columnsAboutToBeInsertedERK11QModelIndexii" title='PictureFlowPrivate::columnsAboutToBeInserted' data-ref="_ZN18PictureFlowPrivate24columnsAboutToBeInsertedERK11QModelIndexii">columnsAboutToBeInserted</dfn>(<em>const</em> <a class="type" href="../../../../../include/qt4/QtCore/qabstractitemmodel.h.html#QModelIndex" title='QModelIndex' data-ref="QModelIndex">QModelIndex</a> &amp; <dfn class="local col7 decl" id="107parent" title='parent' data-type='const QModelIndex &amp;' data-ref="107parent">parent</dfn>, <em>int</em> <dfn class="local col8 decl" id="108start" title='start' data-type='int' data-ref="108start">start</dfn>, <em>int</em> <dfn class="local col9 decl" id="109end" title='end' data-type='int' data-ref="109end">end</dfn>);</td></tr>
+<tr><th id="368">368</th><td>    <em>void</em> <dfn class="decl" id="_ZN18PictureFlowPrivate23columnsAboutToBeRemovedERK11QModelIndexii" title='PictureFlowPrivate::columnsAboutToBeRemoved' data-ref="_ZN18PictureFlowPrivate23columnsAboutToBeRemovedERK11QModelIndexii">columnsAboutToBeRemoved</dfn>(<em>const</em> <a class="type" href="../../../../../include/qt4/QtCore/qabstractitemmodel.h.html#QModelIndex" title='QModelIndex' data-ref="QModelIndex">QModelIndex</a> &amp; <dfn class="local col0 decl" id="110parent" title='parent' data-type='const QModelIndex &amp;' data-ref="110parent">parent</dfn>, <em>int</em> <dfn class="local col1 decl" id="111start" title='start' data-type='int' data-ref="111start">start</dfn>, <em>int</em> <dfn class="local col2 decl" id="112end" title='end' data-type='int' data-ref="112end">end</dfn>);</td></tr>
+<tr><th id="369">369</th><td>    <em>void</em> <dfn class="decl" id="_ZN18PictureFlowPrivate15columnsInsertedERK11QModelIndexii" title='PictureFlowPrivate::columnsInserted' data-ref="_ZN18PictureFlowPrivate15columnsInsertedERK11QModelIndexii">columnsInserted</dfn>(<em>const</em> <a class="type" href="../../../../../include/qt4/QtCore/qabstractitemmodel.h.html#QModelIndex" title='QModelIndex' data-ref="QModelIndex">QModelIndex</a> &amp; <dfn class="local col3 decl" id="113parent" title='parent' data-type='const QModelIndex &amp;' data-ref="113parent">parent</dfn>, <em>int</em> <dfn class="local col4 decl" id="114start" title='start' data-type='int' data-ref="114start">start</dfn>, <em>int</em> <dfn class="local col5 decl" id="115end" title='end' data-type='int' data-ref="115end">end</dfn>);</td></tr>
+<tr><th id="370">370</th><td>    <em>void</em> <dfn class="decl" id="_ZN18PictureFlowPrivate14columnsRemovedERK11QModelIndexii" title='PictureFlowPrivate::columnsRemoved' data-ref="_ZN18PictureFlowPrivate14columnsRemovedERK11QModelIndexii">columnsRemoved</dfn>(<em>const</em> <a class="type" href="../../../../../include/qt4/QtCore/qabstractitemmodel.h.html#QModelIndex" title='QModelIndex' data-ref="QModelIndex">QModelIndex</a> &amp; <dfn class="local col6 decl" id="116parent" title='parent' data-type='const QModelIndex &amp;' data-ref="116parent">parent</dfn>, <em>int</em> <dfn class="local col7 decl" id="117start" title='start' data-type='int' data-ref="117start">start</dfn>, <em>int</em> <dfn class="local col8 decl" id="118end" title='end' data-type='int' data-ref="118end">end</dfn>);</td></tr>
+<tr><th id="371">371</th><td>    <em>void</em> <dfn class="decl" id="_ZN18PictureFlowPrivate11dataChangedERK11QModelIndexS2_" title='PictureFlowPrivate::dataChanged' data-ref="_ZN18PictureFlowPrivate11dataChangedERK11QModelIndexS2_">dataChanged</dfn>(<em>const</em> <a class="type" href="../../../../../include/qt4/QtCore/qabstractitemmodel.h.html#QModelIndex" title='QModelIndex' data-ref="QModelIndex">QModelIndex</a> &amp; <dfn class="local col9 decl" id="119topLeft" title='topLeft' data-type='const QModelIndex &amp;' data-ref="119topLeft">topLeft</dfn>, <em>const</em> <a class="type" href="../../../../../include/qt4/QtCore/qabstractitemmodel.h.html#QModelIndex" title='QModelIndex' data-ref="QModelIndex">QModelIndex</a> &amp; <dfn class="local col0 decl" id="120bottomRight" title='bottomRight' data-type='const QModelIndex &amp;' data-ref="120bottomRight">bottomRight</dfn>);</td></tr>
+<tr><th id="372">372</th><td>    <em>void</em> <dfn class="decl" id="_ZN18PictureFlowPrivate17headerDataChangedEN2Qt11OrientationEii" title='PictureFlowPrivate::headerDataChanged' data-ref="_ZN18PictureFlowPrivate17headerDataChangedEN2Qt11OrientationEii">headerDataChanged</dfn>(<span class="namespace">Qt::</span><a class="type" href="../../../../../include/qt4/QtCore/qnamespace.h.html#Qt::Orientation" title='Qt::Orientation' data-ref="Qt::Orientation">Orientation</a> <dfn class="local col1 decl" id="121orientation" title='orientation' data-type='Qt::Orientation' data-ref="121orientation">orientation</dfn>, <em>int</em> <dfn class="local col2 decl" id="122first" title='first' data-type='int' data-ref="122first">first</dfn>, <em>int</em> <dfn class="local col3 decl" id="123last" title='last' data-type='int' data-ref="123last">last</dfn>);</td></tr>
+<tr><th id="373">373</th><td>    <em>void</em> <dfn class="decl" id="_ZN18PictureFlowPrivate22layoutAboutToBeChangedEv" title='PictureFlowPrivate::layoutAboutToBeChanged' data-ref="_ZN18PictureFlowPrivate22layoutAboutToBeChangedEv">layoutAboutToBeChanged</dfn>();</td></tr>
+<tr><th id="374">374</th><td>    <em>void</em> <dfn class="decl" id="_ZN18PictureFlowPrivate13layoutChangedEv" title='PictureFlowPrivate::layoutChanged' data-ref="_ZN18PictureFlowPrivate13layoutChangedEv">layoutChanged</dfn>();</td></tr>
+<tr><th id="375">375</th><td>    <em>void</em> <dfn class="decl" id="_ZN18PictureFlowPrivate19modelAboutToBeResetEv" title='PictureFlowPrivate::modelAboutToBeReset' data-ref="_ZN18PictureFlowPrivate19modelAboutToBeResetEv">modelAboutToBeReset</dfn>();</td></tr>
+<tr><th id="376">376</th><td>    <em>void</em> <dfn class="decl" id="_ZN18PictureFlowPrivate10modelResetEv" title='PictureFlowPrivate::modelReset' data-ref="_ZN18PictureFlowPrivate10modelResetEv">modelReset</dfn>();</td></tr>
+<tr><th id="377">377</th><td>    <em>void</em> <dfn class="decl" id="_ZN18PictureFlowPrivate21rowsAboutToBeInsertedERK11QModelIndexii" title='PictureFlowPrivate::rowsAboutToBeInserted' data-ref="_ZN18PictureFlowPrivate21rowsAboutToBeInsertedERK11QModelIndexii">rowsAboutToBeInserted</dfn>(<em>const</em> <a class="type" href="../../../../../include/qt4/QtCore/qabstractitemmodel.h.html#QModelIndex" title='QModelIndex' data-ref="QModelIndex">QModelIndex</a> &amp; <dfn class="local col4 decl" id="124parent" title='parent' data-type='const QModelIndex &amp;' data-ref="124parent">parent</dfn>, <em>int</em> <dfn class="local col5 decl" id="125start" title='start' data-type='int' data-ref="125start">start</dfn>, <em>int</em> <dfn class="local col6 decl" id="126end" title='end' data-type='int' data-ref="126end">end</dfn>);</td></tr>
+<tr><th id="378">378</th><td>    <em>void</em> <dfn class="decl" id="_ZN18PictureFlowPrivate20rowsAboutToBeRemovedERK11QModelIndexii" title='PictureFlowPrivate::rowsAboutToBeRemoved' data-ref="_ZN18PictureFlowPrivate20rowsAboutToBeRemovedERK11QModelIndexii">rowsAboutToBeRemoved</dfn>(<em>const</em> <a class="type" href="../../../../../include/qt4/QtCore/qabstractitemmodel.h.html#QModelIndex" title='QModelIndex' data-ref="QModelIndex">QModelIndex</a> &amp; <dfn class="local col7 decl" id="127parent" title='parent' data-type='const QModelIndex &amp;' data-ref="127parent">parent</dfn>, <em>int</em> <dfn class="local col8 decl" id="128start" title='start' data-type='int' data-ref="128start">start</dfn>, <em>int</em> <dfn class="local col9 decl" id="129end" title='end' data-type='int' data-ref="129end">end</dfn>);</td></tr>
+<tr><th id="379">379</th><td>    <em>void</em> <dfn class="decl" id="_ZN18PictureFlowPrivate12rowsInsertedERK11QModelIndexii" title='PictureFlowPrivate::rowsInserted' data-ref="_ZN18PictureFlowPrivate12rowsInsertedERK11QModelIndexii">rowsInserted</dfn>(<em>const</em> <a class="type" href="../../../../../include/qt4/QtCore/qabstractitemmodel.h.html#QModelIndex" title='QModelIndex' data-ref="QModelIndex">QModelIndex</a> &amp; <dfn class="local col0 decl" id="130parent" title='parent' data-type='const QModelIndex &amp;' data-ref="130parent">parent</dfn>, <em>int</em> <dfn class="local col1 decl" id="131start" title='start' data-type='int' data-ref="131start">start</dfn>, <em>int</em> <dfn class="local col2 decl" id="132end" title='end' data-type='int' data-ref="132end">end</dfn>);</td></tr>
+<tr><th id="380">380</th><td>    <em>void</em> <dfn class="decl" id="_ZN18PictureFlowPrivate11rowsRemovedERK11QModelIndexii" title='PictureFlowPrivate::rowsRemoved' data-ref="_ZN18PictureFlowPrivate11rowsRemovedERK11QModelIndexii">rowsRemoved</dfn>(<em>const</em> <a class="type" href="../../../../../include/qt4/QtCore/qabstractitemmodel.h.html#QModelIndex" title='QModelIndex' data-ref="QModelIndex">QModelIndex</a> &amp; <dfn class="local col3 decl" id="133parent" title='parent' data-type='const QModelIndex &amp;' data-ref="133parent">parent</dfn>, <em>int</em> <dfn class="local col4 decl" id="134start" title='start' data-type='int' data-ref="134start">start</dfn>, <em>int</em> <dfn class="local col5 decl" id="135end" title='end' data-type='int' data-ref="135end">end</dfn>);</td></tr>
+<tr><th id="381">381</th><td>};</td></tr>
+<tr><th id="382">382</th><td></td></tr>
+<tr><th id="383">383</th><td></td></tr>
+<tr><th id="384">384</th><td><u>#<span data-ppcond="32">endif</span> // PICTUREFLOW_H</u></td></tr>
+<tr><th id="385">385</th><td></td></tr>
+<tr><th id="386">386</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated while processing <a href='../components/playlist/standardpanel.cpp.html'>vlc/modules/gui/qt4/components/playlist/standardpanel.cpp</a><br/>Generated on <em>2016-Oct-25</em> from project vlc revision <em>2.2.0-git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

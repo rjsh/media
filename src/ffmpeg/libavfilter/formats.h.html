@@ -1,0 +1,308 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>formats.h source code [ffmpeg/libavfilter/formats.h] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="AVFilterChannelLayouts,AVFilterFormats "/>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavfilter/formats.h'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavfilter</a>/<a href='formats.h.html'>formats.h</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="3">3</th><td><i> *</i></td></tr>
+<tr><th id="4">4</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="5">5</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="6">6</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="7">7</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="8">8</th><td><i> *</i></td></tr>
+<tr><th id="9">9</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="10">10</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="11">11</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="12">12</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="13">13</th><td><i> *</i></td></tr>
+<tr><th id="14">14</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="15">15</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="16">16</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="17">17</th><td><i> */</i></td></tr>
+<tr><th id="18">18</th><td></td></tr>
+<tr><th id="19">19</th><td><u>#<span data-ppcond="19">ifndef</span> <span class="macro" data-ref="_M/AVFILTER_FORMATS_H">AVFILTER_FORMATS_H</span></u></td></tr>
+<tr><th id="20">20</th><td><u>#define <dfn class="macro" id="_M/AVFILTER_FORMATS_H" data-ref="_M/AVFILTER_FORMATS_H">AVFILTER_FORMATS_H</dfn></u></td></tr>
+<tr><th id="21">21</th><td></td></tr>
+<tr><th id="22">22</th><td><u>#include <a href="avfilter.h.html">"avfilter.h"</a></u></td></tr>
+<tr><th id="23">23</th><td></td></tr>
+<tr><th id="24">24</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="25">25</th><td><i class="doc"> * A list of supported formats for one end of a filter link. This is used</i></td></tr>
+<tr><th id="26">26</th><td><i class="doc"> * during the format negotiation process to try to pick the best format to</i></td></tr>
+<tr><th id="27">27</th><td><i class="doc"> * use to minimize the number of necessary conversions. Each filter gives a</i></td></tr>
+<tr><th id="28">28</th><td><i class="doc"> * list of the formats supported by each input and output pad. The list</i></td></tr>
+<tr><th id="29">29</th><td><i class="doc"> * given for each pad need not be distinct - they may be references to the</i></td></tr>
+<tr><th id="30">30</th><td><i class="doc"> * same list of formats, as is often the case when a filter supports multiple</i></td></tr>
+<tr><th id="31">31</th><td><i class="doc"> * formats, but will always output the same format as it is given in input.</i></td></tr>
+<tr><th id="32">32</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="33">33</th><td><i class="doc"> * In this way, a list of possible input formats and a list of possible</i></td></tr>
+<tr><th id="34">34</th><td><i class="doc"> * output formats are associated with each link. When a set of formats is</i></td></tr>
+<tr><th id="35">35</th><td><i class="doc"> * negotiated over a link, the input and output lists are merged to form a</i></td></tr>
+<tr><th id="36">36</th><td><i class="doc"> * new list containing only the common elements of each list. In the case</i></td></tr>
+<tr><th id="37">37</th><td><i class="doc"> * that there were no common elements, a format conversion is necessary.</i></td></tr>
+<tr><th id="38">38</th><td><i class="doc"> * Otherwise, the lists are merged, and all other links which reference</i></td></tr>
+<tr><th id="39">39</th><td><i class="doc"> * either of the format lists involved in the merge are also affected.</i></td></tr>
+<tr><th id="40">40</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="41">41</th><td><i class="doc"> * For example, consider the filter chain:</i></td></tr>
+<tr><th id="42">42</th><td><i class="doc"> * filter (a) --&gt; (b) filter (b) --&gt; (c) filter</i></td></tr>
+<tr><th id="43">43</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="44">44</th><td><i class="doc"> * where the letters in parenthesis indicate a list of formats supported on</i></td></tr>
+<tr><th id="45">45</th><td><i class="doc"> * the input or output of the link. Suppose the lists are as follows:</i></td></tr>
+<tr><th id="46">46</th><td><i class="doc"> * (a) = {A, B}</i></td></tr>
+<tr><th id="47">47</th><td><i class="doc"> * (b) = {A, B, C}</i></td></tr>
+<tr><th id="48">48</th><td><i class="doc"> * (c) = {B, C}</i></td></tr>
+<tr><th id="49">49</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="50">50</th><td><i class="doc"> * First, the first link's lists are merged, yielding:</i></td></tr>
+<tr><th id="51">51</th><td><i class="doc"> * filter (a) --&gt; (a) filter (a) --&gt; (c) filter</i></td></tr>
+<tr><th id="52">52</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="53">53</th><td><i class="doc"> * Notice that format list (b) now refers to the same list as filter list (a).</i></td></tr>
+<tr><th id="54">54</th><td><i class="doc"> * Next, the lists for the second link are merged, yielding:</i></td></tr>
+<tr><th id="55">55</th><td><i class="doc"> * filter (a) --&gt; (a) filter (a) --&gt; (a) filter</i></td></tr>
+<tr><th id="56">56</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="57">57</th><td><i class="doc"> * where (a) = {B}.</i></td></tr>
+<tr><th id="58">58</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="59">59</th><td><i class="doc"> * Unfortunately, when the format lists at the two ends of a link are merged,</i></td></tr>
+<tr><th id="60">60</th><td><i class="doc"> * we must ensure that all links which reference either pre-merge format list</i></td></tr>
+<tr><th id="61">61</th><td><i class="doc"> * get updated as well. Therefore, we have the format list structure store a</i></td></tr>
+<tr><th id="62">62</th><td><i class="doc"> * pointer to each of the pointers to itself.</i></td></tr>
+<tr><th id="63">63</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="64">64</th><td><b>struct</b> <dfn class="type def" id="AVFilterFormats" title='AVFilterFormats' data-ref="AVFilterFormats">AVFilterFormats</dfn> {</td></tr>
+<tr><th id="65">65</th><td>    <em>unsigned</em> <dfn class="decl" id="AVFilterFormats::nb_formats" title='AVFilterFormats::nb_formats' data-ref="AVFilterFormats::nb_formats">nb_formats</dfn>;        <i class="doc">///&lt; number of formats</i></td></tr>
+<tr><th id="66">66</th><td>    <em>int</em> *<dfn class="decl" id="AVFilterFormats::formats" title='AVFilterFormats::formats' data-ref="AVFilterFormats::formats">formats</dfn>;               <i class="doc">///&lt; list of media formats</i></td></tr>
+<tr><th id="67">67</th><td></td></tr>
+<tr><th id="68">68</th><td>    <em>unsigned</em> <dfn class="decl" id="AVFilterFormats::refcount" title='AVFilterFormats::refcount' data-ref="AVFilterFormats::refcount">refcount</dfn>;          <i class="doc">///&lt; number of references to this list</i></td></tr>
+<tr><th id="69">69</th><td>    <b>struct</b> <a class="type" href="#AVFilterFormats" title='AVFilterFormats' data-ref="AVFilterFormats">AVFilterFormats</a> ***<dfn class="decl" id="AVFilterFormats::refs" title='AVFilterFormats::refs' data-ref="AVFilterFormats::refs">refs</dfn>; <i class="doc">///&lt; references to this list</i></td></tr>
+<tr><th id="70">70</th><td>};</td></tr>
+<tr><th id="71">71</th><td></td></tr>
+<tr><th id="72">72</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="73">73</th><td><i class="doc"> * A list of supported channel layouts.</i></td></tr>
+<tr><th id="74">74</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="75">75</th><td><i class="doc"> * The list works the same as AVFilterFormats, except for the following</i></td></tr>
+<tr><th id="76">76</th><td><i class="doc"> * differences:</i></td></tr>
+<tr><th id="77">77</th><td><i class="doc"> * - A list with all_layouts = 1 means all channel layouts with a known</i></td></tr>
+<tr><th id="78">78</th><td><i class="doc"> *   disposition; nb_channel_layouts must then be 0.</i></td></tr>
+<tr><th id="79">79</th><td><i class="doc"> * - A list with all_counts = 1 means all channel counts, with a known or</i></td></tr>
+<tr><th id="80">80</th><td><i class="doc"> *   unknown disposition; nb_channel_layouts must then be 0 and all_layouts 1.</i></td></tr>
+<tr><th id="81">81</th><td><i class="doc"> * - The list must not contain a layout with a known disposition and a</i></td></tr>
+<tr><th id="82">82</th><td><i class="doc"> *   channel count with unknown disposition with the same number of channels</i></td></tr>
+<tr><th id="83">83</th><td><i class="doc"> *   (e.g. AV_CH_LAYOUT_STEREO and FF_COUNT2LAYOUT(2).</i></td></tr>
+<tr><th id="84">84</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="85">85</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="AVFilterChannelLayouts" title='AVFilterChannelLayouts' data-ref="AVFilterChannelLayouts"><a class="type" href="#AVFilterChannelLayouts" title='AVFilterChannelLayouts' data-ref="AVFilterChannelLayouts">AVFilterChannelLayouts</a></dfn> {</td></tr>
+<tr><th id="86">86</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint64_t" title='uint64_t' data-type='unsigned long' data-ref="uint64_t">uint64_t</a> *<dfn class="decl" id="AVFilterChannelLayouts::channel_layouts" title='AVFilterChannelLayouts::channel_layouts' data-ref="AVFilterChannelLayouts::channel_layouts">channel_layouts</dfn>;  <i class="doc">///&lt; list of channel layouts</i></td></tr>
+<tr><th id="87">87</th><td>    <em>int</em>    <dfn class="decl" id="AVFilterChannelLayouts::nb_channel_layouts" title='AVFilterChannelLayouts::nb_channel_layouts' data-ref="AVFilterChannelLayouts::nb_channel_layouts">nb_channel_layouts</dfn>;  <i class="doc">///&lt; number of channel layouts</i></td></tr>
+<tr><th id="88">88</th><td>    <em>char</em> <dfn class="decl" id="AVFilterChannelLayouts::all_layouts" title='AVFilterChannelLayouts::all_layouts' data-ref="AVFilterChannelLayouts::all_layouts">all_layouts</dfn>;           <i class="doc">///&lt; accept any known channel layout</i></td></tr>
+<tr><th id="89">89</th><td>    <em>char</em> <dfn class="decl" id="AVFilterChannelLayouts::all_counts" title='AVFilterChannelLayouts::all_counts' data-ref="AVFilterChannelLayouts::all_counts">all_counts</dfn>;            <i class="doc">///&lt; accept any channel layout or count</i></td></tr>
+<tr><th id="90">90</th><td></td></tr>
+<tr><th id="91">91</th><td>    <em>unsigned</em> <dfn class="decl" id="AVFilterChannelLayouts::refcount" title='AVFilterChannelLayouts::refcount' data-ref="AVFilterChannelLayouts::refcount">refcount</dfn>;          <i class="doc">///&lt; number of references to this list</i></td></tr>
+<tr><th id="92">92</th><td>    <b>struct</b> <a class="type" href="#AVFilterChannelLayouts" title='AVFilterChannelLayouts' data-ref="AVFilterChannelLayouts">AVFilterChannelLayouts</a> ***<dfn class="decl" id="AVFilterChannelLayouts::refs" title='AVFilterChannelLayouts::refs' data-ref="AVFilterChannelLayouts::refs">refs</dfn>; <i class="doc">///&lt; references to this list</i></td></tr>
+<tr><th id="93">93</th><td>} <dfn class="typedef" id="AVFilterChannelLayouts" title='AVFilterChannelLayouts' data-type='struct AVFilterChannelLayouts' data-ref="AVFilterChannelLayouts">AVFilterChannelLayouts</dfn>;</td></tr>
+<tr><th id="94">94</th><td></td></tr>
+<tr><th id="95">95</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="96">96</th><td><i class="doc"> * Encode a channel count as a channel layout.</i></td></tr>
+<tr><th id="97">97</th><td><i class="doc"> * FF_COUNT2LAYOUT(c) means any channel layout with c channels, with a known</i></td></tr>
+<tr><th id="98">98</th><td><i class="doc"> * or unknown disposition.</i></td></tr>
+<tr><th id="99">99</th><td><i class="doc"> * The result is only valid inside AVFilterChannelLayouts and immediately</i></td></tr>
+<tr><th id="100">100</th><td><i class="doc"> * related functions.</i></td></tr>
+<tr><th id="101">101</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="102">102</th><td><u>#define <dfn class="macro" id="_M/FF_COUNT2LAYOUT" data-ref="_M/FF_COUNT2LAYOUT">FF_COUNT2LAYOUT</dfn>(c) (0x8000000000000000ULL | (c))</u></td></tr>
+<tr><th id="103">103</th><td></td></tr>
+<tr><th id="104">104</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="105">105</th><td><i class="doc"> * Decode a channel count encoded as a channel layout.</i></td></tr>
+<tr><th id="106">106</th><td><i class="doc"> * Return 0 if the channel layout was a real one.</i></td></tr>
+<tr><th id="107">107</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="108">108</th><td><u>#define <dfn class="macro" id="_M/FF_LAYOUT2COUNT" data-ref="_M/FF_LAYOUT2COUNT">FF_LAYOUT2COUNT</dfn>(l) (((l) &amp; 0x8000000000000000ULL) ? \</u></td></tr>
+<tr><th id="109">109</th><td><u>                           (int)((l) &amp; 0x7FFFFFFF) : 0)</u></td></tr>
+<tr><th id="110">110</th><td></td></tr>
+<tr><th id="111">111</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="112">112</th><td><i class="doc"> * Return a channel layouts/samplerates list which contains the intersection of</i></td></tr>
+<tr><th id="113">113</th><td><i class="doc"> * the layouts/samplerates of a and b. Also, all the references of a, all the</i></td></tr>
+<tr><th id="114">114</th><td><i class="doc"> * references of b, and a and b themselves will be deallocated.</i></td></tr>
+<tr><th id="115">115</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="116">116</th><td><i class="doc"> * If a and b do not share any common elements, neither is modified, and NULL</i></td></tr>
+<tr><th id="117">117</th><td><i class="doc"> * is returned.</i></td></tr>
+<tr><th id="118">118</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="119">119</th><td><a class="typedef" href="#AVFilterChannelLayouts" title='AVFilterChannelLayouts' data-type='struct AVFilterChannelLayouts' data-ref="AVFilterChannelLayouts">AVFilterChannelLayouts</a> *<dfn class="decl" id="ff_merge_channel_layouts" title='ff_merge_channel_layouts' data-ref="ff_merge_channel_layouts">ff_merge_channel_layouts</dfn>(<a class="typedef" href="#AVFilterChannelLayouts" title='AVFilterChannelLayouts' data-type='struct AVFilterChannelLayouts' data-ref="AVFilterChannelLayouts">AVFilterChannelLayouts</a> *<dfn class="local col7 decl" id="27a" title='a' data-type='AVFilterChannelLayouts *' data-ref="27a">a</dfn>,</td></tr>
+<tr><th id="120">120</th><td>                                                 <a class="typedef" href="#AVFilterChannelLayouts" title='AVFilterChannelLayouts' data-type='struct AVFilterChannelLayouts' data-ref="AVFilterChannelLayouts">AVFilterChannelLayouts</a> *<dfn class="local col8 decl" id="28b" title='b' data-type='AVFilterChannelLayouts *' data-ref="28b">b</dfn>);</td></tr>
+<tr><th id="121">121</th><td><a class="typedef" href="avfilter.h.html#AVFilterFormats" title='AVFilterFormats' data-type='struct AVFilterFormats' data-ref="AVFilterFormats">AVFilterFormats</a> *<dfn class="decl" id="ff_merge_samplerates" title='ff_merge_samplerates' data-ref="ff_merge_samplerates">ff_merge_samplerates</dfn>(<a class="typedef" href="avfilter.h.html#AVFilterFormats" title='AVFilterFormats' data-type='struct AVFilterFormats' data-ref="AVFilterFormats">AVFilterFormats</a> *<dfn class="local col9 decl" id="29a" title='a' data-type='AVFilterFormats *' data-ref="29a">a</dfn>,</td></tr>
+<tr><th id="122">122</th><td>                                      <a class="typedef" href="avfilter.h.html#AVFilterFormats" title='AVFilterFormats' data-type='struct AVFilterFormats' data-ref="AVFilterFormats">AVFilterFormats</a> *<dfn class="local col0 decl" id="30b" title='b' data-type='AVFilterFormats *' data-ref="30b">b</dfn>);</td></tr>
+<tr><th id="123">123</th><td></td></tr>
+<tr><th id="124">124</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="125">125</th><td><i class="doc"> * Construct an empty AVFilterChannelLayouts/AVFilterFormats struct --</i></td></tr>
+<tr><th id="126">126</th><td><i class="doc"> * representing any channel layout (with known disposition)/sample rate.</i></td></tr>
+<tr><th id="127">127</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="128">128</th><td><a class="macro" href="../libavutil/attributes.h.html#56" title="__attribute__((warn_unused_result))" data-ref="_M/av_warn_unused_result">av_warn_unused_result</a></td></tr>
+<tr><th id="129">129</th><td><a class="typedef" href="#AVFilterChannelLayouts" title='AVFilterChannelLayouts' data-type='struct AVFilterChannelLayouts' data-ref="AVFilterChannelLayouts">AVFilterChannelLayouts</a> *<dfn class="decl" id="ff_all_channel_layouts" title='ff_all_channel_layouts' data-ref="ff_all_channel_layouts">ff_all_channel_layouts</dfn>(<em>void</em>);</td></tr>
+<tr><th id="130">130</th><td></td></tr>
+<tr><th id="131">131</th><td><a class="macro" href="../libavutil/attributes.h.html#56" title="__attribute__((warn_unused_result))" data-ref="_M/av_warn_unused_result">av_warn_unused_result</a></td></tr>
+<tr><th id="132">132</th><td><a class="typedef" href="avfilter.h.html#AVFilterFormats" title='AVFilterFormats' data-type='struct AVFilterFormats' data-ref="AVFilterFormats">AVFilterFormats</a> *<dfn class="decl" id="ff_all_samplerates" title='ff_all_samplerates' data-ref="ff_all_samplerates">ff_all_samplerates</dfn>(<em>void</em>);</td></tr>
+<tr><th id="133">133</th><td></td></tr>
+<tr><th id="134">134</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="135">135</th><td><i class="doc"> * Construct an AVFilterChannelLayouts coding for any channel layout, with</i></td></tr>
+<tr><th id="136">136</th><td><i class="doc"> * known or unknown disposition.</i></td></tr>
+<tr><th id="137">137</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="138">138</th><td><a class="macro" href="../libavutil/attributes.h.html#56" title="__attribute__((warn_unused_result))" data-ref="_M/av_warn_unused_result">av_warn_unused_result</a></td></tr>
+<tr><th id="139">139</th><td><a class="typedef" href="#AVFilterChannelLayouts" title='AVFilterChannelLayouts' data-type='struct AVFilterChannelLayouts' data-ref="AVFilterChannelLayouts">AVFilterChannelLayouts</a> *<dfn class="decl" id="ff_all_channel_counts" title='ff_all_channel_counts' data-ref="ff_all_channel_counts">ff_all_channel_counts</dfn>(<em>void</em>);</td></tr>
+<tr><th id="140">140</th><td></td></tr>
+<tr><th id="141">141</th><td><a class="macro" href="../libavutil/attributes.h.html#56" title="__attribute__((warn_unused_result))" data-ref="_M/av_warn_unused_result">av_warn_unused_result</a></td></tr>
+<tr><th id="142">142</th><td><a class="typedef" href="#AVFilterChannelLayouts" title='AVFilterChannelLayouts' data-type='struct AVFilterChannelLayouts' data-ref="AVFilterChannelLayouts">AVFilterChannelLayouts</a> *<dfn class="decl" id="avfilter_make_format64_list" title='avfilter_make_format64_list' data-ref="avfilter_make_format64_list">avfilter_make_format64_list</dfn>(<em>const</em> <a class="typedef" href="../../include/x86_64-linux-gnu/sys/types.h.html#197" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> *<dfn class="local col1 decl" id="31fmts" title='fmts' data-type='const int64_t *' data-ref="31fmts">fmts</dfn>);</td></tr>
+<tr><th id="143">143</th><td></td></tr>
+<tr><th id="144">144</th><td><a class="macro" href="../libavutil/attributes.h.html#56" title="__attribute__((warn_unused_result))" data-ref="_M/av_warn_unused_result">av_warn_unused_result</a></td></tr>
+<tr><th id="145">145</th><td><a class="typedef" href="#AVFilterChannelLayouts" title='AVFilterChannelLayouts' data-type='struct AVFilterChannelLayouts' data-ref="AVFilterChannelLayouts">AVFilterChannelLayouts</a> *<dfn class="decl" id="ff_make_formatu64_list" title='ff_make_formatu64_list' data-ref="ff_make_formatu64_list">ff_make_formatu64_list</dfn>(<em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint64_t" title='uint64_t' data-type='unsigned long' data-ref="uint64_t">uint64_t</a> *<dfn class="local col2 decl" id="32fmts" title='fmts' data-type='const uint64_t *' data-ref="32fmts">fmts</dfn>);</td></tr>
+<tr><th id="146">146</th><td></td></tr>
+<tr><th id="147">147</th><td></td></tr>
+<tr><th id="148">148</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="149">149</th><td><i class="doc"> * A helper for query_formats() which sets all links to the same list of channel</i></td></tr>
+<tr><th id="150">150</th><td><i class="doc"> * layouts/sample rates. If there are no links hooked to this filter, the list</i></td></tr>
+<tr><th id="151">151</th><td><i class="doc"> * is freed.</i></td></tr>
+<tr><th id="152">152</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="153">153</th><td><a class="macro" href="../libavutil/attributes.h.html#56" title="__attribute__((warn_unused_result))" data-ref="_M/av_warn_unused_result">av_warn_unused_result</a></td></tr>
+<tr><th id="154">154</th><td><em>int</em> <dfn class="decl" id="ff_set_common_channel_layouts" title='ff_set_common_channel_layouts' data-ref="ff_set_common_channel_layouts">ff_set_common_channel_layouts</dfn>(<a class="typedef" href="avfilter.h.html#AVFilterContext" title='AVFilterContext' data-type='struct AVFilterContext' data-ref="AVFilterContext">AVFilterContext</a> *<dfn class="local col3 decl" id="33ctx" title='ctx' data-type='AVFilterContext *' data-ref="33ctx">ctx</dfn>,</td></tr>
+<tr><th id="155">155</th><td>                                  <a class="typedef" href="#AVFilterChannelLayouts" title='AVFilterChannelLayouts' data-type='struct AVFilterChannelLayouts' data-ref="AVFilterChannelLayouts">AVFilterChannelLayouts</a> *<dfn class="local col4 decl" id="34layouts" title='layouts' data-type='AVFilterChannelLayouts *' data-ref="34layouts">layouts</dfn>);</td></tr>
+<tr><th id="156">156</th><td><a class="macro" href="../libavutil/attributes.h.html#56" title="__attribute__((warn_unused_result))" data-ref="_M/av_warn_unused_result">av_warn_unused_result</a></td></tr>
+<tr><th id="157">157</th><td><em>int</em> <dfn class="decl" id="ff_set_common_samplerates" title='ff_set_common_samplerates' data-ref="ff_set_common_samplerates">ff_set_common_samplerates</dfn>(<a class="typedef" href="avfilter.h.html#AVFilterContext" title='AVFilterContext' data-type='struct AVFilterContext' data-ref="AVFilterContext">AVFilterContext</a> *<dfn class="local col5 decl" id="35ctx" title='ctx' data-type='AVFilterContext *' data-ref="35ctx">ctx</dfn>,</td></tr>
+<tr><th id="158">158</th><td>                              <a class="typedef" href="avfilter.h.html#AVFilterFormats" title='AVFilterFormats' data-type='struct AVFilterFormats' data-ref="AVFilterFormats">AVFilterFormats</a> *<dfn class="local col6 decl" id="36samplerates" title='samplerates' data-type='AVFilterFormats *' data-ref="36samplerates">samplerates</dfn>);</td></tr>
+<tr><th id="159">159</th><td></td></tr>
+<tr><th id="160">160</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="161">161</th><td><i class="doc"> * A helper for query_formats() which sets all links to the same list of</i></td></tr>
+<tr><th id="162">162</th><td><i class="doc"> * formats. If there are no links hooked to this filter, the list of formats is</i></td></tr>
+<tr><th id="163">163</th><td><i class="doc"> * freed.</i></td></tr>
+<tr><th id="164">164</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="165">165</th><td><a class="macro" href="../libavutil/attributes.h.html#56" title="__attribute__((warn_unused_result))" data-ref="_M/av_warn_unused_result">av_warn_unused_result</a></td></tr>
+<tr><th id="166">166</th><td><em>int</em> <dfn class="decl" id="ff_set_common_formats" title='ff_set_common_formats' data-ref="ff_set_common_formats">ff_set_common_formats</dfn>(<a class="typedef" href="avfilter.h.html#AVFilterContext" title='AVFilterContext' data-type='struct AVFilterContext' data-ref="AVFilterContext">AVFilterContext</a> *<dfn class="local col7 decl" id="37ctx" title='ctx' data-type='AVFilterContext *' data-ref="37ctx">ctx</dfn>, <a class="typedef" href="avfilter.h.html#AVFilterFormats" title='AVFilterFormats' data-type='struct AVFilterFormats' data-ref="AVFilterFormats">AVFilterFormats</a> *<dfn class="local col8 decl" id="38formats" title='formats' data-type='AVFilterFormats *' data-ref="38formats">formats</dfn>);</td></tr>
+<tr><th id="167">167</th><td></td></tr>
+<tr><th id="168">168</th><td><a class="macro" href="../libavutil/attributes.h.html#56" title="__attribute__((warn_unused_result))" data-ref="_M/av_warn_unused_result">av_warn_unused_result</a></td></tr>
+<tr><th id="169">169</th><td><em>int</em> <dfn class="decl" id="ff_add_channel_layout" title='ff_add_channel_layout' data-ref="ff_add_channel_layout">ff_add_channel_layout</dfn>(<a class="typedef" href="#AVFilterChannelLayouts" title='AVFilterChannelLayouts' data-type='struct AVFilterChannelLayouts' data-ref="AVFilterChannelLayouts">AVFilterChannelLayouts</a> **<dfn class="local col9 decl" id="39l" title='l' data-type='AVFilterChannelLayouts **' data-ref="39l">l</dfn>, <a class="typedef" href="../../include/stdint.h.html#uint64_t" title='uint64_t' data-type='unsigned long' data-ref="uint64_t">uint64_t</a> <dfn class="local col0 decl" id="40channel_layout" title='channel_layout' data-type='uint64_t' data-ref="40channel_layout">channel_layout</dfn>);</td></tr>
+<tr><th id="170">170</th><td></td></tr>
+<tr><th id="171">171</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="172">172</th><td><i class="doc"> * Add *ref as a new reference to f.</i></td></tr>
+<tr><th id="173">173</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="174">174</th><td><a class="macro" href="../libavutil/attributes.h.html#56" title="__attribute__((warn_unused_result))" data-ref="_M/av_warn_unused_result">av_warn_unused_result</a></td></tr>
+<tr><th id="175">175</th><td><em>int</em> <dfn class="decl" id="ff_channel_layouts_ref" title='ff_channel_layouts_ref' data-ref="ff_channel_layouts_ref">ff_channel_layouts_ref</dfn>(<a class="typedef" href="#AVFilterChannelLayouts" title='AVFilterChannelLayouts' data-type='struct AVFilterChannelLayouts' data-ref="AVFilterChannelLayouts">AVFilterChannelLayouts</a> *<dfn class="local col1 decl" id="41f" title='f' data-type='AVFilterChannelLayouts *' data-ref="41f">f</dfn>,</td></tr>
+<tr><th id="176">176</th><td>                           <a class="typedef" href="#AVFilterChannelLayouts" title='AVFilterChannelLayouts' data-type='struct AVFilterChannelLayouts' data-ref="AVFilterChannelLayouts">AVFilterChannelLayouts</a> **<dfn class="local col2 decl" id="42ref" title='ref' data-type='AVFilterChannelLayouts **' data-ref="42ref">ref</dfn>);</td></tr>
+<tr><th id="177">177</th><td></td></tr>
+<tr><th id="178">178</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="179">179</th><td><i class="doc"> * Remove a reference to a channel layouts list.</i></td></tr>
+<tr><th id="180">180</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="181">181</th><td><em>void</em> <dfn class="decl" id="ff_channel_layouts_unref" title='ff_channel_layouts_unref' data-ref="ff_channel_layouts_unref">ff_channel_layouts_unref</dfn>(<a class="typedef" href="#AVFilterChannelLayouts" title='AVFilterChannelLayouts' data-type='struct AVFilterChannelLayouts' data-ref="AVFilterChannelLayouts">AVFilterChannelLayouts</a> **<dfn class="local col3 decl" id="43ref" title='ref' data-type='AVFilterChannelLayouts **' data-ref="43ref">ref</dfn>);</td></tr>
+<tr><th id="182">182</th><td></td></tr>
+<tr><th id="183">183</th><td><em>void</em> <dfn class="decl" id="ff_channel_layouts_changeref" title='ff_channel_layouts_changeref' data-ref="ff_channel_layouts_changeref">ff_channel_layouts_changeref</dfn>(<a class="typedef" href="#AVFilterChannelLayouts" title='AVFilterChannelLayouts' data-type='struct AVFilterChannelLayouts' data-ref="AVFilterChannelLayouts">AVFilterChannelLayouts</a> **<dfn class="local col4 decl" id="44oldref" title='oldref' data-type='AVFilterChannelLayouts **' data-ref="44oldref">oldref</dfn>,</td></tr>
+<tr><th id="184">184</th><td>                                  <a class="typedef" href="#AVFilterChannelLayouts" title='AVFilterChannelLayouts' data-type='struct AVFilterChannelLayouts' data-ref="AVFilterChannelLayouts">AVFilterChannelLayouts</a> **<dfn class="local col5 decl" id="45newref" title='newref' data-type='AVFilterChannelLayouts **' data-ref="45newref">newref</dfn>);</td></tr>
+<tr><th id="185">185</th><td></td></tr>
+<tr><th id="186">186</th><td><a class="macro" href="../libavutil/attributes.h.html#56" title="__attribute__((warn_unused_result))" data-ref="_M/av_warn_unused_result">av_warn_unused_result</a></td></tr>
+<tr><th id="187">187</th><td><em>int</em> <dfn class="decl" id="ff_default_query_formats" title='ff_default_query_formats' data-ref="ff_default_query_formats">ff_default_query_formats</dfn>(<a class="typedef" href="avfilter.h.html#AVFilterContext" title='AVFilterContext' data-type='struct AVFilterContext' data-ref="AVFilterContext">AVFilterContext</a> *<dfn class="local col6 decl" id="46ctx" title='ctx' data-type='AVFilterContext *' data-ref="46ctx">ctx</dfn>);</td></tr>
+<tr><th id="188">188</th><td></td></tr>
+<tr><th id="189">189</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="190">190</th><td><i class="doc"> * Set the formats list to all existing formats.</i></td></tr>
+<tr><th id="191">191</th><td><i class="doc"> * This function behaves like ff_default_query_formats(), except it also</i></td></tr>
+<tr><th id="192">192</th><td><i class="doc"> * accepts channel layouts with unknown disposition. It should only be used</i></td></tr>
+<tr><th id="193">193</th><td><i class="doc"> * with audio filters.</i></td></tr>
+<tr><th id="194">194</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="195">195</th><td><a class="macro" href="../libavutil/attributes.h.html#56" title="__attribute__((warn_unused_result))" data-ref="_M/av_warn_unused_result">av_warn_unused_result</a></td></tr>
+<tr><th id="196">196</th><td><em>int</em> <dfn class="decl" id="ff_query_formats_all" title='ff_query_formats_all' data-ref="ff_query_formats_all">ff_query_formats_all</dfn>(<a class="typedef" href="avfilter.h.html#AVFilterContext" title='AVFilterContext' data-type='struct AVFilterContext' data-ref="AVFilterContext">AVFilterContext</a> *<dfn class="local col7 decl" id="47ctx" title='ctx' data-type='AVFilterContext *' data-ref="47ctx">ctx</dfn>);</td></tr>
+<tr><th id="197">197</th><td></td></tr>
+<tr><th id="198">198</th><td></td></tr>
+<tr><th id="199">199</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="200">200</th><td><i class="doc"> * Create a list of supported formats. This is intended for use in</i></td></tr>
+<tr><th id="201">201</th><td><i class="doc"> * AVFilter-&gt;query_formats().</i></td></tr>
+<tr><th id="202">202</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="203">203</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">fmts</span> list of media formats, terminated by -1</i></td></tr>
+<tr><th id="204">204</th><td><i class="doc"> * <span class="command">@return</span> the format list, with no existing references</i></td></tr>
+<tr><th id="205">205</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="206">206</th><td><a class="macro" href="../libavutil/attributes.h.html#56" title="__attribute__((warn_unused_result))" data-ref="_M/av_warn_unused_result">av_warn_unused_result</a></td></tr>
+<tr><th id="207">207</th><td><a class="typedef" href="avfilter.h.html#AVFilterFormats" title='AVFilterFormats' data-type='struct AVFilterFormats' data-ref="AVFilterFormats">AVFilterFormats</a> *<dfn class="decl" id="ff_make_format_list" title='ff_make_format_list' data-ref="ff_make_format_list">ff_make_format_list</dfn>(<em>const</em> <em>int</em> *<dfn class="local col8 decl" id="48fmts" title='fmts' data-type='const int *' data-ref="48fmts">fmts</dfn>);</td></tr>
+<tr><th id="208">208</th><td></td></tr>
+<tr><th id="209">209</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="210">210</th><td><i class="doc"> * Add fmt to the list of media formats contained in *avff.</i></td></tr>
+<tr><th id="211">211</th><td><i class="doc"> * If *avff is NULL the function allocates the filter formats struct</i></td></tr>
+<tr><th id="212">212</th><td><i class="doc"> * and puts its pointer in *avff.</i></td></tr>
+<tr><th id="213">213</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="214">214</th><td><i class="doc"> * <span class="command">@return</span> a non negative value in case of success, or a negative</i></td></tr>
+<tr><th id="215">215</th><td><i class="doc"> * value corresponding to an AVERROR code in case of error</i></td></tr>
+<tr><th id="216">216</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="217">217</th><td><a class="macro" href="../libavutil/attributes.h.html#56" title="__attribute__((warn_unused_result))" data-ref="_M/av_warn_unused_result">av_warn_unused_result</a></td></tr>
+<tr><th id="218">218</th><td><em>int</em> <dfn class="decl" id="ff_add_format" title='ff_add_format' data-ref="ff_add_format">ff_add_format</dfn>(<a class="typedef" href="avfilter.h.html#AVFilterFormats" title='AVFilterFormats' data-type='struct AVFilterFormats' data-ref="AVFilterFormats">AVFilterFormats</a> **<dfn class="local col9 decl" id="49avff" title='avff' data-type='AVFilterFormats **' data-ref="49avff">avff</dfn>, <a class="typedef" href="../../include/x86_64-linux-gnu/sys/types.h.html#197" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="local col0 decl" id="50fmt" title='fmt' data-type='int64_t' data-ref="50fmt">fmt</dfn>);</td></tr>
+<tr><th id="219">219</th><td></td></tr>
+<tr><th id="220">220</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="221">221</th><td><i class="doc"> * Return a list of all formats supported by FFmpeg for the given media type.</i></td></tr>
+<tr><th id="222">222</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="223">223</th><td><a class="macro" href="../libavutil/attributes.h.html#56" title="__attribute__((warn_unused_result))" data-ref="_M/av_warn_unused_result">av_warn_unused_result</a></td></tr>
+<tr><th id="224">224</th><td><a class="typedef" href="avfilter.h.html#AVFilterFormats" title='AVFilterFormats' data-type='struct AVFilterFormats' data-ref="AVFilterFormats">AVFilterFormats</a> *<dfn class="decl" id="ff_all_formats" title='ff_all_formats' data-ref="ff_all_formats">ff_all_formats</dfn>(<b>enum</b> <a class="type" href="../libavutil/avutil.h.html#AVMediaType" title='AVMediaType' data-ref="AVMediaType">AVMediaType</a> <dfn class="local col1 decl" id="51type" title='type' data-type='enum AVMediaType' data-ref="51type">type</dfn>);</td></tr>
+<tr><th id="225">225</th><td></td></tr>
+<tr><th id="226">226</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="227">227</th><td><i class="doc"> * Construct a formats list containing all planar sample formats.</i></td></tr>
+<tr><th id="228">228</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="229">229</th><td><a class="macro" href="../libavutil/attributes.h.html#56" title="__attribute__((warn_unused_result))" data-ref="_M/av_warn_unused_result">av_warn_unused_result</a></td></tr>
+<tr><th id="230">230</th><td><a class="typedef" href="avfilter.h.html#AVFilterFormats" title='AVFilterFormats' data-type='struct AVFilterFormats' data-ref="AVFilterFormats">AVFilterFormats</a> *<dfn class="decl" id="ff_planar_sample_fmts" title='ff_planar_sample_fmts' data-ref="ff_planar_sample_fmts">ff_planar_sample_fmts</dfn>(<em>void</em>);</td></tr>
+<tr><th id="231">231</th><td></td></tr>
+<tr><th id="232">232</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="233">233</th><td><i class="doc"> * Return a format list which contains the intersection of the formats of</i></td></tr>
+<tr><th id="234">234</th><td><i class="doc"> * a and b. Also, all the references of a, all the references of b, and</i></td></tr>
+<tr><th id="235">235</th><td><i class="doc"> * a and b themselves will be deallocated.</i></td></tr>
+<tr><th id="236">236</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="237">237</th><td><i class="doc"> * If a and b do not share any common formats, neither is modified, and NULL</i></td></tr>
+<tr><th id="238">238</th><td><i class="doc"> * is returned.</i></td></tr>
+<tr><th id="239">239</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="240">240</th><td><a class="typedef" href="avfilter.h.html#AVFilterFormats" title='AVFilterFormats' data-type='struct AVFilterFormats' data-ref="AVFilterFormats">AVFilterFormats</a> *<dfn class="decl" id="ff_merge_formats" title='ff_merge_formats' data-ref="ff_merge_formats">ff_merge_formats</dfn>(<a class="typedef" href="avfilter.h.html#AVFilterFormats" title='AVFilterFormats' data-type='struct AVFilterFormats' data-ref="AVFilterFormats">AVFilterFormats</a> *<dfn class="local col2 decl" id="52a" title='a' data-type='AVFilterFormats *' data-ref="52a">a</dfn>, <a class="typedef" href="avfilter.h.html#AVFilterFormats" title='AVFilterFormats' data-type='struct AVFilterFormats' data-ref="AVFilterFormats">AVFilterFormats</a> *<dfn class="local col3 decl" id="53b" title='b' data-type='AVFilterFormats *' data-ref="53b">b</dfn>,</td></tr>
+<tr><th id="241">241</th><td>                                  <b>enum</b> <a class="type" href="../libavutil/avutil.h.html#AVMediaType" title='AVMediaType' data-ref="AVMediaType">AVMediaType</a> <dfn class="local col4 decl" id="54type" title='type' data-type='enum AVMediaType' data-ref="54type">type</dfn>);</td></tr>
+<tr><th id="242">242</th><td></td></tr>
+<tr><th id="243">243</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="244">244</th><td><i class="doc"> * Add *ref as a new reference to formats.</i></td></tr>
+<tr><th id="245">245</th><td><i class="doc"> * That is the pointers will point like in the ascii art below:</i></td></tr>
+<tr><th id="246">246</th><td><i class="doc"> *   ________</i></td></tr>
+<tr><th id="247">247</th><td><i class="doc"> *  |formats |&lt;--------.</i></td></tr>
+<tr><th id="248">248</th><td><i class="doc"> *  |  ____  |     ____|___________________</i></td></tr>
+<tr><th id="249">249</th><td><i class="doc"> *  | |refs| |    |  __|_</i></td></tr>
+<tr><th id="250">250</th><td><i class="doc"> *  | |* * | |    | |  | |  AVFilterLink</i></td></tr>
+<tr><th id="251">251</th><td><i class="doc"> *  | |* *---------&gt;|*ref|</i></td></tr>
+<tr><th id="252">252</th><td><i class="doc"> *  | |____| |    | |____|</i></td></tr>
+<tr><th id="253">253</th><td><i class="doc"> *  |________|    |________________________</i></td></tr>
+<tr><th id="254">254</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="255">255</th><td><a class="macro" href="../libavutil/attributes.h.html#56" title="__attribute__((warn_unused_result))" data-ref="_M/av_warn_unused_result">av_warn_unused_result</a></td></tr>
+<tr><th id="256">256</th><td><em>int</em> <dfn class="decl" id="ff_formats_ref" title='ff_formats_ref' data-ref="ff_formats_ref">ff_formats_ref</dfn>(<a class="typedef" href="avfilter.h.html#AVFilterFormats" title='AVFilterFormats' data-type='struct AVFilterFormats' data-ref="AVFilterFormats">AVFilterFormats</a> *<dfn class="local col5 decl" id="55formats" title='formats' data-type='AVFilterFormats *' data-ref="55formats">formats</dfn>, <a class="typedef" href="avfilter.h.html#AVFilterFormats" title='AVFilterFormats' data-type='struct AVFilterFormats' data-ref="AVFilterFormats">AVFilterFormats</a> **<dfn class="local col6 decl" id="56ref" title='ref' data-type='AVFilterFormats **' data-ref="56ref">ref</dfn>);</td></tr>
+<tr><th id="257">257</th><td></td></tr>
+<tr><th id="258">258</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="259">259</th><td><i class="doc"> * If *ref is non-NULL, remove *ref as a reference to the format list</i></td></tr>
+<tr><th id="260">260</th><td><i class="doc"> * it currently points to, deallocates that list if this was the last</i></td></tr>
+<tr><th id="261">261</th><td><i class="doc"> * reference, and sets *ref to NULL.</i></td></tr>
+<tr><th id="262">262</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="263">263</th><td><i class="doc"> *         Before                                 After</i></td></tr>
+<tr><th id="264">264</th><td><i class="doc"> *   ________                               ________         NULL</i></td></tr>
+<tr><th id="265">265</th><td><i class="doc"> *  |formats |&lt;--------.                   |formats |         ^</i></td></tr>
+<tr><th id="266">266</th><td><i class="doc"> *  |  ____  |     ____|________________   |  ____  |     ____|________________</i></td></tr>
+<tr><th id="267">267</th><td><i class="doc"> *  | |refs| |    |  __|_                  | |refs| |    |  __|_</i></td></tr>
+<tr><th id="268">268</th><td><i class="doc"> *  | |* * | |    | |  | |  AVFilterLink   | |* * | |    | |  | |  AVFilterLink</i></td></tr>
+<tr><th id="269">269</th><td><i class="doc"> *  | |* *---------&gt;|*ref|                 | |*   | |    | |*ref|</i></td></tr>
+<tr><th id="270">270</th><td><i class="doc"> *  | |____| |    | |____|                 | |____| |    | |____|</i></td></tr>
+<tr><th id="271">271</th><td><i class="doc"> *  |________|    |_____________________   |________|    |_____________________</i></td></tr>
+<tr><th id="272">272</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="273">273</th><td><em>void</em> <dfn class="decl" id="ff_formats_unref" title='ff_formats_unref' data-ref="ff_formats_unref">ff_formats_unref</dfn>(<a class="typedef" href="avfilter.h.html#AVFilterFormats" title='AVFilterFormats' data-type='struct AVFilterFormats' data-ref="AVFilterFormats">AVFilterFormats</a> **<dfn class="local col7 decl" id="57ref" title='ref' data-type='AVFilterFormats **' data-ref="57ref">ref</dfn>);</td></tr>
+<tr><th id="274">274</th><td></td></tr>
+<tr><th id="275">275</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="276">276</th><td><i class="doc"> *         Before                                 After</i></td></tr>
+<tr><th id="277">277</th><td><i class="doc"> *   ________                         ________</i></td></tr>
+<tr><th id="278">278</th><td><i class="doc"> *  |formats |&lt;---------.            |formats |&lt;---------.</i></td></tr>
+<tr><th id="279">279</th><td><i class="doc"> *  |  ____  |       ___|___         |  ____  |       ___|___</i></td></tr>
+<tr><th id="280">280</th><td><i class="doc"> *  | |refs| |      |   |   |        | |refs| |      |   |   |   NULL</i></td></tr>
+<tr><th id="281">281</th><td><i class="doc"> *  | |* *---------&gt;|*oldref|        | |* *---------&gt;|*newref|     ^</i></td></tr>
+<tr><th id="282">282</th><td><i class="doc"> *  | |* * | |      |_______|        | |* * | |      |_______|  ___|___</i></td></tr>
+<tr><th id="283">283</th><td><i class="doc"> *  | |____| |                       | |____| |                |   |   |</i></td></tr>
+<tr><th id="284">284</th><td><i class="doc"> *  |________|                       |________|                |*oldref|</i></td></tr>
+<tr><th id="285">285</th><td><i class="doc"> *                                                             |_______|</i></td></tr>
+<tr><th id="286">286</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="287">287</th><td><em>void</em> <dfn class="decl" id="ff_formats_changeref" title='ff_formats_changeref' data-ref="ff_formats_changeref">ff_formats_changeref</dfn>(<a class="typedef" href="avfilter.h.html#AVFilterFormats" title='AVFilterFormats' data-type='struct AVFilterFormats' data-ref="AVFilterFormats">AVFilterFormats</a> **<dfn class="local col8 decl" id="58oldref" title='oldref' data-type='AVFilterFormats **' data-ref="58oldref">oldref</dfn>, <a class="typedef" href="avfilter.h.html#AVFilterFormats" title='AVFilterFormats' data-type='struct AVFilterFormats' data-ref="AVFilterFormats">AVFilterFormats</a> **<dfn class="local col9 decl" id="59newref" title='newref' data-type='AVFilterFormats **' data-ref="59newref">newref</dfn>);</td></tr>
+<tr><th id="288">288</th><td></td></tr>
+<tr><th id="289">289</th><td><u>#<span data-ppcond="19">endif</span> /* AVFILTER_FORMATS_H */</u></td></tr>
+<tr><th id="290">290</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated while processing <a href='aeval.c.html'>ffmpeg/libavfilter/aeval.c</a><br/>Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

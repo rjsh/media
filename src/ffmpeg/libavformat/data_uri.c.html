@@ -1,0 +1,136 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>data_uri.c source code [ffmpeg/libavformat/data_uri.c] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavformat/data_uri.c'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavformat</a>/<a href='data_uri.c.html'>data_uri.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * Copyright (c) 2012 Nicolas George</i></td></tr>
+<tr><th id="3">3</th><td><i> *</i></td></tr>
+<tr><th id="4">4</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="5">5</th><td><i> *</i></td></tr>
+<tr><th id="6">6</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="7">7</th><td><i> * modify it under the terms of the GNU Lesser General Public License</i></td></tr>
+<tr><th id="8">8</th><td><i> * as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="9">9</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="10">10</th><td><i> *</i></td></tr>
+<tr><th id="11">11</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="12">12</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="13">13</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the</i></td></tr>
+<tr><th id="14">14</th><td><i> * GNU Lesser General Public License for more details.</i></td></tr>
+<tr><th id="15">15</th><td><i> *</i></td></tr>
+<tr><th id="16">16</th><td><i> * You should have received a copy of the GNU Lesser General Public License</i></td></tr>
+<tr><th id="17">17</th><td><i> * along with FFmpeg; if not, write to the Free Software Foundation, Inc.,</i></td></tr>
+<tr><th id="18">18</th><td><i> * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="19">19</th><td><i> */</i></td></tr>
+<tr><th id="20">20</th><td></td></tr>
+<tr><th id="21">21</th><td><u>#include <a href="../../include/string.h.html">&lt;string.h&gt;</a></u></td></tr>
+<tr><th id="22">22</th><td><u>#include <a href="../libavutil/avstring.h.html">"libavutil/avstring.h"</a></u></td></tr>
+<tr><th id="23">23</th><td><u>#include <a href="../libavutil/base64.h.html">"libavutil/base64.h"</a></u></td></tr>
+<tr><th id="24">24</th><td><u>#include <a href="url.h.html">"url.h"</a></u></td></tr>
+<tr><th id="25">25</th><td></td></tr>
+<tr><th id="26">26</th><td><b>typedef</b> <b>struct</b> {</td></tr>
+<tr><th id="27">27</th><td>    <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="tu decl" id="{anonymous}::data" title='&lt;anonymous struct&gt;::data' data-type='const uint8_t *' data-ref="{anonymous}::data">data</dfn>;</td></tr>
+<tr><th id="28">28</th><td>    <em>void</em> *<dfn class="tu decl" id="{anonymous}::tofree" title='&lt;anonymous struct&gt;::tofree' data-type='void *' data-ref="{anonymous}::tofree">tofree</dfn>;</td></tr>
+<tr><th id="29">29</th><td>    <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="tu decl" id="{anonymous}::size" title='&lt;anonymous struct&gt;::size' data-type='size_t' data-ref="{anonymous}::size">size</dfn>;</td></tr>
+<tr><th id="30">30</th><td>    <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="tu decl" id="{anonymous}::pos" title='&lt;anonymous struct&gt;::pos' data-type='size_t' data-ref="{anonymous}::pos">pos</dfn>;</td></tr>
+<tr><th id="31">31</th><td>} <dfn class="typedef" id="DataContext" title='DataContext' data-type='struct DataContext' data-ref="DataContext">DataContext</dfn>;</td></tr>
+<tr><th id="32">32</th><td></td></tr>
+<tr><th id="33">33</th><td><em>static</em> <a class="macro" href="../libavutil/attributes.h.html#84" title="" data-ref="_M/av_cold">av_cold</a> <em>int</em> <dfn class="tu decl def" id="data_open" title='data_open' data-type='int data_open(URLContext * h, const char * uri, int flags)' data-ref="data_open">data_open</dfn>(<a class="typedef" href="url.h.html#URLContext" title='URLContext' data-type='struct URLContext' data-ref="URLContext">URLContext</a> *<dfn class="local col1 decl" id="1h" title='h' data-type='URLContext *' data-ref="1h">h</dfn>, <em>const</em> <em>char</em> *<dfn class="local col2 decl" id="2uri" title='uri' data-type='const char *' data-ref="2uri">uri</dfn>, <em>int</em> <dfn class="local col3 decl" id="3flags" title='flags' data-type='int' data-ref="3flags">flags</dfn>)</td></tr>
+<tr><th id="34">34</th><td>{</td></tr>
+<tr><th id="35">35</th><td>    <a class="typedef" href="#DataContext" title='DataContext' data-type='struct DataContext' data-ref="DataContext">DataContext</a> *<dfn class="local col4 decl" id="4dc" title='dc' data-type='DataContext *' data-ref="4dc">dc</dfn> = <a class="local col1 ref" href="#1h" title='h' data-ref="1h">h</a>-&gt;<a class="ref" href="url.h.html#URLContext::priv_data" title='URLContext::priv_data' data-ref="URLContext::priv_data">priv_data</a>;</td></tr>
+<tr><th id="36">36</th><td>    <em>const</em> <em>char</em> *<dfn class="local col5 decl" id="5data" title='data' data-type='const char *' data-ref="5data">data</dfn>, *<dfn class="local col6 decl" id="6opt" title='opt' data-type='const char *' data-ref="6opt">opt</dfn>, *<dfn class="local col7 decl" id="7next" title='next' data-type='const char *' data-ref="7next">next</dfn>;</td></tr>
+<tr><th id="37">37</th><td>    <em>char</em> *<dfn class="local col8 decl" id="8ddata" title='ddata' data-type='char *' data-ref="8ddata">ddata</dfn>;</td></tr>
+<tr><th id="38">38</th><td>    <em>int</em> <dfn class="local col9 decl" id="9ret" title='ret' data-type='int' data-ref="9ret">ret</dfn>, <dfn class="local col0 decl" id="10base64" title='base64' data-type='int' data-ref="10base64">base64</dfn> = <var>0</var>;</td></tr>
+<tr><th id="39">39</th><td>    <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="local col1 decl" id="11in_size" title='in_size' data-type='size_t' data-ref="11in_size">in_size</dfn>;</td></tr>
+<tr><th id="40">40</th><td></td></tr>
+<tr><th id="41">41</th><td>    <i>/* data:content/type[;base64],payload */</i></td></tr>
+<tr><th id="42">42</th><td></td></tr>
+<tr><th id="43">43</th><td>    <a class="ref" href="../libavutil/avstring.h.html#av_strstart" title='av_strstart' data-ref="av_strstart">av_strstart</a>(<a class="local col2 ref" href="#2uri" title='uri' data-ref="2uri">uri</a>, <q>"data:"</q>, &amp;<a class="local col2 ref" href="#2uri" title='uri' data-ref="2uri">uri</a>);</td></tr>
+<tr><th id="44">44</th><td>    <a class="local col5 ref" href="#5data" title='data' data-ref="5data">data</a> = <a class="ref" href="../../include/string.h.html#strchr" title='strchr' data-ref="strchr">strchr</a>(<a class="local col2 ref" href="#2uri" title='uri' data-ref="2uri">uri</a>, <kbd>','</kbd>);</td></tr>
+<tr><th id="45">45</th><td>    <b>if</b> (!<a class="local col5 ref" href="#5data" title='data' data-ref="5data">data</a>) {</td></tr>
+<tr><th id="46">46</th><td>        <a class="ref" href="../libavutil/log.h.html#av_log" title='av_log' data-ref="av_log">av_log</a>(<a class="local col1 ref" href="#1h" title='h' data-ref="1h">h</a>, <a class="macro" href="../libavutil/log.h.html#176" title="16" data-ref="_M/AV_LOG_ERROR">AV_LOG_ERROR</a>, <q>"No ',' delimiter in URI\n"</q>);</td></tr>
+<tr><th id="47">47</th><td>        <b>return</b> <a class="macro" href="../libavutil/error.h.html#39" title="(-(22))" data-ref="_M/AVERROR">AVERROR</a>(<a class="macro" href="../../include/asm-generic/errno-base.h.html#25" title="22" data-ref="_M/EINVAL">EINVAL</a>);</td></tr>
+<tr><th id="48">48</th><td>    }</td></tr>
+<tr><th id="49">49</th><td>    <a class="local col6 ref" href="#6opt" title='opt' data-ref="6opt">opt</a> = <a class="local col2 ref" href="#2uri" title='uri' data-ref="2uri">uri</a>;</td></tr>
+<tr><th id="50">50</th><td>    <b>while</b> (<a class="local col6 ref" href="#6opt" title='opt' data-ref="6opt">opt</a> &lt; <a class="local col5 ref" href="#5data" title='data' data-ref="5data">data</a>) {</td></tr>
+<tr><th id="51">51</th><td>        <a class="local col7 ref" href="#7next" title='next' data-ref="7next">next</a> = <a class="ref" href="../libavutil/avutil.h.html#av_x_if_null" title='av_x_if_null' data-ref="av_x_if_null">av_x_if_null</a>(<a class="ref" href="../../include/string.h.html#memchr" title='memchr' data-ref="memchr">memchr</a>(<a class="local col6 ref" href="#6opt" title='opt' data-ref="6opt">opt</a>, <kbd>';'</kbd>, <a class="local col5 ref" href="#5data" title='data' data-ref="5data">data</a> - <a class="local col6 ref" href="#6opt" title='opt' data-ref="6opt">opt</a>), <a class="local col5 ref" href="#5data" title='data' data-ref="5data">data</a>);</td></tr>
+<tr><th id="52">52</th><td>        <b>if</b> (<a class="local col6 ref" href="#6opt" title='opt' data-ref="6opt">opt</a> == <a class="local col2 ref" href="#2uri" title='uri' data-ref="2uri">uri</a>) {</td></tr>
+<tr><th id="53">53</th><td>            <b>if</b> (!<a class="ref" href="../../include/string.h.html#memchr" title='memchr' data-ref="memchr">memchr</a>(<a class="local col6 ref" href="#6opt" title='opt' data-ref="6opt">opt</a>, <kbd>'/'</kbd>, <a class="local col7 ref" href="#7next" title='next' data-ref="7next">next</a> - <a class="local col6 ref" href="#6opt" title='opt' data-ref="6opt">opt</a>)) { <i>/* basic validity check */</i></td></tr>
+<tr><th id="54">54</th><td>                <a class="ref" href="../libavutil/log.h.html#av_log" title='av_log' data-ref="av_log">av_log</a>(<a class="local col1 ref" href="#1h" title='h' data-ref="1h">h</a>, <a class="macro" href="../libavutil/log.h.html#176" title="16" data-ref="_M/AV_LOG_ERROR">AV_LOG_ERROR</a>, <q>"Invalid content-type '%.*s'\n"</q>,</td></tr>
+<tr><th id="55">55</th><td>                       (<em>int</em>)(<a class="local col7 ref" href="#7next" title='next' data-ref="7next">next</a> - <a class="local col6 ref" href="#6opt" title='opt' data-ref="6opt">opt</a>), <a class="local col6 ref" href="#6opt" title='opt' data-ref="6opt">opt</a>);</td></tr>
+<tr><th id="56">56</th><td>                <b>return</b> <a class="macro" href="../libavutil/error.h.html#39" title="(-(22))" data-ref="_M/AVERROR">AVERROR</a>(<a class="macro" href="../../include/asm-generic/errno-base.h.html#25" title="22" data-ref="_M/EINVAL">EINVAL</a>);</td></tr>
+<tr><th id="57">57</th><td>            }</td></tr>
+<tr><th id="58">58</th><td>            <a class="ref" href="../libavutil/log.h.html#av_log" title='av_log' data-ref="av_log">av_log</a>(<a class="local col1 ref" href="#1h" title='h' data-ref="1h">h</a>, <a class="macro" href="../libavutil/log.h.html#192" title="40" data-ref="_M/AV_LOG_VERBOSE">AV_LOG_VERBOSE</a>, <q>"Content-type: %.*s\n"</q>,</td></tr>
+<tr><th id="59">59</th><td>                   (<em>int</em>)(<a class="local col7 ref" href="#7next" title='next' data-ref="7next">next</a> - <a class="local col6 ref" href="#6opt" title='opt' data-ref="6opt">opt</a>), <a class="local col6 ref" href="#6opt" title='opt' data-ref="6opt">opt</a>);</td></tr>
+<tr><th id="60">60</th><td>        } <b>else</b> {</td></tr>
+<tr><th id="61">61</th><td>            <b>if</b> (!<a class="ref" href="../libavutil/avstring.h.html#av_strncasecmp" title='av_strncasecmp' data-ref="av_strncasecmp">av_strncasecmp</a>(<a class="local col6 ref" href="#6opt" title='opt' data-ref="6opt">opt</a>, <q>"base64"</q>, <a class="local col7 ref" href="#7next" title='next' data-ref="7next">next</a> - <a class="local col6 ref" href="#6opt" title='opt' data-ref="6opt">opt</a>)) {</td></tr>
+<tr><th id="62">62</th><td>                <a class="local col0 ref" href="#10base64" title='base64' data-ref="10base64">base64</a> = <var>1</var>;</td></tr>
+<tr><th id="63">63</th><td>            } <b>else</b> {</td></tr>
+<tr><th id="64">64</th><td>                <a class="ref" href="../libavutil/log.h.html#av_log" title='av_log' data-ref="av_log">av_log</a>(<a class="local col1 ref" href="#1h" title='h' data-ref="1h">h</a>, <a class="macro" href="../libavutil/log.h.html#192" title="40" data-ref="_M/AV_LOG_VERBOSE">AV_LOG_VERBOSE</a>, <q>"Ignoring option '%.*s'\n"</q>,</td></tr>
+<tr><th id="65">65</th><td>                       (<em>int</em>)(<a class="local col7 ref" href="#7next" title='next' data-ref="7next">next</a> - <a class="local col6 ref" href="#6opt" title='opt' data-ref="6opt">opt</a>), <a class="local col6 ref" href="#6opt" title='opt' data-ref="6opt">opt</a>);</td></tr>
+<tr><th id="66">66</th><td>            }</td></tr>
+<tr><th id="67">67</th><td>        }</td></tr>
+<tr><th id="68">68</th><td>        <a class="local col6 ref" href="#6opt" title='opt' data-ref="6opt">opt</a> = <a class="local col7 ref" href="#7next" title='next' data-ref="7next">next</a> + <var>1</var>;</td></tr>
+<tr><th id="69">69</th><td>    }</td></tr>
+<tr><th id="70">70</th><td></td></tr>
+<tr><th id="71">71</th><td>    <a class="local col5 ref" href="#5data" title='data' data-ref="5data">data</a>++;</td></tr>
+<tr><th id="72">72</th><td>    <a class="local col1 ref" href="#11in_size" title='in_size' data-ref="11in_size">in_size</a> = <a class="ref" href="../../include/string.h.html#strlen" title='strlen' data-ref="strlen">strlen</a>(<a class="local col5 ref" href="#5data" title='data' data-ref="5data">data</a>);</td></tr>
+<tr><th id="73">73</th><td>    <b>if</b> (<a class="local col0 ref" href="#10base64" title='base64' data-ref="10base64">base64</a>) {</td></tr>
+<tr><th id="74">74</th><td>        <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="local col2 decl" id="12out_size" title='out_size' data-type='size_t' data-ref="12out_size">out_size</dfn> = <var>3</var> * (<a class="local col1 ref" href="#11in_size" title='in_size' data-ref="11in_size">in_size</a> / <var>4</var>) + <var>1</var>;</td></tr>
+<tr><th id="75">75</th><td></td></tr>
+<tr><th id="76">76</th><td>        <b>if</b> (<a class="local col2 ref" href="#12out_size" title='out_size' data-ref="12out_size">out_size</a> &gt; <span class="macro" title="2147483647" data-ref="_M/INT_MAX">INT_MAX</span> || !(<a class="local col8 ref" href="#8ddata" title='ddata' data-ref="8ddata">ddata</a> = <a class="ref" href="../libavutil/mem.h.html#av_malloc" title='av_malloc' data-ref="av_malloc">av_malloc</a>(<a class="local col2 ref" href="#12out_size" title='out_size' data-ref="12out_size">out_size</a>)))</td></tr>
+<tr><th id="77">77</th><td>            <b>return</b> <a class="macro" href="../libavutil/error.h.html#39" title="(-(12))" data-ref="_M/AVERROR">AVERROR</a>(<a class="macro" href="../../include/asm-generic/errno-base.h.html#15" title="12" data-ref="_M/ENOMEM">ENOMEM</a>);</td></tr>
+<tr><th id="78">78</th><td>        <b>if</b> ((<a class="local col9 ref" href="#9ret" title='ret' data-ref="9ret">ret</a> = <a class="ref" href="../libavutil/base64.h.html#av_base64_decode" title='av_base64_decode' data-ref="av_base64_decode">av_base64_decode</a>(<a class="local col8 ref" href="#8ddata" title='ddata' data-ref="8ddata">ddata</a>, <a class="local col5 ref" href="#5data" title='data' data-ref="5data">data</a>, <a class="local col2 ref" href="#12out_size" title='out_size' data-ref="12out_size">out_size</a>)) &lt; <var>0</var>) {</td></tr>
+<tr><th id="79">79</th><td>            <a class="ref" href="../libavutil/mem.h.html#av_free" title='av_free' data-ref="av_free">av_free</a>(<a class="local col8 ref" href="#8ddata" title='ddata' data-ref="8ddata">ddata</a>);</td></tr>
+<tr><th id="80">80</th><td>            <a class="ref" href="../libavutil/log.h.html#av_log" title='av_log' data-ref="av_log">av_log</a>(<a class="local col1 ref" href="#1h" title='h' data-ref="1h">h</a>, <a class="macro" href="../libavutil/log.h.html#176" title="16" data-ref="_M/AV_LOG_ERROR">AV_LOG_ERROR</a>, <q>"Invalid base64 in URI\n"</q>);</td></tr>
+<tr><th id="81">81</th><td>            <b>return</b> <a class="local col9 ref" href="#9ret" title='ret' data-ref="9ret">ret</a>;</td></tr>
+<tr><th id="82">82</th><td>        }</td></tr>
+<tr><th id="83">83</th><td>        <a class="local col4 ref" href="#4dc" title='dc' data-ref="4dc">dc</a>-&gt;<a class="tu ref" href="#{anonymous}::data" title='&lt;anonymous struct&gt;::data' data-use='w' data-ref="{anonymous}::data">data</a> = <a class="local col4 ref" href="#4dc" title='dc' data-ref="4dc">dc</a>-&gt;<a class="tu ref" href="#{anonymous}::tofree" title='&lt;anonymous struct&gt;::tofree' data-use='w' data-ref="{anonymous}::tofree">tofree</a> = <a class="local col8 ref" href="#8ddata" title='ddata' data-ref="8ddata">ddata</a>;</td></tr>
+<tr><th id="84">84</th><td>        <a class="local col4 ref" href="#4dc" title='dc' data-ref="4dc">dc</a>-&gt;<a class="tu ref" href="#{anonymous}::size" title='&lt;anonymous struct&gt;::size' data-use='w' data-ref="{anonymous}::size">size</a> = <a class="local col9 ref" href="#9ret" title='ret' data-ref="9ret">ret</a>;</td></tr>
+<tr><th id="85">85</th><td>    } <b>else</b> {</td></tr>
+<tr><th id="86">86</th><td>        <a class="local col4 ref" href="#4dc" title='dc' data-ref="4dc">dc</a>-&gt;<a class="tu ref" href="#{anonymous}::data" title='&lt;anonymous struct&gt;::data' data-use='w' data-ref="{anonymous}::data">data</a> = <a class="local col5 ref" href="#5data" title='data' data-ref="5data">data</a>;</td></tr>
+<tr><th id="87">87</th><td>        <a class="local col4 ref" href="#4dc" title='dc' data-ref="4dc">dc</a>-&gt;<a class="tu ref" href="#{anonymous}::size" title='&lt;anonymous struct&gt;::size' data-use='w' data-ref="{anonymous}::size">size</a> = <a class="local col1 ref" href="#11in_size" title='in_size' data-ref="11in_size">in_size</a>;</td></tr>
+<tr><th id="88">88</th><td>    }</td></tr>
+<tr><th id="89">89</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="90">90</th><td>}</td></tr>
+<tr><th id="91">91</th><td></td></tr>
+<tr><th id="92">92</th><td><em>static</em> <a class="macro" href="../libavutil/attributes.h.html#84" title="" data-ref="_M/av_cold">av_cold</a> <em>int</em> <dfn class="tu decl def" id="data_close" title='data_close' data-type='int data_close(URLContext * h)' data-ref="data_close">data_close</dfn>(<a class="typedef" href="url.h.html#URLContext" title='URLContext' data-type='struct URLContext' data-ref="URLContext">URLContext</a> *<dfn class="local col3 decl" id="13h" title='h' data-type='URLContext *' data-ref="13h">h</dfn>)</td></tr>
+<tr><th id="93">93</th><td>{</td></tr>
+<tr><th id="94">94</th><td>    <a class="typedef" href="#DataContext" title='DataContext' data-type='struct DataContext' data-ref="DataContext">DataContext</a> *<dfn class="local col4 decl" id="14dc" title='dc' data-type='DataContext *' data-ref="14dc">dc</dfn> = <a class="local col3 ref" href="#13h" title='h' data-ref="13h">h</a>-&gt;<a class="ref" href="url.h.html#URLContext::priv_data" title='URLContext::priv_data' data-ref="URLContext::priv_data">priv_data</a>;</td></tr>
+<tr><th id="95">95</th><td></td></tr>
+<tr><th id="96">96</th><td>    <a class="ref" href="../libavutil/mem.h.html#av_freep" title='av_freep' data-ref="av_freep">av_freep</a>(&amp;<a class="local col4 ref" href="#14dc" title='dc' data-ref="14dc">dc</a>-&gt;<a class="tu ref" href="#{anonymous}::tofree" title='&lt;anonymous struct&gt;::tofree' data-use='a' data-ref="{anonymous}::tofree">tofree</a>);</td></tr>
+<tr><th id="97">97</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="98">98</th><td>}</td></tr>
+<tr><th id="99">99</th><td></td></tr>
+<tr><th id="100">100</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="data_read" title='data_read' data-type='int data_read(URLContext * h, unsigned char * buf, int size)' data-ref="data_read">data_read</dfn>(<a class="typedef" href="url.h.html#URLContext" title='URLContext' data-type='struct URLContext' data-ref="URLContext">URLContext</a> *<dfn class="local col5 decl" id="15h" title='h' data-type='URLContext *' data-ref="15h">h</dfn>, <em>unsigned</em> <em>char</em> *<dfn class="local col6 decl" id="16buf" title='buf' data-type='unsigned char *' data-ref="16buf">buf</dfn>, <em>int</em> <dfn class="local col7 decl" id="17size" title='size' data-type='int' data-ref="17size">size</dfn>)</td></tr>
+<tr><th id="101">101</th><td>{</td></tr>
+<tr><th id="102">102</th><td>    <a class="typedef" href="#DataContext" title='DataContext' data-type='struct DataContext' data-ref="DataContext">DataContext</a> *<dfn class="local col8 decl" id="18dc" title='dc' data-type='DataContext *' data-ref="18dc">dc</dfn> = <a class="local col5 ref" href="#15h" title='h' data-ref="15h">h</a>-&gt;<a class="ref" href="url.h.html#URLContext::priv_data" title='URLContext::priv_data' data-ref="URLContext::priv_data">priv_data</a>;</td></tr>
+<tr><th id="103">103</th><td></td></tr>
+<tr><th id="104">104</th><td>    <b>if</b> (<a class="local col8 ref" href="#18dc" title='dc' data-ref="18dc">dc</a>-&gt;<a class="tu ref" href="#{anonymous}::pos" title='&lt;anonymous struct&gt;::pos' data-use='r' data-ref="{anonymous}::pos">pos</a> &gt;= <a class="local col8 ref" href="#18dc" title='dc' data-ref="18dc">dc</a>-&gt;<a class="tu ref" href="#{anonymous}::size" title='&lt;anonymous struct&gt;::size' data-use='r' data-ref="{anonymous}::size">size</a>)</td></tr>
+<tr><th id="105">105</th><td>        <b>return</b> <a class="macro" href="../libavutil/error.h.html#55" title="(-(int)((&apos;E&apos;) | ((&apos;O&apos;) &lt;&lt; 8) | ((&apos;F&apos;) &lt;&lt; 16) | ((unsigned)(&apos; &apos;) &lt;&lt; 24)))" data-ref="_M/AVERROR_EOF">AVERROR_EOF</a>;</td></tr>
+<tr><th id="106">106</th><td>    <a class="local col7 ref" href="#17size" title='size' data-ref="17size">size</a> = <a class="macro" href="../libavutil/common.h.html#96" title="((size) &gt; (dc-&gt;size - dc-&gt;pos) ? (dc-&gt;size - dc-&gt;pos) : (size))" data-ref="_M/FFMIN">FFMIN</a>(<a class="local col7 ref" href="#17size" title='size' data-ref="17size">size</a>, <a class="local col8 ref" href="#18dc" title='dc' data-ref="18dc">dc</a>-&gt;<a class="tu ref" href="#{anonymous}::size" title='&lt;anonymous struct&gt;::size' data-use='r' data-ref="{anonymous}::size">size</a> - <a class="local col8 ref" href="#18dc" title='dc' data-ref="18dc">dc</a>-&gt;<a class="tu ref" href="#{anonymous}::pos" title='&lt;anonymous struct&gt;::pos' data-use='r' data-ref="{anonymous}::pos">pos</a>);</td></tr>
+<tr><th id="107">107</th><td>    <a class="ref" href="../../include/string.h.html#memcpy" title='memcpy' data-ref="memcpy">memcpy</a>(<a class="local col6 ref" href="#16buf" title='buf' data-ref="16buf">buf</a>, <a class="local col8 ref" href="#18dc" title='dc' data-ref="18dc">dc</a>-&gt;<a class="tu ref" href="#{anonymous}::data" title='&lt;anonymous struct&gt;::data' data-use='r' data-ref="{anonymous}::data">data</a> + <a class="local col8 ref" href="#18dc" title='dc' data-ref="18dc">dc</a>-&gt;<a class="tu ref" href="#{anonymous}::pos" title='&lt;anonymous struct&gt;::pos' data-use='r' data-ref="{anonymous}::pos">pos</a>, <a class="local col7 ref" href="#17size" title='size' data-ref="17size">size</a>);</td></tr>
+<tr><th id="108">108</th><td>    <a class="local col8 ref" href="#18dc" title='dc' data-ref="18dc">dc</a>-&gt;<a class="tu ref" href="#{anonymous}::pos" title='&lt;anonymous struct&gt;::pos' data-use='w' data-ref="{anonymous}::pos">pos</a> += <a class="local col7 ref" href="#17size" title='size' data-ref="17size">size</a>;</td></tr>
+<tr><th id="109">109</th><td>    <b>return</b> <a class="local col7 ref" href="#17size" title='size' data-ref="17size">size</a>;</td></tr>
+<tr><th id="110">110</th><td>}</td></tr>
+<tr><th id="111">111</th><td></td></tr>
+<tr><th id="112">112</th><td><em>const</em> <a class="typedef" href="url.h.html#URLProtocol" title='URLProtocol' data-type='struct URLProtocol' data-ref="URLProtocol">URLProtocol</a> <dfn class="decl def" id="ff_data_protocol" title='ff_data_protocol' data-ref="ff_data_protocol">ff_data_protocol</dfn> = {</td></tr>
+<tr><th id="113">113</th><td>    .<a class="ref" href="url.h.html#URLProtocol::name" title='URLProtocol::name' data-ref="URLProtocol::name">name</a>           = <q>"data"</q>,</td></tr>
+<tr><th id="114">114</th><td>    .<a class="ref" href="url.h.html#URLProtocol::url_open" title='URLProtocol::url_open' data-ref="URLProtocol::url_open">url_open</a>       = <a class="tu ref" href="#data_open" title='data_open' data-use='r' data-ref="data_open">data_open</a>,</td></tr>
+<tr><th id="115">115</th><td>    .<a class="ref" href="url.h.html#URLProtocol::url_close" title='URLProtocol::url_close' data-ref="URLProtocol::url_close">url_close</a>      = <a class="tu ref" href="#data_close" title='data_close' data-use='r' data-ref="data_close">data_close</a>,</td></tr>
+<tr><th id="116">116</th><td>    .<a class="ref" href="url.h.html#URLProtocol::url_read" title='URLProtocol::url_read' data-ref="URLProtocol::url_read">url_read</a>       = <a class="tu ref" href="#data_read" title='data_read' data-use='r' data-ref="data_read">data_read</a>,</td></tr>
+<tr><th id="117">117</th><td>    .<a class="ref" href="url.h.html#URLProtocol::priv_data_size" title='URLProtocol::priv_data_size' data-ref="URLProtocol::priv_data_size">priv_data_size</a> = <b>sizeof</b>(<a class="typedef" href="#DataContext" title='DataContext' data-type='struct DataContext' data-ref="DataContext">DataContext</a>),</td></tr>
+<tr><th id="118">118</th><td>};</td></tr>
+<tr><th id="119">119</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

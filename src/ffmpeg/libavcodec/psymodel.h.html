@@ -1,0 +1,223 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>psymodel.h source code [ffmpeg/libavcodec/psymodel.h] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="FFPsyBand,FFPsyChannel,FFPsyChannelGroup,FFPsyContext,FFPsyModel,FFPsyWindowInfo "/>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavcodec/psymodel.h'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavcodec</a>/<a href='psymodel.h.html'>psymodel.h</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * audio encoder psychoacoustic model</i></td></tr>
+<tr><th id="3">3</th><td><i> * Copyright (C) 2008 Konstantin Shishkov</i></td></tr>
+<tr><th id="4">4</th><td><i> *</i></td></tr>
+<tr><th id="5">5</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="8">8</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="9">9</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="10">10</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="11">11</th><td><i> *</i></td></tr>
+<tr><th id="12">12</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="13">13</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="14">14</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="15">15</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="16">16</th><td><i> *</i></td></tr>
+<tr><th id="17">17</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="18">18</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="19">19</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="20">20</th><td><i> */</i></td></tr>
+<tr><th id="21">21</th><td></td></tr>
+<tr><th id="22">22</th><td><u>#<span data-ppcond="22">ifndef</span> <span class="macro" data-ref="_M/AVCODEC_PSYMODEL_H">AVCODEC_PSYMODEL_H</span></u></td></tr>
+<tr><th id="23">23</th><td><u>#define <dfn class="macro" id="_M/AVCODEC_PSYMODEL_H" data-ref="_M/AVCODEC_PSYMODEL_H">AVCODEC_PSYMODEL_H</dfn></u></td></tr>
+<tr><th id="24">24</th><td></td></tr>
+<tr><th id="25">25</th><td><u>#include <a href="avcodec.h.html">"avcodec.h"</a></u></td></tr>
+<tr><th id="26">26</th><td></td></tr>
+<tr><th id="27">27</th><td><i class="doc">/** maximum possible number of bands */</i></td></tr>
+<tr><th id="28">28</th><td><u>#define <dfn class="macro" id="_M/PSY_MAX_BANDS" data-ref="_M/PSY_MAX_BANDS">PSY_MAX_BANDS</dfn> 128</u></td></tr>
+<tr><th id="29">29</th><td><i class="doc">/** maximum number of channels */</i></td></tr>
+<tr><th id="30">30</th><td><u>#define <dfn class="macro" id="_M/PSY_MAX_CHANS" data-ref="_M/PSY_MAX_CHANS">PSY_MAX_CHANS</dfn> 20</u></td></tr>
+<tr><th id="31">31</th><td></td></tr>
+<tr><th id="32">32</th><td><i>/* cutoff for VBR is purposely increased, since LP filtering actually</i></td></tr>
+<tr><th id="33">33</th><td><i> * hinders VBR performance rather than the opposite</i></td></tr>
+<tr><th id="34">34</th><td><i> */</i></td></tr>
+<tr><th id="35">35</th><td><u>#define <dfn class="macro" id="_M/AAC_CUTOFF_FROM_BITRATE" data-ref="_M/AAC_CUTOFF_FROM_BITRATE">AAC_CUTOFF_FROM_BITRATE</dfn>(bit_rate,channels,sample_rate) (bit_rate ? FFMIN3(FFMIN3( \</u></td></tr>
+<tr><th id="36">36</th><td><u>    FFMAX(bit_rate/channels/5, bit_rate/channels*15/32 - 5500), \</u></td></tr>
+<tr><th id="37">37</th><td><u>    3000 + bit_rate/channels/4, \</u></td></tr>
+<tr><th id="38">38</th><td><u>    12000 + bit_rate/channels/16), \</u></td></tr>
+<tr><th id="39">39</th><td><u>    22000, \</u></td></tr>
+<tr><th id="40">40</th><td><u>    sample_rate / 2): (sample_rate / 2))</u></td></tr>
+<tr><th id="41">41</th><td><u>#define <dfn class="macro" id="_M/AAC_CUTOFF" data-ref="_M/AAC_CUTOFF">AAC_CUTOFF</dfn>(s) ( \</u></td></tr>
+<tr><th id="42">42</th><td><u>    (s-&gt;flags &amp; CODEC_FLAG_QSCALE) \</u></td></tr>
+<tr><th id="43">43</th><td><u>    ? s-&gt;sample_rate / 2 \</u></td></tr>
+<tr><th id="44">44</th><td><u>    : AAC_CUTOFF_FROM_BITRATE(s-&gt;bit_rate, s-&gt;channels, s-&gt;sample_rate) \</u></td></tr>
+<tr><th id="45">45</th><td><u>)</u></td></tr>
+<tr><th id="46">46</th><td></td></tr>
+<tr><th id="47">47</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="48">48</th><td><i class="doc"> * single band psychoacoustic information</i></td></tr>
+<tr><th id="49">49</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="50">50</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="FFPsyBand" title='FFPsyBand' data-ref="FFPsyBand"><a class="type" href="#FFPsyBand" title='FFPsyBand' data-ref="FFPsyBand">FFPsyBand</a></dfn> {</td></tr>
+<tr><th id="51">51</th><td>    <em>int</em>   <dfn class="decl" id="FFPsyBand::bits" title='FFPsyBand::bits' data-ref="FFPsyBand::bits">bits</dfn>;</td></tr>
+<tr><th id="52">52</th><td>    <em>float</em> <dfn class="decl" id="FFPsyBand::energy" title='FFPsyBand::energy' data-ref="FFPsyBand::energy">energy</dfn>;</td></tr>
+<tr><th id="53">53</th><td>    <em>float</em> <dfn class="decl" id="FFPsyBand::threshold" title='FFPsyBand::threshold' data-ref="FFPsyBand::threshold">threshold</dfn>;</td></tr>
+<tr><th id="54">54</th><td>    <em>float</em> <dfn class="decl" id="FFPsyBand::spread" title='FFPsyBand::spread' data-ref="FFPsyBand::spread">spread</dfn>;    <i>/* Energy spread over the band */</i></td></tr>
+<tr><th id="55">55</th><td>} <dfn class="typedef" id="FFPsyBand" title='FFPsyBand' data-type='struct FFPsyBand' data-ref="FFPsyBand">FFPsyBand</dfn>;</td></tr>
+<tr><th id="56">56</th><td></td></tr>
+<tr><th id="57">57</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="58">58</th><td><i class="doc"> * single channel psychoacoustic information</i></td></tr>
+<tr><th id="59">59</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="60">60</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="FFPsyChannel" title='FFPsyChannel' data-ref="FFPsyChannel"><a class="type" href="#FFPsyChannel" title='FFPsyChannel' data-ref="FFPsyChannel">FFPsyChannel</a></dfn> {</td></tr>
+<tr><th id="61">61</th><td>    <a class="typedef" href="#FFPsyBand" title='FFPsyBand' data-type='struct FFPsyBand' data-ref="FFPsyBand">FFPsyBand</a> <dfn class="decl" id="FFPsyChannel::psy_bands" title='FFPsyChannel::psy_bands' data-ref="FFPsyChannel::psy_bands">psy_bands</dfn>[<a class="macro" href="#28" title="128" data-ref="_M/PSY_MAX_BANDS">PSY_MAX_BANDS</a>]; <i class="doc">///&lt; channel bands information</i></td></tr>
+<tr><th id="62">62</th><td>    <em>float</em>     <dfn class="decl" id="FFPsyChannel::entropy" title='FFPsyChannel::entropy' data-ref="FFPsyChannel::entropy">entropy</dfn>;                  <i class="doc">///&lt; total PE for this channel</i></td></tr>
+<tr><th id="63">63</th><td>} <dfn class="typedef" id="FFPsyChannel" title='FFPsyChannel' data-type='struct FFPsyChannel' data-ref="FFPsyChannel">FFPsyChannel</dfn>;</td></tr>
+<tr><th id="64">64</th><td></td></tr>
+<tr><th id="65">65</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="66">66</th><td><i class="doc"> * psychoacoustic information for an arbitrary group of channels</i></td></tr>
+<tr><th id="67">67</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="68">68</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="FFPsyChannelGroup" title='FFPsyChannelGroup' data-ref="FFPsyChannelGroup"><a class="type" href="#FFPsyChannelGroup" title='FFPsyChannelGroup' data-ref="FFPsyChannelGroup">FFPsyChannelGroup</a></dfn> {</td></tr>
+<tr><th id="69">69</th><td>    <a class="typedef" href="#FFPsyChannel" title='FFPsyChannel' data-type='struct FFPsyChannel' data-ref="FFPsyChannel">FFPsyChannel</a> *<dfn class="decl" id="FFPsyChannelGroup::ch" title='FFPsyChannelGroup::ch' data-ref="FFPsyChannelGroup::ch">ch</dfn>[<a class="macro" href="#30" title="20" data-ref="_M/PSY_MAX_CHANS">PSY_MAX_CHANS</a>];  <i class="doc">///&lt; pointers to the individual channels in the group</i></td></tr>
+<tr><th id="70">70</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="FFPsyChannelGroup::num_ch" title='FFPsyChannelGroup::num_ch' data-ref="FFPsyChannelGroup::num_ch">num_ch</dfn>;                   <i class="doc">///&lt; number of channels in this group</i></td></tr>
+<tr><th id="71">71</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="FFPsyChannelGroup::coupling" title='FFPsyChannelGroup::coupling' data-ref="FFPsyChannelGroup::coupling">coupling</dfn>[<a class="macro" href="#28" title="128" data-ref="_M/PSY_MAX_BANDS">PSY_MAX_BANDS</a>];  <i class="doc">///&lt; allow coupling for this band in the group</i></td></tr>
+<tr><th id="72">72</th><td>} <dfn class="typedef" id="FFPsyChannelGroup" title='FFPsyChannelGroup' data-type='struct FFPsyChannelGroup' data-ref="FFPsyChannelGroup">FFPsyChannelGroup</dfn>;</td></tr>
+<tr><th id="73">73</th><td></td></tr>
+<tr><th id="74">74</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="75">75</th><td><i class="doc"> * windowing related information</i></td></tr>
+<tr><th id="76">76</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="77">77</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="FFPsyWindowInfo" title='FFPsyWindowInfo' data-ref="FFPsyWindowInfo"><a class="type" href="#FFPsyWindowInfo" title='FFPsyWindowInfo' data-ref="FFPsyWindowInfo">FFPsyWindowInfo</a></dfn> {</td></tr>
+<tr><th id="78">78</th><td>    <em>int</em> <dfn class="decl" id="FFPsyWindowInfo::window_type" title='FFPsyWindowInfo::window_type' data-ref="FFPsyWindowInfo::window_type">window_type</dfn>[<var>3</var>];               <i class="doc">///&lt; window type (short/long/transitional, etc.) - current, previous and next</i></td></tr>
+<tr><th id="79">79</th><td>    <em>int</em> <dfn class="decl" id="FFPsyWindowInfo::window_shape" title='FFPsyWindowInfo::window_shape' data-ref="FFPsyWindowInfo::window_shape">window_shape</dfn>;                 <i class="doc">///&lt; window shape (sine/KBD/whatever)</i></td></tr>
+<tr><th id="80">80</th><td>    <em>int</em> <dfn class="decl" id="FFPsyWindowInfo::num_windows" title='FFPsyWindowInfo::num_windows' data-ref="FFPsyWindowInfo::num_windows">num_windows</dfn>;                  <i class="doc">///&lt; number of windows in a frame</i></td></tr>
+<tr><th id="81">81</th><td>    <em>int</em> <dfn class="decl" id="FFPsyWindowInfo::grouping" title='FFPsyWindowInfo::grouping' data-ref="FFPsyWindowInfo::grouping">grouping</dfn>[<var>8</var>];                  <i class="doc">///&lt; window grouping (for e.g. AAC)</i></td></tr>
+<tr><th id="82">82</th><td>    <em>float</em> <dfn class="decl" id="FFPsyWindowInfo::clipping" title='FFPsyWindowInfo::clipping' data-ref="FFPsyWindowInfo::clipping">clipping</dfn>[<var>8</var>];                <i class="doc">///&lt; maximum absolute normalized intensity in the given window for clip avoidance</i></td></tr>
+<tr><th id="83">83</th><td>    <em>int</em> *<dfn class="decl" id="FFPsyWindowInfo::window_sizes" title='FFPsyWindowInfo::window_sizes' data-ref="FFPsyWindowInfo::window_sizes">window_sizes</dfn>;                <i class="doc">///&lt; sequence of window sizes inside one frame (for eg. WMA)</i></td></tr>
+<tr><th id="84">84</th><td>} <dfn class="typedef" id="FFPsyWindowInfo" title='FFPsyWindowInfo' data-type='struct FFPsyWindowInfo' data-ref="FFPsyWindowInfo">FFPsyWindowInfo</dfn>;</td></tr>
+<tr><th id="85">85</th><td></td></tr>
+<tr><th id="86">86</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="87">87</th><td><i class="doc"> * context used by psychoacoustic model</i></td></tr>
+<tr><th id="88">88</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="89">89</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="FFPsyContext" title='FFPsyContext' data-ref="FFPsyContext"><a class="type" href="#FFPsyContext" title='FFPsyContext' data-ref="FFPsyContext">FFPsyContext</a></dfn> {</td></tr>
+<tr><th id="90">90</th><td>    <a class="typedef" href="avcodec.h.html#AVCodecContext" title='AVCodecContext' data-type='struct AVCodecContext' data-ref="AVCodecContext">AVCodecContext</a> *<dfn class="decl" id="FFPsyContext::avctx" title='FFPsyContext::avctx' data-ref="FFPsyContext::avctx">avctx</dfn>;            <i class="doc">///&lt; encoder context</i></td></tr>
+<tr><th id="91">91</th><td>    <em>const</em> <b>struct</b> <a class="type" href="#FFPsyModel" title='FFPsyModel' data-ref="FFPsyModel">FFPsyModel</a> *<dfn class="decl" id="FFPsyContext::model" title='FFPsyContext::model' data-ref="FFPsyContext::model">model</dfn>;   <i class="doc">///&lt; encoder-specific model functions</i></td></tr>
+<tr><th id="92">92</th><td></td></tr>
+<tr><th id="93">93</th><td>    <a class="typedef" href="#FFPsyChannel" title='FFPsyChannel' data-type='struct FFPsyChannel' data-ref="FFPsyChannel">FFPsyChannel</a>      *<dfn class="decl" id="FFPsyContext::ch" title='FFPsyContext::ch' data-ref="FFPsyContext::ch">ch</dfn>;            <i class="doc">///&lt; single channel information</i></td></tr>
+<tr><th id="94">94</th><td>    <a class="typedef" href="#FFPsyChannelGroup" title='FFPsyChannelGroup' data-type='struct FFPsyChannelGroup' data-ref="FFPsyChannelGroup">FFPsyChannelGroup</a> *<dfn class="decl" id="FFPsyContext::group" title='FFPsyContext::group' data-ref="FFPsyContext::group">group</dfn>;         <i class="doc">///&lt; channel group information</i></td></tr>
+<tr><th id="95">95</th><td>    <em>int</em> <dfn class="decl" id="FFPsyContext::num_groups" title='FFPsyContext::num_groups' data-ref="FFPsyContext::num_groups">num_groups</dfn>;                   <i class="doc">///&lt; number of channel groups</i></td></tr>
+<tr><th id="96">96</th><td>    <em>int</em> <dfn class="decl" id="FFPsyContext::cutoff" title='FFPsyContext::cutoff' data-ref="FFPsyContext::cutoff">cutoff</dfn>;                       <i class="doc">///&lt; lowpass frequency cutoff for analysis</i></td></tr>
+<tr><th id="97">97</th><td></td></tr>
+<tr><th id="98">98</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> **<dfn class="decl" id="FFPsyContext::bands" title='FFPsyContext::bands' data-ref="FFPsyContext::bands">bands</dfn>;                  <i class="doc">///&lt; scalefactor band sizes for possible frame sizes</i></td></tr>
+<tr><th id="99">99</th><td>    <em>int</em>     *<dfn class="decl" id="FFPsyContext::num_bands" title='FFPsyContext::num_bands' data-ref="FFPsyContext::num_bands">num_bands</dfn>;               <i class="doc">///&lt; number of scalefactor bands for possible frame sizes</i></td></tr>
+<tr><th id="100">100</th><td>    <em>int</em> <dfn class="decl" id="FFPsyContext::num_lens" title='FFPsyContext::num_lens' data-ref="FFPsyContext::num_lens">num_lens</dfn>;                     <i class="doc">///&lt; number of scalefactor band sets</i></td></tr>
+<tr><th id="101">101</th><td></td></tr>
+<tr><th id="102">102</th><td>    <b>struct</b> {</td></tr>
+<tr><th id="103">103</th><td>        <em>int</em> <dfn class="decl" id="FFPsyContext::{anonymous}::size" title='FFPsyContext::&lt;anonymous struct&gt;::size' data-ref="FFPsyContext::{anonymous}::size">size</dfn>;                     <i class="doc">///&lt; size of the bitresevoir in bits</i></td></tr>
+<tr><th id="104">104</th><td>        <em>int</em> <dfn class="decl" id="FFPsyContext::{anonymous}::bits" title='FFPsyContext::&lt;anonymous struct&gt;::bits' data-ref="FFPsyContext::{anonymous}::bits">bits</dfn>;                     <i class="doc">///&lt; number of bits used in the bitresevoir</i></td></tr>
+<tr><th id="105">105</th><td>        <em>int</em> <dfn class="decl" id="FFPsyContext::{anonymous}::alloc" title='FFPsyContext::&lt;anonymous struct&gt;::alloc' data-ref="FFPsyContext::{anonymous}::alloc">alloc</dfn>;                    <i class="doc">///&lt; number of bits allocated by the psy, or -1 if no allocation was done</i></td></tr>
+<tr><th id="106">106</th><td>    } <dfn class="decl" id="FFPsyContext::bitres" title='FFPsyContext::bitres' data-ref="FFPsyContext::bitres">bitres</dfn>;</td></tr>
+<tr><th id="107">107</th><td></td></tr>
+<tr><th id="108">108</th><td>    <em>void</em>* <dfn class="decl" id="FFPsyContext::model_priv_data" title='FFPsyContext::model_priv_data' data-ref="FFPsyContext::model_priv_data">model_priv_data</dfn>;            <i class="doc">///&lt; psychoacoustic model implementation private data</i></td></tr>
+<tr><th id="109">109</th><td>} <dfn class="typedef" id="FFPsyContext" title='FFPsyContext' data-type='struct FFPsyContext' data-ref="FFPsyContext">FFPsyContext</dfn>;</td></tr>
+<tr><th id="110">110</th><td></td></tr>
+<tr><th id="111">111</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="112">112</th><td><i class="doc"> * codec-specific psychoacoustic model implementation</i></td></tr>
+<tr><th id="113">113</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="114">114</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="FFPsyModel" title='FFPsyModel' data-ref="FFPsyModel"><a class="type" href="#FFPsyModel" title='FFPsyModel' data-ref="FFPsyModel">FFPsyModel</a></dfn> {</td></tr>
+<tr><th id="115">115</th><td>    <em>const</em> <em>char</em> *<dfn class="decl" id="FFPsyModel::name" title='FFPsyModel::name' data-ref="FFPsyModel::name">name</dfn>;</td></tr>
+<tr><th id="116">116</th><td>    <em>int</em>  (*<dfn class="decl" id="FFPsyModel::init" title='FFPsyModel::init' data-ref="FFPsyModel::init">init</dfn>)   (<a class="typedef" href="#FFPsyContext" title='FFPsyContext' data-type='struct FFPsyContext' data-ref="FFPsyContext">FFPsyContext</a> *<dfn class="local col4 decl" id="254apc" title='apc' data-type='FFPsyContext *' data-ref="254apc">apc</dfn>);</td></tr>
+<tr><th id="117">117</th><td></td></tr>
+<tr><th id="118">118</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="119">119</th><td><i class="doc">     * Suggest window sequence for channel.</i></td></tr>
+<tr><th id="120">120</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="121">121</th><td><i class="doc">     * <span class="command">@param</span> <span class="arg">ctx</span>       model context</i></td></tr>
+<tr><th id="122">122</th><td><i class="doc">     * <span class="command">@param</span> <span class="arg">audio</span>     samples for the current frame</i></td></tr>
+<tr><th id="123">123</th><td><i class="doc">     * <span class="command">@param</span> <span class="arg">la</span>        lookahead samples (NULL when unavailable)</i></td></tr>
+<tr><th id="124">124</th><td><i class="doc">     * <span class="command">@param</span> <span class="arg">channel</span>   number of channel element to analyze</i></td></tr>
+<tr><th id="125">125</th><td><i class="doc">     * <span class="command">@param</span> <span class="arg">prev_type</span> previous window type</i></td></tr>
+<tr><th id="126">126</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="127">127</th><td><i class="doc">     * <span class="command">@return</span> suggested window information in a structure</i></td></tr>
+<tr><th id="128">128</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="129">129</th><td>    <a class="typedef" href="#FFPsyWindowInfo" title='FFPsyWindowInfo' data-type='struct FFPsyWindowInfo' data-ref="FFPsyWindowInfo">FFPsyWindowInfo</a> (*<dfn class="decl" id="FFPsyModel::window" title='FFPsyModel::window' data-ref="FFPsyModel::window">window</dfn>)(<a class="typedef" href="#FFPsyContext" title='FFPsyContext' data-type='struct FFPsyContext' data-ref="FFPsyContext">FFPsyContext</a> *<dfn class="local col5 decl" id="255ctx" title='ctx' data-type='FFPsyContext *' data-ref="255ctx">ctx</dfn>, <em>const</em> <em>float</em> *<dfn class="local col6 decl" id="256audio" title='audio' data-type='const float *' data-ref="256audio">audio</dfn>, <em>const</em> <em>float</em> *<dfn class="local col7 decl" id="257la" title='la' data-type='const float *' data-ref="257la">la</dfn>, <em>int</em> <dfn class="local col8 decl" id="258channel" title='channel' data-type='int' data-ref="258channel">channel</dfn>, <em>int</em> <dfn class="local col9 decl" id="259prev_type" title='prev_type' data-type='int' data-ref="259prev_type">prev_type</dfn>);</td></tr>
+<tr><th id="130">130</th><td></td></tr>
+<tr><th id="131">131</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="132">132</th><td><i class="doc">     * Perform psychoacoustic analysis and set band info (threshold, energy) for a group of channels.</i></td></tr>
+<tr><th id="133">133</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="134">134</th><td><i class="doc">     * <span class="command">@param</span> <span class="arg">ctx</span>      model context</i></td></tr>
+<tr><th id="135">135</th><td><i class="doc">     * <span class="command">@param</span> <span class="arg">channel</span>  channel number of the first channel in the group to perform analysis on</i></td></tr>
+<tr><th id="136">136</th><td><i class="doc">     * <span class="command">@param</span> <span class="arg">coeffs</span>   array of pointers to the transformed coefficients</i></td></tr>
+<tr><th id="137">137</th><td><i class="doc">     * <span class="command">@param</span> <span class="arg">wi</span>       window information for the channels in the group</i></td></tr>
+<tr><th id="138">138</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="139">139</th><td>    <em>void</em> (*<dfn class="decl" id="FFPsyModel::analyze" title='FFPsyModel::analyze' data-ref="FFPsyModel::analyze">analyze</dfn>)(<a class="typedef" href="#FFPsyContext" title='FFPsyContext' data-type='struct FFPsyContext' data-ref="FFPsyContext">FFPsyContext</a> *<dfn class="local col0 decl" id="260ctx" title='ctx' data-type='FFPsyContext *' data-ref="260ctx">ctx</dfn>, <em>int</em> <dfn class="local col1 decl" id="261channel" title='channel' data-type='int' data-ref="261channel">channel</dfn>, <em>const</em> <em>float</em> **<dfn class="local col2 decl" id="262coeffs" title='coeffs' data-type='const float **' data-ref="262coeffs">coeffs</dfn>, <em>const</em> <a class="typedef" href="#FFPsyWindowInfo" title='FFPsyWindowInfo' data-type='struct FFPsyWindowInfo' data-ref="FFPsyWindowInfo">FFPsyWindowInfo</a> *<dfn class="local col3 decl" id="263wi" title='wi' data-type='const FFPsyWindowInfo *' data-ref="263wi">wi</dfn>);</td></tr>
+<tr><th id="140">140</th><td></td></tr>
+<tr><th id="141">141</th><td>    <em>void</em> (*<dfn class="decl" id="FFPsyModel::end" title='FFPsyModel::end' data-ref="FFPsyModel::end">end</dfn>)    (<a class="typedef" href="#FFPsyContext" title='FFPsyContext' data-type='struct FFPsyContext' data-ref="FFPsyContext">FFPsyContext</a> *<dfn class="local col4 decl" id="264apc" title='apc' data-type='FFPsyContext *' data-ref="264apc">apc</dfn>);</td></tr>
+<tr><th id="142">142</th><td>} <dfn class="typedef" id="FFPsyModel" title='FFPsyModel' data-type='struct FFPsyModel' data-ref="FFPsyModel">FFPsyModel</dfn>;</td></tr>
+<tr><th id="143">143</th><td></td></tr>
+<tr><th id="144">144</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="145">145</th><td><i class="doc"> * Initialize psychoacoustic model.</i></td></tr>
+<tr><th id="146">146</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="147">147</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">ctx</span>        model context</i></td></tr>
+<tr><th id="148">148</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">avctx</span>      codec context</i></td></tr>
+<tr><th id="149">149</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">num_lens</span>   number of possible frame lengths</i></td></tr>
+<tr><th id="150">150</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">bands</span>      scalefactor band lengths for all frame lengths</i></td></tr>
+<tr><th id="151">151</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">num_bands</span>  number of scalefactor bands for all frame lengths</i></td></tr>
+<tr><th id="152">152</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">num_groups</span> number of channel groups</i></td></tr>
+<tr><th id="153">153</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">group_map</span>  array with # of channels in group - 1, for each group</i></td></tr>
+<tr><th id="154">154</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="155">155</th><td><i class="doc"> * <span class="command">@return</span> zero if successful, a negative value if not</i></td></tr>
+<tr><th id="156">156</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="157">157</th><td><em>int</em> <dfn class="decl" id="ff_psy_init" title='ff_psy_init' data-ref="ff_psy_init">ff_psy_init</dfn>(<a class="typedef" href="#FFPsyContext" title='FFPsyContext' data-type='struct FFPsyContext' data-ref="FFPsyContext">FFPsyContext</a> *<dfn class="local col5 decl" id="265ctx" title='ctx' data-type='FFPsyContext *' data-ref="265ctx">ctx</dfn>, <a class="typedef" href="avcodec.h.html#AVCodecContext" title='AVCodecContext' data-type='struct AVCodecContext' data-ref="AVCodecContext">AVCodecContext</a> *<dfn class="local col6 decl" id="266avctx" title='avctx' data-type='AVCodecContext *' data-ref="266avctx">avctx</dfn>, <em>int</em> <dfn class="local col7 decl" id="267num_lens" title='num_lens' data-type='int' data-ref="267num_lens">num_lens</dfn>,</td></tr>
+<tr><th id="158">158</th><td>                <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> **<dfn class="local col8 decl" id="268bands" title='bands' data-type='const uint8_t **' data-ref="268bands">bands</dfn>, <em>const</em> <em>int</em> *<dfn class="local col9 decl" id="269num_bands" title='num_bands' data-type='const int *' data-ref="269num_bands">num_bands</dfn>,</td></tr>
+<tr><th id="159">159</th><td>                <em>int</em> <dfn class="local col0 decl" id="270num_groups" title='num_groups' data-type='int' data-ref="270num_groups">num_groups</dfn>, <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col1 decl" id="271group_map" title='group_map' data-type='const uint8_t *' data-ref="271group_map">group_map</dfn>);</td></tr>
+<tr><th id="160">160</th><td></td></tr>
+<tr><th id="161">161</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="162">162</th><td><i class="doc"> * Determine what group a channel belongs to.</i></td></tr>
+<tr><th id="163">163</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="164">164</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">ctx</span>     psymodel context</i></td></tr>
+<tr><th id="165">165</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">channel</span> channel to locate the group for</i></td></tr>
+<tr><th id="166">166</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="167">167</th><td><i class="doc"> * <span class="command">@return</span> pointer to the FFPsyChannelGroup this channel belongs to</i></td></tr>
+<tr><th id="168">168</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="169">169</th><td><a class="typedef" href="#FFPsyChannelGroup" title='FFPsyChannelGroup' data-type='struct FFPsyChannelGroup' data-ref="FFPsyChannelGroup">FFPsyChannelGroup</a> *<dfn class="decl" id="ff_psy_find_group" title='ff_psy_find_group' data-ref="ff_psy_find_group">ff_psy_find_group</dfn>(<a class="typedef" href="#FFPsyContext" title='FFPsyContext' data-type='struct FFPsyContext' data-ref="FFPsyContext">FFPsyContext</a> *<dfn class="local col2 decl" id="272ctx" title='ctx' data-type='FFPsyContext *' data-ref="272ctx">ctx</dfn>, <em>int</em> <dfn class="local col3 decl" id="273channel" title='channel' data-type='int' data-ref="273channel">channel</dfn>);</td></tr>
+<tr><th id="170">170</th><td></td></tr>
+<tr><th id="171">171</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="172">172</th><td><i class="doc"> * Cleanup model context at the end.</i></td></tr>
+<tr><th id="173">173</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="174">174</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">ctx</span> model context</i></td></tr>
+<tr><th id="175">175</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="176">176</th><td><em>void</em> <dfn class="decl" id="ff_psy_end" title='ff_psy_end' data-ref="ff_psy_end">ff_psy_end</dfn>(<a class="typedef" href="#FFPsyContext" title='FFPsyContext' data-type='struct FFPsyContext' data-ref="FFPsyContext">FFPsyContext</a> *<dfn class="local col4 decl" id="274ctx" title='ctx' data-type='FFPsyContext *' data-ref="274ctx">ctx</dfn>);</td></tr>
+<tr><th id="177">177</th><td></td></tr>
+<tr><th id="178">178</th><td></td></tr>
+<tr><th id="179">179</th><td><i>/**************************************************************************</i></td></tr>
+<tr><th id="180">180</th><td><i> *                       Audio preprocessing stuff.                       *</i></td></tr>
+<tr><th id="181">181</th><td><i> *       This should be moved into some audio filter eventually.          *</i></td></tr>
+<tr><th id="182">182</th><td><i> **************************************************************************/</i></td></tr>
+<tr><th id="183">183</th><td><b>struct</b> <dfn class="type" id="FFPsyPreprocessContext" title='FFPsyPreprocessContext' data-ref="FFPsyPreprocessContext">FFPsyPreprocessContext</dfn>;</td></tr>
+<tr><th id="184">184</th><td></td></tr>
+<tr><th id="185">185</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="186">186</th><td><i class="doc"> * psychoacoustic model audio preprocessing initialization</i></td></tr>
+<tr><th id="187">187</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="188">188</th><td><b>struct</b> <a class="type" href="#FFPsyPreprocessContext" title='FFPsyPreprocessContext' data-ref="FFPsyPreprocessContext">FFPsyPreprocessContext</a> *<dfn class="decl" id="ff_psy_preprocess_init" title='ff_psy_preprocess_init' data-ref="ff_psy_preprocess_init">ff_psy_preprocess_init</dfn>(<a class="typedef" href="avcodec.h.html#AVCodecContext" title='AVCodecContext' data-type='struct AVCodecContext' data-ref="AVCodecContext">AVCodecContext</a> *<dfn class="local col5 decl" id="275avctx" title='avctx' data-type='AVCodecContext *' data-ref="275avctx">avctx</dfn>);</td></tr>
+<tr><th id="189">189</th><td></td></tr>
+<tr><th id="190">190</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="191">191</th><td><i class="doc"> * Preprocess several channel in audio frame in order to compress it better.</i></td></tr>
+<tr><th id="192">192</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="193">193</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">ctx</span>      preprocessing context</i></td></tr>
+<tr><th id="194">194</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">audio</span>    samples to be filtered (in place)</i></td></tr>
+<tr><th id="195">195</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">channels</span> number of channel to preprocess</i></td></tr>
+<tr><th id="196">196</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="197">197</th><td><em>void</em> <dfn class="decl" id="ff_psy_preprocess" title='ff_psy_preprocess' data-ref="ff_psy_preprocess">ff_psy_preprocess</dfn>(<b>struct</b> <a class="type" href="#FFPsyPreprocessContext" title='FFPsyPreprocessContext' data-ref="FFPsyPreprocessContext">FFPsyPreprocessContext</a> *<dfn class="local col6 decl" id="276ctx" title='ctx' data-type='struct FFPsyPreprocessContext *' data-ref="276ctx">ctx</dfn>, <em>float</em> **<dfn class="local col7 decl" id="277audio" title='audio' data-type='float **' data-ref="277audio">audio</dfn>, <em>int</em> <dfn class="local col8 decl" id="278channels" title='channels' data-type='int' data-ref="278channels">channels</dfn>);</td></tr>
+<tr><th id="198">198</th><td></td></tr>
+<tr><th id="199">199</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="200">200</th><td><i class="doc"> * Cleanup audio preprocessing module.</i></td></tr>
+<tr><th id="201">201</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="202">202</th><td><em>void</em> <dfn class="decl" id="ff_psy_preprocess_end" title='ff_psy_preprocess_end' data-ref="ff_psy_preprocess_end">ff_psy_preprocess_end</dfn>(<b>struct</b> <a class="type" href="#FFPsyPreprocessContext" title='FFPsyPreprocessContext' data-ref="FFPsyPreprocessContext">FFPsyPreprocessContext</a> *<dfn class="local col9 decl" id="279ctx" title='ctx' data-type='struct FFPsyPreprocessContext *' data-ref="279ctx">ctx</dfn>);</td></tr>
+<tr><th id="203">203</th><td></td></tr>
+<tr><th id="204">204</th><td><u>#<span data-ppcond="22">endif</span> /* AVCODEC_PSYMODEL_H */</u></td></tr>
+<tr><th id="205">205</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated while processing <a href='aaccoder.c.html'>ffmpeg/libavcodec/aaccoder.c</a><br/>Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

@@ -1,0 +1,401 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>vlc_network.h source code [vlc/include/vlc_network.h] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="virtual_socket_t "/>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'vlc/include/vlc_network.h'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>vlc</a>/<a href='./'>include</a>/<a href='vlc_network.h.html'>vlc_network.h</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*****************************************************************************</i></td></tr>
+<tr><th id="2">2</th><td><i> * vlc_network.h: interface to communicate with network plug-ins</i></td></tr>
+<tr><th id="3">3</th><td><i> *****************************************************************************</i></td></tr>
+<tr><th id="4">4</th><td><i> * Copyright (C) 2002-2005 VLC authors and VideoLAN</i></td></tr>
+<tr><th id="5">5</th><td><i> * Copyright © 2006-2007 Rémi Denis-Courmont</i></td></tr>
+<tr><th id="6">6</th><td><i> * $Id: d1c63b1e76dbf462062cb6c1a36b2c8c7fd4427a $</i></td></tr>
+<tr><th id="7">7</th><td><i> *</i></td></tr>
+<tr><th id="8">8</th><td><i> * Authors: Christophe Massiot &lt;massiot@via.ecp.fr&gt;</i></td></tr>
+<tr><th id="9">9</th><td><i> *          Laurent Aimar &lt;fenrir@via.ecp.fr&gt;</i></td></tr>
+<tr><th id="10">10</th><td><i> *          Rémi Denis-Courmont &lt;rem # videolan.org&gt;</i></td></tr>
+<tr><th id="11">11</th><td><i> *</i></td></tr>
+<tr><th id="12">12</th><td><i> * This program is free software; you can redistribute it and/or modify it</i></td></tr>
+<tr><th id="13">13</th><td><i> * under the terms of the GNU Lesser General Public License as published by</i></td></tr>
+<tr><th id="14">14</th><td><i> * the Free Software Foundation; either version 2.1 of the License, or</i></td></tr>
+<tr><th id="15">15</th><td><i> * (at your option) any later version.</i></td></tr>
+<tr><th id="16">16</th><td><i> *</i></td></tr>
+<tr><th id="17">17</th><td><i> * This program is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="18">18</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="19">19</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</i></td></tr>
+<tr><th id="20">20</th><td><i> * GNU Lesser General Public License for more details.</i></td></tr>
+<tr><th id="21">21</th><td><i> *</i></td></tr>
+<tr><th id="22">22</th><td><i> * You should have received a copy of the GNU Lesser General Public License</i></td></tr>
+<tr><th id="23">23</th><td><i> * along with this program; if not, write to the Free Software Foundation,</i></td></tr>
+<tr><th id="24">24</th><td><i> * Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.</i></td></tr>
+<tr><th id="25">25</th><td><i> *****************************************************************************/</i></td></tr>
+<tr><th id="26">26</th><td></td></tr>
+<tr><th id="27">27</th><td><u>#<span data-ppcond="27">ifndef</span> <span class="macro" data-ref="_M/VLC_NETWORK_H">VLC_NETWORK_H</span></u></td></tr>
+<tr><th id="28">28</th><td><u># define <dfn class="macro" id="_M/VLC_NETWORK_H" data-ref="_M/VLC_NETWORK_H">VLC_NETWORK_H</dfn></u></td></tr>
+<tr><th id="29">29</th><td></td></tr>
+<tr><th id="30">30</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="31">31</th><td><i class="doc"> *<span class="command"> \file</span></i></td></tr>
+<tr><th id="32">32</th><td><i class="doc"> * This file defines interface to communicate with network plug-ins</i></td></tr>
+<tr><th id="33">33</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="34">34</th><td></td></tr>
+<tr><th id="35">35</th><td><u>#<span data-ppcond="35">if</span> defined( <span class="macro" data-ref="_M/_WIN32">_WIN32</span> )</u></td></tr>
+<tr><th id="36">36</th><td><u>#   define _NO_OLDNAMES 1</u></td></tr>
+<tr><th id="37">37</th><td><u>#   include &lt;io.h&gt;</u></td></tr>
+<tr><th id="38">38</th><td><u>#   include &lt;winsock2.h&gt;</u></td></tr>
+<tr><th id="39">39</th><td><u>#   include &lt;ws2tcpip.h&gt;</u></td></tr>
+<tr><th id="40">40</th><td><u>#   define net_errno (WSAGetLastError())</u></td></tr>
+<tr><th id="41">41</th><td></td></tr>
+<tr><th id="42">42</th><td><b>struct</b> iovec</td></tr>
+<tr><th id="43">43</th><td>{</td></tr>
+<tr><th id="44">44</th><td>    <em>void</em>  *iov_base;</td></tr>
+<tr><th id="45">45</th><td>    size_t iov_len;</td></tr>
+<tr><th id="46">46</th><td>};</td></tr>
+<tr><th id="47">47</th><td></td></tr>
+<tr><th id="48">48</th><td><b>struct</b> msghdr</td></tr>
+<tr><th id="49">49</th><td>{</td></tr>
+<tr><th id="50">50</th><td>    <em>void</em>         *msg_name;</td></tr>
+<tr><th id="51">51</th><td>    size_t        msg_namelen;</td></tr>
+<tr><th id="52">52</th><td>    <b>struct</b> iovec *msg_iov;</td></tr>
+<tr><th id="53">53</th><td>    size_t        msg_iovlen;</td></tr>
+<tr><th id="54">54</th><td>    <em>void</em>         *msg_control;</td></tr>
+<tr><th id="55">55</th><td>    size_t        msg_controllen;</td></tr>
+<tr><th id="56">56</th><td>    <em>int</em>           msg_flags;</td></tr>
+<tr><th id="57">57</th><td>};</td></tr>
+<tr><th id="58">58</th><td></td></tr>
+<tr><th id="59">59</th><td><u>#   ifndef IPV6_V6ONLY</u></td></tr>
+<tr><th id="60">60</th><td><u>#       define IPV6_V6ONLY 27</u></td></tr>
+<tr><th id="61">61</th><td><u>#   endif</u></td></tr>
+<tr><th id="62">62</th><td><u>#<span data-ppcond="35">else</span></u></td></tr>
+<tr><th id="63">63</th><td><u>#   include <a href="../../include/x86_64-linux-gnu/sys/types.h.html">&lt;sys/types.h&gt;</a></u></td></tr>
+<tr><th id="64">64</th><td><u>#   include <a href="../../include/unistd.h.html">&lt;unistd.h&gt;</a></u></td></tr>
+<tr><th id="65">65</th><td><u>#   include <a href="../../include/x86_64-linux-gnu/sys/socket.h.html">&lt;sys/socket.h&gt;</a></u></td></tr>
+<tr><th id="66">66</th><td><u>#   include <a href="../../include/netinet/in.h.html">&lt;netinet/in.h&gt;</a></u></td></tr>
+<tr><th id="67">67</th><td><u>#   include <a href="../../include/netdb.h.html">&lt;netdb.h&gt;</a></u></td></tr>
+<tr><th id="68">68</th><td><u>#   define <dfn class="macro" id="_M/net_errno" data-ref="_M/net_errno">net_errno</dfn> errno</u></td></tr>
+<tr><th id="69">69</th><td><u>#<span data-ppcond="35">endif</span></u></td></tr>
+<tr><th id="70">70</th><td></td></tr>
+<tr><th id="71">71</th><td><u>#<span data-ppcond="71">if</span> defined( <span class="macro" data-ref="_M/__SYMBIAN32__">__SYMBIAN32__</span> )</u></td></tr>
+<tr><th id="72">72</th><td><u>#   undef AF_INET6</u></td></tr>
+<tr><th id="73">73</th><td><u>#   undef IN6_IS_ADDR_MULTICAST</u></td></tr>
+<tr><th id="74">74</th><td><u>#   undef IPV6_V6ONLY</u></td></tr>
+<tr><th id="75">75</th><td><u>#   undef IPV6_MULTICAST_HOPS</u></td></tr>
+<tr><th id="76">76</th><td><u>#   undef IPV6_MULTICAST_IF</u></td></tr>
+<tr><th id="77">77</th><td><u>#   undef IPV6_TCLASS</u></td></tr>
+<tr><th id="78">78</th><td><u>#   undef IPV6_JOIN_GROUP</u></td></tr>
+<tr><th id="79">79</th><td><u>#<span data-ppcond="71">endif</span></u></td></tr>
+<tr><th id="80">80</th><td></td></tr>
+<tr><th id="81">81</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>int</em> <dfn class="decl" id="vlc_socket" title='vlc_socket' data-ref="vlc_socket">vlc_socket</dfn> (<em>int</em>, <em>int</em>, <em>int</em>, <span class="macro" title="_Bool" data-ref="_M/bool">bool</span> <dfn class="local col2 decl" id="42nonblock" title='nonblock' data-type='_Bool' data-ref="42nonblock">nonblock</dfn>) <a class="macro" href="vlc_common.h.html#98" title="__attribute__ ((warn_unused_result))" data-ref="_M/VLC_USED">VLC_USED</a>;</td></tr>
+<tr><th id="82">82</th><td></td></tr>
+<tr><th id="83">83</th><td><b>struct</b> <a class="type" href="../../include/x86_64-linux-gnu/bits/socket.h.html#sockaddr" title='sockaddr' data-ref="sockaddr" id="sockaddr">sockaddr</a>;</td></tr>
+<tr><th id="84">84</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>int</em> <dfn class="decl" id="vlc_accept" title='vlc_accept' data-ref="vlc_accept">vlc_accept</dfn>( <em>int</em>, <b>struct</b> <a class="type" href="../../include/x86_64-linux-gnu/bits/socket.h.html#sockaddr" title='sockaddr' data-ref="sockaddr">sockaddr</a> *, <a class="typedef" href="../../include/unistd.h.html#socklen_t" title='socklen_t' data-type='__socklen_t' data-ref="socklen_t">socklen_t</a> *, <span class="macro" title="_Bool" data-ref="_M/bool">bool</span> ) <a class="macro" href="vlc_common.h.html#98" title="__attribute__ ((warn_unused_result))" data-ref="_M/VLC_USED">VLC_USED</a>;</td></tr>
+<tr><th id="85">85</th><td></td></tr>
+<tr><th id="86">86</th><td><u># <span data-ppcond="86">ifdef</span> <span class="macro" data-ref="_M/__cplusplus">__cplusplus</span></u></td></tr>
+<tr><th id="87">87</th><td><b>extern</b> <q>"C"</q> {</td></tr>
+<tr><th id="88">88</th><td><u># <span data-ppcond="86">endif</span></u></td></tr>
+<tr><th id="89">89</th><td></td></tr>
+<tr><th id="90">90</th><td><i>/* Portable networking layer communication */</i></td></tr>
+<tr><th id="91">91</th><td><em>int</em> <dfn class="decl" id="net_Socket" title='net_Socket' data-ref="net_Socket">net_Socket</dfn> (<a class="typedef" href="vlc_common.h.html#vlc_object_t" title='vlc_object_t' data-type='struct vlc_object_t' data-ref="vlc_object_t">vlc_object_t</a> *<dfn class="local col3 decl" id="43obj" title='obj' data-type='vlc_object_t *' data-ref="43obj">obj</dfn>, <em>int</em> <dfn class="local col4 decl" id="44family" title='family' data-type='int' data-ref="44family">family</dfn>, <em>int</em> <dfn class="local col5 decl" id="45socktype" title='socktype' data-type='int' data-ref="45socktype">socktype</dfn>, <em>int</em> <dfn class="local col6 decl" id="46proto" title='proto' data-type='int' data-ref="46proto">proto</dfn>);</td></tr>
+<tr><th id="92">92</th><td></td></tr>
+<tr><th id="93">93</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>int</em> <dfn class="decl" id="net_Connect" title='net_Connect' data-ref="net_Connect">net_Connect</dfn>(<a class="typedef" href="vlc_common.h.html#vlc_object_t" title='vlc_object_t' data-type='struct vlc_object_t' data-ref="vlc_object_t">vlc_object_t</a> *<dfn class="local col7 decl" id="47p_this" title='p_this' data-type='vlc_object_t *' data-ref="47p_this">p_this</dfn>, <em>const</em> <em>char</em> *<dfn class="local col8 decl" id="48psz_host" title='psz_host' data-type='const char *' data-ref="48psz_host">psz_host</dfn>, <em>int</em> <dfn class="local col9 decl" id="49i_port" title='i_port' data-type='int' data-ref="49i_port">i_port</dfn>, <em>int</em> <dfn class="local col0 decl" id="50socktype" title='socktype' data-type='int' data-ref="50socktype">socktype</dfn>, <em>int</em> <dfn class="local col1 decl" id="51protocol" title='protocol' data-type='int' data-ref="51protocol">protocol</dfn>);</td></tr>
+<tr><th id="94">94</th><td><u>#define <dfn class="macro" id="_M/net_Connect" data-ref="_M/net_Connect">net_Connect</dfn>(a, b, c, d, e) <a class="ref" href="#net_Connect" title='net_Connect' data-ref="net_Connect">net_Connect</a>(VLC_OBJECT(a), b, c, d, e)</u></td></tr>
+<tr><th id="95">95</th><td></td></tr>
+<tr><th id="96">96</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>int</em> * <dfn class="decl" id="net_Listen" title='net_Listen' data-ref="net_Listen">net_Listen</dfn>(<a class="typedef" href="vlc_common.h.html#vlc_object_t" title='vlc_object_t' data-type='struct vlc_object_t' data-ref="vlc_object_t">vlc_object_t</a> *<dfn class="local col2 decl" id="52p_this" title='p_this' data-type='vlc_object_t *' data-ref="52p_this">p_this</dfn>, <em>const</em> <em>char</em> *<dfn class="local col3 decl" id="53psz_host" title='psz_host' data-type='const char *' data-ref="53psz_host">psz_host</dfn>, <em>int</em> <dfn class="local col4 decl" id="54i_port" title='i_port' data-type='int' data-ref="54i_port">i_port</dfn>, <em>int</em> <dfn class="local col5 decl" id="55socktype" title='socktype' data-type='int' data-ref="55socktype">socktype</dfn>, <em>int</em> <dfn class="local col6 decl" id="56protocol" title='protocol' data-type='int' data-ref="56protocol">protocol</dfn>);</td></tr>
+<tr><th id="97">97</th><td></td></tr>
+<tr><th id="98">98</th><td><u>#define <dfn class="macro" id="_M/net_ListenTCP" data-ref="_M/net_ListenTCP">net_ListenTCP</dfn>(a, b, c) net_Listen(VLC_OBJECT(a), b, c, \</u></td></tr>
+<tr><th id="99">99</th><td><u>                                          SOCK_STREAM, IPPROTO_TCP)</u></td></tr>
+<tr><th id="100">100</th><td></td></tr>
+<tr><th id="101">101</th><td><em>static</em> <b>inline</b> <em>int</em> <dfn class="decl def" id="net_ConnectTCP" title='net_ConnectTCP' data-ref="net_ConnectTCP">net_ConnectTCP</dfn> (<a class="typedef" href="vlc_common.h.html#vlc_object_t" title='vlc_object_t' data-type='struct vlc_object_t' data-ref="vlc_object_t">vlc_object_t</a> *<dfn class="local col7 decl" id="57obj" title='obj' data-type='vlc_object_t *' data-ref="57obj">obj</dfn>, <em>const</em> <em>char</em> *<dfn class="local col8 decl" id="58host" title='host' data-type='const char *' data-ref="58host">host</dfn>, <em>int</em> <dfn class="local col9 decl" id="59port" title='port' data-type='int' data-ref="59port">port</dfn>)</td></tr>
+<tr><th id="102">102</th><td>{</td></tr>
+<tr><th id="103">103</th><td>    <b>return</b> <a class="macro" href="#94" title="net_Connect(__builtin_choose_expr( __builtin_offsetof(__typeof__(*(obj)), psz_object_type), (void)0 , (vlc_object_t *)(obj)), host, port, SOCK_STREAM, IPPROTO_TCP)" data-ref="_M/net_Connect">net_Connect</a> (<a class="local col7 ref" href="#57obj" title='obj' data-ref="57obj">obj</a>, <a class="local col8 ref" href="#58host" title='host' data-ref="58host">host</a>, <a class="local col9 ref" href="#59port" title='port' data-ref="59port">port</a>, <a class="macro" href="../../include/x86_64-linux-gnu/bits/socket_type.h.html#28" title="SOCK_STREAM" data-ref="_M/SOCK_STREAM">SOCK_STREAM</a>, <a class="macro" href="../../include/netinet/in.h.html#51" title="IPPROTO_TCP" data-ref="_M/IPPROTO_TCP">IPPROTO_TCP</a>);</td></tr>
+<tr><th id="104">104</th><td>}</td></tr>
+<tr><th id="105">105</th><td><u>#define <dfn class="macro" id="_M/net_ConnectTCP" data-ref="_M/net_ConnectTCP">net_ConnectTCP</dfn>(a, b, c) net_ConnectTCP(VLC_OBJECT(a), b, c)</u></td></tr>
+<tr><th id="106">106</th><td></td></tr>
+<tr><th id="107">107</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>int</em> <dfn class="decl" id="net_AcceptSingle" title='net_AcceptSingle' data-ref="net_AcceptSingle">net_AcceptSingle</dfn>(<a class="typedef" href="vlc_common.h.html#vlc_object_t" title='vlc_object_t' data-type='struct vlc_object_t' data-ref="vlc_object_t">vlc_object_t</a> *<dfn class="local col0 decl" id="60obj" title='obj' data-type='vlc_object_t *' data-ref="60obj">obj</dfn>, <em>int</em> <dfn class="local col1 decl" id="61lfd" title='lfd' data-type='int' data-ref="61lfd">lfd</dfn>);</td></tr>
+<tr><th id="108">108</th><td></td></tr>
+<tr><th id="109">109</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>int</em> <dfn class="decl" id="net_Accept" title='net_Accept' data-ref="net_Accept">net_Accept</dfn>( <a class="typedef" href="vlc_common.h.html#vlc_object_t" title='vlc_object_t' data-type='struct vlc_object_t' data-ref="vlc_object_t">vlc_object_t</a> *, <em>int</em> * );</td></tr>
+<tr><th id="110">110</th><td><u>#define <dfn class="macro" id="_M/net_Accept" data-ref="_M/net_Accept">net_Accept</dfn>(a, b) \</u></td></tr>
+<tr><th id="111">111</th><td><u>        net_Accept(VLC_OBJECT(a), b)</u></td></tr>
+<tr><th id="112">112</th><td></td></tr>
+<tr><th id="113">113</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>int</em> <dfn class="decl" id="net_ConnectDgram" title='net_ConnectDgram' data-ref="net_ConnectDgram">net_ConnectDgram</dfn>( <a class="typedef" href="vlc_common.h.html#vlc_object_t" title='vlc_object_t' data-type='struct vlc_object_t' data-ref="vlc_object_t">vlc_object_t</a> *<dfn class="local col2 decl" id="62p_this" title='p_this' data-type='vlc_object_t *' data-ref="62p_this">p_this</dfn>, <em>const</em> <em>char</em> *<dfn class="local col3 decl" id="63psz_host" title='psz_host' data-type='const char *' data-ref="63psz_host">psz_host</dfn>, <em>int</em> <dfn class="local col4 decl" id="64i_port" title='i_port' data-type='int' data-ref="64i_port">i_port</dfn>, <em>int</em> <dfn class="local col5 decl" id="65hlim" title='hlim' data-type='int' data-ref="65hlim">hlim</dfn>, <em>int</em> <dfn class="local col6 decl" id="66proto" title='proto' data-type='int' data-ref="66proto">proto</dfn> );</td></tr>
+<tr><th id="114">114</th><td><u>#define <dfn class="macro" id="_M/net_ConnectDgram" data-ref="_M/net_ConnectDgram">net_ConnectDgram</dfn>(a, b, c, d, e ) \</u></td></tr>
+<tr><th id="115">115</th><td><u>        <a class="ref" href="#net_ConnectDgram" title='net_ConnectDgram' data-ref="net_ConnectDgram">net_ConnectDgram</a>(VLC_OBJECT(a), b, c, d, e)</u></td></tr>
+<tr><th id="116">116</th><td></td></tr>
+<tr><th id="117">117</th><td><em>static</em> <b>inline</b> <em>int</em> <dfn class="decl def" id="net_ConnectUDP" title='net_ConnectUDP' data-ref="net_ConnectUDP">net_ConnectUDP</dfn> (<a class="typedef" href="vlc_common.h.html#vlc_object_t" title='vlc_object_t' data-type='struct vlc_object_t' data-ref="vlc_object_t">vlc_object_t</a> *<dfn class="local col7 decl" id="67obj" title='obj' data-type='vlc_object_t *' data-ref="67obj">obj</dfn>, <em>const</em> <em>char</em> *<dfn class="local col8 decl" id="68host" title='host' data-type='const char *' data-ref="68host">host</dfn>, <em>int</em> <dfn class="local col9 decl" id="69port" title='port' data-type='int' data-ref="69port">port</dfn>, <em>int</em> <dfn class="local col0 decl" id="70hlim" title='hlim' data-type='int' data-ref="70hlim">hlim</dfn>)</td></tr>
+<tr><th id="118">118</th><td>{</td></tr>
+<tr><th id="119">119</th><td>    <b>return</b> <a class="macro" href="#114" title="net_ConnectDgram(__builtin_choose_expr( __builtin_offsetof(__typeof__(*(obj)), psz_object_type), (void)0 , (vlc_object_t *)(obj)), host, port, hlim, IPPROTO_UDP)" data-ref="_M/net_ConnectDgram">net_ConnectDgram</a> (<a class="local col7 ref" href="#67obj" title='obj' data-ref="67obj">obj</a>, <a class="local col8 ref" href="#68host" title='host' data-ref="68host">host</a>, <a class="local col9 ref" href="#69port" title='port' data-ref="69port">port</a>, <a class="local col0 ref" href="#70hlim" title='hlim' data-ref="70hlim">hlim</a>, <a class="macro" href="../../include/netinet/in.h.html#57" title="IPPROTO_UDP" data-ref="_M/IPPROTO_UDP">IPPROTO_UDP</a>);</td></tr>
+<tr><th id="120">120</th><td>}</td></tr>
+<tr><th id="121">121</th><td></td></tr>
+<tr><th id="122">122</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>int</em> <dfn class="decl" id="net_OpenDgram" title='net_OpenDgram' data-ref="net_OpenDgram">net_OpenDgram</dfn>( <a class="typedef" href="vlc_common.h.html#vlc_object_t" title='vlc_object_t' data-type='struct vlc_object_t' data-ref="vlc_object_t">vlc_object_t</a> *<dfn class="local col1 decl" id="71p_this" title='p_this' data-type='vlc_object_t *' data-ref="71p_this">p_this</dfn>, <em>const</em> <em>char</em> *<dfn class="local col2 decl" id="72psz_bind" title='psz_bind' data-type='const char *' data-ref="72psz_bind">psz_bind</dfn>, <em>int</em> <dfn class="local col3 decl" id="73i_bind" title='i_bind' data-type='int' data-ref="73i_bind">i_bind</dfn>, <em>const</em> <em>char</em> *<dfn class="local col4 decl" id="74psz_server" title='psz_server' data-type='const char *' data-ref="74psz_server">psz_server</dfn>, <em>int</em> <dfn class="local col5 decl" id="75i_server" title='i_server' data-type='int' data-ref="75i_server">i_server</dfn>, <em>int</em> <dfn class="local col6 decl" id="76proto" title='proto' data-type='int' data-ref="76proto">proto</dfn> );</td></tr>
+<tr><th id="123">123</th><td><u>#define <dfn class="macro" id="_M/net_OpenDgram" data-ref="_M/net_OpenDgram">net_OpenDgram</dfn>( a, b, c, d, e, g ) \</u></td></tr>
+<tr><th id="124">124</th><td><u>        <a class="ref" href="#net_OpenDgram" title='net_OpenDgram' data-ref="net_OpenDgram">net_OpenDgram</a>(VLC_OBJECT(a), b, c, d, e, g)</u></td></tr>
+<tr><th id="125">125</th><td></td></tr>
+<tr><th id="126">126</th><td><em>static</em> <b>inline</b> <em>int</em> <dfn class="decl def" id="net_ListenUDP1" title='net_ListenUDP1' data-ref="net_ListenUDP1">net_ListenUDP1</dfn> (<a class="typedef" href="vlc_common.h.html#vlc_object_t" title='vlc_object_t' data-type='struct vlc_object_t' data-ref="vlc_object_t">vlc_object_t</a> *<dfn class="local col7 decl" id="77obj" title='obj' data-type='vlc_object_t *' data-ref="77obj">obj</dfn>, <em>const</em> <em>char</em> *<dfn class="local col8 decl" id="78host" title='host' data-type='const char *' data-ref="78host">host</dfn>, <em>int</em> <dfn class="local col9 decl" id="79port" title='port' data-type='int' data-ref="79port">port</dfn>)</td></tr>
+<tr><th id="127">127</th><td>{</td></tr>
+<tr><th id="128">128</th><td>    <b>return</b> <a class="macro" href="#123" title="net_OpenDgram(__builtin_choose_expr( __builtin_offsetof(__typeof__(*(obj)), psz_object_type), (void)0 , (vlc_object_t *)(obj)), host, port, ((void*)0), 0, IPPROTO_UDP)" data-ref="_M/net_OpenDgram">net_OpenDgram</a> (<a class="local col7 ref" href="#77obj" title='obj' data-ref="77obj">obj</a>, <a class="local col8 ref" href="#78host" title='host' data-ref="78host">host</a>, <a class="local col9 ref" href="#79port" title='port' data-ref="79port">port</a>, <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>, <var>0</var>, <a class="macro" href="../../include/netinet/in.h.html#57" title="IPPROTO_UDP" data-ref="_M/IPPROTO_UDP">IPPROTO_UDP</a>);</td></tr>
+<tr><th id="129">129</th><td>}</td></tr>
+<tr><th id="130">130</th><td></td></tr>
+<tr><th id="131">131</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>void</em> <dfn class="decl" id="net_ListenClose" title='net_ListenClose' data-ref="net_ListenClose">net_ListenClose</dfn>( <em>int</em> *<dfn class="local col0 decl" id="80fd" title='fd' data-type='int *' data-ref="80fd">fd</dfn> );</td></tr>
+<tr><th id="132">132</th><td></td></tr>
+<tr><th id="133">133</th><td><em>int</em> <dfn class="decl" id="net_Subscribe" title='net_Subscribe' data-ref="net_Subscribe">net_Subscribe</dfn> (<a class="typedef" href="vlc_common.h.html#vlc_object_t" title='vlc_object_t' data-type='struct vlc_object_t' data-ref="vlc_object_t">vlc_object_t</a> *<dfn class="local col1 decl" id="81obj" title='obj' data-type='vlc_object_t *' data-ref="81obj">obj</dfn>, <em>int</em> <dfn class="local col2 decl" id="82fd" title='fd' data-type='int' data-ref="82fd">fd</dfn>, <em>const</em> <b>struct</b> <a class="type" href="../../include/x86_64-linux-gnu/bits/socket.h.html#sockaddr" title='sockaddr' data-ref="sockaddr">sockaddr</a> *<dfn class="local col3 decl" id="83addr" title='addr' data-type='const struct sockaddr *' data-ref="83addr">addr</dfn>,</td></tr>
+<tr><th id="134">134</th><td>                   <a class="typedef" href="../../include/unistd.h.html#socklen_t" title='socklen_t' data-type='__socklen_t' data-ref="socklen_t">socklen_t</a> <dfn class="local col4 decl" id="84addrlen" title='addrlen' data-type='socklen_t' data-ref="84addrlen">addrlen</dfn>);</td></tr>
+<tr><th id="135">135</th><td></td></tr>
+<tr><th id="136">136</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>int</em> <dfn class="decl" id="net_SetCSCov" title='net_SetCSCov' data-ref="net_SetCSCov">net_SetCSCov</dfn>( <em>int</em> <dfn class="local col5 decl" id="85fd" title='fd' data-type='int' data-ref="85fd">fd</dfn>, <em>int</em> <dfn class="local col6 decl" id="86sendcov" title='sendcov' data-type='int' data-ref="86sendcov">sendcov</dfn>, <em>int</em> <dfn class="local col7 decl" id="87recvcov" title='recvcov' data-type='int' data-ref="87recvcov">recvcov</dfn> );</td></tr>
+<tr><th id="137">137</th><td></td></tr>
+<tr><th id="138">138</th><td><i>/* Functions to read from or write to the networking layer */</i></td></tr>
+<tr><th id="139">139</th><td><b>struct</b> <dfn class="type def" id="virtual_socket_t" title='virtual_socket_t' data-ref="virtual_socket_t">virtual_socket_t</dfn></td></tr>
+<tr><th id="140">140</th><td>{</td></tr>
+<tr><th id="141">141</th><td>    <em>void</em> *<dfn class="decl" id="virtual_socket_t::p_sys" title='virtual_socket_t::p_sys' data-ref="virtual_socket_t::p_sys">p_sys</dfn>;</td></tr>
+<tr><th id="142">142</th><td>    <em>int</em> (*<dfn class="decl" id="virtual_socket_t::pf_recv" title='virtual_socket_t::pf_recv' data-ref="virtual_socket_t::pf_recv">pf_recv</dfn>) ( <em>void</em> *, <em>void</em> *, <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> );</td></tr>
+<tr><th id="143">143</th><td>    <em>int</em> (*<dfn class="decl" id="virtual_socket_t::pf_send" title='virtual_socket_t::pf_send' data-ref="virtual_socket_t::pf_send">pf_send</dfn>) ( <em>void</em> *, <em>const</em> <em>void</em> *, <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> );</td></tr>
+<tr><th id="144">144</th><td>};</td></tr>
+<tr><th id="145">145</th><td></td></tr>
+<tr><th id="146">146</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <a class="typedef" href="../../include/x86_64-linux-gnu/sys/types.h.html#ssize_t" title='ssize_t' data-type='__ssize_t' data-ref="ssize_t">ssize_t</a> <dfn class="decl" id="net_Read" title='net_Read' data-ref="net_Read">net_Read</dfn>( <a class="typedef" href="vlc_common.h.html#vlc_object_t" title='vlc_object_t' data-type='struct vlc_object_t' data-ref="vlc_object_t">vlc_object_t</a> *<dfn class="local col8 decl" id="88p_this" title='p_this' data-type='vlc_object_t *' data-ref="88p_this">p_this</dfn>, <em>int</em> <dfn class="local col9 decl" id="89fd" title='fd' data-type='int' data-ref="89fd">fd</dfn>, <em>const</em> <a class="typedef" href="vlc_common.h.html#v_socket_t" title='v_socket_t' data-type='struct virtual_socket_t' data-ref="v_socket_t">v_socket_t</a> *, <em>void</em> *<dfn class="local col0 decl" id="90p_data" title='p_data' data-type='void *' data-ref="90p_data">p_data</dfn>, <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="local col1 decl" id="91i_data" title='i_data' data-type='size_t' data-ref="91i_data">i_data</dfn>, <span class="macro" title="_Bool" data-ref="_M/bool">bool</span> <dfn class="local col2 decl" id="92b_retry" title='b_retry' data-type='_Bool' data-ref="92b_retry">b_retry</dfn> );</td></tr>
+<tr><th id="147">147</th><td><u>#define <dfn class="macro" id="_M/net_Read" data-ref="_M/net_Read">net_Read</dfn>(a,b,c,d,e,f) net_Read(VLC_OBJECT(a),b,c,d,e,f)</u></td></tr>
+<tr><th id="148">148</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <a class="typedef" href="../../include/x86_64-linux-gnu/sys/types.h.html#ssize_t" title='ssize_t' data-type='__ssize_t' data-ref="ssize_t">ssize_t</a> <dfn class="decl" id="net_Write" title='net_Write' data-ref="net_Write">net_Write</dfn>( <a class="typedef" href="vlc_common.h.html#vlc_object_t" title='vlc_object_t' data-type='struct vlc_object_t' data-ref="vlc_object_t">vlc_object_t</a> *<dfn class="local col3 decl" id="93p_this" title='p_this' data-type='vlc_object_t *' data-ref="93p_this">p_this</dfn>, <em>int</em> <dfn class="local col4 decl" id="94fd" title='fd' data-type='int' data-ref="94fd">fd</dfn>, <em>const</em> <a class="typedef" href="vlc_common.h.html#v_socket_t" title='v_socket_t' data-type='struct virtual_socket_t' data-ref="v_socket_t">v_socket_t</a> *, <em>const</em> <em>void</em> *<dfn class="local col5 decl" id="95p_data" title='p_data' data-type='const void *' data-ref="95p_data">p_data</dfn>, <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="local col6 decl" id="96i_data" title='i_data' data-type='size_t' data-ref="96i_data">i_data</dfn> );</td></tr>
+<tr><th id="149">149</th><td><u>#define <dfn class="macro" id="_M/net_Write" data-ref="_M/net_Write">net_Write</dfn>(a,b,c,d,e) net_Write(VLC_OBJECT(a),b,c,d,e)</u></td></tr>
+<tr><th id="150">150</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>char</em> * <dfn class="decl" id="net_Gets" title='net_Gets' data-ref="net_Gets">net_Gets</dfn>( <a class="typedef" href="vlc_common.h.html#vlc_object_t" title='vlc_object_t' data-type='struct vlc_object_t' data-ref="vlc_object_t">vlc_object_t</a> *<dfn class="local col7 decl" id="97p_this" title='p_this' data-type='vlc_object_t *' data-ref="97p_this">p_this</dfn>, <em>int</em> <dfn class="local col8 decl" id="98fd" title='fd' data-type='int' data-ref="98fd">fd</dfn>, <em>const</em> <a class="typedef" href="vlc_common.h.html#v_socket_t" title='v_socket_t' data-type='struct virtual_socket_t' data-ref="v_socket_t">v_socket_t</a> * );</td></tr>
+<tr><th id="151">151</th><td><u>#define <dfn class="macro" id="_M/net_Gets" data-ref="_M/net_Gets">net_Gets</dfn>(a,b,c) net_Gets(VLC_OBJECT(a),b,c)</u></td></tr>
+<tr><th id="152">152</th><td></td></tr>
+<tr><th id="153">153</th><td></td></tr>
+<tr><th id="154">154</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <a class="typedef" href="../../include/x86_64-linux-gnu/sys/types.h.html#ssize_t" title='ssize_t' data-type='__ssize_t' data-ref="ssize_t">ssize_t</a> <dfn class="decl" id="net_Printf" title='net_Printf' data-ref="net_Printf">net_Printf</dfn>( <a class="typedef" href="vlc_common.h.html#vlc_object_t" title='vlc_object_t' data-type='struct vlc_object_t' data-ref="vlc_object_t">vlc_object_t</a> *<dfn class="local col9 decl" id="99p_this" title='p_this' data-type='vlc_object_t *' data-ref="99p_this">p_this</dfn>, <em>int</em> <dfn class="local col0 decl" id="100fd" title='fd' data-type='int' data-ref="100fd">fd</dfn>, <em>const</em> <a class="typedef" href="vlc_common.h.html#v_socket_t" title='v_socket_t' data-type='struct virtual_socket_t' data-ref="v_socket_t">v_socket_t</a> *, <em>const</em> <em>char</em> *<dfn class="local col1 decl" id="101psz_fmt" title='psz_fmt' data-type='const char *' data-ref="101psz_fmt">psz_fmt</dfn>, ... ) <a class="macro" href="vlc_common.h.html#90" title="__attribute__ ((format(printf,4,5)))" data-ref="_M/VLC_FORMAT">VLC_FORMAT</a>( <var>4</var>, <var>5</var> );</td></tr>
+<tr><th id="155">155</th><td><u>#define <dfn class="macro" id="_M/net_Printf" data-ref="_M/net_Printf">net_Printf</dfn>(o,fd,vs,...) net_Printf(VLC_OBJECT(o),fd,vs, __VA_ARGS__)</u></td></tr>
+<tr><th id="156">156</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <a class="typedef" href="../../include/x86_64-linux-gnu/sys/types.h.html#ssize_t" title='ssize_t' data-type='__ssize_t' data-ref="ssize_t">ssize_t</a> <dfn class="decl" id="net_vaPrintf" title='net_vaPrintf' data-ref="net_vaPrintf">net_vaPrintf</dfn>( <a class="typedef" href="vlc_common.h.html#vlc_object_t" title='vlc_object_t' data-type='struct vlc_object_t' data-ref="vlc_object_t">vlc_object_t</a> *<dfn class="local col2 decl" id="102p_this" title='p_this' data-type='vlc_object_t *' data-ref="102p_this">p_this</dfn>, <em>int</em> <dfn class="local col3 decl" id="103fd" title='fd' data-type='int' data-ref="103fd">fd</dfn>, <em>const</em> <a class="typedef" href="vlc_common.h.html#v_socket_t" title='v_socket_t' data-type='struct virtual_socket_t' data-ref="v_socket_t">v_socket_t</a> *, <em>const</em> <em>char</em> *<dfn class="local col4 decl" id="104psz_fmt" title='psz_fmt' data-type='const char *' data-ref="104psz_fmt">psz_fmt</dfn>, <span class='typedef' title='va_list' data-type='__gnuc_va_list' data-ref="va_list">va_list</span> <dfn class="local col5 decl" id="105args" title='args' data-type='__va_list_tag *' data-ref="105args">args</dfn> );</td></tr>
+<tr><th id="157">157</th><td><u>#define <dfn class="macro" id="_M/net_vaPrintf" data-ref="_M/net_vaPrintf">net_vaPrintf</dfn>(a,b,c,d,e) net_vaPrintf(VLC_OBJECT(a),b,c,d,e)</u></td></tr>
+<tr><th id="158">158</th><td></td></tr>
+<tr><th id="159">159</th><td><u>#<span data-ppcond="159">ifdef</span> <span class="macro" data-ref="_M/_WIN32">_WIN32</span></u></td></tr>
+<tr><th id="160">160</th><td><i>/* Microsoft: same semantic, same value, different name... go figure */</i></td></tr>
+<tr><th id="161">161</th><td><u># define SHUT_RD SD_RECEIVE</u></td></tr>
+<tr><th id="162">162</th><td><u># define SHUT_WR SD_SEND</u></td></tr>
+<tr><th id="163">163</th><td><u># define SHUT_RDWR SD_BOTH</u></td></tr>
+<tr><th id="164">164</th><td><u># define net_Close( fd ) closesocket ((SOCKET)fd)</u></td></tr>
+<tr><th id="165">165</th><td><u>#<span data-ppcond="159">else</span></u></td></tr>
+<tr><th id="166">166</th><td><u># <span data-ppcond="166">ifdef</span> <span class="macro" data-ref="_M/__OS2__">__OS2__</span></u></td></tr>
+<tr><th id="167">167</th><td><u>#  define SHUT_RD    0</u></td></tr>
+<tr><th id="168">168</th><td><u>#  define SHUT_WR    1</u></td></tr>
+<tr><th id="169">169</th><td><u>#  define SHUT_RDWR  2</u></td></tr>
+<tr><th id="170">170</th><td><u># <span data-ppcond="166">endif</span></u></td></tr>
+<tr><th id="171">171</th><td><u># define <dfn class="macro" id="_M/net_Close" data-ref="_M/net_Close">net_Close</dfn>( fd ) (void)close (fd)</u></td></tr>
+<tr><th id="172">172</th><td><u>#<span data-ppcond="159">endif</span></u></td></tr>
+<tr><th id="173">173</th><td></td></tr>
+<tr><th id="174">174</th><td><i>/* Portable network names/addresses resolution layer */</i></td></tr>
+<tr><th id="175">175</th><td></td></tr>
+<tr><th id="176">176</th><td><i>/* GAI error codes */</i></td></tr>
+<tr><th id="177">177</th><td><u># <span data-ppcond="177">ifndef</span> <a class="macro" href="../../include/netdb.h.html#618" data-ref="_M/EAI_BADFLAGS">EAI_BADFLAGS</a></u></td></tr>
+<tr><th id="178">178</th><td><u>#  define EAI_BADFLAGS -1</u></td></tr>
+<tr><th id="179">179</th><td><u># <span data-ppcond="177">endif</span></u></td></tr>
+<tr><th id="180">180</th><td><u># <span data-ppcond="180">ifndef</span> <a class="macro" href="../../include/netdb.h.html#619" data-ref="_M/EAI_NONAME">EAI_NONAME</a></u></td></tr>
+<tr><th id="181">181</th><td><u>#  define EAI_NONAME -2</u></td></tr>
+<tr><th id="182">182</th><td><u># <span data-ppcond="180">endif</span></u></td></tr>
+<tr><th id="183">183</th><td><u># <span data-ppcond="183">ifndef</span> <a class="macro" href="../../include/netdb.h.html#620" data-ref="_M/EAI_AGAIN">EAI_AGAIN</a></u></td></tr>
+<tr><th id="184">184</th><td><u>#  define EAI_AGAIN -3</u></td></tr>
+<tr><th id="185">185</th><td><u># <span data-ppcond="183">endif</span></u></td></tr>
+<tr><th id="186">186</th><td><u># <span data-ppcond="186">ifndef</span> <a class="macro" href="../../include/netdb.h.html#621" data-ref="_M/EAI_FAIL">EAI_FAIL</a></u></td></tr>
+<tr><th id="187">187</th><td><u>#  define EAI_FAIL -4</u></td></tr>
+<tr><th id="188">188</th><td><u># <span data-ppcond="186">endif</span></u></td></tr>
+<tr><th id="189">189</th><td><u># <span data-ppcond="189">ifndef</span> <a class="macro" href="../../include/netdb.h.html#629" data-ref="_M/EAI_NODATA">EAI_NODATA</a></u></td></tr>
+<tr><th id="190">190</th><td><u>#  define EAI_NODATA -5</u></td></tr>
+<tr><th id="191">191</th><td><u># <span data-ppcond="189">endif</span></u></td></tr>
+<tr><th id="192">192</th><td><u># <span data-ppcond="192">ifndef</span> <a class="macro" href="../../include/netdb.h.html#622" data-ref="_M/EAI_FAMILY">EAI_FAMILY</a></u></td></tr>
+<tr><th id="193">193</th><td><u>#  define EAI_FAMILY -6</u></td></tr>
+<tr><th id="194">194</th><td><u># <span data-ppcond="192">endif</span></u></td></tr>
+<tr><th id="195">195</th><td><u># <span data-ppcond="195">ifndef</span> <a class="macro" href="../../include/netdb.h.html#623" data-ref="_M/EAI_SOCKTYPE">EAI_SOCKTYPE</a></u></td></tr>
+<tr><th id="196">196</th><td><u>#  define EAI_SOCKTYPE -7</u></td></tr>
+<tr><th id="197">197</th><td><u># <span data-ppcond="195">endif</span></u></td></tr>
+<tr><th id="198">198</th><td><u># <span data-ppcond="198">ifndef</span> <a class="macro" href="../../include/netdb.h.html#624" data-ref="_M/EAI_SERVICE">EAI_SERVICE</a></u></td></tr>
+<tr><th id="199">199</th><td><u>#  define EAI_SERVICE -8</u></td></tr>
+<tr><th id="200">200</th><td><u># <span data-ppcond="198">endif</span></u></td></tr>
+<tr><th id="201">201</th><td><u># <span data-ppcond="201">ifndef</span> <a class="macro" href="../../include/netdb.h.html#630" data-ref="_M/EAI_ADDRFAMILY">EAI_ADDRFAMILY</a></u></td></tr>
+<tr><th id="202">202</th><td><u>#  define EAI_ADDRFAMILY -9</u></td></tr>
+<tr><th id="203">203</th><td><u># <span data-ppcond="201">endif</span></u></td></tr>
+<tr><th id="204">204</th><td><u># <span data-ppcond="204">ifndef</span> <a class="macro" href="../../include/netdb.h.html#625" data-ref="_M/EAI_MEMORY">EAI_MEMORY</a></u></td></tr>
+<tr><th id="205">205</th><td><u>#  define EAI_MEMORY -10</u></td></tr>
+<tr><th id="206">206</th><td><u># <span data-ppcond="204">endif</span></u></td></tr>
+<tr><th id="207">207</th><td><u>#<span data-ppcond="207">ifndef</span> <a class="macro" href="../../include/netdb.h.html#627" data-ref="_M/EAI_OVERFLOW">EAI_OVERFLOW</a></u></td></tr>
+<tr><th id="208">208</th><td><u>#  define EAI_OVERFLOW -11</u></td></tr>
+<tr><th id="209">209</th><td><u>#<span data-ppcond="207">endif</span></u></td></tr>
+<tr><th id="210">210</th><td><u># <span data-ppcond="210">ifndef</span> <a class="macro" href="../../include/netdb.h.html#626" data-ref="_M/EAI_SYSTEM">EAI_SYSTEM</a></u></td></tr>
+<tr><th id="211">211</th><td><u>#  define EAI_SYSTEM -12</u></td></tr>
+<tr><th id="212">212</th><td><u># <span data-ppcond="210">endif</span></u></td></tr>
+<tr><th id="213">213</th><td></td></tr>
+<tr><th id="214">214</th><td></td></tr>
+<tr><th id="215">215</th><td><u># <span data-ppcond="215">ifndef</span> <a class="macro" href="../../include/netdb.h.html#640" data-ref="_M/NI_MAXHOST">NI_MAXHOST</a></u></td></tr>
+<tr><th id="216">216</th><td><u>#  define NI_MAXHOST 1025</u></td></tr>
+<tr><th id="217">217</th><td><u>#  define NI_MAXSERV 32</u></td></tr>
+<tr><th id="218">218</th><td><u># <span data-ppcond="215">endif</span></u></td></tr>
+<tr><th id="219">219</th><td><u># define <dfn class="macro" id="_M/NI_MAXNUMERICHOST" data-ref="_M/NI_MAXNUMERICHOST">NI_MAXNUMERICHOST</dfn> 64</u></td></tr>
+<tr><th id="220">220</th><td></td></tr>
+<tr><th id="221">221</th><td><u>#<span data-ppcond="221">ifndef</span> <a class="macro" href="../../include/netdb.h.html#615" data-ref="_M/AI_NUMERICSERV">AI_NUMERICSERV</a></u></td></tr>
+<tr><th id="222">222</th><td><u># define AI_NUMERICSERV 0</u></td></tr>
+<tr><th id="223">223</th><td><u>#<span data-ppcond="221">endif</span></u></td></tr>
+<tr><th id="224">224</th><td><u>#<span data-ppcond="224">ifndef</span> <a class="macro" href="../../include/netdb.h.html#606" data-ref="_M/AI_IDN">AI_IDN</a></u></td></tr>
+<tr><th id="225">225</th><td><u># define AI_IDN 0 /* GNU/libc extension */</u></td></tr>
+<tr><th id="226">226</th><td><u>#<span data-ppcond="224">endif</span></u></td></tr>
+<tr><th id="227">227</th><td></td></tr>
+<tr><th id="228">228</th><td><u>#<span data-ppcond="228">ifdef</span> <span class="macro" data-ref="_M/_WIN32">_WIN32</span></u></td></tr>
+<tr><th id="229">229</th><td><u># undef gai_strerror</u></td></tr>
+<tr><th id="230">230</th><td><u># define gai_strerror gai_strerrorA</u></td></tr>
+<tr><th id="231">231</th><td><u>#<span data-ppcond="228">endif</span></u></td></tr>
+<tr><th id="232">232</th><td></td></tr>
+<tr><th id="233">233</th><td><u>#<span data-ppcond="233">ifdef</span> <span class="macro" data-ref="_M/__OS2__">__OS2__</span></u></td></tr>
+<tr><th id="234">234</th><td><u># ifndef NI_NUMERICHOST</u></td></tr>
+<tr><th id="235">235</th><td><u>#  define NI_NUMERICHOST 0x01</u></td></tr>
+<tr><th id="236">236</th><td><u>#  define NI_NUMERICSERV 0x02</u></td></tr>
+<tr><th id="237">237</th><td><u>#  define NI_NOFQDN      0x04</u></td></tr>
+<tr><th id="238">238</th><td><u>#  define NI_NAMEREQD    0x08</u></td></tr>
+<tr><th id="239">239</th><td><u>#  define NI_DGRAM       0x10</u></td></tr>
+<tr><th id="240">240</th><td><u># endif</u></td></tr>
+<tr><th id="241">241</th><td></td></tr>
+<tr><th id="242">242</th><td><b>struct</b> addrinfo</td></tr>
+<tr><th id="243">243</th><td>{</td></tr>
+<tr><th id="244">244</th><td>    <em>int</em> ai_flags;</td></tr>
+<tr><th id="245">245</th><td>    <em>int</em> ai_family;</td></tr>
+<tr><th id="246">246</th><td>    <em>int</em> ai_socktype;</td></tr>
+<tr><th id="247">247</th><td>    <em>int</em> ai_protocol;</td></tr>
+<tr><th id="248">248</th><td>    size_t ai_addrlen;</td></tr>
+<tr><th id="249">249</th><td>    <b>struct</b> sockaddr *ai_addr;</td></tr>
+<tr><th id="250">250</th><td>    <em>char</em> *ai_canonname;</td></tr>
+<tr><th id="251">251</th><td>    <b>struct</b> addrinfo *ai_next;</td></tr>
+<tr><th id="252">252</th><td>};</td></tr>
+<tr><th id="253">253</th><td></td></tr>
+<tr><th id="254">254</th><td><u># define AI_PASSIVE     1</u></td></tr>
+<tr><th id="255">255</th><td><u># define AI_CANONNAME   2</u></td></tr>
+<tr><th id="256">256</th><td><u># define AI_NUMERICHOST 4</u></td></tr>
+<tr><th id="257">257</th><td></td></tr>
+<tr><th id="258">258</th><td>VLC_API <em>const</em> <em>char</em> *gai_strerror( <em>int</em> errnum );</td></tr>
+<tr><th id="259">259</th><td></td></tr>
+<tr><th id="260">260</th><td>VLC_API <em>int</em>  getaddrinfo ( <em>const</em> <em>char</em> *, <em>const</em> <em>char</em> *,</td></tr>
+<tr><th id="261">261</th><td>                           <em>const</em> <b>struct</b> addrinfo *, <b>struct</b> addrinfo ** );</td></tr>
+<tr><th id="262">262</th><td>VLC_API <em>void</em> freeaddrinfo( <b>struct</b> addrinfo * );</td></tr>
+<tr><th id="263">263</th><td>VLC_API <em>int</em>  getnameinfo ( <em>const</em> <b>struct</b> sockaddr *, socklen_t,</td></tr>
+<tr><th id="264">264</th><td>                           <em>char</em> *, <em>int</em>, <em>char</em> *, <em>int</em>, <em>int</em> );</td></tr>
+<tr><th id="265">265</th><td><u>#<span data-ppcond="233">endif</span></u></td></tr>
+<tr><th id="266">266</th><td></td></tr>
+<tr><th id="267">267</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>int</em> <dfn class="decl" id="vlc_getnameinfo" title='vlc_getnameinfo' data-ref="vlc_getnameinfo">vlc_getnameinfo</dfn>( <em>const</em> <b>struct</b> <a class="type" href="../../include/x86_64-linux-gnu/bits/socket.h.html#sockaddr" title='sockaddr' data-ref="sockaddr">sockaddr</a> *, <em>int</em>, <em>char</em> *, <em>int</em>, <em>int</em> *, <em>int</em> );</td></tr>
+<tr><th id="268">268</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>int</em> <dfn class="decl" id="vlc_getaddrinfo" title='vlc_getaddrinfo' data-ref="vlc_getaddrinfo">vlc_getaddrinfo</dfn> (<em>const</em> <em>char</em> *, <em>unsigned</em>,</td></tr>
+<tr><th id="269">269</th><td>                             <em>const</em> <b>struct</b> <a class="type" href="../../include/netdb.h.html#addrinfo" title='addrinfo' data-ref="addrinfo">addrinfo</a> *, <b>struct</b> <a class="type" href="../../include/netdb.h.html#addrinfo" title='addrinfo' data-ref="addrinfo">addrinfo</a> **);</td></tr>
+<tr><th id="270">270</th><td></td></tr>
+<tr><th id="271">271</th><td></td></tr>
+<tr><th id="272">272</th><td><u>#<span data-ppcond="272">ifdef</span> <span class="macro" data-ref="_M/__OS2__">__OS2__</span></u></td></tr>
+<tr><th id="273">273</th><td><i>/* OS/2 does not support IPv6, yet. But declare these only for compilation */</i></td></tr>
+<tr><th id="274">274</th><td><b>struct</b> in6_addr</td></tr>
+<tr><th id="275">275</th><td>{</td></tr>
+<tr><th id="276">276</th><td>    uint8_t s6_addr[<var>16</var>];</td></tr>
+<tr><th id="277">277</th><td>};</td></tr>
+<tr><th id="278">278</th><td></td></tr>
+<tr><th id="279">279</th><td><b>struct</b> sockaddr_in6</td></tr>
+<tr><th id="280">280</th><td>{</td></tr>
+<tr><th id="281">281</th><td>    uint8_t         sin6_len;</td></tr>
+<tr><th id="282">282</th><td>    uint8_t         sin6_family;</td></tr>
+<tr><th id="283">283</th><td>    uint16_t        sin6_port;</td></tr>
+<tr><th id="284">284</th><td>    uint32_t        sin6_flowinfo;</td></tr>
+<tr><th id="285">285</th><td>    <b>struct</b> in6_addr sin6_addr;</td></tr>
+<tr><th id="286">286</th><td>    uint32_t        sin6_scope_id;</td></tr>
+<tr><th id="287">287</th><td>};</td></tr>
+<tr><th id="288">288</th><td></td></tr>
+<tr><th id="289">289</th><td><u># define IN6_IS_ADDR_MULTICAST(a)   (((__const uint8_t *) (a))[0] == 0xff)</u></td></tr>
+<tr><th id="290">290</th><td></td></tr>
+<tr><th id="291">291</th><td><em>static</em> <em>const</em> <b>struct</b> in6_addr in6addr_any =</td></tr>
+<tr><th id="292">292</th><td>    { { <var>0</var>, <var>0</var>, <var>0</var>, <var>0</var>, <var>0</var>, <var>0</var>, <var>0</var>, <var>0</var>, <var>0</var>, <var>0</var>, <var>0</var>, <var>0</var>, <var>0</var>, <var>0</var>, <var>0</var>, <var>0</var> } };</td></tr>
+<tr><th id="293">293</th><td><u>#<span data-ppcond="272">endif</span></u></td></tr>
+<tr><th id="294">294</th><td></td></tr>
+<tr><th id="295">295</th><td><em>static</em> <b>inline</b> <span class="macro" title="_Bool" data-ref="_M/bool">bool</span></td></tr>
+<tr><th id="296">296</th><td><dfn class="decl def" id="net_SockAddrIsMulticast" title='net_SockAddrIsMulticast' data-ref="net_SockAddrIsMulticast">net_SockAddrIsMulticast</dfn> (<em>const</em> <b>struct</b> <a class="type" href="../../include/x86_64-linux-gnu/bits/socket.h.html#sockaddr" title='sockaddr' data-ref="sockaddr">sockaddr</a> *<dfn class="local col6 decl" id="106addr" title='addr' data-type='const struct sockaddr *' data-ref="106addr">addr</dfn>, <a class="typedef" href="../../include/unistd.h.html#socklen_t" title='socklen_t' data-type='__socklen_t' data-ref="socklen_t">socklen_t</a> <dfn class="local col7 decl" id="107len" title='len' data-type='socklen_t' data-ref="107len">len</dfn>)</td></tr>
+<tr><th id="297">297</th><td>{</td></tr>
+<tr><th id="298">298</th><td>    <b>switch</b> (<a class="local col6 ref" href="#106addr" title='addr' data-ref="106addr">addr</a>-&gt;<a class="ref" href="../../include/x86_64-linux-gnu/bits/socket.h.html#151" title='sockaddr::sa_family' data-ref="sockaddr::sa_family">sa_family</a>)</td></tr>
+<tr><th id="299">299</th><td>    {</td></tr>
+<tr><th id="300">300</th><td><u>#<span data-ppcond="300">ifdef</span> <a class="macro" href="../../include/netinet/in.h.html#182" data-ref="_M/IN_MULTICAST">IN_MULTICAST</a></u></td></tr>
+<tr><th id="301">301</th><td>        <b>case</b> <a class="macro" href="../../include/x86_64-linux-gnu/bits/socket.h.html#90" title="2" data-ref="_M/AF_INET">AF_INET</a>:</td></tr>
+<tr><th id="302">302</th><td>        {</td></tr>
+<tr><th id="303">303</th><td>            <em>const</em> <b>struct</b> <a class="type" href="../../include/netinet/in.h.html#sockaddr_in" title='sockaddr_in' data-ref="sockaddr_in">sockaddr_in</a> *<dfn class="local col8 decl" id="108v4" title='v4' data-type='const struct sockaddr_in *' data-ref="108v4">v4</dfn> = (<em>const</em> <b>struct</b> <a class="type" href="../../include/netinet/in.h.html#sockaddr_in" title='sockaddr_in' data-ref="sockaddr_in">sockaddr_in</a> *)<a class="local col6 ref" href="#106addr" title='addr' data-ref="106addr">addr</a>;</td></tr>
+<tr><th id="304">304</th><td>            <b>if</b> ((<span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span>)<a class="local col7 ref" href="#107len" title='len' data-ref="107len">len</a> &lt; <b>sizeof</b> (*<a class="local col8 ref" href="#108v4" title='v4' data-ref="108v4">v4</a>))</td></tr>
+<tr><th id="305">305</th><td>                <b>return</b> <span class="macro" title="0" data-ref="_M/false">false</span>;</td></tr>
+<tr><th id="306">306</th><td>            <b>return</b> <a class="macro" href="../../include/netinet/in.h.html#182" title="((((in_addr_t)((__extension__ ({ unsigned int __v, __x = (v4-&gt;sin_addr.s_addr); if (__builtin_constant_p (__x)) __v = ((((__x) &amp; 0xff000000) &gt;&gt; 24) | (((__x) &amp; 0x00ff0000) &gt;&gt; 8) | (((__x) &amp; 0x0000ff00) &lt;&lt; 8) | (((__x) &amp; 0x000000ff) &lt;&lt; 24)); else __asm__ (&quot;bswap %0&quot; : &quot;=r&quot; (__v) : &quot;0&quot; (__x)); __v; })))) &amp; 0xf0000000) == 0xe0000000)" data-ref="_M/IN_MULTICAST">IN_MULTICAST</a> (<a class="macro" href="../../include/netinet/in.h.html#400" title="(__extension__ ({ unsigned int __v, __x = (v4-&gt;sin_addr.s_addr); if (__builtin_constant_p (__x)) __v = ((((__x) &amp; 0xff000000) &gt;&gt; 24) | (((__x) &amp; 0x00ff0000) &gt;&gt; 8) | (((__x) &amp; 0x0000ff00) &lt;&lt; 8) | (((__x) &amp; 0x000000ff) &lt;&lt; 24)); else __asm__ (&quot;bswap %0&quot; : &quot;=r&quot; (__v) : &quot;0&quot; (__x)); __v; }))" data-ref="_M/ntohl">ntohl</a> (<a class="local col8 ref" href="#108v4" title='v4' data-ref="108v4">v4</a>-&gt;<a class="ref" href="../../include/netinet/in.h.html#sockaddr_in::sin_addr" title='sockaddr_in::sin_addr' data-ref="sockaddr_in::sin_addr">sin_addr</a>.<a class="ref" href="../../include/netinet/in.h.html#in_addr::s_addr" title='in_addr::s_addr' data-ref="in_addr::s_addr">s_addr</a>)) != <var>0</var>;</td></tr>
+<tr><th id="307">307</th><td>        }</td></tr>
+<tr><th id="308">308</th><td><u>#<span data-ppcond="300">endif</span></u></td></tr>
+<tr><th id="309">309</th><td></td></tr>
+<tr><th id="310">310</th><td><u>#<span data-ppcond="310">ifdef</span> <a class="macro" href="../../include/netinet/in.h.html#497" data-ref="_M/IN6_IS_ADDR_MULTICAST">IN6_IS_ADDR_MULTICAST</a></u></td></tr>
+<tr><th id="311">311</th><td>        <b>case</b> <a class="macro" href="../../include/x86_64-linux-gnu/bits/socket.h.html#98" title="10" data-ref="_M/AF_INET6">AF_INET6</a>:</td></tr>
+<tr><th id="312">312</th><td>        {</td></tr>
+<tr><th id="313">313</th><td>            <em>const</em> <b>struct</b> <a class="type" href="../../include/netinet/in.h.html#sockaddr_in6" title='sockaddr_in6' data-ref="sockaddr_in6">sockaddr_in6</a> *<dfn class="local col9 decl" id="109v6" title='v6' data-type='const struct sockaddr_in6 *' data-ref="109v6">v6</dfn> = (<em>const</em> <b>struct</b> <a class="type" href="../../include/netinet/in.h.html#sockaddr_in6" title='sockaddr_in6' data-ref="sockaddr_in6">sockaddr_in6</a> *)<a class="local col6 ref" href="#106addr" title='addr' data-ref="106addr">addr</a>;</td></tr>
+<tr><th id="314">314</th><td>            <b>if</b> ((<span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span>)<a class="local col7 ref" href="#107len" title='len' data-ref="107len">len</a> &lt; <b>sizeof</b> (*<a class="local col9 ref" href="#109v6" title='v6' data-ref="109v6">v6</a>))</td></tr>
+<tr><th id="315">315</th><td>                <b>return</b> <span class="macro" title="0" data-ref="_M/false">false</span>;</td></tr>
+<tr><th id="316">316</th><td>            <b>return</b> <a class="macro" href="../../include/netinet/in.h.html#497" title="(((const uint8_t *) (&amp;v6-&gt;sin6_addr))[0] == 0xff)" data-ref="_M/IN6_IS_ADDR_MULTICAST">IN6_IS_ADDR_MULTICAST</a> (&amp;<a class="local col9 ref" href="#109v6" title='v6' data-ref="109v6">v6</a>-&gt;<a class="ref" href="../../include/netinet/in.h.html#sockaddr_in6::sin6_addr" title='sockaddr_in6::sin6_addr' data-ref="sockaddr_in6::sin6_addr">sin6_addr</a>) != <var>0</var>;</td></tr>
+<tr><th id="317">317</th><td>        }</td></tr>
+<tr><th id="318">318</th><td><u>#<span data-ppcond="310">endif</span></u></td></tr>
+<tr><th id="319">319</th><td>    }</td></tr>
+<tr><th id="320">320</th><td></td></tr>
+<tr><th id="321">321</th><td>    <b>return</b> <span class="macro" title="0" data-ref="_M/false">false</span>;</td></tr>
+<tr><th id="322">322</th><td>}</td></tr>
+<tr><th id="323">323</th><td></td></tr>
+<tr><th id="324">324</th><td></td></tr>
+<tr><th id="325">325</th><td><em>static</em> <b>inline</b> <em>int</em> <dfn class="decl def" id="net_GetSockAddress" title='net_GetSockAddress' data-ref="net_GetSockAddress">net_GetSockAddress</dfn>( <em>int</em> <dfn class="local col0 decl" id="110fd" title='fd' data-type='int' data-ref="110fd">fd</dfn>, <em>char</em> *<dfn class="local col1 decl" id="111address" title='address' data-type='char *' data-ref="111address">address</dfn>, <em>int</em> *<dfn class="local col2 decl" id="112port" title='port' data-type='int *' data-ref="112port">port</dfn> )</td></tr>
+<tr><th id="326">326</th><td>{</td></tr>
+<tr><th id="327">327</th><td>    <b>struct</b> <a class="type" href="../../include/x86_64-linux-gnu/bits/socket.h.html#sockaddr_storage" title='sockaddr_storage' data-ref="sockaddr_storage">sockaddr_storage</a> <dfn class="local col3 decl" id="113addr" title='addr' data-type='struct sockaddr_storage' data-ref="113addr">addr</dfn>;</td></tr>
+<tr><th id="328">328</th><td>    <a class="typedef" href="../../include/unistd.h.html#socklen_t" title='socklen_t' data-type='__socklen_t' data-ref="socklen_t">socklen_t</a> <dfn class="local col4 decl" id="114addrlen" title='addrlen' data-type='socklen_t' data-ref="114addrlen">addrlen</dfn> = <b>sizeof</b>( <a class="local col3 ref" href="#113addr" title='addr' data-ref="113addr">addr</a> );</td></tr>
+<tr><th id="329">329</th><td></td></tr>
+<tr><th id="330">330</th><td>    <b>return</b> <a class="ref" href="../../include/x86_64-linux-gnu/sys/socket.h.html#getsockname" title='getsockname' data-ref="getsockname">getsockname</a>( <a class="local col0 ref" href="#110fd" title='fd' data-ref="110fd">fd</a>, (<b>struct</b> <a class="type" href="../../include/x86_64-linux-gnu/bits/socket.h.html#sockaddr" title='sockaddr' data-ref="sockaddr">sockaddr</a> *)&amp;<a class="local col3 ref" href="#113addr" title='addr' data-ref="113addr">addr</a>, &amp;<a class="local col4 ref" href="#114addrlen" title='addrlen' data-ref="114addrlen">addrlen</a> )</td></tr>
+<tr><th id="331">331</th><td>        || <a class="ref" href="#vlc_getnameinfo" title='vlc_getnameinfo' data-ref="vlc_getnameinfo">vlc_getnameinfo</a>( (<b>struct</b> <a class="type" href="../../include/x86_64-linux-gnu/bits/socket.h.html#sockaddr" title='sockaddr' data-ref="sockaddr">sockaddr</a> *)&amp;<a class="local col3 ref" href="#113addr" title='addr' data-ref="113addr">addr</a>, <a class="local col4 ref" href="#114addrlen" title='addrlen' data-ref="114addrlen">addrlen</a>, <a class="local col1 ref" href="#111address" title='address' data-ref="111address">address</a>,</td></tr>
+<tr><th id="332">332</th><td>                            <a class="macro" href="#219" title="64" data-ref="_M/NI_MAXNUMERICHOST">NI_MAXNUMERICHOST</a>, <a class="local col2 ref" href="#112port" title='port' data-ref="112port">port</a>, <a class="macro" href="../../include/netdb.h.html#644" title="1" data-ref="_M/NI_NUMERICHOST">NI_NUMERICHOST</a> )</td></tr>
+<tr><th id="333">333</th><td>        ? <a class="macro" href="vlc_common.h.html#375" title="(-1)" data-ref="_M/VLC_EGENERIC">VLC_EGENERIC</a> : <var>0</var>;</td></tr>
+<tr><th id="334">334</th><td>}</td></tr>
+<tr><th id="335">335</th><td></td></tr>
+<tr><th id="336">336</th><td><em>static</em> <b>inline</b> <em>int</em> <dfn class="decl def" id="net_GetPeerAddress" title='net_GetPeerAddress' data-ref="net_GetPeerAddress">net_GetPeerAddress</dfn>( <em>int</em> <dfn class="local col5 decl" id="115fd" title='fd' data-type='int' data-ref="115fd">fd</dfn>, <em>char</em> *<dfn class="local col6 decl" id="116address" title='address' data-type='char *' data-ref="116address">address</dfn>, <em>int</em> *<dfn class="local col7 decl" id="117port" title='port' data-type='int *' data-ref="117port">port</dfn> )</td></tr>
+<tr><th id="337">337</th><td>{</td></tr>
+<tr><th id="338">338</th><td>    <b>struct</b> <a class="type" href="../../include/x86_64-linux-gnu/bits/socket.h.html#sockaddr_storage" title='sockaddr_storage' data-ref="sockaddr_storage">sockaddr_storage</a> <dfn class="local col8 decl" id="118addr" title='addr' data-type='struct sockaddr_storage' data-ref="118addr">addr</dfn>;</td></tr>
+<tr><th id="339">339</th><td>    <a class="typedef" href="../../include/unistd.h.html#socklen_t" title='socklen_t' data-type='__socklen_t' data-ref="socklen_t">socklen_t</a> <dfn class="local col9 decl" id="119addrlen" title='addrlen' data-type='socklen_t' data-ref="119addrlen">addrlen</dfn> = <b>sizeof</b>( <a class="local col8 ref" href="#118addr" title='addr' data-ref="118addr">addr</a> );</td></tr>
+<tr><th id="340">340</th><td></td></tr>
+<tr><th id="341">341</th><td>    <b>return</b> <a class="ref" href="../../include/x86_64-linux-gnu/sys/socket.h.html#getpeername" title='getpeername' data-ref="getpeername">getpeername</a>( <a class="local col5 ref" href="#115fd" title='fd' data-ref="115fd">fd</a>, (<b>struct</b> <a class="type" href="../../include/x86_64-linux-gnu/bits/socket.h.html#sockaddr" title='sockaddr' data-ref="sockaddr">sockaddr</a> *)&amp;<a class="local col8 ref" href="#118addr" title='addr' data-ref="118addr">addr</a>, &amp;<a class="local col9 ref" href="#119addrlen" title='addrlen' data-ref="119addrlen">addrlen</a> )</td></tr>
+<tr><th id="342">342</th><td>        || <a class="ref" href="#vlc_getnameinfo" title='vlc_getnameinfo' data-ref="vlc_getnameinfo">vlc_getnameinfo</a>( (<b>struct</b> <a class="type" href="../../include/x86_64-linux-gnu/bits/socket.h.html#sockaddr" title='sockaddr' data-ref="sockaddr">sockaddr</a> *)&amp;<a class="local col8 ref" href="#118addr" title='addr' data-ref="118addr">addr</a>, <a class="local col9 ref" href="#119addrlen" title='addrlen' data-ref="119addrlen">addrlen</a>, <a class="local col6 ref" href="#116address" title='address' data-ref="116address">address</a>,</td></tr>
+<tr><th id="343">343</th><td>                            <a class="macro" href="#219" title="64" data-ref="_M/NI_MAXNUMERICHOST">NI_MAXNUMERICHOST</a>, <a class="local col7 ref" href="#117port" title='port' data-ref="117port">port</a>, <a class="macro" href="../../include/netdb.h.html#644" title="1" data-ref="_M/NI_NUMERICHOST">NI_NUMERICHOST</a> )</td></tr>
+<tr><th id="344">344</th><td>        ? <a class="macro" href="vlc_common.h.html#375" title="(-1)" data-ref="_M/VLC_EGENERIC">VLC_EGENERIC</a> : <var>0</var>;</td></tr>
+<tr><th id="345">345</th><td>}</td></tr>
+<tr><th id="346">346</th><td></td></tr>
+<tr><th id="347">347</th><td><em>static</em> <b>inline</b> <a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> <dfn class="decl def" id="net_GetPort" title='net_GetPort' data-ref="net_GetPort">net_GetPort</dfn> (<em>const</em> <b>struct</b> <a class="type" href="../../include/x86_64-linux-gnu/bits/socket.h.html#sockaddr" title='sockaddr' data-ref="sockaddr">sockaddr</a> *<dfn class="local col0 decl" id="120addr" title='addr' data-type='const struct sockaddr *' data-ref="120addr">addr</dfn>)</td></tr>
+<tr><th id="348">348</th><td>{</td></tr>
+<tr><th id="349">349</th><td>    <b>switch</b> (<a class="local col0 ref" href="#120addr" title='addr' data-ref="120addr">addr</a>-&gt;<a class="ref" href="../../include/x86_64-linux-gnu/bits/socket.h.html#151" title='sockaddr::sa_family' data-ref="sockaddr::sa_family">sa_family</a>)</td></tr>
+<tr><th id="350">350</th><td>    {</td></tr>
+<tr><th id="351">351</th><td><u>#<span data-ppcond="351">ifdef</span> <a class="macro" href="../../include/x86_64-linux-gnu/bits/socket.h.html#98" data-ref="_M/AF_INET6">AF_INET6</a></u></td></tr>
+<tr><th id="352">352</th><td>        <b>case</b> <a class="macro" href="../../include/x86_64-linux-gnu/bits/socket.h.html#98" title="10" data-ref="_M/AF_INET6">AF_INET6</a>:</td></tr>
+<tr><th id="353">353</th><td>            <b>return</b> ((<em>const</em> <b>struct</b> <a class="type" href="../../include/netinet/in.h.html#sockaddr_in6" title='sockaddr_in6' data-ref="sockaddr_in6">sockaddr_in6</a> *)<a class="local col0 ref" href="#120addr" title='addr' data-ref="120addr">addr</a>)-&gt;<a class="ref" href="../../include/netinet/in.h.html#sockaddr_in6::sin6_port" title='sockaddr_in6::sin6_port' data-ref="sockaddr_in6::sin6_port">sin6_port</a>;</td></tr>
+<tr><th id="354">354</th><td><u>#<span data-ppcond="351">endif</span></u></td></tr>
+<tr><th id="355">355</th><td>        <b>case</b> <a class="macro" href="../../include/x86_64-linux-gnu/bits/socket.h.html#90" title="2" data-ref="_M/AF_INET">AF_INET</a>:</td></tr>
+<tr><th id="356">356</th><td>            <b>return</b> ((<em>const</em> <b>struct</b> <a class="type" href="../../include/netinet/in.h.html#sockaddr_in" title='sockaddr_in' data-ref="sockaddr_in">sockaddr_in</a> *)<a class="local col0 ref" href="#120addr" title='addr' data-ref="120addr">addr</a>)-&gt;<a class="ref" href="../../include/netinet/in.h.html#sockaddr_in::sin_port" title='sockaddr_in::sin_port' data-ref="sockaddr_in::sin_port">sin_port</a>;</td></tr>
+<tr><th id="357">357</th><td>    }</td></tr>
+<tr><th id="358">358</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="359">359</th><td>}</td></tr>
+<tr><th id="360">360</th><td></td></tr>
+<tr><th id="361">361</th><td><em>static</em> <b>inline</b> <em>void</em> <dfn class="decl def" id="net_SetPort" title='net_SetPort' data-ref="net_SetPort">net_SetPort</dfn> (<b>struct</b> <a class="type" href="../../include/x86_64-linux-gnu/bits/socket.h.html#sockaddr" title='sockaddr' data-ref="sockaddr">sockaddr</a> *<dfn class="local col1 decl" id="121addr" title='addr' data-type='struct sockaddr *' data-ref="121addr">addr</dfn>, <a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> <dfn class="local col2 decl" id="122port" title='port' data-type='uint16_t' data-ref="122port">port</dfn>)</td></tr>
+<tr><th id="362">362</th><td>{</td></tr>
+<tr><th id="363">363</th><td>    <b>switch</b> (<a class="local col1 ref" href="#121addr" title='addr' data-ref="121addr">addr</a>-&gt;<a class="ref" href="../../include/x86_64-linux-gnu/bits/socket.h.html#151" title='sockaddr::sa_family' data-ref="sockaddr::sa_family">sa_family</a>)</td></tr>
+<tr><th id="364">364</th><td>    {</td></tr>
+<tr><th id="365">365</th><td><u>#<span data-ppcond="365">ifdef</span> <a class="macro" href="../../include/x86_64-linux-gnu/bits/socket.h.html#98" data-ref="_M/AF_INET6">AF_INET6</a></u></td></tr>
+<tr><th id="366">366</th><td>        <b>case</b> <a class="macro" href="../../include/x86_64-linux-gnu/bits/socket.h.html#98" title="10" data-ref="_M/AF_INET6">AF_INET6</a>:</td></tr>
+<tr><th id="367">367</th><td>            ((<b>struct</b> <a class="type" href="../../include/netinet/in.h.html#sockaddr_in6" title='sockaddr_in6' data-ref="sockaddr_in6">sockaddr_in6</a> *)<a class="local col1 ref" href="#121addr" title='addr' data-ref="121addr">addr</a>)-&gt;<a class="ref" href="../../include/netinet/in.h.html#sockaddr_in6::sin6_port" title='sockaddr_in6::sin6_port' data-ref="sockaddr_in6::sin6_port">sin6_port</a> = <a class="local col2 ref" href="#122port" title='port' data-ref="122port">port</a>;</td></tr>
+<tr><th id="368">368</th><td>        <b>break</b>;</td></tr>
+<tr><th id="369">369</th><td><u>#<span data-ppcond="365">endif</span></u></td></tr>
+<tr><th id="370">370</th><td>        <b>case</b> <a class="macro" href="../../include/x86_64-linux-gnu/bits/socket.h.html#90" title="2" data-ref="_M/AF_INET">AF_INET</a>:</td></tr>
+<tr><th id="371">371</th><td>            ((<b>struct</b> <a class="type" href="../../include/netinet/in.h.html#sockaddr_in" title='sockaddr_in' data-ref="sockaddr_in">sockaddr_in</a> *)<a class="local col1 ref" href="#121addr" title='addr' data-ref="121addr">addr</a>)-&gt;<a class="ref" href="../../include/netinet/in.h.html#sockaddr_in::sin_port" title='sockaddr_in::sin_port' data-ref="sockaddr_in::sin_port">sin_port</a> = <a class="local col2 ref" href="#122port" title='port' data-ref="122port">port</a>;</td></tr>
+<tr><th id="372">372</th><td>        <b>break</b>;</td></tr>
+<tr><th id="373">373</th><td>    }</td></tr>
+<tr><th id="374">374</th><td>}</td></tr>
+<tr><th id="375">375</th><td></td></tr>
+<tr><th id="376">376</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>char</em> *<dfn class="decl" id="vlc_getProxyUrl" title='vlc_getProxyUrl' data-ref="vlc_getProxyUrl">vlc_getProxyUrl</dfn>(<em>const</em> <em>char</em> *);</td></tr>
+<tr><th id="377">377</th><td></td></tr>
+<tr><th id="378">378</th><td><u># <span data-ppcond="378">ifdef</span> <span class="macro" data-ref="_M/__cplusplus">__cplusplus</span></u></td></tr>
+<tr><th id="379">379</th><td>}</td></tr>
+<tr><th id="380">380</th><td><u># <span data-ppcond="378">endif</span></u></td></tr>
+<tr><th id="381">381</th><td></td></tr>
+<tr><th id="382">382</th><td><u>#<span data-ppcond="27">endif</span></u></td></tr>
+<tr><th id="383">383</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated while processing <a href='../modules/access/file.c.html'>vlc/modules/access/file.c</a><br/>Generated on <em>2016-Oct-25</em> from project vlc revision <em>2.2.0-git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

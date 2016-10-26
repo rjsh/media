@@ -1,0 +1,180 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>ac3dsp.h source code [ffmpeg/libavcodec/ac3dsp.h] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="AC3DSPContext "/>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavcodec/ac3dsp.h'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavcodec</a>/<a href='ac3dsp.h.html'>ac3dsp.h</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * AC-3 DSP functions</i></td></tr>
+<tr><th id="3">3</th><td><i> * Copyright (c) 2011 Justin Ruggles</i></td></tr>
+<tr><th id="4">4</th><td><i> *</i></td></tr>
+<tr><th id="5">5</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="8">8</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="9">9</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="10">10</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="11">11</th><td><i> *</i></td></tr>
+<tr><th id="12">12</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="13">13</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="14">14</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="15">15</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="16">16</th><td><i> *</i></td></tr>
+<tr><th id="17">17</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="18">18</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="19">19</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="20">20</th><td><i> */</i></td></tr>
+<tr><th id="21">21</th><td></td></tr>
+<tr><th id="22">22</th><td><u>#<span data-ppcond="22">ifndef</span> <span class="macro" data-ref="_M/AVCODEC_AC3DSP_H">AVCODEC_AC3DSP_H</span></u></td></tr>
+<tr><th id="23">23</th><td><u>#define <dfn class="macro" id="_M/AVCODEC_AC3DSP_H" data-ref="_M/AVCODEC_AC3DSP_H">AVCODEC_AC3DSP_H</dfn></u></td></tr>
+<tr><th id="24">24</th><td></td></tr>
+<tr><th id="25">25</th><td><u>#include &lt;stdint.h&gt;</u></td></tr>
+<tr><th id="26">26</th><td></td></tr>
+<tr><th id="27">27</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="28">28</th><td><i class="doc"> * Number of mantissa bits written for each bap value.</i></td></tr>
+<tr><th id="29">29</th><td><i class="doc"> * bap values with fractional bits are set to 0 and are calculated separately.</i></td></tr>
+<tr><th id="30">30</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="31">31</th><td><b>extern</b> <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> <dfn class="decl" id="ff_ac3_bap_bits" title='ff_ac3_bap_bits' data-ref="ff_ac3_bap_bits">ff_ac3_bap_bits</dfn>[<var>16</var>];</td></tr>
+<tr><th id="32">32</th><td></td></tr>
+<tr><th id="33">33</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="AC3DSPContext" title='AC3DSPContext' data-ref="AC3DSPContext"><a class="type" href="#AC3DSPContext" title='AC3DSPContext' data-ref="AC3DSPContext">AC3DSPContext</a></dfn> {</td></tr>
+<tr><th id="34">34</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="35">35</th><td><i class="doc">     * Set each encoded exponent in a block to the minimum of itself and the</i></td></tr>
+<tr><th id="36">36</th><td><i class="doc">     * exponents in the same frequency bin of up to 5 following blocks.</i></td></tr>
+<tr><th id="37">37</th><td><i class="doc">     * <span class="command">@param</span> <span class="arg">exp</span>   pointer to the start of the current block of exponents.</i></td></tr>
+<tr><th id="38">38</th><td><i class="doc">     *              constraints: align 16</i></td></tr>
+<tr><th id="39">39</th><td><i class="doc">     * <span class="command">@param</span> <span class="arg">num_reuse_blocks</span>  number of blocks that will reuse exponents from the current block.</i></td></tr>
+<tr><th id="40">40</th><td><i class="doc">     *                          constraints: range 0 to 5</i></td></tr>
+<tr><th id="41">41</th><td><i class="doc">     * <span class="command">@param</span> <span class="arg">nb_coefs</span>  number of frequency coefficients.</i></td></tr>
+<tr><th id="42">42</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="43">43</th><td>    <em>void</em> (*<dfn class="decl" id="AC3DSPContext::ac3_exponent_min" title='AC3DSPContext::ac3_exponent_min' data-ref="AC3DSPContext::ac3_exponent_min">ac3_exponent_min</dfn>)(<a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col1 decl" id="1exp" title='exp' data-type='uint8_t *' data-ref="1exp">exp</dfn>, <em>int</em> <dfn class="local col2 decl" id="2num_reuse_blocks" title='num_reuse_blocks' data-type='int' data-ref="2num_reuse_blocks">num_reuse_blocks</dfn>, <em>int</em> <dfn class="local col3 decl" id="3nb_coefs" title='nb_coefs' data-type='int' data-ref="3nb_coefs">nb_coefs</dfn>);</td></tr>
+<tr><th id="44">44</th><td></td></tr>
+<tr><th id="45">45</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="46">46</th><td><i class="doc">     * Calculate the maximum MSB of the absolute value of each element in an</i></td></tr>
+<tr><th id="47">47</th><td><i class="doc">     * array of int16_t.</i></td></tr>
+<tr><th id="48">48</th><td><i class="doc">     * <span class="command">@param</span> <span class="arg">src</span> input array</i></td></tr>
+<tr><th id="49">49</th><td><i class="doc">     *            constraints: align 16. values must be in range [-32767,32767]</i></td></tr>
+<tr><th id="50">50</th><td><i class="doc">     * <span class="command">@param</span> <span class="arg">len</span> number of values in the array</i></td></tr>
+<tr><th id="51">51</th><td><i class="doc">     *            constraints: multiple of 16 greater than 0</i></td></tr>
+<tr><th id="52">52</th><td><i class="doc">     * <span class="command">@return</span>    a value with the same MSB as max(abs(src[]))</i></td></tr>
+<tr><th id="53">53</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="54">54</th><td>    <em>int</em> (*<dfn class="decl" id="AC3DSPContext::ac3_max_msb_abs_int16" title='AC3DSPContext::ac3_max_msb_abs_int16' data-ref="AC3DSPContext::ac3_max_msb_abs_int16">ac3_max_msb_abs_int16</dfn>)(<em>const</em> <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> *<dfn class="local col4 decl" id="4src" title='src' data-type='const int16_t *' data-ref="4src">src</dfn>, <em>int</em> <dfn class="local col5 decl" id="5len" title='len' data-type='int' data-ref="5len">len</dfn>);</td></tr>
+<tr><th id="55">55</th><td></td></tr>
+<tr><th id="56">56</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="57">57</th><td><i class="doc">     * Left-shift each value in an array of int16_t by a specified amount.</i></td></tr>
+<tr><th id="58">58</th><td><i class="doc">     * <span class="command">@param</span> <span class="arg">src</span>    input array</i></td></tr>
+<tr><th id="59">59</th><td><i class="doc">     *               constraints: align 16</i></td></tr>
+<tr><th id="60">60</th><td><i class="doc">     * <span class="command">@param</span> <span class="arg">len</span>    number of values in the array</i></td></tr>
+<tr><th id="61">61</th><td><i class="doc">     *               constraints: multiple of 32 greater than 0</i></td></tr>
+<tr><th id="62">62</th><td><i class="doc">     * <span class="command">@param</span> <span class="arg">shift</span>  left shift amount</i></td></tr>
+<tr><th id="63">63</th><td><i class="doc">     *               constraints: range [0,15]</i></td></tr>
+<tr><th id="64">64</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="65">65</th><td>    <em>void</em> (*<dfn class="decl" id="AC3DSPContext::ac3_lshift_int16" title='AC3DSPContext::ac3_lshift_int16' data-ref="AC3DSPContext::ac3_lshift_int16">ac3_lshift_int16</dfn>)(<a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> *<dfn class="local col6 decl" id="6src" title='src' data-type='int16_t *' data-ref="6src">src</dfn>, <em>unsigned</em> <em>int</em> <dfn class="local col7 decl" id="7len" title='len' data-type='unsigned int' data-ref="7len">len</dfn>, <em>unsigned</em> <em>int</em> <dfn class="local col8 decl" id="8shift" title='shift' data-type='unsigned int' data-ref="8shift">shift</dfn>);</td></tr>
+<tr><th id="66">66</th><td></td></tr>
+<tr><th id="67">67</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="68">68</th><td><i class="doc">     * Right-shift each value in an array of int32_t by a specified amount.</i></td></tr>
+<tr><th id="69">69</th><td><i class="doc">     * <span class="command">@param</span> <span class="arg">src</span>    input array</i></td></tr>
+<tr><th id="70">70</th><td><i class="doc">     *               constraints: align 16</i></td></tr>
+<tr><th id="71">71</th><td><i class="doc">     * <span class="command">@param</span> <span class="arg">len</span>    number of values in the array</i></td></tr>
+<tr><th id="72">72</th><td><i class="doc">     *               constraints: multiple of 16 greater than 0</i></td></tr>
+<tr><th id="73">73</th><td><i class="doc">     * <span class="command">@param</span> <span class="arg">shift</span>  right shift amount</i></td></tr>
+<tr><th id="74">74</th><td><i class="doc">     *               constraints: range [0,31]</i></td></tr>
+<tr><th id="75">75</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="76">76</th><td>    <em>void</em> (*<dfn class="decl" id="AC3DSPContext::ac3_rshift_int32" title='AC3DSPContext::ac3_rshift_int32' data-ref="AC3DSPContext::ac3_rshift_int32">ac3_rshift_int32</dfn>)(<a class="typedef" href="../../include/stdint.h.html#int32_t" title='int32_t' data-type='int' data-ref="int32_t">int32_t</a> *<dfn class="local col9 decl" id="9src" title='src' data-type='int32_t *' data-ref="9src">src</dfn>, <em>unsigned</em> <em>int</em> <dfn class="local col0 decl" id="10len" title='len' data-type='unsigned int' data-ref="10len">len</dfn>, <em>unsigned</em> <em>int</em> <dfn class="local col1 decl" id="11shift" title='shift' data-type='unsigned int' data-ref="11shift">shift</dfn>);</td></tr>
+<tr><th id="77">77</th><td></td></tr>
+<tr><th id="78">78</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="79">79</th><td><i class="doc">     * Convert an array of float in range [-1.0,1.0] to int32_t with range</i></td></tr>
+<tr><th id="80">80</th><td><i class="doc">     * [-(1&lt;&lt;24),(1&lt;&lt;24)]</i></td></tr>
+<tr><th id="81">81</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="82">82</th><td><i class="doc">     * <span class="command">@param</span> <span class="arg">dst</span> destination array of int32_t.</i></td></tr>
+<tr><th id="83">83</th><td><i class="doc">     *            constraints: 16-byte aligned</i></td></tr>
+<tr><th id="84">84</th><td><i class="doc">     * <span class="command">@param</span> <span class="arg">src</span> source array of float.</i></td></tr>
+<tr><th id="85">85</th><td><i class="doc">     *            constraints: 16-byte aligned</i></td></tr>
+<tr><th id="86">86</th><td><i class="doc">     * <span class="command">@param</span> <span class="arg">len</span> number of elements to convert.</i></td></tr>
+<tr><th id="87">87</th><td><i class="doc">     *            constraints: multiple of 32 greater than zero</i></td></tr>
+<tr><th id="88">88</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="89">89</th><td>    <em>void</em> (*<dfn class="decl" id="AC3DSPContext::float_to_fixed24" title='AC3DSPContext::float_to_fixed24' data-ref="AC3DSPContext::float_to_fixed24">float_to_fixed24</dfn>)(<a class="typedef" href="../../include/stdint.h.html#int32_t" title='int32_t' data-type='int' data-ref="int32_t">int32_t</a> *<dfn class="local col2 decl" id="12dst" title='dst' data-type='int32_t *' data-ref="12dst">dst</dfn>, <em>const</em> <em>float</em> *<dfn class="local col3 decl" id="13src" title='src' data-type='const float *' data-ref="13src">src</dfn>, <em>unsigned</em> <em>int</em> <dfn class="local col4 decl" id="14len" title='len' data-type='unsigned int' data-ref="14len">len</dfn>);</td></tr>
+<tr><th id="90">90</th><td></td></tr>
+<tr><th id="91">91</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="92">92</th><td><i class="doc">     * Calculate bit allocation pointers.</i></td></tr>
+<tr><th id="93">93</th><td><i class="doc">     * The SNR is the difference between the masking curve and the signal.  AC-3</i></td></tr>
+<tr><th id="94">94</th><td><i class="doc">     * uses this value for each frequency bin to allocate bits.  The snroffset</i></td></tr>
+<tr><th id="95">95</th><td><i class="doc">     * parameter is a global adjustment to the SNR for all bins.</i></td></tr>
+<tr><th id="96">96</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="97">97</th><td><i class="doc">     * <span class="command">@param</span>[in]  <span class="arg">mask</span>       masking curve</i></td></tr>
+<tr><th id="98">98</th><td><i class="doc">     * <span class="command">@param</span>[in]  <span class="arg">psd</span>        signal power for each frequency bin</i></td></tr>
+<tr><th id="99">99</th><td><i class="doc">     * <span class="command">@param</span>[in]  <span class="arg">start</span>      starting bin location</i></td></tr>
+<tr><th id="100">100</th><td><i class="doc">     * <span class="command">@param</span>[in]  <span class="arg">end</span>        ending bin location</i></td></tr>
+<tr><th id="101">101</th><td><i class="doc">     * <span class="command">@param</span>[in]  <span class="arg">snr_offset</span> SNR adjustment</i></td></tr>
+<tr><th id="102">102</th><td><i class="doc">     * <span class="command">@param</span>[in]  <span class="arg">floor</span>      noise floor</i></td></tr>
+<tr><th id="103">103</th><td><i class="doc">     * <span class="command">@param</span>[in]  <span class="arg">bap_tab</span>    look-up table for bit allocation pointers</i></td></tr>
+<tr><th id="104">104</th><td><i class="doc">     * <span class="command">@param</span>[out] <span class="arg">bap</span>        bit allocation pointers</i></td></tr>
+<tr><th id="105">105</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="106">106</th><td>    <em>void</em> (*<dfn class="decl" id="AC3DSPContext::bit_alloc_calc_bap" title='AC3DSPContext::bit_alloc_calc_bap' data-ref="AC3DSPContext::bit_alloc_calc_bap">bit_alloc_calc_bap</dfn>)(<a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> *<dfn class="local col5 decl" id="15mask" title='mask' data-type='int16_t *' data-ref="15mask">mask</dfn>, <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> *<dfn class="local col6 decl" id="16psd" title='psd' data-type='int16_t *' data-ref="16psd">psd</dfn>, <em>int</em> <dfn class="local col7 decl" id="17start" title='start' data-type='int' data-ref="17start">start</dfn>, <em>int</em> <dfn class="local col8 decl" id="18end" title='end' data-type='int' data-ref="18end">end</dfn>,</td></tr>
+<tr><th id="107">107</th><td>                               <em>int</em> <dfn class="local col9 decl" id="19snr_offset" title='snr_offset' data-type='int' data-ref="19snr_offset">snr_offset</dfn>, <em>int</em> <dfn class="local col0 decl" id="20floor" title='floor' data-type='int' data-ref="20floor">floor</dfn>,</td></tr>
+<tr><th id="108">108</th><td>                               <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col1 decl" id="21bap_tab" title='bap_tab' data-type='const uint8_t *' data-ref="21bap_tab">bap_tab</dfn>, <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col2 decl" id="22bap" title='bap' data-type='uint8_t *' data-ref="22bap">bap</dfn>);</td></tr>
+<tr><th id="109">109</th><td></td></tr>
+<tr><th id="110">110</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="111">111</th><td><i class="doc">     * Update bap counts using the supplied array of bap.</i></td></tr>
+<tr><th id="112">112</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="113">113</th><td><i class="doc">     * <span class="command">@param</span>[out] <span class="arg">mant_cnt</span>   bap counts for 1 block</i></td></tr>
+<tr><th id="114">114</th><td><i class="doc">     * <span class="command">@param</span>[in]  <span class="arg">bap</span>        array of bap, pointing to start coef bin</i></td></tr>
+<tr><th id="115">115</th><td><i class="doc">     * <span class="command">@param</span>[in]  <span class="arg">len</span>        number of elements to process</i></td></tr>
+<tr><th id="116">116</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="117">117</th><td>    <em>void</em> (*<dfn class="decl" id="AC3DSPContext::update_bap_counts" title='AC3DSPContext::update_bap_counts' data-ref="AC3DSPContext::update_bap_counts">update_bap_counts</dfn>)(<a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> <dfn class="local col3 decl" id="23mant_cnt" title='mant_cnt' data-type='uint16_t *' data-ref="23mant_cnt">mant_cnt</dfn>[<var>16</var>], <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col4 decl" id="24bap" title='bap' data-type='uint8_t *' data-ref="24bap">bap</dfn>, <em>int</em> <dfn class="local col5 decl" id="25len" title='len' data-type='int' data-ref="25len">len</dfn>);</td></tr>
+<tr><th id="118">118</th><td></td></tr>
+<tr><th id="119">119</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="120">120</th><td><i class="doc">     * Calculate the number of bits needed to encode a set of mantissas.</i></td></tr>
+<tr><th id="121">121</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="122">122</th><td><i class="doc">     * <span class="command">@param</span>[in] <span class="arg">mant_cnt</span>    bap counts for all blocks</i></td></tr>
+<tr><th id="123">123</th><td><i class="doc">     * <span class="command">@return</span>                mantissa bit count</i></td></tr>
+<tr><th id="124">124</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="125">125</th><td>    <em>int</em> (*<dfn class="decl" id="AC3DSPContext::compute_mantissa_size" title='AC3DSPContext::compute_mantissa_size' data-ref="AC3DSPContext::compute_mantissa_size">compute_mantissa_size</dfn>)(<a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> <dfn class="local col6 decl" id="26mant_cnt" title='mant_cnt' data-type='uint16_t (*)[16]' data-ref="26mant_cnt">mant_cnt</dfn>[<var>6</var>][<var>16</var>]);</td></tr>
+<tr><th id="126">126</th><td></td></tr>
+<tr><th id="127">127</th><td>    <em>void</em> (*<dfn class="decl" id="AC3DSPContext::extract_exponents" title='AC3DSPContext::extract_exponents' data-ref="AC3DSPContext::extract_exponents">extract_exponents</dfn>)(<a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col7 decl" id="27exp" title='exp' data-type='uint8_t *' data-ref="27exp">exp</dfn>, <a class="typedef" href="../../include/stdint.h.html#int32_t" title='int32_t' data-type='int' data-ref="int32_t">int32_t</a> *<dfn class="local col8 decl" id="28coef" title='coef' data-type='int32_t *' data-ref="28coef">coef</dfn>, <em>int</em> <dfn class="local col9 decl" id="29nb_coefs" title='nb_coefs' data-type='int' data-ref="29nb_coefs">nb_coefs</dfn>);</td></tr>
+<tr><th id="128">128</th><td></td></tr>
+<tr><th id="129">129</th><td>    <em>void</em> (*<dfn class="decl" id="AC3DSPContext::sum_square_butterfly_int32" title='AC3DSPContext::sum_square_butterfly_int32' data-ref="AC3DSPContext::sum_square_butterfly_int32">sum_square_butterfly_int32</dfn>)(<a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="local col0 decl" id="30sum" title='sum' data-type='int64_t *' data-ref="30sum">sum</dfn>[<var>4</var>], <em>const</em> <a class="typedef" href="../../include/stdint.h.html#int32_t" title='int32_t' data-type='int' data-ref="int32_t">int32_t</a> *<dfn class="local col1 decl" id="31coef0" title='coef0' data-type='const int32_t *' data-ref="31coef0">coef0</dfn>,</td></tr>
+<tr><th id="130">130</th><td>                                       <em>const</em> <a class="typedef" href="../../include/stdint.h.html#int32_t" title='int32_t' data-type='int' data-ref="int32_t">int32_t</a> *<dfn class="local col2 decl" id="32coef1" title='coef1' data-type='const int32_t *' data-ref="32coef1">coef1</dfn>, <em>int</em> <dfn class="local col3 decl" id="33len" title='len' data-type='int' data-ref="33len">len</dfn>);</td></tr>
+<tr><th id="131">131</th><td></td></tr>
+<tr><th id="132">132</th><td>    <em>void</em> (*<dfn class="decl" id="AC3DSPContext::sum_square_butterfly_float" title='AC3DSPContext::sum_square_butterfly_float' data-ref="AC3DSPContext::sum_square_butterfly_float">sum_square_butterfly_float</dfn>)(<em>float</em> <dfn class="local col4 decl" id="34sum" title='sum' data-type='float *' data-ref="34sum">sum</dfn>[<var>4</var>], <em>const</em> <em>float</em> *<dfn class="local col5 decl" id="35coef0" title='coef0' data-type='const float *' data-ref="35coef0">coef0</dfn>,</td></tr>
+<tr><th id="133">133</th><td>                                       <em>const</em> <em>float</em> *<dfn class="local col6 decl" id="36coef1" title='coef1' data-type='const float *' data-ref="36coef1">coef1</dfn>, <em>int</em> <dfn class="local col7 decl" id="37len" title='len' data-type='int' data-ref="37len">len</dfn>);</td></tr>
+<tr><th id="134">134</th><td></td></tr>
+<tr><th id="135">135</th><td>    <em>void</em> (*<dfn class="decl" id="AC3DSPContext::downmix" title='AC3DSPContext::downmix' data-ref="AC3DSPContext::downmix">downmix</dfn>)(<em>float</em> **<dfn class="local col8 decl" id="38samples" title='samples' data-type='float **' data-ref="38samples">samples</dfn>, <em>float</em> (*<dfn class="local col9 decl" id="39matrix" title='matrix' data-type='float (*)[2]' data-ref="39matrix">matrix</dfn>)[<var>2</var>], <em>int</em> <dfn class="local col0 decl" id="40out_ch" title='out_ch' data-type='int' data-ref="40out_ch">out_ch</dfn>,</td></tr>
+<tr><th id="136">136</th><td>                    <em>int</em> <dfn class="local col1 decl" id="41in_ch" title='in_ch' data-type='int' data-ref="41in_ch">in_ch</dfn>, <em>int</em> <dfn class="local col2 decl" id="42len" title='len' data-type='int' data-ref="42len">len</dfn>);</td></tr>
+<tr><th id="137">137</th><td></td></tr>
+<tr><th id="138">138</th><td>    <em>void</em> (*<dfn class="decl" id="AC3DSPContext::downmix_fixed" title='AC3DSPContext::downmix_fixed' data-ref="AC3DSPContext::downmix_fixed">downmix_fixed</dfn>)(<a class="typedef" href="../../include/stdint.h.html#int32_t" title='int32_t' data-type='int' data-ref="int32_t">int32_t</a> **<dfn class="local col3 decl" id="43samples" title='samples' data-type='int32_t **' data-ref="43samples">samples</dfn>, <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> (*<dfn class="local col4 decl" id="44matrix" title='matrix' data-type='int16_t (*)[2]' data-ref="44matrix">matrix</dfn>)[<var>2</var>], <em>int</em> <dfn class="local col5 decl" id="45out_ch" title='out_ch' data-type='int' data-ref="45out_ch">out_ch</dfn>,</td></tr>
+<tr><th id="139">139</th><td>                          <em>int</em> <dfn class="local col6 decl" id="46in_ch" title='in_ch' data-type='int' data-ref="46in_ch">in_ch</dfn>, <em>int</em> <dfn class="local col7 decl" id="47len" title='len' data-type='int' data-ref="47len">len</dfn>);</td></tr>
+<tr><th id="140">140</th><td></td></tr>
+<tr><th id="141">141</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="142">142</th><td><i class="doc">     * Apply symmetric window in 16-bit fixed-point.</i></td></tr>
+<tr><th id="143">143</th><td><i class="doc">     * <span class="command">@param</span> <span class="arg">output</span> destination array</i></td></tr>
+<tr><th id="144">144</th><td><i class="doc">     *               constraints: 16-byte aligned</i></td></tr>
+<tr><th id="145">145</th><td><i class="doc">     * <span class="command">@param</span> <span class="arg">input</span>  source array</i></td></tr>
+<tr><th id="146">146</th><td><i class="doc">     *               constraints: 16-byte aligned</i></td></tr>
+<tr><th id="147">147</th><td><i class="doc">     * <span class="command">@param</span> <span class="arg">window</span> window array</i></td></tr>
+<tr><th id="148">148</th><td><i class="doc">     *               constraints: 16-byte aligned, at least len/2 elements</i></td></tr>
+<tr><th id="149">149</th><td><i class="doc">     * <span class="command">@param</span> <span class="arg">len</span>    full window length</i></td></tr>
+<tr><th id="150">150</th><td><i class="doc">     *               constraints: multiple of ? greater than zero</i></td></tr>
+<tr><th id="151">151</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="152">152</th><td>    <em>void</em> (*<dfn class="decl" id="AC3DSPContext::apply_window_int16" title='AC3DSPContext::apply_window_int16' data-ref="AC3DSPContext::apply_window_int16">apply_window_int16</dfn>)(<a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> *<dfn class="local col8 decl" id="48output" title='output' data-type='int16_t *' data-ref="48output">output</dfn>, <em>const</em> <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> *<dfn class="local col9 decl" id="49input" title='input' data-type='const int16_t *' data-ref="49input">input</dfn>,</td></tr>
+<tr><th id="153">153</th><td>                               <em>const</em> <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> *<dfn class="local col0 decl" id="50window" title='window' data-type='const int16_t *' data-ref="50window">window</dfn>, <em>unsigned</em> <em>int</em> <dfn class="local col1 decl" id="51len" title='len' data-type='unsigned int' data-ref="51len">len</dfn>);</td></tr>
+<tr><th id="154">154</th><td>} <dfn class="typedef" id="AC3DSPContext" title='AC3DSPContext' data-type='struct AC3DSPContext' data-ref="AC3DSPContext">AC3DSPContext</dfn>;</td></tr>
+<tr><th id="155">155</th><td></td></tr>
+<tr><th id="156">156</th><td><em>void</em> <dfn class="decl" id="ff_ac3dsp_init" title='ff_ac3dsp_init' data-ref="ff_ac3dsp_init">ff_ac3dsp_init</dfn>    (<a class="typedef" href="#AC3DSPContext" title='AC3DSPContext' data-type='struct AC3DSPContext' data-ref="AC3DSPContext">AC3DSPContext</a> *<dfn class="local col2 decl" id="52c" title='c' data-type='AC3DSPContext *' data-ref="52c">c</dfn>, <em>int</em> <dfn class="local col3 decl" id="53bit_exact" title='bit_exact' data-type='int' data-ref="53bit_exact">bit_exact</dfn>);</td></tr>
+<tr><th id="157">157</th><td><em>void</em> <dfn class="decl" id="ff_ac3dsp_init_arm" title='ff_ac3dsp_init_arm' data-ref="ff_ac3dsp_init_arm">ff_ac3dsp_init_arm</dfn>(<a class="typedef" href="#AC3DSPContext" title='AC3DSPContext' data-type='struct AC3DSPContext' data-ref="AC3DSPContext">AC3DSPContext</a> *<dfn class="local col4 decl" id="54c" title='c' data-type='AC3DSPContext *' data-ref="54c">c</dfn>, <em>int</em> <dfn class="local col5 decl" id="55bit_exact" title='bit_exact' data-type='int' data-ref="55bit_exact">bit_exact</dfn>);</td></tr>
+<tr><th id="158">158</th><td><em>void</em> <dfn class="decl" id="ff_ac3dsp_init_x86" title='ff_ac3dsp_init_x86' data-ref="ff_ac3dsp_init_x86">ff_ac3dsp_init_x86</dfn>(<a class="typedef" href="#AC3DSPContext" title='AC3DSPContext' data-type='struct AC3DSPContext' data-ref="AC3DSPContext">AC3DSPContext</a> *<dfn class="local col6 decl" id="56c" title='c' data-type='AC3DSPContext *' data-ref="56c">c</dfn>, <em>int</em> <dfn class="local col7 decl" id="57bit_exact" title='bit_exact' data-type='int' data-ref="57bit_exact">bit_exact</dfn>);</td></tr>
+<tr><th id="159">159</th><td><em>void</em> <dfn class="decl" id="ff_ac3dsp_init_mips" title='ff_ac3dsp_init_mips' data-ref="ff_ac3dsp_init_mips">ff_ac3dsp_init_mips</dfn>(<a class="typedef" href="#AC3DSPContext" title='AC3DSPContext' data-type='struct AC3DSPContext' data-ref="AC3DSPContext">AC3DSPContext</a> *<dfn class="local col8 decl" id="58c" title='c' data-type='AC3DSPContext *' data-ref="58c">c</dfn>, <em>int</em> <dfn class="local col9 decl" id="59bit_exact" title='bit_exact' data-type='int' data-ref="59bit_exact">bit_exact</dfn>);</td></tr>
+<tr><th id="160">160</th><td></td></tr>
+<tr><th id="161">161</th><td><u>#<span data-ppcond="22">endif</span> /* AVCODEC_AC3DSP_H */</u></td></tr>
+<tr><th id="162">162</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated while processing <a href='ac3dec_fixed.c.html'>ffmpeg/libavcodec/ac3dec_fixed.c</a><br/>Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

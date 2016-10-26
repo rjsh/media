@@ -1,0 +1,472 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>FnordlichtConnection.cpp source code [vlc/modules/video_filter/atmo/FnordlichtConnection.cpp] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'vlc/modules/video_filter/atmo/FnordlichtConnection.cpp'; var root_path = '../../../..'; var data_path = '../../../../../data';</script>
+<script src='../../../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='../../..'>vlc</a>/<a href='../..'>modules</a>/<a href='..'>video_filter</a>/<a href='./'>atmo</a>/<a href='FnordlichtConnection.cpp.html'>FnordlichtConnection.cpp</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * FnordlichtConnection.cpp: class to access a FnordlichtLight Hardware</i></td></tr>
+<tr><th id="3">3</th><td><i> * - the description could be found</i></td></tr>
+<tr><th id="4">4</th><td><i> * here: <a href="http://github.com/fd0/fnordlicht/raw/master/doc/PROTOCOL">http://github.com/fd0/fnordlicht/raw/master/doc/PROTOCOL</a></i></td></tr>
+<tr><th id="5">5</th><td><i> *</i></td></tr>
+<tr><th id="6">6</th><td><i> * (C) Kai Lauterbach (klaute at gmail.com)</i></td></tr>
+<tr><th id="7">7</th><td><i> *</i></td></tr>
+<tr><th id="8">8</th><td><i> * This program is free software; you can redistribute it and/or modify it</i></td></tr>
+<tr><th id="9">9</th><td><i> * under the terms of the GNU Lesser General Public License as published by</i></td></tr>
+<tr><th id="10">10</th><td><i> * the Free Software Foundation; either version 2.1 of the License, or</i></td></tr>
+<tr><th id="11">11</th><td><i> * (at your option) any later version.</i></td></tr>
+<tr><th id="12">12</th><td><i> *</i></td></tr>
+<tr><th id="13">13</th><td><i> * This program is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="14">14</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="15">15</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</i></td></tr>
+<tr><th id="16">16</th><td><i> * GNU Lesser General Public License for more details.</i></td></tr>
+<tr><th id="17">17</th><td><i> *</i></td></tr>
+<tr><th id="18">18</th><td><i> * You should have received a copy of the GNU Lesser General Public License</i></td></tr>
+<tr><th id="19">19</th><td><i> * along with this program; if not, write to the Free Software Foundation,</i></td></tr>
+<tr><th id="20">20</th><td><i> * Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.</i></td></tr>
+<tr><th id="21">21</th><td><i> *</i></td></tr>
+<tr><th id="22">22</th><td><i> * $Id: 799bdf2ba8dcbdb5301c46356d97a6f51eb92994 $</i></td></tr>
+<tr><th id="23">23</th><td><i> */</i></td></tr>
+<tr><th id="24">24</th><td></td></tr>
+<tr><th id="25">25</th><td><u>#<span data-ppcond="25">ifdef</span> <span class="macro" data-ref="_M/HAVE_CONFIG_H">HAVE_CONFIG_H</span></u></td></tr>
+<tr><th id="26">26</th><td><u># include <a href="../../../config.h.html">"config.h"</a></u></td></tr>
+<tr><th id="27">27</th><td><u>#<span data-ppcond="25">endif</span></u></td></tr>
+<tr><th id="28">28</th><td></td></tr>
+<tr><th id="29">29</th><td><u>#include <a href="AtmoDefs.h.html">"AtmoDefs.h"</a></u></td></tr>
+<tr><th id="30">30</th><td><u>#include <a href="FnordlichtConnection.h.html">"FnordlichtConnection.h"</a></u></td></tr>
+<tr><th id="31">31</th><td></td></tr>
+<tr><th id="32">32</th><td><u>#<span data-ppcond="32">if</span> !defined(<a class="macro" href="AtmoDefs.h.html#20" data-ref="_M/_ATMO_VLC_PLUGIN_">_ATMO_VLC_PLUGIN_</a>)</u></td></tr>
+<tr><th id="33">33</th><td><u># include "FnordlichtConfigDialog.h"</u></td></tr>
+<tr><th id="34">34</th><td><u>#<span data-ppcond="32">endif</span></u></td></tr>
+<tr><th id="35">35</th><td></td></tr>
+<tr><th id="36">36</th><td><u>#include <a href="../../../../include/stdio.h.html">&lt;stdio.h&gt;</a></u></td></tr>
+<tr><th id="37">37</th><td><u>#include <a href="../../../../include/fcntl.h.html">&lt;fcntl.h&gt;</a></u></td></tr>
+<tr><th id="38">38</th><td></td></tr>
+<tr><th id="39">39</th><td><u>#<span data-ppcond="39">if</span> !defined(<span class="macro" data-ref="_M/_WIN32">_WIN32</span>)</u></td></tr>
+<tr><th id="40">40</th><td><u>#include <a href="../../../../include/termios.h.html">&lt;termios.h&gt;</a></u></td></tr>
+<tr><th id="41">41</th><td><u>#include <a href="../../../../include/unistd.h.html">&lt;unistd.h&gt;</a></u></td></tr>
+<tr><th id="42">42</th><td><u>#<span data-ppcond="39">endif</span></u></td></tr>
+<tr><th id="43">43</th><td></td></tr>
+<tr><th id="44">44</th><td><a class="type" href="FnordlichtConnection.h.html#CFnordlichtConnection" title='CFnordlichtConnection' data-ref="CFnordlichtConnection">CFnordlichtConnection</a>::<dfn class="decl def" id="_ZN21CFnordlichtConnectionC1EP11CAtmoConfig" title='CFnordlichtConnection::CFnordlichtConnection' data-ref="_ZN21CFnordlichtConnectionC1EP11CAtmoConfig">CFnordlichtConnection</dfn>(<a class="type" href="AtmoConfig.h.html#CAtmoConfig" title='CAtmoConfig' data-ref="CAtmoConfig">CAtmoConfig</a> *<dfn class="local col1 decl" id="1cfg" title='cfg' data-type='CAtmoConfig *' data-ref="1cfg">cfg</dfn>)</td></tr>
+<tr><th id="45">45</th><td>    : <a class="type" href="AtmoConnection.h.html#CAtmoConnection" title='CAtmoConnection' data-ref="CAtmoConnection">CAtmoConnection</a><a class="ref" href="AtmoConnection.h.html#_ZN15CAtmoConnectionC1EP11CAtmoConfig" title='CAtmoConnection::CAtmoConnection' data-ref="_ZN15CAtmoConnectionC1EP11CAtmoConfig">(</a><a class="local col1 ref" href="#1cfg" title='cfg' data-ref="1cfg">cfg</a>)</td></tr>
+<tr><th id="46">46</th><td>{</td></tr>
+<tr><th id="47">47</th><td>    <a class="member" href="FnordlichtConnection.h.html#CFnordlichtConnection::m_hComport" title='CFnordlichtConnection::m_hComport' data-ref="CFnordlichtConnection::m_hComport">m_hComport</a> = <a class="macro" href="AtmoDefs.h.html#57" title="-1" data-ref="_M/INVALID_HANDLE_VALUE">INVALID_HANDLE_VALUE</a>;</td></tr>
+<tr><th id="48">48</th><td>}</td></tr>
+<tr><th id="49">49</th><td></td></tr>
+<tr><th id="50">50</th><td><a class="type" href="FnordlichtConnection.h.html#CFnordlichtConnection" title='CFnordlichtConnection' data-ref="CFnordlichtConnection">CFnordlichtConnection</a>::<dfn class="virtual decl def" id="_ZN21CFnordlichtConnectionD1Ev" title='CFnordlichtConnection::~CFnordlichtConnection' data-ref="_ZN21CFnordlichtConnectionD1Ev">~</dfn>CFnordlichtConnection()</td></tr>
+<tr><th id="51">51</th><td>{</td></tr>
+<tr><th id="52">52</th><td>}</td></tr>
+<tr><th id="53">53</th><td></td></tr>
+<tr><th id="54">54</th><td><a class="macro" href="AtmoDefs.h.html#36" title="bool" data-ref="_M/ATMO_BOOL">ATMO_BOOL</a> <a class="type" href="FnordlichtConnection.h.html#CFnordlichtConnection" title='CFnordlichtConnection' data-ref="CFnordlichtConnection">CFnordlichtConnection</a>::<dfn class="virtual decl def" id="_ZN21CFnordlichtConnection14OpenConnectionEv" title='CFnordlichtConnection::OpenConnection' data-ref="_ZN21CFnordlichtConnection14OpenConnectionEv">OpenConnection</dfn>()</td></tr>
+<tr><th id="55">55</th><td>{</td></tr>
+<tr><th id="56">56</th><td><u>#<span data-ppcond="56">if</span> defined(<a class="macro" href="AtmoDefs.h.html#20" data-ref="_M/_ATMO_VLC_PLUGIN_">_ATMO_VLC_PLUGIN_</a>)</u></td></tr>
+<tr><th id="57">57</th><td>    <em>char</em> *<dfn class="local col2 decl" id="2serdevice" title='serdevice' data-type='char *' data-ref="2serdevice">serdevice</dfn> = <a class="member" href="AtmoConnection.h.html#CAtmoConnection::m_pAtmoConfig" title='CAtmoConnection::m_pAtmoConfig' data-ref="CAtmoConnection::m_pAtmoConfig">m_pAtmoConfig</a>-&gt;<a class="ref" href="AtmoConfig.h.html#_ZN11CAtmoConfig15getSerialDeviceEv" title='CAtmoConfig::getSerialDevice' data-ref="_ZN11CAtmoConfig15getSerialDeviceEv">getSerialDevice</a>();</td></tr>
+<tr><th id="58">58</th><td>    <b>if</b> ( !<a class="local col2 ref" href="#2serdevice" title='serdevice' data-ref="2serdevice">serdevice</a> )</td></tr>
+<tr><th id="59">59</th><td>        <b>return</b> <a class="macro" href="AtmoDefs.h.html#38" title="false" data-ref="_M/ATMO_FALSE">ATMO_FALSE</a>;</td></tr>
+<tr><th id="60">60</th><td><u>#<span data-ppcond="56">else</span></u></td></tr>
+<tr><th id="61">61</th><td>    <em>int</em> portNummer = m_pAtmoConfig-&gt;getComport();</td></tr>
+<tr><th id="62">62</th><td>    m_dwLastWin32Error = <var>0</var>;</td></tr>
+<tr><th id="63">63</th><td>    <b>if</b> ( portNummer &lt; <var>1</var> )</td></tr>
+<tr><th id="64">64</th><td>        <b>return</b> ATMO_FALSE; <i>// make no real sense;-)</i></td></tr>
+<tr><th id="65">65</th><td><u>#<span data-ppcond="56">endif</span></u></td></tr>
+<tr><th id="66">66</th><td></td></tr>
+<tr><th id="67">67</th><td>    <a class="virtual member" href="#_ZN21CFnordlichtConnection15CloseConnectionEv" title='CFnordlichtConnection::CloseConnection' data-ref="_ZN21CFnordlichtConnection15CloseConnectionEv">CloseConnection</a>();</td></tr>
+<tr><th id="68">68</th><td></td></tr>
+<tr><th id="69">69</th><td><u>#<span data-ppcond="69">if</span> !defined(<a class="macro" href="AtmoDefs.h.html#20" data-ref="_M/_ATMO_VLC_PLUGIN_">_ATMO_VLC_PLUGIN_</a>)</u></td></tr>
+<tr><th id="70">70</th><td>    <em>char</em> serdevice[<var>16</var>];  <i>// com4294967295</i></td></tr>
+<tr><th id="71">71</th><td>    sprintf(serdevice,<q>"com%d"</q>,portNummer);</td></tr>
+<tr><th id="72">72</th><td><u>#<span data-ppcond="69">endif</span></u></td></tr>
+<tr><th id="73">73</th><td></td></tr>
+<tr><th id="74">74</th><td><u>#<span data-ppcond="74">if</span> defined(<span class="macro" data-ref="_M/_WIN32">_WIN32</span>)</u></td></tr>
+<tr><th id="75">75</th><td></td></tr>
+<tr><th id="76">76</th><td>    m_hComport = CreateFileA(serdevice,</td></tr>
+<tr><th id="77">77</th><td>                    GENERIC_WRITE, <var>0</var>, NULL,</td></tr>
+<tr><th id="78">78</th><td>                    OPEN_EXISTING, <var>0</var>, NULL);</td></tr>
+<tr><th id="79">79</th><td>    <b>if</b> ( m_hComport == INVALID_HANDLE_VALUE )</td></tr>
+<tr><th id="80">80</th><td>    {</td></tr>
+<tr><th id="81">81</th><td>        <i>// we have a problem here can't open com port...</i></td></tr>
+<tr><th id="82">82</th><td><i>        // somebody else may use it?</i></td></tr>
+<tr><th id="83">83</th><td><i>        // m_dwLastWin32Error = GetLastError();</i></td></tr>
+<tr><th id="84">84</th><td>        <b>return</b> ATMO_FALSE;</td></tr>
+<tr><th id="85">85</th><td>    }</td></tr>
+<tr><th id="86">86</th><td>    <i>/* change serial settings (Speed, stopbits etc.) */</i></td></tr>
+<tr><th id="87">87</th><td>    DCB dcb; <i>// für comport-parameter</i></td></tr>
+<tr><th id="88">88</th><td>    dcb.DCBlength = <b>sizeof</b>(DCB);</td></tr>
+<tr><th id="89">89</th><td>    GetCommState(m_hComport, &amp;dcb); <i>// ger current serialport settings</i></td></tr>
+<tr><th id="90">90</th><td>    dcb.BaudRate = <var>19200</var>;       <i>// set speed</i></td></tr>
+<tr><th id="91">91</th><td>    dcb.ByteSize = <var>8</var>;          <i>// set databits</i></td></tr>
+<tr><th id="92">92</th><td>    dcb.Parity   = NOPARITY;    <i>// set parity</i></td></tr>
+<tr><th id="93">93</th><td>    dcb.StopBits = ONESTOPBIT;   <i>// set one stop bit</i></td></tr>
+<tr><th id="94">94</th><td>    SetCommState(m_hComport, &amp;dcb);    <i>// apply settings</i></td></tr>
+<tr><th id="95">95</th><td></td></tr>
+<tr><th id="96">96</th><td><u>#<span data-ppcond="74">else</span></u></td></tr>
+<tr><th id="97">97</th><td></td></tr>
+<tr><th id="98">98</th><td>    <em>int</em> <dfn class="local col3 decl" id="3bconst" title='bconst' data-type='int' data-ref="3bconst">bconst</dfn> = <a class="macro" href="../../../../include/x86_64-linux-gnu/bits/termios.h.html#135" title="0000016" data-ref="_M/B19200">B19200</a>;</td></tr>
+<tr><th id="99">99</th><td>    <a class="member" href="FnordlichtConnection.h.html#CFnordlichtConnection::m_hComport" title='CFnordlichtConnection::m_hComport' data-ref="CFnordlichtConnection::m_hComport">m_hComport</a> = <a class="ref" href="../../../../include/fcntl.h.html#149" title='open' data-ref="open64">open</a>(<a class="local col2 ref" href="#2serdevice" title='serdevice' data-ref="2serdevice">serdevice</a>,<a class="macro" href="../../../../include/x86_64-linux-gnu/bits/fcntl-linux.h.html#45" title="02" data-ref="_M/O_RDWR">O_RDWR</a> |<a class="macro" href="../../../../include/x86_64-linux-gnu/bits/fcntl-linux.h.html#53" title="0400" data-ref="_M/O_NOCTTY">O_NOCTTY</a>);</td></tr>
+<tr><th id="100">100</th><td>    <b>if</b> ( <a class="member" href="FnordlichtConnection.h.html#CFnordlichtConnection::m_hComport" title='CFnordlichtConnection::m_hComport' data-ref="CFnordlichtConnection::m_hComport">m_hComport</a> &lt; <var>0</var> )</td></tr>
+<tr><th id="101">101</th><td>        <b>return</b> <a class="macro" href="AtmoDefs.h.html#38" title="false" data-ref="_M/ATMO_FALSE">ATMO_FALSE</a>;</td></tr>
+<tr><th id="102">102</th><td></td></tr>
+<tr><th id="103">103</th><td>    <b>struct</b> <a class="type" href="../../../../include/x86_64-linux-gnu/bits/termios.h.html#termios" title='termios' data-ref="termios">termios</a> <a class="ref fake" href="../../../../include/x86_64-linux-gnu/bits/termios.h.html#28" title='termios::termios' data-ref="_ZN7termiosC1Ev"></a><dfn class="local col4 decl" id="4tio" title='tio' data-type='struct termios' data-ref="4tio">tio</dfn>;</td></tr>
+<tr><th id="104">104</th><td>    <a class="ref" href="../../../../include/string.h.html#memset" title='memset' data-ref="memset">memset</a>(&amp;<a class="local col4 ref" href="#4tio" title='tio' data-ref="4tio">tio</a>,<var>0</var>,<b>sizeof</b>(<a class="local col4 ref" href="#4tio" title='tio' data-ref="4tio">tio</a>));</td></tr>
+<tr><th id="105">105</th><td>    <a class="local col4 ref" href="#4tio" title='tio' data-ref="4tio">tio</a>.<a class="ref" href="../../../../include/x86_64-linux-gnu/bits/termios.h.html#termios::c_cflag" title='termios::c_cflag' data-ref="termios::c_cflag">c_cflag</a> = (<a class="macro" href="../../../../include/x86_64-linux-gnu/bits/termios.h.html#145" title="0000060" data-ref="_M/CS8">CS8</a> | <a class="macro" href="../../../../include/x86_64-linux-gnu/bits/termios.h.html#147" title="0000200" data-ref="_M/CREAD">CREAD</a> | <a class="macro" href="../../../../include/x86_64-linux-gnu/bits/termios.h.html#150" title="0002000" data-ref="_M/HUPCL">HUPCL</a> | <a class="macro" href="../../../../include/x86_64-linux-gnu/bits/termios.h.html#151" title="0004000" data-ref="_M/CLOCAL">CLOCAL</a>);</td></tr>
+<tr><th id="106">106</th><td>    <a class="local col4 ref" href="#4tio" title='tio' data-ref="4tio">tio</a>.<a class="ref" href="../../../../include/x86_64-linux-gnu/bits/termios.h.html#termios::c_iflag" title='termios::c_iflag' data-ref="termios::c_iflag">c_iflag</a> = (<a class="macro" href="../../../../include/x86_64-linux-gnu/bits/termios.h.html#66" title="0000020" data-ref="_M/INPCK">INPCK</a> | <a class="macro" href="../../../../include/x86_64-linux-gnu/bits/termios.h.html#63" title="0000002" data-ref="_M/BRKINT">BRKINT</a>);</td></tr>
+<tr><th id="107">107</th><td>    <a class="ref" href="../../../../include/termios.h.html#cfsetispeed" title='cfsetispeed' data-ref="cfsetispeed">cfsetispeed</a>(&amp;<a class="local col4 ref" href="#4tio" title='tio' data-ref="4tio">tio</a>, <a class="local col3 ref" href="#3bconst" title='bconst' data-ref="3bconst">bconst</a>);</td></tr>
+<tr><th id="108">108</th><td>    <a class="ref" href="../../../../include/termios.h.html#cfsetospeed" title='cfsetospeed' data-ref="cfsetospeed">cfsetospeed</a>(&amp;<a class="local col4 ref" href="#4tio" title='tio' data-ref="4tio">tio</a>, <a class="local col3 ref" href="#3bconst" title='bconst' data-ref="3bconst">bconst</a>);</td></tr>
+<tr><th id="109">109</th><td>    <b>if</b>( ! <a class="ref" href="../../../../include/termios.h.html#tcsetattr" title='tcsetattr' data-ref="tcsetattr">tcsetattr</a>(<a class="member" href="FnordlichtConnection.h.html#CFnordlichtConnection::m_hComport" title='CFnordlichtConnection::m_hComport' data-ref="CFnordlichtConnection::m_hComport">m_hComport</a>, <a class="macro" href="../../../../include/x86_64-linux-gnu/bits/termios.h.html#213" title="0" data-ref="_M/TCSANOW">TCSANOW</a>, &amp;<a class="local col4 ref" href="#4tio" title='tio' data-ref="4tio">tio</a>) )</td></tr>
+<tr><th id="110">110</th><td>        <a class="ref" href="../../../../include/termios.h.html#tcflush" title='tcflush' data-ref="tcflush">tcflush</a>(<a class="member" href="FnordlichtConnection.h.html#CFnordlichtConnection::m_hComport" title='CFnordlichtConnection::m_hComport' data-ref="CFnordlichtConnection::m_hComport">m_hComport</a>, <a class="macro" href="../../../../include/x86_64-linux-gnu/bits/termios.h.html#210" title="2" data-ref="_M/TCIOFLUSH">TCIOFLUSH</a>);</td></tr>
+<tr><th id="111">111</th><td>    <b>else</b> {</td></tr>
+<tr><th id="112">112</th><td>        <i>// can't change parms</i></td></tr>
+<tr><th id="113">113</th><td>        <a class="ref" href="../../../../include/unistd.h.html#close" title='close' data-ref="close">close</a>(<a class="member" href="FnordlichtConnection.h.html#CFnordlichtConnection::m_hComport" title='CFnordlichtConnection::m_hComport' data-ref="CFnordlichtConnection::m_hComport">m_hComport</a>);</td></tr>
+<tr><th id="114">114</th><td>        <a class="member" href="FnordlichtConnection.h.html#CFnordlichtConnection::m_hComport" title='CFnordlichtConnection::m_hComport' data-ref="CFnordlichtConnection::m_hComport">m_hComport</a> = -<var>1</var>;</td></tr>
+<tr><th id="115">115</th><td>        <b>return</b> <b>false</b>;</td></tr>
+<tr><th id="116">116</th><td>    }</td></tr>
+<tr><th id="117">117</th><td></td></tr>
+<tr><th id="118">118</th><td><u>#<span data-ppcond="74">endif</span></u></td></tr>
+<tr><th id="119">119</th><td></td></tr>
+<tr><th id="120">120</th><td>    <i>// sync fnordlicht</i></td></tr>
+<tr><th id="121">121</th><td>    <b>if</b> ( <a class="member" href="#_ZN21CFnordlichtConnection4syncEv" title='CFnordlichtConnection::sync' data-ref="_ZN21CFnordlichtConnection4syncEv">sync</a>() )</td></tr>
+<tr><th id="122">122</th><td>        <i>// stop fading on all devices</i></td></tr>
+<tr><th id="123">123</th><td>        <b>if</b> ( <a class="member" href="#_ZN21CFnordlichtConnection4stopEh" title='CFnordlichtConnection::stop' data-ref="_ZN21CFnordlichtConnection4stopEh">stop</a>(<var>255</var>) )</td></tr>
+<tr><th id="124">124</th><td>            <b>return</b> <b>true</b>; <i>// fnordlicht initialized...</i></td></tr>
+<tr><th id="125">125</th><td></td></tr>
+<tr><th id="126">126</th><td>    <b>return</b> <b>false</b>; <i>// something is going wrong...</i></td></tr>
+<tr><th id="127">127</th><td>}</td></tr>
+<tr><th id="128">128</th><td></td></tr>
+<tr><th id="129">129</th><td><em>void</em> <a class="type" href="FnordlichtConnection.h.html#CFnordlichtConnection" title='CFnordlichtConnection' data-ref="CFnordlichtConnection">CFnordlichtConnection</a>::<dfn class="virtual decl def" id="_ZN21CFnordlichtConnection15CloseConnectionEv" title='CFnordlichtConnection::CloseConnection' data-ref="_ZN21CFnordlichtConnection15CloseConnectionEv">CloseConnection</dfn>()</td></tr>
+<tr><th id="130">130</th><td>{</td></tr>
+<tr><th id="131">131</th><td>    <b>if</b> ( <a class="member" href="FnordlichtConnection.h.html#CFnordlichtConnection::m_hComport" title='CFnordlichtConnection::m_hComport' data-ref="CFnordlichtConnection::m_hComport">m_hComport</a> != <a class="macro" href="AtmoDefs.h.html#57" title="-1" data-ref="_M/INVALID_HANDLE_VALUE">INVALID_HANDLE_VALUE</a> )</td></tr>
+<tr><th id="132">132</th><td>    {</td></tr>
+<tr><th id="133">133</th><td>        <a class="member" href="#_ZN21CFnordlichtConnection5resetEh" title='CFnordlichtConnection::reset' data-ref="_ZN21CFnordlichtConnection5resetEh">reset</a>(<var>255</var>);</td></tr>
+<tr><th id="134">134</th><td></td></tr>
+<tr><th id="135">135</th><td><u>#<span data-ppcond="135">if</span> defined(<span class="macro" data-ref="_M/_WIN32">_WIN32</span>)</u></td></tr>
+<tr><th id="136">136</th><td>        CloseHandle(m_hComport);</td></tr>
+<tr><th id="137">137</th><td><u>#<span data-ppcond="135">else</span></u></td></tr>
+<tr><th id="138">138</th><td>        <a class="ref" href="../../../../include/unistd.h.html#close" title='close' data-ref="close">close</a>(<a class="member" href="FnordlichtConnection.h.html#CFnordlichtConnection::m_hComport" title='CFnordlichtConnection::m_hComport' data-ref="CFnordlichtConnection::m_hComport">m_hComport</a>);</td></tr>
+<tr><th id="139">139</th><td><u>#<span data-ppcond="135">endif</span></u></td></tr>
+<tr><th id="140">140</th><td>        <a class="member" href="FnordlichtConnection.h.html#CFnordlichtConnection::m_hComport" title='CFnordlichtConnection::m_hComport' data-ref="CFnordlichtConnection::m_hComport">m_hComport</a> = <a class="macro" href="AtmoDefs.h.html#57" title="-1" data-ref="_M/INVALID_HANDLE_VALUE">INVALID_HANDLE_VALUE</a>;</td></tr>
+<tr><th id="141">141</th><td>    }</td></tr>
+<tr><th id="142">142</th><td>}</td></tr>
+<tr><th id="143">143</th><td></td></tr>
+<tr><th id="144">144</th><td><a class="macro" href="AtmoDefs.h.html#36" title="bool" data-ref="_M/ATMO_BOOL">ATMO_BOOL</a> <a class="type" href="FnordlichtConnection.h.html#CFnordlichtConnection" title='CFnordlichtConnection' data-ref="CFnordlichtConnection">CFnordlichtConnection</a>::<dfn class="virtual decl def" id="_ZN21CFnordlichtConnection6isOpenEv" title='CFnordlichtConnection::isOpen' data-ref="_ZN21CFnordlichtConnection6isOpenEv">isOpen</dfn>(<em>void</em>)</td></tr>
+<tr><th id="145">145</th><td>{</td></tr>
+<tr><th id="146">146</th><td>    <b>return</b> (<a class="member" href="FnordlichtConnection.h.html#CFnordlichtConnection::m_hComport" title='CFnordlichtConnection::m_hComport' data-ref="CFnordlichtConnection::m_hComport">m_hComport</a> != <a class="macro" href="AtmoDefs.h.html#57" title="-1" data-ref="_M/INVALID_HANDLE_VALUE">INVALID_HANDLE_VALUE</a>);</td></tr>
+<tr><th id="147">147</th><td>}</td></tr>
+<tr><th id="148">148</th><td></td></tr>
+<tr><th id="149">149</th><td><i>/*</i></td></tr>
+<tr><th id="150">150</th><td><i>    def fade_rgb(addr, r, g, b, step, delay)</i></td></tr>
+<tr><th id="151">151</th><td><i>       $dev.write addr.chr</i></td></tr>
+<tr><th id="152">152</th><td><i>       $dev.write "\x01"</i></td></tr>
+<tr><th id="153">153</th><td><i>       $dev.write step.chr</i></td></tr>
+<tr><th id="154">154</th><td><i>       $dev.write delay.chr</i></td></tr>
+<tr><th id="155">155</th><td><i>       $dev.write r.chr</i></td></tr>
+<tr><th id="156">156</th><td><i>       $dev.write g.chr</i></td></tr>
+<tr><th id="157">157</th><td><i>       $dev.write b.chr</i></td></tr>
+<tr><th id="158">158</th><td><i>       $dev.write "\x00\x00\x00\x00\x00"</i></td></tr>
+<tr><th id="159">159</th><td><i>       $dev.write "\x00\x00\x00"</i></td></tr>
+<tr><th id="160">160</th><td><i>       $dev.flush</i></td></tr>
+<tr><th id="161">161</th><td><i>    end</i></td></tr>
+<tr><th id="162">162</th><td><i>*/</i></td></tr>
+<tr><th id="163">163</th><td><a class="macro" href="AtmoDefs.h.html#36" title="bool" data-ref="_M/ATMO_BOOL">ATMO_BOOL</a> <a class="type" href="FnordlichtConnection.h.html#CFnordlichtConnection" title='CFnordlichtConnection' data-ref="CFnordlichtConnection">CFnordlichtConnection</a>::<dfn class="virtual decl def" id="_ZN21CFnordlichtConnection8SendDataEP12xColorPacket" title='CFnordlichtConnection::SendData' data-ref="_ZN21CFnordlichtConnection8SendDataEP12xColorPacket">SendData</dfn>(<a class="typedef" href="AtmoDefs.h.html#pColorPacket" title='pColorPacket' data-type='xColorPacket *' data-ref="pColorPacket">pColorPacket</a> <dfn class="local col5 decl" id="5data" title='data' data-type='pColorPacket' data-ref="5data">data</dfn>)</td></tr>
+<tr><th id="164">164</th><td>{</td></tr>
+<tr><th id="165">165</th><td>    <b>if</b> ( <a class="member" href="FnordlichtConnection.h.html#CFnordlichtConnection::m_hComport" title='CFnordlichtConnection::m_hComport' data-ref="CFnordlichtConnection::m_hComport">m_hComport</a> == <a class="macro" href="AtmoDefs.h.html#57" title="-1" data-ref="_M/INVALID_HANDLE_VALUE">INVALID_HANDLE_VALUE</a> )</td></tr>
+<tr><th id="166">166</th><td>        <b>return</b> <a class="macro" href="AtmoDefs.h.html#38" title="false" data-ref="_M/ATMO_FALSE">ATMO_FALSE</a>;</td></tr>
+<tr><th id="167">167</th><td></td></tr>
+<tr><th id="168">168</th><td>    <em>int</em> <dfn class="local col6 decl" id="6amount" title='amount' data-type='int' data-ref="6amount">amount</dfn> = <a class="virtual member" href="#_ZN21CFnordlichtConnection21getAmountFnordlichterEv" title='CFnordlichtConnection::getAmountFnordlichter' data-ref="_ZN21CFnordlichtConnection21getAmountFnordlichterEv">getAmountFnordlichter</a>();</td></tr>
+<tr><th id="169">169</th><td>    <em>unsigned</em> <em>char</em> <dfn class="local col7 decl" id="7buffer" title='buffer' data-type='unsigned char [15]' data-ref="7buffer">buffer</dfn>[<var>15</var>];</td></tr>
+<tr><th id="170">170</th><td>    <a class="ref" href="../../../../include/string.h.html#memset" title='memset' data-ref="memset">memset</a>(&amp;<a class="local col7 ref" href="#7buffer" title='buffer' data-ref="7buffer">buffer</a>, <var>0</var>, <b>sizeof</b>(<a class="local col7 ref" href="#7buffer" title='buffer' data-ref="7buffer">buffer</a>) ); <i>// zero buffer</i></td></tr>
+<tr><th id="171">171</th><td>    <em>int</em> <dfn class="local col8 decl" id="8iBytesWritten" title='iBytesWritten' data-type='int' data-ref="8iBytesWritten">iBytesWritten</dfn>;</td></tr>
+<tr><th id="172">172</th><td></td></tr>
+<tr><th id="173">173</th><td>    <a class="member" href="AtmoConnection.h.html#_ZN15CAtmoConnection4LockEv" title='CAtmoConnection::Lock' data-ref="_ZN15CAtmoConnection4LockEv">Lock</a>();</td></tr>
+<tr><th id="174">174</th><td></td></tr>
+<tr><th id="175">175</th><td>    <a class="local col7 ref" href="#7buffer" title='buffer' data-ref="7buffer">buffer</a>[<var>1</var>] = <var>0x01</var>; <i>// fade to rgb color</i></td></tr>
+<tr><th id="176">176</th><td>    <a class="local col7 ref" href="#7buffer" title='buffer' data-ref="7buffer">buffer</a>[<var>2</var>] = <var>0x80</var>; <i>// in two steps</i></td></tr>
+<tr><th id="177">177</th><td>    <a class="local col7 ref" href="#7buffer" title='buffer' data-ref="7buffer">buffer</a>[<var>3</var>] = <var>0x01</var>; <i>// 1ms pause between steps</i></td></tr>
+<tr><th id="178">178</th><td></td></tr>
+<tr><th id="179">179</th><td>    <i>// send all packages to all fnordlicht's</i></td></tr>
+<tr><th id="180">180</th><td>    <b>for</b>( <em>unsigned</em> <em>char</em> <dfn class="local col9 decl" id="9i" title='i' data-type='unsigned char' data-ref="9i">i</dfn>=<var>0</var>; <a class="local col9 ref" href="#9i" title='i' data-ref="9i">i</a> &lt; <a class="local col6 ref" href="#6amount" title='amount' data-ref="6amount">amount</a>; <a class="local col9 ref" href="#9i" title='i' data-ref="9i">i</a>++ )</td></tr>
+<tr><th id="181">181</th><td>    {</td></tr>
+<tr><th id="182">182</th><td>        <em>int</em> <dfn class="local col0 decl" id="10idx" title='idx' data-type='int' data-ref="10idx">idx</dfn>;</td></tr>
+<tr><th id="183">183</th><td>        <b>if</b> ( <a class="member" href="AtmoConnection.h.html#CAtmoConnection::m_ChannelAssignment" title='CAtmoConnection::m_ChannelAssignment' data-ref="CAtmoConnection::m_ChannelAssignment">m_ChannelAssignment</a> &amp;&amp; <a class="local col9 ref" href="#9i" title='i' data-ref="9i">i</a> &lt; <a class="member" href="AtmoConnection.h.html#CAtmoConnection::m_NumAssignedChannels" title='CAtmoConnection::m_NumAssignedChannels' data-ref="CAtmoConnection::m_NumAssignedChannels">m_NumAssignedChannels</a> )</td></tr>
+<tr><th id="184">184</th><td>            <a class="local col0 ref" href="#10idx" title='idx' data-ref="10idx">idx</a> = <a class="member" href="AtmoConnection.h.html#CAtmoConnection::m_ChannelAssignment" title='CAtmoConnection::m_ChannelAssignment' data-ref="CAtmoConnection::m_ChannelAssignment">m_ChannelAssignment</a>[<a class="local col9 ref" href="#9i" title='i' data-ref="9i">i</a>];</td></tr>
+<tr><th id="185">185</th><td>        <b>else</b></td></tr>
+<tr><th id="186">186</th><td>            <a class="local col0 ref" href="#10idx" title='idx' data-ref="10idx">idx</a> = -<var>1</var>; <i>// no channel assigned to fnordlicht[i]</i></td></tr>
+<tr><th id="187">187</th><td></td></tr>
+<tr><th id="188">188</th><td>        <b>if</b>( <a class="local col0 ref" href="#10idx" title='idx' data-ref="10idx">idx</a> &gt;= <var>0</var> &amp;&amp; <a class="local col0 ref" href="#10idx" title='idx' data-ref="10idx">idx</a> &lt;= <a class="local col5 ref" href="#5data" title='data' data-ref="5data">data</a>-&gt;<a class="ref" href="AtmoDefs.h.html#{anonymous}::numColors" title='&lt;anonymous struct&gt;::numColors' data-ref="{anonymous}::numColors">numColors</a> )</td></tr>
+<tr><th id="189">189</th><td>        {</td></tr>
+<tr><th id="190">190</th><td>            <i>// fnordlicht address equals to a MoMo Channel</i></td></tr>
+<tr><th id="191">191</th><td>            <a class="local col7 ref" href="#7buffer" title='buffer' data-ref="7buffer">buffer</a>[<var>0</var>] = <a class="local col9 ref" href="#9i" title='i' data-ref="9i">i</a>; <i>// fnordlicht address (0..254, 255 = broadcast)</i></td></tr>
+<tr><th id="192">192</th><td>            <a class="local col7 ref" href="#7buffer" title='buffer' data-ref="7buffer">buffer</a>[<var>4</var>] = <a class="local col5 ref" href="#5data" title='data' data-ref="5data">data</a>-&gt;<a class="ref" href="AtmoDefs.h.html#{anonymous}::zone" title='&lt;anonymous struct&gt;::zone' data-ref="{anonymous}::zone">zone</a>[<a class="local col0 ref" href="#10idx" title='idx' data-ref="10idx">idx</a>].<a class="ref" href="AtmoDefs.h.html#{anonymous}::r" title='&lt;anonymous struct&gt;::r' data-ref="{anonymous}::r">r</a>;</td></tr>
+<tr><th id="193">193</th><td>            <a class="local col7 ref" href="#7buffer" title='buffer' data-ref="7buffer">buffer</a>[<var>5</var>] = <a class="local col5 ref" href="#5data" title='data' data-ref="5data">data</a>-&gt;<a class="ref" href="AtmoDefs.h.html#{anonymous}::zone" title='&lt;anonymous struct&gt;::zone' data-ref="{anonymous}::zone">zone</a>[<a class="local col0 ref" href="#10idx" title='idx' data-ref="10idx">idx</a>].<a class="ref" href="AtmoDefs.h.html#{anonymous}::g" title='&lt;anonymous struct&gt;::g' data-ref="{anonymous}::g">g</a>;</td></tr>
+<tr><th id="194">194</th><td>            <a class="local col7 ref" href="#7buffer" title='buffer' data-ref="7buffer">buffer</a>[<var>6</var>] = <a class="local col5 ref" href="#5data" title='data' data-ref="5data">data</a>-&gt;<a class="ref" href="AtmoDefs.h.html#{anonymous}::zone" title='&lt;anonymous struct&gt;::zone' data-ref="{anonymous}::zone">zone</a>[<a class="local col0 ref" href="#10idx" title='idx' data-ref="10idx">idx</a>].<a class="ref" href="AtmoDefs.h.html#{anonymous}::b" title='&lt;anonymous struct&gt;::b' data-ref="{anonymous}::b">b</a>;</td></tr>
+<tr><th id="195">195</th><td>        }</td></tr>
+<tr><th id="196">196</th><td></td></tr>
+<tr><th id="197">197</th><td><u>#<span data-ppcond="197">if</span> defined(<span class="macro" data-ref="_M/_WIN32">_WIN32</span>)</u></td></tr>
+<tr><th id="198">198</th><td>        <i>// send to COM-Port</i></td></tr>
+<tr><th id="199">199</th><td>        WriteFile( m_hComport, buffer, <b>sizeof</b>(buffer),</td></tr>
+<tr><th id="200">200</th><td>                    (DWORD*)&amp;iBytesWritten, NULL );</td></tr>
+<tr><th id="201">201</th><td><u>#<span data-ppcond="197">else</span></u></td></tr>
+<tr><th id="202">202</th><td>        <a class="local col8 ref" href="#8iBytesWritten" title='iBytesWritten' data-ref="8iBytesWritten">iBytesWritten</a> = <a class="ref" href="../../../../include/unistd.h.html#write" title='write' data-ref="write">write</a>(<a class="member" href="FnordlichtConnection.h.html#CFnordlichtConnection::m_hComport" title='CFnordlichtConnection::m_hComport' data-ref="CFnordlichtConnection::m_hComport">m_hComport</a>, <a class="local col7 ref" href="#7buffer" title='buffer' data-ref="7buffer">buffer</a>, <b>sizeof</b>(<a class="local col7 ref" href="#7buffer" title='buffer' data-ref="7buffer">buffer</a>));</td></tr>
+<tr><th id="203">203</th><td>        <a class="ref" href="../../../../include/termios.h.html#tcflush" title='tcflush' data-ref="tcflush">tcflush</a>(<a class="member" href="FnordlichtConnection.h.html#CFnordlichtConnection::m_hComport" title='CFnordlichtConnection::m_hComport' data-ref="CFnordlichtConnection::m_hComport">m_hComport</a>, <a class="macro" href="../../../../include/x86_64-linux-gnu/bits/termios.h.html#210" title="2" data-ref="_M/TCIOFLUSH">TCIOFLUSH</a>);</td></tr>
+<tr><th id="204">204</th><td>        <a class="ref" href="../../../../include/termios.h.html#tcdrain" title='tcdrain' data-ref="tcdrain">tcdrain</a>(<a class="member" href="FnordlichtConnection.h.html#CFnordlichtConnection::m_hComport" title='CFnordlichtConnection::m_hComport' data-ref="CFnordlichtConnection::m_hComport">m_hComport</a>); <i>// flush buffer</i></td></tr>
+<tr><th id="205">205</th><td><u>#<span data-ppcond="197">endif</span></u></td></tr>
+<tr><th id="206">206</th><td></td></tr>
+<tr><th id="207">207</th><td>        <b>if</b> (<a class="local col8 ref" href="#8iBytesWritten" title='iBytesWritten' data-ref="8iBytesWritten">iBytesWritten</a> != <b>sizeof</b>(<a class="local col7 ref" href="#7buffer" title='buffer' data-ref="7buffer">buffer</a>))</td></tr>
+<tr><th id="208">208</th><td>        {</td></tr>
+<tr><th id="209">209</th><td>            <a class="member" href="AtmoConnection.h.html#_ZN15CAtmoConnection6UnlockEv" title='CAtmoConnection::Unlock' data-ref="_ZN15CAtmoConnection6UnlockEv">Unlock</a>();</td></tr>
+<tr><th id="210">210</th><td>            <b>return</b> <a class="macro" href="AtmoDefs.h.html#38" title="false" data-ref="_M/ATMO_FALSE">ATMO_FALSE</a>; <i>// shouldn't be...</i></td></tr>
+<tr><th id="211">211</th><td>        }</td></tr>
+<tr><th id="212">212</th><td></td></tr>
+<tr><th id="213">213</th><td>    }</td></tr>
+<tr><th id="214">214</th><td></td></tr>
+<tr><th id="215">215</th><td>    <a class="member" href="AtmoConnection.h.html#_ZN15CAtmoConnection6UnlockEv" title='CAtmoConnection::Unlock' data-ref="_ZN15CAtmoConnection6UnlockEv">Unlock</a>();</td></tr>
+<tr><th id="216">216</th><td></td></tr>
+<tr><th id="217">217</th><td>    <b>return</b> <a class="macro" href="AtmoDefs.h.html#37" title="true" data-ref="_M/ATMO_TRUE">ATMO_TRUE</a>;</td></tr>
+<tr><th id="218">218</th><td>}</td></tr>
+<tr><th id="219">219</th><td></td></tr>
+<tr><th id="220">220</th><td></td></tr>
+<tr><th id="221">221</th><td><a class="macro" href="AtmoDefs.h.html#36" title="bool" data-ref="_M/ATMO_BOOL">ATMO_BOOL</a> <a class="type" href="FnordlichtConnection.h.html#CFnordlichtConnection" title='CFnordlichtConnection' data-ref="CFnordlichtConnection">CFnordlichtConnection</a>::<dfn class="virtual decl def" id="_ZN21CFnordlichtConnection20CreateDefaultMappingEP22CAtmoChannelAssignment" title='CFnordlichtConnection::CreateDefaultMapping' data-ref="_ZN21CFnordlichtConnection20CreateDefaultMappingEP22CAtmoChannelAssignment">CreateDefaultMapping</dfn>(<a class="type" href="AtmoChannelAssignment.h.html#CAtmoChannelAssignment" title='CAtmoChannelAssignment' data-ref="CAtmoChannelAssignment">CAtmoChannelAssignment</a> *<dfn class="local col1 decl" id="11ca" title='ca' data-type='CAtmoChannelAssignment *' data-ref="11ca">ca</dfn>)</td></tr>
+<tr><th id="222">222</th><td>{</td></tr>
+<tr><th id="223">223</th><td>    <b>if</b> ( !<a class="local col1 ref" href="#11ca" title='ca' data-ref="11ca">ca</a> )</td></tr>
+<tr><th id="224">224</th><td>        <b>return</b> <a class="macro" href="AtmoDefs.h.html#38" title="false" data-ref="_M/ATMO_FALSE">ATMO_FALSE</a>;</td></tr>
+<tr><th id="225">225</th><td>    <a class="local col1 ref" href="#11ca" title='ca' data-ref="11ca">ca</a>-&gt;<a class="ref" href="AtmoChannelAssignment.h.html#_ZN22CAtmoChannelAssignment7setSizeEi" title='CAtmoChannelAssignment::setSize' data-ref="_ZN22CAtmoChannelAssignment7setSizeEi">setSize</a>( <a class="virtual member" href="#_ZN21CFnordlichtConnection21getAmountFnordlichterEv" title='CFnordlichtConnection::getAmountFnordlichter' data-ref="_ZN21CFnordlichtConnection21getAmountFnordlichterEv">getAmountFnordlichter</a>() );  <i>// oder 4 ? depending on config!</i></td></tr>
+<tr><th id="226">226</th><td>    <a class="local col1 ref" href="#11ca" title='ca' data-ref="11ca">ca</a>-&gt;<a class="ref" href="AtmoChannelAssignment.h.html#_ZN22CAtmoChannelAssignment12setZoneIndexEii" title='CAtmoChannelAssignment::setZoneIndex' data-ref="_ZN22CAtmoChannelAssignment12setZoneIndexEii">setZoneIndex</a>(<var>0</var>, <var>0</var>); <i>// Zone 5</i></td></tr>
+<tr><th id="227">227</th><td>    <a class="local col1 ref" href="#11ca" title='ca' data-ref="11ca">ca</a>-&gt;<a class="ref" href="AtmoChannelAssignment.h.html#_ZN22CAtmoChannelAssignment12setZoneIndexEii" title='CAtmoChannelAssignment::setZoneIndex' data-ref="_ZN22CAtmoChannelAssignment12setZoneIndexEii">setZoneIndex</a>(<var>1</var>, <var>1</var>);</td></tr>
+<tr><th id="228">228</th><td>    <a class="local col1 ref" href="#11ca" title='ca' data-ref="11ca">ca</a>-&gt;<a class="ref" href="AtmoChannelAssignment.h.html#_ZN22CAtmoChannelAssignment12setZoneIndexEii" title='CAtmoChannelAssignment::setZoneIndex' data-ref="_ZN22CAtmoChannelAssignment12setZoneIndexEii">setZoneIndex</a>(<var>2</var>, <var>2</var>);</td></tr>
+<tr><th id="229">229</th><td>    <a class="local col1 ref" href="#11ca" title='ca' data-ref="11ca">ca</a>-&gt;<a class="ref" href="AtmoChannelAssignment.h.html#_ZN22CAtmoChannelAssignment12setZoneIndexEii" title='CAtmoChannelAssignment::setZoneIndex' data-ref="_ZN22CAtmoChannelAssignment12setZoneIndexEii">setZoneIndex</a>(<var>3</var>, <var>3</var>);</td></tr>
+<tr><th id="230">230</th><td>    <b>return</b> <a class="macro" href="AtmoDefs.h.html#37" title="true" data-ref="_M/ATMO_TRUE">ATMO_TRUE</a>;</td></tr>
+<tr><th id="231">231</th><td>}</td></tr>
+<tr><th id="232">232</th><td></td></tr>
+<tr><th id="233">233</th><td><em>int</em> <a class="type" href="FnordlichtConnection.h.html#CFnordlichtConnection" title='CFnordlichtConnection' data-ref="CFnordlichtConnection">CFnordlichtConnection</a>::<dfn class="virtual decl def" id="_ZN21CFnordlichtConnection21getAmountFnordlichterEv" title='CFnordlichtConnection::getAmountFnordlichter' data-ref="_ZN21CFnordlichtConnection21getAmountFnordlichterEv">getAmountFnordlichter</dfn>()</td></tr>
+<tr><th id="234">234</th><td>{</td></tr>
+<tr><th id="235">235</th><td>   <b>return</b> <a class="member" href="AtmoConnection.h.html#CAtmoConnection::m_pAtmoConfig" title='CAtmoConnection::m_pAtmoConfig' data-ref="CAtmoConnection::m_pAtmoConfig">m_pAtmoConfig</a>-&gt;<a class="ref" href="AtmoConfig.h.html#_ZN11CAtmoConfig20getFnordlicht_AmountEv" title='CAtmoConfig::getFnordlicht_Amount' data-ref="_ZN11CAtmoConfig20getFnordlicht_AmountEv">getFnordlicht_Amount</a>();</td></tr>
+<tr><th id="236">236</th><td>}</td></tr>
+<tr><th id="237">237</th><td></td></tr>
+<tr><th id="238">238</th><td><i>/*</i></td></tr>
+<tr><th id="239">239</th><td><i>    def sync(addr = 0)</i></td></tr>
+<tr><th id="240">240</th><td><i>       1.up to(15) do</i></td></tr>
+<tr><th id="241">241</th><td><i>          $dev.write "\e"</i></td></tr>
+<tr><th id="242">242</th><td><i>       end</i></td></tr>
+<tr><th id="243">243</th><td><i>       $dev.write addr.chr</i></td></tr>
+<tr><th id="244">244</th><td><i>       $dev.flush</i></td></tr>
+<tr><th id="245">245</th><td><i>    end</i></td></tr>
+<tr><th id="246">246</th><td><i>*/</i></td></tr>
+<tr><th id="247">247</th><td><a class="macro" href="AtmoDefs.h.html#36" title="bool" data-ref="_M/ATMO_BOOL">ATMO_BOOL</a> <a class="type" href="FnordlichtConnection.h.html#CFnordlichtConnection" title='CFnordlichtConnection' data-ref="CFnordlichtConnection">CFnordlichtConnection</a>::<dfn class="decl def" id="_ZN21CFnordlichtConnection4syncEv" title='CFnordlichtConnection::sync' data-ref="_ZN21CFnordlichtConnection4syncEv">sync</dfn>(<em>void</em>)</td></tr>
+<tr><th id="248">248</th><td>{</td></tr>
+<tr><th id="249">249</th><td>    <b>if</b> ( <a class="member" href="FnordlichtConnection.h.html#CFnordlichtConnection::m_hComport" title='CFnordlichtConnection::m_hComport' data-ref="CFnordlichtConnection::m_hComport">m_hComport</a> == <a class="macro" href="AtmoDefs.h.html#57" title="-1" data-ref="_M/INVALID_HANDLE_VALUE">INVALID_HANDLE_VALUE</a> )</td></tr>
+<tr><th id="250">250</th><td>        <b>return</b> <a class="macro" href="AtmoDefs.h.html#38" title="false" data-ref="_M/ATMO_FALSE">ATMO_FALSE</a>;</td></tr>
+<tr><th id="251">251</th><td></td></tr>
+<tr><th id="252">252</th><td>    <em>unsigned</em> <em>char</em> <dfn class="local col2 decl" id="12buffer" title='buffer' data-type='unsigned char [16]' data-ref="12buffer">buffer</dfn>[<var>16</var>];</td></tr>
+<tr><th id="253">253</th><td></td></tr>
+<tr><th id="254">254</th><td>    <em>int</em> <dfn class="local col3 decl" id="13iBytesWritten" title='iBytesWritten' data-type='int' data-ref="13iBytesWritten">iBytesWritten</dfn>;</td></tr>
+<tr><th id="255">255</th><td></td></tr>
+<tr><th id="256">256</th><td>    <a class="member" href="AtmoConnection.h.html#_ZN15CAtmoConnection4LockEv" title='CAtmoConnection::Lock' data-ref="_ZN15CAtmoConnection4LockEv">Lock</a>();</td></tr>
+<tr><th id="257">257</th><td></td></tr>
+<tr><th id="258">258</th><td>    <i>// fill buffer with 15 escape character</i></td></tr>
+<tr><th id="259">259</th><td>    <a class="ref" href="../../../../include/string.h.html#memset" title='memset' data-ref="memset">memset</a>(&amp;<a class="local col2 ref" href="#12buffer" title='buffer' data-ref="12buffer">buffer</a>, <var>0x1b</var>, <b>sizeof</b>(<a class="local col2 ref" href="#12buffer" title='buffer' data-ref="12buffer">buffer</a>)-<var>1</var>);</td></tr>
+<tr><th id="260">260</th><td></td></tr>
+<tr><th id="261">261</th><td>    <a class="local col2 ref" href="#12buffer" title='buffer' data-ref="12buffer">buffer</a>[<b>sizeof</b>(<a class="local col2 ref" href="#12buffer" title='buffer' data-ref="12buffer">buffer</a>)-<var>1</var>] = <var>0x00</var>; <i>// append one zero byte</i></td></tr>
+<tr><th id="262">262</th><td></td></tr>
+<tr><th id="263">263</th><td><u>#<span data-ppcond="263">if</span> defined(<span class="macro" data-ref="_M/_WIN32">_WIN32</span>)</u></td></tr>
+<tr><th id="264">264</th><td>        <i>// send to COM-Port</i></td></tr>
+<tr><th id="265">265</th><td>        WriteFile( m_hComport, buffer, <b>sizeof</b>(buffer),</td></tr>
+<tr><th id="266">266</th><td>                    (DWORD*)&amp;iBytesWritten, NULL );</td></tr>
+<tr><th id="267">267</th><td><u>#<span data-ppcond="263">else</span></u></td></tr>
+<tr><th id="268">268</th><td>        <a class="local col3 ref" href="#13iBytesWritten" title='iBytesWritten' data-ref="13iBytesWritten">iBytesWritten</a> = <a class="ref" href="../../../../include/unistd.h.html#write" title='write' data-ref="write">write</a>(<a class="member" href="FnordlichtConnection.h.html#CFnordlichtConnection::m_hComport" title='CFnordlichtConnection::m_hComport' data-ref="CFnordlichtConnection::m_hComport">m_hComport</a>, <a class="local col2 ref" href="#12buffer" title='buffer' data-ref="12buffer">buffer</a>, <b>sizeof</b>(<a class="local col2 ref" href="#12buffer" title='buffer' data-ref="12buffer">buffer</a>));</td></tr>
+<tr><th id="269">269</th><td>        <a class="ref" href="../../../../include/termios.h.html#tcflush" title='tcflush' data-ref="tcflush">tcflush</a>(<a class="member" href="FnordlichtConnection.h.html#CFnordlichtConnection::m_hComport" title='CFnordlichtConnection::m_hComport' data-ref="CFnordlichtConnection::m_hComport">m_hComport</a>, <a class="macro" href="../../../../include/x86_64-linux-gnu/bits/termios.h.html#210" title="2" data-ref="_M/TCIOFLUSH">TCIOFLUSH</a>);</td></tr>
+<tr><th id="270">270</th><td>        <a class="ref" href="../../../../include/termios.h.html#tcdrain" title='tcdrain' data-ref="tcdrain">tcdrain</a>(<a class="member" href="FnordlichtConnection.h.html#CFnordlichtConnection::m_hComport" title='CFnordlichtConnection::m_hComport' data-ref="CFnordlichtConnection::m_hComport">m_hComport</a>); <i>// flush buffer</i></td></tr>
+<tr><th id="271">271</th><td><u>#<span data-ppcond="263">endif</span></u></td></tr>
+<tr><th id="272">272</th><td></td></tr>
+<tr><th id="273">273</th><td>    <a class="member" href="AtmoConnection.h.html#_ZN15CAtmoConnection6UnlockEv" title='CAtmoConnection::Unlock' data-ref="_ZN15CAtmoConnection6UnlockEv">Unlock</a>();</td></tr>
+<tr><th id="274">274</th><td></td></tr>
+<tr><th id="275">275</th><td>    <b>return</b> (<a class="local col3 ref" href="#13iBytesWritten" title='iBytesWritten' data-ref="13iBytesWritten">iBytesWritten</a> == <b>sizeof</b>(<a class="local col2 ref" href="#12buffer" title='buffer' data-ref="12buffer">buffer</a>)) ? <a class="macro" href="AtmoDefs.h.html#37" title="true" data-ref="_M/ATMO_TRUE">ATMO_TRUE</a> : <a class="macro" href="AtmoDefs.h.html#38" title="false" data-ref="_M/ATMO_FALSE">ATMO_FALSE</a>;</td></tr>
+<tr><th id="276">276</th><td></td></tr>
+<tr><th id="277">277</th><td>}</td></tr>
+<tr><th id="278">278</th><td></td></tr>
+<tr><th id="279">279</th><td><i>/*</i></td></tr>
+<tr><th id="280">280</th><td><i>    def stop(addr, fading = 1)</i></td></tr>
+<tr><th id="281">281</th><td><i>       $dev.write addr.chr</i></td></tr>
+<tr><th id="282">282</th><td><i>       $dev.write "\x08"</i></td></tr>
+<tr><th id="283">283</th><td><i>       $dev.write fading.chr</i></td></tr>
+<tr><th id="284">284</th><td><i>       $dev.write "\x00\x00\x00\x00"</i></td></tr>
+<tr><th id="285">285</th><td><i>       $dev.write "\x00\x00\x00\x00\x00"</i></td></tr>
+<tr><th id="286">286</th><td><i>       $dev.write "\x00\x00\x00"</i></td></tr>
+<tr><th id="287">287</th><td><i>       $dev.flush</i></td></tr>
+<tr><th id="288">288</th><td><i>    end</i></td></tr>
+<tr><th id="289">289</th><td><i>*/</i></td></tr>
+<tr><th id="290">290</th><td><a class="macro" href="AtmoDefs.h.html#36" title="bool" data-ref="_M/ATMO_BOOL">ATMO_BOOL</a> <a class="type" href="FnordlichtConnection.h.html#CFnordlichtConnection" title='CFnordlichtConnection' data-ref="CFnordlichtConnection">CFnordlichtConnection</a>::<dfn class="decl def" id="_ZN21CFnordlichtConnection4stopEh" title='CFnordlichtConnection::stop' data-ref="_ZN21CFnordlichtConnection4stopEh">stop</dfn>(<em>unsigned</em> <em>char</em> <dfn class="local col4 decl" id="14addr" title='addr' data-type='unsigned char' data-ref="14addr">addr</dfn>)</td></tr>
+<tr><th id="291">291</th><td>{</td></tr>
+<tr><th id="292">292</th><td>    <b>if</b>(<a class="member" href="FnordlichtConnection.h.html#CFnordlichtConnection::m_hComport" title='CFnordlichtConnection::m_hComport' data-ref="CFnordlichtConnection::m_hComport">m_hComport</a> == <a class="macro" href="AtmoDefs.h.html#57" title="-1" data-ref="_M/INVALID_HANDLE_VALUE">INVALID_HANDLE_VALUE</a>)</td></tr>
+<tr><th id="293">293</th><td>        <b>return</b> <a class="macro" href="AtmoDefs.h.html#38" title="false" data-ref="_M/ATMO_FALSE">ATMO_FALSE</a>;</td></tr>
+<tr><th id="294">294</th><td></td></tr>
+<tr><th id="295">295</th><td>    <em>unsigned</em> <em>char</em> <dfn class="local col5 decl" id="15buffer" title='buffer' data-type='unsigned char [15]' data-ref="15buffer">buffer</dfn>[<var>15</var>];</td></tr>
+<tr><th id="296">296</th><td>    <a class="ref" href="../../../../include/string.h.html#memset" title='memset' data-ref="memset">memset</a>(&amp;<a class="local col5 ref" href="#15buffer" title='buffer' data-ref="15buffer">buffer</a>, <var>0</var>, <b>sizeof</b>(<a class="local col5 ref" href="#15buffer" title='buffer' data-ref="15buffer">buffer</a>)); <i>// zero buffer</i></td></tr>
+<tr><th id="297">297</th><td>    <em>int</em> <dfn class="local col6 decl" id="16iBytesWritten" title='iBytesWritten' data-type='int' data-ref="16iBytesWritten">iBytesWritten</dfn>;</td></tr>
+<tr><th id="298">298</th><td></td></tr>
+<tr><th id="299">299</th><td>    <a class="member" href="AtmoConnection.h.html#_ZN15CAtmoConnection4LockEv" title='CAtmoConnection::Lock' data-ref="_ZN15CAtmoConnection4LockEv">Lock</a>();</td></tr>
+<tr><th id="300">300</th><td></td></tr>
+<tr><th id="301">301</th><td>    <a class="local col5 ref" href="#15buffer" title='buffer' data-ref="15buffer">buffer</a>[<var>0</var>] = <a class="local col4 ref" href="#14addr" title='addr' data-ref="14addr">addr</a>; <i>// fnordlicht address (255 = broadcast)</i></td></tr>
+<tr><th id="302">302</th><td>    <a class="local col5 ref" href="#15buffer" title='buffer' data-ref="15buffer">buffer</a>[<var>1</var>] = <var>0x08</var>; <i>// stop command</i></td></tr>
+<tr><th id="303">303</th><td>    <a class="local col5 ref" href="#15buffer" title='buffer' data-ref="15buffer">buffer</a>[<var>2</var>] = <var>1</var>;    <i>// fading</i></td></tr>
+<tr><th id="304">304</th><td></td></tr>
+<tr><th id="305">305</th><td><u>#<span data-ppcond="305">if</span> defined(<span class="macro" data-ref="_M/_WIN32">_WIN32</span>)</u></td></tr>
+<tr><th id="306">306</th><td>        <i>// send to COM-Port</i></td></tr>
+<tr><th id="307">307</th><td>        WriteFile( m_hComport, buffer, <b>sizeof</b>(buffer),</td></tr>
+<tr><th id="308">308</th><td>                    (DWORD*)&amp;iBytesWritten, NULL );</td></tr>
+<tr><th id="309">309</th><td><u>#<span data-ppcond="305">else</span></u></td></tr>
+<tr><th id="310">310</th><td>        <a class="local col6 ref" href="#16iBytesWritten" title='iBytesWritten' data-ref="16iBytesWritten">iBytesWritten</a> = <a class="ref" href="../../../../include/unistd.h.html#write" title='write' data-ref="write">write</a>(<a class="member" href="FnordlichtConnection.h.html#CFnordlichtConnection::m_hComport" title='CFnordlichtConnection::m_hComport' data-ref="CFnordlichtConnection::m_hComport">m_hComport</a>, <a class="local col5 ref" href="#15buffer" title='buffer' data-ref="15buffer">buffer</a>, <b>sizeof</b>(<a class="local col5 ref" href="#15buffer" title='buffer' data-ref="15buffer">buffer</a>));</td></tr>
+<tr><th id="311">311</th><td>        <a class="ref" href="../../../../include/termios.h.html#tcflush" title='tcflush' data-ref="tcflush">tcflush</a>(<a class="member" href="FnordlichtConnection.h.html#CFnordlichtConnection::m_hComport" title='CFnordlichtConnection::m_hComport' data-ref="CFnordlichtConnection::m_hComport">m_hComport</a>, <a class="macro" href="../../../../include/x86_64-linux-gnu/bits/termios.h.html#210" title="2" data-ref="_M/TCIOFLUSH">TCIOFLUSH</a>);</td></tr>
+<tr><th id="312">312</th><td>        <a class="ref" href="../../../../include/termios.h.html#tcdrain" title='tcdrain' data-ref="tcdrain">tcdrain</a>(<a class="member" href="FnordlichtConnection.h.html#CFnordlichtConnection::m_hComport" title='CFnordlichtConnection::m_hComport' data-ref="CFnordlichtConnection::m_hComport">m_hComport</a>); <i>// flush buffer</i></td></tr>
+<tr><th id="313">313</th><td><u>#<span data-ppcond="305">endif</span></u></td></tr>
+<tr><th id="314">314</th><td></td></tr>
+<tr><th id="315">315</th><td>    <a class="member" href="AtmoConnection.h.html#_ZN15CAtmoConnection6UnlockEv" title='CAtmoConnection::Unlock' data-ref="_ZN15CAtmoConnection6UnlockEv">Unlock</a>();</td></tr>
+<tr><th id="316">316</th><td></td></tr>
+<tr><th id="317">317</th><td>    <b>return</b> (<a class="local col6 ref" href="#16iBytesWritten" title='iBytesWritten' data-ref="16iBytesWritten">iBytesWritten</a> == <b>sizeof</b>(<a class="local col5 ref" href="#15buffer" title='buffer' data-ref="15buffer">buffer</a>)) ? <a class="macro" href="AtmoDefs.h.html#37" title="true" data-ref="_M/ATMO_TRUE">ATMO_TRUE</a> : <a class="macro" href="AtmoDefs.h.html#38" title="false" data-ref="_M/ATMO_FALSE">ATMO_FALSE</a>;</td></tr>
+<tr><th id="318">318</th><td>}</td></tr>
+<tr><th id="319">319</th><td></td></tr>
+<tr><th id="320">320</th><td><i>/*</i></td></tr>
+<tr><th id="321">321</th><td><i>*/</i></td></tr>
+<tr><th id="322">322</th><td><a class="macro" href="AtmoDefs.h.html#36" title="bool" data-ref="_M/ATMO_BOOL">ATMO_BOOL</a> <a class="type" href="FnordlichtConnection.h.html#CFnordlichtConnection" title='CFnordlichtConnection' data-ref="CFnordlichtConnection">CFnordlichtConnection</a>::<dfn class="decl def" id="_ZN21CFnordlichtConnection5resetEh" title='CFnordlichtConnection::reset' data-ref="_ZN21CFnordlichtConnection5resetEh">reset</dfn>(<em>unsigned</em> <em>char</em> <dfn class="local col7 decl" id="17addr" title='addr' data-type='unsigned char' data-ref="17addr">addr</dfn>)</td></tr>
+<tr><th id="323">323</th><td>{</td></tr>
+<tr><th id="324">324</th><td>    <b>if</b>(<a class="member" href="FnordlichtConnection.h.html#CFnordlichtConnection::m_hComport" title='CFnordlichtConnection::m_hComport' data-ref="CFnordlichtConnection::m_hComport">m_hComport</a> == <a class="macro" href="AtmoDefs.h.html#57" title="-1" data-ref="_M/INVALID_HANDLE_VALUE">INVALID_HANDLE_VALUE</a>)</td></tr>
+<tr><th id="325">325</th><td>        <b>return</b> <a class="macro" href="AtmoDefs.h.html#38" title="false" data-ref="_M/ATMO_FALSE">ATMO_FALSE</a>;</td></tr>
+<tr><th id="326">326</th><td></td></tr>
+<tr><th id="327">327</th><td>    <a class="member" href="#_ZN21CFnordlichtConnection4stopEh" title='CFnordlichtConnection::stop' data-ref="_ZN21CFnordlichtConnection4stopEh">stop</a>(<var>255</var>);</td></tr>
+<tr><th id="328">328</th><td></td></tr>
+<tr><th id="329">329</th><td>    <b>if</b> ( <a class="member" href="#_ZN21CFnordlichtConnection4syncEv" title='CFnordlichtConnection::sync' data-ref="_ZN21CFnordlichtConnection4syncEv">sync</a>() &amp;&amp; <a class="member" href="#_ZN21CFnordlichtConnection16start_bootloaderEh" title='CFnordlichtConnection::start_bootloader' data-ref="_ZN21CFnordlichtConnection16start_bootloaderEh">start_bootloader</a>(<a class="local col7 ref" href="#17addr" title='addr' data-ref="17addr">addr</a>) )</td></tr>
+<tr><th id="330">330</th><td>    {</td></tr>
+<tr><th id="331">331</th><td><u>#<span data-ppcond="331">if</span> defined(<a class="macro" href="AtmoDefs.h.html#20" data-ref="_M/_ATMO_VLC_PLUGIN_">_ATMO_VLC_PLUGIN_</a>)</u></td></tr>
+<tr><th id="332">332</th><td>        <a class="macro" href="AtmoDefs.h.html#22" title="msleep((200000))" data-ref="_M/do_sleep">do_sleep</a>(<var>200000</var>); <i>// wait 200ms</i></td></tr>
+<tr><th id="333">333</th><td><u>#<span data-ppcond="331">else</span></u></td></tr>
+<tr><th id="334">334</th><td>        do_sleep(<var>200</var>); <i>// wait 200ms</i></td></tr>
+<tr><th id="335">335</th><td><u>#<span data-ppcond="331">endif</span></u></td></tr>
+<tr><th id="336">336</th><td>        <b>if</b> ( <a class="member" href="#_ZN21CFnordlichtConnection4syncEv" title='CFnordlichtConnection::sync' data-ref="_ZN21CFnordlichtConnection4syncEv">sync</a>() &amp;&amp; <a class="member" href="#_ZN21CFnordlichtConnection22boot_enter_applicationEh" title='CFnordlichtConnection::boot_enter_application' data-ref="_ZN21CFnordlichtConnection22boot_enter_applicationEh">boot_enter_application</a>(<a class="local col7 ref" href="#17addr" title='addr' data-ref="17addr">addr</a>) )</td></tr>
+<tr><th id="337">337</th><td>                <b>return</b> <a class="macro" href="AtmoDefs.h.html#37" title="true" data-ref="_M/ATMO_TRUE">ATMO_TRUE</a>;</td></tr>
+<tr><th id="338">338</th><td>    }</td></tr>
+<tr><th id="339">339</th><td></td></tr>
+<tr><th id="340">340</th><td>    <b>return</b> <a class="macro" href="AtmoDefs.h.html#38" title="false" data-ref="_M/ATMO_FALSE">ATMO_FALSE</a>;</td></tr>
+<tr><th id="341">341</th><td>}</td></tr>
+<tr><th id="342">342</th><td></td></tr>
+<tr><th id="343">343</th><td><i>/*</i></td></tr>
+<tr><th id="344">344</th><td><i>    def start_bootloader(addr)</i></td></tr>
+<tr><th id="345">345</th><td><i>        $dev.write(addr.chr)</i></td></tr>
+<tr><th id="346">346</th><td><i>        $dev.write("\x80")</i></td></tr>
+<tr><th id="347">347</th><td><i>        $dev.write("\x6b\x56\x27\xfc")</i></td></tr>
+<tr><th id="348">348</th><td><i>        $dev.write("\x00\x00\x00\x00\x00\x00\x00\x00\x00")</i></td></tr>
+<tr><th id="349">349</th><td><i>        $dev.flush</i></td></tr>
+<tr><th id="350">350</th><td><i>    end</i></td></tr>
+<tr><th id="351">351</th><td><i>*/</i></td></tr>
+<tr><th id="352">352</th><td><a class="macro" href="AtmoDefs.h.html#36" title="bool" data-ref="_M/ATMO_BOOL">ATMO_BOOL</a> <a class="type" href="FnordlichtConnection.h.html#CFnordlichtConnection" title='CFnordlichtConnection' data-ref="CFnordlichtConnection">CFnordlichtConnection</a>::<dfn class="decl def" id="_ZN21CFnordlichtConnection16start_bootloaderEh" title='CFnordlichtConnection::start_bootloader' data-ref="_ZN21CFnordlichtConnection16start_bootloaderEh">start_bootloader</dfn>(<em>unsigned</em> <em>char</em> <dfn class="local col8 decl" id="18addr" title='addr' data-type='unsigned char' data-ref="18addr">addr</dfn>)</td></tr>
+<tr><th id="353">353</th><td>{</td></tr>
+<tr><th id="354">354</th><td>    <b>if</b>(<a class="member" href="FnordlichtConnection.h.html#CFnordlichtConnection::m_hComport" title='CFnordlichtConnection::m_hComport' data-ref="CFnordlichtConnection::m_hComport">m_hComport</a> == <a class="macro" href="AtmoDefs.h.html#57" title="-1" data-ref="_M/INVALID_HANDLE_VALUE">INVALID_HANDLE_VALUE</a>)</td></tr>
+<tr><th id="355">355</th><td>        <b>return</b> <a class="macro" href="AtmoDefs.h.html#38" title="false" data-ref="_M/ATMO_FALSE">ATMO_FALSE</a>;</td></tr>
+<tr><th id="356">356</th><td></td></tr>
+<tr><th id="357">357</th><td>    <em>unsigned</em> <em>char</em> <dfn class="local col9 decl" id="19buffer" title='buffer' data-type='unsigned char [15]' data-ref="19buffer">buffer</dfn>[<var>15</var>];</td></tr>
+<tr><th id="358">358</th><td>    <a class="ref" href="../../../../include/string.h.html#memset" title='memset' data-ref="memset">memset</a>(&amp;<a class="local col9 ref" href="#19buffer" title='buffer' data-ref="19buffer">buffer</a>, <var>0</var>, <b>sizeof</b>(<a class="local col9 ref" href="#19buffer" title='buffer' data-ref="19buffer">buffer</a>)); <i>// zero buffer</i></td></tr>
+<tr><th id="359">359</th><td>    <em>int</em> <dfn class="local col0 decl" id="20iBytesWritten" title='iBytesWritten' data-type='int' data-ref="20iBytesWritten">iBytesWritten</dfn>;</td></tr>
+<tr><th id="360">360</th><td></td></tr>
+<tr><th id="361">361</th><td>    <a class="member" href="AtmoConnection.h.html#_ZN15CAtmoConnection4LockEv" title='CAtmoConnection::Lock' data-ref="_ZN15CAtmoConnection4LockEv">Lock</a>();</td></tr>
+<tr><th id="362">362</th><td></td></tr>
+<tr><th id="363">363</th><td>    <a class="local col9 ref" href="#19buffer" title='buffer' data-ref="19buffer">buffer</a>[<var>0</var>] = <a class="local col8 ref" href="#18addr" title='addr' data-ref="18addr">addr</a>; <i>// fnordlicht address (255 = broadcast)</i></td></tr>
+<tr><th id="364">364</th><td>    <a class="local col9 ref" href="#19buffer" title='buffer' data-ref="19buffer">buffer</a>[<var>1</var>] = <var>0x80</var>; <i>// start_bootloader</i></td></tr>
+<tr><th id="365">365</th><td>    <a class="local col9 ref" href="#19buffer" title='buffer' data-ref="19buffer">buffer</a>[<var>2</var>] = <var>0x6b</var>;</td></tr>
+<tr><th id="366">366</th><td>    <a class="local col9 ref" href="#19buffer" title='buffer' data-ref="19buffer">buffer</a>[<var>3</var>] = <var>0x56</var>;</td></tr>
+<tr><th id="367">367</th><td>    <a class="local col9 ref" href="#19buffer" title='buffer' data-ref="19buffer">buffer</a>[<var>4</var>] = <var>0x27</var>;</td></tr>
+<tr><th id="368">368</th><td>    <a class="local col9 ref" href="#19buffer" title='buffer' data-ref="19buffer">buffer</a>[<var>5</var>] = <var>0xfc</var>;</td></tr>
+<tr><th id="369">369</th><td></td></tr>
+<tr><th id="370">370</th><td><u>#<span data-ppcond="370">if</span> defined(<span class="macro" data-ref="_M/_WIN32">_WIN32</span>)</u></td></tr>
+<tr><th id="371">371</th><td>        <i>// send to COM-Port</i></td></tr>
+<tr><th id="372">372</th><td>        WriteFile( m_hComport, buffer, <b>sizeof</b>(buffer),</td></tr>
+<tr><th id="373">373</th><td>                    (DWORD*)&amp;iBytesWritten, NULL );</td></tr>
+<tr><th id="374">374</th><td><u>#<span data-ppcond="370">else</span></u></td></tr>
+<tr><th id="375">375</th><td>        <a class="local col0 ref" href="#20iBytesWritten" title='iBytesWritten' data-ref="20iBytesWritten">iBytesWritten</a> = <a class="ref" href="../../../../include/unistd.h.html#write" title='write' data-ref="write">write</a>(<a class="member" href="FnordlichtConnection.h.html#CFnordlichtConnection::m_hComport" title='CFnordlichtConnection::m_hComport' data-ref="CFnordlichtConnection::m_hComport">m_hComport</a>, <a class="local col9 ref" href="#19buffer" title='buffer' data-ref="19buffer">buffer</a>, <b>sizeof</b>(<a class="local col9 ref" href="#19buffer" title='buffer' data-ref="19buffer">buffer</a>));</td></tr>
+<tr><th id="376">376</th><td>        <a class="ref" href="../../../../include/termios.h.html#tcflush" title='tcflush' data-ref="tcflush">tcflush</a>(<a class="member" href="FnordlichtConnection.h.html#CFnordlichtConnection::m_hComport" title='CFnordlichtConnection::m_hComport' data-ref="CFnordlichtConnection::m_hComport">m_hComport</a>, <a class="macro" href="../../../../include/x86_64-linux-gnu/bits/termios.h.html#210" title="2" data-ref="_M/TCIOFLUSH">TCIOFLUSH</a>);</td></tr>
+<tr><th id="377">377</th><td>        <a class="ref" href="../../../../include/termios.h.html#tcdrain" title='tcdrain' data-ref="tcdrain">tcdrain</a>(<a class="member" href="FnordlichtConnection.h.html#CFnordlichtConnection::m_hComport" title='CFnordlichtConnection::m_hComport' data-ref="CFnordlichtConnection::m_hComport">m_hComport</a>); <i>// flush buffer</i></td></tr>
+<tr><th id="378">378</th><td><u>#<span data-ppcond="370">endif</span></u></td></tr>
+<tr><th id="379">379</th><td></td></tr>
+<tr><th id="380">380</th><td>    <a class="member" href="AtmoConnection.h.html#_ZN15CAtmoConnection6UnlockEv" title='CAtmoConnection::Unlock' data-ref="_ZN15CAtmoConnection6UnlockEv">Unlock</a>();</td></tr>
+<tr><th id="381">381</th><td></td></tr>
+<tr><th id="382">382</th><td>    <b>return</b> (<a class="local col0 ref" href="#20iBytesWritten" title='iBytesWritten' data-ref="20iBytesWritten">iBytesWritten</a> == <b>sizeof</b>(<a class="local col9 ref" href="#19buffer" title='buffer' data-ref="19buffer">buffer</a>)) ? <a class="macro" href="AtmoDefs.h.html#37" title="true" data-ref="_M/ATMO_TRUE">ATMO_TRUE</a> : <a class="macro" href="AtmoDefs.h.html#38" title="false" data-ref="_M/ATMO_FALSE">ATMO_FALSE</a>;</td></tr>
+<tr><th id="383">383</th><td>}</td></tr>
+<tr><th id="384">384</th><td></td></tr>
+<tr><th id="385">385</th><td><i>/*</i></td></tr>
+<tr><th id="386">386</th><td><i>    def boot_enter_application(addr)</i></td></tr>
+<tr><th id="387">387</th><td><i>        $dev.write(addr.chr)</i></td></tr>
+<tr><th id="388">388</th><td><i>        $dev.write("\x87")</i></td></tr>
+<tr><th id="389">389</th><td><i>        $dev.write("\x00"*13)</i></td></tr>
+<tr><th id="390">390</th><td><i>        $dev.flush</i></td></tr>
+<tr><th id="391">391</th><td><i>    end</i></td></tr>
+<tr><th id="392">392</th><td><i>*/</i></td></tr>
+<tr><th id="393">393</th><td><a class="macro" href="AtmoDefs.h.html#36" title="bool" data-ref="_M/ATMO_BOOL">ATMO_BOOL</a> <a class="type" href="FnordlichtConnection.h.html#CFnordlichtConnection" title='CFnordlichtConnection' data-ref="CFnordlichtConnection">CFnordlichtConnection</a>::<dfn class="decl def" id="_ZN21CFnordlichtConnection22boot_enter_applicationEh" title='CFnordlichtConnection::boot_enter_application' data-ref="_ZN21CFnordlichtConnection22boot_enter_applicationEh">boot_enter_application</dfn>(<em>unsigned</em> <em>char</em> <dfn class="local col1 decl" id="21addr" title='addr' data-type='unsigned char' data-ref="21addr">addr</dfn>)</td></tr>
+<tr><th id="394">394</th><td>{</td></tr>
+<tr><th id="395">395</th><td>    <b>if</b>(<a class="member" href="FnordlichtConnection.h.html#CFnordlichtConnection::m_hComport" title='CFnordlichtConnection::m_hComport' data-ref="CFnordlichtConnection::m_hComport">m_hComport</a> == <a class="macro" href="AtmoDefs.h.html#57" title="-1" data-ref="_M/INVALID_HANDLE_VALUE">INVALID_HANDLE_VALUE</a>)</td></tr>
+<tr><th id="396">396</th><td>        <b>return</b> <a class="macro" href="AtmoDefs.h.html#38" title="false" data-ref="_M/ATMO_FALSE">ATMO_FALSE</a>;</td></tr>
+<tr><th id="397">397</th><td></td></tr>
+<tr><th id="398">398</th><td>    <em>unsigned</em> <em>char</em> <dfn class="local col2 decl" id="22buffer" title='buffer' data-type='unsigned char [15]' data-ref="22buffer">buffer</dfn>[<var>15</var>];</td></tr>
+<tr><th id="399">399</th><td>    <a class="ref" href="../../../../include/string.h.html#memset" title='memset' data-ref="memset">memset</a>(&amp;<a class="local col2 ref" href="#22buffer" title='buffer' data-ref="22buffer">buffer</a>, <var>0</var>, <b>sizeof</b>(<a class="local col2 ref" href="#22buffer" title='buffer' data-ref="22buffer">buffer</a>)); <i>// zero buffer</i></td></tr>
+<tr><th id="400">400</th><td>    <em>int</em> <dfn class="local col3 decl" id="23iBytesWritten" title='iBytesWritten' data-type='int' data-ref="23iBytesWritten">iBytesWritten</dfn>;</td></tr>
+<tr><th id="401">401</th><td></td></tr>
+<tr><th id="402">402</th><td>    <a class="member" href="AtmoConnection.h.html#_ZN15CAtmoConnection4LockEv" title='CAtmoConnection::Lock' data-ref="_ZN15CAtmoConnection4LockEv">Lock</a>();</td></tr>
+<tr><th id="403">403</th><td></td></tr>
+<tr><th id="404">404</th><td>    <a class="local col2 ref" href="#22buffer" title='buffer' data-ref="22buffer">buffer</a>[<var>0</var>] = <a class="local col1 ref" href="#21addr" title='addr' data-ref="21addr">addr</a>; <i>// fnordlicht address (255 = broadcast)</i></td></tr>
+<tr><th id="405">405</th><td>    <a class="local col2 ref" href="#22buffer" title='buffer' data-ref="22buffer">buffer</a>[<var>1</var>] = <var>0x87</var>; <i>// boot_ender_application command</i></td></tr>
+<tr><th id="406">406</th><td></td></tr>
+<tr><th id="407">407</th><td><u>#<span data-ppcond="407">if</span> defined(<span class="macro" data-ref="_M/_WIN32">_WIN32</span>)</u></td></tr>
+<tr><th id="408">408</th><td>        <i>// send to COM-Port</i></td></tr>
+<tr><th id="409">409</th><td>        WriteFile( m_hComport, buffer, <b>sizeof</b>(buffer),</td></tr>
+<tr><th id="410">410</th><td>                    (DWORD*)&amp;iBytesWritten, NULL );</td></tr>
+<tr><th id="411">411</th><td><u>#<span data-ppcond="407">else</span></u></td></tr>
+<tr><th id="412">412</th><td>        <a class="local col3 ref" href="#23iBytesWritten" title='iBytesWritten' data-ref="23iBytesWritten">iBytesWritten</a> = <a class="ref" href="../../../../include/unistd.h.html#write" title='write' data-ref="write">write</a>(<a class="member" href="FnordlichtConnection.h.html#CFnordlichtConnection::m_hComport" title='CFnordlichtConnection::m_hComport' data-ref="CFnordlichtConnection::m_hComport">m_hComport</a>, <a class="local col2 ref" href="#22buffer" title='buffer' data-ref="22buffer">buffer</a>, <b>sizeof</b>(<a class="local col2 ref" href="#22buffer" title='buffer' data-ref="22buffer">buffer</a>));</td></tr>
+<tr><th id="413">413</th><td>        <a class="ref" href="../../../../include/termios.h.html#tcflush" title='tcflush' data-ref="tcflush">tcflush</a>(<a class="member" href="FnordlichtConnection.h.html#CFnordlichtConnection::m_hComport" title='CFnordlichtConnection::m_hComport' data-ref="CFnordlichtConnection::m_hComport">m_hComport</a>, <a class="macro" href="../../../../include/x86_64-linux-gnu/bits/termios.h.html#210" title="2" data-ref="_M/TCIOFLUSH">TCIOFLUSH</a>);</td></tr>
+<tr><th id="414">414</th><td>        <a class="ref" href="../../../../include/termios.h.html#tcdrain" title='tcdrain' data-ref="tcdrain">tcdrain</a>(<a class="member" href="FnordlichtConnection.h.html#CFnordlichtConnection::m_hComport" title='CFnordlichtConnection::m_hComport' data-ref="CFnordlichtConnection::m_hComport">m_hComport</a>); <i>// flush buffer</i></td></tr>
+<tr><th id="415">415</th><td><u>#<span data-ppcond="407">endif</span></u></td></tr>
+<tr><th id="416">416</th><td></td></tr>
+<tr><th id="417">417</th><td>    <a class="member" href="AtmoConnection.h.html#_ZN15CAtmoConnection6UnlockEv" title='CAtmoConnection::Unlock' data-ref="_ZN15CAtmoConnection6UnlockEv">Unlock</a>();</td></tr>
+<tr><th id="418">418</th><td></td></tr>
+<tr><th id="419">419</th><td>    <b>return</b> (<a class="local col3 ref" href="#23iBytesWritten" title='iBytesWritten' data-ref="23iBytesWritten">iBytesWritten</a> == <b>sizeof</b>(<a class="local col2 ref" href="#22buffer" title='buffer' data-ref="22buffer">buffer</a>)) ? <a class="macro" href="AtmoDefs.h.html#37" title="true" data-ref="_M/ATMO_TRUE">ATMO_TRUE</a> : <a class="macro" href="AtmoDefs.h.html#38" title="false" data-ref="_M/ATMO_FALSE">ATMO_FALSE</a>;</td></tr>
+<tr><th id="420">420</th><td>}</td></tr>
+<tr><th id="421">421</th><td></td></tr>
+<tr><th id="422">422</th><td><u>#<span data-ppcond="422">if</span> !defined(<a class="macro" href="AtmoDefs.h.html#20" data-ref="_M/_ATMO_VLC_PLUGIN_">_ATMO_VLC_PLUGIN_</a>)</u></td></tr>
+<tr><th id="423">423</th><td></td></tr>
+<tr><th id="424">424</th><td><em>char</em> *CFnordlichtConnection::getChannelName(<em>int</em> ch)</td></tr>
+<tr><th id="425">425</th><td>{</td></tr>
+<tr><th id="426">426</th><td>    <em>char</em> buf[<var>60</var>];</td></tr>
+<tr><th id="427">427</th><td>    <b>if</b>( ch &lt; <var>0</var> ) <b>return</b> NULL;</td></tr>
+<tr><th id="428">428</th><td>    <b>if</b>( ch &gt;= getAmountFnordlichter() ) <b>return</b> NULL;</td></tr>
+<tr><th id="429">429</th><td></td></tr>
+<tr><th id="430">430</th><td>    sprintf(buf,<q>"Number [%d]"</q>,ch);</td></tr>
+<tr><th id="431">431</th><td>    <b>return</b> strdup(buf);</td></tr>
+<tr><th id="432">432</th><td>    <i>// sorry asprintf is not defined on Visual Studio :)</i></td></tr>
+<tr><th id="433">433</th><td><i>    // return (asprintf(&amp;ret, "Number [%d]", ch) != -1) ? ret : NULL;</i></td></tr>
+<tr><th id="434">434</th><td></td></tr>
+<tr><th id="435">435</th><td>}</td></tr>
+<tr><th id="436">436</th><td></td></tr>
+<tr><th id="437">437</th><td>ATMO_BOOL CFnordlichtConnection::ShowConfigDialog(HINSTANCE hInst, HWND parent,</td></tr>
+<tr><th id="438">438</th><td>                                                    CAtmoConfig *cfg)</td></tr>
+<tr><th id="439">439</th><td>{</td></tr>
+<tr><th id="440">440</th><td>    CFnordlichtConfigDialog *dlg = <b>new</b> CFnordlichtConfigDialog(hInst,</td></tr>
+<tr><th id="441">441</th><td>                                                                parent,</td></tr>
+<tr><th id="442">442</th><td>                                                                cfg);</td></tr>
+<tr><th id="443">443</th><td></td></tr>
+<tr><th id="444">444</th><td>    INT_PTR result = dlg-&gt;ShowModal();</td></tr>
+<tr><th id="445">445</th><td></td></tr>
+<tr><th id="446">446</th><td>    <b>delete</b> dlg;</td></tr>
+<tr><th id="447">447</th><td></td></tr>
+<tr><th id="448">448</th><td>    <b>if</b>(result == IDOK)</td></tr>
+<tr><th id="449">449</th><td>        <b>return</b> ATMO_TRUE;</td></tr>
+<tr><th id="450">450</th><td>    <b>else</b></td></tr>
+<tr><th id="451">451</th><td>        <b>return</b> ATMO_FALSE;</td></tr>
+<tr><th id="452">452</th><td>}</td></tr>
+<tr><th id="453">453</th><td></td></tr>
+<tr><th id="454">454</th><td><u>#<span data-ppcond="422">endif</span></u></td></tr>
+<tr><th id="455">455</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project vlc revision <em>2.2.0-git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

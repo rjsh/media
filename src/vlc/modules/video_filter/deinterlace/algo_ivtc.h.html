@@ -1,0 +1,754 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>algo_ivtc.h source code [vlc/modules/video_filter/deinterlace/algo_ivtc.h] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'vlc/modules/video_filter/deinterlace/algo_ivtc.h'; var root_path = '../../../..'; var data_path = '../../../../../data';</script>
+<script src='../../../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='../../..'>vlc</a>/<a href='../..'>modules</a>/<a href='..'>video_filter</a>/<a href='./'>deinterlace</a>/<a href='algo_ivtc.h.html'>algo_ivtc.h</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*****************************************************************************</i></td></tr>
+<tr><th id="2">2</th><td><i> * algo_ivtc.h : IVTC (inverse telecine) algorithm for the VLC deinterlacer</i></td></tr>
+<tr><th id="3">3</th><td><i> *****************************************************************************</i></td></tr>
+<tr><th id="4">4</th><td><i> * Copyright (C) 2010-2011 VLC authors and VideoLAN</i></td></tr>
+<tr><th id="5">5</th><td><i> * $Id: 3bc4ff3f0ae8ec12704f65f6021f93b45d902aaa $</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * Author: Juha Jeronen &lt;juha.jeronen@jyu.fi&gt;</i></td></tr>
+<tr><th id="8">8</th><td><i> *</i></td></tr>
+<tr><th id="9">9</th><td><i> * This program is free software; you can redistribute it and/or modify it</i></td></tr>
+<tr><th id="10">10</th><td><i> * under the terms of the GNU Lesser General Public License as published by</i></td></tr>
+<tr><th id="11">11</th><td><i> * the Free Software Foundation; either version 2.1 of the License, or</i></td></tr>
+<tr><th id="12">12</th><td><i> * (at your option) any later version.</i></td></tr>
+<tr><th id="13">13</th><td><i> *</i></td></tr>
+<tr><th id="14">14</th><td><i> * This program is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="15">15</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="16">16</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</i></td></tr>
+<tr><th id="17">17</th><td><i> * GNU Lesser General Public License for more details.</i></td></tr>
+<tr><th id="18">18</th><td><i> *</i></td></tr>
+<tr><th id="19">19</th><td><i> * You should have received a copy of the GNU Lesser General Public License</i></td></tr>
+<tr><th id="20">20</th><td><i> * along with this program; if not, write to the Free Software Foundation,</i></td></tr>
+<tr><th id="21">21</th><td><i> * Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.</i></td></tr>
+<tr><th id="22">22</th><td><i> *****************************************************************************/</i></td></tr>
+<tr><th id="23">23</th><td></td></tr>
+<tr><th id="24">24</th><td><u>#<span data-ppcond="24">ifndef</span> <span class="macro" data-ref="_M/VLC_DEINTERLACE_ALGO_IVTC_H">VLC_DEINTERLACE_ALGO_IVTC_H</span></u></td></tr>
+<tr><th id="25">25</th><td><u>#define <dfn class="macro" id="_M/VLC_DEINTERLACE_ALGO_IVTC_H" data-ref="_M/VLC_DEINTERLACE_ALGO_IVTC_H">VLC_DEINTERLACE_ALGO_IVTC_H</dfn> 1</u></td></tr>
+<tr><th id="26">26</th><td></td></tr>
+<tr><th id="27">27</th><td><i>/* Forward declarations */</i></td></tr>
+<tr><th id="28">28</th><td><b>struct</b> <a class="type" href="../../../include/vlc_filter.h.html#filter_t" title='filter_t' data-ref="filter_t" id="filter_t">filter_t</a>;</td></tr>
+<tr><th id="29">29</th><td><b>struct</b> <a class="type" href="../../../include/vlc_picture.h.html#picture_t" title='picture_t' data-ref="picture_t" id="picture_t">picture_t</a>;</td></tr>
+<tr><th id="30">30</th><td></td></tr>
+<tr><th id="31">31</th><td><i>/*****************************************************************************</i></td></tr>
+<tr><th id="32">32</th><td><i> * Data structures</i></td></tr>
+<tr><th id="33">33</th><td><i> *****************************************************************************/</i></td></tr>
+<tr><th id="34">34</th><td></td></tr>
+<tr><th id="35">35</th><td><u>#define <dfn class="macro" id="_M/IVTC_NUM_FIELD_PAIRS" data-ref="_M/IVTC_NUM_FIELD_PAIRS">IVTC_NUM_FIELD_PAIRS</dfn> 7</u></td></tr>
+<tr><th id="36">36</th><td><u>#define <dfn class="macro" id="_M/IVTC_DETECTION_HISTORY_SIZE" data-ref="_M/IVTC_DETECTION_HISTORY_SIZE">IVTC_DETECTION_HISTORY_SIZE</dfn> 3</u></td></tr>
+<tr><th id="37">37</th><td><u>#define <dfn class="macro" id="_M/IVTC_LATEST" data-ref="_M/IVTC_LATEST">IVTC_LATEST</dfn> (IVTC_DETECTION_HISTORY_SIZE-1)</u></td></tr>
+<tr><th id="38">38</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="39">39</th><td><i class="doc"> * Algorithm-specific state for IVTC.</i></td></tr>
+<tr><th id="40">40</th><td><i class="doc"> * <span class="command">@see</span> RenderIVTC()</i></td></tr>
+<tr><th id="41">41</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="42">42</th><td><b>typedef</b> <b>struct</b></td></tr>
+<tr><th id="43">43</th><td>{</td></tr>
+<tr><th id="44">44</th><td>    <em>int</em> <dfn class="decl" id="{anonymous}::i_mode" title='&lt;anonymous struct&gt;::i_mode' data-ref="{anonymous}::i_mode">i_mode</dfn>; <i class="doc">/**&lt; Detecting, hard TC, or soft TC. <span class="command">@see</span> ivtc_mode */</i></td></tr>
+<tr><th id="45">45</th><td>    <em>int</em> <dfn class="decl" id="{anonymous}::i_old_mode" title='&lt;anonymous struct&gt;::i_old_mode' data-ref="{anonymous}::i_old_mode">i_old_mode</dfn>; <i class="doc">/**&lt; <span class="command">@see</span> IVTCSoftTelecineDetect() */</i></td></tr>
+<tr><th id="46">46</th><td></td></tr>
+<tr><th id="47">47</th><td>    <em>int</em> <dfn class="decl" id="{anonymous}::i_cadence_pos" title='&lt;anonymous struct&gt;::i_cadence_pos' data-ref="{anonymous}::i_cadence_pos">i_cadence_pos</dfn>; <i class="doc">/**&lt; Cadence counter, 0..4. Runs when locked on. */</i></td></tr>
+<tr><th id="48">48</th><td>    <em>int</em> <dfn class="decl" id="{anonymous}::i_tfd" title='&lt;anonymous struct&gt;::i_tfd' data-ref="{anonymous}::i_tfd">i_tfd</dfn>; <i class="doc">/**&lt; TFF or BFF telecine. Detected from the video. */</i></td></tr>
+<tr><th id="49">49</th><td></td></tr>
+<tr><th id="50">50</th><td>    <i class="doc">/** Raw low-level detector output.</i></td></tr>
+<tr><th id="51">51</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="52">52</th><td><i class="doc">     *  <span class="command">@see</span> IVTCLowLevelDetect()</i></td></tr>
+<tr><th id="53">53</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="54">54</th><td>    <em>int</em> <dfn class="decl" id="{anonymous}::pi_scores" title='&lt;anonymous struct&gt;::pi_scores' data-ref="{anonymous}::pi_scores">pi_scores</dfn>[<a class="macro" href="#35" title="7" data-ref="_M/IVTC_NUM_FIELD_PAIRS">IVTC_NUM_FIELD_PAIRS</a>]; <i class="doc">/**&lt; Interlace scores. */</i></td></tr>
+<tr><th id="55">55</th><td>    <em>int</em> <dfn class="decl" id="{anonymous}::pi_motion" title='&lt;anonymous struct&gt;::pi_motion' data-ref="{anonymous}::pi_motion">pi_motion</dfn>[<a class="macro" href="#36" title="3" data-ref="_M/IVTC_DETECTION_HISTORY_SIZE">IVTC_DETECTION_HISTORY_SIZE</a>]; <i class="doc">/**&lt; 8x8 blocks with motion. */</i></td></tr>
+<tr><th id="56">56</th><td>    <em>int</em> <dfn class="decl" id="{anonymous}::pi_top_rep" title='&lt;anonymous struct&gt;::pi_top_rep' data-ref="{anonymous}::pi_top_rep">pi_top_rep</dfn>[<a class="macro" href="#36" title="3" data-ref="_M/IVTC_DETECTION_HISTORY_SIZE">IVTC_DETECTION_HISTORY_SIZE</a>]; <i class="doc">/**&lt; Hard top field repeat. */</i></td></tr>
+<tr><th id="57">57</th><td>    <em>int</em> <dfn class="decl" id="{anonymous}::pi_bot_rep" title='&lt;anonymous struct&gt;::pi_bot_rep' data-ref="{anonymous}::pi_bot_rep">pi_bot_rep</dfn>[<a class="macro" href="#36" title="3" data-ref="_M/IVTC_DETECTION_HISTORY_SIZE">IVTC_DETECTION_HISTORY_SIZE</a>]; <i class="doc">/**&lt; Hard bot field repeat. */</i></td></tr>
+<tr><th id="58">58</th><td></td></tr>
+<tr><th id="59">59</th><td>    <i class="doc">/** Interlace scores of outgoing frames, used for judging IVTC output</i></td></tr>
+<tr><th id="60">60</th><td><i class="doc">     *  (detecting cadence breaks).</i></td></tr>
+<tr><th id="61">61</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="62">62</th><td><i class="doc">     *  <span class="command">@see</span> IVTCOutputOrDropFrame()</i></td></tr>
+<tr><th id="63">63</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="64">64</th><td>    <em>int</em> <dfn class="decl" id="{anonymous}::pi_final_scores" title='&lt;anonymous struct&gt;::pi_final_scores' data-ref="{anonymous}::pi_final_scores">pi_final_scores</dfn>[<a class="macro" href="#36" title="3" data-ref="_M/IVTC_DETECTION_HISTORY_SIZE">IVTC_DETECTION_HISTORY_SIZE</a>];</td></tr>
+<tr><th id="65">65</th><td></td></tr>
+<tr><th id="66">66</th><td>    <i class="doc">/** Cadence position detection history (in ivtc_cadence_pos format).</i></td></tr>
+<tr><th id="67">67</th><td><i class="doc">     *  Contains the detected cadence position and a corresponding</i></td></tr>
+<tr><th id="68">68</th><td><i class="doc">     *  reliability flag for each algorithm.</i></td></tr>
+<tr><th id="69">69</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="70">70</th><td><i class="doc">     *  s = scores, interlace scores based algorithm, original to this filter.</i></td></tr>
+<tr><th id="71">71</th><td><i class="doc">     *  v = vektor, hard field repeat based algorithm, inspired by</i></td></tr>
+<tr><th id="72">72</th><td><i class="doc">     *              the TVTime/Xine IVTC filter by Billy Biggs (Vektor).</i></td></tr>
+<tr><th id="73">73</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="74">74</th><td><i class="doc">     *  Each algorithm may also keep internal, opaque data.</i></td></tr>
+<tr><th id="75">75</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="76">76</th><td><i class="doc">     *  <span class="command">@see</span> ivtc_cadence_pos</i></td></tr>
+<tr><th id="77">77</th><td><i class="doc">     *  <span class="command">@see</span> IVTCCadenceDetectAlgoScores()</i></td></tr>
+<tr><th id="78">78</th><td><i class="doc">     *  <span class="command">@see</span> IVTCCadenceDetectAlgoVektor()</i></td></tr>
+<tr><th id="79">79</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="80">80</th><td>    <em>int</em>  <dfn class="decl" id="{anonymous}::pi_s_cadence_pos" title='&lt;anonymous struct&gt;::pi_s_cadence_pos' data-ref="{anonymous}::pi_s_cadence_pos">pi_s_cadence_pos</dfn>[<a class="macro" href="#36" title="3" data-ref="_M/IVTC_DETECTION_HISTORY_SIZE">IVTC_DETECTION_HISTORY_SIZE</a>];</td></tr>
+<tr><th id="81">81</th><td>    <span class="macro" title="_Bool" data-ref="_M/bool">bool</span> <dfn class="decl" id="{anonymous}::pb_s_reliable" title='&lt;anonymous struct&gt;::pb_s_reliable' data-ref="{anonymous}::pb_s_reliable">pb_s_reliable</dfn>[<a class="macro" href="#36" title="3" data-ref="_M/IVTC_DETECTION_HISTORY_SIZE">IVTC_DETECTION_HISTORY_SIZE</a>];</td></tr>
+<tr><th id="82">82</th><td>    <em>int</em>  <dfn class="decl" id="{anonymous}::pi_v_raw" title='&lt;anonymous struct&gt;::pi_v_raw' data-ref="{anonymous}::pi_v_raw">pi_v_raw</dfn>[<a class="macro" href="#36" title="3" data-ref="_M/IVTC_DETECTION_HISTORY_SIZE">IVTC_DETECTION_HISTORY_SIZE</a>]; <i class="doc">/**&lt; "vektor" algo internal */</i></td></tr>
+<tr><th id="83">83</th><td>    <em>int</em>  <dfn class="decl" id="{anonymous}::pi_v_cadence_pos" title='&lt;anonymous struct&gt;::pi_v_cadence_pos' data-ref="{anonymous}::pi_v_cadence_pos">pi_v_cadence_pos</dfn>[<a class="macro" href="#36" title="3" data-ref="_M/IVTC_DETECTION_HISTORY_SIZE">IVTC_DETECTION_HISTORY_SIZE</a>];</td></tr>
+<tr><th id="84">84</th><td>    <span class="macro" title="_Bool" data-ref="_M/bool">bool</span> <dfn class="decl" id="{anonymous}::pb_v_reliable" title='&lt;anonymous struct&gt;::pb_v_reliable' data-ref="{anonymous}::pb_v_reliable">pb_v_reliable</dfn>[<a class="macro" href="#36" title="3" data-ref="_M/IVTC_DETECTION_HISTORY_SIZE">IVTC_DETECTION_HISTORY_SIZE</a>];</td></tr>
+<tr><th id="85">85</th><td></td></tr>
+<tr><th id="86">86</th><td>    <i class="doc">/** Final result, chosen by IVTCCadenceDetectFinalize() from the results</i></td></tr>
+<tr><th id="87">87</th><td><i class="doc">     *  given by the different detection algorithms.</i></td></tr>
+<tr><th id="88">88</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="89">89</th><td><i class="doc">     *  <span class="command">@see</span> IVTCCadenceDetectFinalize()</i></td></tr>
+<tr><th id="90">90</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="91">91</th><td>    <em>int</em> <dfn class="decl" id="{anonymous}::pi_cadence_pos_history" title='&lt;anonymous struct&gt;::pi_cadence_pos_history' data-ref="{anonymous}::pi_cadence_pos_history">pi_cadence_pos_history</dfn>[<a class="macro" href="#36" title="3" data-ref="_M/IVTC_DETECTION_HISTORY_SIZE">IVTC_DETECTION_HISTORY_SIZE</a>];</td></tr>
+<tr><th id="92">92</th><td></td></tr>
+<tr><th id="93">93</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="94">94</th><td><i class="doc">     *  Set by cadence analyzer. Whether the sequence of last</i></td></tr>
+<tr><th id="95">95</th><td><i class="doc">     *  IVTC_DETECTION_HISTORY_SIZE detected positions, stored in</i></td></tr>
+<tr><th id="96">96</th><td><i class="doc">     *  pi_cadence_pos_history, looks like a valid telecine.</i></td></tr>
+<tr><th id="97">97</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="98">98</th><td><i class="doc">     *  <span class="command">@see</span> IVTCCadenceAnalyze()</i></td></tr>
+<tr><th id="99">99</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="100">100</th><td>    <span class="macro" title="_Bool" data-ref="_M/bool">bool</span> <dfn class="decl" id="{anonymous}::b_sequence_valid" title='&lt;anonymous struct&gt;::b_sequence_valid' data-ref="{anonymous}::b_sequence_valid">b_sequence_valid</dfn>;</td></tr>
+<tr><th id="101">101</th><td></td></tr>
+<tr><th id="102">102</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="103">103</th><td><i class="doc">     *  Set by cadence analyzer. True if detected position = "dea".</i></td></tr>
+<tr><th id="104">104</th><td><i class="doc">     *  The three entries of this are used for detecting three progressive</i></td></tr>
+<tr><th id="105">105</th><td><i class="doc">     *  stencil positions in a row, i.e. five progressive frames in a row;</i></td></tr>
+<tr><th id="106">106</th><td><i class="doc">     *  this triggers exit from hard IVTC.</i></td></tr>
+<tr><th id="107">107</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="108">108</th><td><i class="doc">     *  <span class="command">@see</span> IVTCCadenceAnalyze()</i></td></tr>
+<tr><th id="109">109</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="110">110</th><td>    <span class="macro" title="_Bool" data-ref="_M/bool">bool</span> <dfn class="decl" id="{anonymous}::pb_all_progressives" title='&lt;anonymous struct&gt;::pb_all_progressives' data-ref="{anonymous}::pb_all_progressives">pb_all_progressives</dfn>[<a class="macro" href="#36" title="3" data-ref="_M/IVTC_DETECTION_HISTORY_SIZE">IVTC_DETECTION_HISTORY_SIZE</a>];</td></tr>
+<tr><th id="111">111</th><td>} <dfn class="typedef" id="ivtc_sys_t" title='ivtc_sys_t' data-type='struct ivtc_sys_t' data-ref="ivtc_sys_t">ivtc_sys_t</dfn>;</td></tr>
+<tr><th id="112">112</th><td></td></tr>
+<tr><th id="113">113</th><td><i>/*****************************************************************************</i></td></tr>
+<tr><th id="114">114</th><td><i> * Functions</i></td></tr>
+<tr><th id="115">115</th><td><i> *****************************************************************************/</i></td></tr>
+<tr><th id="116">116</th><td></td></tr>
+<tr><th id="117">117</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="118">118</th><td><i class="doc"> * Deinterlace filter. Performs inverse telecine.</i></td></tr>
+<tr><th id="119">119</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="120">120</th><td><i class="doc"> * Also known as "film mode" or "3:2 reverse pulldown" in some equipment.</i></td></tr>
+<tr><th id="121">121</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="122">122</th><td><i class="doc"> * This filter attempts to reconstruct the original film frames from an</i></td></tr>
+<tr><th id="123">123</th><td><i class="doc"> * NTSC telecined signal. It is intended for 24fps progressive material</i></td></tr>
+<tr><th id="124">124</th><td><i class="doc"> * that was telecined to NTSC 60i. For example, most NTSC anime DVDs</i></td></tr>
+<tr><th id="125">125</th><td><i class="doc"> * are like this.</i></td></tr>
+<tr><th id="126">126</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="127">127</th><td><i class="doc"> * There is no input frame parameter, because the input frames</i></td></tr>
+<tr><th id="128">128</th><td><i class="doc"> * are taken from the history buffer.</i></td></tr>
+<tr><th id="129">129</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="130">130</th><td><i class="doc"> * This algorithm does CUSTOM_PTS timestamp mangling.</i></td></tr>
+<tr><th id="131">131</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="132">132</th><td><i class="doc"> * See the file comment for a detailed description of the algorithm.</i></td></tr>
+<tr><th id="133">133</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="134">134</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">p_filter</span> The filter instance. Must be non-NULL.</i></td></tr>
+<tr><th id="135">135</th><td><i class="doc"> * <span class="command">@param</span>[out] <span class="arg">p_dst</span> Output frame. Must be allocated by caller.</i></td></tr>
+<tr><th id="136">136</th><td><i class="doc"> * <span class="command">@return</span> VLC error code (int).</i></td></tr>
+<tr><th id="137">137</th><td><i class="doc"> *<span class="command"> @retval</span> VLC_SUCCESS A film frame was reconstructed to p_dst.</i></td></tr>
+<tr><th id="138">138</th><td><i class="doc"> *<span class="command"> @retval</span> VLC_EGENERIC Frame dropped as part of normal IVTC operation.</i></td></tr>
+<tr><th id="139">139</th><td><i class="doc"> * <span class="command">@see</span> Deinterlace()</i></td></tr>
+<tr><th id="140">140</th><td><i class="doc"> * <span class="command">@see</span> ComposeFrame()</i></td></tr>
+<tr><th id="141">141</th><td><i class="doc"> * <span class="command">@see</span> CalculateInterlaceScore()</i></td></tr>
+<tr><th id="142">142</th><td><i class="doc"> * <span class="command">@see</span> EstimateNumBlocksWithMotion()</i></td></tr>
+<tr><th id="143">143</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="144">144</th><td><em>int</em> <dfn class="decl" id="RenderIVTC" title='RenderIVTC' data-ref="RenderIVTC">RenderIVTC</dfn>( <a class="typedef" href="../../../include/vlc_common.h.html#filter_t" title='filter_t' data-type='struct filter_t' data-ref="filter_t">filter_t</a> *<dfn class="local col6 decl" id="36p_filter" title='p_filter' data-type='filter_t *' data-ref="36p_filter">p_filter</dfn>, <a class="typedef" href="../../../include/vlc_common.h.html#picture_t" title='picture_t' data-type='struct picture_t' data-ref="picture_t">picture_t</a> *<dfn class="local col7 decl" id="37p_dst" title='p_dst' data-type='picture_t *' data-ref="37p_dst">p_dst</dfn> );</td></tr>
+<tr><th id="145">145</th><td></td></tr>
+<tr><th id="146">146</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="147">147</th><td><i class="doc"> * Clears the inverse telecine subsystem state.</i></td></tr>
+<tr><th id="148">148</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="149">149</th><td><i class="doc"> * Used during initialization and uninitialization</i></td></tr>
+<tr><th id="150">150</th><td><i class="doc"> * (called from Open() and Flush()).</i></td></tr>
+<tr><th id="151">151</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="152">152</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">p_filter</span> The filter instance.</i></td></tr>
+<tr><th id="153">153</th><td><i class="doc"> * <span class="command">@see</span> RenderIVTC()</i></td></tr>
+<tr><th id="154">154</th><td><i class="doc"> * <span class="command">@see</span> Open()</i></td></tr>
+<tr><th id="155">155</th><td><i class="doc"> * <span class="command">@see</span> Flush()</i></td></tr>
+<tr><th id="156">156</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="157">157</th><td><em>void</em> <dfn class="decl" id="IVTCClearState" title='IVTCClearState' data-ref="IVTCClearState">IVTCClearState</dfn>( <a class="typedef" href="../../../include/vlc_common.h.html#filter_t" title='filter_t' data-type='struct filter_t' data-ref="filter_t">filter_t</a> *<dfn class="local col8 decl" id="38p_filter" title='p_filter' data-type='filter_t *' data-ref="38p_filter">p_filter</dfn> );</td></tr>
+<tr><th id="158">158</th><td></td></tr>
+<tr><th id="159">159</th><td><i>/*****************************************************************************</i></td></tr>
+<tr><th id="160">160</th><td><i> * Extra documentation</i></td></tr>
+<tr><th id="161">161</th><td><i> *****************************************************************************/</i></td></tr>
+<tr><th id="162">162</th><td></td></tr>
+<tr><th id="163">163</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="164">164</th><td><i class="doc"> *<span class="command"> \file</span></i></td></tr>
+<tr><th id="165">165</th><td><i class="doc"> * IVTC (inverse telecine) algorithm for the VLC deinterlacer.</i></td></tr>
+<tr><th id="166">166</th><td><i class="doc"> * Also known as "film mode" or "3:2 reverse pulldown" in some equipment.</i></td></tr>
+<tr><th id="167">167</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="168">168</th><td><i class="doc"> * Summary:</i></td></tr>
+<tr><th id="169">169</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="170">170</th><td><i class="doc"> * This is a "live IVTC" filter, which attempts to do in realtime what</i></td></tr>
+<tr><th id="171">171</th><td><i class="doc"> * Transcode's ivtc-&gt;decimate-&gt;32detect chain does offline. Additionally,</i></td></tr>
+<tr><th id="172">172</th><td><i class="doc"> * it removes soft telecine. It is an original design, based on some ideas</i></td></tr>
+<tr><th id="173">173</th><td><i class="doc"> * from Transcode, some from TVTime/Xine, and some original.</i></td></tr>
+<tr><th id="174">174</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="175">175</th><td><i class="doc"> * If the input material is pure NTSC telecined film, inverse telecine</i></td></tr>
+<tr><th id="176">176</th><td><i class="doc"> * will (ideally) exactly recover the original progressive film frames.</i></td></tr>
+<tr><th id="177">177</th><td><i class="doc"> * The output will run at 4/5 of the original framerate with no loss of</i></td></tr>
+<tr><th id="178">178</th><td><i class="doc"> * information. Interlacing artifacts are removed, and motion becomes</i></td></tr>
+<tr><th id="179">179</th><td><i class="doc"> * as smooth as it was on the original film. For soft-telecined material,</i></td></tr>
+<tr><th id="180">180</th><td><i class="doc"> * on the other hand, the progressive frames alredy exist, so only the</i></td></tr>
+<tr><th id="181">181</th><td><i class="doc"> * timings are changed such that the output becomes smooth 24fps (or would,</i></td></tr>
+<tr><th id="182">182</th><td><i class="doc"> * if the output device had an infinite framerate).</i></td></tr>
+<tr><th id="183">183</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="184">184</th><td><i class="doc"> * Put in simple terms, this filter is targeted for NTSC movies and</i></td></tr>
+<tr><th id="185">185</th><td><i class="doc"> * especially anime. Virtually all 1990s and early 2000s anime is</i></td></tr>
+<tr><th id="186">186</th><td><i class="doc"> * hard-telecined. Because the source material is like that,</i></td></tr>
+<tr><th id="187">187</th><td><i class="doc"> * IVTC is needed for also virtually all official R1 (US) anime DVDs.</i></td></tr>
+<tr><th id="188">188</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="189">189</th><td><i class="doc"> * Note that some anime from the turn of the century (e.g. Silent Mobius</i></td></tr>
+<tr><th id="190">190</th><td><i class="doc"> * and Sol Bianca) is a hybrid of telecined film and true interlaced</i></td></tr>
+<tr><th id="191">191</th><td><i class="doc"> * computer-generated effects and camera pans. In this case, applying IVTC</i></td></tr>
+<tr><th id="192">192</th><td><i class="doc"> * will effectively attempt to reconstruct the frames based on the film</i></td></tr>
+<tr><th id="193">193</th><td><i class="doc"> * component, but even if this is successful, the framerate reduction will</i></td></tr>
+<tr><th id="194">194</th><td><i class="doc"> * cause the computer-generated effects to stutter. This is mathematically</i></td></tr>
+<tr><th id="195">195</th><td><i class="doc"> * unavoidable. Instead of IVTC, a framerate doubling deinterlacer is</i></td></tr>
+<tr><th id="196">196</th><td><i class="doc"> * recommended for such material. Try "Phosphor", "Bob", or "Linear".</i></td></tr>
+<tr><th id="197">197</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="198">198</th><td><i class="doc"> * Fortunately, 30fps true progressive anime is on the rise (e.g. ARIA,</i></td></tr>
+<tr><th id="199">199</th><td><i class="doc"> * Black Lagoon, Galaxy Angel, Ghost in the Shell: Solid State Society,</i></td></tr>
+<tr><th id="200">200</th><td><i class="doc"> * Mai Otome, Last Exile, and Rocket Girls). This type requires no</i></td></tr>
+<tr><th id="201">201</th><td><i class="doc"> * deinterlacer at all.</i></td></tr>
+<tr><th id="202">202</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="203">203</th><td><i class="doc"> * Another recent trend is using 24fps computer-generated effects and</i></td></tr>
+<tr><th id="204">204</th><td><i class="doc"> * telecining them along with the cels (e.g. Kiddy Grade, Str.A.In. and</i></td></tr>
+<tr><th id="205">205</th><td><i class="doc"> * The Third: The Girl with the Blue Eye). For this group, IVTC is the</i></td></tr>
+<tr><th id="206">206</th><td><i class="doc"> * correct way to deinterlace, and works properly.</i></td></tr>
+<tr><th id="207">207</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="208">208</th><td><i class="doc"> * Soft telecined anime, while rare, also exists. Stellvia of the Universe</i></td></tr>
+<tr><th id="209">209</th><td><i class="doc"> * and Angel Links are examples of this. Stellvia constantly alternates</i></td></tr>
+<tr><th id="210">210</th><td><i class="doc"> * between soft and hard telecine - pure CGI sequences are soft-telecined,</i></td></tr>
+<tr><th id="211">211</th><td><i class="doc"> * while sequences incorporating cel animation are hard-telecined.</i></td></tr>
+<tr><th id="212">212</th><td><i class="doc"> * This makes it very hard for the cadence detector to lock on,</i></td></tr>
+<tr><th id="213">213</th><td><i class="doc"> * and indeed Stellvia gives some trouble for the filter.</i></td></tr>
+<tr><th id="214">214</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="215">215</th><td><i class="doc"> * To finish the list of different material types, Azumanga Daioh deserves</i></td></tr>
+<tr><th id="216">216</th><td><i class="doc"> * a special mention. The OP and ED sequences are both 30fps progressive,</i></td></tr>
+<tr><th id="217">217</th><td><i class="doc"> * while the episodes themselves are hard-telecined. This filter should</i></td></tr>
+<tr><th id="218">218</th><td><i class="doc"> * mostly work correctly with such material, too. (The beginning of the OP</i></td></tr>
+<tr><th id="219">219</th><td><i class="doc"> * shows some artifacts, but otherwise both the OP and ED are indeed</i></td></tr>
+<tr><th id="220">220</th><td><i class="doc"> * rendered progressive. The technical reason is that the filter has been</i></td></tr>
+<tr><th id="221">221</th><td><i class="doc"> * designed to aggressively reconstruct film frames, which helps in many</i></td></tr>
+<tr><th id="222">222</th><td><i class="doc"> * cases with hard-telecined material. In very rare cases, this approach may</i></td></tr>
+<tr><th id="223">223</th><td><i class="doc"> * go wrong, regardless of whether the input is telecined or progressive.)</i></td></tr>
+<tr><th id="224">224</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="225">225</th><td><i class="doc"> * Finally, note also that IVTC is the only correct way to deinterlace NTSC</i></td></tr>
+<tr><th id="226">226</th><td><i class="doc"> * telecined material. Simply applying an interpolating deinterlacing filter</i></td></tr>
+<tr><th id="227">227</th><td><i class="doc"> * (with no framerate doubling) is harmful for two reasons. First, even if</i></td></tr>
+<tr><th id="228">228</th><td><i class="doc"> * the filter does not damage already progressive frames, it will lose half</i></td></tr>
+<tr><th id="229">229</th><td><i class="doc"> * of the available vertical resolution of those frames that are judged</i></td></tr>
+<tr><th id="230">230</th><td><i class="doc"> * interlaced. Some algorithms combining data from multiple frames may be</i></td></tr>
+<tr><th id="231">231</th><td><i class="doc"> * able to counter this to an extent, effectively performing something akin</i></td></tr>
+<tr><th id="232">232</th><td><i class="doc"> * to the frame reconstruction part of IVTC. A more serious problem is that</i></td></tr>
+<tr><th id="233">233</th><td><i class="doc"> * any motion will stutter, because (even in the ideal case) one out of</i></td></tr>
+<tr><th id="234">234</th><td><i class="doc"> * every four film frames will be shown twice, while the other three will</i></td></tr>
+<tr><th id="235">235</th><td><i class="doc"> * be shown only once. Duplicate removal and framerate reduction - which are</i></td></tr>
+<tr><th id="236">236</th><td><i class="doc"> * part of IVTC - are also needed to properly play back telecined material</i></td></tr>
+<tr><th id="237">237</th><td><i class="doc"> * on progressive displays at a non-doubled framerate.</i></td></tr>
+<tr><th id="238">238</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="239">239</th><td><i class="doc"> * So, try this filter on your NTSC anime DVDs. It just might help.</i></td></tr>
+<tr><th id="240">240</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="241">241</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="242">242</th><td><i class="doc"> * Technical details:</i></td></tr>
+<tr><th id="243">243</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="244">244</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="245">245</th><td><i class="doc"> * First, NTSC hard telecine in a nutshell:</i></td></tr>
+<tr><th id="246">246</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="247">247</th><td><i class="doc"> * Film is commonly captured at 24 fps. The framerate must be raised from</i></td></tr>
+<tr><th id="248">248</th><td><i class="doc"> * 24 fps to 59.94 fields per second, This starts by pretending that the</i></td></tr>
+<tr><th id="249">249</th><td><i class="doc"> * original framerate is 23.976 fps. When authoring, the audio can be</i></td></tr>
+<tr><th id="250">250</th><td><i class="doc"> * slowed down by 0.1% to match. Now 59.94 = 5/4 * (2*23.976), which gives</i></td></tr>
+<tr><th id="251">251</th><td><i class="doc"> * a nice ratio made out of small integers.</i></td></tr>
+<tr><th id="252">252</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="253">253</th><td><i class="doc"> * Thus, each group of four film frames must become five frames in the NTSC</i></td></tr>
+<tr><th id="254">254</th><td><i class="doc"> * video stream. One cannot simply repeat one frame of every four, because</i></td></tr>
+<tr><th id="255">255</th><td><i class="doc"> * this would result in jerky motion. To slightly soften the jerkiness,</i></td></tr>
+<tr><th id="256">256</th><td><i class="doc"> * the extra frame is split into two extra fields, inserted at different</i></td></tr>
+<tr><th id="257">257</th><td><i class="doc"> * times. The content of the extra fields is (in classical telecine)</i></td></tr>
+<tr><th id="258">258</th><td><i class="doc"> * duplicated as-is from existing fields.</i></td></tr>
+<tr><th id="259">259</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="260">260</th><td><i class="doc"> * The field duplication technique is called "3:2 pulldown". The pattern</i></td></tr>
+<tr><th id="261">261</th><td><i class="doc"> * is called the cadence. The output from 3:2 pulldown looks like this</i></td></tr>
+<tr><th id="262">262</th><td><i class="doc"> * (if the telecine is TFF, top field first):</i></td></tr>
+<tr><th id="263">263</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="264">264</th><td><i class="doc"> * a  b  c  d  e     Telecined frame (actual frames stored on DVD)</i></td></tr>
+<tr><th id="265">265</th><td><i class="doc"> * T1 T1 T2 T3 T4    *T*op field content</i></td></tr>
+<tr><th id="266">266</th><td><i class="doc"> * B1 B2 B3 B3 B4    *B*ottom field content</i></td></tr>
+<tr><th id="267">267</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="268">268</th><td><i class="doc"> * Numbers 1-4 denote the original film frames. E.g. T1 = top field of</i></td></tr>
+<tr><th id="269">269</th><td><i class="doc"> * original film frame 1. The field Tb, and one of either Bc or Bd, are</i></td></tr>
+<tr><th id="270">270</th><td><i class="doc"> * the extra fields inserted in the telecine. With exact duplication, it</i></td></tr>
+<tr><th id="271">271</th><td><i class="doc"> * of course doesn't matter whether Bc or Bd is the extra field, but</i></td></tr>
+<tr><th id="272">272</th><td><i class="doc"> * with "full field blended" material (see below) this will affect how to</i></td></tr>
+<tr><th id="273">273</th><td><i class="doc"> * correctly extract film frame 3.</i></td></tr>
+<tr><th id="274">274</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="275">275</th><td><i class="doc"> * See the following web pages for illustrations and discussion:</i></td></tr>
+<tr><th id="276">276</th><td><i class="doc"> * <a href="http://neuron2.net/LVG/telecining1.html">http://neuron2.net/LVG/telecining1.html</a></i></td></tr>
+<tr><th id="277">277</th><td><i class="doc"> * <a href="http://arbor.ee.ntu.edu.tw/~jackeikuo/dvd2avi/ivtc/">http://arbor.ee.ntu.edu.tw/~jackeikuo/dvd2avi/ivtc/</a></i></td></tr>
+<tr><th id="278">278</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="279">279</th><td><i class="doc"> * Note that film frame 2 has been stored "half and half" into two telecined</i></td></tr>
+<tr><th id="280">280</th><td><i class="doc"> * frames (b and c). Note also that telecine produces a sequence of</i></td></tr>
+<tr><th id="281">281</th><td><i class="doc"> * 3 progressive frames (d, e and a) followed by 2 interlaced frames</i></td></tr>
+<tr><th id="282">282</th><td><i class="doc"> * (b and c).</i></td></tr>
+<tr><th id="283">283</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="284">284</th><td><i class="doc"> * The output may also look like this (BFF telecine, bottom field first):</i></td></tr>
+<tr><th id="285">285</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="286">286</th><td><i class="doc"> * a' b' c' d' e'</i></td></tr>
+<tr><th id="287">287</th><td><i class="doc"> * T1 T2 T3 T3 T4</i></td></tr>
+<tr><th id="288">288</th><td><i class="doc"> * B1 B1 B2 B3 B4</i></td></tr>
+<tr><th id="289">289</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="290">290</th><td><i class="doc"> * Now field Bb', and one of either Tc' or Td', are the extra fields.</i></td></tr>
+<tr><th id="291">291</th><td><i class="doc"> * Again, film frame 2 is stored "half and half" (into b' and c').</i></td></tr>
+<tr><th id="292">292</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="293">293</th><td><i class="doc"> * Whether the pattern is like abcde or a'b'c'd'e', depends on the telecine</i></td></tr>
+<tr><th id="294">294</th><td><i class="doc"> * field dominance (TFF or BFF). This must match the video field dominance,</i></td></tr>
+<tr><th id="295">295</th><td><i class="doc"> * but is conceptually different. Importantly, there is no temporal</i></td></tr>
+<tr><th id="296">296</th><td><i class="doc"> * difference between those fields that came from the same film frame.</i></td></tr>
+<tr><th id="297">297</th><td><i class="doc"> * Also, see the section on soft telecine below.</i></td></tr>
+<tr><th id="298">298</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="299">299</th><td><i class="doc"> * In a hard telecine, the TFD and VFD must match for field renderers</i></td></tr>
+<tr><th id="300">300</th><td><i class="doc"> * (e.g. traditional DVD player + CRT TV) to work correctly; this should be</i></td></tr>
+<tr><th id="301">301</th><td><i class="doc"> * fairly obvious by considering the above telecine patterns and how a</i></td></tr>
+<tr><th id="302">302</th><td><i class="doc"> * field renderer displays the material (one field at a time, dominant</i></td></tr>
+<tr><th id="303">303</th><td><i class="doc"> * field first).</i></td></tr>
+<tr><th id="304">304</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="305">305</th><td><i class="doc"> * The VFD may, *correctly*, flip mid-stream, if soft field repeats</i></td></tr>
+<tr><th id="306">306</th><td><i class="doc"> * (repeat_pict) have been used. They are commonly used in soft telecine</i></td></tr>
+<tr><th id="307">307</th><td><i class="doc"> * (see below), but also occasional lone field repeats exist in some streams,</i></td></tr>
+<tr><th id="308">308</th><td><i class="doc"> * e.g., Sol Bianca.</i></td></tr>
+<tr><th id="309">309</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="310">310</th><td><i class="doc"> * See e.g.</i></td></tr>
+<tr><th id="311">311</th><td><i class="doc"> * <a href="http://www.cambridgeimaging.co.uk/downloads/Telecine%20field%20dominance.pdf">http://www.cambridgeimaging.co.uk/downloads/Telecine%20field%20dominance.pdf</a></i></td></tr>
+<tr><th id="312">312</th><td><i class="doc"> * for discussion. The document discusses mostly PAL, but includes some notes</i></td></tr>
+<tr><th id="313">313</th><td><i class="doc"> * on NTSC, too.</i></td></tr>
+<tr><th id="314">314</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="315">315</th><td><i class="doc"> * The reason for the words "classical telecine" above, when field</i></td></tr>
+<tr><th id="316">316</th><td><i class="doc"> * duplication was first mentioned, is that there exists a</i></td></tr>
+<tr><th id="317">317</th><td><i class="doc"> * "full field blended" version, where the added fields are not exact</i></td></tr>
+<tr><th id="318">318</th><td><i class="doc"> * duplicates, but are blends of the original film frames. This is rare</i></td></tr>
+<tr><th id="319">319</th><td><i class="doc"> * in NTSC, but some material like this reportedly exists. See</i></td></tr>
+<tr><th id="320">320</th><td><i class="doc"> * <a href="http://www.animemusicvideos.org/guides/avtech/videogetb2a.html">http://www.animemusicvideos.org/guides/avtech/videogetb2a.html</a></i></td></tr>
+<tr><th id="321">321</th><td><i class="doc"> * In these cases, the additional fields are a (probably 50%) blend of the</i></td></tr>
+<tr><th id="322">322</th><td><i class="doc"> * frames between which they have been inserted. Which one of the two</i></td></tr>
+<tr><th id="323">323</th><td><i class="doc"> * possibilites is the extra field then becomes important.</i></td></tr>
+<tr><th id="324">324</th><td><i class="doc"> * This filter does NOT support "full field blended" material.</i></td></tr>
+<tr><th id="325">325</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="326">326</th><td><i class="doc"> * To summarize, the 3:2 pulldown sequence produces a group of ten fields</i></td></tr>
+<tr><th id="327">327</th><td><i class="doc"> * out of every four film frames. Only eight of these fields are unique.</i></td></tr>
+<tr><th id="328">328</th><td><i class="doc"> * To remove the telecine, the duplicate fields must be removed, and the</i></td></tr>
+<tr><th id="329">329</th><td><i class="doc"> * original progressive frames restored. Additionally, the presentation</i></td></tr>
+<tr><th id="330">330</th><td><i class="doc"> * timestamps (PTS) must be adjusted, and one frame out of five (containing</i></td></tr>
+<tr><th id="331">331</th><td><i class="doc"> * no new information) dropped. The duration of each frame in the output</i></td></tr>
+<tr><th id="332">332</th><td><i class="doc"> * becomes 5/4 of that in the input, i.e. 25% longer.</i></td></tr>
+<tr><th id="333">333</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="334">334</th><td><i class="doc"> * Theoretically, this whole mess could be avoided by soft telecining, if the</i></td></tr>
+<tr><th id="335">335</th><td><i class="doc"> * original material is pure 24fps progressive. By using the stream flags</i></td></tr>
+<tr><th id="336">336</th><td><i class="doc"> * correctly, the original progressive frames can be stored on the DVD.</i></td></tr>
+<tr><th id="337">337</th><td><i class="doc"> * In such cases, the DVD player will apply "soft" 3:2 pulldown. See the</i></td></tr>
+<tr><th id="338">338</th><td><i class="doc"> * following section.</i></td></tr>
+<tr><th id="339">339</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="340">340</th><td><i class="doc"> * Also, the mess with cadence detection for hard telecine (see below) could</i></td></tr>
+<tr><th id="341">341</th><td><i class="doc"> * be avoided by using the progressive frame flag and a five-frame future</i></td></tr>
+<tr><th id="342">342</th><td><i class="doc"> * buffer, but no one ever sets the flag correctly for hard-telecined</i></td></tr>
+<tr><th id="343">343</th><td><i class="doc"> * streams. All frames are marked as interlaced, regardless of their cadence</i></td></tr>
+<tr><th id="344">344</th><td><i class="doc"> * position. This is evil, but sort-of-understandable, given that video</i></td></tr>
+<tr><th id="345">345</th><td><i class="doc"> * editors often come with "progressive" and "interlaced" editing modes,</i></td></tr>
+<tr><th id="346">346</th><td><i class="doc"> * but no separate "telecined" mode that could correctly handle this</i></td></tr>
+<tr><th id="347">347</th><td><i class="doc"> * information.</i></td></tr>
+<tr><th id="348">348</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="349">349</th><td><i class="doc"> * In practice, most material with its origins in Asia (including virtually</i></td></tr>
+<tr><th id="350">350</th><td><i class="doc"> * all official US (R1) anime DVDs) is hard-telecined. Combined with the</i></td></tr>
+<tr><th id="351">351</th><td><i class="doc"> * turn-of-the-century practice of rendering true interlaced effects</i></td></tr>
+<tr><th id="352">352</th><td><i class="doc"> * on top of the hard-telecined stream, we have what can only be described</i></td></tr>
+<tr><th id="353">353</th><td><i class="doc"> * as a monstrosity. Fortunately, recent material is much more consistent,</i></td></tr>
+<tr><th id="354">354</th><td><i class="doc"> * even though still almost always hard-telecined.</i></td></tr>
+<tr><th id="355">355</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="356">356</th><td><i class="doc"> * Finally, note that telecined video is often edited directly in interlaced</i></td></tr>
+<tr><th id="357">357</th><td><i class="doc"> * form, disregarding safe cut positions as pertains to the telecine sequence</i></td></tr>
+<tr><th id="358">358</th><td><i class="doc"> * (there are only two: between "d" and "e", or between "e" and the</i></td></tr>
+<tr><th id="359">359</th><td><i class="doc"> * next "a"). Thus, the telecine sequence will in practice jump erratically</i></td></tr>
+<tr><th id="360">360</th><td><i class="doc"> * at cuts [**]. An aggressive detection strategy is needed to cope with</i></td></tr>
+<tr><th id="361">361</th><td><i class="doc"> * this.</i></td></tr>
+<tr><th id="362">362</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="363">363</th><td><i class="doc"> * [**] <a href="http://users.softlab.ece.ntua.gr/~ttsiod/ivtc.html">http://users.softlab.ece.ntua.gr/~ttsiod/ivtc.html</a></i></td></tr>
+<tr><th id="364">364</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="365">365</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="366">366</th><td><i class="doc"> * Note about chroma formats: 4:2:0 is very common at least on anime DVDs.</i></td></tr>
+<tr><th id="367">367</th><td><i class="doc"> * In the interlaced frames in a hard telecine, the chroma alternates</i></td></tr>
+<tr><th id="368">368</th><td><i class="doc"> * every chroma line, even if the chroma format is 4:2:0! This means that</i></td></tr>
+<tr><th id="369">369</th><td><i class="doc"> * if the interlaced picture is viewed as-is, the luma alternates every line,</i></td></tr>
+<tr><th id="370">370</th><td><i class="doc"> * while the chroma alternates only every two lines of the picture.</i></td></tr>
+<tr><th id="371">371</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="372">372</th><td><i class="doc"> * That is, an interlaced frame in a 4:2:0 telecine looks like this</i></td></tr>
+<tr><th id="373">373</th><td><i class="doc"> * (numbers indicate which film frame the data comes from):</i></td></tr>
+<tr><th id="374">374</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="375">375</th><td><i class="doc"> * luma  stored 4:2:0 chroma  displayed chroma</i></td></tr>
+<tr><th id="376">376</th><td><i class="doc"> * 1111  1111                 1111</i></td></tr>
+<tr><th id="377">377</th><td><i class="doc"> * 2222                       1111</i></td></tr>
+<tr><th id="378">378</th><td><i class="doc"> * 1111  2222                 2222</i></td></tr>
+<tr><th id="379">379</th><td><i class="doc"> * 2222                       2222</i></td></tr>
+<tr><th id="380">380</th><td><i class="doc"> * ...   ...                  ...</i></td></tr>
+<tr><th id="381">381</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="382">382</th><td><i class="doc"> * The deinterlace filter sees the stored 4:2:0 chroma. The "displayed chroma"</i></td></tr>
+<tr><th id="383">383</th><td><i class="doc"> * is only generated later in the filter chain (probably when YUV is converted</i></td></tr>
+<tr><th id="384">384</th><td><i class="doc"> * to the display format, if the display does not accept YUV 4:2:0 directly).</i></td></tr>
+<tr><th id="385">385</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="386">386</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="387">387</th><td><i class="doc"> * Next, how NTSC soft telecine works:</i></td></tr>
+<tr><th id="388">388</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="389">389</th><td><i class="doc"> * a  b  c  d     Frame index (actual frames stored on DVD)</i></td></tr>
+<tr><th id="390">390</th><td><i class="doc"> * T1 T2 T3 T4    *T*op field content</i></td></tr>
+<tr><th id="391">391</th><td><i class="doc"> * B1 B2 B3 B4    *B*ottom field content</i></td></tr>
+<tr><th id="392">392</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="393">393</th><td><i class="doc"> * Here the progressive frames are stored as-is. The catch is in the stream</i></td></tr>
+<tr><th id="394">394</th><td><i class="doc"> * flags. For hard telecine, which was explained above, we have</i></td></tr>
+<tr><th id="395">395</th><td><i class="doc"> * VFD = constant and nb_fields = 2, just like in a true progressive or</i></td></tr>
+<tr><th id="396">396</th><td><i class="doc"> * true interlaced stream. Soft telecine, on the other hand, looks like this:</i></td></tr>
+<tr><th id="397">397</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="398">398</th><td><i class="doc"> * a  b  c  d</i></td></tr>
+<tr><th id="399">399</th><td><i class="doc"> * 3  2  3  2     nb_fields</i></td></tr>
+<tr><th id="400">400</th><td><i class="doc"> * T  B  B  T     *Video* field dominance (for TFF telecine)</i></td></tr>
+<tr><th id="401">401</th><td><i class="doc"> * B  T  T  B     *Video* field dominance (for BFF telecine)</i></td></tr>
+<tr><th id="402">402</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="403">403</th><td><i class="doc"> * Now the video field dominance flipflops every two frames!</i></td></tr>
+<tr><th id="404">404</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="405">405</th><td><i class="doc"> * Note that nb_fields = 3 means the frame duration will be 1.5x that of a</i></td></tr>
+<tr><th id="406">406</th><td><i class="doc"> * normal frame. Often, soft-telecined frames are correctly flagged as</i></td></tr>
+<tr><th id="407">407</th><td><i class="doc"> * progressive.</i></td></tr>
+<tr><th id="408">408</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="409">409</th><td><i class="doc"> * Here the telecining is expected to be done by the player, utilizing the</i></td></tr>
+<tr><th id="410">410</th><td><i class="doc"> * soft field repeat (repeat_pict) feature. This is indeed what a field</i></td></tr>
+<tr><th id="411">411</th><td><i class="doc"> * renderer (traditional interlaced equipment, or a framerate doubler)</i></td></tr>
+<tr><th id="412">412</th><td><i class="doc"> * should do with such a stream.</i></td></tr>
+<tr><th id="413">413</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="414">414</th><td><i class="doc"> * In the IVTC filter, our job is to even out the frame durations, but</i></td></tr>
+<tr><th id="415">415</th><td><i class="doc"> * disregard video field dominance and just pass the progressive pictures</i></td></tr>
+<tr><th id="416">416</th><td><i class="doc"> * through as-is.</i></td></tr>
+<tr><th id="417">417</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="418">418</th><td><i class="doc"> * Fortunately, for soft telecine to work at all, the stream flags must be</i></td></tr>
+<tr><th id="419">419</th><td><i class="doc"> * set correctly. Thus this type can be detected reliably by reading</i></td></tr>
+<tr><th id="420">420</th><td><i class="doc"> * nb_fields from three consecutive frames:</i></td></tr>
+<tr><th id="421">421</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="422">422</th><td><i class="doc"> * Let P = previous, C = current, N = next. If the frame to be rendered is C,</i></td></tr>
+<tr><th id="423">423</th><td><i class="doc"> * there are only three relevant nb_fields flag patterns for the three-frame</i></td></tr>
+<tr><th id="424">424</th><td><i class="doc"> * stencil concerning soft telecine:</i></td></tr>
+<tr><th id="425">425</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="426">426</th><td><i class="doc"> * P C N   What is happening:</i></td></tr>
+<tr><th id="427">427</th><td><i class="doc"> * 2 3 2   Entering soft telecine at frame C, or running inside it already.</i></td></tr>
+<tr><th id="428">428</th><td><i class="doc"> * 3 2 3   Running inside soft telecine.</i></td></tr>
+<tr><th id="429">429</th><td><i class="doc"> * 3 2 2   Exiting soft telecine at frame C. C is the last frame that should</i></td></tr>
+<tr><th id="430">430</th><td><i class="doc"> *         be handled as soft-telecined. (If we do timing adjustments to the</i></td></tr>
+<tr><th id="431">431</th><td><i class="doc"> *         "3"s only, we can already exit soft telecine mode when we see</i></td></tr>
+<tr><th id="432">432</th><td><i class="doc"> *         this pattern.)</i></td></tr>
+<tr><th id="433">433</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="434">434</th><td><i class="doc"> * Note that the same stream may alternate between soft and hard telecine,</i></td></tr>
+<tr><th id="435">435</th><td><i class="doc"> * but these cannot occur at the same time. The start and end of the</i></td></tr>
+<tr><th id="436">436</th><td><i class="doc"> * soft-telecined parts can be read off the stream flags, and the rest of</i></td></tr>
+<tr><th id="437">437</th><td><i class="doc"> * the stream can be handed to the hard IVTC part of the filter for analysis.</i></td></tr>
+<tr><th id="438">438</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="439">439</th><td><i class="doc"> * Finally, note also that a stream may also request a lone field repeat</i></td></tr>
+<tr><th id="440">440</th><td><i class="doc"> * (a sudden "3" surrounded by "2"s). Fortunately, these can be handled as</i></td></tr>
+<tr><th id="441">441</th><td><i class="doc"> * a two-frame soft telecine, as they match the first and third</i></td></tr>
+<tr><th id="442">442</th><td><i class="doc"> * flag patterns above.</i></td></tr>
+<tr><th id="443">443</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="444">444</th><td><i class="doc"> * Combinations with several "3"s in a row are not valid for soft or hard</i></td></tr>
+<tr><th id="445">445</th><td><i class="doc"> * telecine, so if they occur, the frames can be passed through as-is.</i></td></tr>
+<tr><th id="446">446</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="447">447</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="448">448</th><td><i class="doc"> * Cadence detection for hard telecine:</i></td></tr>
+<tr><th id="449">449</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="450">450</th><td><i class="doc"> * Consider viewing the TFF and BFF hard telecine sequences through a</i></td></tr>
+<tr><th id="451">451</th><td><i class="doc"> * three-frame stencil. Again, let P = previous, C = current, N = next.</i></td></tr>
+<tr><th id="452">452</th><td><i class="doc"> * A brief analysis leads to the following cadence tables.</i></td></tr>
+<tr><th id="453">453</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="454">454</th><td><i class="doc"> * PCN                 = stencil position (Previous Current Next),</i></td></tr>
+<tr><th id="455">455</th><td><i class="doc"> * Dups.               = duplicate fields,</i></td></tr>
+<tr><th id="456">456</th><td><i class="doc"> * Best field pairs... = combinations of fields which correctly reproduce</i></td></tr>
+<tr><th id="457">457</th><td><i class="doc"> *                       the original progressive frames,</i></td></tr>
+<tr><th id="458">458</th><td><i class="doc"> * *                   = see timestamp considerations below for why</i></td></tr>
+<tr><th id="459">459</th><td><i class="doc"> *                       this particular arrangement.</i></td></tr>
+<tr><th id="460">460</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="461">461</th><td><i class="doc"> * For TFF:</i></td></tr>
+<tr><th id="462">462</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="463">463</th><td><i class="doc"> * PCN   Dups.     Best field pairs for progressive (correct, theoretical)</i></td></tr>
+<tr><th id="464">464</th><td><i class="doc"> * abc   TP = TC   TPBP = frame 1, TCBP = frame 1, TNBC = frame 2</i></td></tr>
+<tr><th id="465">465</th><td><i class="doc"> * bcd   BC = BN   TCBP = frame 2, TNBC = frame 3, TNBN = frame 3</i></td></tr>
+<tr><th id="466">466</th><td><i class="doc"> * cde   BP = BC   TCBP = frame 3, TCBC = frame 3, TNBN = frame 4</i></td></tr>
+<tr><th id="467">467</th><td><i class="doc"> * dea   none      TPBP = frame 3, TCBC = frame 4, TNBN = frame 1</i></td></tr>
+<tr><th id="468">468</th><td><i class="doc"> * eab   TC = TN   TPBP = frame 4, TCBC = frame 1, TNBC = frame 1</i></td></tr>
+<tr><th id="469">469</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="470">470</th><td><i class="doc"> * (table cont'd)</i></td></tr>
+<tr><th id="471">471</th><td><i class="doc"> * PCN   Progressive output*</i></td></tr>
+<tr><th id="472">472</th><td><i class="doc"> * abc   frame 2 = TNBC (compose TN+BC)</i></td></tr>
+<tr><th id="473">473</th><td><i class="doc"> * bcd   frame 3 = TNBN (copy N)</i></td></tr>
+<tr><th id="474">474</th><td><i class="doc"> * cde   frame 4 = TNBN (copy N)</i></td></tr>
+<tr><th id="475">475</th><td><i class="doc"> * dea   (drop)</i></td></tr>
+<tr><th id="476">476</th><td><i class="doc"> * eab   frame 1 = TCBC (copy C), or TNBC (compose TN+BC)</i></td></tr>
+<tr><th id="477">477</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="478">478</th><td><i class="doc"> * On the rows "dea" and "eab", frame 1 refers to a frame from the next</i></td></tr>
+<tr><th id="479">479</th><td><i class="doc"> * group of 4. "Compose TN+BC" means to construct a frame using the</i></td></tr>
+<tr><th id="480">480</th><td><i class="doc"> * top field of N, and the bottom field of C. See ComposeFrame().</i></td></tr>
+<tr><th id="481">481</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="482">482</th><td><i class="doc"> * For BFF, swap all B and T, and rearrange the symbol pairs to again</i></td></tr>
+<tr><th id="483">483</th><td><i class="doc"> * read "TxBx". We have:</i></td></tr>
+<tr><th id="484">484</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="485">485</th><td><i class="doc"> * PCN   Dups.     Best field pairs for progressive (correct, theoretical)</i></td></tr>
+<tr><th id="486">486</th><td><i class="doc"> * abc   BP = BC   TPBP = frame 1, TPBC = frame 1, TCBN = frame 2</i></td></tr>
+<tr><th id="487">487</th><td><i class="doc"> * bcd   TC = TN   TPBC = frame 2, TCBN = frame 3, TNBN = frame 3</i></td></tr>
+<tr><th id="488">488</th><td><i class="doc"> * cde   TP = TC   TPBC = frame 3, TCBC = frame 3, TNBN = frame 4</i></td></tr>
+<tr><th id="489">489</th><td><i class="doc"> * dea   none      TPBP = frame 3, TCBC = frame 4, TNBN = frame 1</i></td></tr>
+<tr><th id="490">490</th><td><i class="doc"> * eab   BC = BN   TPBP = frame 4, TCBC = frame 1, TCBN = frame 1</i></td></tr>
+<tr><th id="491">491</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="492">492</th><td><i class="doc"> * (table cont'd)</i></td></tr>
+<tr><th id="493">493</th><td><i class="doc"> * PCN   Progressive output*</i></td></tr>
+<tr><th id="494">494</th><td><i class="doc"> * abc   frame 2 = TCBN (compose TC+BN)</i></td></tr>
+<tr><th id="495">495</th><td><i class="doc"> * bcd   frame 3 = TNBN (copy N)</i></td></tr>
+<tr><th id="496">496</th><td><i class="doc"> * cde   frame 4 = TNBN (copy N)</i></td></tr>
+<tr><th id="497">497</th><td><i class="doc"> * dea   (drop)</i></td></tr>
+<tr><th id="498">498</th><td><i class="doc"> * eab   frame 1 = TCBC (copy C), or TCBN (compose TC+BN)</i></td></tr>
+<tr><th id="499">499</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="500">500</th><td><i class="doc"> * From these cadence tables we can extract two strategies for</i></td></tr>
+<tr><th id="501">501</th><td><i class="doc"> * cadence detection. We use both.</i></td></tr>
+<tr><th id="502">502</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="503">503</th><td><i class="doc"> * Strategy 1: duplicated fields ("vektor").</i></td></tr>
+<tr><th id="504">504</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="505">505</th><td><i class="doc"> * Consider that each stencil position has a unique duplicate field</i></td></tr>
+<tr><th id="506">506</th><td><i class="doc"> * condition. In one unique position, "dea", there is no match; in all</i></td></tr>
+<tr><th id="507">507</th><td><i class="doc"> * other positions, exactly one. By conservatively filtering the</i></td></tr>
+<tr><th id="508">508</th><td><i class="doc"> * possibilities based on detected hard field repeats (identical fields</i></td></tr>
+<tr><th id="509">509</th><td><i class="doc"> * in successive input frames), it is possible to gradually lock on</i></td></tr>
+<tr><th id="510">510</th><td><i class="doc"> * to the cadence. This kind of strategy is used by the classic IVTC filter</i></td></tr>
+<tr><th id="511">511</th><td><i class="doc"> * in TVTime/Xine by Billy Biggs (Vektor), hence the name.</i></td></tr>
+<tr><th id="512">512</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="513">513</th><td><i class="doc"> * "Conservative" here means that we do not rule anything out, but start at</i></td></tr>
+<tr><th id="514">514</th><td><i class="doc"> * each stencil position by suggesting the position "dea", and then only add</i></td></tr>
+<tr><th id="515">515</th><td><i class="doc"> * to the list of possibilities based on field repeats that are detected at</i></td></tr>
+<tr><th id="516">516</th><td><i class="doc"> * the present stencil position. This estimate is then filtered by ANDing</i></td></tr>
+<tr><th id="517">517</th><td><i class="doc"> * against a shifted (time-advanced) version of the estimate from the</i></td></tr>
+<tr><th id="518">518</th><td><i class="doc"> * previous stencil position. Once the detected position becomes unique,</i></td></tr>
+<tr><th id="519">519</th><td><i class="doc"> * the filter locks on. If the new detection is inconsistent with the</i></td></tr>
+<tr><th id="520">520</th><td><i class="doc"> * previous one, the detector resets itself and starts from scratch.</i></td></tr>
+<tr><th id="521">521</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="522">522</th><td><i class="doc"> * The strategy is very reliable, as it only requires running (fuzzy)</i></td></tr>
+<tr><th id="523">523</th><td><i class="doc"> * duplicate field detection against the input. It is very good at staying</i></td></tr>
+<tr><th id="524">524</th><td><i class="doc"> * locked on once it acquires the cadence, and it does so correctly very</i></td></tr>
+<tr><th id="525">525</th><td><i class="doc"> * often. These are indeed characteristics that can be observed in the</i></td></tr>
+<tr><th id="526">526</th><td><i class="doc"> * behaviour of the TVTime/Xine filter.</i></td></tr>
+<tr><th id="527">527</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="528">528</th><td><i class="doc"> * Note especially that 8fps/12fps animation, common in anime, will cause</i></td></tr>
+<tr><th id="529">529</th><td><i class="doc"> * spurious hard-repeated fields. The conservative nature of the method</i></td></tr>
+<tr><th id="530">530</th><td><i class="doc"> * makes it very good at dealing with this - any spurious repeats will only</i></td></tr>
+<tr><th id="531">531</th><td><i class="doc"> * slow down the lock-on, not completely confuse it. It should also be good</i></td></tr>
+<tr><th id="532">532</th><td><i class="doc"> * at detecting the presence of a telecine, as neither true interlaced nor</i></td></tr>
+<tr><th id="533">533</th><td><i class="doc"> * true progressive material should contain any hard field repeats.</i></td></tr>
+<tr><th id="534">534</th><td><i class="doc"> * (This, however, has not been tested yet.)</i></td></tr>
+<tr><th id="535">535</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="536">536</th><td><i class="doc"> * The disadvantages are that at times the method may lock on slowly,</i></td></tr>
+<tr><th id="537">537</th><td><i class="doc"> * because the detection must be filtered against the history until</i></td></tr>
+<tr><th id="538">538</th><td><i class="doc"> * a unique solution is found. Resets, if they happen, will also</i></td></tr>
+<tr><th id="539">539</th><td><i class="doc"> * slow down the lock-on.</i></td></tr>
+<tr><th id="540">540</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="541">541</th><td><i class="doc"> * The hard duplicate detection required by this strategy can be made</i></td></tr>
+<tr><th id="542">542</th><td><i class="doc"> * data-adaptive in several ways. TVTime uses a running average of motion</i></td></tr>
+<tr><th id="543">543</th><td><i class="doc"> * scores for its history buffer. We utilize a different, original approach.</i></td></tr>
+<tr><th id="544">544</th><td><i class="doc"> * It is rare, if not nonexistent, that only one field changes between</i></td></tr>
+<tr><th id="545">545</th><td><i class="doc"> * two valid frames. Thus, if one field changes "much more" than the other</i></td></tr>
+<tr><th id="546">546</th><td><i class="doc"> * in fieldwise motion detection, the less changed one is probably a</i></td></tr>
+<tr><th id="547">547</th><td><i class="doc"> * duplicate. Importantly, this works with telecined input, too - the field</i></td></tr>
+<tr><th id="548">548</th><td><i class="doc"> * that changes "much" may be part of another film frame, while the "less"</i></td></tr>
+<tr><th id="549">549</th><td><i class="doc"> * changed one is actually a duplicate from the previous film frame.</i></td></tr>
+<tr><th id="550">550</th><td><i class="doc"> * If both fields change "about as much", then no hard field repeat</i></td></tr>
+<tr><th id="551">551</th><td><i class="doc"> * is detected.</i></td></tr>
+<tr><th id="552">552</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="553">553</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="554">554</th><td><i class="doc"> * Strategy 2: progressive/interlaced field combinations ("scores").</i></td></tr>
+<tr><th id="555">555</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="556">556</th><td><i class="doc"> * We can also form a second strategy, which is not as reliable in practice,</i></td></tr>
+<tr><th id="557">557</th><td><i class="doc"> * but which locks on faster when it does. This is original to this filter.</i></td></tr>
+<tr><th id="558">558</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="559">559</th><td><i class="doc"> * Consider all possible field pairs from two successive frames: TCBC, TCBN,</i></td></tr>
+<tr><th id="560">560</th><td><i class="doc"> * TNBC, TNBN. After one frame, these become TPBP, TPBC, TCBP, TCBC.</i></td></tr>
+<tr><th id="561">561</th><td><i class="doc"> * These eight pairs (seven unique, disregarding the duplicate TCBC)</i></td></tr>
+<tr><th id="562">562</th><td><i class="doc"> * are the exhaustive list of possible field pairs from two successive</i></td></tr>
+<tr><th id="563">563</th><td><i class="doc"> * frames in the three-frame PCN stencil.</i></td></tr>
+<tr><th id="564">564</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="565">565</th><td><i class="doc"> * The above tables list triplets of field pair combinations for each cadence</i></td></tr>
+<tr><th id="566">566</th><td><i class="doc"> * position, which should produce progressive frames. All the given triplets</i></td></tr>
+<tr><th id="567">567</th><td><i class="doc"> * are unique in each table alone, although the one at "dea" is</i></td></tr>
+<tr><th id="568">568</th><td><i class="doc"> * indistinguishable from the case of pure progressive material. It is also</i></td></tr>
+<tr><th id="569">569</th><td><i class="doc"> * the only one which is not unique across both tables.</i></td></tr>
+<tr><th id="570">570</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="571">571</th><td><i class="doc"> * Thus, all sequences of two neighboring triplets are unique across both</i></td></tr>
+<tr><th id="572">572</th><td><i class="doc"> * tables. (For "neighboring", each table is considered to wrap around from</i></td></tr>
+<tr><th id="573">573</th><td><i class="doc"> * "eab" back to "abc", i.e. from the last row back to the first row.)</i></td></tr>
+<tr><th id="574">574</th><td><i class="doc"> * Furthermore, each sequence of three neighboring triplets is redundantly</i></td></tr>
+<tr><th id="575">575</th><td><i class="doc"> * unique (i.e. is unique, and reduces the chance of false positives).</i></td></tr>
+<tr><th id="576">576</th><td><i class="doc"> * (In practice, though, we already know which table to consider, from the fact</i></td></tr>
+<tr><th id="577">577</th><td><i class="doc"> * that TFD and VFD must match. Checking only the relevant table makes the</i></td></tr>
+<tr><th id="578">578</th><td><i class="doc"> * strategy slightly more robust.)</i></td></tr>
+<tr><th id="579">579</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="580">580</th><td><i class="doc"> * The important idea is: *all other* field pair combinations should produce</i></td></tr>
+<tr><th id="581">581</th><td><i class="doc"> * frames that look interlaced. This includes those combinations present in</i></td></tr>
+<tr><th id="582">582</th><td><i class="doc"> * the "wrong" (i.e. not current position) rows of the table (insofar as</i></td></tr>
+<tr><th id="583">583</th><td><i class="doc"> * those combinations are not also present in the "correct" row; by the</i></td></tr>
+<tr><th id="584">584</th><td><i class="doc"> * uniqueness property, *every* "wrong" row will always contain at least one</i></td></tr>
+<tr><th id="585">585</th><td><i class="doc"> * combination that differs from those in the "correct" row).</i></td></tr>
+<tr><th id="586">586</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="587">587</th><td><i class="doc"> * We generate the artificial frames TCBC, TCBN, TNBC and TNBN (virtually;</i></td></tr>
+<tr><th id="588">588</th><td><i class="doc"> * no data is actually moved). Two of these are just the frames C and N,</i></td></tr>
+<tr><th id="589">589</th><td><i class="doc"> * which already exist; the two others correspond to composing the given</i></td></tr>
+<tr><th id="590">590</th><td><i class="doc"> * field pairs. We then compute the interlace score for each of these frames.</i></td></tr>
+<tr><th id="591">591</th><td><i class="doc"> * The interlace scores of what are now TPBP, TPBC and TCBP, also needed,</i></td></tr>
+<tr><th id="592">592</th><td><i class="doc"> * were computed by this same mechanism during the previous input frame.</i></td></tr>
+<tr><th id="593">593</th><td><i class="doc"> * These can be slided in history and reused.</i></td></tr>
+<tr><th id="594">594</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="595">595</th><td><i class="doc"> * We then check, using the computed interlace scores, and taking into</i></td></tr>
+<tr><th id="596">596</th><td><i class="doc"> * account the video field dominance information, which field combination</i></td></tr>
+<tr><th id="597">597</th><td><i class="doc"> * triplet given in the appropriate table produces the smallest sum of</i></td></tr>
+<tr><th id="598">598</th><td><i class="doc"> * interlace scores. Unless we are at PCN = "dea" (which could also be pure</i></td></tr>
+<tr><th id="599">599</th><td><i class="doc"> * progressive!), this immediately gives us the most likely current cadence</i></td></tr>
+<tr><th id="600">600</th><td><i class="doc"> * position. Combined with a two-step history, the sequence of three most</i></td></tr>
+<tr><th id="601">601</th><td><i class="doc"> * likely positions found this way always allows us to make a more or less</i></td></tr>
+<tr><th id="602">602</th><td><i class="doc"> * reliable detection. (That is, when a reliable detection is possible; if the</i></td></tr>
+<tr><th id="603">603</th><td><i class="doc"> * video has no motion at all, every detection will report the position "dea".</i></td></tr>
+<tr><th id="604">604</th><td><i class="doc"> * In anime, still shots are common. Thus we must augment this with a</i></td></tr>
+<tr><th id="605">605</th><td><i class="doc"> * full-frame motion detection that switches the detector off if no motion</i></td></tr>
+<tr><th id="606">606</th><td><i class="doc"> * was detected.)</i></td></tr>
+<tr><th id="607">607</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="608">608</th><td><i class="doc"> * The detection seems to need four full-frame interlace analyses per frame.</i></td></tr>
+<tr><th id="609">609</th><td><i class="doc"> * Actually, three are enough, because the previous N is the new C, so we can</i></td></tr>
+<tr><th id="610">610</th><td><i class="doc"> * slide the already computed result. Also during initialization, we only</i></td></tr>
+<tr><th id="611">611</th><td><i class="doc"> * need to compute TNBN on the first frame; this has become TPBP when the</i></td></tr>
+<tr><th id="612">612</th><td><i class="doc"> * third frame is reached. Similarly, we compute TNBN, TNBC and TCBN during</i></td></tr>
+<tr><th id="613">613</th><td><i class="doc"> * the second frame (just before the filter starts), and these get slided</i></td></tr>
+<tr><th id="614">614</th><td><i class="doc"> * into TCBC, TCBP and TPBC when the third frame is reached. At that point,</i></td></tr>
+<tr><th id="615">615</th><td><i class="doc"> * initialization is complete.</i></td></tr>
+<tr><th id="616">616</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="617">617</th><td><i class="doc"> * Because we only compare interlace scores against each other, no threshold</i></td></tr>
+<tr><th id="618">618</th><td><i class="doc"> * is needed in the cadence detector. Thus it, trivially, adapts to the</i></td></tr>
+<tr><th id="619">619</th><td><i class="doc"> * material automatically.</i></td></tr>
+<tr><th id="620">620</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="621">621</th><td><i class="doc"> * The weakness of this approach is that any comb metric detects incorrectly</i></td></tr>
+<tr><th id="622">622</th><td><i class="doc"> * every now and then. Especially slow vertical camera pans often get treated</i></td></tr>
+<tr><th id="623">623</th><td><i class="doc"> * wrong, because the messed-up field combination looks less interlaced</i></td></tr>
+<tr><th id="624">624</th><td><i class="doc"> * according to the comb metric (especially in anime) than the correct one</i></td></tr>
+<tr><th id="625">625</th><td><i class="doc"> * (which contains, correctly, one-pixel thick cartoon outlines, parts of</i></td></tr>
+<tr><th id="626">626</th><td><i class="doc"> * which often perfectly horizontal).</i></td></tr>
+<tr><th id="627">627</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="628">628</th><td><i class="doc"> * The advantage is that this strategy catches horizontal camera pans</i></td></tr>
+<tr><th id="629">629</th><td><i class="doc"> * immediately and reliably, while the other strategy may still be trying</i></td></tr>
+<tr><th id="630">630</th><td><i class="doc"> * to lock on.</i></td></tr>
+<tr><th id="631">631</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="632">632</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="633">633</th><td><i class="doc"> * Frame reconstruction:</i></td></tr>
+<tr><th id="634">634</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="635">635</th><td><i class="doc"> * We utilize a hybrid approach. If a valid cadence is locked on, we use the</i></td></tr>
+<tr><th id="636">636</th><td><i class="doc"> * operation table to decide what to do. This handles those cases correctly,</i></td></tr>
+<tr><th id="637">637</th><td><i class="doc"> * which would be difficult for the interlace detector alone (e.g. vertical</i></td></tr>
+<tr><th id="638">638</th><td><i class="doc"> * camera pans). Note that the operations that must be performed for IVTC</i></td></tr>
+<tr><th id="639">639</th><td><i class="doc"> * include timestamp mangling and frame dropping, which can only be done</i></td></tr>
+<tr><th id="640">640</th><td><i class="doc"> * reliably on a valid cadence.</i></td></tr>
+<tr><th id="641">641</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="642">642</th><td><i class="doc"> * When the cadence fails (we detect this from a sudden upward jump in the</i></td></tr>
+<tr><th id="643">643</th><td><i class="doc"> * interlace scores of the constructed frames), we reset the "vektor"</i></td></tr>
+<tr><th id="644">644</th><td><i class="doc"> * detector strategy and fall back to an emergency frame composer, where we</i></td></tr>
+<tr><th id="645">645</th><td><i class="doc"> * use ideas from Transcode's IVTC.</i></td></tr>
+<tr><th id="646">646</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="647">647</th><td><i class="doc"> * In this emergency mode, we simply output the least interlaced frame out of</i></td></tr>
+<tr><th id="648">648</th><td><i class="doc"> * the combinations TNBN, TNBC and TCBN (where only one of the last two is</i></td></tr>
+<tr><th id="649">649</th><td><i class="doc"> * tested, based on the stream TFF/BFF information). In this mode, we do not </i></td></tr>
+<tr><th id="650">650</th><td><i class="doc"> * touch the timestamps, and just pass all five frames from each group right</i></td></tr>
+<tr><th id="651">651</th><td><i class="doc"> * through. This introduces some stutter, but in practice it is often not</i></td></tr>
+<tr><th id="652">652</th><td><i class="doc"> * noticeable. This is because the kind of material that is likely to trip up</i></td></tr>
+<tr><th id="653">653</th><td><i class="doc"> * the cadence detector usually includes irregular 8fps/12fps motion. With</i></td></tr>
+<tr><th id="654">654</th><td><i class="doc"> * true 24fps motion, the cadence quickly locks on, and stays locked on.</i></td></tr>
+<tr><th id="655">655</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="656">656</th><td><i class="doc"> * Once the cadence locks on again, we resume normal operation based on</i></td></tr>
+<tr><th id="657">657</th><td><i class="doc"> * the operation table.</i></td></tr>
+<tr><th id="658">658</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="659">659</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="660">660</th><td><i class="doc"> * Timestamp mangling:</i></td></tr>
+<tr><th id="661">661</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="662">662</th><td><i class="doc"> * To make five into four we need to extend frame durations by 25%.</i></td></tr>
+<tr><th id="663">663</th><td><i class="doc"> * Consider the following diagram (times given in 90kHz ticks, rounded to</i></td></tr>
+<tr><th id="664">664</th><td><i class="doc"> * integers; this is just for illustration, and for comparison with the</i></td></tr>
+<tr><th id="665">665</th><td><i class="doc"> * "scratch paper" comments in pulldown.c of TVTime/Xine):</i></td></tr>
+<tr><th id="666">666</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="667">667</th><td><i class="doc"> * NTSC input (29.97 fps)</i></td></tr>
+<tr><th id="668">668</th><td><i class="doc"> * a       b       c       d        e        a (from next group) ...</i></td></tr>
+<tr><th id="669">669</th><td><i class="doc"> * 0    3003    6006    9009    12012    15015</i></td></tr>
+<tr><th id="670">670</th><td><i class="doc"> * 0      3754      7508       11261     15015</i></td></tr>
+<tr><th id="671">671</th><td><i class="doc"> * 1         2         3           4         1 (from next group) ...</i></td></tr>
+<tr><th id="672">672</th><td><i class="doc"> * Film output (23.976 fps)</i></td></tr>
+<tr><th id="673">673</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="674">674</th><td><i class="doc"> * Three of the film frames have length 3754, and one has 3753</i></td></tr>
+<tr><th id="675">675</th><td><i class="doc"> * (it is 1/90000 sec shorter). This rounding was chosen so that the lengths</i></td></tr>
+<tr><th id="676">676</th><td><i class="doc"> * of the group of four sum to the original 15015.</i></td></tr>
+<tr><th id="677">677</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="678">678</th><td><i class="doc"> * From the diagram we get these deltas for presentation timestamp adjustment</i></td></tr>
+<tr><th id="679">679</th><td><i class="doc"> * (in 90 kHz ticks, for illustration):</i></td></tr>
+<tr><th id="680">680</th><td><i class="doc"> * (1-a)   (2-b)  (3-c)   (4-d)   (skip)   (1-a) ...</i></td></tr>
+<tr><th id="681">681</th><td><i class="doc"> *     0   +751   +1502   +2252   (skip)       0 ...</i></td></tr>
+<tr><th id="682">682</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="683">683</th><td><i class="doc"> * In fractions of (p_next-&gt;date - p_cur-&gt;date), regardless of actual</i></td></tr>
+<tr><th id="684">684</th><td><i class="doc"> * time unit, the deltas are:</i></td></tr>
+<tr><th id="685">685</th><td><i class="doc"> * (1-a)   (2-b)  (3-c)   (4-d)   (skip)   (1-a) ...</i></td></tr>
+<tr><th id="686">686</th><td><i class="doc"> *     0   +0.25  +0.50   +0.75   (skip)       0 ...</i></td></tr>
+<tr><th id="687">687</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="688">688</th><td><i class="doc"> * This is what we actually use. In our implementation, the values are stored</i></td></tr>
+<tr><th id="689">689</th><td><i class="doc"> * multiplied by 4, as integers.</i></td></tr>
+<tr><th id="690">690</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="691">691</th><td><i class="doc"> * The "current" frame should be displayed at [original time + delta].</i></td></tr>
+<tr><th id="692">692</th><td><i class="doc"> * E.g., when "current" = b (i.e. PCN = abc), start displaying film frame 2</i></td></tr>
+<tr><th id="693">693</th><td><i class="doc"> * at time [original time of b + 751 ticks]. So, when we catch the cadence,</i></td></tr>
+<tr><th id="694">694</th><td><i class="doc"> * we will start mangling the timestamps according to the cadence position</i></td></tr>
+<tr><th id="695">695</th><td><i class="doc"> * of the "current" frame, using the deltas given above. This will cause</i></td></tr>
+<tr><th id="696">696</th><td><i class="doc"> * a one-time jerk, most noticeable if the cadence happens to catch at</i></td></tr>
+<tr><th id="697">697</th><td><i class="doc"> * position "d". (Alternatively, upon lock-on, we could wait until we are</i></td></tr>
+<tr><th id="698">698</th><td><i class="doc"> * at "a" before switching on IVTC, but this makes the maximal delay</i></td></tr>
+<tr><th id="699">699</th><td><i class="doc"> * [max. detection + max. wait] = 3 + 4 = 7 input frames, which comes to</i></td></tr>
+<tr><th id="700">700</th><td><i class="doc"> * 7/30 ~ 0.23 seconds instead of the 3/30 = 0.10 seconds from purely</i></td></tr>
+<tr><th id="701">701</th><td><i class="doc"> * the detection. The one-time jerk is simpler to implement and gives the</i></td></tr>
+<tr><th id="702">702</th><td><i class="doc"> * faster lock-on.)</i></td></tr>
+<tr><th id="703">703</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="704">704</th><td><i class="doc"> * It is clear that "e" is a safe choice for the dropped frame. This can be</i></td></tr>
+<tr><th id="705">705</th><td><i class="doc"> * seen from the timings and the cadence tables. First, consider the timings.</i></td></tr>
+<tr><th id="706">706</th><td><i class="doc"> * If we have only one future frame, "e" is the only one whose PTS, comparing</i></td></tr>
+<tr><th id="707">707</th><td><i class="doc"> * to the film frames, allows dropping it safely. To see this, consider which</i></td></tr>
+<tr><th id="708">708</th><td><i class="doc"> * film frame needs to be rendered as each new input frame arrives. Secondly,</i></td></tr>
+<tr><th id="709">709</th><td><i class="doc"> * consider the cadence tables. It is ok to drop "e", because the same</i></td></tr>
+<tr><th id="710">710</th><td><i class="doc"> * film frame "1" is available also at the next PCN position "eab".</i></td></tr>
+<tr><th id="711">711</th><td><i class="doc"> * (As a side note, it is interesting that Vektor's filter drops "b".</i></td></tr>
+<tr><th id="712">712</th><td><i class="doc"> * See the TVTime sources.)</i></td></tr>
+<tr><th id="713">713</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="714">714</th><td><i class="doc"> * When the filter falls out of film mode, the timestamps of the incoming</i></td></tr>
+<tr><th id="715">715</th><td><i class="doc"> * frames are left untouched. Thus, the output from this filter has a</i></td></tr>
+<tr><th id="716">716</th><td><i class="doc"> * variable framerate: 4/5 of the input framerate when IVTC is active</i></td></tr>
+<tr><th id="717">717</th><td><i class="doc"> * (whether hard or soft), and the same framerate as input when it is not</i></td></tr>
+<tr><th id="718">718</th><td><i class="doc"> * (or when in emergency mode).</i></td></tr>
+<tr><th id="719">719</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="720">720</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="721">721</th><td><i class="doc"> * For other open-source IVTC codes, which may be a useful source for ideas,</i></td></tr>
+<tr><th id="722">722</th><td><i class="doc"> * see the following:</i></td></tr>
+<tr><th id="723">723</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="724">724</th><td><i class="doc"> * The classic filter by Billy Biggs (Vektor). Written in 2001-2003 for</i></td></tr>
+<tr><th id="725">725</th><td><i class="doc"> * TVTime, and adapted into Xine later. In xine-lib 1.1.19, it is at</i></td></tr>
+<tr><th id="726">726</th><td><i class="doc"> * src/post/deinterlace/pulldown.*. Also needed are tvtime.*, and speedy.*.</i></td></tr>
+<tr><th id="727">727</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="728">728</th><td><i class="doc"> * Transcode's ivtc-&gt;decimate-&gt;32detect chain by Thanassis Tsiodras.</i></td></tr>
+<tr><th id="729">729</th><td><i class="doc"> * Written in 2002, added in Transcode 0.6.12. This probably has something</i></td></tr>
+<tr><th id="730">730</th><td><i class="doc"> * to do with the same chain in MPlayer, considering that MPlayer acquired</i></td></tr>
+<tr><th id="731">731</th><td><i class="doc"> * an IVTC filter around the same time. In Transcode 1.1.5, the IVTC part is</i></td></tr>
+<tr><th id="732">732</th><td><i class="doc"> * at filter/filter_ivtc.c. Transcode 1.1.5 sources can be downloaded from</i></td></tr>
+<tr><th id="733">733</th><td><i class="doc"> * <a href="http://developer.berlios.de/project/showfiles.php?group_id=10094">http://developer.berlios.de/project/showfiles.php?group_id=10094</a></i></td></tr>
+<tr><th id="734">734</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="735">735</th><td></td></tr>
+<tr><th id="736">736</th><td><u>#<span data-ppcond="24">endif</span></u></td></tr>
+<tr><th id="737">737</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated while processing <a href='algo_basic.c.html'>vlc/modules/video_filter/deinterlace/algo_basic.c</a><br/>Generated on <em>2016-Oct-25</em> from project vlc revision <em>2.2.0-git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

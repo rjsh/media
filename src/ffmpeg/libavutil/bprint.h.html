@@ -1,0 +1,237 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>bprint.h source code [ffmpeg/libavutil/bprint.h] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavutil/bprint.h'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavutil</a>/<a href='bprint.h.html'>bprint.h</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * Copyright (c) 2012 Nicolas George</i></td></tr>
+<tr><th id="3">3</th><td><i> *</i></td></tr>
+<tr><th id="4">4</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="5">5</th><td><i> *</i></td></tr>
+<tr><th id="6">6</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="7">7</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="8">8</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="9">9</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="10">10</th><td><i> *</i></td></tr>
+<tr><th id="11">11</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="12">12</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="13">13</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="14">14</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="15">15</th><td><i> *</i></td></tr>
+<tr><th id="16">16</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="17">17</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="18">18</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="19">19</th><td><i> */</i></td></tr>
+<tr><th id="20">20</th><td></td></tr>
+<tr><th id="21">21</th><td><u>#<span data-ppcond="21">ifndef</span> <span class="macro" data-ref="_M/AVUTIL_BPRINT_H">AVUTIL_BPRINT_H</span></u></td></tr>
+<tr><th id="22">22</th><td><u>#define <dfn class="macro" id="_M/AVUTIL_BPRINT_H" data-ref="_M/AVUTIL_BPRINT_H">AVUTIL_BPRINT_H</dfn></u></td></tr>
+<tr><th id="23">23</th><td></td></tr>
+<tr><th id="24">24</th><td><u>#include &lt;stdarg.h&gt;</u></td></tr>
+<tr><th id="25">25</th><td></td></tr>
+<tr><th id="26">26</th><td><u>#include <a href="attributes.h.html">"attributes.h"</a></u></td></tr>
+<tr><th id="27">27</th><td><u>#include <a href="avstring.h.html">"avstring.h"</a></u></td></tr>
+<tr><th id="28">28</th><td></td></tr>
+<tr><th id="29">29</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="30">30</th><td><i class="doc"> * Define a structure with extra padding to a fixed size</i></td></tr>
+<tr><th id="31">31</th><td><i class="doc"> * This helps ensuring binary compatibility with future versions.</i></td></tr>
+<tr><th id="32">32</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="33">33</th><td></td></tr>
+<tr><th id="34">34</th><td><u>#define <dfn class="macro" id="_M/FF_PAD_STRUCTURE" data-ref="_M/FF_PAD_STRUCTURE">FF_PAD_STRUCTURE</dfn>(name, size, ...) \</u></td></tr>
+<tr><th id="35">35</th><td><u>struct ff_pad_helper_##name { __VA_ARGS__ }; \</u></td></tr>
+<tr><th id="36">36</th><td><u>typedef struct name { \</u></td></tr>
+<tr><th id="37">37</th><td><u>    __VA_ARGS__ \</u></td></tr>
+<tr><th id="38">38</th><td><u>    char <dfn class="decl" id="AVBPrint::reserved_padding" title='AVBPrint::reserved_padding' data-ref="AVBPrint::reserved_padding">reserved_padding</dfn>[size - sizeof(struct ff_pad_helper_##name)]; \</u></td></tr>
+<tr><th id="39">39</th><td><u>} name;</u></td></tr>
+<tr><th id="40">40</th><td></td></tr>
+<tr><th id="41">41</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="42">42</th><td><i class="doc"> * Buffer to print data progressively</i></td></tr>
+<tr><th id="43">43</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="44">44</th><td><i class="doc"> * The string buffer grows as necessary and is always 0-terminated.</i></td></tr>
+<tr><th id="45">45</th><td><i class="doc"> * The content of the string is never accessed, and thus is</i></td></tr>
+<tr><th id="46">46</th><td><i class="doc"> * encoding-agnostic and can even hold binary data.</i></td></tr>
+<tr><th id="47">47</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="48">48</th><td><i class="doc"> * Small buffers are kept in the structure itself, and thus require no</i></td></tr>
+<tr><th id="49">49</th><td><i class="doc"> * memory allocation at all (unless the contents of the buffer is needed</i></td></tr>
+<tr><th id="50">50</th><td><i class="doc"> * after the structure goes out of scope). This is almost as lightweight as</i></td></tr>
+<tr><th id="51">51</th><td><i class="doc"> * declaring a local "char buf[512]".</i></td></tr>
+<tr><th id="52">52</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="53">53</th><td><i class="doc"> * The length of the string can go beyond the allocated size: the buffer is</i></td></tr>
+<tr><th id="54">54</th><td><i class="doc"> * then truncated, but the functions still keep account of the actual total</i></td></tr>
+<tr><th id="55">55</th><td><i class="doc"> * length.</i></td></tr>
+<tr><th id="56">56</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="57">57</th><td><i class="doc"> * In other words, buf-&gt;len can be greater than buf-&gt;size and records the</i></td></tr>
+<tr><th id="58">58</th><td><i class="doc"> * total length of what would have been to the buffer if there had been</i></td></tr>
+<tr><th id="59">59</th><td><i class="doc"> * enough memory.</i></td></tr>
+<tr><th id="60">60</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="61">61</th><td><i class="doc"> * Append operations do not need to be tested for failure: if a memory</i></td></tr>
+<tr><th id="62">62</th><td><i class="doc"> * allocation fails, data stop being appended to the buffer, but the length</i></td></tr>
+<tr><th id="63">63</th><td><i class="doc"> * is still updated. This situation can be tested with</i></td></tr>
+<tr><th id="64">64</th><td><i class="doc"> * av_bprint_is_complete().</i></td></tr>
+<tr><th id="65">65</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="66">66</th><td><i class="doc"> * The size_max field determines several possible behaviours:</i></td></tr>
+<tr><th id="67">67</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="68">68</th><td><i class="doc"> * size_max = -1 (= UINT_MAX) or any large value will let the buffer be</i></td></tr>
+<tr><th id="69">69</th><td><i class="doc"> * reallocated as necessary, with an amortized linear cost.</i></td></tr>
+<tr><th id="70">70</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="71">71</th><td><i class="doc"> * size_max = 0 prevents writing anything to the buffer: only the total</i></td></tr>
+<tr><th id="72">72</th><td><i class="doc"> * length is computed. The write operations can then possibly be repeated in</i></td></tr>
+<tr><th id="73">73</th><td><i class="doc"> * a buffer with exactly the necessary size</i></td></tr>
+<tr><th id="74">74</th><td><i class="doc"> * (using size_init = size_max = len + 1).</i></td></tr>
+<tr><th id="75">75</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="76">76</th><td><i class="doc"> * size_max = 1 is automatically replaced by the exact size available in the</i></td></tr>
+<tr><th id="77">77</th><td><i class="doc"> * structure itself, thus ensuring no dynamic memory allocation. The</i></td></tr>
+<tr><th id="78">78</th><td><i class="doc"> * internal buffer is large enough to hold a reasonable paragraph of text,</i></td></tr>
+<tr><th id="79">79</th><td><i class="doc"> * such as the current paragraph.</i></td></tr>
+<tr><th id="80">80</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="81">81</th><td></td></tr>
+<tr><th id="82">82</th><td><a class="macro" href="#34" title="struct ff_pad_helper_AVBPrint { char *str; unsigned len; unsigned size; unsigned size_max; char reserved_internal_buffer[1]; }; typedef struct AVBPrint { char *str; unsigned len; unsigned size; unsigned size_max; char reserved_internal_buffer[1]; char reserved_padding[1024 - sizeof(struct ff_pad_helper_AVBPrint)]; } AVBPrint;" data-ref="_M/FF_PAD_STRUCTURE">FF_PAD_STRUCTURE</a>(<dfn class="type def" id="AVBPrint" title='AVBPrint' data-ref="AVBPrint"><dfn class="typedef" id="AVBPrint" title='AVBPrint' data-type='struct AVBPrint' data-ref="AVBPrint"><a class="type" href="#82" title='AVBPrint' data-ref="AVBPrint">AVBPrint</a></dfn></dfn>, <var>1024</var>,</td></tr>
+<tr><th id="83">83</th><td>    <em>char</em> *<dfn class="decl" id="ff_pad_helper_AVBPrint::str" title='ff_pad_helper_AVBPrint::str' data-ref="ff_pad_helper_AVBPrint::str"><dfn class="decl" id="AVBPrint::str" title='AVBPrint::str' data-ref="AVBPrint::str">str</dfn></dfn>;         <i class="doc">/**&lt; string so far */</i></td></tr>
+<tr><th id="84">84</th><td>    <em>unsigned</em> <dfn class="decl" id="ff_pad_helper_AVBPrint::len" title='ff_pad_helper_AVBPrint::len' data-ref="ff_pad_helper_AVBPrint::len"><dfn class="decl" id="AVBPrint::len" title='AVBPrint::len' data-ref="AVBPrint::len">len</dfn></dfn>;      <i class="doc">/**&lt; length so far */</i></td></tr>
+<tr><th id="85">85</th><td>    <em>unsigned</em> <dfn class="decl" id="ff_pad_helper_AVBPrint::size" title='ff_pad_helper_AVBPrint::size' data-ref="ff_pad_helper_AVBPrint::size"><dfn class="decl" id="AVBPrint::size" title='AVBPrint::size' data-ref="AVBPrint::size">size</dfn></dfn>;     <i class="doc">/**&lt; allocated memory */</i></td></tr>
+<tr><th id="86">86</th><td>    <em>unsigned</em> <dfn class="decl" id="ff_pad_helper_AVBPrint::size_max" title='ff_pad_helper_AVBPrint::size_max' data-ref="ff_pad_helper_AVBPrint::size_max"><dfn class="decl" id="AVBPrint::size_max" title='AVBPrint::size_max' data-ref="AVBPrint::size_max">size_max</dfn></dfn>; <i class="doc">/**&lt; maximum allocated memory */</i></td></tr>
+<tr><th id="87">87</th><td>    <em>char</em> <dfn class="decl" id="ff_pad_helper_AVBPrint::reserved_internal_buffer" title='ff_pad_helper_AVBPrint::reserved_internal_buffer' data-ref="ff_pad_helper_AVBPrint::reserved_internal_buffer"><dfn class="decl" id="AVBPrint::reserved_internal_buffer" title='AVBPrint::reserved_internal_buffer' data-ref="AVBPrint::reserved_internal_buffer">reserved_internal_buffer</dfn></dfn>[<var>1</var>];</td></tr>
+<tr><th id="88">88</th><td>)</td></tr>
+<tr><th id="89">89</th><td></td></tr>
+<tr><th id="90">90</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="91">91</th><td><i class="doc"> * Convenience macros for special values for av_bprint_init() size_max</i></td></tr>
+<tr><th id="92">92</th><td><i class="doc"> * parameter.</i></td></tr>
+<tr><th id="93">93</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="94">94</th><td><u>#define <dfn class="macro" id="_M/AV_BPRINT_SIZE_UNLIMITED" data-ref="_M/AV_BPRINT_SIZE_UNLIMITED">AV_BPRINT_SIZE_UNLIMITED</dfn>  ((unsigned)-1)</u></td></tr>
+<tr><th id="95">95</th><td><u>#define <dfn class="macro" id="_M/AV_BPRINT_SIZE_AUTOMATIC" data-ref="_M/AV_BPRINT_SIZE_AUTOMATIC">AV_BPRINT_SIZE_AUTOMATIC</dfn>  1</u></td></tr>
+<tr><th id="96">96</th><td><u>#define <dfn class="macro" id="_M/AV_BPRINT_SIZE_COUNT_ONLY" data-ref="_M/AV_BPRINT_SIZE_COUNT_ONLY">AV_BPRINT_SIZE_COUNT_ONLY</dfn> 0</u></td></tr>
+<tr><th id="97">97</th><td></td></tr>
+<tr><th id="98">98</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="99">99</th><td><i class="doc"> * Init a print buffer.</i></td></tr>
+<tr><th id="100">100</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="101">101</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">buf</span>        buffer to init</i></td></tr>
+<tr><th id="102">102</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">size_init</span>  initial size (including the final 0)</i></td></tr>
+<tr><th id="103">103</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">size_max</span>   maximum size;</i></td></tr>
+<tr><th id="104">104</th><td><i class="doc"> *                   0 means do not write anything, just count the length;</i></td></tr>
+<tr><th id="105">105</th><td><i class="doc"> *                   1 is replaced by the maximum value for automatic storage;</i></td></tr>
+<tr><th id="106">106</th><td><i class="doc"> *                   any large value means that the internal buffer will be</i></td></tr>
+<tr><th id="107">107</th><td><i class="doc"> *                   reallocated as needed up to that limit; -1 is converted to</i></td></tr>
+<tr><th id="108">108</th><td><i class="doc"> *                   UINT_MAX, the largest limit possible.</i></td></tr>
+<tr><th id="109">109</th><td><i class="doc"> *                   Check also AV_BPRINT_SIZE_* macros.</i></td></tr>
+<tr><th id="110">110</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="111">111</th><td><em>void</em> <dfn class="decl" id="av_bprint_init" title='av_bprint_init' data-ref="av_bprint_init">av_bprint_init</dfn>(<a class="typedef" href="#82" title='AVBPrint' data-type='struct AVBPrint' data-ref="AVBPrint">AVBPrint</a> *<dfn class="local col1 decl" id="61buf" title='buf' data-type='AVBPrint *' data-ref="61buf">buf</dfn>, <em>unsigned</em> <dfn class="local col2 decl" id="62size_init" title='size_init' data-type='unsigned int' data-ref="62size_init">size_init</dfn>, <em>unsigned</em> <dfn class="local col3 decl" id="63size_max" title='size_max' data-type='unsigned int' data-ref="63size_max">size_max</dfn>);</td></tr>
+<tr><th id="112">112</th><td></td></tr>
+<tr><th id="113">113</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="114">114</th><td><i class="doc"> * Init a print buffer using a pre-existing buffer.</i></td></tr>
+<tr><th id="115">115</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="116">116</th><td><i class="doc"> * The buffer will not be reallocated.</i></td></tr>
+<tr><th id="117">117</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="118">118</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">buf</span>     buffer structure to init</i></td></tr>
+<tr><th id="119">119</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">buffer</span>  byte buffer to use for the string data</i></td></tr>
+<tr><th id="120">120</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">size</span>    size of buffer</i></td></tr>
+<tr><th id="121">121</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="122">122</th><td><em>void</em> <dfn class="decl" id="av_bprint_init_for_buffer" title='av_bprint_init_for_buffer' data-ref="av_bprint_init_for_buffer">av_bprint_init_for_buffer</dfn>(<a class="typedef" href="#82" title='AVBPrint' data-type='struct AVBPrint' data-ref="AVBPrint">AVBPrint</a> *<dfn class="local col4 decl" id="64buf" title='buf' data-type='AVBPrint *' data-ref="64buf">buf</dfn>, <em>char</em> *<dfn class="local col5 decl" id="65buffer" title='buffer' data-type='char *' data-ref="65buffer">buffer</dfn>, <em>unsigned</em> <dfn class="local col6 decl" id="66size" title='size' data-type='unsigned int' data-ref="66size">size</dfn>);</td></tr>
+<tr><th id="123">123</th><td></td></tr>
+<tr><th id="124">124</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="125">125</th><td><i class="doc"> * Append a formatted string to a print buffer.</i></td></tr>
+<tr><th id="126">126</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="127">127</th><td><em>void</em> <dfn class="decl" id="av_bprintf" title='av_bprintf' data-ref="av_bprintf">av_bprintf</dfn>(<a class="typedef" href="#82" title='AVBPrint' data-type='struct AVBPrint' data-ref="AVBPrint">AVBPrint</a> *<dfn class="local col7 decl" id="67buf" title='buf' data-type='AVBPrint *' data-ref="67buf">buf</dfn>, <em>const</em> <em>char</em> *<dfn class="local col8 decl" id="68fmt" title='fmt' data-type='const char *' data-ref="68fmt">fmt</dfn>, ...) <a class="macro" href="attributes.h.html#156" title="__attribute__((__format__(__printf__, 2, 3)))" data-ref="_M/av_printf_format">av_printf_format</a>(<var>2</var>, <var>3</var>);</td></tr>
+<tr><th id="128">128</th><td></td></tr>
+<tr><th id="129">129</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="130">130</th><td><i class="doc"> * Append a formatted string to a print buffer.</i></td></tr>
+<tr><th id="131">131</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="132">132</th><td><em>void</em> <dfn class="decl" id="av_vbprintf" title='av_vbprintf' data-ref="av_vbprintf">av_vbprintf</dfn>(<a class="typedef" href="#82" title='AVBPrint' data-type='struct AVBPrint' data-ref="AVBPrint">AVBPrint</a> *<dfn class="local col9 decl" id="69buf" title='buf' data-type='AVBPrint *' data-ref="69buf">buf</dfn>, <em>const</em> <em>char</em> *<dfn class="local col0 decl" id="70fmt" title='fmt' data-type='const char *' data-ref="70fmt">fmt</dfn>, <span class='typedef' title='va_list' data-type='__gnuc_va_list' data-ref="va_list">va_list</span> <dfn class="local col1 decl" id="71vl_arg" title='vl_arg' data-type='__va_list_tag *' data-ref="71vl_arg">vl_arg</dfn>);</td></tr>
+<tr><th id="133">133</th><td></td></tr>
+<tr><th id="134">134</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="135">135</th><td><i class="doc"> * Append char c n times to a print buffer.</i></td></tr>
+<tr><th id="136">136</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="137">137</th><td><em>void</em> <dfn class="decl" id="av_bprint_chars" title='av_bprint_chars' data-ref="av_bprint_chars">av_bprint_chars</dfn>(<a class="typedef" href="#82" title='AVBPrint' data-type='struct AVBPrint' data-ref="AVBPrint">AVBPrint</a> *<dfn class="local col2 decl" id="72buf" title='buf' data-type='AVBPrint *' data-ref="72buf">buf</dfn>, <em>char</em> <dfn class="local col3 decl" id="73c" title='c' data-type='char' data-ref="73c">c</dfn>, <em>unsigned</em> <dfn class="local col4 decl" id="74n" title='n' data-type='unsigned int' data-ref="74n">n</dfn>);</td></tr>
+<tr><th id="138">138</th><td></td></tr>
+<tr><th id="139">139</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="140">140</th><td><i class="doc"> * Append data to a print buffer.</i></td></tr>
+<tr><th id="141">141</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="142">142</th><td><i class="doc"> * param buf  bprint buffer to use</i></td></tr>
+<tr><th id="143">143</th><td><i class="doc"> * param data pointer to data</i></td></tr>
+<tr><th id="144">144</th><td><i class="doc"> * param size size of data</i></td></tr>
+<tr><th id="145">145</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="146">146</th><td><em>void</em> <dfn class="decl" id="av_bprint_append_data" title='av_bprint_append_data' data-ref="av_bprint_append_data">av_bprint_append_data</dfn>(<a class="typedef" href="#82" title='AVBPrint' data-type='struct AVBPrint' data-ref="AVBPrint">AVBPrint</a> *<dfn class="local col5 decl" id="75buf" title='buf' data-type='AVBPrint *' data-ref="75buf">buf</dfn>, <em>const</em> <em>char</em> *<dfn class="local col6 decl" id="76data" title='data' data-type='const char *' data-ref="76data">data</dfn>, <em>unsigned</em> <dfn class="local col7 decl" id="77size" title='size' data-type='unsigned int' data-ref="77size">size</dfn>);</td></tr>
+<tr><th id="147">147</th><td></td></tr>
+<tr><th id="148">148</th><td><b>struct</b> <a class="type" href="../../include/time.h.html#tm" title='tm' data-ref="tm" id="tm">tm</a>;</td></tr>
+<tr><th id="149">149</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="150">150</th><td><i class="doc"> * Append a formatted date and time to a print buffer.</i></td></tr>
+<tr><th id="151">151</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="152">152</th><td><i class="doc"> * param buf  bprint buffer to use</i></td></tr>
+<tr><th id="153">153</th><td><i class="doc"> * param fmt  date and time format string, see strftime()</i></td></tr>
+<tr><th id="154">154</th><td><i class="doc"> * param tm   broken-down time structure to translate</i></td></tr>
+<tr><th id="155">155</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="156">156</th><td><i class="doc"> * <span class="command">@note</span> due to poor design of the standard strftime function, it may</i></td></tr>
+<tr><th id="157">157</th><td><i class="doc"> * produce poor results if the format string expands to a very long text and</i></td></tr>
+<tr><th id="158">158</th><td><i class="doc"> * the bprint buffer is near the limit stated by the size_max option.</i></td></tr>
+<tr><th id="159">159</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="160">160</th><td><em>void</em> <dfn class="decl" id="av_bprint_strftime" title='av_bprint_strftime' data-ref="av_bprint_strftime">av_bprint_strftime</dfn>(<a class="typedef" href="#82" title='AVBPrint' data-type='struct AVBPrint' data-ref="AVBPrint">AVBPrint</a> *<dfn class="local col8 decl" id="78buf" title='buf' data-type='AVBPrint *' data-ref="78buf">buf</dfn>, <em>const</em> <em>char</em> *<dfn class="local col9 decl" id="79fmt" title='fmt' data-type='const char *' data-ref="79fmt">fmt</dfn>, <em>const</em> <b>struct</b> <a class="type" href="../../include/time.h.html#tm" title='tm' data-ref="tm">tm</a> *<dfn class="local col0 decl" id="80tm" title='tm' data-type='const struct tm *' data-ref="80tm">tm</dfn>);</td></tr>
+<tr><th id="161">161</th><td></td></tr>
+<tr><th id="162">162</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="163">163</th><td><i class="doc"> * Allocate bytes in the buffer for external use.</i></td></tr>
+<tr><th id="164">164</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="165">165</th><td><i class="doc"> * <span class="command">@param</span>[in]  <span class="arg">buf</span>          buffer structure</i></td></tr>
+<tr><th id="166">166</th><td><i class="doc"> * <span class="command">@param</span>[in]  <span class="arg">size</span>         required size</i></td></tr>
+<tr><th id="167">167</th><td><i class="doc"> * <span class="command">@param</span>[out] <span class="arg">mem</span>          pointer to the memory area</i></td></tr>
+<tr><th id="168">168</th><td><i class="doc"> * <span class="command">@param</span>[out] <span class="arg">actual_size</span>  size of the memory area after allocation;</i></td></tr>
+<tr><th id="169">169</th><td><i class="doc"> *                          can be larger or smaller than size</i></td></tr>
+<tr><th id="170">170</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="171">171</th><td><em>void</em> <dfn class="decl" id="av_bprint_get_buffer" title='av_bprint_get_buffer' data-ref="av_bprint_get_buffer">av_bprint_get_buffer</dfn>(<a class="typedef" href="#82" title='AVBPrint' data-type='struct AVBPrint' data-ref="AVBPrint">AVBPrint</a> *<dfn class="local col1 decl" id="81buf" title='buf' data-type='AVBPrint *' data-ref="81buf">buf</dfn>, <em>unsigned</em> <dfn class="local col2 decl" id="82size" title='size' data-type='unsigned int' data-ref="82size">size</dfn>,</td></tr>
+<tr><th id="172">172</th><td>                          <em>unsigned</em> <em>char</em> **<dfn class="local col3 decl" id="83mem" title='mem' data-type='unsigned char **' data-ref="83mem">mem</dfn>, <em>unsigned</em> *<dfn class="local col4 decl" id="84actual_size" title='actual_size' data-type='unsigned int *' data-ref="84actual_size">actual_size</dfn>);</td></tr>
+<tr><th id="173">173</th><td></td></tr>
+<tr><th id="174">174</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="175">175</th><td><i class="doc"> * Reset the string to "" but keep internal allocated data.</i></td></tr>
+<tr><th id="176">176</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="177">177</th><td><em>void</em> <dfn class="decl" id="av_bprint_clear" title='av_bprint_clear' data-ref="av_bprint_clear">av_bprint_clear</dfn>(<a class="typedef" href="#82" title='AVBPrint' data-type='struct AVBPrint' data-ref="AVBPrint">AVBPrint</a> *<dfn class="local col5 decl" id="85buf" title='buf' data-type='AVBPrint *' data-ref="85buf">buf</dfn>);</td></tr>
+<tr><th id="178">178</th><td></td></tr>
+<tr><th id="179">179</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="180">180</th><td><i class="doc"> * Test if the print buffer is complete (not truncated).</i></td></tr>
+<tr><th id="181">181</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="182">182</th><td><i class="doc"> * It may have been truncated due to a memory allocation failure</i></td></tr>
+<tr><th id="183">183</th><td><i class="doc"> * or the size_max limit (compare size and size_max if necessary).</i></td></tr>
+<tr><th id="184">184</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="185">185</th><td><em>static</em> <b>inline</b> <em>int</em> <dfn class="decl def" id="av_bprint_is_complete" title='av_bprint_is_complete' data-ref="av_bprint_is_complete">av_bprint_is_complete</dfn>(<em>const</em> <a class="typedef" href="#82" title='AVBPrint' data-type='struct AVBPrint' data-ref="AVBPrint">AVBPrint</a> *<dfn class="local col6 decl" id="86buf" title='buf' data-type='const AVBPrint *' data-ref="86buf">buf</dfn>)</td></tr>
+<tr><th id="186">186</th><td>{</td></tr>
+<tr><th id="187">187</th><td>    <b>return</b> <a class="local col6 ref" href="#86buf" title='buf' data-ref="86buf">buf</a>-&gt;<a class="ref" href="#82" title='AVBPrint::len' data-ref="AVBPrint::len">len</a> &lt; <a class="local col6 ref" href="#86buf" title='buf' data-ref="86buf">buf</a>-&gt;<a class="ref" href="#82" title='AVBPrint::size' data-ref="AVBPrint::size">size</a>;</td></tr>
+<tr><th id="188">188</th><td>}</td></tr>
+<tr><th id="189">189</th><td></td></tr>
+<tr><th id="190">190</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="191">191</th><td><i class="doc"> * Finalize a print buffer.</i></td></tr>
+<tr><th id="192">192</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="193">193</th><td><i class="doc"> * The print buffer can no longer be used afterwards,</i></td></tr>
+<tr><th id="194">194</th><td><i class="doc"> * but the len and size fields are still valid.</i></td></tr>
+<tr><th id="195">195</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="196">196</th><td><i class="doc"> * <span class="command">@arg</span>[out] ret_str  if not NULL, used to return a permanent copy of the</i></td></tr>
+<tr><th id="197">197</th><td><i class="doc"> *                    buffer contents, or NULL if memory allocation fails;</i></td></tr>
+<tr><th id="198">198</th><td><i class="doc"> *                    if NULL, the buffer is discarded and freed</i></td></tr>
+<tr><th id="199">199</th><td><i class="doc"> * <span class="command">@return</span>  0 for success or error code (probably AVERROR(ENOMEM))</i></td></tr>
+<tr><th id="200">200</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="201">201</th><td><em>int</em> <dfn class="decl" id="av_bprint_finalize" title='av_bprint_finalize' data-ref="av_bprint_finalize">av_bprint_finalize</dfn>(<a class="typedef" href="#82" title='AVBPrint' data-type='struct AVBPrint' data-ref="AVBPrint">AVBPrint</a> *<dfn class="local col7 decl" id="87buf" title='buf' data-type='AVBPrint *' data-ref="87buf">buf</dfn>, <em>char</em> **<dfn class="local col8 decl" id="88ret_str" title='ret_str' data-type='char **' data-ref="88ret_str">ret_str</dfn>);</td></tr>
+<tr><th id="202">202</th><td></td></tr>
+<tr><th id="203">203</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="204">204</th><td><i class="doc"> * Escape the content in src and append it to dstbuf.</i></td></tr>
+<tr><th id="205">205</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="206">206</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">dstbuf</span>        already inited destination bprint buffer</i></td></tr>
+<tr><th id="207">207</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">src</span>           string containing the text to escape</i></td></tr>
+<tr><th id="208">208</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">special_chars</span> string containing the special characters which</i></td></tr>
+<tr><th id="209">209</th><td><i class="doc"> *                      need to be escaped, can be NULL</i></td></tr>
+<tr><th id="210">210</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">mode</span>          escape mode to employ, see AV_ESCAPE_MODE_* macros.</i></td></tr>
+<tr><th id="211">211</th><td><i class="doc"> *                      Any unknown value for mode will be considered equivalent to</i></td></tr>
+<tr><th id="212">212</th><td><i class="doc"> *                      AV_ESCAPE_MODE_BACKSLASH, but this behaviour can change without</i></td></tr>
+<tr><th id="213">213</th><td><i class="doc"> *                      notice.</i></td></tr>
+<tr><th id="214">214</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">flags</span>         flags which control how to escape, see AV_ESCAPE_FLAG_* macros</i></td></tr>
+<tr><th id="215">215</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="216">216</th><td><em>void</em> <dfn class="decl" id="av_bprint_escape" title='av_bprint_escape' data-ref="av_bprint_escape">av_bprint_escape</dfn>(<a class="typedef" href="#82" title='AVBPrint' data-type='struct AVBPrint' data-ref="AVBPrint">AVBPrint</a> *<dfn class="local col9 decl" id="89dstbuf" title='dstbuf' data-type='AVBPrint *' data-ref="89dstbuf">dstbuf</dfn>, <em>const</em> <em>char</em> *<dfn class="local col0 decl" id="90src" title='src' data-type='const char *' data-ref="90src">src</dfn>, <em>const</em> <em>char</em> *<dfn class="local col1 decl" id="91special_chars" title='special_chars' data-type='const char *' data-ref="91special_chars">special_chars</dfn>,</td></tr>
+<tr><th id="217">217</th><td>                      <b>enum</b> <a class="type" href="avstring.h.html#AVEscapeMode" title='AVEscapeMode' data-ref="AVEscapeMode">AVEscapeMode</a> <dfn class="local col2 decl" id="92mode" title='mode' data-type='enum AVEscapeMode' data-ref="92mode">mode</dfn>, <em>int</em> <dfn class="local col3 decl" id="93flags" title='flags' data-type='int' data-ref="93flags">flags</dfn>);</td></tr>
+<tr><th id="218">218</th><td></td></tr>
+<tr><th id="219">219</th><td><u>#<span data-ppcond="21">endif</span> /* AVUTIL_BPRINT_H */</u></td></tr>
+<tr><th id="220">220</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated while processing <a href='../libavdevice/alsa_dec.c.html'>ffmpeg/libavdevice/alsa_dec.c</a><br/>Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

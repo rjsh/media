@@ -1,0 +1,355 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>swscale.h source code [ffmpeg/libswscale/swscale.h] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="SwsFilter,SwsVector "/>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libswscale/swscale.h'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libswscale</a>/<a href='swscale.h.html'>swscale.h</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * Copyright (C) 2001-2011 Michael Niedermayer &lt;michaelni@gmx.at&gt;</i></td></tr>
+<tr><th id="3">3</th><td><i> *</i></td></tr>
+<tr><th id="4">4</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="5">5</th><td><i> *</i></td></tr>
+<tr><th id="6">6</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="7">7</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="8">8</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="9">9</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="10">10</th><td><i> *</i></td></tr>
+<tr><th id="11">11</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="12">12</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="13">13</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="14">14</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="15">15</th><td><i> *</i></td></tr>
+<tr><th id="16">16</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="17">17</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="18">18</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="19">19</th><td><i> */</i></td></tr>
+<tr><th id="20">20</th><td></td></tr>
+<tr><th id="21">21</th><td><u>#<span data-ppcond="21">ifndef</span> <span class="macro" data-ref="_M/SWSCALE_SWSCALE_H">SWSCALE_SWSCALE_H</span></u></td></tr>
+<tr><th id="22">22</th><td><u>#define <dfn class="macro" id="_M/SWSCALE_SWSCALE_H" data-ref="_M/SWSCALE_SWSCALE_H">SWSCALE_SWSCALE_H</dfn></u></td></tr>
+<tr><th id="23">23</th><td></td></tr>
+<tr><th id="24">24</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="25">25</th><td><i class="doc"> *<span class="command"> @file</span></i></td></tr>
+<tr><th id="26">26</th><td><i class="doc"> * <span class="command">@ingroup</span> <span class="verb">libsws</span></i></td></tr>
+<tr><th id="27">27</th><td><i class="doc"> * external API header</i></td></tr>
+<tr><th id="28">28</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="29">29</th><td></td></tr>
+<tr><th id="30">30</th><td><u>#include &lt;stdint.h&gt;</u></td></tr>
+<tr><th id="31">31</th><td></td></tr>
+<tr><th id="32">32</th><td><u>#include <a href="../libavutil/avutil.h.html">"libavutil/avutil.h"</a></u></td></tr>
+<tr><th id="33">33</th><td><u>#include <a href="../libavutil/log.h.html">"libavutil/log.h"</a></u></td></tr>
+<tr><th id="34">34</th><td><u>#include <a href="../libavutil/pixfmt.h.html">"libavutil/pixfmt.h"</a></u></td></tr>
+<tr><th id="35">35</th><td><u>#include <a href="version.h.html">"version.h"</a></u></td></tr>
+<tr><th id="36">36</th><td></td></tr>
+<tr><th id="37">37</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="38">38</th><td><i class="doc"> * <span class="command">@defgroup</span> <span class="verb">libsws libswscale</span></i></td></tr>
+<tr><th id="39">39</th><td><i class="doc"> * Color conversion and scaling library.</i></td></tr>
+<tr><th id="40">40</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="41">41</th><td><i class="doc"> * @{</i></td></tr>
+<tr><th id="42">42</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="43">43</th><td><i class="doc"> * Return the LIBSWSCALE_VERSION_INT constant.</i></td></tr>
+<tr><th id="44">44</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="45">45</th><td><em>unsigned</em> <dfn class="decl" id="swscale_version" title='swscale_version' data-ref="swscale_version">swscale_version</dfn>(<em>void</em>);</td></tr>
+<tr><th id="46">46</th><td></td></tr>
+<tr><th id="47">47</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="48">48</th><td><i class="doc"> * Return the libswscale build-time configuration.</i></td></tr>
+<tr><th id="49">49</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="50">50</th><td><em>const</em> <em>char</em> *<dfn class="decl" id="swscale_configuration" title='swscale_configuration' data-ref="swscale_configuration">swscale_configuration</dfn>(<em>void</em>);</td></tr>
+<tr><th id="51">51</th><td></td></tr>
+<tr><th id="52">52</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="53">53</th><td><i class="doc"> * Return the libswscale license.</i></td></tr>
+<tr><th id="54">54</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="55">55</th><td><em>const</em> <em>char</em> *<dfn class="decl" id="swscale_license" title='swscale_license' data-ref="swscale_license">swscale_license</dfn>(<em>void</em>);</td></tr>
+<tr><th id="56">56</th><td></td></tr>
+<tr><th id="57">57</th><td><i>/* values for the flags, the stuff on the command line is different */</i></td></tr>
+<tr><th id="58">58</th><td><u>#define <dfn class="macro" id="_M/SWS_FAST_BILINEAR" data-ref="_M/SWS_FAST_BILINEAR">SWS_FAST_BILINEAR</dfn>     1</u></td></tr>
+<tr><th id="59">59</th><td><u>#define <dfn class="macro" id="_M/SWS_BILINEAR" data-ref="_M/SWS_BILINEAR">SWS_BILINEAR</dfn>          2</u></td></tr>
+<tr><th id="60">60</th><td><u>#define <dfn class="macro" id="_M/SWS_BICUBIC" data-ref="_M/SWS_BICUBIC">SWS_BICUBIC</dfn>           4</u></td></tr>
+<tr><th id="61">61</th><td><u>#define <dfn class="macro" id="_M/SWS_X" data-ref="_M/SWS_X">SWS_X</dfn>                 8</u></td></tr>
+<tr><th id="62">62</th><td><u>#define <dfn class="macro" id="_M/SWS_POINT" data-ref="_M/SWS_POINT">SWS_POINT</dfn>          0x10</u></td></tr>
+<tr><th id="63">63</th><td><u>#define <dfn class="macro" id="_M/SWS_AREA" data-ref="_M/SWS_AREA">SWS_AREA</dfn>           0x20</u></td></tr>
+<tr><th id="64">64</th><td><u>#define <dfn class="macro" id="_M/SWS_BICUBLIN" data-ref="_M/SWS_BICUBLIN">SWS_BICUBLIN</dfn>       0x40</u></td></tr>
+<tr><th id="65">65</th><td><u>#define <dfn class="macro" id="_M/SWS_GAUSS" data-ref="_M/SWS_GAUSS">SWS_GAUSS</dfn>          0x80</u></td></tr>
+<tr><th id="66">66</th><td><u>#define <dfn class="macro" id="_M/SWS_SINC" data-ref="_M/SWS_SINC">SWS_SINC</dfn>          0x100</u></td></tr>
+<tr><th id="67">67</th><td><u>#define <dfn class="macro" id="_M/SWS_LANCZOS" data-ref="_M/SWS_LANCZOS">SWS_LANCZOS</dfn>       0x200</u></td></tr>
+<tr><th id="68">68</th><td><u>#define <dfn class="macro" id="_M/SWS_SPLINE" data-ref="_M/SWS_SPLINE">SWS_SPLINE</dfn>        0x400</u></td></tr>
+<tr><th id="69">69</th><td></td></tr>
+<tr><th id="70">70</th><td><u>#define <dfn class="macro" id="_M/SWS_SRC_V_CHR_DROP_MASK" data-ref="_M/SWS_SRC_V_CHR_DROP_MASK">SWS_SRC_V_CHR_DROP_MASK</dfn>     0x30000</u></td></tr>
+<tr><th id="71">71</th><td><u>#define <dfn class="macro" id="_M/SWS_SRC_V_CHR_DROP_SHIFT" data-ref="_M/SWS_SRC_V_CHR_DROP_SHIFT">SWS_SRC_V_CHR_DROP_SHIFT</dfn>    16</u></td></tr>
+<tr><th id="72">72</th><td></td></tr>
+<tr><th id="73">73</th><td><u>#define <dfn class="macro" id="_M/SWS_PARAM_DEFAULT" data-ref="_M/SWS_PARAM_DEFAULT">SWS_PARAM_DEFAULT</dfn>           123456</u></td></tr>
+<tr><th id="74">74</th><td></td></tr>
+<tr><th id="75">75</th><td><u>#define <dfn class="macro" id="_M/SWS_PRINT_INFO" data-ref="_M/SWS_PRINT_INFO">SWS_PRINT_INFO</dfn>              0x1000</u></td></tr>
+<tr><th id="76">76</th><td></td></tr>
+<tr><th id="77">77</th><td><i>//the following 3 flags are not completely implemented</i></td></tr>
+<tr><th id="78">78</th><td><i>//internal chrominance subsampling info</i></td></tr>
+<tr><th id="79">79</th><td><u>#define <dfn class="macro" id="_M/SWS_FULL_CHR_H_INT" data-ref="_M/SWS_FULL_CHR_H_INT">SWS_FULL_CHR_H_INT</dfn>    0x2000</u></td></tr>
+<tr><th id="80">80</th><td><i>//input subsampling info</i></td></tr>
+<tr><th id="81">81</th><td><u>#define <dfn class="macro" id="_M/SWS_FULL_CHR_H_INP" data-ref="_M/SWS_FULL_CHR_H_INP">SWS_FULL_CHR_H_INP</dfn>    0x4000</u></td></tr>
+<tr><th id="82">82</th><td><u>#define <dfn class="macro" id="_M/SWS_DIRECT_BGR" data-ref="_M/SWS_DIRECT_BGR">SWS_DIRECT_BGR</dfn>        0x8000</u></td></tr>
+<tr><th id="83">83</th><td><u>#define <dfn class="macro" id="_M/SWS_ACCURATE_RND" data-ref="_M/SWS_ACCURATE_RND">SWS_ACCURATE_RND</dfn>      0x40000</u></td></tr>
+<tr><th id="84">84</th><td><u>#define <dfn class="macro" id="_M/SWS_BITEXACT" data-ref="_M/SWS_BITEXACT">SWS_BITEXACT</dfn>          0x80000</u></td></tr>
+<tr><th id="85">85</th><td><u>#define <dfn class="macro" id="_M/SWS_ERROR_DIFFUSION" data-ref="_M/SWS_ERROR_DIFFUSION">SWS_ERROR_DIFFUSION</dfn>  0x800000</u></td></tr>
+<tr><th id="86">86</th><td></td></tr>
+<tr><th id="87">87</th><td><u>#define <dfn class="macro" id="_M/SWS_MAX_REDUCE_CUTOFF" data-ref="_M/SWS_MAX_REDUCE_CUTOFF">SWS_MAX_REDUCE_CUTOFF</dfn> 0.002</u></td></tr>
+<tr><th id="88">88</th><td></td></tr>
+<tr><th id="89">89</th><td><u>#define <dfn class="macro" id="_M/SWS_CS_ITU709" data-ref="_M/SWS_CS_ITU709">SWS_CS_ITU709</dfn>         1</u></td></tr>
+<tr><th id="90">90</th><td><u>#define <dfn class="macro" id="_M/SWS_CS_FCC" data-ref="_M/SWS_CS_FCC">SWS_CS_FCC</dfn>            4</u></td></tr>
+<tr><th id="91">91</th><td><u>#define <dfn class="macro" id="_M/SWS_CS_ITU601" data-ref="_M/SWS_CS_ITU601">SWS_CS_ITU601</dfn>         5</u></td></tr>
+<tr><th id="92">92</th><td><u>#define <dfn class="macro" id="_M/SWS_CS_ITU624" data-ref="_M/SWS_CS_ITU624">SWS_CS_ITU624</dfn>         5</u></td></tr>
+<tr><th id="93">93</th><td><u>#define <dfn class="macro" id="_M/SWS_CS_SMPTE170M" data-ref="_M/SWS_CS_SMPTE170M">SWS_CS_SMPTE170M</dfn>      5</u></td></tr>
+<tr><th id="94">94</th><td><u>#define <dfn class="macro" id="_M/SWS_CS_SMPTE240M" data-ref="_M/SWS_CS_SMPTE240M">SWS_CS_SMPTE240M</dfn>      7</u></td></tr>
+<tr><th id="95">95</th><td><u>#define <dfn class="macro" id="_M/SWS_CS_DEFAULT" data-ref="_M/SWS_CS_DEFAULT">SWS_CS_DEFAULT</dfn>        5</u></td></tr>
+<tr><th id="96">96</th><td><u>#define <dfn class="macro" id="_M/SWS_CS_BT2020" data-ref="_M/SWS_CS_BT2020">SWS_CS_BT2020</dfn>         9</u></td></tr>
+<tr><th id="97">97</th><td></td></tr>
+<tr><th id="98">98</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="99">99</th><td><i class="doc"> * Return a pointer to yuv&lt;-&gt;rgb coefficients for the given colorspace</i></td></tr>
+<tr><th id="100">100</th><td><i class="doc"> * suitable for sws_setColorspaceDetails().</i></td></tr>
+<tr><th id="101">101</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="102">102</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">colorspace</span> One of the SWS_CS_* macros. If invalid,</i></td></tr>
+<tr><th id="103">103</th><td><i class="doc"> * SWS_CS_DEFAULT is used.</i></td></tr>
+<tr><th id="104">104</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="105">105</th><td><em>const</em> <em>int</em> *<dfn class="decl" id="sws_getCoefficients" title='sws_getCoefficients' data-ref="sws_getCoefficients">sws_getCoefficients</dfn>(<em>int</em> <dfn class="local col8 decl" id="8colorspace" title='colorspace' data-type='int' data-ref="8colorspace">colorspace</dfn>);</td></tr>
+<tr><th id="106">106</th><td></td></tr>
+<tr><th id="107">107</th><td><i>// when used for filters they must have an odd number of elements</i></td></tr>
+<tr><th id="108">108</th><td><i>// coeffs cannot be shared between vectors</i></td></tr>
+<tr><th id="109">109</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="SwsVector" title='SwsVector' data-ref="SwsVector"><a class="type" href="#SwsVector" title='SwsVector' data-ref="SwsVector">SwsVector</a></dfn> {</td></tr>
+<tr><th id="110">110</th><td>    <em>double</em> *<dfn class="decl" id="SwsVector::coeff" title='SwsVector::coeff' data-ref="SwsVector::coeff">coeff</dfn>;              <i class="doc">///&lt; pointer to the list of coefficients</i></td></tr>
+<tr><th id="111">111</th><td>    <em>int</em> <dfn class="decl" id="SwsVector::length" title='SwsVector::length' data-ref="SwsVector::length">length</dfn>;                 <i class="doc">///&lt; number of coefficients in the vector</i></td></tr>
+<tr><th id="112">112</th><td>} <dfn class="typedef" id="SwsVector" title='SwsVector' data-type='struct SwsVector' data-ref="SwsVector">SwsVector</dfn>;</td></tr>
+<tr><th id="113">113</th><td></td></tr>
+<tr><th id="114">114</th><td><i>// vectors can be shared</i></td></tr>
+<tr><th id="115">115</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="SwsFilter" title='SwsFilter' data-ref="SwsFilter"><a class="type" href="#SwsFilter" title='SwsFilter' data-ref="SwsFilter">SwsFilter</a></dfn> {</td></tr>
+<tr><th id="116">116</th><td>    <a class="typedef" href="#SwsVector" title='SwsVector' data-type='struct SwsVector' data-ref="SwsVector">SwsVector</a> *<dfn class="decl" id="SwsFilter::lumH" title='SwsFilter::lumH' data-ref="SwsFilter::lumH">lumH</dfn>;</td></tr>
+<tr><th id="117">117</th><td>    <a class="typedef" href="#SwsVector" title='SwsVector' data-type='struct SwsVector' data-ref="SwsVector">SwsVector</a> *<dfn class="decl" id="SwsFilter::lumV" title='SwsFilter::lumV' data-ref="SwsFilter::lumV">lumV</dfn>;</td></tr>
+<tr><th id="118">118</th><td>    <a class="typedef" href="#SwsVector" title='SwsVector' data-type='struct SwsVector' data-ref="SwsVector">SwsVector</a> *<dfn class="decl" id="SwsFilter::chrH" title='SwsFilter::chrH' data-ref="SwsFilter::chrH">chrH</dfn>;</td></tr>
+<tr><th id="119">119</th><td>    <a class="typedef" href="#SwsVector" title='SwsVector' data-type='struct SwsVector' data-ref="SwsVector">SwsVector</a> *<dfn class="decl" id="SwsFilter::chrV" title='SwsFilter::chrV' data-ref="SwsFilter::chrV">chrV</dfn>;</td></tr>
+<tr><th id="120">120</th><td>} <dfn class="typedef" id="SwsFilter" title='SwsFilter' data-type='struct SwsFilter' data-ref="SwsFilter">SwsFilter</dfn>;</td></tr>
+<tr><th id="121">121</th><td></td></tr>
+<tr><th id="122">122</th><td><b>struct</b> <dfn class="type" id="SwsContext" title='SwsContext' data-ref="SwsContext">SwsContext</dfn>;</td></tr>
+<tr><th id="123">123</th><td></td></tr>
+<tr><th id="124">124</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="125">125</th><td><i class="doc"> * Return a positive value if pix_fmt is a supported input format, 0</i></td></tr>
+<tr><th id="126">126</th><td><i class="doc"> * otherwise.</i></td></tr>
+<tr><th id="127">127</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="128">128</th><td><em>int</em> <dfn class="decl" id="sws_isSupportedInput" title='sws_isSupportedInput' data-ref="sws_isSupportedInput">sws_isSupportedInput</dfn>(<b>enum</b> <a class="type" href="../libavutil/pixfmt.h.html#AVPixelFormat" title='AVPixelFormat' data-ref="AVPixelFormat">AVPixelFormat</a> <dfn class="local col9 decl" id="9pix_fmt" title='pix_fmt' data-type='enum AVPixelFormat' data-ref="9pix_fmt">pix_fmt</dfn>);</td></tr>
+<tr><th id="129">129</th><td></td></tr>
+<tr><th id="130">130</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="131">131</th><td><i class="doc"> * Return a positive value if pix_fmt is a supported output format, 0</i></td></tr>
+<tr><th id="132">132</th><td><i class="doc"> * otherwise.</i></td></tr>
+<tr><th id="133">133</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="134">134</th><td><em>int</em> <dfn class="decl" id="sws_isSupportedOutput" title='sws_isSupportedOutput' data-ref="sws_isSupportedOutput">sws_isSupportedOutput</dfn>(<b>enum</b> <a class="type" href="../libavutil/pixfmt.h.html#AVPixelFormat" title='AVPixelFormat' data-ref="AVPixelFormat">AVPixelFormat</a> <dfn class="local col0 decl" id="10pix_fmt" title='pix_fmt' data-type='enum AVPixelFormat' data-ref="10pix_fmt">pix_fmt</dfn>);</td></tr>
+<tr><th id="135">135</th><td></td></tr>
+<tr><th id="136">136</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="137">137</th><td><i class="doc"> * <span class="command">@param</span>[in]  <span class="arg">pix_fmt</span> the pixel format</i></td></tr>
+<tr><th id="138">138</th><td><i class="doc"> * <span class="command">@return</span> a positive value if an endianness conversion for pix_fmt is</i></td></tr>
+<tr><th id="139">139</th><td><i class="doc"> * supported, 0 otherwise.</i></td></tr>
+<tr><th id="140">140</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="141">141</th><td><em>int</em> <dfn class="decl" id="sws_isSupportedEndiannessConversion" title='sws_isSupportedEndiannessConversion' data-ref="sws_isSupportedEndiannessConversion">sws_isSupportedEndiannessConversion</dfn>(<b>enum</b> <a class="type" href="../libavutil/pixfmt.h.html#AVPixelFormat" title='AVPixelFormat' data-ref="AVPixelFormat">AVPixelFormat</a> <dfn class="local col1 decl" id="11pix_fmt" title='pix_fmt' data-type='enum AVPixelFormat' data-ref="11pix_fmt">pix_fmt</dfn>);</td></tr>
+<tr><th id="142">142</th><td></td></tr>
+<tr><th id="143">143</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="144">144</th><td><i class="doc"> * Allocate an empty SwsContext. This must be filled and passed to</i></td></tr>
+<tr><th id="145">145</th><td><i class="doc"> * sws_init_context(). For filling see AVOptions, options.c and</i></td></tr>
+<tr><th id="146">146</th><td><i class="doc"> * sws_setColorspaceDetails().</i></td></tr>
+<tr><th id="147">147</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="148">148</th><td><b>struct</b> <a class="type" href="#SwsContext" title='SwsContext' data-ref="SwsContext">SwsContext</a> *<dfn class="decl" id="sws_alloc_context" title='sws_alloc_context' data-ref="sws_alloc_context">sws_alloc_context</dfn>(<em>void</em>);</td></tr>
+<tr><th id="149">149</th><td></td></tr>
+<tr><th id="150">150</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="151">151</th><td><i class="doc"> * Initialize the swscaler context sws_context.</i></td></tr>
+<tr><th id="152">152</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="153">153</th><td><i class="doc"> * <span class="command">@return</span> zero or positive value on success, a negative value on</i></td></tr>
+<tr><th id="154">154</th><td><i class="doc"> * error</i></td></tr>
+<tr><th id="155">155</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="156">156</th><td><a class="macro" href="../libavutil/attributes.h.html#56" title="__attribute__((warn_unused_result))" data-ref="_M/av_warn_unused_result">av_warn_unused_result</a></td></tr>
+<tr><th id="157">157</th><td><em>int</em> <dfn class="decl" id="sws_init_context" title='sws_init_context' data-ref="sws_init_context">sws_init_context</dfn>(<b>struct</b> <a class="type" href="#SwsContext" title='SwsContext' data-ref="SwsContext">SwsContext</a> *<dfn class="local col2 decl" id="12sws_context" title='sws_context' data-type='struct SwsContext *' data-ref="12sws_context">sws_context</dfn>, <a class="typedef" href="#SwsFilter" title='SwsFilter' data-type='struct SwsFilter' data-ref="SwsFilter">SwsFilter</a> *<dfn class="local col3 decl" id="13srcFilter" title='srcFilter' data-type='SwsFilter *' data-ref="13srcFilter">srcFilter</dfn>, <a class="typedef" href="#SwsFilter" title='SwsFilter' data-type='struct SwsFilter' data-ref="SwsFilter">SwsFilter</a> *<dfn class="local col4 decl" id="14dstFilter" title='dstFilter' data-type='SwsFilter *' data-ref="14dstFilter">dstFilter</dfn>);</td></tr>
+<tr><th id="158">158</th><td></td></tr>
+<tr><th id="159">159</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="160">160</th><td><i class="doc"> * Free the swscaler context swsContext.</i></td></tr>
+<tr><th id="161">161</th><td><i class="doc"> * If swsContext is NULL, then does nothing.</i></td></tr>
+<tr><th id="162">162</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="163">163</th><td><em>void</em> <dfn class="decl" id="sws_freeContext" title='sws_freeContext' data-ref="sws_freeContext">sws_freeContext</dfn>(<b>struct</b> <a class="type" href="#SwsContext" title='SwsContext' data-ref="SwsContext">SwsContext</a> *<dfn class="local col5 decl" id="15swsContext" title='swsContext' data-type='struct SwsContext *' data-ref="15swsContext">swsContext</dfn>);</td></tr>
+<tr><th id="164">164</th><td></td></tr>
+<tr><th id="165">165</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="166">166</th><td><i class="doc"> * Allocate and return an SwsContext. You need it to perform</i></td></tr>
+<tr><th id="167">167</th><td><i class="doc"> * scaling/conversion operations using sws_scale().</i></td></tr>
+<tr><th id="168">168</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="169">169</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">srcW</span> the width of the source image</i></td></tr>
+<tr><th id="170">170</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">srcH</span> the height of the source image</i></td></tr>
+<tr><th id="171">171</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">srcFormat</span> the source image format</i></td></tr>
+<tr><th id="172">172</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">dstW</span> the width of the destination image</i></td></tr>
+<tr><th id="173">173</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">dstH</span> the height of the destination image</i></td></tr>
+<tr><th id="174">174</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">dstFormat</span> the destination image format</i></td></tr>
+<tr><th id="175">175</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">flags</span> specify which algorithm and options to use for rescaling</i></td></tr>
+<tr><th id="176">176</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">param</span> extra parameters to tune the used scaler</i></td></tr>
+<tr><th id="177">177</th><td><i class="doc"> *              For SWS_BICUBIC param[0] and [1] tune the shape of the basis</i></td></tr>
+<tr><th id="178">178</th><td><i class="doc"> *              function, param[0] tunes f(1) and param[1] f´(1)</i></td></tr>
+<tr><th id="179">179</th><td><i class="doc"> *              For SWS_GAUSS param[0] tunes the exponent and thus cutoff</i></td></tr>
+<tr><th id="180">180</th><td><i class="doc"> *              frequency</i></td></tr>
+<tr><th id="181">181</th><td><i class="doc"> *              For SWS_LANCZOS param[0] tunes the width of the window function</i></td></tr>
+<tr><th id="182">182</th><td><i class="doc"> * <span class="command">@return</span> a pointer to an allocated context, or NULL in case of error</i></td></tr>
+<tr><th id="183">183</th><td><i class="doc"> * <span class="command">@note</span> this function is to be removed after a saner alternative is</i></td></tr>
+<tr><th id="184">184</th><td><i class="doc"> *       written</i></td></tr>
+<tr><th id="185">185</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="186">186</th><td><b>struct</b> <a class="type" href="#SwsContext" title='SwsContext' data-ref="SwsContext">SwsContext</a> *<dfn class="decl" id="sws_getContext" title='sws_getContext' data-ref="sws_getContext">sws_getContext</dfn>(<em>int</em> <dfn class="local col6 decl" id="16srcW" title='srcW' data-type='int' data-ref="16srcW">srcW</dfn>, <em>int</em> <dfn class="local col7 decl" id="17srcH" title='srcH' data-type='int' data-ref="17srcH">srcH</dfn>, <b>enum</b> <a class="type" href="../libavutil/pixfmt.h.html#AVPixelFormat" title='AVPixelFormat' data-ref="AVPixelFormat">AVPixelFormat</a> <dfn class="local col8 decl" id="18srcFormat" title='srcFormat' data-type='enum AVPixelFormat' data-ref="18srcFormat">srcFormat</dfn>,</td></tr>
+<tr><th id="187">187</th><td>                                  <em>int</em> <dfn class="local col9 decl" id="19dstW" title='dstW' data-type='int' data-ref="19dstW">dstW</dfn>, <em>int</em> <dfn class="local col0 decl" id="20dstH" title='dstH' data-type='int' data-ref="20dstH">dstH</dfn>, <b>enum</b> <a class="type" href="../libavutil/pixfmt.h.html#AVPixelFormat" title='AVPixelFormat' data-ref="AVPixelFormat">AVPixelFormat</a> <dfn class="local col1 decl" id="21dstFormat" title='dstFormat' data-type='enum AVPixelFormat' data-ref="21dstFormat">dstFormat</dfn>,</td></tr>
+<tr><th id="188">188</th><td>                                  <em>int</em> <dfn class="local col2 decl" id="22flags" title='flags' data-type='int' data-ref="22flags">flags</dfn>, <a class="typedef" href="#SwsFilter" title='SwsFilter' data-type='struct SwsFilter' data-ref="SwsFilter">SwsFilter</a> *<dfn class="local col3 decl" id="23srcFilter" title='srcFilter' data-type='SwsFilter *' data-ref="23srcFilter">srcFilter</dfn>,</td></tr>
+<tr><th id="189">189</th><td>                                  <a class="typedef" href="#SwsFilter" title='SwsFilter' data-type='struct SwsFilter' data-ref="SwsFilter">SwsFilter</a> *<dfn class="local col4 decl" id="24dstFilter" title='dstFilter' data-type='SwsFilter *' data-ref="24dstFilter">dstFilter</dfn>, <em>const</em> <em>double</em> *<dfn class="local col5 decl" id="25param" title='param' data-type='const double *' data-ref="25param">param</dfn>);</td></tr>
+<tr><th id="190">190</th><td></td></tr>
+<tr><th id="191">191</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="192">192</th><td><i class="doc"> * Scale the image slice in srcSlice and put the resulting scaled</i></td></tr>
+<tr><th id="193">193</th><td><i class="doc"> * slice in the image in dst. A slice is a sequence of consecutive</i></td></tr>
+<tr><th id="194">194</th><td><i class="doc"> * rows in an image.</i></td></tr>
+<tr><th id="195">195</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="196">196</th><td><i class="doc"> * Slices have to be provided in sequential order, either in</i></td></tr>
+<tr><th id="197">197</th><td><i class="doc"> * top-bottom or bottom-top order. If slices are provided in</i></td></tr>
+<tr><th id="198">198</th><td><i class="doc"> * non-sequential order the behavior of the function is undefined.</i></td></tr>
+<tr><th id="199">199</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="200">200</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">c</span>         the scaling context previously created with</i></td></tr>
+<tr><th id="201">201</th><td><i class="doc"> *                  sws_getContext()</i></td></tr>
+<tr><th id="202">202</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">srcSlice</span>  the array containing the pointers to the planes of</i></td></tr>
+<tr><th id="203">203</th><td><i class="doc"> *                  the source slice</i></td></tr>
+<tr><th id="204">204</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">srcStride</span> the array containing the strides for each plane of</i></td></tr>
+<tr><th id="205">205</th><td><i class="doc"> *                  the source image</i></td></tr>
+<tr><th id="206">206</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">srcSliceY</span> the position in the source image of the slice to</i></td></tr>
+<tr><th id="207">207</th><td><i class="doc"> *                  process, that is the number (counted starting from</i></td></tr>
+<tr><th id="208">208</th><td><i class="doc"> *                  zero) in the image of the first row of the slice</i></td></tr>
+<tr><th id="209">209</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">srcSliceH</span> the height of the source slice, that is the number</i></td></tr>
+<tr><th id="210">210</th><td><i class="doc"> *                  of rows in the slice</i></td></tr>
+<tr><th id="211">211</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">dst</span>       the array containing the pointers to the planes of</i></td></tr>
+<tr><th id="212">212</th><td><i class="doc"> *                  the destination image</i></td></tr>
+<tr><th id="213">213</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">dstStride</span> the array containing the strides for each plane of</i></td></tr>
+<tr><th id="214">214</th><td><i class="doc"> *                  the destination image</i></td></tr>
+<tr><th id="215">215</th><td><i class="doc"> * <span class="command">@return</span>          the height of the output slice</i></td></tr>
+<tr><th id="216">216</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="217">217</th><td><em>int</em> <dfn class="decl" id="sws_scale" title='sws_scale' data-ref="sws_scale">sws_scale</dfn>(<b>struct</b> <a class="type" href="#SwsContext" title='SwsContext' data-ref="SwsContext">SwsContext</a> *<dfn class="local col6 decl" id="26c" title='c' data-type='struct SwsContext *' data-ref="26c">c</dfn>, <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<em>const</em> <dfn class="local col7 decl" id="27srcSlice" title='srcSlice' data-type='const uint8_t *const *' data-ref="27srcSlice">srcSlice</dfn>[],</td></tr>
+<tr><th id="218">218</th><td>              <em>const</em> <em>int</em> <dfn class="local col8 decl" id="28srcStride" title='srcStride' data-type='const int *' data-ref="28srcStride">srcStride</dfn>[], <em>int</em> <dfn class="local col9 decl" id="29srcSliceY" title='srcSliceY' data-type='int' data-ref="29srcSliceY">srcSliceY</dfn>, <em>int</em> <dfn class="local col0 decl" id="30srcSliceH" title='srcSliceH' data-type='int' data-ref="30srcSliceH">srcSliceH</dfn>,</td></tr>
+<tr><th id="219">219</th><td>              <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<em>const</em> <dfn class="local col1 decl" id="31dst" title='dst' data-type='uint8_t *const *' data-ref="31dst">dst</dfn>[], <em>const</em> <em>int</em> <dfn class="local col2 decl" id="32dstStride" title='dstStride' data-type='const int *' data-ref="32dstStride">dstStride</dfn>[]);</td></tr>
+<tr><th id="220">220</th><td></td></tr>
+<tr><th id="221">221</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="222">222</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">dstRange</span> flag indicating the while-black range of the output (1=jpeg / 0=mpeg)</i></td></tr>
+<tr><th id="223">223</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">srcRange</span> flag indicating the while-black range of the input (1=jpeg / 0=mpeg)</i></td></tr>
+<tr><th id="224">224</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">table</span> the yuv2rgb coefficients describing the output yuv space, normally ff_yuv2rgb_coeffs[x]</i></td></tr>
+<tr><th id="225">225</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">inv_table</span> the yuv2rgb coefficients describing the input yuv space, normally ff_yuv2rgb_coeffs[x]</i></td></tr>
+<tr><th id="226">226</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">brightness</span> 16.16 fixed point brightness correction</i></td></tr>
+<tr><th id="227">227</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">contrast</span> 16.16 fixed point contrast correction</i></td></tr>
+<tr><th id="228">228</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">saturation</span> 16.16 fixed point saturation correction</i></td></tr>
+<tr><th id="229">229</th><td><i class="doc"> * <span class="command">@return</span> -1 if not supported</i></td></tr>
+<tr><th id="230">230</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="231">231</th><td><em>int</em> <dfn class="decl" id="sws_setColorspaceDetails" title='sws_setColorspaceDetails' data-ref="sws_setColorspaceDetails">sws_setColorspaceDetails</dfn>(<b>struct</b> <a class="type" href="#SwsContext" title='SwsContext' data-ref="SwsContext">SwsContext</a> *<dfn class="local col3 decl" id="33c" title='c' data-type='struct SwsContext *' data-ref="33c">c</dfn>, <em>const</em> <em>int</em> <dfn class="local col4 decl" id="34inv_table" title='inv_table' data-type='const int *' data-ref="34inv_table">inv_table</dfn>[<var>4</var>],</td></tr>
+<tr><th id="232">232</th><td>                             <em>int</em> <dfn class="local col5 decl" id="35srcRange" title='srcRange' data-type='int' data-ref="35srcRange">srcRange</dfn>, <em>const</em> <em>int</em> <dfn class="local col6 decl" id="36table" title='table' data-type='const int *' data-ref="36table">table</dfn>[<var>4</var>], <em>int</em> <dfn class="local col7 decl" id="37dstRange" title='dstRange' data-type='int' data-ref="37dstRange">dstRange</dfn>,</td></tr>
+<tr><th id="233">233</th><td>                             <em>int</em> <dfn class="local col8 decl" id="38brightness" title='brightness' data-type='int' data-ref="38brightness">brightness</dfn>, <em>int</em> <dfn class="local col9 decl" id="39contrast" title='contrast' data-type='int' data-ref="39contrast">contrast</dfn>, <em>int</em> <dfn class="local col0 decl" id="40saturation" title='saturation' data-type='int' data-ref="40saturation">saturation</dfn>);</td></tr>
+<tr><th id="234">234</th><td></td></tr>
+<tr><th id="235">235</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="236">236</th><td><i class="doc"> * <span class="command">@return</span> -1 if not supported</i></td></tr>
+<tr><th id="237">237</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="238">238</th><td><em>int</em> <dfn class="decl" id="sws_getColorspaceDetails" title='sws_getColorspaceDetails' data-ref="sws_getColorspaceDetails">sws_getColorspaceDetails</dfn>(<b>struct</b> <a class="type" href="#SwsContext" title='SwsContext' data-ref="SwsContext">SwsContext</a> *<dfn class="local col1 decl" id="41c" title='c' data-type='struct SwsContext *' data-ref="41c">c</dfn>, <em>int</em> **<dfn class="local col2 decl" id="42inv_table" title='inv_table' data-type='int **' data-ref="42inv_table">inv_table</dfn>,</td></tr>
+<tr><th id="239">239</th><td>                             <em>int</em> *<dfn class="local col3 decl" id="43srcRange" title='srcRange' data-type='int *' data-ref="43srcRange">srcRange</dfn>, <em>int</em> **<dfn class="local col4 decl" id="44table" title='table' data-type='int **' data-ref="44table">table</dfn>, <em>int</em> *<dfn class="local col5 decl" id="45dstRange" title='dstRange' data-type='int *' data-ref="45dstRange">dstRange</dfn>,</td></tr>
+<tr><th id="240">240</th><td>                             <em>int</em> *<dfn class="local col6 decl" id="46brightness" title='brightness' data-type='int *' data-ref="46brightness">brightness</dfn>, <em>int</em> *<dfn class="local col7 decl" id="47contrast" title='contrast' data-type='int *' data-ref="47contrast">contrast</dfn>, <em>int</em> *<dfn class="local col8 decl" id="48saturation" title='saturation' data-type='int *' data-ref="48saturation">saturation</dfn>);</td></tr>
+<tr><th id="241">241</th><td></td></tr>
+<tr><th id="242">242</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="243">243</th><td><i class="doc"> * Allocate and return an uninitialized vector with length coefficients.</i></td></tr>
+<tr><th id="244">244</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="245">245</th><td><a class="typedef" href="#SwsVector" title='SwsVector' data-type='struct SwsVector' data-ref="SwsVector">SwsVector</a> *<dfn class="decl" id="sws_allocVec" title='sws_allocVec' data-ref="sws_allocVec">sws_allocVec</dfn>(<em>int</em> <dfn class="local col9 decl" id="49length" title='length' data-type='int' data-ref="49length">length</dfn>);</td></tr>
+<tr><th id="246">246</th><td></td></tr>
+<tr><th id="247">247</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="248">248</th><td><i class="doc"> * Return a normalized Gaussian curve used to filter stuff</i></td></tr>
+<tr><th id="249">249</th><td><i class="doc"> * quality = 3 is high quality, lower is lower quality.</i></td></tr>
+<tr><th id="250">250</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="251">251</th><td><a class="typedef" href="#SwsVector" title='SwsVector' data-type='struct SwsVector' data-ref="SwsVector">SwsVector</a> *<dfn class="decl" id="sws_getGaussianVec" title='sws_getGaussianVec' data-ref="sws_getGaussianVec">sws_getGaussianVec</dfn>(<em>double</em> <dfn class="local col0 decl" id="50variance" title='variance' data-type='double' data-ref="50variance">variance</dfn>, <em>double</em> <dfn class="local col1 decl" id="51quality" title='quality' data-type='double' data-ref="51quality">quality</dfn>);</td></tr>
+<tr><th id="252">252</th><td></td></tr>
+<tr><th id="253">253</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="254">254</th><td><i class="doc"> * Scale all the coefficients of a by the scalar value.</i></td></tr>
+<tr><th id="255">255</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="256">256</th><td><em>void</em> <dfn class="decl" id="sws_scaleVec" title='sws_scaleVec' data-ref="sws_scaleVec">sws_scaleVec</dfn>(<a class="typedef" href="#SwsVector" title='SwsVector' data-type='struct SwsVector' data-ref="SwsVector">SwsVector</a> *<dfn class="local col2 decl" id="52a" title='a' data-type='SwsVector *' data-ref="52a">a</dfn>, <em>double</em> <dfn class="local col3 decl" id="53scalar" title='scalar' data-type='double' data-ref="53scalar">scalar</dfn>);</td></tr>
+<tr><th id="257">257</th><td></td></tr>
+<tr><th id="258">258</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="259">259</th><td><i class="doc"> * Scale all the coefficients of a so that their sum equals height.</i></td></tr>
+<tr><th id="260">260</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="261">261</th><td><em>void</em> <dfn class="decl" id="sws_normalizeVec" title='sws_normalizeVec' data-ref="sws_normalizeVec">sws_normalizeVec</dfn>(<a class="typedef" href="#SwsVector" title='SwsVector' data-type='struct SwsVector' data-ref="SwsVector">SwsVector</a> *<dfn class="local col4 decl" id="54a" title='a' data-type='SwsVector *' data-ref="54a">a</dfn>, <em>double</em> <dfn class="local col5 decl" id="55height" title='height' data-type='double' data-ref="55height">height</dfn>);</td></tr>
+<tr><th id="262">262</th><td></td></tr>
+<tr><th id="263">263</th><td><u>#<span data-ppcond="263">if</span> <a class="macro" href="version.h.html#50" title="(4 &lt; 6)" data-ref="_M/FF_API_SWS_VECTOR">FF_API_SWS_VECTOR</a></u></td></tr>
+<tr><th id="264">264</th><td><a class="macro" href="../libavutil/attributes.h.html#94" title="__attribute__((deprecated))" data-ref="_M/attribute_deprecated">attribute_deprecated</a> <a class="typedef" href="#SwsVector" title='SwsVector' data-type='struct SwsVector' data-ref="SwsVector">SwsVector</a> *<dfn class="decl" id="sws_getConstVec" title='sws_getConstVec' data-ref="sws_getConstVec">sws_getConstVec</dfn>(<em>double</em> <dfn class="local col6 decl" id="56c" title='c' data-type='double' data-ref="56c">c</dfn>, <em>int</em> <dfn class="local col7 decl" id="57length" title='length' data-type='int' data-ref="57length">length</dfn>);</td></tr>
+<tr><th id="265">265</th><td><a class="macro" href="../libavutil/attributes.h.html#94" title="__attribute__((deprecated))" data-ref="_M/attribute_deprecated">attribute_deprecated</a> <a class="typedef" href="#SwsVector" title='SwsVector' data-type='struct SwsVector' data-ref="SwsVector">SwsVector</a> *<dfn class="decl" id="sws_getIdentityVec" title='sws_getIdentityVec' data-ref="sws_getIdentityVec">sws_getIdentityVec</dfn>(<em>void</em>);</td></tr>
+<tr><th id="266">266</th><td><a class="macro" href="../libavutil/attributes.h.html#94" title="__attribute__((deprecated))" data-ref="_M/attribute_deprecated">attribute_deprecated</a> <em>void</em> <dfn class="decl" id="sws_convVec" title='sws_convVec' data-ref="sws_convVec">sws_convVec</dfn>(<a class="typedef" href="#SwsVector" title='SwsVector' data-type='struct SwsVector' data-ref="SwsVector">SwsVector</a> *<dfn class="local col8 decl" id="58a" title='a' data-type='SwsVector *' data-ref="58a">a</dfn>, <a class="typedef" href="#SwsVector" title='SwsVector' data-type='struct SwsVector' data-ref="SwsVector">SwsVector</a> *<dfn class="local col9 decl" id="59b" title='b' data-type='SwsVector *' data-ref="59b">b</dfn>);</td></tr>
+<tr><th id="267">267</th><td><a class="macro" href="../libavutil/attributes.h.html#94" title="__attribute__((deprecated))" data-ref="_M/attribute_deprecated">attribute_deprecated</a> <em>void</em> <dfn class="decl" id="sws_addVec" title='sws_addVec' data-ref="sws_addVec">sws_addVec</dfn>(<a class="typedef" href="#SwsVector" title='SwsVector' data-type='struct SwsVector' data-ref="SwsVector">SwsVector</a> *<dfn class="local col0 decl" id="60a" title='a' data-type='SwsVector *' data-ref="60a">a</dfn>, <a class="typedef" href="#SwsVector" title='SwsVector' data-type='struct SwsVector' data-ref="SwsVector">SwsVector</a> *<dfn class="local col1 decl" id="61b" title='b' data-type='SwsVector *' data-ref="61b">b</dfn>);</td></tr>
+<tr><th id="268">268</th><td><a class="macro" href="../libavutil/attributes.h.html#94" title="__attribute__((deprecated))" data-ref="_M/attribute_deprecated">attribute_deprecated</a> <em>void</em> <dfn class="decl" id="sws_subVec" title='sws_subVec' data-ref="sws_subVec">sws_subVec</dfn>(<a class="typedef" href="#SwsVector" title='SwsVector' data-type='struct SwsVector' data-ref="SwsVector">SwsVector</a> *<dfn class="local col2 decl" id="62a" title='a' data-type='SwsVector *' data-ref="62a">a</dfn>, <a class="typedef" href="#SwsVector" title='SwsVector' data-type='struct SwsVector' data-ref="SwsVector">SwsVector</a> *<dfn class="local col3 decl" id="63b" title='b' data-type='SwsVector *' data-ref="63b">b</dfn>);</td></tr>
+<tr><th id="269">269</th><td><a class="macro" href="../libavutil/attributes.h.html#94" title="__attribute__((deprecated))" data-ref="_M/attribute_deprecated">attribute_deprecated</a> <em>void</em> <dfn class="decl" id="sws_shiftVec" title='sws_shiftVec' data-ref="sws_shiftVec">sws_shiftVec</dfn>(<a class="typedef" href="#SwsVector" title='SwsVector' data-type='struct SwsVector' data-ref="SwsVector">SwsVector</a> *<dfn class="local col4 decl" id="64a" title='a' data-type='SwsVector *' data-ref="64a">a</dfn>, <em>int</em> <dfn class="local col5 decl" id="65shift" title='shift' data-type='int' data-ref="65shift">shift</dfn>);</td></tr>
+<tr><th id="270">270</th><td><a class="macro" href="../libavutil/attributes.h.html#94" title="__attribute__((deprecated))" data-ref="_M/attribute_deprecated">attribute_deprecated</a> <a class="typedef" href="#SwsVector" title='SwsVector' data-type='struct SwsVector' data-ref="SwsVector">SwsVector</a> *<dfn class="decl" id="sws_cloneVec" title='sws_cloneVec' data-ref="sws_cloneVec">sws_cloneVec</dfn>(<a class="typedef" href="#SwsVector" title='SwsVector' data-type='struct SwsVector' data-ref="SwsVector">SwsVector</a> *<dfn class="local col6 decl" id="66a" title='a' data-type='SwsVector *' data-ref="66a">a</dfn>);</td></tr>
+<tr><th id="271">271</th><td><a class="macro" href="../libavutil/attributes.h.html#94" title="__attribute__((deprecated))" data-ref="_M/attribute_deprecated">attribute_deprecated</a> <em>void</em> <dfn class="decl" id="sws_printVec2" title='sws_printVec2' data-ref="sws_printVec2">sws_printVec2</dfn>(<a class="typedef" href="#SwsVector" title='SwsVector' data-type='struct SwsVector' data-ref="SwsVector">SwsVector</a> *<dfn class="local col7 decl" id="67a" title='a' data-type='SwsVector *' data-ref="67a">a</dfn>, <a class="typedef" href="../libavutil/log.h.html#AVClass" title='AVClass' data-type='struct AVClass' data-ref="AVClass">AVClass</a> *<dfn class="local col8 decl" id="68log_ctx" title='log_ctx' data-type='AVClass *' data-ref="68log_ctx">log_ctx</dfn>, <em>int</em> <dfn class="local col9 decl" id="69log_level" title='log_level' data-type='int' data-ref="69log_level">log_level</dfn>);</td></tr>
+<tr><th id="272">272</th><td><u>#<span data-ppcond="263">endif</span></u></td></tr>
+<tr><th id="273">273</th><td></td></tr>
+<tr><th id="274">274</th><td><em>void</em> <dfn class="decl" id="sws_freeVec" title='sws_freeVec' data-ref="sws_freeVec">sws_freeVec</dfn>(<a class="typedef" href="#SwsVector" title='SwsVector' data-type='struct SwsVector' data-ref="SwsVector">SwsVector</a> *<dfn class="local col0 decl" id="70a" title='a' data-type='SwsVector *' data-ref="70a">a</dfn>);</td></tr>
+<tr><th id="275">275</th><td></td></tr>
+<tr><th id="276">276</th><td><a class="typedef" href="#SwsFilter" title='SwsFilter' data-type='struct SwsFilter' data-ref="SwsFilter">SwsFilter</a> *<dfn class="decl" id="sws_getDefaultFilter" title='sws_getDefaultFilter' data-ref="sws_getDefaultFilter">sws_getDefaultFilter</dfn>(<em>float</em> <dfn class="local col1 decl" id="71lumaGBlur" title='lumaGBlur' data-type='float' data-ref="71lumaGBlur">lumaGBlur</dfn>, <em>float</em> <dfn class="local col2 decl" id="72chromaGBlur" title='chromaGBlur' data-type='float' data-ref="72chromaGBlur">chromaGBlur</dfn>,</td></tr>
+<tr><th id="277">277</th><td>                                <em>float</em> <dfn class="local col3 decl" id="73lumaSharpen" title='lumaSharpen' data-type='float' data-ref="73lumaSharpen">lumaSharpen</dfn>, <em>float</em> <dfn class="local col4 decl" id="74chromaSharpen" title='chromaSharpen' data-type='float' data-ref="74chromaSharpen">chromaSharpen</dfn>,</td></tr>
+<tr><th id="278">278</th><td>                                <em>float</em> <dfn class="local col5 decl" id="75chromaHShift" title='chromaHShift' data-type='float' data-ref="75chromaHShift">chromaHShift</dfn>, <em>float</em> <dfn class="local col6 decl" id="76chromaVShift" title='chromaVShift' data-type='float' data-ref="76chromaVShift">chromaVShift</dfn>,</td></tr>
+<tr><th id="279">279</th><td>                                <em>int</em> <dfn class="local col7 decl" id="77verbose" title='verbose' data-type='int' data-ref="77verbose">verbose</dfn>);</td></tr>
+<tr><th id="280">280</th><td><em>void</em> <dfn class="decl" id="sws_freeFilter" title='sws_freeFilter' data-ref="sws_freeFilter">sws_freeFilter</dfn>(<a class="typedef" href="#SwsFilter" title='SwsFilter' data-type='struct SwsFilter' data-ref="SwsFilter">SwsFilter</a> *<dfn class="local col8 decl" id="78filter" title='filter' data-type='SwsFilter *' data-ref="78filter">filter</dfn>);</td></tr>
+<tr><th id="281">281</th><td></td></tr>
+<tr><th id="282">282</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="283">283</th><td><i class="doc"> * Check if context can be reused, otherwise reallocate a new one.</i></td></tr>
+<tr><th id="284">284</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="285">285</th><td><i class="doc"> * If context is NULL, just calls sws_getContext() to get a new</i></td></tr>
+<tr><th id="286">286</th><td><i class="doc"> * context. Otherwise, checks if the parameters are the ones already</i></td></tr>
+<tr><th id="287">287</th><td><i class="doc"> * saved in context. If that is the case, returns the current</i></td></tr>
+<tr><th id="288">288</th><td><i class="doc"> * context. Otherwise, frees context and gets a new context with</i></td></tr>
+<tr><th id="289">289</th><td><i class="doc"> * the new parameters.</i></td></tr>
+<tr><th id="290">290</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="291">291</th><td><i class="doc"> * Be warned that srcFilter and dstFilter are not checked, they</i></td></tr>
+<tr><th id="292">292</th><td><i class="doc"> * are assumed to remain the same.</i></td></tr>
+<tr><th id="293">293</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="294">294</th><td><b>struct</b> <a class="type" href="#SwsContext" title='SwsContext' data-ref="SwsContext">SwsContext</a> *<dfn class="decl" id="sws_getCachedContext" title='sws_getCachedContext' data-ref="sws_getCachedContext">sws_getCachedContext</dfn>(<b>struct</b> <a class="type" href="#SwsContext" title='SwsContext' data-ref="SwsContext">SwsContext</a> *<dfn class="local col9 decl" id="79context" title='context' data-type='struct SwsContext *' data-ref="79context">context</dfn>,</td></tr>
+<tr><th id="295">295</th><td>                                        <em>int</em> <dfn class="local col0 decl" id="80srcW" title='srcW' data-type='int' data-ref="80srcW">srcW</dfn>, <em>int</em> <dfn class="local col1 decl" id="81srcH" title='srcH' data-type='int' data-ref="81srcH">srcH</dfn>, <b>enum</b> <a class="type" href="../libavutil/pixfmt.h.html#AVPixelFormat" title='AVPixelFormat' data-ref="AVPixelFormat">AVPixelFormat</a> <dfn class="local col2 decl" id="82srcFormat" title='srcFormat' data-type='enum AVPixelFormat' data-ref="82srcFormat">srcFormat</dfn>,</td></tr>
+<tr><th id="296">296</th><td>                                        <em>int</em> <dfn class="local col3 decl" id="83dstW" title='dstW' data-type='int' data-ref="83dstW">dstW</dfn>, <em>int</em> <dfn class="local col4 decl" id="84dstH" title='dstH' data-type='int' data-ref="84dstH">dstH</dfn>, <b>enum</b> <a class="type" href="../libavutil/pixfmt.h.html#AVPixelFormat" title='AVPixelFormat' data-ref="AVPixelFormat">AVPixelFormat</a> <dfn class="local col5 decl" id="85dstFormat" title='dstFormat' data-type='enum AVPixelFormat' data-ref="85dstFormat">dstFormat</dfn>,</td></tr>
+<tr><th id="297">297</th><td>                                        <em>int</em> <dfn class="local col6 decl" id="86flags" title='flags' data-type='int' data-ref="86flags">flags</dfn>, <a class="typedef" href="#SwsFilter" title='SwsFilter' data-type='struct SwsFilter' data-ref="SwsFilter">SwsFilter</a> *<dfn class="local col7 decl" id="87srcFilter" title='srcFilter' data-type='SwsFilter *' data-ref="87srcFilter">srcFilter</dfn>,</td></tr>
+<tr><th id="298">298</th><td>                                        <a class="typedef" href="#SwsFilter" title='SwsFilter' data-type='struct SwsFilter' data-ref="SwsFilter">SwsFilter</a> *<dfn class="local col8 decl" id="88dstFilter" title='dstFilter' data-type='SwsFilter *' data-ref="88dstFilter">dstFilter</dfn>, <em>const</em> <em>double</em> *<dfn class="local col9 decl" id="89param" title='param' data-type='const double *' data-ref="89param">param</dfn>);</td></tr>
+<tr><th id="299">299</th><td></td></tr>
+<tr><th id="300">300</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="301">301</th><td><i class="doc"> * Convert an 8-bit paletted frame into a frame with a color depth of 32 bits.</i></td></tr>
+<tr><th id="302">302</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="303">303</th><td><i class="doc"> * The output frame will have the same packed format as the palette.</i></td></tr>
+<tr><th id="304">304</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="305">305</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">src</span>        source frame buffer</i></td></tr>
+<tr><th id="306">306</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">dst</span>        destination frame buffer</i></td></tr>
+<tr><th id="307">307</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">num_pixels</span> number of pixels to convert</i></td></tr>
+<tr><th id="308">308</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">palette</span>    array with [256] entries, which must match color arrangement (RGB or BGR) of src</i></td></tr>
+<tr><th id="309">309</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="310">310</th><td><em>void</em> <dfn class="decl" id="sws_convertPalette8ToPacked32" title='sws_convertPalette8ToPacked32' data-ref="sws_convertPalette8ToPacked32">sws_convertPalette8ToPacked32</dfn>(<em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col0 decl" id="90src" title='src' data-type='const uint8_t *' data-ref="90src">src</dfn>, <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col1 decl" id="91dst" title='dst' data-type='uint8_t *' data-ref="91dst">dst</dfn>, <em>int</em> <dfn class="local col2 decl" id="92num_pixels" title='num_pixels' data-type='int' data-ref="92num_pixels">num_pixels</dfn>, <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col3 decl" id="93palette" title='palette' data-type='const uint8_t *' data-ref="93palette">palette</dfn>);</td></tr>
+<tr><th id="311">311</th><td></td></tr>
+<tr><th id="312">312</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="313">313</th><td><i class="doc"> * Convert an 8-bit paletted frame into a frame with a color depth of 24 bits.</i></td></tr>
+<tr><th id="314">314</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="315">315</th><td><i class="doc"> * With the palette format "ABCD", the destination frame ends up with the format "ABC".</i></td></tr>
+<tr><th id="316">316</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="317">317</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">src</span>        source frame buffer</i></td></tr>
+<tr><th id="318">318</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">dst</span>        destination frame buffer</i></td></tr>
+<tr><th id="319">319</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">num_pixels</span> number of pixels to convert</i></td></tr>
+<tr><th id="320">320</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">palette</span>    array with [256] entries, which must match color arrangement (RGB or BGR) of src</i></td></tr>
+<tr><th id="321">321</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="322">322</th><td><em>void</em> <dfn class="decl" id="sws_convertPalette8ToPacked24" title='sws_convertPalette8ToPacked24' data-ref="sws_convertPalette8ToPacked24">sws_convertPalette8ToPacked24</dfn>(<em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col4 decl" id="94src" title='src' data-type='const uint8_t *' data-ref="94src">src</dfn>, <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col5 decl" id="95dst" title='dst' data-type='uint8_t *' data-ref="95dst">dst</dfn>, <em>int</em> <dfn class="local col6 decl" id="96num_pixels" title='num_pixels' data-type='int' data-ref="96num_pixels">num_pixels</dfn>, <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col7 decl" id="97palette" title='palette' data-type='const uint8_t *' data-ref="97palette">palette</dfn>);</td></tr>
+<tr><th id="323">323</th><td></td></tr>
+<tr><th id="324">324</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="325">325</th><td><i class="doc"> * Get the AVClass for swsContext. It can be used in combination with</i></td></tr>
+<tr><th id="326">326</th><td><i class="doc"> * AV_OPT_SEARCH_FAKE_OBJ for examining options.</i></td></tr>
+<tr><th id="327">327</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="328">328</th><td><i class="doc"> * <span class="command">@see</span> av_opt_find().</i></td></tr>
+<tr><th id="329">329</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="330">330</th><td><em>const</em> <a class="typedef" href="../libavutil/log.h.html#AVClass" title='AVClass' data-type='struct AVClass' data-ref="AVClass">AVClass</a> *<dfn class="decl" id="sws_get_class" title='sws_get_class' data-ref="sws_get_class">sws_get_class</dfn>(<em>void</em>);</td></tr>
+<tr><th id="331">331</th><td></td></tr>
+<tr><th id="332">332</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="333">333</th><td><i class="doc"> * @}</i></td></tr>
+<tr><th id="334">334</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="335">335</th><td></td></tr>
+<tr><th id="336">336</th><td><u>#<span data-ppcond="21">endif</span> /* SWSCALE_SWSCALE_H */</u></td></tr>
+<tr><th id="337">337</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated while processing <a href='../libavfilter/avf_showcqt.c.html'>ffmpeg/libavfilter/avf_showcqt.c</a><br/>Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

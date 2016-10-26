@@ -1,0 +1,140 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>bufferqueue.h source code [ffmpeg/libavfilter/bufferqueue.h] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="FFBufQueue "/>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavfilter/bufferqueue.h'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavfilter</a>/<a href='bufferqueue.h.html'>bufferqueue.h</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * Generic buffer queue</i></td></tr>
+<tr><th id="3">3</th><td><i> * Copyright (c) 2012 Nicolas George</i></td></tr>
+<tr><th id="4">4</th><td><i> *</i></td></tr>
+<tr><th id="5">5</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="8">8</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="9">9</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="10">10</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="11">11</th><td><i> *</i></td></tr>
+<tr><th id="12">12</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="13">13</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="14">14</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="15">15</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="16">16</th><td><i> *</i></td></tr>
+<tr><th id="17">17</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="18">18</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="19">19</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="20">20</th><td><i> */</i></td></tr>
+<tr><th id="21">21</th><td></td></tr>
+<tr><th id="22">22</th><td><u>#<span data-ppcond="22">ifndef</span> <span class="macro" data-ref="_M/AVFILTER_BUFFERQUEUE_H">AVFILTER_BUFFERQUEUE_H</span></u></td></tr>
+<tr><th id="23">23</th><td><u>#define <dfn class="macro" id="_M/AVFILTER_BUFFERQUEUE_H" data-ref="_M/AVFILTER_BUFFERQUEUE_H">AVFILTER_BUFFERQUEUE_H</dfn></u></td></tr>
+<tr><th id="24">24</th><td></td></tr>
+<tr><th id="25">25</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="26">26</th><td><i class="doc"> * FFBufQueue: simple AVFrame queue API</i></td></tr>
+<tr><th id="27">27</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="28">28</th><td><i class="doc"> * Note: this API is not thread-safe. Concurrent access to the same queue</i></td></tr>
+<tr><th id="29">29</th><td><i class="doc"> * must be protected by a mutex or any synchronization mechanism.</i></td></tr>
+<tr><th id="30">30</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="31">31</th><td></td></tr>
+<tr><th id="32">32</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="33">33</th><td><i class="doc"> * Maximum size of the queue.</i></td></tr>
+<tr><th id="34">34</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="35">35</th><td><i class="doc"> * This value can be overridden by definying it before including this</i></td></tr>
+<tr><th id="36">36</th><td><i class="doc"> * header.</i></td></tr>
+<tr><th id="37">37</th><td><i class="doc"> * Powers of 2 are recommended.</i></td></tr>
+<tr><th id="38">38</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="39">39</th><td><u>#<span data-ppcond="39">ifndef</span> <span class="macro" data-ref="_M/FF_BUFQUEUE_SIZE">FF_BUFQUEUE_SIZE</span></u></td></tr>
+<tr><th id="40">40</th><td><u>#define <dfn class="macro" id="_M/FF_BUFQUEUE_SIZE" data-ref="_M/FF_BUFQUEUE_SIZE">FF_BUFQUEUE_SIZE</dfn> 64</u></td></tr>
+<tr><th id="41">41</th><td><u>#<span data-ppcond="39">endif</span></u></td></tr>
+<tr><th id="42">42</th><td></td></tr>
+<tr><th id="43">43</th><td><u>#include <a href="avfilter.h.html">"avfilter.h"</a></u></td></tr>
+<tr><th id="44">44</th><td><u>#include <a href="../libavutil/avassert.h.html">"libavutil/avassert.h"</a></u></td></tr>
+<tr><th id="45">45</th><td></td></tr>
+<tr><th id="46">46</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="47">47</th><td><i class="doc"> * Structure holding the queue</i></td></tr>
+<tr><th id="48">48</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="49">49</th><td><b>struct</b> <dfn class="type def" id="FFBufQueue" title='FFBufQueue' data-ref="FFBufQueue">FFBufQueue</dfn> {</td></tr>
+<tr><th id="50">50</th><td>    <a class="typedef" href="../libavutil/frame.h.html#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="decl" id="FFBufQueue::queue" title='FFBufQueue::queue' data-ref="FFBufQueue::queue">queue</dfn>[<a class="macro" href="#40" title="64" data-ref="_M/FF_BUFQUEUE_SIZE">FF_BUFQUEUE_SIZE</a>];</td></tr>
+<tr><th id="51">51</th><td>    <em>unsigned</em> <em>short</em> <dfn class="decl" id="FFBufQueue::head" title='FFBufQueue::head' data-ref="FFBufQueue::head">head</dfn>;</td></tr>
+<tr><th id="52">52</th><td>    <em>unsigned</em> <em>short</em> <dfn class="decl" id="FFBufQueue::available" title='FFBufQueue::available' data-ref="FFBufQueue::available">available</dfn>; <i class="doc">/**&lt; number of available buffers */</i></td></tr>
+<tr><th id="53">53</th><td>};</td></tr>
+<tr><th id="54">54</th><td></td></tr>
+<tr><th id="55">55</th><td><u>#define <dfn class="macro" id="_M/BUCKET" data-ref="_M/BUCKET">BUCKET</dfn>(i) <a class="local col3 ref" href="#3queue" title='queue' data-ref="3queue"><a class="local col5 ref" href="#5queue" title='queue' data-ref="5queue">queue</a></a>-&gt;<a class="ref" href="#FFBufQueue::queue" title='FFBufQueue::queue' data-ref="FFBufQueue::queue">queue</a>[(<a class="local col3 ref" href="#3queue" title='queue' data-ref="3queue"><a class="local col5 ref" href="#5queue" title='queue' data-ref="5queue">queue</a></a>-&gt;<a class="ref" href="#FFBufQueue::head" title='FFBufQueue::head' data-ref="FFBufQueue::head">head</a> + (i)) % FF_BUFQUEUE_SIZE]</u></td></tr>
+<tr><th id="56">56</th><td></td></tr>
+<tr><th id="57">57</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="58">58</th><td><i class="doc"> * Test if a buffer queue is full.</i></td></tr>
+<tr><th id="59">59</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="60">60</th><td><em>static</em> <b>inline</b> <em>int</em> <dfn class="decl def" id="ff_bufqueue_is_full" title='ff_bufqueue_is_full' data-ref="ff_bufqueue_is_full">ff_bufqueue_is_full</dfn>(<b>struct</b> <a class="type" href="#FFBufQueue" title='FFBufQueue' data-ref="FFBufQueue">FFBufQueue</a> *<dfn class="local col1 decl" id="1queue" title='queue' data-type='struct FFBufQueue *' data-ref="1queue">queue</dfn>)</td></tr>
+<tr><th id="61">61</th><td>{</td></tr>
+<tr><th id="62">62</th><td>    <b>return</b> <a class="local col1 ref" href="#1queue" title='queue' data-ref="1queue">queue</a>-&gt;<a class="ref" href="#FFBufQueue::available" title='FFBufQueue::available' data-ref="FFBufQueue::available">available</a> == <a class="macro" href="#40" title="64" data-ref="_M/FF_BUFQUEUE_SIZE">FF_BUFQUEUE_SIZE</a>;</td></tr>
+<tr><th id="63">63</th><td>}</td></tr>
+<tr><th id="64">64</th><td></td></tr>
+<tr><th id="65">65</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="66">66</th><td><i class="doc"> * Add a buffer to the queue.</i></td></tr>
+<tr><th id="67">67</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="68">68</th><td><i class="doc"> * If the queue is already full, then the current last buffer is dropped</i></td></tr>
+<tr><th id="69">69</th><td><i class="doc"> * (and unrefed) with a warning before adding the new buffer.</i></td></tr>
+<tr><th id="70">70</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="71">71</th><td><em>static</em> <b>inline</b> <em>void</em> <dfn class="decl def" id="ff_bufqueue_add" title='ff_bufqueue_add' data-ref="ff_bufqueue_add">ff_bufqueue_add</dfn>(<em>void</em> *<dfn class="local col2 decl" id="2log" title='log' data-type='void *' data-ref="2log">log</dfn>, <b>struct</b> <a class="type" href="#FFBufQueue" title='FFBufQueue' data-ref="FFBufQueue">FFBufQueue</a> *<dfn class="local col3 decl" id="3queue" title='queue' data-type='struct FFBufQueue *' data-ref="3queue">queue</dfn>,</td></tr>
+<tr><th id="72">72</th><td>                                   <a class="typedef" href="../libavutil/frame.h.html#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col4 decl" id="4buf" title='buf' data-type='AVFrame *' data-ref="4buf">buf</dfn>)</td></tr>
+<tr><th id="73">73</th><td>{</td></tr>
+<tr><th id="74">74</th><td>    <b>if</b> (<a class="ref" href="#ff_bufqueue_is_full" title='ff_bufqueue_is_full' data-ref="ff_bufqueue_is_full">ff_bufqueue_is_full</a>(<a class="local col3 ref" href="#3queue" title='queue' data-ref="3queue">queue</a>)) {</td></tr>
+<tr><th id="75">75</th><td>        <a class="ref" href="../libavutil/log.h.html#av_log" title='av_log' data-ref="av_log">av_log</a>(<a class="local col2 ref" href="#2log" title='log' data-ref="2log">log</a>, <a class="macro" href="../libavutil/log.h.html#182" title="24" data-ref="_M/AV_LOG_WARNING">AV_LOG_WARNING</a>, <q>"Buffer queue overflow, dropping.\n"</q>);</td></tr>
+<tr><th id="76">76</th><td>        <a class="ref" href="../libavutil/frame.h.html#av_frame_free" title='av_frame_free' data-ref="av_frame_free">av_frame_free</a>(&amp;<a class="macro" href="#55" title="queue-&gt;queue[(queue-&gt;head + (--queue-&gt;available)) % 64]" data-ref="_M/BUCKET">BUCKET</a>(--<a class="local col3 ref" href="#3queue" title='queue' data-ref="3queue">queue</a>-&gt;<a class="ref" href="#FFBufQueue::available" title='FFBufQueue::available' data-ref="FFBufQueue::available">available</a>));</td></tr>
+<tr><th id="77">77</th><td>    }</td></tr>
+<tr><th id="78">78</th><td>    <a class="macro" href="#55" title="queue-&gt;queue[(queue-&gt;head + (queue-&gt;available++)) % 64]" data-ref="_M/BUCKET">BUCKET</a>(<a class="local col3 ref" href="#3queue" title='queue' data-ref="3queue">queue</a>-&gt;<a class="ref" href="#FFBufQueue::available" title='FFBufQueue::available' data-ref="FFBufQueue::available">available</a>++) = <a class="local col4 ref" href="#4buf" title='buf' data-ref="4buf">buf</a>;</td></tr>
+<tr><th id="79">79</th><td>}</td></tr>
+<tr><th id="80">80</th><td></td></tr>
+<tr><th id="81">81</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="82">82</th><td><i class="doc"> * Get a buffer from the queue without altering it.</i></td></tr>
+<tr><th id="83">83</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="84">84</th><td><i class="doc"> * Buffer with index 0 is the first buffer in the queue.</i></td></tr>
+<tr><th id="85">85</th><td><i class="doc"> * Return NULL if the queue has not enough buffers.</i></td></tr>
+<tr><th id="86">86</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="87">87</th><td><em>static</em> <b>inline</b> <a class="typedef" href="../libavutil/frame.h.html#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="decl def" id="ff_bufqueue_peek" title='ff_bufqueue_peek' data-ref="ff_bufqueue_peek">ff_bufqueue_peek</dfn>(<b>struct</b> <a class="type" href="#FFBufQueue" title='FFBufQueue' data-ref="FFBufQueue">FFBufQueue</a> *<dfn class="local col5 decl" id="5queue" title='queue' data-type='struct FFBufQueue *' data-ref="5queue">queue</dfn>,</td></tr>
+<tr><th id="88">88</th><td>                                        <em>unsigned</em> <dfn class="local col6 decl" id="6index" title='index' data-type='unsigned int' data-ref="6index">index</dfn>)</td></tr>
+<tr><th id="89">89</th><td>{</td></tr>
+<tr><th id="90">90</th><td>    <b>return</b> <a class="local col6 ref" href="#6index" title='index' data-ref="6index">index</a> &lt; <a class="local col5 ref" href="#5queue" title='queue' data-ref="5queue">queue</a>-&gt;<a class="ref" href="#FFBufQueue::available" title='FFBufQueue::available' data-ref="FFBufQueue::available">available</a> ? <a class="macro" href="#55" title="queue-&gt;queue[(queue-&gt;head + (index)) % 64]" data-ref="_M/BUCKET">BUCKET</a>(<a class="local col6 ref" href="#6index" title='index' data-ref="6index">index</a>) : <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="91">91</th><td>}</td></tr>
+<tr><th id="92">92</th><td></td></tr>
+<tr><th id="93">93</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="94">94</th><td><i class="doc"> * Get the first buffer from the queue and remove it.</i></td></tr>
+<tr><th id="95">95</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="96">96</th><td><i class="doc"> * Do not use on an empty queue.</i></td></tr>
+<tr><th id="97">97</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="98">98</th><td><em>static</em> <b>inline</b> <a class="typedef" href="../libavutil/frame.h.html#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="decl def" id="ff_bufqueue_get" title='ff_bufqueue_get' data-ref="ff_bufqueue_get">ff_bufqueue_get</dfn>(<b>struct</b> <a class="type" href="#FFBufQueue" title='FFBufQueue' data-ref="FFBufQueue">FFBufQueue</a> *<dfn class="local col7 decl" id="7queue" title='queue' data-type='struct FFBufQueue *' data-ref="7queue">queue</dfn>)</td></tr>
+<tr><th id="99">99</th><td>{</td></tr>
+<tr><th id="100">100</th><td>    <a class="typedef" href="../libavutil/frame.h.html#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col8 decl" id="8ret" title='ret' data-type='AVFrame *' data-ref="8ret">ret</dfn> = <a class="local col7 ref" href="#7queue" title='queue' data-ref="7queue">queue</a>-&gt;<a class="ref" href="#FFBufQueue::queue" title='FFBufQueue::queue' data-ref="FFBufQueue::queue">queue</a>[<a class="local col7 ref" href="#7queue" title='queue' data-ref="7queue">queue</a>-&gt;<a class="ref" href="#FFBufQueue::head" title='FFBufQueue::head' data-ref="FFBufQueue::head">head</a>];</td></tr>
+<tr><th id="101">101</th><td>    <a class="macro" href="../libavutil/avassert.h.html#37" title="do { if (!(queue-&gt;available)) { av_log(((void*)0), 0, &quot;Assertion %s failed at %s:%d\n&quot;, &quot;queue-&gt;available&quot;, &quot;/usr/local/google/home/robertshih/ffmpeg/src/ffmpeg/libavfilter/bufferqueue.h&quot;, 101); abort(); } } while (0)" data-ref="_M/av_assert0">av_assert0</a>(<a class="local col7 ref" href="#7queue" title='queue' data-ref="7queue">queue</a>-&gt;<a class="ref" href="#FFBufQueue::available" title='FFBufQueue::available' data-ref="FFBufQueue::available">available</a>);</td></tr>
+<tr><th id="102">102</th><td>    <a class="local col7 ref" href="#7queue" title='queue' data-ref="7queue">queue</a>-&gt;<a class="ref" href="#FFBufQueue::available" title='FFBufQueue::available' data-ref="FFBufQueue::available">available</a>--;</td></tr>
+<tr><th id="103">103</th><td>    <a class="local col7 ref" href="#7queue" title='queue' data-ref="7queue">queue</a>-&gt;<a class="ref" href="#FFBufQueue::queue" title='FFBufQueue::queue' data-ref="FFBufQueue::queue">queue</a>[<a class="local col7 ref" href="#7queue" title='queue' data-ref="7queue">queue</a>-&gt;<a class="ref" href="#FFBufQueue::head" title='FFBufQueue::head' data-ref="FFBufQueue::head">head</a>] = <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="104">104</th><td>    <a class="local col7 ref" href="#7queue" title='queue' data-ref="7queue">queue</a>-&gt;<a class="ref" href="#FFBufQueue::head" title='FFBufQueue::head' data-ref="FFBufQueue::head">head</a> = (<a class="local col7 ref" href="#7queue" title='queue' data-ref="7queue">queue</a>-&gt;<a class="ref" href="#FFBufQueue::head" title='FFBufQueue::head' data-ref="FFBufQueue::head">head</a> + <var>1</var>) % <a class="macro" href="#40" title="64" data-ref="_M/FF_BUFQUEUE_SIZE">FF_BUFQUEUE_SIZE</a>;</td></tr>
+<tr><th id="105">105</th><td>    <b>return</b> <a class="local col8 ref" href="#8ret" title='ret' data-ref="8ret">ret</a>;</td></tr>
+<tr><th id="106">106</th><td>}</td></tr>
+<tr><th id="107">107</th><td></td></tr>
+<tr><th id="108">108</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="109">109</th><td><i class="doc"> * Unref and remove all buffers from the queue.</i></td></tr>
+<tr><th id="110">110</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="111">111</th><td><em>static</em> <b>inline</b> <em>void</em> <dfn class="decl def" id="ff_bufqueue_discard_all" title='ff_bufqueue_discard_all' data-ref="ff_bufqueue_discard_all">ff_bufqueue_discard_all</dfn>(<b>struct</b> <a class="type" href="#FFBufQueue" title='FFBufQueue' data-ref="FFBufQueue">FFBufQueue</a> *<dfn class="local col9 decl" id="9queue" title='queue' data-type='struct FFBufQueue *' data-ref="9queue">queue</dfn>)</td></tr>
+<tr><th id="112">112</th><td>{</td></tr>
+<tr><th id="113">113</th><td>    <b>while</b> (<a class="local col9 ref" href="#9queue" title='queue' data-ref="9queue">queue</a>-&gt;<a class="ref" href="#FFBufQueue::available" title='FFBufQueue::available' data-ref="FFBufQueue::available">available</a>) {</td></tr>
+<tr><th id="114">114</th><td>        <a class="typedef" href="../libavutil/frame.h.html#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col0 decl" id="10buf" title='buf' data-type='AVFrame *' data-ref="10buf">buf</dfn> = <a class="ref" href="#ff_bufqueue_get" title='ff_bufqueue_get' data-ref="ff_bufqueue_get">ff_bufqueue_get</a>(<a class="local col9 ref" href="#9queue" title='queue' data-ref="9queue">queue</a>);</td></tr>
+<tr><th id="115">115</th><td>        <a class="ref" href="../libavutil/frame.h.html#av_frame_free" title='av_frame_free' data-ref="av_frame_free">av_frame_free</a>(&amp;<a class="local col0 ref" href="#10buf" title='buf' data-ref="10buf">buf</a>);</td></tr>
+<tr><th id="116">116</th><td>    }</td></tr>
+<tr><th id="117">117</th><td>}</td></tr>
+<tr><th id="118">118</th><td></td></tr>
+<tr><th id="119">119</th><td><u>#undef <a class="macro" href="#55" data-ref="_M/BUCKET">BUCKET</a></u></td></tr>
+<tr><th id="120">120</th><td></td></tr>
+<tr><th id="121">121</th><td><u>#<span data-ppcond="22">endif</span> /* AVFILTER_BUFFERQUEUE_H */</u></td></tr>
+<tr><th id="122">122</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated while processing <a href='af_amerge.c.html'>ffmpeg/libavfilter/af_amerge.c</a><br/>Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

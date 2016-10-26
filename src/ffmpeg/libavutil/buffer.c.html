@@ -1,0 +1,445 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>buffer.c source code [ffmpeg/libavutil/buffer.c] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavutil/buffer.c'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavutil</a>/<a href='buffer.c.html'>buffer.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="3">3</th><td><i> *</i></td></tr>
+<tr><th id="4">4</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="5">5</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="6">6</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="7">7</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="8">8</th><td><i> *</i></td></tr>
+<tr><th id="9">9</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="10">10</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="11">11</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="12">12</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="13">13</th><td><i> *</i></td></tr>
+<tr><th id="14">14</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="15">15</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="16">16</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="17">17</th><td><i> */</i></td></tr>
+<tr><th id="18">18</th><td></td></tr>
+<tr><th id="19">19</th><td><u>#include &lt;stdint.h&gt;</u></td></tr>
+<tr><th id="20">20</th><td><u>#include <a href="../../include/string.h.html">&lt;string.h&gt;</a></u></td></tr>
+<tr><th id="21">21</th><td></td></tr>
+<tr><th id="22">22</th><td><u>#include <a href="atomic.h.html">"atomic.h"</a></u></td></tr>
+<tr><th id="23">23</th><td><u>#include <a href="buffer_internal.h.html">"buffer_internal.h"</a></u></td></tr>
+<tr><th id="24">24</th><td><u>#include <a href="common.h.html">"common.h"</a></u></td></tr>
+<tr><th id="25">25</th><td><u>#include <a href="mem.h.html">"mem.h"</a></u></td></tr>
+<tr><th id="26">26</th><td><u>#include <a href="thread.h.html">"thread.h"</a></u></td></tr>
+<tr><th id="27">27</th><td></td></tr>
+<tr><th id="28">28</th><td><a class="typedef" href="buffer.h.html#AVBufferRef" title='AVBufferRef' data-type='struct AVBufferRef' data-ref="AVBufferRef">AVBufferRef</a> *<dfn class="decl def" id="av_buffer_create" title='av_buffer_create' data-ref="av_buffer_create">av_buffer_create</dfn>(<a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col9 decl" id="9data" title='data' data-type='uint8_t *' data-ref="9data">data</dfn>, <em>int</em> <dfn class="local col0 decl" id="10size" title='size' data-type='int' data-ref="10size">size</dfn>,</td></tr>
+<tr><th id="29">29</th><td>                              <em>void</em> (*<dfn class="local col1 decl" id="11free" title='free' data-type='void (*)(void *, uint8_t *)' data-ref="11free">free</dfn>)(<em>void</em> *<dfn class="local col2 decl" id="12opaque" title='opaque' data-type='void *' data-ref="12opaque">opaque</dfn>, <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col3 decl" id="13data" title='data' data-type='uint8_t *' data-ref="13data">data</dfn>),</td></tr>
+<tr><th id="30">30</th><td>                              <em>void</em> *<dfn class="local col4 decl" id="14opaque" title='opaque' data-type='void *' data-ref="14opaque">opaque</dfn>, <em>int</em> <dfn class="local col5 decl" id="15flags" title='flags' data-type='int' data-ref="15flags">flags</dfn>)</td></tr>
+<tr><th id="31">31</th><td>{</td></tr>
+<tr><th id="32">32</th><td>    <a class="typedef" href="buffer.h.html#AVBufferRef" title='AVBufferRef' data-type='struct AVBufferRef' data-ref="AVBufferRef">AVBufferRef</a> *<dfn class="local col6 decl" id="16ref" title='ref' data-type='AVBufferRef *' data-ref="16ref">ref</dfn> = <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="33">33</th><td>    <a class="typedef" href="buffer.h.html#AVBuffer" title='AVBuffer' data-type='struct AVBuffer' data-ref="AVBuffer">AVBuffer</a>    *<dfn class="local col7 decl" id="17buf" title='buf' data-type='AVBuffer *' data-ref="17buf">buf</dfn> = <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="34">34</th><td></td></tr>
+<tr><th id="35">35</th><td>    <a class="local col7 ref" href="#17buf" title='buf' data-ref="17buf">buf</a> = <a class="ref" href="mem.h.html#av_mallocz" title='av_mallocz' data-ref="av_mallocz">av_mallocz</a>(<b>sizeof</b>(*<a class="local col7 ref" href="#17buf" title='buf' data-ref="17buf">buf</a>));</td></tr>
+<tr><th id="36">36</th><td>    <b>if</b> (!<a class="local col7 ref" href="#17buf" title='buf' data-ref="17buf">buf</a>)</td></tr>
+<tr><th id="37">37</th><td>        <b>return</b> <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="38">38</th><td></td></tr>
+<tr><th id="39">39</th><td>    <a class="local col7 ref" href="#17buf" title='buf' data-ref="17buf">buf</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBuffer::data" title='AVBuffer::data' data-ref="AVBuffer::data">data</a>     = <a class="local col9 ref" href="#9data" title='data' data-ref="9data">data</a>;</td></tr>
+<tr><th id="40">40</th><td>    <a class="local col7 ref" href="#17buf" title='buf' data-ref="17buf">buf</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBuffer::size" title='AVBuffer::size' data-ref="AVBuffer::size">size</a>     = <a class="local col0 ref" href="#10size" title='size' data-ref="10size">size</a>;</td></tr>
+<tr><th id="41">41</th><td>    <a class="local col7 ref" href="#17buf" title='buf' data-ref="17buf">buf</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBuffer::free" title='AVBuffer::free' data-ref="AVBuffer::free">free</a>     = <a class="local col1 ref" href="#11free" title='free' data-ref="11free">free</a> ? <a class="local col1 ref" href="#11free" title='free' data-ref="11free">free</a> : <a class="ref" href="#av_buffer_default_free" title='av_buffer_default_free' data-ref="av_buffer_default_free">av_buffer_default_free</a>;</td></tr>
+<tr><th id="42">42</th><td>    <a class="local col7 ref" href="#17buf" title='buf' data-ref="17buf">buf</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBuffer::opaque" title='AVBuffer::opaque' data-ref="AVBuffer::opaque">opaque</a>   = <a class="local col4 ref" href="#14opaque" title='opaque' data-ref="14opaque">opaque</a>;</td></tr>
+<tr><th id="43">43</th><td>    <a class="local col7 ref" href="#17buf" title='buf' data-ref="17buf">buf</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBuffer::refcount" title='AVBuffer::refcount' data-ref="AVBuffer::refcount">refcount</a> = <var>1</var>;</td></tr>
+<tr><th id="44">44</th><td></td></tr>
+<tr><th id="45">45</th><td>    <b>if</b> (<a class="local col5 ref" href="#15flags" title='flags' data-ref="15flags">flags</a> &amp; <a class="macro" href="buffer.h.html#113" title="(1 &lt;&lt; 0)" data-ref="_M/AV_BUFFER_FLAG_READONLY">AV_BUFFER_FLAG_READONLY</a>)</td></tr>
+<tr><th id="46">46</th><td>        <a class="local col7 ref" href="#17buf" title='buf' data-ref="17buf">buf</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBuffer::flags" title='AVBuffer::flags' data-ref="AVBuffer::flags">flags</a> |= <a class="macro" href="buffer_internal.h.html#30" title="(1 &lt;&lt; 0)" data-ref="_M/BUFFER_FLAG_READONLY">BUFFER_FLAG_READONLY</a>;</td></tr>
+<tr><th id="47">47</th><td></td></tr>
+<tr><th id="48">48</th><td>    <a class="local col6 ref" href="#16ref" title='ref' data-ref="16ref">ref</a> = <a class="ref" href="mem.h.html#av_mallocz" title='av_mallocz' data-ref="av_mallocz">av_mallocz</a>(<b>sizeof</b>(*<a class="local col6 ref" href="#16ref" title='ref' data-ref="16ref">ref</a>));</td></tr>
+<tr><th id="49">49</th><td>    <b>if</b> (!<a class="local col6 ref" href="#16ref" title='ref' data-ref="16ref">ref</a>) {</td></tr>
+<tr><th id="50">50</th><td>        <a class="ref" href="mem.h.html#av_freep" title='av_freep' data-ref="av_freep">av_freep</a>(&amp;<a class="local col7 ref" href="#17buf" title='buf' data-ref="17buf">buf</a>);</td></tr>
+<tr><th id="51">51</th><td>        <b>return</b> <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="52">52</th><td>    }</td></tr>
+<tr><th id="53">53</th><td></td></tr>
+<tr><th id="54">54</th><td>    <a class="local col6 ref" href="#16ref" title='ref' data-ref="16ref">ref</a>-&gt;<a class="ref" href="buffer.h.html#AVBufferRef::buffer" title='AVBufferRef::buffer' data-ref="AVBufferRef::buffer">buffer</a> = <a class="local col7 ref" href="#17buf" title='buf' data-ref="17buf">buf</a>;</td></tr>
+<tr><th id="55">55</th><td>    <a class="local col6 ref" href="#16ref" title='ref' data-ref="16ref">ref</a>-&gt;<a class="ref" href="buffer.h.html#AVBufferRef::data" title='AVBufferRef::data' data-ref="AVBufferRef::data">data</a>   = <a class="local col9 ref" href="#9data" title='data' data-ref="9data">data</a>;</td></tr>
+<tr><th id="56">56</th><td>    <a class="local col6 ref" href="#16ref" title='ref' data-ref="16ref">ref</a>-&gt;<a class="ref" href="buffer.h.html#AVBufferRef::size" title='AVBufferRef::size' data-ref="AVBufferRef::size">size</a>   = <a class="local col0 ref" href="#10size" title='size' data-ref="10size">size</a>;</td></tr>
+<tr><th id="57">57</th><td></td></tr>
+<tr><th id="58">58</th><td>    <b>return</b> <a class="local col6 ref" href="#16ref" title='ref' data-ref="16ref">ref</a>;</td></tr>
+<tr><th id="59">59</th><td>}</td></tr>
+<tr><th id="60">60</th><td></td></tr>
+<tr><th id="61">61</th><td><em>void</em> <dfn class="decl def" id="av_buffer_default_free" title='av_buffer_default_free' data-ref="av_buffer_default_free">av_buffer_default_free</dfn>(<em>void</em> *<dfn class="local col8 decl" id="18opaque" title='opaque' data-type='void *' data-ref="18opaque">opaque</dfn>, <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col9 decl" id="19data" title='data' data-type='uint8_t *' data-ref="19data">data</dfn>)</td></tr>
+<tr><th id="62">62</th><td>{</td></tr>
+<tr><th id="63">63</th><td>    <a class="ref" href="mem.h.html#av_free" title='av_free' data-ref="av_free">av_free</a>(<a class="local col9 ref" href="#19data" title='data' data-ref="19data">data</a>);</td></tr>
+<tr><th id="64">64</th><td>}</td></tr>
+<tr><th id="65">65</th><td></td></tr>
+<tr><th id="66">66</th><td><a class="typedef" href="buffer.h.html#AVBufferRef" title='AVBufferRef' data-type='struct AVBufferRef' data-ref="AVBufferRef">AVBufferRef</a> *<dfn class="decl def" id="av_buffer_alloc" title='av_buffer_alloc' data-ref="av_buffer_alloc">av_buffer_alloc</dfn>(<em>int</em> <dfn class="local col0 decl" id="20size" title='size' data-type='int' data-ref="20size">size</dfn>)</td></tr>
+<tr><th id="67">67</th><td>{</td></tr>
+<tr><th id="68">68</th><td>    <a class="typedef" href="buffer.h.html#AVBufferRef" title='AVBufferRef' data-type='struct AVBufferRef' data-ref="AVBufferRef">AVBufferRef</a> *<dfn class="local col1 decl" id="21ret" title='ret' data-type='AVBufferRef *' data-ref="21ret">ret</dfn> = <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="69">69</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a>    *<dfn class="local col2 decl" id="22data" title='data' data-type='uint8_t *' data-ref="22data">data</dfn> = <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="70">70</th><td></td></tr>
+<tr><th id="71">71</th><td>    <a class="local col2 ref" href="#22data" title='data' data-ref="22data">data</a> = <a class="ref" href="mem.h.html#av_malloc" title='av_malloc' data-ref="av_malloc">av_malloc</a>(<a class="local col0 ref" href="#20size" title='size' data-ref="20size">size</a>);</td></tr>
+<tr><th id="72">72</th><td>    <b>if</b> (!<a class="local col2 ref" href="#22data" title='data' data-ref="22data">data</a>)</td></tr>
+<tr><th id="73">73</th><td>        <b>return</b> <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="74">74</th><td></td></tr>
+<tr><th id="75">75</th><td>    <a class="local col1 ref" href="#21ret" title='ret' data-ref="21ret">ret</a> = <a class="ref" href="#av_buffer_create" title='av_buffer_create' data-ref="av_buffer_create">av_buffer_create</a>(<a class="local col2 ref" href="#22data" title='data' data-ref="22data">data</a>, <a class="local col0 ref" href="#20size" title='size' data-ref="20size">size</a>, <a class="ref" href="#av_buffer_default_free" title='av_buffer_default_free' data-ref="av_buffer_default_free">av_buffer_default_free</a>, <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>, <var>0</var>);</td></tr>
+<tr><th id="76">76</th><td>    <b>if</b> (!<a class="local col1 ref" href="#21ret" title='ret' data-ref="21ret">ret</a>)</td></tr>
+<tr><th id="77">77</th><td>        <a class="ref" href="mem.h.html#av_freep" title='av_freep' data-ref="av_freep">av_freep</a>(&amp;<a class="local col2 ref" href="#22data" title='data' data-ref="22data">data</a>);</td></tr>
+<tr><th id="78">78</th><td></td></tr>
+<tr><th id="79">79</th><td>    <b>return</b> <a class="local col1 ref" href="#21ret" title='ret' data-ref="21ret">ret</a>;</td></tr>
+<tr><th id="80">80</th><td>}</td></tr>
+<tr><th id="81">81</th><td></td></tr>
+<tr><th id="82">82</th><td><a class="typedef" href="buffer.h.html#AVBufferRef" title='AVBufferRef' data-type='struct AVBufferRef' data-ref="AVBufferRef">AVBufferRef</a> *<dfn class="decl def" id="av_buffer_allocz" title='av_buffer_allocz' data-ref="av_buffer_allocz">av_buffer_allocz</dfn>(<em>int</em> <dfn class="local col3 decl" id="23size" title='size' data-type='int' data-ref="23size">size</dfn>)</td></tr>
+<tr><th id="83">83</th><td>{</td></tr>
+<tr><th id="84">84</th><td>    <a class="typedef" href="buffer.h.html#AVBufferRef" title='AVBufferRef' data-type='struct AVBufferRef' data-ref="AVBufferRef">AVBufferRef</a> *<dfn class="local col4 decl" id="24ret" title='ret' data-type='AVBufferRef *' data-ref="24ret">ret</dfn> = <a class="ref" href="#av_buffer_alloc" title='av_buffer_alloc' data-ref="av_buffer_alloc">av_buffer_alloc</a>(<a class="local col3 ref" href="#23size" title='size' data-ref="23size">size</a>);</td></tr>
+<tr><th id="85">85</th><td>    <b>if</b> (!<a class="local col4 ref" href="#24ret" title='ret' data-ref="24ret">ret</a>)</td></tr>
+<tr><th id="86">86</th><td>        <b>return</b> <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="87">87</th><td></td></tr>
+<tr><th id="88">88</th><td>    <a class="ref" href="../../include/string.h.html#memset" title='memset' data-ref="memset">memset</a>(<a class="local col4 ref" href="#24ret" title='ret' data-ref="24ret">ret</a>-&gt;<a class="ref" href="buffer.h.html#AVBufferRef::data" title='AVBufferRef::data' data-ref="AVBufferRef::data">data</a>, <var>0</var>, <a class="local col3 ref" href="#23size" title='size' data-ref="23size">size</a>);</td></tr>
+<tr><th id="89">89</th><td>    <b>return</b> <a class="local col4 ref" href="#24ret" title='ret' data-ref="24ret">ret</a>;</td></tr>
+<tr><th id="90">90</th><td>}</td></tr>
+<tr><th id="91">91</th><td></td></tr>
+<tr><th id="92">92</th><td><a class="typedef" href="buffer.h.html#AVBufferRef" title='AVBufferRef' data-type='struct AVBufferRef' data-ref="AVBufferRef">AVBufferRef</a> *<dfn class="decl def" id="av_buffer_ref" title='av_buffer_ref' data-ref="av_buffer_ref">av_buffer_ref</dfn>(<a class="typedef" href="buffer.h.html#AVBufferRef" title='AVBufferRef' data-type='struct AVBufferRef' data-ref="AVBufferRef">AVBufferRef</a> *<dfn class="local col5 decl" id="25buf" title='buf' data-type='AVBufferRef *' data-ref="25buf">buf</dfn>)</td></tr>
+<tr><th id="93">93</th><td>{</td></tr>
+<tr><th id="94">94</th><td>    <a class="typedef" href="buffer.h.html#AVBufferRef" title='AVBufferRef' data-type='struct AVBufferRef' data-ref="AVBufferRef">AVBufferRef</a> *<dfn class="local col6 decl" id="26ret" title='ret' data-type='AVBufferRef *' data-ref="26ret">ret</dfn> = <a class="ref" href="mem.h.html#av_mallocz" title='av_mallocz' data-ref="av_mallocz">av_mallocz</a>(<b>sizeof</b>(*<a class="local col6 ref" href="#26ret" title='ret' data-ref="26ret">ret</a>));</td></tr>
+<tr><th id="95">95</th><td></td></tr>
+<tr><th id="96">96</th><td>    <b>if</b> (!<a class="local col6 ref" href="#26ret" title='ret' data-ref="26ret">ret</a>)</td></tr>
+<tr><th id="97">97</th><td>        <b>return</b> <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="98">98</th><td></td></tr>
+<tr><th id="99">99</th><td>    *<a class="local col6 ref" href="#26ret" title='ret' data-ref="26ret">ret</a> = *<a class="local col5 ref" href="#25buf" title='buf' data-ref="25buf">buf</a>;</td></tr>
+<tr><th id="100">100</th><td></td></tr>
+<tr><th id="101">101</th><td>    <a class="macro" href="atomic_gcc.h.html#50" title="atomic_int_add_and_fetch_gcc" data-ref="_M/avpriv_atomic_int_add_and_fetch">avpriv_atomic_int_add_and_fetch</a>(&amp;<a class="local col5 ref" href="#25buf" title='buf' data-ref="25buf">buf</a>-&gt;<a class="ref" href="buffer.h.html#AVBufferRef::buffer" title='AVBufferRef::buffer' data-ref="AVBufferRef::buffer">buffer</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBuffer::refcount" title='AVBuffer::refcount' data-ref="AVBuffer::refcount">refcount</a>, <var>1</var>);</td></tr>
+<tr><th id="102">102</th><td></td></tr>
+<tr><th id="103">103</th><td>    <b>return</b> <a class="local col6 ref" href="#26ret" title='ret' data-ref="26ret">ret</a>;</td></tr>
+<tr><th id="104">104</th><td>}</td></tr>
+<tr><th id="105">105</th><td></td></tr>
+<tr><th id="106">106</th><td><em>static</em> <em>void</em> <dfn class="tu decl def" id="buffer_replace" title='buffer_replace' data-type='void buffer_replace(AVBufferRef ** dst, AVBufferRef ** src)' data-ref="buffer_replace">buffer_replace</dfn>(<a class="typedef" href="buffer.h.html#AVBufferRef" title='AVBufferRef' data-type='struct AVBufferRef' data-ref="AVBufferRef">AVBufferRef</a> **<dfn class="local col7 decl" id="27dst" title='dst' data-type='AVBufferRef **' data-ref="27dst">dst</dfn>, <a class="typedef" href="buffer.h.html#AVBufferRef" title='AVBufferRef' data-type='struct AVBufferRef' data-ref="AVBufferRef">AVBufferRef</a> **<dfn class="local col8 decl" id="28src" title='src' data-type='AVBufferRef **' data-ref="28src">src</dfn>)</td></tr>
+<tr><th id="107">107</th><td>{</td></tr>
+<tr><th id="108">108</th><td>    <a class="typedef" href="buffer.h.html#AVBuffer" title='AVBuffer' data-type='struct AVBuffer' data-ref="AVBuffer">AVBuffer</a> *<dfn class="local col9 decl" id="29b" title='b' data-type='AVBuffer *' data-ref="29b">b</dfn>;</td></tr>
+<tr><th id="109">109</th><td></td></tr>
+<tr><th id="110">110</th><td>    <a class="local col9 ref" href="#29b" title='b' data-ref="29b">b</a> = (*<a class="local col7 ref" href="#27dst" title='dst' data-ref="27dst">dst</a>)-&gt;<a class="ref" href="buffer.h.html#AVBufferRef::buffer" title='AVBufferRef::buffer' data-ref="AVBufferRef::buffer">buffer</a>;</td></tr>
+<tr><th id="111">111</th><td></td></tr>
+<tr><th id="112">112</th><td>    <b>if</b> (<a class="local col8 ref" href="#28src" title='src' data-ref="28src">src</a>) {</td></tr>
+<tr><th id="113">113</th><td>        **<a class="local col7 ref" href="#27dst" title='dst' data-ref="27dst">dst</a> = **<a class="local col8 ref" href="#28src" title='src' data-ref="28src">src</a>;</td></tr>
+<tr><th id="114">114</th><td>        <a class="ref" href="mem.h.html#av_freep" title='av_freep' data-ref="av_freep">av_freep</a>(<a class="local col8 ref" href="#28src" title='src' data-ref="28src">src</a>);</td></tr>
+<tr><th id="115">115</th><td>    } <b>else</b></td></tr>
+<tr><th id="116">116</th><td>        <a class="ref" href="mem.h.html#av_freep" title='av_freep' data-ref="av_freep">av_freep</a>(<a class="local col7 ref" href="#27dst" title='dst' data-ref="27dst">dst</a>);</td></tr>
+<tr><th id="117">117</th><td></td></tr>
+<tr><th id="118">118</th><td>    <b>if</b> (!<a class="macro" href="atomic_gcc.h.html#50" title="atomic_int_add_and_fetch_gcc" data-ref="_M/avpriv_atomic_int_add_and_fetch">avpriv_atomic_int_add_and_fetch</a>(&amp;<a class="local col9 ref" href="#29b" title='b' data-ref="29b">b</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBuffer::refcount" title='AVBuffer::refcount' data-ref="AVBuffer::refcount">refcount</a>, -<var>1</var>)) {</td></tr>
+<tr><th id="119">119</th><td>        <a class="local col9 ref" href="#29b" title='b' data-ref="29b">b</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBuffer::free" title='AVBuffer::free' data-ref="AVBuffer::free">free</a>(<a class="local col9 ref" href="#29b" title='b' data-ref="29b">b</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBuffer::opaque" title='AVBuffer::opaque' data-ref="AVBuffer::opaque">opaque</a>, <a class="local col9 ref" href="#29b" title='b' data-ref="29b">b</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBuffer::data" title='AVBuffer::data' data-ref="AVBuffer::data">data</a>);</td></tr>
+<tr><th id="120">120</th><td>        <a class="ref" href="mem.h.html#av_freep" title='av_freep' data-ref="av_freep">av_freep</a>(&amp;<a class="local col9 ref" href="#29b" title='b' data-ref="29b">b</a>);</td></tr>
+<tr><th id="121">121</th><td>    }</td></tr>
+<tr><th id="122">122</th><td>}</td></tr>
+<tr><th id="123">123</th><td></td></tr>
+<tr><th id="124">124</th><td><em>void</em> <dfn class="decl def" id="av_buffer_unref" title='av_buffer_unref' data-ref="av_buffer_unref">av_buffer_unref</dfn>(<a class="typedef" href="buffer.h.html#AVBufferRef" title='AVBufferRef' data-type='struct AVBufferRef' data-ref="AVBufferRef">AVBufferRef</a> **<dfn class="local col0 decl" id="30buf" title='buf' data-type='AVBufferRef **' data-ref="30buf">buf</dfn>)</td></tr>
+<tr><th id="125">125</th><td>{</td></tr>
+<tr><th id="126">126</th><td>    <b>if</b> (!<a class="local col0 ref" href="#30buf" title='buf' data-ref="30buf">buf</a> || !*<a class="local col0 ref" href="#30buf" title='buf' data-ref="30buf">buf</a>)</td></tr>
+<tr><th id="127">127</th><td>        <b>return</b>;</td></tr>
+<tr><th id="128">128</th><td></td></tr>
+<tr><th id="129">129</th><td>    <a class="tu ref" href="#buffer_replace" title='buffer_replace' data-use='c' data-ref="buffer_replace">buffer_replace</a>(<a class="local col0 ref" href="#30buf" title='buf' data-ref="30buf">buf</a>, <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>);</td></tr>
+<tr><th id="130">130</th><td>}</td></tr>
+<tr><th id="131">131</th><td></td></tr>
+<tr><th id="132">132</th><td><em>int</em> <dfn class="decl def" id="av_buffer_is_writable" title='av_buffer_is_writable' data-ref="av_buffer_is_writable">av_buffer_is_writable</dfn>(<em>const</em> <a class="typedef" href="buffer.h.html#AVBufferRef" title='AVBufferRef' data-type='struct AVBufferRef' data-ref="AVBufferRef">AVBufferRef</a> *<dfn class="local col1 decl" id="31buf" title='buf' data-type='const AVBufferRef *' data-ref="31buf">buf</dfn>)</td></tr>
+<tr><th id="133">133</th><td>{</td></tr>
+<tr><th id="134">134</th><td>    <b>if</b> (<a class="local col1 ref" href="#31buf" title='buf' data-ref="31buf">buf</a>-&gt;<a class="ref" href="buffer.h.html#AVBufferRef::buffer" title='AVBufferRef::buffer' data-ref="AVBufferRef::buffer">buffer</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBuffer::flags" title='AVBuffer::flags' data-ref="AVBuffer::flags">flags</a> &amp; <a class="macro" href="buffer.h.html#113" title="(1 &lt;&lt; 0)" data-ref="_M/AV_BUFFER_FLAG_READONLY">AV_BUFFER_FLAG_READONLY</a>)</td></tr>
+<tr><th id="135">135</th><td>        <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="136">136</th><td></td></tr>
+<tr><th id="137">137</th><td>    <b>return</b> <a class="macro" href="atomic_gcc.h.html#28" title="atomic_int_get_gcc" data-ref="_M/avpriv_atomic_int_get">avpriv_atomic_int_get</a>(&amp;<a class="local col1 ref" href="#31buf" title='buf' data-ref="31buf">buf</a>-&gt;<a class="ref" href="buffer.h.html#AVBufferRef::buffer" title='AVBufferRef::buffer' data-ref="AVBufferRef::buffer">buffer</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBuffer::refcount" title='AVBuffer::refcount' data-ref="AVBuffer::refcount">refcount</a>) == <var>1</var>;</td></tr>
+<tr><th id="138">138</th><td>}</td></tr>
+<tr><th id="139">139</th><td></td></tr>
+<tr><th id="140">140</th><td><em>void</em> *<dfn class="decl def" id="av_buffer_get_opaque" title='av_buffer_get_opaque' data-ref="av_buffer_get_opaque">av_buffer_get_opaque</dfn>(<em>const</em> <a class="typedef" href="buffer.h.html#AVBufferRef" title='AVBufferRef' data-type='struct AVBufferRef' data-ref="AVBufferRef">AVBufferRef</a> *<dfn class="local col2 decl" id="32buf" title='buf' data-type='const AVBufferRef *' data-ref="32buf">buf</dfn>)</td></tr>
+<tr><th id="141">141</th><td>{</td></tr>
+<tr><th id="142">142</th><td>    <b>return</b> <a class="local col2 ref" href="#32buf" title='buf' data-ref="32buf">buf</a>-&gt;<a class="ref" href="buffer.h.html#AVBufferRef::buffer" title='AVBufferRef::buffer' data-ref="AVBufferRef::buffer">buffer</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBuffer::opaque" title='AVBuffer::opaque' data-ref="AVBuffer::opaque">opaque</a>;</td></tr>
+<tr><th id="143">143</th><td>}</td></tr>
+<tr><th id="144">144</th><td></td></tr>
+<tr><th id="145">145</th><td><em>int</em> <dfn class="decl def" id="av_buffer_get_ref_count" title='av_buffer_get_ref_count' data-ref="av_buffer_get_ref_count">av_buffer_get_ref_count</dfn>(<em>const</em> <a class="typedef" href="buffer.h.html#AVBufferRef" title='AVBufferRef' data-type='struct AVBufferRef' data-ref="AVBufferRef">AVBufferRef</a> *<dfn class="local col3 decl" id="33buf" title='buf' data-type='const AVBufferRef *' data-ref="33buf">buf</dfn>)</td></tr>
+<tr><th id="146">146</th><td>{</td></tr>
+<tr><th id="147">147</th><td>    <b>return</b> <a class="local col3 ref" href="#33buf" title='buf' data-ref="33buf">buf</a>-&gt;<a class="ref" href="buffer.h.html#AVBufferRef::buffer" title='AVBufferRef::buffer' data-ref="AVBufferRef::buffer">buffer</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBuffer::refcount" title='AVBuffer::refcount' data-ref="AVBuffer::refcount">refcount</a>;</td></tr>
+<tr><th id="148">148</th><td>}</td></tr>
+<tr><th id="149">149</th><td></td></tr>
+<tr><th id="150">150</th><td><em>int</em> <dfn class="decl def" id="av_buffer_make_writable" title='av_buffer_make_writable' data-ref="av_buffer_make_writable">av_buffer_make_writable</dfn>(<a class="typedef" href="buffer.h.html#AVBufferRef" title='AVBufferRef' data-type='struct AVBufferRef' data-ref="AVBufferRef">AVBufferRef</a> **<dfn class="local col4 decl" id="34pbuf" title='pbuf' data-type='AVBufferRef **' data-ref="34pbuf">pbuf</dfn>)</td></tr>
+<tr><th id="151">151</th><td>{</td></tr>
+<tr><th id="152">152</th><td>    <a class="typedef" href="buffer.h.html#AVBufferRef" title='AVBufferRef' data-type='struct AVBufferRef' data-ref="AVBufferRef">AVBufferRef</a> *<dfn class="local col5 decl" id="35newbuf" title='newbuf' data-type='AVBufferRef *' data-ref="35newbuf">newbuf</dfn>, *<dfn class="local col6 decl" id="36buf" title='buf' data-type='AVBufferRef *' data-ref="36buf">buf</dfn> = *<a class="local col4 ref" href="#34pbuf" title='pbuf' data-ref="34pbuf">pbuf</a>;</td></tr>
+<tr><th id="153">153</th><td></td></tr>
+<tr><th id="154">154</th><td>    <b>if</b> (<a class="ref" href="#av_buffer_is_writable" title='av_buffer_is_writable' data-ref="av_buffer_is_writable">av_buffer_is_writable</a>(<a class="local col6 ref" href="#36buf" title='buf' data-ref="36buf">buf</a>))</td></tr>
+<tr><th id="155">155</th><td>        <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="156">156</th><td></td></tr>
+<tr><th id="157">157</th><td>    <a class="local col5 ref" href="#35newbuf" title='newbuf' data-ref="35newbuf">newbuf</a> = <a class="ref" href="#av_buffer_alloc" title='av_buffer_alloc' data-ref="av_buffer_alloc">av_buffer_alloc</a>(<a class="local col6 ref" href="#36buf" title='buf' data-ref="36buf">buf</a>-&gt;<a class="ref" href="buffer.h.html#AVBufferRef::size" title='AVBufferRef::size' data-ref="AVBufferRef::size">size</a>);</td></tr>
+<tr><th id="158">158</th><td>    <b>if</b> (!<a class="local col5 ref" href="#35newbuf" title='newbuf' data-ref="35newbuf">newbuf</a>)</td></tr>
+<tr><th id="159">159</th><td>        <b>return</b> <a class="macro" href="error.h.html#39" title="(-(12))" data-ref="_M/AVERROR">AVERROR</a>(<a class="macro" href="../../include/asm-generic/errno-base.h.html#15" title="12" data-ref="_M/ENOMEM">ENOMEM</a>);</td></tr>
+<tr><th id="160">160</th><td></td></tr>
+<tr><th id="161">161</th><td>    <a class="ref" href="../../include/string.h.html#memcpy" title='memcpy' data-ref="memcpy">memcpy</a>(<a class="local col5 ref" href="#35newbuf" title='newbuf' data-ref="35newbuf">newbuf</a>-&gt;<a class="ref" href="buffer.h.html#AVBufferRef::data" title='AVBufferRef::data' data-ref="AVBufferRef::data">data</a>, <a class="local col6 ref" href="#36buf" title='buf' data-ref="36buf">buf</a>-&gt;<a class="ref" href="buffer.h.html#AVBufferRef::data" title='AVBufferRef::data' data-ref="AVBufferRef::data">data</a>, <a class="local col6 ref" href="#36buf" title='buf' data-ref="36buf">buf</a>-&gt;<a class="ref" href="buffer.h.html#AVBufferRef::size" title='AVBufferRef::size' data-ref="AVBufferRef::size">size</a>);</td></tr>
+<tr><th id="162">162</th><td></td></tr>
+<tr><th id="163">163</th><td>    <a class="tu ref" href="#buffer_replace" title='buffer_replace' data-use='c' data-ref="buffer_replace">buffer_replace</a>(<a class="local col4 ref" href="#34pbuf" title='pbuf' data-ref="34pbuf">pbuf</a>, &amp;<a class="local col5 ref" href="#35newbuf" title='newbuf' data-ref="35newbuf">newbuf</a>);</td></tr>
+<tr><th id="164">164</th><td></td></tr>
+<tr><th id="165">165</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="166">166</th><td>}</td></tr>
+<tr><th id="167">167</th><td></td></tr>
+<tr><th id="168">168</th><td><em>int</em> <dfn class="decl def" id="av_buffer_realloc" title='av_buffer_realloc' data-ref="av_buffer_realloc">av_buffer_realloc</dfn>(<a class="typedef" href="buffer.h.html#AVBufferRef" title='AVBufferRef' data-type='struct AVBufferRef' data-ref="AVBufferRef">AVBufferRef</a> **<dfn class="local col7 decl" id="37pbuf" title='pbuf' data-type='AVBufferRef **' data-ref="37pbuf">pbuf</dfn>, <em>int</em> <dfn class="local col8 decl" id="38size" title='size' data-type='int' data-ref="38size">size</dfn>)</td></tr>
+<tr><th id="169">169</th><td>{</td></tr>
+<tr><th id="170">170</th><td>    <a class="typedef" href="buffer.h.html#AVBufferRef" title='AVBufferRef' data-type='struct AVBufferRef' data-ref="AVBufferRef">AVBufferRef</a> *<dfn class="local col9 decl" id="39buf" title='buf' data-type='AVBufferRef *' data-ref="39buf">buf</dfn> = *<a class="local col7 ref" href="#37pbuf" title='pbuf' data-ref="37pbuf">pbuf</a>;</td></tr>
+<tr><th id="171">171</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col0 decl" id="40tmp" title='tmp' data-type='uint8_t *' data-ref="40tmp">tmp</dfn>;</td></tr>
+<tr><th id="172">172</th><td></td></tr>
+<tr><th id="173">173</th><td>    <b>if</b> (!<a class="local col9 ref" href="#39buf" title='buf' data-ref="39buf">buf</a>) {</td></tr>
+<tr><th id="174">174</th><td>        <i>/* allocate a new buffer with av_realloc(), so it will be reallocatable</i></td></tr>
+<tr><th id="175">175</th><td><i>         * later */</i></td></tr>
+<tr><th id="176">176</th><td>        <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col1 decl" id="41data" title='data' data-type='uint8_t *' data-ref="41data">data</dfn> = <a class="ref" href="mem.h.html#av_realloc" title='av_realloc' data-ref="av_realloc">av_realloc</a>(<span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>, <a class="local col8 ref" href="#38size" title='size' data-ref="38size">size</a>);</td></tr>
+<tr><th id="177">177</th><td>        <b>if</b> (!<a class="local col1 ref" href="#41data" title='data' data-ref="41data">data</a>)</td></tr>
+<tr><th id="178">178</th><td>            <b>return</b> <a class="macro" href="error.h.html#39" title="(-(12))" data-ref="_M/AVERROR">AVERROR</a>(<a class="macro" href="../../include/asm-generic/errno-base.h.html#15" title="12" data-ref="_M/ENOMEM">ENOMEM</a>);</td></tr>
+<tr><th id="179">179</th><td></td></tr>
+<tr><th id="180">180</th><td>        <a class="local col9 ref" href="#39buf" title='buf' data-ref="39buf">buf</a> = <a class="ref" href="#av_buffer_create" title='av_buffer_create' data-ref="av_buffer_create">av_buffer_create</a>(<a class="local col1 ref" href="#41data" title='data' data-ref="41data">data</a>, <a class="local col8 ref" href="#38size" title='size' data-ref="38size">size</a>, <a class="ref" href="#av_buffer_default_free" title='av_buffer_default_free' data-ref="av_buffer_default_free">av_buffer_default_free</a>, <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>, <var>0</var>);</td></tr>
+<tr><th id="181">181</th><td>        <b>if</b> (!<a class="local col9 ref" href="#39buf" title='buf' data-ref="39buf">buf</a>) {</td></tr>
+<tr><th id="182">182</th><td>            <a class="ref" href="mem.h.html#av_freep" title='av_freep' data-ref="av_freep">av_freep</a>(&amp;<a class="local col1 ref" href="#41data" title='data' data-ref="41data">data</a>);</td></tr>
+<tr><th id="183">183</th><td>            <b>return</b> <a class="macro" href="error.h.html#39" title="(-(12))" data-ref="_M/AVERROR">AVERROR</a>(<a class="macro" href="../../include/asm-generic/errno-base.h.html#15" title="12" data-ref="_M/ENOMEM">ENOMEM</a>);</td></tr>
+<tr><th id="184">184</th><td>        }</td></tr>
+<tr><th id="185">185</th><td></td></tr>
+<tr><th id="186">186</th><td>        <a class="local col9 ref" href="#39buf" title='buf' data-ref="39buf">buf</a>-&gt;<a class="ref" href="buffer.h.html#AVBufferRef::buffer" title='AVBufferRef::buffer' data-ref="AVBufferRef::buffer">buffer</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBuffer::flags" title='AVBuffer::flags' data-ref="AVBuffer::flags">flags</a> |= <a class="macro" href="buffer_internal.h.html#34" title="(1 &lt;&lt; 1)" data-ref="_M/BUFFER_FLAG_REALLOCATABLE">BUFFER_FLAG_REALLOCATABLE</a>;</td></tr>
+<tr><th id="187">187</th><td>        *<a class="local col7 ref" href="#37pbuf" title='pbuf' data-ref="37pbuf">pbuf</a> = <a class="local col9 ref" href="#39buf" title='buf' data-ref="39buf">buf</a>;</td></tr>
+<tr><th id="188">188</th><td></td></tr>
+<tr><th id="189">189</th><td>        <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="190">190</th><td>    } <b>else</b> <b>if</b> (<a class="local col9 ref" href="#39buf" title='buf' data-ref="39buf">buf</a>-&gt;<a class="ref" href="buffer.h.html#AVBufferRef::size" title='AVBufferRef::size' data-ref="AVBufferRef::size">size</a> == <a class="local col8 ref" href="#38size" title='size' data-ref="38size">size</a>)</td></tr>
+<tr><th id="191">191</th><td>        <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="192">192</th><td></td></tr>
+<tr><th id="193">193</th><td>    <b>if</b> (!(<a class="local col9 ref" href="#39buf" title='buf' data-ref="39buf">buf</a>-&gt;<a class="ref" href="buffer.h.html#AVBufferRef::buffer" title='AVBufferRef::buffer' data-ref="AVBufferRef::buffer">buffer</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBuffer::flags" title='AVBuffer::flags' data-ref="AVBuffer::flags">flags</a> &amp; <a class="macro" href="buffer_internal.h.html#34" title="(1 &lt;&lt; 1)" data-ref="_M/BUFFER_FLAG_REALLOCATABLE">BUFFER_FLAG_REALLOCATABLE</a>) ||</td></tr>
+<tr><th id="194">194</th><td>        !<a class="ref" href="#av_buffer_is_writable" title='av_buffer_is_writable' data-ref="av_buffer_is_writable">av_buffer_is_writable</a>(<a class="local col9 ref" href="#39buf" title='buf' data-ref="39buf">buf</a>)) {</td></tr>
+<tr><th id="195">195</th><td>        <i>/* cannot realloc, allocate a new reallocable buffer and copy data */</i></td></tr>
+<tr><th id="196">196</th><td>        <a class="typedef" href="buffer.h.html#AVBufferRef" title='AVBufferRef' data-type='struct AVBufferRef' data-ref="AVBufferRef">AVBufferRef</a> *<dfn class="local col2 decl" id="42new" title='new' data-type='AVBufferRef *' data-ref="42new">new</dfn> = <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="197">197</th><td></td></tr>
+<tr><th id="198">198</th><td>        <a class="ref" href="#av_buffer_realloc" title='av_buffer_realloc' data-ref="av_buffer_realloc">av_buffer_realloc</a>(&amp;<a class="local col2 ref" href="#42new" title='new' data-ref="42new">new</a>, <a class="local col8 ref" href="#38size" title='size' data-ref="38size">size</a>);</td></tr>
+<tr><th id="199">199</th><td>        <b>if</b> (!<a class="local col2 ref" href="#42new" title='new' data-ref="42new">new</a>)</td></tr>
+<tr><th id="200">200</th><td>            <b>return</b> <a class="macro" href="error.h.html#39" title="(-(12))" data-ref="_M/AVERROR">AVERROR</a>(<a class="macro" href="../../include/asm-generic/errno-base.h.html#15" title="12" data-ref="_M/ENOMEM">ENOMEM</a>);</td></tr>
+<tr><th id="201">201</th><td></td></tr>
+<tr><th id="202">202</th><td>        <a class="ref" href="../../include/string.h.html#memcpy" title='memcpy' data-ref="memcpy">memcpy</a>(<a class="local col2 ref" href="#42new" title='new' data-ref="42new">new</a>-&gt;<a class="ref" href="buffer.h.html#AVBufferRef::data" title='AVBufferRef::data' data-ref="AVBufferRef::data">data</a>, <a class="local col9 ref" href="#39buf" title='buf' data-ref="39buf">buf</a>-&gt;<a class="ref" href="buffer.h.html#AVBufferRef::data" title='AVBufferRef::data' data-ref="AVBufferRef::data">data</a>, <a class="macro" href="common.h.html#96" title="((size) &gt; (buf-&gt;size) ? (buf-&gt;size) : (size))" data-ref="_M/FFMIN">FFMIN</a>(<a class="local col8 ref" href="#38size" title='size' data-ref="38size">size</a>, <a class="local col9 ref" href="#39buf" title='buf' data-ref="39buf">buf</a>-&gt;<a class="ref" href="buffer.h.html#AVBufferRef::size" title='AVBufferRef::size' data-ref="AVBufferRef::size">size</a>));</td></tr>
+<tr><th id="203">203</th><td></td></tr>
+<tr><th id="204">204</th><td>        <a class="tu ref" href="#buffer_replace" title='buffer_replace' data-use='c' data-ref="buffer_replace">buffer_replace</a>(<a class="local col7 ref" href="#37pbuf" title='pbuf' data-ref="37pbuf">pbuf</a>, &amp;<a class="local col2 ref" href="#42new" title='new' data-ref="42new">new</a>);</td></tr>
+<tr><th id="205">205</th><td>        <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="206">206</th><td>    }</td></tr>
+<tr><th id="207">207</th><td></td></tr>
+<tr><th id="208">208</th><td>    <a class="local col0 ref" href="#40tmp" title='tmp' data-ref="40tmp">tmp</a> = <a class="ref" href="mem.h.html#av_realloc" title='av_realloc' data-ref="av_realloc">av_realloc</a>(<a class="local col9 ref" href="#39buf" title='buf' data-ref="39buf">buf</a>-&gt;<a class="ref" href="buffer.h.html#AVBufferRef::buffer" title='AVBufferRef::buffer' data-ref="AVBufferRef::buffer">buffer</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBuffer::data" title='AVBuffer::data' data-ref="AVBuffer::data">data</a>, <a class="local col8 ref" href="#38size" title='size' data-ref="38size">size</a>);</td></tr>
+<tr><th id="209">209</th><td>    <b>if</b> (!<a class="local col0 ref" href="#40tmp" title='tmp' data-ref="40tmp">tmp</a>)</td></tr>
+<tr><th id="210">210</th><td>        <b>return</b> <a class="macro" href="error.h.html#39" title="(-(12))" data-ref="_M/AVERROR">AVERROR</a>(<a class="macro" href="../../include/asm-generic/errno-base.h.html#15" title="12" data-ref="_M/ENOMEM">ENOMEM</a>);</td></tr>
+<tr><th id="211">211</th><td></td></tr>
+<tr><th id="212">212</th><td>    <a class="local col9 ref" href="#39buf" title='buf' data-ref="39buf">buf</a>-&gt;<a class="ref" href="buffer.h.html#AVBufferRef::buffer" title='AVBufferRef::buffer' data-ref="AVBufferRef::buffer">buffer</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBuffer::data" title='AVBuffer::data' data-ref="AVBuffer::data">data</a> = <a class="local col9 ref" href="#39buf" title='buf' data-ref="39buf">buf</a>-&gt;<a class="ref" href="buffer.h.html#AVBufferRef::data" title='AVBufferRef::data' data-ref="AVBufferRef::data">data</a> = <a class="local col0 ref" href="#40tmp" title='tmp' data-ref="40tmp">tmp</a>;</td></tr>
+<tr><th id="213">213</th><td>    <a class="local col9 ref" href="#39buf" title='buf' data-ref="39buf">buf</a>-&gt;<a class="ref" href="buffer.h.html#AVBufferRef::buffer" title='AVBufferRef::buffer' data-ref="AVBufferRef::buffer">buffer</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBuffer::size" title='AVBuffer::size' data-ref="AVBuffer::size">size</a> = <a class="local col9 ref" href="#39buf" title='buf' data-ref="39buf">buf</a>-&gt;<a class="ref" href="buffer.h.html#AVBufferRef::size" title='AVBufferRef::size' data-ref="AVBufferRef::size">size</a> = <a class="local col8 ref" href="#38size" title='size' data-ref="38size">size</a>;</td></tr>
+<tr><th id="214">214</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="215">215</th><td>}</td></tr>
+<tr><th id="216">216</th><td></td></tr>
+<tr><th id="217">217</th><td><a class="typedef" href="buffer.h.html#AVBufferPool" title='AVBufferPool' data-type='struct AVBufferPool' data-ref="AVBufferPool">AVBufferPool</a> *<dfn class="decl def" id="av_buffer_pool_init2" title='av_buffer_pool_init2' data-ref="av_buffer_pool_init2">av_buffer_pool_init2</dfn>(<em>int</em> <dfn class="local col3 decl" id="43size" title='size' data-type='int' data-ref="43size">size</dfn>, <em>void</em> *<dfn class="local col4 decl" id="44opaque" title='opaque' data-type='void *' data-ref="44opaque">opaque</dfn>,</td></tr>
+<tr><th id="218">218</th><td>                                   <a class="typedef" href="buffer.h.html#AVBufferRef" title='AVBufferRef' data-type='struct AVBufferRef' data-ref="AVBufferRef">AVBufferRef</a>* (*<dfn class="local col5 decl" id="45alloc" title='alloc' data-type='AVBufferRef *(*)(void *, int)' data-ref="45alloc">alloc</dfn>)(<em>void</em> *<dfn class="local col6 decl" id="46opaque" title='opaque' data-type='void *' data-ref="46opaque">opaque</dfn>, <em>int</em> <dfn class="local col7 decl" id="47size" title='size' data-type='int' data-ref="47size">size</dfn>),</td></tr>
+<tr><th id="219">219</th><td>                                   <em>void</em> (*<dfn class="local col8 decl" id="48pool_free" title='pool_free' data-type='void (*)(void *)' data-ref="48pool_free">pool_free</dfn>)(<em>void</em> *<dfn class="local col9 decl" id="49opaque" title='opaque' data-type='void *' data-ref="49opaque">opaque</dfn>))</td></tr>
+<tr><th id="220">220</th><td>{</td></tr>
+<tr><th id="221">221</th><td>    <a class="typedef" href="buffer.h.html#AVBufferPool" title='AVBufferPool' data-type='struct AVBufferPool' data-ref="AVBufferPool">AVBufferPool</a> *<dfn class="local col0 decl" id="50pool" title='pool' data-type='AVBufferPool *' data-ref="50pool">pool</dfn> = <a class="ref" href="mem.h.html#av_mallocz" title='av_mallocz' data-ref="av_mallocz">av_mallocz</a>(<b>sizeof</b>(*<a class="local col0 ref" href="#50pool" title='pool' data-ref="50pool">pool</a>));</td></tr>
+<tr><th id="222">222</th><td>    <b>if</b> (!<a class="local col0 ref" href="#50pool" title='pool' data-ref="50pool">pool</a>)</td></tr>
+<tr><th id="223">223</th><td>        <b>return</b> <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="224">224</th><td></td></tr>
+<tr><th id="225">225</th><td>    <a class="macro" href="thread.h.html#137" title="pthread_mutex_init" data-ref="_M/ff_mutex_init">ff_mutex_init</a>(&amp;<a class="local col0 ref" href="#50pool" title='pool' data-ref="50pool">pool</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBufferPool::mutex" title='AVBufferPool::mutex' data-ref="AVBufferPool::mutex">mutex</a>, <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>);</td></tr>
+<tr><th id="226">226</th><td></td></tr>
+<tr><th id="227">227</th><td>    <a class="local col0 ref" href="#50pool" title='pool' data-ref="50pool">pool</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBufferPool::size" title='AVBufferPool::size' data-ref="AVBufferPool::size">size</a>      = <a class="local col3 ref" href="#43size" title='size' data-ref="43size">size</a>;</td></tr>
+<tr><th id="228">228</th><td>    <a class="local col0 ref" href="#50pool" title='pool' data-ref="50pool">pool</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBufferPool::opaque" title='AVBufferPool::opaque' data-ref="AVBufferPool::opaque">opaque</a>    = <a class="local col4 ref" href="#44opaque" title='opaque' data-ref="44opaque">opaque</a>;</td></tr>
+<tr><th id="229">229</th><td>    <a class="local col0 ref" href="#50pool" title='pool' data-ref="50pool">pool</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBufferPool::alloc2" title='AVBufferPool::alloc2' data-ref="AVBufferPool::alloc2">alloc2</a>    = <a class="local col5 ref" href="#45alloc" title='alloc' data-ref="45alloc">alloc</a>;</td></tr>
+<tr><th id="230">230</th><td>    <a class="local col0 ref" href="#50pool" title='pool' data-ref="50pool">pool</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBufferPool::pool_free" title='AVBufferPool::pool_free' data-ref="AVBufferPool::pool_free">pool_free</a> = <a class="local col8 ref" href="#48pool_free" title='pool_free' data-ref="48pool_free">pool_free</a>;</td></tr>
+<tr><th id="231">231</th><td></td></tr>
+<tr><th id="232">232</th><td>    <a class="macro" href="atomic_gcc.h.html#39" title="atomic_int_set_gcc" data-ref="_M/avpriv_atomic_int_set">avpriv_atomic_int_set</a>(&amp;<a class="local col0 ref" href="#50pool" title='pool' data-ref="50pool">pool</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBufferPool::refcount" title='AVBufferPool::refcount' data-ref="AVBufferPool::refcount">refcount</a>, <var>1</var>);</td></tr>
+<tr><th id="233">233</th><td></td></tr>
+<tr><th id="234">234</th><td>    <b>return</b> <a class="local col0 ref" href="#50pool" title='pool' data-ref="50pool">pool</a>;</td></tr>
+<tr><th id="235">235</th><td>}</td></tr>
+<tr><th id="236">236</th><td></td></tr>
+<tr><th id="237">237</th><td><a class="typedef" href="buffer.h.html#AVBufferPool" title='AVBufferPool' data-type='struct AVBufferPool' data-ref="AVBufferPool">AVBufferPool</a> *<dfn class="decl def" id="av_buffer_pool_init" title='av_buffer_pool_init' data-ref="av_buffer_pool_init">av_buffer_pool_init</dfn>(<em>int</em> <dfn class="local col1 decl" id="51size" title='size' data-type='int' data-ref="51size">size</dfn>, <a class="typedef" href="buffer.h.html#AVBufferRef" title='AVBufferRef' data-type='struct AVBufferRef' data-ref="AVBufferRef">AVBufferRef</a>* (*<dfn class="local col2 decl" id="52alloc" title='alloc' data-type='AVBufferRef *(*)(int)' data-ref="52alloc">alloc</dfn>)(<em>int</em> <dfn class="local col3 decl" id="53size" title='size' data-type='int' data-ref="53size">size</dfn>))</td></tr>
+<tr><th id="238">238</th><td>{</td></tr>
+<tr><th id="239">239</th><td>    <a class="typedef" href="buffer.h.html#AVBufferPool" title='AVBufferPool' data-type='struct AVBufferPool' data-ref="AVBufferPool">AVBufferPool</a> *<dfn class="local col4 decl" id="54pool" title='pool' data-type='AVBufferPool *' data-ref="54pool">pool</dfn> = <a class="ref" href="mem.h.html#av_mallocz" title='av_mallocz' data-ref="av_mallocz">av_mallocz</a>(<b>sizeof</b>(*<a class="local col4 ref" href="#54pool" title='pool' data-ref="54pool">pool</a>));</td></tr>
+<tr><th id="240">240</th><td>    <b>if</b> (!<a class="local col4 ref" href="#54pool" title='pool' data-ref="54pool">pool</a>)</td></tr>
+<tr><th id="241">241</th><td>        <b>return</b> <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="242">242</th><td></td></tr>
+<tr><th id="243">243</th><td>    <a class="macro" href="thread.h.html#137" title="pthread_mutex_init" data-ref="_M/ff_mutex_init">ff_mutex_init</a>(&amp;<a class="local col4 ref" href="#54pool" title='pool' data-ref="54pool">pool</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBufferPool::mutex" title='AVBufferPool::mutex' data-ref="AVBufferPool::mutex">mutex</a>, <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>);</td></tr>
+<tr><th id="244">244</th><td></td></tr>
+<tr><th id="245">245</th><td>    <a class="local col4 ref" href="#54pool" title='pool' data-ref="54pool">pool</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBufferPool::size" title='AVBufferPool::size' data-ref="AVBufferPool::size">size</a>     = <a class="local col1 ref" href="#51size" title='size' data-ref="51size">size</a>;</td></tr>
+<tr><th id="246">246</th><td>    <a class="local col4 ref" href="#54pool" title='pool' data-ref="54pool">pool</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBufferPool::alloc" title='AVBufferPool::alloc' data-ref="AVBufferPool::alloc">alloc</a>    = <a class="local col2 ref" href="#52alloc" title='alloc' data-ref="52alloc">alloc</a> ? <a class="local col2 ref" href="#52alloc" title='alloc' data-ref="52alloc">alloc</a> : <a class="ref" href="#av_buffer_alloc" title='av_buffer_alloc' data-ref="av_buffer_alloc">av_buffer_alloc</a>;</td></tr>
+<tr><th id="247">247</th><td></td></tr>
+<tr><th id="248">248</th><td>    <a class="macro" href="atomic_gcc.h.html#39" title="atomic_int_set_gcc" data-ref="_M/avpriv_atomic_int_set">avpriv_atomic_int_set</a>(&amp;<a class="local col4 ref" href="#54pool" title='pool' data-ref="54pool">pool</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBufferPool::refcount" title='AVBufferPool::refcount' data-ref="AVBufferPool::refcount">refcount</a>, <var>1</var>);</td></tr>
+<tr><th id="249">249</th><td></td></tr>
+<tr><th id="250">250</th><td>    <b>return</b> <a class="local col4 ref" href="#54pool" title='pool' data-ref="54pool">pool</a>;</td></tr>
+<tr><th id="251">251</th><td>}</td></tr>
+<tr><th id="252">252</th><td></td></tr>
+<tr><th id="253">253</th><td><i  data-doc="buffer_pool_free">/*</i></td></tr>
+<tr><th id="254">254</th><td><i  data-doc="buffer_pool_free"> * This function gets called when the pool has been uninited and</i></td></tr>
+<tr><th id="255">255</th><td><i  data-doc="buffer_pool_free"> * all the buffers returned to it.</i></td></tr>
+<tr><th id="256">256</th><td><i  data-doc="buffer_pool_free"> */</i></td></tr>
+<tr><th id="257">257</th><td><em>static</em> <em>void</em> <dfn class="tu decl def" id="buffer_pool_free" title='buffer_pool_free' data-type='void buffer_pool_free(AVBufferPool * pool)' data-ref="buffer_pool_free">buffer_pool_free</dfn>(<a class="typedef" href="buffer.h.html#AVBufferPool" title='AVBufferPool' data-type='struct AVBufferPool' data-ref="AVBufferPool">AVBufferPool</a> *<dfn class="local col5 decl" id="55pool" title='pool' data-type='AVBufferPool *' data-ref="55pool">pool</dfn>)</td></tr>
+<tr><th id="258">258</th><td>{</td></tr>
+<tr><th id="259">259</th><td>    <b>while</b> (<a class="local col5 ref" href="#55pool" title='pool' data-ref="55pool">pool</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBufferPool::pool" title='AVBufferPool::pool' data-ref="AVBufferPool::pool">pool</a>) {</td></tr>
+<tr><th id="260">260</th><td>        <a class="typedef" href="buffer_internal.h.html#BufferPoolEntry" title='BufferPoolEntry' data-type='struct BufferPoolEntry' data-ref="BufferPoolEntry">BufferPoolEntry</a> *<dfn class="local col6 decl" id="56buf" title='buf' data-type='BufferPoolEntry *' data-ref="56buf">buf</dfn> = <a class="local col5 ref" href="#55pool" title='pool' data-ref="55pool">pool</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBufferPool::pool" title='AVBufferPool::pool' data-ref="AVBufferPool::pool">pool</a>;</td></tr>
+<tr><th id="261">261</th><td>        <a class="local col5 ref" href="#55pool" title='pool' data-ref="55pool">pool</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBufferPool::pool" title='AVBufferPool::pool' data-ref="AVBufferPool::pool">pool</a> = <a class="local col6 ref" href="#56buf" title='buf' data-ref="56buf">buf</a>-&gt;<a class="ref" href="buffer_internal.h.html#BufferPoolEntry::next" title='BufferPoolEntry::next' data-ref="BufferPoolEntry::next">next</a>;</td></tr>
+<tr><th id="262">262</th><td></td></tr>
+<tr><th id="263">263</th><td>        <a class="local col6 ref" href="#56buf" title='buf' data-ref="56buf">buf</a>-&gt;<a class="ref" href="buffer_internal.h.html#BufferPoolEntry::free" title='BufferPoolEntry::free' data-ref="BufferPoolEntry::free">free</a>(<a class="local col6 ref" href="#56buf" title='buf' data-ref="56buf">buf</a>-&gt;<a class="ref" href="buffer_internal.h.html#BufferPoolEntry::opaque" title='BufferPoolEntry::opaque' data-ref="BufferPoolEntry::opaque">opaque</a>, <a class="local col6 ref" href="#56buf" title='buf' data-ref="56buf">buf</a>-&gt;<a class="ref" href="buffer_internal.h.html#BufferPoolEntry::data" title='BufferPoolEntry::data' data-ref="BufferPoolEntry::data">data</a>);</td></tr>
+<tr><th id="264">264</th><td>        <a class="ref" href="mem.h.html#av_freep" title='av_freep' data-ref="av_freep">av_freep</a>(&amp;<a class="local col6 ref" href="#56buf" title='buf' data-ref="56buf">buf</a>);</td></tr>
+<tr><th id="265">265</th><td>    }</td></tr>
+<tr><th id="266">266</th><td>    <a class="macro" href="thread.h.html#140" title="pthread_mutex_destroy" data-ref="_M/ff_mutex_destroy">ff_mutex_destroy</a>(&amp;<a class="local col5 ref" href="#55pool" title='pool' data-ref="55pool">pool</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBufferPool::mutex" title='AVBufferPool::mutex' data-ref="AVBufferPool::mutex">mutex</a>);</td></tr>
+<tr><th id="267">267</th><td></td></tr>
+<tr><th id="268">268</th><td>    <b>if</b> (<a class="local col5 ref" href="#55pool" title='pool' data-ref="55pool">pool</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBufferPool::pool_free" title='AVBufferPool::pool_free' data-ref="AVBufferPool::pool_free">pool_free</a>)</td></tr>
+<tr><th id="269">269</th><td>        <a class="local col5 ref" href="#55pool" title='pool' data-ref="55pool">pool</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBufferPool::pool_free" title='AVBufferPool::pool_free' data-ref="AVBufferPool::pool_free">pool_free</a>(<a class="local col5 ref" href="#55pool" title='pool' data-ref="55pool">pool</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBufferPool::opaque" title='AVBufferPool::opaque' data-ref="AVBufferPool::opaque">opaque</a>);</td></tr>
+<tr><th id="270">270</th><td></td></tr>
+<tr><th id="271">271</th><td>    <a class="ref" href="mem.h.html#av_freep" title='av_freep' data-ref="av_freep">av_freep</a>(&amp;<a class="local col5 ref" href="#55pool" title='pool' data-ref="55pool">pool</a>);</td></tr>
+<tr><th id="272">272</th><td>}</td></tr>
+<tr><th id="273">273</th><td></td></tr>
+<tr><th id="274">274</th><td><em>void</em> <dfn class="decl def" id="av_buffer_pool_uninit" title='av_buffer_pool_uninit' data-ref="av_buffer_pool_uninit">av_buffer_pool_uninit</dfn>(<a class="typedef" href="buffer.h.html#AVBufferPool" title='AVBufferPool' data-type='struct AVBufferPool' data-ref="AVBufferPool">AVBufferPool</a> **<dfn class="local col7 decl" id="57ppool" title='ppool' data-type='AVBufferPool **' data-ref="57ppool">ppool</dfn>)</td></tr>
+<tr><th id="275">275</th><td>{</td></tr>
+<tr><th id="276">276</th><td>    <a class="typedef" href="buffer.h.html#AVBufferPool" title='AVBufferPool' data-type='struct AVBufferPool' data-ref="AVBufferPool">AVBufferPool</a> *<dfn class="local col8 decl" id="58pool" title='pool' data-type='AVBufferPool *' data-ref="58pool">pool</dfn>;</td></tr>
+<tr><th id="277">277</th><td></td></tr>
+<tr><th id="278">278</th><td>    <b>if</b> (!<a class="local col7 ref" href="#57ppool" title='ppool' data-ref="57ppool">ppool</a> || !*<a class="local col7 ref" href="#57ppool" title='ppool' data-ref="57ppool">ppool</a>)</td></tr>
+<tr><th id="279">279</th><td>        <b>return</b>;</td></tr>
+<tr><th id="280">280</th><td>    <a class="local col8 ref" href="#58pool" title='pool' data-ref="58pool">pool</a>   = *<a class="local col7 ref" href="#57ppool" title='ppool' data-ref="57ppool">ppool</a>;</td></tr>
+<tr><th id="281">281</th><td>    *<a class="local col7 ref" href="#57ppool" title='ppool' data-ref="57ppool">ppool</a> = <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="282">282</th><td></td></tr>
+<tr><th id="283">283</th><td>    <b>if</b> (!<a class="macro" href="atomic_gcc.h.html#50" title="atomic_int_add_and_fetch_gcc" data-ref="_M/avpriv_atomic_int_add_and_fetch">avpriv_atomic_int_add_and_fetch</a>(&amp;<a class="local col8 ref" href="#58pool" title='pool' data-ref="58pool">pool</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBufferPool::refcount" title='AVBufferPool::refcount' data-ref="AVBufferPool::refcount">refcount</a>, -<var>1</var>))</td></tr>
+<tr><th id="284">284</th><td>        <a class="tu ref" href="#buffer_pool_free" title='buffer_pool_free' data-use='c' data-ref="buffer_pool_free">buffer_pool_free</a>(<a class="local col8 ref" href="#58pool" title='pool' data-ref="58pool">pool</a>);</td></tr>
+<tr><th id="285">285</th><td>}</td></tr>
+<tr><th id="286">286</th><td></td></tr>
+<tr><th id="287">287</th><td><u>#<span data-ppcond="287">if</span> <a class="macro" href="thread.h.html#29" title="0" data-ref="_M/USE_ATOMICS">USE_ATOMICS</a></u></td></tr>
+<tr><th id="288">288</th><td><i>/* remove the whole buffer list from the pool and return it */</i></td></tr>
+<tr><th id="289">289</th><td><em>static</em> BufferPoolEntry *get_pool(AVBufferPool *pool)</td></tr>
+<tr><th id="290">290</th><td>{</td></tr>
+<tr><th id="291">291</th><td>    BufferPoolEntry *cur = *(<em>void</em> * <em>volatile</em> *)&amp;pool-&gt;pool, *last = NULL;</td></tr>
+<tr><th id="292">292</th><td></td></tr>
+<tr><th id="293">293</th><td>    <b>while</b> (cur != last) {</td></tr>
+<tr><th id="294">294</th><td>        last = cur;</td></tr>
+<tr><th id="295">295</th><td>        cur = avpriv_atomic_ptr_cas((<em>void</em> * <em>volatile</em> *)&amp;pool-&gt;pool, last, NULL);</td></tr>
+<tr><th id="296">296</th><td>        <b>if</b> (!cur)</td></tr>
+<tr><th id="297">297</th><td>            <b>return</b> NULL;</td></tr>
+<tr><th id="298">298</th><td>    }</td></tr>
+<tr><th id="299">299</th><td></td></tr>
+<tr><th id="300">300</th><td>    <b>return</b> cur;</td></tr>
+<tr><th id="301">301</th><td>}</td></tr>
+<tr><th id="302">302</th><td></td></tr>
+<tr><th id="303">303</th><td><em>static</em> <em>void</em> add_to_pool(BufferPoolEntry *buf)</td></tr>
+<tr><th id="304">304</th><td>{</td></tr>
+<tr><th id="305">305</th><td>    AVBufferPool *pool;</td></tr>
+<tr><th id="306">306</th><td>    BufferPoolEntry *cur, *end = buf;</td></tr>
+<tr><th id="307">307</th><td></td></tr>
+<tr><th id="308">308</th><td>    <b>if</b> (!buf)</td></tr>
+<tr><th id="309">309</th><td>        <b>return</b>;</td></tr>
+<tr><th id="310">310</th><td>    pool = buf-&gt;pool;</td></tr>
+<tr><th id="311">311</th><td></td></tr>
+<tr><th id="312">312</th><td>    <b>while</b> (end-&gt;next)</td></tr>
+<tr><th id="313">313</th><td>        end = end-&gt;next;</td></tr>
+<tr><th id="314">314</th><td></td></tr>
+<tr><th id="315">315</th><td>    <b>while</b> (avpriv_atomic_ptr_cas((<em>void</em> * <em>volatile</em> *)&amp;pool-&gt;pool, NULL, buf)) {</td></tr>
+<tr><th id="316">316</th><td>        <i>/* pool is not empty, retrieve it and append it to our list */</i></td></tr>
+<tr><th id="317">317</th><td>        cur = get_pool(pool);</td></tr>
+<tr><th id="318">318</th><td>        end-&gt;next = cur;</td></tr>
+<tr><th id="319">319</th><td>        <b>while</b> (end-&gt;next)</td></tr>
+<tr><th id="320">320</th><td>            end = end-&gt;next;</td></tr>
+<tr><th id="321">321</th><td>    }</td></tr>
+<tr><th id="322">322</th><td>}</td></tr>
+<tr><th id="323">323</th><td><u>#<span data-ppcond="287">endif</span></u></td></tr>
+<tr><th id="324">324</th><td></td></tr>
+<tr><th id="325">325</th><td><em>static</em> <em>void</em> <dfn class="tu decl def" id="pool_release_buffer" title='pool_release_buffer' data-type='void pool_release_buffer(void * opaque, uint8_t * data)' data-ref="pool_release_buffer">pool_release_buffer</dfn>(<em>void</em> *<dfn class="local col9 decl" id="59opaque" title='opaque' data-type='void *' data-ref="59opaque">opaque</dfn>, <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col0 decl" id="60data" title='data' data-type='uint8_t *' data-ref="60data">data</dfn>)</td></tr>
+<tr><th id="326">326</th><td>{</td></tr>
+<tr><th id="327">327</th><td>    <a class="typedef" href="buffer_internal.h.html#BufferPoolEntry" title='BufferPoolEntry' data-type='struct BufferPoolEntry' data-ref="BufferPoolEntry">BufferPoolEntry</a> *<dfn class="local col1 decl" id="61buf" title='buf' data-type='BufferPoolEntry *' data-ref="61buf">buf</dfn> = <a class="local col9 ref" href="#59opaque" title='opaque' data-ref="59opaque">opaque</a>;</td></tr>
+<tr><th id="328">328</th><td>    <a class="typedef" href="buffer.h.html#AVBufferPool" title='AVBufferPool' data-type='struct AVBufferPool' data-ref="AVBufferPool">AVBufferPool</a> *<dfn class="local col2 decl" id="62pool" title='pool' data-type='AVBufferPool *' data-ref="62pool">pool</dfn> = <a class="local col1 ref" href="#61buf" title='buf' data-ref="61buf">buf</a>-&gt;<a class="ref" href="buffer_internal.h.html#BufferPoolEntry::pool" title='BufferPoolEntry::pool' data-ref="BufferPoolEntry::pool">pool</a>;</td></tr>
+<tr><th id="329">329</th><td></td></tr>
+<tr><th id="330">330</th><td>    <b>if</b>(<a class="macro" href="../config.h.html#567" title="0" data-ref="_M/CONFIG_MEMORY_POISONING">CONFIG_MEMORY_POISONING</a>)</td></tr>
+<tr><th id="331">331</th><td>        <a class="ref" href="../../include/string.h.html#memset" title='memset' data-ref="memset">memset</a>(<a class="local col1 ref" href="#61buf" title='buf' data-ref="61buf">buf</a>-&gt;<a class="ref" href="buffer_internal.h.html#BufferPoolEntry::data" title='BufferPoolEntry::data' data-ref="BufferPoolEntry::data">data</a>, <a class="macro" href="internal.h.html#85" title="0x2a" data-ref="_M/FF_MEMORY_POISON">FF_MEMORY_POISON</a>, <a class="local col2 ref" href="#62pool" title='pool' data-ref="62pool">pool</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBufferPool::size" title='AVBufferPool::size' data-ref="AVBufferPool::size">size</a>);</td></tr>
+<tr><th id="332">332</th><td></td></tr>
+<tr><th id="333">333</th><td><u>#<span data-ppcond="333">if</span> <a class="macro" href="thread.h.html#29" title="0" data-ref="_M/USE_ATOMICS">USE_ATOMICS</a></u></td></tr>
+<tr><th id="334">334</th><td>    add_to_pool(buf);</td></tr>
+<tr><th id="335">335</th><td><u>#<span data-ppcond="333">else</span></u></td></tr>
+<tr><th id="336">336</th><td>    <a class="macro" href="thread.h.html#138" title="pthread_mutex_lock" data-ref="_M/ff_mutex_lock">ff_mutex_lock</a>(&amp;<a class="local col2 ref" href="#62pool" title='pool' data-ref="62pool">pool</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBufferPool::mutex" title='AVBufferPool::mutex' data-ref="AVBufferPool::mutex">mutex</a>);</td></tr>
+<tr><th id="337">337</th><td>    <a class="local col1 ref" href="#61buf" title='buf' data-ref="61buf">buf</a>-&gt;<a class="ref" href="buffer_internal.h.html#BufferPoolEntry::next" title='BufferPoolEntry::next' data-ref="BufferPoolEntry::next">next</a> = <a class="local col2 ref" href="#62pool" title='pool' data-ref="62pool">pool</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBufferPool::pool" title='AVBufferPool::pool' data-ref="AVBufferPool::pool">pool</a>;</td></tr>
+<tr><th id="338">338</th><td>    <a class="local col2 ref" href="#62pool" title='pool' data-ref="62pool">pool</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBufferPool::pool" title='AVBufferPool::pool' data-ref="AVBufferPool::pool">pool</a> = <a class="local col1 ref" href="#61buf" title='buf' data-ref="61buf">buf</a>;</td></tr>
+<tr><th id="339">339</th><td>    <a class="macro" href="thread.h.html#139" title="pthread_mutex_unlock" data-ref="_M/ff_mutex_unlock">ff_mutex_unlock</a>(&amp;<a class="local col2 ref" href="#62pool" title='pool' data-ref="62pool">pool</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBufferPool::mutex" title='AVBufferPool::mutex' data-ref="AVBufferPool::mutex">mutex</a>);</td></tr>
+<tr><th id="340">340</th><td><u>#<span data-ppcond="333">endif</span></u></td></tr>
+<tr><th id="341">341</th><td></td></tr>
+<tr><th id="342">342</th><td>    <b>if</b> (!<a class="macro" href="atomic_gcc.h.html#50" title="atomic_int_add_and_fetch_gcc" data-ref="_M/avpriv_atomic_int_add_and_fetch">avpriv_atomic_int_add_and_fetch</a>(&amp;<a class="local col2 ref" href="#62pool" title='pool' data-ref="62pool">pool</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBufferPool::refcount" title='AVBufferPool::refcount' data-ref="AVBufferPool::refcount">refcount</a>, -<var>1</var>))</td></tr>
+<tr><th id="343">343</th><td>        <a class="tu ref" href="#buffer_pool_free" title='buffer_pool_free' data-use='c' data-ref="buffer_pool_free">buffer_pool_free</a>(<a class="local col2 ref" href="#62pool" title='pool' data-ref="62pool">pool</a>);</td></tr>
+<tr><th id="344">344</th><td>}</td></tr>
+<tr><th id="345">345</th><td></td></tr>
+<tr><th id="346">346</th><td><i  data-doc="pool_alloc_buffer">/* allocate a new buffer and override its free() callback so that</i></td></tr>
+<tr><th id="347">347</th><td><i  data-doc="pool_alloc_buffer"> * it is returned to the pool on free */</i></td></tr>
+<tr><th id="348">348</th><td><em>static</em> <a class="typedef" href="buffer.h.html#AVBufferRef" title='AVBufferRef' data-type='struct AVBufferRef' data-ref="AVBufferRef">AVBufferRef</a> *<dfn class="tu decl def" id="pool_alloc_buffer" title='pool_alloc_buffer' data-type='AVBufferRef * pool_alloc_buffer(AVBufferPool * pool)' data-ref="pool_alloc_buffer">pool_alloc_buffer</dfn>(<a class="typedef" href="buffer.h.html#AVBufferPool" title='AVBufferPool' data-type='struct AVBufferPool' data-ref="AVBufferPool">AVBufferPool</a> *<dfn class="local col3 decl" id="63pool" title='pool' data-type='AVBufferPool *' data-ref="63pool">pool</dfn>)</td></tr>
+<tr><th id="349">349</th><td>{</td></tr>
+<tr><th id="350">350</th><td>    <a class="typedef" href="buffer_internal.h.html#BufferPoolEntry" title='BufferPoolEntry' data-type='struct BufferPoolEntry' data-ref="BufferPoolEntry">BufferPoolEntry</a> *<dfn class="local col4 decl" id="64buf" title='buf' data-type='BufferPoolEntry *' data-ref="64buf">buf</dfn>;</td></tr>
+<tr><th id="351">351</th><td>    <a class="typedef" href="buffer.h.html#AVBufferRef" title='AVBufferRef' data-type='struct AVBufferRef' data-ref="AVBufferRef">AVBufferRef</a>     *<dfn class="local col5 decl" id="65ret" title='ret' data-type='AVBufferRef *' data-ref="65ret">ret</dfn>;</td></tr>
+<tr><th id="352">352</th><td></td></tr>
+<tr><th id="353">353</th><td>    <a class="local col5 ref" href="#65ret" title='ret' data-ref="65ret">ret</a> = <a class="local col3 ref" href="#63pool" title='pool' data-ref="63pool">pool</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBufferPool::alloc2" title='AVBufferPool::alloc2' data-ref="AVBufferPool::alloc2">alloc2</a> ? <a class="local col3 ref" href="#63pool" title='pool' data-ref="63pool">pool</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBufferPool::alloc2" title='AVBufferPool::alloc2' data-ref="AVBufferPool::alloc2">alloc2</a>(<a class="local col3 ref" href="#63pool" title='pool' data-ref="63pool">pool</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBufferPool::opaque" title='AVBufferPool::opaque' data-ref="AVBufferPool::opaque">opaque</a>, <a class="local col3 ref" href="#63pool" title='pool' data-ref="63pool">pool</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBufferPool::size" title='AVBufferPool::size' data-ref="AVBufferPool::size">size</a>) :</td></tr>
+<tr><th id="354">354</th><td>                         <a class="local col3 ref" href="#63pool" title='pool' data-ref="63pool">pool</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBufferPool::alloc" title='AVBufferPool::alloc' data-ref="AVBufferPool::alloc">alloc</a>(<a class="local col3 ref" href="#63pool" title='pool' data-ref="63pool">pool</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBufferPool::size" title='AVBufferPool::size' data-ref="AVBufferPool::size">size</a>);</td></tr>
+<tr><th id="355">355</th><td>    <b>if</b> (!<a class="local col5 ref" href="#65ret" title='ret' data-ref="65ret">ret</a>)</td></tr>
+<tr><th id="356">356</th><td>        <b>return</b> <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="357">357</th><td></td></tr>
+<tr><th id="358">358</th><td>    <a class="local col4 ref" href="#64buf" title='buf' data-ref="64buf">buf</a> = <a class="ref" href="mem.h.html#av_mallocz" title='av_mallocz' data-ref="av_mallocz">av_mallocz</a>(<b>sizeof</b>(*<a class="local col4 ref" href="#64buf" title='buf' data-ref="64buf">buf</a>));</td></tr>
+<tr><th id="359">359</th><td>    <b>if</b> (!<a class="local col4 ref" href="#64buf" title='buf' data-ref="64buf">buf</a>) {</td></tr>
+<tr><th id="360">360</th><td>        <a class="ref" href="#av_buffer_unref" title='av_buffer_unref' data-ref="av_buffer_unref">av_buffer_unref</a>(&amp;<a class="local col5 ref" href="#65ret" title='ret' data-ref="65ret">ret</a>);</td></tr>
+<tr><th id="361">361</th><td>        <b>return</b> <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="362">362</th><td>    }</td></tr>
+<tr><th id="363">363</th><td></td></tr>
+<tr><th id="364">364</th><td>    <a class="local col4 ref" href="#64buf" title='buf' data-ref="64buf">buf</a>-&gt;<a class="ref" href="buffer_internal.h.html#BufferPoolEntry::data" title='BufferPoolEntry::data' data-ref="BufferPoolEntry::data">data</a>   = <a class="local col5 ref" href="#65ret" title='ret' data-ref="65ret">ret</a>-&gt;<a class="ref" href="buffer.h.html#AVBufferRef::buffer" title='AVBufferRef::buffer' data-ref="AVBufferRef::buffer">buffer</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBuffer::data" title='AVBuffer::data' data-ref="AVBuffer::data">data</a>;</td></tr>
+<tr><th id="365">365</th><td>    <a class="local col4 ref" href="#64buf" title='buf' data-ref="64buf">buf</a>-&gt;<a class="ref" href="buffer_internal.h.html#BufferPoolEntry::opaque" title='BufferPoolEntry::opaque' data-ref="BufferPoolEntry::opaque">opaque</a> = <a class="local col5 ref" href="#65ret" title='ret' data-ref="65ret">ret</a>-&gt;<a class="ref" href="buffer.h.html#AVBufferRef::buffer" title='AVBufferRef::buffer' data-ref="AVBufferRef::buffer">buffer</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBuffer::opaque" title='AVBuffer::opaque' data-ref="AVBuffer::opaque">opaque</a>;</td></tr>
+<tr><th id="366">366</th><td>    <a class="local col4 ref" href="#64buf" title='buf' data-ref="64buf">buf</a>-&gt;<a class="ref" href="buffer_internal.h.html#BufferPoolEntry::free" title='BufferPoolEntry::free' data-ref="BufferPoolEntry::free">free</a>   = <a class="local col5 ref" href="#65ret" title='ret' data-ref="65ret">ret</a>-&gt;<a class="ref" href="buffer.h.html#AVBufferRef::buffer" title='AVBufferRef::buffer' data-ref="AVBufferRef::buffer">buffer</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBuffer::free" title='AVBuffer::free' data-ref="AVBuffer::free">free</a>;</td></tr>
+<tr><th id="367">367</th><td>    <a class="local col4 ref" href="#64buf" title='buf' data-ref="64buf">buf</a>-&gt;<a class="ref" href="buffer_internal.h.html#BufferPoolEntry::pool" title='BufferPoolEntry::pool' data-ref="BufferPoolEntry::pool">pool</a>   = <a class="local col3 ref" href="#63pool" title='pool' data-ref="63pool">pool</a>;</td></tr>
+<tr><th id="368">368</th><td></td></tr>
+<tr><th id="369">369</th><td>    <a class="local col5 ref" href="#65ret" title='ret' data-ref="65ret">ret</a>-&gt;<a class="ref" href="buffer.h.html#AVBufferRef::buffer" title='AVBufferRef::buffer' data-ref="AVBufferRef::buffer">buffer</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBuffer::opaque" title='AVBuffer::opaque' data-ref="AVBuffer::opaque">opaque</a> = <a class="local col4 ref" href="#64buf" title='buf' data-ref="64buf">buf</a>;</td></tr>
+<tr><th id="370">370</th><td>    <a class="local col5 ref" href="#65ret" title='ret' data-ref="65ret">ret</a>-&gt;<a class="ref" href="buffer.h.html#AVBufferRef::buffer" title='AVBufferRef::buffer' data-ref="AVBufferRef::buffer">buffer</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBuffer::free" title='AVBuffer::free' data-ref="AVBuffer::free">free</a>   = <a class="tu ref" href="#pool_release_buffer" title='pool_release_buffer' data-use='r' data-ref="pool_release_buffer">pool_release_buffer</a>;</td></tr>
+<tr><th id="371">371</th><td></td></tr>
+<tr><th id="372">372</th><td><u>#<span data-ppcond="372">if</span> <a class="macro" href="thread.h.html#29" title="0" data-ref="_M/USE_ATOMICS">USE_ATOMICS</a></u></td></tr>
+<tr><th id="373">373</th><td>    avpriv_atomic_int_add_and_fetch(&amp;pool-&gt;refcount, <var>1</var>);</td></tr>
+<tr><th id="374">374</th><td>    avpriv_atomic_int_add_and_fetch(&amp;pool-&gt;nb_allocated, <var>1</var>);</td></tr>
+<tr><th id="375">375</th><td><u>#<span data-ppcond="372">endif</span></u></td></tr>
+<tr><th id="376">376</th><td></td></tr>
+<tr><th id="377">377</th><td>    <b>return</b> <a class="local col5 ref" href="#65ret" title='ret' data-ref="65ret">ret</a>;</td></tr>
+<tr><th id="378">378</th><td>}</td></tr>
+<tr><th id="379">379</th><td></td></tr>
+<tr><th id="380">380</th><td><a class="typedef" href="buffer.h.html#AVBufferRef" title='AVBufferRef' data-type='struct AVBufferRef' data-ref="AVBufferRef">AVBufferRef</a> *<dfn class="decl def" id="av_buffer_pool_get" title='av_buffer_pool_get' data-ref="av_buffer_pool_get">av_buffer_pool_get</dfn>(<a class="typedef" href="buffer.h.html#AVBufferPool" title='AVBufferPool' data-type='struct AVBufferPool' data-ref="AVBufferPool">AVBufferPool</a> *<dfn class="local col6 decl" id="66pool" title='pool' data-type='AVBufferPool *' data-ref="66pool">pool</dfn>)</td></tr>
+<tr><th id="381">381</th><td>{</td></tr>
+<tr><th id="382">382</th><td>    <a class="typedef" href="buffer.h.html#AVBufferRef" title='AVBufferRef' data-type='struct AVBufferRef' data-ref="AVBufferRef">AVBufferRef</a> *<dfn class="local col7 decl" id="67ret" title='ret' data-type='AVBufferRef *' data-ref="67ret">ret</dfn>;</td></tr>
+<tr><th id="383">383</th><td>    <a class="typedef" href="buffer_internal.h.html#BufferPoolEntry" title='BufferPoolEntry' data-type='struct BufferPoolEntry' data-ref="BufferPoolEntry">BufferPoolEntry</a> *<dfn class="local col8 decl" id="68buf" title='buf' data-type='BufferPoolEntry *' data-ref="68buf">buf</dfn>;</td></tr>
+<tr><th id="384">384</th><td></td></tr>
+<tr><th id="385">385</th><td><u>#<span data-ppcond="385">if</span> <a class="macro" href="thread.h.html#29" title="0" data-ref="_M/USE_ATOMICS">USE_ATOMICS</a></u></td></tr>
+<tr><th id="386">386</th><td>    <i>/* check whether the pool is empty */</i></td></tr>
+<tr><th id="387">387</th><td>    buf = get_pool(pool);</td></tr>
+<tr><th id="388">388</th><td>    <b>if</b> (!buf &amp;&amp; pool-&gt;refcount &lt;= pool-&gt;nb_allocated) {</td></tr>
+<tr><th id="389">389</th><td>        av_log(NULL, AV_LOG_DEBUG, <q>"Pool race dectected, spining to avoid overallocation and eventual OOM\n"</q>);</td></tr>
+<tr><th id="390">390</th><td>        <b>while</b> (!buf &amp;&amp; avpriv_atomic_int_get(&amp;pool-&gt;refcount) &lt;= avpriv_atomic_int_get(&amp;pool-&gt;nb_allocated))</td></tr>
+<tr><th id="391">391</th><td>            buf = get_pool(pool);</td></tr>
+<tr><th id="392">392</th><td>    }</td></tr>
+<tr><th id="393">393</th><td></td></tr>
+<tr><th id="394">394</th><td>    <b>if</b> (!buf)</td></tr>
+<tr><th id="395">395</th><td>        <b>return</b> pool_alloc_buffer(pool);</td></tr>
+<tr><th id="396">396</th><td></td></tr>
+<tr><th id="397">397</th><td>    <i>/* keep the first entry, return the rest of the list to the pool */</i></td></tr>
+<tr><th id="398">398</th><td>    add_to_pool(buf-&gt;next);</td></tr>
+<tr><th id="399">399</th><td>    buf-&gt;next = NULL;</td></tr>
+<tr><th id="400">400</th><td></td></tr>
+<tr><th id="401">401</th><td>    ret = av_buffer_create(buf-&gt;data, pool-&gt;size, pool_release_buffer,</td></tr>
+<tr><th id="402">402</th><td>                           buf, <var>0</var>);</td></tr>
+<tr><th id="403">403</th><td>    <b>if</b> (!ret) {</td></tr>
+<tr><th id="404">404</th><td>        add_to_pool(buf);</td></tr>
+<tr><th id="405">405</th><td>        <b>return</b> NULL;</td></tr>
+<tr><th id="406">406</th><td>    }</td></tr>
+<tr><th id="407">407</th><td><u>#<span data-ppcond="385">else</span></u></td></tr>
+<tr><th id="408">408</th><td>    <a class="macro" href="thread.h.html#138" title="pthread_mutex_lock" data-ref="_M/ff_mutex_lock">ff_mutex_lock</a>(&amp;<a class="local col6 ref" href="#66pool" title='pool' data-ref="66pool">pool</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBufferPool::mutex" title='AVBufferPool::mutex' data-ref="AVBufferPool::mutex">mutex</a>);</td></tr>
+<tr><th id="409">409</th><td>    <a class="local col8 ref" href="#68buf" title='buf' data-ref="68buf">buf</a> = <a class="local col6 ref" href="#66pool" title='pool' data-ref="66pool">pool</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBufferPool::pool" title='AVBufferPool::pool' data-ref="AVBufferPool::pool">pool</a>;</td></tr>
+<tr><th id="410">410</th><td>    <b>if</b> (<a class="local col8 ref" href="#68buf" title='buf' data-ref="68buf">buf</a>) {</td></tr>
+<tr><th id="411">411</th><td>        <a class="local col7 ref" href="#67ret" title='ret' data-ref="67ret">ret</a> = <a class="ref" href="#av_buffer_create" title='av_buffer_create' data-ref="av_buffer_create">av_buffer_create</a>(<a class="local col8 ref" href="#68buf" title='buf' data-ref="68buf">buf</a>-&gt;<a class="ref" href="buffer_internal.h.html#BufferPoolEntry::data" title='BufferPoolEntry::data' data-ref="BufferPoolEntry::data">data</a>, <a class="local col6 ref" href="#66pool" title='pool' data-ref="66pool">pool</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBufferPool::size" title='AVBufferPool::size' data-ref="AVBufferPool::size">size</a>, <a class="tu ref" href="#pool_release_buffer" title='pool_release_buffer' data-use='r' data-ref="pool_release_buffer">pool_release_buffer</a>,</td></tr>
+<tr><th id="412">412</th><td>                               <a class="local col8 ref" href="#68buf" title='buf' data-ref="68buf">buf</a>, <var>0</var>);</td></tr>
+<tr><th id="413">413</th><td>        <b>if</b> (<a class="local col7 ref" href="#67ret" title='ret' data-ref="67ret">ret</a>) {</td></tr>
+<tr><th id="414">414</th><td>            <a class="local col6 ref" href="#66pool" title='pool' data-ref="66pool">pool</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBufferPool::pool" title='AVBufferPool::pool' data-ref="AVBufferPool::pool">pool</a> = <a class="local col8 ref" href="#68buf" title='buf' data-ref="68buf">buf</a>-&gt;<a class="ref" href="buffer_internal.h.html#BufferPoolEntry::next" title='BufferPoolEntry::next' data-ref="BufferPoolEntry::next">next</a>;</td></tr>
+<tr><th id="415">415</th><td>            <a class="local col8 ref" href="#68buf" title='buf' data-ref="68buf">buf</a>-&gt;<a class="ref" href="buffer_internal.h.html#BufferPoolEntry::next" title='BufferPoolEntry::next' data-ref="BufferPoolEntry::next">next</a> = <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="416">416</th><td>        }</td></tr>
+<tr><th id="417">417</th><td>    } <b>else</b> {</td></tr>
+<tr><th id="418">418</th><td>        <a class="local col7 ref" href="#67ret" title='ret' data-ref="67ret">ret</a> = <a class="tu ref" href="#pool_alloc_buffer" title='pool_alloc_buffer' data-use='c' data-ref="pool_alloc_buffer">pool_alloc_buffer</a>(<a class="local col6 ref" href="#66pool" title='pool' data-ref="66pool">pool</a>);</td></tr>
+<tr><th id="419">419</th><td>    }</td></tr>
+<tr><th id="420">420</th><td>    <a class="macro" href="thread.h.html#139" title="pthread_mutex_unlock" data-ref="_M/ff_mutex_unlock">ff_mutex_unlock</a>(&amp;<a class="local col6 ref" href="#66pool" title='pool' data-ref="66pool">pool</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBufferPool::mutex" title='AVBufferPool::mutex' data-ref="AVBufferPool::mutex">mutex</a>);</td></tr>
+<tr><th id="421">421</th><td><u>#<span data-ppcond="385">endif</span></u></td></tr>
+<tr><th id="422">422</th><td></td></tr>
+<tr><th id="423">423</th><td>    <b>if</b> (<a class="local col7 ref" href="#67ret" title='ret' data-ref="67ret">ret</a>)</td></tr>
+<tr><th id="424">424</th><td>        <a class="macro" href="atomic_gcc.h.html#50" title="atomic_int_add_and_fetch_gcc" data-ref="_M/avpriv_atomic_int_add_and_fetch">avpriv_atomic_int_add_and_fetch</a>(&amp;<a class="local col6 ref" href="#66pool" title='pool' data-ref="66pool">pool</a>-&gt;<a class="ref" href="buffer_internal.h.html#AVBufferPool::refcount" title='AVBufferPool::refcount' data-ref="AVBufferPool::refcount">refcount</a>, <var>1</var>);</td></tr>
+<tr><th id="425">425</th><td></td></tr>
+<tr><th id="426">426</th><td>    <b>return</b> <a class="local col7 ref" href="#67ret" title='ret' data-ref="67ret">ret</a>;</td></tr>
+<tr><th id="427">427</th><td>}</td></tr>
+<tr><th id="428">428</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

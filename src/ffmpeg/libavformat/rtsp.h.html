@@ -1,0 +1,660 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>rtsp.h source code [ffmpeg/libavformat/rtsp.h] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="RTSPClientState,RTSPControlTransport,RTSPLowerTransport,RTSPMessageHeader,RTSPServerType,RTSPSource,RTSPState,RTSPStream,RTSPTransport,RTSPTransportField "/>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavformat/rtsp.h'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavformat</a>/<a href='rtsp.h.html'>rtsp.h</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * RTSP definitions</i></td></tr>
+<tr><th id="3">3</th><td><i> * Copyright (c) 2002 Fabrice Bellard</i></td></tr>
+<tr><th id="4">4</th><td><i> *</i></td></tr>
+<tr><th id="5">5</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="8">8</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="9">9</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="10">10</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="11">11</th><td><i> *</i></td></tr>
+<tr><th id="12">12</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="13">13</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="14">14</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="15">15</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="16">16</th><td><i> *</i></td></tr>
+<tr><th id="17">17</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="18">18</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="19">19</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="20">20</th><td><i> */</i></td></tr>
+<tr><th id="21">21</th><td><u>#<span data-ppcond="21">ifndef</span> <span class="macro" data-ref="_M/AVFORMAT_RTSP_H">AVFORMAT_RTSP_H</span></u></td></tr>
+<tr><th id="22">22</th><td><u>#define <dfn class="macro" id="_M/AVFORMAT_RTSP_H" data-ref="_M/AVFORMAT_RTSP_H">AVFORMAT_RTSP_H</dfn></u></td></tr>
+<tr><th id="23">23</th><td></td></tr>
+<tr><th id="24">24</th><td><u>#include &lt;stdint.h&gt;</u></td></tr>
+<tr><th id="25">25</th><td><u>#include <a href="avformat.h.html">"avformat.h"</a></u></td></tr>
+<tr><th id="26">26</th><td><u>#include <a href="rtspcodes.h.html">"rtspcodes.h"</a></u></td></tr>
+<tr><th id="27">27</th><td><u>#include <a href="rtpdec.h.html">"rtpdec.h"</a></u></td></tr>
+<tr><th id="28">28</th><td><u>#include <a href="network.h.html">"network.h"</a></u></td></tr>
+<tr><th id="29">29</th><td><u>#include <a href="httpauth.h.html">"httpauth.h"</a></u></td></tr>
+<tr><th id="30">30</th><td></td></tr>
+<tr><th id="31">31</th><td><u>#include <a href="../libavutil/log.h.html">"libavutil/log.h"</a></u></td></tr>
+<tr><th id="32">32</th><td><u>#include <a href="../libavutil/opt.h.html">"libavutil/opt.h"</a></u></td></tr>
+<tr><th id="33">33</th><td></td></tr>
+<tr><th id="34">34</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="35">35</th><td><i class="doc"> * Network layer over which RTP/etc packet data will be transported.</i></td></tr>
+<tr><th id="36">36</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="37">37</th><td><b>enum</b> <dfn class="type def" id="RTSPLowerTransport" title='RTSPLowerTransport' data-ref="RTSPLowerTransport">RTSPLowerTransport</dfn> {</td></tr>
+<tr><th id="38">38</th><td>    <dfn class="enum" id="RTSPLowerTransport::RTSP_LOWER_TRANSPORT_UDP" title='RTSPLowerTransport::RTSP_LOWER_TRANSPORT_UDP' data-ref="RTSPLowerTransport::RTSP_LOWER_TRANSPORT_UDP">RTSP_LOWER_TRANSPORT_UDP</dfn> = <var>0</var>,           <i class="doc">/**&lt; UDP/unicast */</i></td></tr>
+<tr><th id="39">39</th><td>    <dfn class="enum" id="RTSPLowerTransport::RTSP_LOWER_TRANSPORT_TCP" title='RTSPLowerTransport::RTSP_LOWER_TRANSPORT_TCP' data-ref="RTSPLowerTransport::RTSP_LOWER_TRANSPORT_TCP">RTSP_LOWER_TRANSPORT_TCP</dfn> = <var>1</var>,           <i class="doc">/**&lt; TCP; interleaved in RTSP */</i></td></tr>
+<tr><th id="40">40</th><td>    <dfn class="enum" id="RTSPLowerTransport::RTSP_LOWER_TRANSPORT_UDP_MULTICAST" title='RTSPLowerTransport::RTSP_LOWER_TRANSPORT_UDP_MULTICAST' data-ref="RTSPLowerTransport::RTSP_LOWER_TRANSPORT_UDP_MULTICAST">RTSP_LOWER_TRANSPORT_UDP_MULTICAST</dfn> = <var>2</var>, <i class="doc">/**&lt; UDP/multicast */</i></td></tr>
+<tr><th id="41">41</th><td>    <dfn class="enum" id="RTSPLowerTransport::RTSP_LOWER_TRANSPORT_NB" title='RTSPLowerTransport::RTSP_LOWER_TRANSPORT_NB' data-ref="RTSPLowerTransport::RTSP_LOWER_TRANSPORT_NB">RTSP_LOWER_TRANSPORT_NB</dfn>,</td></tr>
+<tr><th id="42">42</th><td>    <dfn class="enum" id="RTSPLowerTransport::RTSP_LOWER_TRANSPORT_HTTP" title='RTSPLowerTransport::RTSP_LOWER_TRANSPORT_HTTP' data-ref="RTSPLowerTransport::RTSP_LOWER_TRANSPORT_HTTP">RTSP_LOWER_TRANSPORT_HTTP</dfn> = <var>8</var>,          <i class="doc">/**&lt; HTTP tunneled - not a proper</i></td></tr>
+<tr><th id="43">43</th><td><i class="doc">                                                 transport mode as such,</i></td></tr>
+<tr><th id="44">44</th><td><i class="doc">                                                 only for use via AVOptions */</i></td></tr>
+<tr><th id="45">45</th><td>    <dfn class="enum" id="RTSPLowerTransport::RTSP_LOWER_TRANSPORT_CUSTOM" title='RTSPLowerTransport::RTSP_LOWER_TRANSPORT_CUSTOM' data-ref="RTSPLowerTransport::RTSP_LOWER_TRANSPORT_CUSTOM">RTSP_LOWER_TRANSPORT_CUSTOM</dfn> = <var>16</var>,       <i class="doc">/**&lt; Custom IO - not a public</i></td></tr>
+<tr><th id="46">46</th><td><i class="doc">                                                 option for lower_transport_mask,</i></td></tr>
+<tr><th id="47">47</th><td><i class="doc">                                                 but set in the SDP demuxer based</i></td></tr>
+<tr><th id="48">48</th><td><i class="doc">                                                 on a flag. */</i></td></tr>
+<tr><th id="49">49</th><td>};</td></tr>
+<tr><th id="50">50</th><td></td></tr>
+<tr><th id="51">51</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="52">52</th><td><i class="doc"> * Packet profile of the data that we will be receiving. Real servers</i></td></tr>
+<tr><th id="53">53</th><td><i class="doc"> * commonly send RDT (although they can sometimes send RTP as well),</i></td></tr>
+<tr><th id="54">54</th><td><i class="doc"> * whereas most others will send RTP.</i></td></tr>
+<tr><th id="55">55</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="56">56</th><td><b>enum</b> <dfn class="type def" id="RTSPTransport" title='RTSPTransport' data-ref="RTSPTransport">RTSPTransport</dfn> {</td></tr>
+<tr><th id="57">57</th><td>    <dfn class="enum" id="RTSPTransport::RTSP_TRANSPORT_RTP" title='RTSPTransport::RTSP_TRANSPORT_RTP' data-ref="RTSPTransport::RTSP_TRANSPORT_RTP">RTSP_TRANSPORT_RTP</dfn>, <i class="doc">/**&lt; Standards-compliant RTP */</i></td></tr>
+<tr><th id="58">58</th><td>    <dfn class="enum" id="RTSPTransport::RTSP_TRANSPORT_RDT" title='RTSPTransport::RTSP_TRANSPORT_RDT' data-ref="RTSPTransport::RTSP_TRANSPORT_RDT">RTSP_TRANSPORT_RDT</dfn>, <i class="doc">/**&lt; Realmedia Data Transport */</i></td></tr>
+<tr><th id="59">59</th><td>    <dfn class="enum" id="RTSPTransport::RTSP_TRANSPORT_RAW" title='RTSPTransport::RTSP_TRANSPORT_RAW' data-ref="RTSPTransport::RTSP_TRANSPORT_RAW">RTSP_TRANSPORT_RAW</dfn>, <i class="doc">/**&lt; Raw data (over UDP) */</i></td></tr>
+<tr><th id="60">60</th><td>    <dfn class="enum" id="RTSPTransport::RTSP_TRANSPORT_NB" title='RTSPTransport::RTSP_TRANSPORT_NB' data-ref="RTSPTransport::RTSP_TRANSPORT_NB">RTSP_TRANSPORT_NB</dfn></td></tr>
+<tr><th id="61">61</th><td>};</td></tr>
+<tr><th id="62">62</th><td></td></tr>
+<tr><th id="63">63</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="64">64</th><td><i class="doc"> * Transport mode for the RTSP data. This may be plain, or</i></td></tr>
+<tr><th id="65">65</th><td><i class="doc"> * tunneled, which is done over HTTP.</i></td></tr>
+<tr><th id="66">66</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="67">67</th><td><b>enum</b> <dfn class="type def" id="RTSPControlTransport" title='RTSPControlTransport' data-ref="RTSPControlTransport">RTSPControlTransport</dfn> {</td></tr>
+<tr><th id="68">68</th><td>    <dfn class="enum" id="RTSPControlTransport::RTSP_MODE_PLAIN" title='RTSPControlTransport::RTSP_MODE_PLAIN' data-ref="RTSPControlTransport::RTSP_MODE_PLAIN">RTSP_MODE_PLAIN</dfn>,   <i class="doc">/**&lt; Normal RTSP */</i></td></tr>
+<tr><th id="69">69</th><td>    <dfn class="enum" id="RTSPControlTransport::RTSP_MODE_TUNNEL" title='RTSPControlTransport::RTSP_MODE_TUNNEL' data-ref="RTSPControlTransport::RTSP_MODE_TUNNEL">RTSP_MODE_TUNNEL</dfn>   <i class="doc">/**&lt; RTSP over HTTP (tunneling) */</i></td></tr>
+<tr><th id="70">70</th><td>};</td></tr>
+<tr><th id="71">71</th><td></td></tr>
+<tr><th id="72">72</th><td><u>#define <dfn class="macro" id="_M/RTSP_DEFAULT_PORT" data-ref="_M/RTSP_DEFAULT_PORT">RTSP_DEFAULT_PORT</dfn>   554</u></td></tr>
+<tr><th id="73">73</th><td><u>#define <dfn class="macro" id="_M/RTSPS_DEFAULT_PORT" data-ref="_M/RTSPS_DEFAULT_PORT">RTSPS_DEFAULT_PORT</dfn>  322</u></td></tr>
+<tr><th id="74">74</th><td><u>#define <dfn class="macro" id="_M/RTSP_MAX_TRANSPORTS" data-ref="_M/RTSP_MAX_TRANSPORTS">RTSP_MAX_TRANSPORTS</dfn> 8</u></td></tr>
+<tr><th id="75">75</th><td><u>#define <dfn class="macro" id="_M/RTSP_TCP_MAX_PACKET_SIZE" data-ref="_M/RTSP_TCP_MAX_PACKET_SIZE">RTSP_TCP_MAX_PACKET_SIZE</dfn> 1472</u></td></tr>
+<tr><th id="76">76</th><td><u>#define <dfn class="macro" id="_M/RTSP_DEFAULT_NB_AUDIO_CHANNELS" data-ref="_M/RTSP_DEFAULT_NB_AUDIO_CHANNELS">RTSP_DEFAULT_NB_AUDIO_CHANNELS</dfn> 1</u></td></tr>
+<tr><th id="77">77</th><td><u>#define <dfn class="macro" id="_M/RTSP_DEFAULT_AUDIO_SAMPLERATE" data-ref="_M/RTSP_DEFAULT_AUDIO_SAMPLERATE">RTSP_DEFAULT_AUDIO_SAMPLERATE</dfn> 44100</u></td></tr>
+<tr><th id="78">78</th><td><u>#define <dfn class="macro" id="_M/RTSP_RTP_PORT_MIN" data-ref="_M/RTSP_RTP_PORT_MIN">RTSP_RTP_PORT_MIN</dfn> 5000</u></td></tr>
+<tr><th id="79">79</th><td><u>#define <dfn class="macro" id="_M/RTSP_RTP_PORT_MAX" data-ref="_M/RTSP_RTP_PORT_MAX">RTSP_RTP_PORT_MAX</dfn> 65000</u></td></tr>
+<tr><th id="80">80</th><td></td></tr>
+<tr><th id="81">81</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="82">82</th><td><i class="doc"> * This describes a single item in the "Transport:" line of one stream as</i></td></tr>
+<tr><th id="83">83</th><td><i class="doc"> * negotiated by the SETUP RTSP command. Multiple transports are comma-</i></td></tr>
+<tr><th id="84">84</th><td><i class="doc"> * separated ("Transport: x-read-rdt/tcp;interleaved=0-1,rtp/avp/udp;</i></td></tr>
+<tr><th id="85">85</th><td><i class="doc"> * client_port=1000-1001;server_port=1800-1801") and described in separate</i></td></tr>
+<tr><th id="86">86</th><td><i class="doc"> * RTSPTransportFields.</i></td></tr>
+<tr><th id="87">87</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="88">88</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="RTSPTransportField" title='RTSPTransportField' data-ref="RTSPTransportField"><a class="type" href="#RTSPTransportField" title='RTSPTransportField' data-ref="RTSPTransportField">RTSPTransportField</a></dfn> {</td></tr>
+<tr><th id="89">89</th><td>    <i class="doc">/** interleave ids, if TCP transport; each TCP/RTSP data packet starts</i></td></tr>
+<tr><th id="90">90</th><td><i class="doc">     * with a '$', stream length and stream ID. If the stream ID is within</i></td></tr>
+<tr><th id="91">91</th><td><i class="doc">     * the range of this interleaved_min-max, then the packet belongs to</i></td></tr>
+<tr><th id="92">92</th><td><i class="doc">     * this stream. */</i></td></tr>
+<tr><th id="93">93</th><td>    <em>int</em> <dfn class="decl" id="RTSPTransportField::interleaved_min" title='RTSPTransportField::interleaved_min' data-ref="RTSPTransportField::interleaved_min">interleaved_min</dfn>, <dfn class="decl" id="RTSPTransportField::interleaved_max" title='RTSPTransportField::interleaved_max' data-ref="RTSPTransportField::interleaved_max">interleaved_max</dfn>;</td></tr>
+<tr><th id="94">94</th><td></td></tr>
+<tr><th id="95">95</th><td>    <i class="doc">/** UDP multicast port range; the ports to which we should connect to</i></td></tr>
+<tr><th id="96">96</th><td><i class="doc">     * receive multicast UDP data. */</i></td></tr>
+<tr><th id="97">97</th><td>    <em>int</em> <dfn class="decl" id="RTSPTransportField::port_min" title='RTSPTransportField::port_min' data-ref="RTSPTransportField::port_min">port_min</dfn>, <dfn class="decl" id="RTSPTransportField::port_max" title='RTSPTransportField::port_max' data-ref="RTSPTransportField::port_max">port_max</dfn>;</td></tr>
+<tr><th id="98">98</th><td></td></tr>
+<tr><th id="99">99</th><td>    <i class="doc">/** UDP client ports; these should be the local ports of the UDP RTP</i></td></tr>
+<tr><th id="100">100</th><td><i class="doc">     * (and RTCP) sockets over which we receive RTP/RTCP data. */</i></td></tr>
+<tr><th id="101">101</th><td>    <em>int</em> <dfn class="decl" id="RTSPTransportField::client_port_min" title='RTSPTransportField::client_port_min' data-ref="RTSPTransportField::client_port_min">client_port_min</dfn>, <dfn class="decl" id="RTSPTransportField::client_port_max" title='RTSPTransportField::client_port_max' data-ref="RTSPTransportField::client_port_max">client_port_max</dfn>;</td></tr>
+<tr><th id="102">102</th><td></td></tr>
+<tr><th id="103">103</th><td>    <i class="doc">/** UDP unicast server port range; the ports to which we should connect</i></td></tr>
+<tr><th id="104">104</th><td><i class="doc">     * to receive unicast UDP RTP/RTCP data. */</i></td></tr>
+<tr><th id="105">105</th><td>    <em>int</em> <dfn class="decl" id="RTSPTransportField::server_port_min" title='RTSPTransportField::server_port_min' data-ref="RTSPTransportField::server_port_min">server_port_min</dfn>, <dfn class="decl" id="RTSPTransportField::server_port_max" title='RTSPTransportField::server_port_max' data-ref="RTSPTransportField::server_port_max">server_port_max</dfn>;</td></tr>
+<tr><th id="106">106</th><td></td></tr>
+<tr><th id="107">107</th><td>    <i class="doc">/** time-to-live value (required for multicast); the amount of HOPs that</i></td></tr>
+<tr><th id="108">108</th><td><i class="doc">     * packets will be allowed to make before being discarded. */</i></td></tr>
+<tr><th id="109">109</th><td>    <em>int</em> <dfn class="decl" id="RTSPTransportField::ttl" title='RTSPTransportField::ttl' data-ref="RTSPTransportField::ttl">ttl</dfn>;</td></tr>
+<tr><th id="110">110</th><td></td></tr>
+<tr><th id="111">111</th><td>    <i class="doc">/** transport set to record data */</i></td></tr>
+<tr><th id="112">112</th><td>    <em>int</em> <dfn class="decl" id="RTSPTransportField::mode_record" title='RTSPTransportField::mode_record' data-ref="RTSPTransportField::mode_record">mode_record</dfn>;</td></tr>
+<tr><th id="113">113</th><td></td></tr>
+<tr><th id="114">114</th><td>    <b>struct</b> <a class="type" href="../../include/x86_64-linux-gnu/bits/socket.h.html#sockaddr_storage" title='sockaddr_storage' data-ref="sockaddr_storage">sockaddr_storage</a> <dfn class="decl" id="RTSPTransportField::destination" title='RTSPTransportField::destination' data-ref="RTSPTransportField::destination">destination</dfn>; <i class="doc">/**&lt; destination IP address */</i></td></tr>
+<tr><th id="115">115</th><td>    <em>char</em> <dfn class="decl" id="RTSPTransportField::source" title='RTSPTransportField::source' data-ref="RTSPTransportField::source">source</dfn>[<a class="macro" href="../../include/netinet/in.h.html#233" title="46" data-ref="_M/INET6_ADDRSTRLEN">INET6_ADDRSTRLEN</a> + <var>1</var>]; <i class="doc">/**&lt; source IP address */</i></td></tr>
+<tr><th id="116">116</th><td></td></tr>
+<tr><th id="117">117</th><td>    <i class="doc">/** data/packet transport protocol; e.g. RTP or RDT */</i></td></tr>
+<tr><th id="118">118</th><td>    <b>enum</b> <a class="type" href="#RTSPTransport" title='RTSPTransport' data-ref="RTSPTransport">RTSPTransport</a> <dfn class="decl" id="RTSPTransportField::transport" title='RTSPTransportField::transport' data-ref="RTSPTransportField::transport">transport</dfn>;</td></tr>
+<tr><th id="119">119</th><td></td></tr>
+<tr><th id="120">120</th><td>    <i class="doc">/** network layer transport protocol; e.g. TCP or UDP uni-/multicast */</i></td></tr>
+<tr><th id="121">121</th><td>    <b>enum</b> <a class="type" href="#RTSPLowerTransport" title='RTSPLowerTransport' data-ref="RTSPLowerTransport">RTSPLowerTransport</a> <dfn class="decl" id="RTSPTransportField::lower_transport" title='RTSPTransportField::lower_transport' data-ref="RTSPTransportField::lower_transport">lower_transport</dfn>;</td></tr>
+<tr><th id="122">122</th><td>} <dfn class="typedef" id="RTSPTransportField" title='RTSPTransportField' data-type='struct RTSPTransportField' data-ref="RTSPTransportField">RTSPTransportField</dfn>;</td></tr>
+<tr><th id="123">123</th><td></td></tr>
+<tr><th id="124">124</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="125">125</th><td><i class="doc"> * This describes the server response to each RTSP command.</i></td></tr>
+<tr><th id="126">126</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="127">127</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="RTSPMessageHeader" title='RTSPMessageHeader' data-ref="RTSPMessageHeader"><a class="type" href="#RTSPMessageHeader" title='RTSPMessageHeader' data-ref="RTSPMessageHeader">RTSPMessageHeader</a></dfn> {</td></tr>
+<tr><th id="128">128</th><td>    <i class="doc">/** length of the data following this header */</i></td></tr>
+<tr><th id="129">129</th><td>    <em>int</em> <dfn class="decl" id="RTSPMessageHeader::content_length" title='RTSPMessageHeader::content_length' data-ref="RTSPMessageHeader::content_length">content_length</dfn>;</td></tr>
+<tr><th id="130">130</th><td></td></tr>
+<tr><th id="131">131</th><td>    <b>enum</b> <a class="type" href="rtspcodes.h.html#RTSPStatusCode" title='RTSPStatusCode' data-ref="RTSPStatusCode">RTSPStatusCode</a> <dfn class="decl" id="RTSPMessageHeader::status_code" title='RTSPMessageHeader::status_code' data-ref="RTSPMessageHeader::status_code">status_code</dfn>; <i class="doc">/**&lt; response code from server */</i></td></tr>
+<tr><th id="132">132</th><td></td></tr>
+<tr><th id="133">133</th><td>    <i class="doc">/** number of items in the 'transports' variable below */</i></td></tr>
+<tr><th id="134">134</th><td>    <em>int</em> <dfn class="decl" id="RTSPMessageHeader::nb_transports" title='RTSPMessageHeader::nb_transports' data-ref="RTSPMessageHeader::nb_transports">nb_transports</dfn>;</td></tr>
+<tr><th id="135">135</th><td></td></tr>
+<tr><th id="136">136</th><td>    <i class="doc">/** Time range of the streams that the server will stream. In</i></td></tr>
+<tr><th id="137">137</th><td><i class="doc">     * AV_TIME_BASE unit, AV_NOPTS_VALUE if not used */</i></td></tr>
+<tr><th id="138">138</th><td>    <a class="typedef" href="../../include/x86_64-linux-gnu/sys/types.h.html#197" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="decl" id="RTSPMessageHeader::range_start" title='RTSPMessageHeader::range_start' data-ref="RTSPMessageHeader::range_start">range_start</dfn>, <dfn class="decl" id="RTSPMessageHeader::range_end" title='RTSPMessageHeader::range_end' data-ref="RTSPMessageHeader::range_end">range_end</dfn>;</td></tr>
+<tr><th id="139">139</th><td></td></tr>
+<tr><th id="140">140</th><td>    <i class="doc">/** describes the complete "Transport:" line of the server in response</i></td></tr>
+<tr><th id="141">141</th><td><i class="doc">     * to a SETUP RTSP command by the client */</i></td></tr>
+<tr><th id="142">142</th><td>    <a class="typedef" href="#RTSPTransportField" title='RTSPTransportField' data-type='struct RTSPTransportField' data-ref="RTSPTransportField">RTSPTransportField</a> <dfn class="decl" id="RTSPMessageHeader::transports" title='RTSPMessageHeader::transports' data-ref="RTSPMessageHeader::transports">transports</dfn>[<a class="macro" href="#74" title="8" data-ref="_M/RTSP_MAX_TRANSPORTS">RTSP_MAX_TRANSPORTS</a>];</td></tr>
+<tr><th id="143">143</th><td></td></tr>
+<tr><th id="144">144</th><td>    <em>int</em> <dfn class="decl" id="RTSPMessageHeader::seq" title='RTSPMessageHeader::seq' data-ref="RTSPMessageHeader::seq">seq</dfn>;                         <i class="doc">/**&lt; sequence number */</i></td></tr>
+<tr><th id="145">145</th><td></td></tr>
+<tr><th id="146">146</th><td>    <i class="doc">/** the "Session:" field. This value is initially set by the server and</i></td></tr>
+<tr><th id="147">147</th><td><i class="doc">     * should be re-transmitted by the client in every RTSP command. */</i></td></tr>
+<tr><th id="148">148</th><td>    <em>char</em> <dfn class="decl" id="RTSPMessageHeader::session_id" title='RTSPMessageHeader::session_id' data-ref="RTSPMessageHeader::session_id">session_id</dfn>[<var>512</var>];</td></tr>
+<tr><th id="149">149</th><td></td></tr>
+<tr><th id="150">150</th><td>    <i class="doc">/** the "Location:" field. This value is used to handle redirection.</i></td></tr>
+<tr><th id="151">151</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="152">152</th><td>    <em>char</em> <dfn class="decl" id="RTSPMessageHeader::location" title='RTSPMessageHeader::location' data-ref="RTSPMessageHeader::location">location</dfn>[<var>4096</var>];</td></tr>
+<tr><th id="153">153</th><td></td></tr>
+<tr><th id="154">154</th><td>    <i class="doc">/** the "RealChallenge1:" field from the server */</i></td></tr>
+<tr><th id="155">155</th><td>    <em>char</em> <dfn class="decl" id="RTSPMessageHeader::real_challenge" title='RTSPMessageHeader::real_challenge' data-ref="RTSPMessageHeader::real_challenge">real_challenge</dfn>[<var>64</var>];</td></tr>
+<tr><th id="156">156</th><td></td></tr>
+<tr><th id="157">157</th><td>    <i class="doc">/** the "Server: field, which can be used to identify some special-case</i></td></tr>
+<tr><th id="158">158</th><td><i class="doc">     * servers that are not 100% standards-compliant. We use this to identify</i></td></tr>
+<tr><th id="159">159</th><td><i class="doc">     * Windows Media Server, which has a value "WMServer/v.e.r.sion", where</i></td></tr>
+<tr><th id="160">160</th><td><i class="doc">     * version is a sequence of digits (e.g. 9.0.0.3372). Helix/Real servers</i></td></tr>
+<tr><th id="161">161</th><td><i class="doc">     * use something like "Helix [..] Server Version v.e.r.sion (platform)</i></td></tr>
+<tr><th id="162">162</th><td><i class="doc">     * (RealServer compatible)" or "RealServer Version v.e.r.sion (platform)",</i></td></tr>
+<tr><th id="163">163</th><td><i class="doc">     * where platform is the output of $uname -msr | sed 's/ /-/g'. */</i></td></tr>
+<tr><th id="164">164</th><td>    <em>char</em> <dfn class="decl" id="RTSPMessageHeader::server" title='RTSPMessageHeader::server' data-ref="RTSPMessageHeader::server">server</dfn>[<var>64</var>];</td></tr>
+<tr><th id="165">165</th><td></td></tr>
+<tr><th id="166">166</th><td>    <i class="doc">/** The "timeout" comes as part of the server response to the "SETUP"</i></td></tr>
+<tr><th id="167">167</th><td><i class="doc">     * command, in the "Session: &lt;xyz&gt;[;timeout=&lt;value&gt;]" line. It is the</i></td></tr>
+<tr><th id="168">168</th><td><i class="doc">     * time, in seconds, that the server will go without traffic over the</i></td></tr>
+<tr><th id="169">169</th><td><i class="doc">     * RTSP/TCP connection before it closes the connection. To prevent</i></td></tr>
+<tr><th id="170">170</th><td><i class="doc">     * this, sent dummy requests (e.g. OPTIONS) with intervals smaller</i></td></tr>
+<tr><th id="171">171</th><td><i class="doc">     * than this value. */</i></td></tr>
+<tr><th id="172">172</th><td>    <em>int</em> <dfn class="decl" id="RTSPMessageHeader::timeout" title='RTSPMessageHeader::timeout' data-ref="RTSPMessageHeader::timeout">timeout</dfn>;</td></tr>
+<tr><th id="173">173</th><td></td></tr>
+<tr><th id="174">174</th><td>    <i class="doc">/** The "Notice" or "X-Notice" field value. See</i></td></tr>
+<tr><th id="175">175</th><td><i class="doc">     * <a href="http://tools.ietf.org/html/draft-stiemerling-rtsp-announce-00">http://tools.ietf.org/html/draft-stiemerling-rtsp-announce-00</a></i></td></tr>
+<tr><th id="176">176</th><td><i class="doc">     * for a complete list of supported values. */</i></td></tr>
+<tr><th id="177">177</th><td>    <em>int</em> <dfn class="decl" id="RTSPMessageHeader::notice" title='RTSPMessageHeader::notice' data-ref="RTSPMessageHeader::notice">notice</dfn>;</td></tr>
+<tr><th id="178">178</th><td></td></tr>
+<tr><th id="179">179</th><td>    <i class="doc">/** The "reason" is meant to specify better the meaning of the error code</i></td></tr>
+<tr><th id="180">180</th><td><i class="doc">     * returned</i></td></tr>
+<tr><th id="181">181</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="182">182</th><td>    <em>char</em> <dfn class="decl" id="RTSPMessageHeader::reason" title='RTSPMessageHeader::reason' data-ref="RTSPMessageHeader::reason">reason</dfn>[<var>256</var>];</td></tr>
+<tr><th id="183">183</th><td></td></tr>
+<tr><th id="184">184</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="185">185</th><td><i class="doc">     * Content type header</i></td></tr>
+<tr><th id="186">186</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="187">187</th><td>    <em>char</em> <dfn class="decl" id="RTSPMessageHeader::content_type" title='RTSPMessageHeader::content_type' data-ref="RTSPMessageHeader::content_type">content_type</dfn>[<var>64</var>];</td></tr>
+<tr><th id="188">188</th><td>} <dfn class="typedef" id="RTSPMessageHeader" title='RTSPMessageHeader' data-type='struct RTSPMessageHeader' data-ref="RTSPMessageHeader">RTSPMessageHeader</dfn>;</td></tr>
+<tr><th id="189">189</th><td></td></tr>
+<tr><th id="190">190</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="191">191</th><td><i class="doc"> * Client state, i.e. whether we are currently receiving data (PLAYING) or</i></td></tr>
+<tr><th id="192">192</th><td><i class="doc"> * setup-but-not-receiving (PAUSED). State can be changed in applications</i></td></tr>
+<tr><th id="193">193</th><td><i class="doc"> * by calling av_read_play/pause().</i></td></tr>
+<tr><th id="194">194</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="195">195</th><td><b>enum</b> <dfn class="type def" id="RTSPClientState" title='RTSPClientState' data-ref="RTSPClientState">RTSPClientState</dfn> {</td></tr>
+<tr><th id="196">196</th><td>    <dfn class="enum" id="RTSPClientState::RTSP_STATE_IDLE" title='RTSPClientState::RTSP_STATE_IDLE' data-ref="RTSPClientState::RTSP_STATE_IDLE">RTSP_STATE_IDLE</dfn>,    <i class="doc">/**&lt; not initialized */</i></td></tr>
+<tr><th id="197">197</th><td>    <dfn class="enum" id="RTSPClientState::RTSP_STATE_STREAMING" title='RTSPClientState::RTSP_STATE_STREAMING' data-ref="RTSPClientState::RTSP_STATE_STREAMING">RTSP_STATE_STREAMING</dfn>, <i class="doc">/**&lt; initialized and sending/receiving data */</i></td></tr>
+<tr><th id="198">198</th><td>    <dfn class="enum" id="RTSPClientState::RTSP_STATE_PAUSED" title='RTSPClientState::RTSP_STATE_PAUSED' data-ref="RTSPClientState::RTSP_STATE_PAUSED">RTSP_STATE_PAUSED</dfn>,  <i class="doc">/**&lt; initialized, but not receiving data */</i></td></tr>
+<tr><th id="199">199</th><td>    <dfn class="enum" id="RTSPClientState::RTSP_STATE_SEEKING" title='RTSPClientState::RTSP_STATE_SEEKING' data-ref="RTSPClientState::RTSP_STATE_SEEKING">RTSP_STATE_SEEKING</dfn>, <i class="doc">/**&lt; initialized, requesting a seek */</i></td></tr>
+<tr><th id="200">200</th><td>};</td></tr>
+<tr><th id="201">201</th><td></td></tr>
+<tr><th id="202">202</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="203">203</th><td><i class="doc"> * Identify particular servers that require special handling, such as</i></td></tr>
+<tr><th id="204">204</th><td><i class="doc"> * standards-incompliant "Transport:" lines in the SETUP request.</i></td></tr>
+<tr><th id="205">205</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="206">206</th><td><b>enum</b> <dfn class="type def" id="RTSPServerType" title='RTSPServerType' data-ref="RTSPServerType">RTSPServerType</dfn> {</td></tr>
+<tr><th id="207">207</th><td>    <dfn class="enum" id="RTSPServerType::RTSP_SERVER_RTP" title='RTSPServerType::RTSP_SERVER_RTP' data-ref="RTSPServerType::RTSP_SERVER_RTP">RTSP_SERVER_RTP</dfn>,  <i class="doc">/**&lt; Standards-compliant RTP-server */</i></td></tr>
+<tr><th id="208">208</th><td>    <dfn class="enum" id="RTSPServerType::RTSP_SERVER_REAL" title='RTSPServerType::RTSP_SERVER_REAL' data-ref="RTSPServerType::RTSP_SERVER_REAL">RTSP_SERVER_REAL</dfn>, <i class="doc">/**&lt; Realmedia-style server */</i></td></tr>
+<tr><th id="209">209</th><td>    <dfn class="enum" id="RTSPServerType::RTSP_SERVER_WMS" title='RTSPServerType::RTSP_SERVER_WMS' data-ref="RTSPServerType::RTSP_SERVER_WMS">RTSP_SERVER_WMS</dfn>,  <i class="doc">/**&lt; Windows Media server */</i></td></tr>
+<tr><th id="210">210</th><td>    <dfn class="enum" id="RTSPServerType::RTSP_SERVER_NB" title='RTSPServerType::RTSP_SERVER_NB' data-ref="RTSPServerType::RTSP_SERVER_NB">RTSP_SERVER_NB</dfn></td></tr>
+<tr><th id="211">211</th><td>};</td></tr>
+<tr><th id="212">212</th><td></td></tr>
+<tr><th id="213">213</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="214">214</th><td><i class="doc"> * Private data for the RTSP demuxer.</i></td></tr>
+<tr><th id="215">215</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="216">216</th><td><i class="doc"> * <span class="command">@todo</span> Use AVIOContext instead of URLContext</i></td></tr>
+<tr><th id="217">217</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="218">218</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="RTSPState" title='RTSPState' data-ref="RTSPState"><a class="type" href="#RTSPState" title='RTSPState' data-ref="RTSPState">RTSPState</a></dfn> {</td></tr>
+<tr><th id="219">219</th><td>    <em>const</em> <a class="typedef" href="../libavutil/log.h.html#AVClass" title='AVClass' data-type='struct AVClass' data-ref="AVClass">AVClass</a> *<dfn class="decl" id="RTSPState::class" title='RTSPState::class' data-ref="RTSPState::class">class</dfn>;             <i class="doc">/**&lt; Class for private options. */</i></td></tr>
+<tr><th id="220">220</th><td>    <a class="typedef" href="url.h.html#URLContext" title='URLContext' data-type='struct URLContext' data-ref="URLContext">URLContext</a> *<dfn class="decl" id="RTSPState::rtsp_hd" title='RTSPState::rtsp_hd' data-ref="RTSPState::rtsp_hd">rtsp_hd</dfn>; <i>/* RTSP TCP connection handle */</i></td></tr>
+<tr><th id="221">221</th><td></td></tr>
+<tr><th id="222">222</th><td>    <i class="doc">/** number of items in the 'rtsp_streams' variable */</i></td></tr>
+<tr><th id="223">223</th><td>    <em>int</em> <dfn class="decl" id="RTSPState::nb_rtsp_streams" title='RTSPState::nb_rtsp_streams' data-ref="RTSPState::nb_rtsp_streams">nb_rtsp_streams</dfn>;</td></tr>
+<tr><th id="224">224</th><td></td></tr>
+<tr><th id="225">225</th><td>    <b>struct</b> <a class="type" href="#RTSPStream" title='RTSPStream' data-ref="RTSPStream">RTSPStream</a> **<dfn class="decl" id="RTSPState::rtsp_streams" title='RTSPState::rtsp_streams' data-ref="RTSPState::rtsp_streams">rtsp_streams</dfn>; <i class="doc">/**&lt; streams in this session */</i></td></tr>
+<tr><th id="226">226</th><td></td></tr>
+<tr><th id="227">227</th><td>    <i class="doc">/** indicator of whether we are currently receiving data from the</i></td></tr>
+<tr><th id="228">228</th><td><i class="doc">     * server. Basically this isn't more than a simple cache of the</i></td></tr>
+<tr><th id="229">229</th><td><i class="doc">     * last PLAY/PAUSE command sent to the server, to make sure we don't</i></td></tr>
+<tr><th id="230">230</th><td><i class="doc">     * send 2x the same unexpectedly or commands in the wrong state. */</i></td></tr>
+<tr><th id="231">231</th><td>    <b>enum</b> <a class="type" href="#RTSPClientState" title='RTSPClientState' data-ref="RTSPClientState">RTSPClientState</a> <dfn class="decl" id="RTSPState::state" title='RTSPState::state' data-ref="RTSPState::state">state</dfn>;</td></tr>
+<tr><th id="232">232</th><td></td></tr>
+<tr><th id="233">233</th><td>    <i class="doc">/** the seek value requested when calling av_seek_frame(). This value</i></td></tr>
+<tr><th id="234">234</th><td><i class="doc">     * is subsequently used as part of the "Range" parameter when emitting</i></td></tr>
+<tr><th id="235">235</th><td><i class="doc">     * the RTSP PLAY command. If we are currently playing, this command is</i></td></tr>
+<tr><th id="236">236</th><td><i class="doc">     * called instantly. If we are currently paused, this command is called</i></td></tr>
+<tr><th id="237">237</th><td><i class="doc">     * whenever we resume playback. Either way, the value is only used once,</i></td></tr>
+<tr><th id="238">238</th><td><i class="doc">     * see rtsp_read_play() and rtsp_read_seek(). */</i></td></tr>
+<tr><th id="239">239</th><td>    <a class="typedef" href="../../include/x86_64-linux-gnu/sys/types.h.html#197" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="decl" id="RTSPState::seek_timestamp" title='RTSPState::seek_timestamp' data-ref="RTSPState::seek_timestamp">seek_timestamp</dfn>;</td></tr>
+<tr><th id="240">240</th><td></td></tr>
+<tr><th id="241">241</th><td>    <em>int</em> <dfn class="decl" id="RTSPState::seq" title='RTSPState::seq' data-ref="RTSPState::seq">seq</dfn>;                          <i class="doc">/**&lt; RTSP command sequence number */</i></td></tr>
+<tr><th id="242">242</th><td></td></tr>
+<tr><th id="243">243</th><td>    <i class="doc">/** copy of RTSPMessageHeader-&gt;session_id, i.e. the server-provided session</i></td></tr>
+<tr><th id="244">244</th><td><i class="doc">     * identifier that the client should re-transmit in each RTSP command */</i></td></tr>
+<tr><th id="245">245</th><td>    <em>char</em> <dfn class="decl" id="RTSPState::session_id" title='RTSPState::session_id' data-ref="RTSPState::session_id">session_id</dfn>[<var>512</var>];</td></tr>
+<tr><th id="246">246</th><td></td></tr>
+<tr><th id="247">247</th><td>    <i class="doc">/** copy of RTSPMessageHeader-&gt;timeout, i.e. the time (in seconds) that</i></td></tr>
+<tr><th id="248">248</th><td><i class="doc">     * the server will go without traffic on the RTSP/TCP line before it</i></td></tr>
+<tr><th id="249">249</th><td><i class="doc">     * closes the connection. */</i></td></tr>
+<tr><th id="250">250</th><td>    <em>int</em> <dfn class="decl" id="RTSPState::timeout" title='RTSPState::timeout' data-ref="RTSPState::timeout">timeout</dfn>;</td></tr>
+<tr><th id="251">251</th><td></td></tr>
+<tr><th id="252">252</th><td>    <i class="doc">/** timestamp of the last RTSP command that we sent to the RTSP server.</i></td></tr>
+<tr><th id="253">253</th><td><i class="doc">     * This is used to calculate when to send dummy commands to keep the</i></td></tr>
+<tr><th id="254">254</th><td><i class="doc">     * connection alive, in conjunction with timeout. */</i></td></tr>
+<tr><th id="255">255</th><td>    <a class="typedef" href="../../include/x86_64-linux-gnu/sys/types.h.html#197" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="decl" id="RTSPState::last_cmd_time" title='RTSPState::last_cmd_time' data-ref="RTSPState::last_cmd_time">last_cmd_time</dfn>;</td></tr>
+<tr><th id="256">256</th><td></td></tr>
+<tr><th id="257">257</th><td>    <i class="doc">/** the negotiated data/packet transport protocol; e.g. RTP or RDT */</i></td></tr>
+<tr><th id="258">258</th><td>    <b>enum</b> <a class="type" href="#RTSPTransport" title='RTSPTransport' data-ref="RTSPTransport">RTSPTransport</a> <dfn class="decl" id="RTSPState::transport" title='RTSPState::transport' data-ref="RTSPState::transport">transport</dfn>;</td></tr>
+<tr><th id="259">259</th><td></td></tr>
+<tr><th id="260">260</th><td>    <i class="doc">/** the negotiated network layer transport protocol; e.g. TCP or UDP</i></td></tr>
+<tr><th id="261">261</th><td><i class="doc">     * uni-/multicast */</i></td></tr>
+<tr><th id="262">262</th><td>    <b>enum</b> <a class="type" href="#RTSPLowerTransport" title='RTSPLowerTransport' data-ref="RTSPLowerTransport">RTSPLowerTransport</a> <dfn class="decl" id="RTSPState::lower_transport" title='RTSPState::lower_transport' data-ref="RTSPState::lower_transport">lower_transport</dfn>;</td></tr>
+<tr><th id="263">263</th><td></td></tr>
+<tr><th id="264">264</th><td>    <i class="doc">/** brand of server that we're talking to; e.g. WMS, REAL or other.</i></td></tr>
+<tr><th id="265">265</th><td><i class="doc">     * Detected based on the value of RTSPMessageHeader-&gt;server or the presence</i></td></tr>
+<tr><th id="266">266</th><td><i class="doc">     * of RTSPMessageHeader-&gt;real_challenge */</i></td></tr>
+<tr><th id="267">267</th><td>    <b>enum</b> <a class="type" href="#RTSPServerType" title='RTSPServerType' data-ref="RTSPServerType">RTSPServerType</a> <dfn class="decl" id="RTSPState::server_type" title='RTSPState::server_type' data-ref="RTSPState::server_type">server_type</dfn>;</td></tr>
+<tr><th id="268">268</th><td></td></tr>
+<tr><th id="269">269</th><td>    <i class="doc">/** the "RealChallenge1:" field from the server */</i></td></tr>
+<tr><th id="270">270</th><td>    <em>char</em> <dfn class="decl" id="RTSPState::real_challenge" title='RTSPState::real_challenge' data-ref="RTSPState::real_challenge">real_challenge</dfn>[<var>64</var>];</td></tr>
+<tr><th id="271">271</th><td></td></tr>
+<tr><th id="272">272</th><td>    <i class="doc">/** plaintext authorization line (username:password) */</i></td></tr>
+<tr><th id="273">273</th><td>    <em>char</em> <dfn class="decl" id="RTSPState::auth" title='RTSPState::auth' data-ref="RTSPState::auth">auth</dfn>[<var>128</var>];</td></tr>
+<tr><th id="274">274</th><td></td></tr>
+<tr><th id="275">275</th><td>    <i class="doc">/** authentication state */</i></td></tr>
+<tr><th id="276">276</th><td>    <a class="typedef" href="httpauth.h.html#HTTPAuthState" title='HTTPAuthState' data-type='struct HTTPAuthState' data-ref="HTTPAuthState">HTTPAuthState</a> <dfn class="decl" id="RTSPState::auth_state" title='RTSPState::auth_state' data-ref="RTSPState::auth_state">auth_state</dfn>;</td></tr>
+<tr><th id="277">277</th><td></td></tr>
+<tr><th id="278">278</th><td>    <i class="doc">/** The last reply of the server to a RTSP command */</i></td></tr>
+<tr><th id="279">279</th><td>    <em>char</em> <dfn class="decl" id="RTSPState::last_reply" title='RTSPState::last_reply' data-ref="RTSPState::last_reply">last_reply</dfn>[<var>2048</var>]; <i>/* XXX: allocate ? */</i></td></tr>
+<tr><th id="280">280</th><td></td></tr>
+<tr><th id="281">281</th><td>    <i class="doc">/** RTSPStream-&gt;transport_priv of the last stream that we read a</i></td></tr>
+<tr><th id="282">282</th><td><i class="doc">     * packet from */</i></td></tr>
+<tr><th id="283">283</th><td>    <em>void</em> *<dfn class="decl" id="RTSPState::cur_transport_priv" title='RTSPState::cur_transport_priv' data-ref="RTSPState::cur_transport_priv">cur_transport_priv</dfn>;</td></tr>
+<tr><th id="284">284</th><td></td></tr>
+<tr><th id="285">285</th><td>    <i class="doc">/** The following are used for Real stream selection */</i></td></tr>
+<tr><th id="286">286</th><td><i class="doc">    //@{</i></td></tr>
+<tr><th id="287">287</th><td>    <i class="doc">/** whether we need to send a "SET_PARAMETER Subscribe:" command */</i></td></tr>
+<tr><th id="288">288</th><td>    <em>int</em> <dfn class="decl" id="RTSPState::need_subscription" title='RTSPState::need_subscription' data-ref="RTSPState::need_subscription">need_subscription</dfn>;</td></tr>
+<tr><th id="289">289</th><td></td></tr>
+<tr><th id="290">290</th><td>    <i class="doc">/** stream setup during the last frame read. This is used to detect if</i></td></tr>
+<tr><th id="291">291</th><td><i class="doc">     * we need to subscribe or unsubscribe to any new streams. */</i></td></tr>
+<tr><th id="292">292</th><td>    <b>enum</b> <a class="type" href="../libavcodec/avcodec.h.html#AVDiscard" title='AVDiscard' data-ref="AVDiscard">AVDiscard</a> *<dfn class="decl" id="RTSPState::real_setup_cache" title='RTSPState::real_setup_cache' data-ref="RTSPState::real_setup_cache">real_setup_cache</dfn>;</td></tr>
+<tr><th id="293">293</th><td></td></tr>
+<tr><th id="294">294</th><td>    <i class="doc">/** current stream setup. This is a temporary buffer used to compare</i></td></tr>
+<tr><th id="295">295</th><td><i class="doc">     * current setup to previous frame setup. */</i></td></tr>
+<tr><th id="296">296</th><td>    <b>enum</b> <a class="type" href="../libavcodec/avcodec.h.html#AVDiscard" title='AVDiscard' data-ref="AVDiscard">AVDiscard</a> *<dfn class="decl" id="RTSPState::real_setup" title='RTSPState::real_setup' data-ref="RTSPState::real_setup">real_setup</dfn>;</td></tr>
+<tr><th id="297">297</th><td></td></tr>
+<tr><th id="298">298</th><td>    <i class="doc">/** the last value of the "SET_PARAMETER Subscribe:" RTSP command.</i></td></tr>
+<tr><th id="299">299</th><td><i class="doc">     * this is used to send the same "Unsubscribe:" if stream setup changed,</i></td></tr>
+<tr><th id="300">300</th><td><i class="doc">     * before sending a new "Subscribe:" command. */</i></td></tr>
+<tr><th id="301">301</th><td>    <em>char</em> <dfn class="decl" id="RTSPState::last_subscription" title='RTSPState::last_subscription' data-ref="RTSPState::last_subscription">last_subscription</dfn>[<var>1024</var>];</td></tr>
+<tr><th id="302">302</th><td>    <i>//@}</i></td></tr>
+<tr><th id="303">303</th><td></td></tr>
+<tr><th id="304">304</th><td>    <i class="doc">/** The following are used for RTP/ASF streams */</i></td></tr>
+<tr><th id="305">305</th><td><i class="doc">    //@{</i></td></tr>
+<tr><th id="306">306</th><td>    <i class="doc">/** ASF demuxer context for the embedded ASF stream from WMS servers */</i></td></tr>
+<tr><th id="307">307</th><td>    <a class="typedef" href="avformat.h.html#AVFormatContext" title='AVFormatContext' data-type='struct AVFormatContext' data-ref="AVFormatContext">AVFormatContext</a> *<dfn class="decl" id="RTSPState::asf_ctx" title='RTSPState::asf_ctx' data-ref="RTSPState::asf_ctx">asf_ctx</dfn>;</td></tr>
+<tr><th id="308">308</th><td></td></tr>
+<tr><th id="309">309</th><td>    <i class="doc">/** cache for position of the asf demuxer, since we load a new</i></td></tr>
+<tr><th id="310">310</th><td><i class="doc">     * data packet in the bytecontext for each incoming RTSP packet. */</i></td></tr>
+<tr><th id="311">311</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint64_t" title='uint64_t' data-type='unsigned long' data-ref="uint64_t">uint64_t</a> <dfn class="decl" id="RTSPState::asf_pb_pos" title='RTSPState::asf_pb_pos' data-ref="RTSPState::asf_pb_pos">asf_pb_pos</dfn>;</td></tr>
+<tr><th id="312">312</th><td>    <i>//@}</i></td></tr>
+<tr><th id="313">313</th><td></td></tr>
+<tr><th id="314">314</th><td>    <i class="doc">/** some MS RTSP streams contain a URL in the SDP that we need to use</i></td></tr>
+<tr><th id="315">315</th><td><i class="doc">     * for all subsequent RTSP requests, rather than the input URI; in</i></td></tr>
+<tr><th id="316">316</th><td><i class="doc">     * other cases, this is a copy of AVFormatContext-&gt;filename. */</i></td></tr>
+<tr><th id="317">317</th><td>    <em>char</em> <dfn class="decl" id="RTSPState::control_uri" title='RTSPState::control_uri' data-ref="RTSPState::control_uri">control_uri</dfn>[<var>1024</var>];</td></tr>
+<tr><th id="318">318</th><td></td></tr>
+<tr><th id="319">319</th><td>    <i class="doc">/** The following are used for parsing raw mpegts in udp */</i></td></tr>
+<tr><th id="320">320</th><td><i class="doc">    //@{</i></td></tr>
+<tr><th id="321">321</th><td>    <b>struct</b> <dfn class="type" id="MpegTSContext" title='MpegTSContext' data-ref="MpegTSContext"><a class="type" href="#MpegTSContext" title='MpegTSContext' data-ref="MpegTSContext">MpegTSContext</a></dfn> *<dfn class="decl" id="RTSPState::ts" title='RTSPState::ts' data-ref="RTSPState::ts">ts</dfn>;</td></tr>
+<tr><th id="322">322</th><td>    <em>int</em> <dfn class="decl" id="RTSPState::recvbuf_pos" title='RTSPState::recvbuf_pos' data-ref="RTSPState::recvbuf_pos">recvbuf_pos</dfn>;</td></tr>
+<tr><th id="323">323</th><td>    <em>int</em> <dfn class="decl" id="RTSPState::recvbuf_len" title='RTSPState::recvbuf_len' data-ref="RTSPState::recvbuf_len">recvbuf_len</dfn>;</td></tr>
+<tr><th id="324">324</th><td>    <i>//@}</i></td></tr>
+<tr><th id="325">325</th><td></td></tr>
+<tr><th id="326">326</th><td>    <i class="doc">/** Additional output handle, used when input and output are done</i></td></tr>
+<tr><th id="327">327</th><td><i class="doc">     * separately, eg for HTTP tunneling. */</i></td></tr>
+<tr><th id="328">328</th><td>    <a class="typedef" href="url.h.html#URLContext" title='URLContext' data-type='struct URLContext' data-ref="URLContext">URLContext</a> *<dfn class="decl" id="RTSPState::rtsp_hd_out" title='RTSPState::rtsp_hd_out' data-ref="RTSPState::rtsp_hd_out">rtsp_hd_out</dfn>;</td></tr>
+<tr><th id="329">329</th><td></td></tr>
+<tr><th id="330">330</th><td>    <i class="doc">/** RTSP transport mode, such as plain or tunneled. */</i></td></tr>
+<tr><th id="331">331</th><td>    <b>enum</b> <a class="type" href="#RTSPControlTransport" title='RTSPControlTransport' data-ref="RTSPControlTransport">RTSPControlTransport</a> <dfn class="decl" id="RTSPState::control_transport" title='RTSPState::control_transport' data-ref="RTSPState::control_transport">control_transport</dfn>;</td></tr>
+<tr><th id="332">332</th><td></td></tr>
+<tr><th id="333">333</th><td>    <i>/* Number of RTCP BYE packets the RTSP session has received.</i></td></tr>
+<tr><th id="334">334</th><td><i>     * An EOF is propagated back if nb_byes == nb_streams.</i></td></tr>
+<tr><th id="335">335</th><td><i>     * This is reset after a seek. */</i></td></tr>
+<tr><th id="336">336</th><td>    <em>int</em> <dfn class="decl" id="RTSPState::nb_byes" title='RTSPState::nb_byes' data-ref="RTSPState::nb_byes">nb_byes</dfn>;</td></tr>
+<tr><th id="337">337</th><td></td></tr>
+<tr><th id="338">338</th><td>    <i class="doc">/** Reusable buffer for receiving packets */</i></td></tr>
+<tr><th id="339">339</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a>* <dfn class="decl" id="RTSPState::recvbuf" title='RTSPState::recvbuf' data-ref="RTSPState::recvbuf">recvbuf</dfn>;</td></tr>
+<tr><th id="340">340</th><td></td></tr>
+<tr><th id="341">341</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="342">342</th><td><i class="doc">     * A mask with all requested transport methods</i></td></tr>
+<tr><th id="343">343</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="344">344</th><td>    <em>int</em> <dfn class="decl" id="RTSPState::lower_transport_mask" title='RTSPState::lower_transport_mask' data-ref="RTSPState::lower_transport_mask">lower_transport_mask</dfn>;</td></tr>
+<tr><th id="345">345</th><td></td></tr>
+<tr><th id="346">346</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="347">347</th><td><i class="doc">     * The number of returned packets</i></td></tr>
+<tr><th id="348">348</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="349">349</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint64_t" title='uint64_t' data-type='unsigned long' data-ref="uint64_t">uint64_t</a> <dfn class="decl" id="RTSPState::packets" title='RTSPState::packets' data-ref="RTSPState::packets">packets</dfn>;</td></tr>
+<tr><th id="350">350</th><td></td></tr>
+<tr><th id="351">351</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="352">352</th><td><i class="doc">     * Polling array for udp</i></td></tr>
+<tr><th id="353">353</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="354">354</th><td>    <b>struct</b> <a class="type" href="../../include/x86_64-linux-gnu/sys/poll.h.html#pollfd" title='pollfd' data-ref="pollfd">pollfd</a> *<dfn class="decl" id="RTSPState::p" title='RTSPState::p' data-ref="RTSPState::p">p</dfn>;</td></tr>
+<tr><th id="355">355</th><td></td></tr>
+<tr><th id="356">356</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="357">357</th><td><i class="doc">     * Whether the server supports the GET_PARAMETER method.</i></td></tr>
+<tr><th id="358">358</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="359">359</th><td>    <em>int</em> <dfn class="decl" id="RTSPState::get_parameter_supported" title='RTSPState::get_parameter_supported' data-ref="RTSPState::get_parameter_supported">get_parameter_supported</dfn>;</td></tr>
+<tr><th id="360">360</th><td></td></tr>
+<tr><th id="361">361</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="362">362</th><td><i class="doc">     * Do not begin to play the stream immediately.</i></td></tr>
+<tr><th id="363">363</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="364">364</th><td>    <em>int</em> <dfn class="decl" id="RTSPState::initial_pause" title='RTSPState::initial_pause' data-ref="RTSPState::initial_pause">initial_pause</dfn>;</td></tr>
+<tr><th id="365">365</th><td></td></tr>
+<tr><th id="366">366</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="367">367</th><td><i class="doc">     * Option flags for the chained RTP muxer.</i></td></tr>
+<tr><th id="368">368</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="369">369</th><td>    <em>int</em> <dfn class="decl" id="RTSPState::rtp_muxer_flags" title='RTSPState::rtp_muxer_flags' data-ref="RTSPState::rtp_muxer_flags">rtp_muxer_flags</dfn>;</td></tr>
+<tr><th id="370">370</th><td></td></tr>
+<tr><th id="371">371</th><td>    <i class="doc">/** Whether the server accepts the x-Dynamic-Rate header */</i></td></tr>
+<tr><th id="372">372</th><td>    <em>int</em> <dfn class="decl" id="RTSPState::accept_dynamic_rate" title='RTSPState::accept_dynamic_rate' data-ref="RTSPState::accept_dynamic_rate">accept_dynamic_rate</dfn>;</td></tr>
+<tr><th id="373">373</th><td></td></tr>
+<tr><th id="374">374</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="375">375</th><td><i class="doc">     * Various option flags for the RTSP muxer/demuxer.</i></td></tr>
+<tr><th id="376">376</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="377">377</th><td>    <em>int</em> <dfn class="decl" id="RTSPState::rtsp_flags" title='RTSPState::rtsp_flags' data-ref="RTSPState::rtsp_flags">rtsp_flags</dfn>;</td></tr>
+<tr><th id="378">378</th><td></td></tr>
+<tr><th id="379">379</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="380">380</th><td><i class="doc">     * Mask of all requested media types</i></td></tr>
+<tr><th id="381">381</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="382">382</th><td>    <em>int</em> <dfn class="decl" id="RTSPState::media_type_mask" title='RTSPState::media_type_mask' data-ref="RTSPState::media_type_mask">media_type_mask</dfn>;</td></tr>
+<tr><th id="383">383</th><td></td></tr>
+<tr><th id="384">384</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="385">385</th><td><i class="doc">     * Minimum and maximum local UDP ports.</i></td></tr>
+<tr><th id="386">386</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="387">387</th><td>    <em>int</em> <dfn class="decl" id="RTSPState::rtp_port_min" title='RTSPState::rtp_port_min' data-ref="RTSPState::rtp_port_min">rtp_port_min</dfn>, <dfn class="decl" id="RTSPState::rtp_port_max" title='RTSPState::rtp_port_max' data-ref="RTSPState::rtp_port_max">rtp_port_max</dfn>;</td></tr>
+<tr><th id="388">388</th><td></td></tr>
+<tr><th id="389">389</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="390">390</th><td><i class="doc">     * Timeout to wait for incoming connections.</i></td></tr>
+<tr><th id="391">391</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="392">392</th><td>    <em>int</em> <dfn class="decl" id="RTSPState::initial_timeout" title='RTSPState::initial_timeout' data-ref="RTSPState::initial_timeout">initial_timeout</dfn>;</td></tr>
+<tr><th id="393">393</th><td></td></tr>
+<tr><th id="394">394</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="395">395</th><td><i class="doc">     * timeout of socket i/o operations.</i></td></tr>
+<tr><th id="396">396</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="397">397</th><td>    <em>int</em> <dfn class="decl" id="RTSPState::stimeout" title='RTSPState::stimeout' data-ref="RTSPState::stimeout">stimeout</dfn>;</td></tr>
+<tr><th id="398">398</th><td></td></tr>
+<tr><th id="399">399</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="400">400</th><td><i class="doc">     * Size of RTP packet reordering queue.</i></td></tr>
+<tr><th id="401">401</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="402">402</th><td>    <em>int</em> <dfn class="decl" id="RTSPState::reordering_queue_size" title='RTSPState::reordering_queue_size' data-ref="RTSPState::reordering_queue_size">reordering_queue_size</dfn>;</td></tr>
+<tr><th id="403">403</th><td></td></tr>
+<tr><th id="404">404</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="405">405</th><td><i class="doc">     * User-Agent string</i></td></tr>
+<tr><th id="406">406</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="407">407</th><td>    <em>char</em> *<dfn class="decl" id="RTSPState::user_agent" title='RTSPState::user_agent' data-ref="RTSPState::user_agent">user_agent</dfn>;</td></tr>
+<tr><th id="408">408</th><td></td></tr>
+<tr><th id="409">409</th><td>    <em>char</em> <dfn class="decl" id="RTSPState::default_lang" title='RTSPState::default_lang' data-ref="RTSPState::default_lang">default_lang</dfn>[<var>4</var>];</td></tr>
+<tr><th id="410">410</th><td>    <em>int</em> <dfn class="decl" id="RTSPState::buffer_size" title='RTSPState::buffer_size' data-ref="RTSPState::buffer_size">buffer_size</dfn>;</td></tr>
+<tr><th id="411">411</th><td>} <dfn class="typedef" id="RTSPState" title='RTSPState' data-type='struct RTSPState' data-ref="RTSPState">RTSPState</dfn>;</td></tr>
+<tr><th id="412">412</th><td></td></tr>
+<tr><th id="413">413</th><td><u>#define <dfn class="macro" id="_M/RTSP_FLAG_FILTER_SRC" data-ref="_M/RTSP_FLAG_FILTER_SRC">RTSP_FLAG_FILTER_SRC</dfn>  0x1    /**&lt; Filter incoming UDP packets -</u></td></tr>
+<tr><th id="414">414</th><td><u>                                          receive packets only from the right</u></td></tr>
+<tr><th id="415">415</th><td><u>                                          source address and port. */</u></td></tr>
+<tr><th id="416">416</th><td><u>#define <dfn class="macro" id="_M/RTSP_FLAG_LISTEN" data-ref="_M/RTSP_FLAG_LISTEN">RTSP_FLAG_LISTEN</dfn>      0x2    /**&lt; Wait for incoming connections. */</u></td></tr>
+<tr><th id="417">417</th><td><u>#define <dfn class="macro" id="_M/RTSP_FLAG_CUSTOM_IO" data-ref="_M/RTSP_FLAG_CUSTOM_IO">RTSP_FLAG_CUSTOM_IO</dfn>   0x4    /**&lt; Do all IO via the AVIOContext. */</u></td></tr>
+<tr><th id="418">418</th><td><u>#define <dfn class="macro" id="_M/RTSP_FLAG_RTCP_TO_SOURCE" data-ref="_M/RTSP_FLAG_RTCP_TO_SOURCE">RTSP_FLAG_RTCP_TO_SOURCE</dfn> 0x8 /**&lt; Send RTCP packets to the source</u></td></tr>
+<tr><th id="419">419</th><td><u>                                          address of received packets. */</u></td></tr>
+<tr><th id="420">420</th><td><u>#define <dfn class="macro" id="_M/RTSP_FLAG_PREFER_TCP" data-ref="_M/RTSP_FLAG_PREFER_TCP">RTSP_FLAG_PREFER_TCP</dfn>  0x10   /**&lt; Try RTP via TCP first if possible. */</u></td></tr>
+<tr><th id="421">421</th><td></td></tr>
+<tr><th id="422">422</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="RTSPSource" title='RTSPSource' data-ref="RTSPSource"><a class="type" href="#RTSPSource" title='RTSPSource' data-ref="RTSPSource">RTSPSource</a></dfn> {</td></tr>
+<tr><th id="423">423</th><td>    <em>char</em> <dfn class="decl" id="RTSPSource::addr" title='RTSPSource::addr' data-ref="RTSPSource::addr">addr</dfn>[<var>128</var>]; <i class="doc">/**&lt; Source-specific multicast include source IP address (from SDP content) */</i></td></tr>
+<tr><th id="424">424</th><td>} <dfn class="typedef" id="RTSPSource" title='RTSPSource' data-type='struct RTSPSource' data-ref="RTSPSource">RTSPSource</dfn>;</td></tr>
+<tr><th id="425">425</th><td></td></tr>
+<tr><th id="426">426</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="427">427</th><td><i class="doc"> * Describe a single stream, as identified by a single m= line block in the</i></td></tr>
+<tr><th id="428">428</th><td><i class="doc"> * SDP content. In the case of RDT, one RTSPStream can represent multiple</i></td></tr>
+<tr><th id="429">429</th><td><i class="doc"> * AVStreams. In this case, each AVStream in this set has similar content</i></td></tr>
+<tr><th id="430">430</th><td><i class="doc"> * (but different codec/bitrate).</i></td></tr>
+<tr><th id="431">431</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="432">432</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="RTSPStream" title='RTSPStream' data-ref="RTSPStream"><a class="type" href="#RTSPStream" title='RTSPStream' data-ref="RTSPStream">RTSPStream</a></dfn> {</td></tr>
+<tr><th id="433">433</th><td>    <a class="typedef" href="url.h.html#URLContext" title='URLContext' data-type='struct URLContext' data-ref="URLContext">URLContext</a> *<dfn class="decl" id="RTSPStream::rtp_handle" title='RTSPStream::rtp_handle' data-ref="RTSPStream::rtp_handle">rtp_handle</dfn>;   <i class="doc">/**&lt; RTP stream handle (if UDP) */</i></td></tr>
+<tr><th id="434">434</th><td>    <em>void</em> *<dfn class="decl" id="RTSPStream::transport_priv" title='RTSPStream::transport_priv' data-ref="RTSPStream::transport_priv">transport_priv</dfn>; <i class="doc">/**&lt; RTP/RDT parse context if input, RTP AVFormatContext if output */</i></td></tr>
+<tr><th id="435">435</th><td></td></tr>
+<tr><th id="436">436</th><td>    <i class="doc">/** corresponding stream index, if any. -1 if none (MPEG2TS case) */</i></td></tr>
+<tr><th id="437">437</th><td>    <em>int</em> <dfn class="decl" id="RTSPStream::stream_index" title='RTSPStream::stream_index' data-ref="RTSPStream::stream_index">stream_index</dfn>;</td></tr>
+<tr><th id="438">438</th><td></td></tr>
+<tr><th id="439">439</th><td>    <i class="doc">/** interleave IDs; copies of RTSPTransportField-&gt;interleaved_min/max</i></td></tr>
+<tr><th id="440">440</th><td><i class="doc">     * for the selected transport. Only used for TCP. */</i></td></tr>
+<tr><th id="441">441</th><td>    <em>int</em> <dfn class="decl" id="RTSPStream::interleaved_min" title='RTSPStream::interleaved_min' data-ref="RTSPStream::interleaved_min">interleaved_min</dfn>, <dfn class="decl" id="RTSPStream::interleaved_max" title='RTSPStream::interleaved_max' data-ref="RTSPStream::interleaved_max">interleaved_max</dfn>;</td></tr>
+<tr><th id="442">442</th><td></td></tr>
+<tr><th id="443">443</th><td>    <em>char</em> <dfn class="decl" id="RTSPStream::control_url" title='RTSPStream::control_url' data-ref="RTSPStream::control_url">control_url</dfn>[<var>1024</var>];   <i class="doc">/**&lt; url for this stream (from SDP) */</i></td></tr>
+<tr><th id="444">444</th><td></td></tr>
+<tr><th id="445">445</th><td>    <i class="doc">/** The following are used only in SDP, not RTSP */</i></td></tr>
+<tr><th id="446">446</th><td><i class="doc">    //@{</i></td></tr>
+<tr><th id="447">447</th><td>    <em>int</em> <dfn class="decl" id="RTSPStream::sdp_port" title='RTSPStream::sdp_port' data-ref="RTSPStream::sdp_port">sdp_port</dfn>;             <i class="doc">/**&lt; port (from SDP content) */</i></td></tr>
+<tr><th id="448">448</th><td>    <b>struct</b> <a class="type" href="../../include/x86_64-linux-gnu/bits/socket.h.html#sockaddr_storage" title='sockaddr_storage' data-ref="sockaddr_storage">sockaddr_storage</a> <dfn class="decl" id="RTSPStream::sdp_ip" title='RTSPStream::sdp_ip' data-ref="RTSPStream::sdp_ip">sdp_ip</dfn>; <i class="doc">/**&lt; IP address (from SDP content) */</i></td></tr>
+<tr><th id="449">449</th><td>    <em>int</em> <dfn class="decl" id="RTSPStream::nb_include_source_addrs" title='RTSPStream::nb_include_source_addrs' data-ref="RTSPStream::nb_include_source_addrs">nb_include_source_addrs</dfn>; <i class="doc">/**&lt; Number of source-specific multicast include source IP addresses (from SDP content) */</i></td></tr>
+<tr><th id="450">450</th><td>    <b>struct</b> <a class="type" href="#RTSPSource" title='RTSPSource' data-ref="RTSPSource">RTSPSource</a> **<dfn class="decl" id="RTSPStream::include_source_addrs" title='RTSPStream::include_source_addrs' data-ref="RTSPStream::include_source_addrs">include_source_addrs</dfn>; <i class="doc">/**&lt; Source-specific multicast include source IP addresses (from SDP content) */</i></td></tr>
+<tr><th id="451">451</th><td>    <em>int</em> <dfn class="decl" id="RTSPStream::nb_exclude_source_addrs" title='RTSPStream::nb_exclude_source_addrs' data-ref="RTSPStream::nb_exclude_source_addrs">nb_exclude_source_addrs</dfn>; <i class="doc">/**&lt; Number of source-specific multicast exclude source IP addresses (from SDP content) */</i></td></tr>
+<tr><th id="452">452</th><td>    <b>struct</b> <a class="type" href="#RTSPSource" title='RTSPSource' data-ref="RTSPSource">RTSPSource</a> **<dfn class="decl" id="RTSPStream::exclude_source_addrs" title='RTSPStream::exclude_source_addrs' data-ref="RTSPStream::exclude_source_addrs">exclude_source_addrs</dfn>; <i class="doc">/**&lt; Source-specific multicast exclude source IP addresses (from SDP content) */</i></td></tr>
+<tr><th id="453">453</th><td>    <em>int</em> <dfn class="decl" id="RTSPStream::sdp_ttl" title='RTSPStream::sdp_ttl' data-ref="RTSPStream::sdp_ttl">sdp_ttl</dfn>;              <i class="doc">/**&lt; IP Time-To-Live (from SDP content) */</i></td></tr>
+<tr><th id="454">454</th><td>    <em>int</em> <dfn class="decl" id="RTSPStream::sdp_payload_type" title='RTSPStream::sdp_payload_type' data-ref="RTSPStream::sdp_payload_type">sdp_payload_type</dfn>;     <i class="doc">/**&lt; payload type */</i></td></tr>
+<tr><th id="455">455</th><td>    <i>//@}</i></td></tr>
+<tr><th id="456">456</th><td></td></tr>
+<tr><th id="457">457</th><td>    <i class="doc">/** The following are used for dynamic protocols (rtpdec_*.c/rdt.c) */</i></td></tr>
+<tr><th id="458">458</th><td><i class="doc">    //@{</i></td></tr>
+<tr><th id="459">459</th><td>    <i class="doc">/** handler structure */</i></td></tr>
+<tr><th id="460">460</th><td>    <a class="typedef" href="rtpdec.h.html#RTPDynamicProtocolHandler" title='RTPDynamicProtocolHandler' data-type='struct RTPDynamicProtocolHandler' data-ref="RTPDynamicProtocolHandler">RTPDynamicProtocolHandler</a> *<dfn class="decl" id="RTSPStream::dynamic_handler" title='RTSPStream::dynamic_handler' data-ref="RTSPStream::dynamic_handler">dynamic_handler</dfn>;</td></tr>
+<tr><th id="461">461</th><td></td></tr>
+<tr><th id="462">462</th><td>    <i class="doc">/** private data associated with the dynamic protocol */</i></td></tr>
+<tr><th id="463">463</th><td>    <a class="typedef" href="rtpdec.h.html#PayloadContext" title='PayloadContext' data-type='struct PayloadContext' data-ref="PayloadContext">PayloadContext</a> *<dfn class="decl" id="RTSPStream::dynamic_protocol_context" title='RTSPStream::dynamic_protocol_context' data-ref="RTSPStream::dynamic_protocol_context">dynamic_protocol_context</dfn>;</td></tr>
+<tr><th id="464">464</th><td>    <i>//@}</i></td></tr>
+<tr><th id="465">465</th><td></td></tr>
+<tr><th id="466">466</th><td>    <i class="doc">/** Enable sending RTCP feedback messages according to RFC 4585 */</i></td></tr>
+<tr><th id="467">467</th><td>    <em>int</em> <dfn class="decl" id="RTSPStream::feedback" title='RTSPStream::feedback' data-ref="RTSPStream::feedback">feedback</dfn>;</td></tr>
+<tr><th id="468">468</th><td></td></tr>
+<tr><th id="469">469</th><td>    <i class="doc">/** SSRC for this stream, to allow identifying RTCP packets before the first RTP packet */</i></td></tr>
+<tr><th id="470">470</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a> <dfn class="decl" id="RTSPStream::ssrc" title='RTSPStream::ssrc' data-ref="RTSPStream::ssrc">ssrc</dfn>;</td></tr>
+<tr><th id="471">471</th><td></td></tr>
+<tr><th id="472">472</th><td>    <em>char</em> <dfn class="decl" id="RTSPStream::crypto_suite" title='RTSPStream::crypto_suite' data-ref="RTSPStream::crypto_suite">crypto_suite</dfn>[<var>40</var>];</td></tr>
+<tr><th id="473">473</th><td>    <em>char</em> <dfn class="decl" id="RTSPStream::crypto_params" title='RTSPStream::crypto_params' data-ref="RTSPStream::crypto_params">crypto_params</dfn>[<var>100</var>];</td></tr>
+<tr><th id="474">474</th><td>} <dfn class="typedef" id="RTSPStream" title='RTSPStream' data-type='struct RTSPStream' data-ref="RTSPStream">RTSPStream</dfn>;</td></tr>
+<tr><th id="475">475</th><td></td></tr>
+<tr><th id="476">476</th><td><em>void</em> <dfn class="decl" id="ff_rtsp_parse_line" title='ff_rtsp_parse_line' data-ref="ff_rtsp_parse_line">ff_rtsp_parse_line</dfn>(<a class="typedef" href="avformat.h.html#AVFormatContext" title='AVFormatContext' data-type='struct AVFormatContext' data-ref="AVFormatContext">AVFormatContext</a> *<dfn class="local col6 decl" id="106s" title='s' data-type='AVFormatContext *' data-ref="106s">s</dfn>,</td></tr>
+<tr><th id="477">477</th><td>                        <a class="typedef" href="#RTSPMessageHeader" title='RTSPMessageHeader' data-type='struct RTSPMessageHeader' data-ref="RTSPMessageHeader">RTSPMessageHeader</a> *<dfn class="local col7 decl" id="107reply" title='reply' data-type='RTSPMessageHeader *' data-ref="107reply">reply</dfn>, <em>const</em> <em>char</em> *<dfn class="local col8 decl" id="108buf" title='buf' data-type='const char *' data-ref="108buf">buf</dfn>,</td></tr>
+<tr><th id="478">478</th><td>                        <a class="typedef" href="#RTSPState" title='RTSPState' data-type='struct RTSPState' data-ref="RTSPState">RTSPState</a> *<dfn class="local col9 decl" id="109rt" title='rt' data-type='RTSPState *' data-ref="109rt">rt</dfn>, <em>const</em> <em>char</em> *<dfn class="local col0 decl" id="110method" title='method' data-type='const char *' data-ref="110method">method</dfn>);</td></tr>
+<tr><th id="479">479</th><td></td></tr>
+<tr><th id="480">480</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="481">481</th><td><i class="doc"> * Send a command to the RTSP server without waiting for the reply.</i></td></tr>
+<tr><th id="482">482</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="483">483</th><td><i class="doc"> * <span class="command">@see</span> rtsp_send_cmd_with_content_async</i></td></tr>
+<tr><th id="484">484</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="485">485</th><td><em>int</em> <dfn class="decl" id="ff_rtsp_send_cmd_async" title='ff_rtsp_send_cmd_async' data-ref="ff_rtsp_send_cmd_async">ff_rtsp_send_cmd_async</dfn>(<a class="typedef" href="avformat.h.html#AVFormatContext" title='AVFormatContext' data-type='struct AVFormatContext' data-ref="AVFormatContext">AVFormatContext</a> *<dfn class="local col1 decl" id="111s" title='s' data-type='AVFormatContext *' data-ref="111s">s</dfn>, <em>const</em> <em>char</em> *<dfn class="local col2 decl" id="112method" title='method' data-type='const char *' data-ref="112method">method</dfn>,</td></tr>
+<tr><th id="486">486</th><td>                           <em>const</em> <em>char</em> *<dfn class="local col3 decl" id="113url" title='url' data-type='const char *' data-ref="113url">url</dfn>, <em>const</em> <em>char</em> *<dfn class="local col4 decl" id="114headers" title='headers' data-type='const char *' data-ref="114headers">headers</dfn>);</td></tr>
+<tr><th id="487">487</th><td></td></tr>
+<tr><th id="488">488</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="489">489</th><td><i class="doc"> * Send a command to the RTSP server and wait for the reply.</i></td></tr>
+<tr><th id="490">490</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="491">491</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">s</span> RTSP (de)muxer context</i></td></tr>
+<tr><th id="492">492</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">method</span> the method for the request</i></td></tr>
+<tr><th id="493">493</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">url</span> the target url for the request</i></td></tr>
+<tr><th id="494">494</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">headers</span> extra header lines to include in the request</i></td></tr>
+<tr><th id="495">495</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">reply</span> pointer where the RTSP message header will be stored</i></td></tr>
+<tr><th id="496">496</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">content_ptr</span> pointer where the RTSP message body, if any, will</i></td></tr>
+<tr><th id="497">497</th><td><i class="doc"> *                    be stored (length is in reply)</i></td></tr>
+<tr><th id="498">498</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">send_content</span> if non-null, the data to send as request body content</i></td></tr>
+<tr><th id="499">499</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">send_content_length</span> the length of the send_content data, or 0 if</i></td></tr>
+<tr><th id="500">500</th><td><i class="doc"> *                            send_content is null</i></td></tr>
+<tr><th id="501">501</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="502">502</th><td><i class="doc"> * <span class="command">@return</span> zero if success, nonzero otherwise</i></td></tr>
+<tr><th id="503">503</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="504">504</th><td><em>int</em> <dfn class="decl" id="ff_rtsp_send_cmd_with_content" title='ff_rtsp_send_cmd_with_content' data-ref="ff_rtsp_send_cmd_with_content">ff_rtsp_send_cmd_with_content</dfn>(<a class="typedef" href="avformat.h.html#AVFormatContext" title='AVFormatContext' data-type='struct AVFormatContext' data-ref="AVFormatContext">AVFormatContext</a> *<dfn class="local col5 decl" id="115s" title='s' data-type='AVFormatContext *' data-ref="115s">s</dfn>,</td></tr>
+<tr><th id="505">505</th><td>                                  <em>const</em> <em>char</em> *<dfn class="local col6 decl" id="116method" title='method' data-type='const char *' data-ref="116method">method</dfn>, <em>const</em> <em>char</em> *<dfn class="local col7 decl" id="117url" title='url' data-type='const char *' data-ref="117url">url</dfn>,</td></tr>
+<tr><th id="506">506</th><td>                                  <em>const</em> <em>char</em> *<dfn class="local col8 decl" id="118headers" title='headers' data-type='const char *' data-ref="118headers">headers</dfn>,</td></tr>
+<tr><th id="507">507</th><td>                                  <a class="typedef" href="#RTSPMessageHeader" title='RTSPMessageHeader' data-type='struct RTSPMessageHeader' data-ref="RTSPMessageHeader">RTSPMessageHeader</a> *<dfn class="local col9 decl" id="119reply" title='reply' data-type='RTSPMessageHeader *' data-ref="119reply">reply</dfn>,</td></tr>
+<tr><th id="508">508</th><td>                                  <em>unsigned</em> <em>char</em> **<dfn class="local col0 decl" id="120content_ptr" title='content_ptr' data-type='unsigned char **' data-ref="120content_ptr">content_ptr</dfn>,</td></tr>
+<tr><th id="509">509</th><td>                                  <em>const</em> <em>unsigned</em> <em>char</em> *<dfn class="local col1 decl" id="121send_content" title='send_content' data-type='const unsigned char *' data-ref="121send_content">send_content</dfn>,</td></tr>
+<tr><th id="510">510</th><td>                                  <em>int</em> <dfn class="local col2 decl" id="122send_content_length" title='send_content_length' data-type='int' data-ref="122send_content_length">send_content_length</dfn>);</td></tr>
+<tr><th id="511">511</th><td></td></tr>
+<tr><th id="512">512</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="513">513</th><td><i class="doc"> * Send a command to the RTSP server and wait for the reply.</i></td></tr>
+<tr><th id="514">514</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="515">515</th><td><i class="doc"> * <span class="command">@see</span> rtsp_send_cmd_with_content</i></td></tr>
+<tr><th id="516">516</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="517">517</th><td><em>int</em> <dfn class="decl" id="ff_rtsp_send_cmd" title='ff_rtsp_send_cmd' data-ref="ff_rtsp_send_cmd">ff_rtsp_send_cmd</dfn>(<a class="typedef" href="avformat.h.html#AVFormatContext" title='AVFormatContext' data-type='struct AVFormatContext' data-ref="AVFormatContext">AVFormatContext</a> *<dfn class="local col3 decl" id="123s" title='s' data-type='AVFormatContext *' data-ref="123s">s</dfn>, <em>const</em> <em>char</em> *<dfn class="local col4 decl" id="124method" title='method' data-type='const char *' data-ref="124method">method</dfn>,</td></tr>
+<tr><th id="518">518</th><td>                     <em>const</em> <em>char</em> *<dfn class="local col5 decl" id="125url" title='url' data-type='const char *' data-ref="125url">url</dfn>, <em>const</em> <em>char</em> *<dfn class="local col6 decl" id="126headers" title='headers' data-type='const char *' data-ref="126headers">headers</dfn>,</td></tr>
+<tr><th id="519">519</th><td>                     <a class="typedef" href="#RTSPMessageHeader" title='RTSPMessageHeader' data-type='struct RTSPMessageHeader' data-ref="RTSPMessageHeader">RTSPMessageHeader</a> *<dfn class="local col7 decl" id="127reply" title='reply' data-type='RTSPMessageHeader *' data-ref="127reply">reply</dfn>, <em>unsigned</em> <em>char</em> **<dfn class="local col8 decl" id="128content_ptr" title='content_ptr' data-type='unsigned char **' data-ref="128content_ptr">content_ptr</dfn>);</td></tr>
+<tr><th id="520">520</th><td></td></tr>
+<tr><th id="521">521</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="522">522</th><td><i class="doc"> * Read a RTSP message from the server, or prepare to read data</i></td></tr>
+<tr><th id="523">523</th><td><i class="doc"> * packets if we're reading data interleaved over the TCP/RTSP</i></td></tr>
+<tr><th id="524">524</th><td><i class="doc"> * connection as well.</i></td></tr>
+<tr><th id="525">525</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="526">526</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">s</span> RTSP (de)muxer context</i></td></tr>
+<tr><th id="527">527</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">reply</span> pointer where the RTSP message header will be stored</i></td></tr>
+<tr><th id="528">528</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">content_ptr</span> pointer where the RTSP message body, if any, will</i></td></tr>
+<tr><th id="529">529</th><td><i class="doc"> *                    be stored (length is in reply)</i></td></tr>
+<tr><th id="530">530</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">return_on_interleaved_data</span> whether the function may return if we</i></td></tr>
+<tr><th id="531">531</th><td><i class="doc"> *                   encounter a data marker ('$'), which precedes data</i></td></tr>
+<tr><th id="532">532</th><td><i class="doc"> *                   packets over interleaved TCP/RTSP connections. If this</i></td></tr>
+<tr><th id="533">533</th><td><i class="doc"> *                   is set, this function will return 1 after encountering</i></td></tr>
+<tr><th id="534">534</th><td><i class="doc"> *                   a '$'. If it is not set, the function will skip any</i></td></tr>
+<tr><th id="535">535</th><td><i class="doc"> *                   data packets (if they are encountered), until a reply</i></td></tr>
+<tr><th id="536">536</th><td><i class="doc"> *                   has been fully parsed. If no more data is available</i></td></tr>
+<tr><th id="537">537</th><td><i class="doc"> *                   without parsing a reply, it will return an error.</i></td></tr>
+<tr><th id="538">538</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">method</span> the RTSP method this is a reply to. This affects how</i></td></tr>
+<tr><th id="539">539</th><td><i class="doc"> *               some response headers are acted upon. May be NULL.</i></td></tr>
+<tr><th id="540">540</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="541">541</th><td><i class="doc"> * <span class="command">@return</span> 1 if a data packets is ready to be received, -1 on error,</i></td></tr>
+<tr><th id="542">542</th><td><i class="doc"> *          and 0 on success.</i></td></tr>
+<tr><th id="543">543</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="544">544</th><td><em>int</em> <dfn class="decl" id="ff_rtsp_read_reply" title='ff_rtsp_read_reply' data-ref="ff_rtsp_read_reply">ff_rtsp_read_reply</dfn>(<a class="typedef" href="avformat.h.html#AVFormatContext" title='AVFormatContext' data-type='struct AVFormatContext' data-ref="AVFormatContext">AVFormatContext</a> *<dfn class="local col9 decl" id="129s" title='s' data-type='AVFormatContext *' data-ref="129s">s</dfn>, <a class="typedef" href="#RTSPMessageHeader" title='RTSPMessageHeader' data-type='struct RTSPMessageHeader' data-ref="RTSPMessageHeader">RTSPMessageHeader</a> *<dfn class="local col0 decl" id="130reply" title='reply' data-type='RTSPMessageHeader *' data-ref="130reply">reply</dfn>,</td></tr>
+<tr><th id="545">545</th><td>                       <em>unsigned</em> <em>char</em> **<dfn class="local col1 decl" id="131content_ptr" title='content_ptr' data-type='unsigned char **' data-ref="131content_ptr">content_ptr</dfn>,</td></tr>
+<tr><th id="546">546</th><td>                       <em>int</em> <dfn class="local col2 decl" id="132return_on_interleaved_data" title='return_on_interleaved_data' data-type='int' data-ref="132return_on_interleaved_data">return_on_interleaved_data</dfn>, <em>const</em> <em>char</em> *<dfn class="local col3 decl" id="133method" title='method' data-type='const char *' data-ref="133method">method</dfn>);</td></tr>
+<tr><th id="547">547</th><td></td></tr>
+<tr><th id="548">548</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="549">549</th><td><i class="doc"> * Skip a RTP/TCP interleaved packet.</i></td></tr>
+<tr><th id="550">550</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="551">551</th><td><em>void</em> <dfn class="decl" id="ff_rtsp_skip_packet" title='ff_rtsp_skip_packet' data-ref="ff_rtsp_skip_packet">ff_rtsp_skip_packet</dfn>(<a class="typedef" href="avformat.h.html#AVFormatContext" title='AVFormatContext' data-type='struct AVFormatContext' data-ref="AVFormatContext">AVFormatContext</a> *<dfn class="local col4 decl" id="134s" title='s' data-type='AVFormatContext *' data-ref="134s">s</dfn>);</td></tr>
+<tr><th id="552">552</th><td></td></tr>
+<tr><th id="553">553</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="554">554</th><td><i class="doc"> * Connect to the RTSP server and set up the individual media streams.</i></td></tr>
+<tr><th id="555">555</th><td><i class="doc"> * This can be used for both muxers and demuxers.</i></td></tr>
+<tr><th id="556">556</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="557">557</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">s</span> RTSP (de)muxer context</i></td></tr>
+<tr><th id="558">558</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="559">559</th><td><i class="doc"> * <span class="command">@return</span> 0 on success, &lt; 0 on error. Cleans up all allocations done</i></td></tr>
+<tr><th id="560">560</th><td><i class="doc"> *          within the function on error.</i></td></tr>
+<tr><th id="561">561</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="562">562</th><td><em>int</em> <dfn class="decl" id="ff_rtsp_connect" title='ff_rtsp_connect' data-ref="ff_rtsp_connect">ff_rtsp_connect</dfn>(<a class="typedef" href="avformat.h.html#AVFormatContext" title='AVFormatContext' data-type='struct AVFormatContext' data-ref="AVFormatContext">AVFormatContext</a> *<dfn class="local col5 decl" id="135s" title='s' data-type='AVFormatContext *' data-ref="135s">s</dfn>);</td></tr>
+<tr><th id="563">563</th><td></td></tr>
+<tr><th id="564">564</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="565">565</th><td><i class="doc"> * Close and free all streams within the RTSP (de)muxer</i></td></tr>
+<tr><th id="566">566</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="567">567</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">s</span> RTSP (de)muxer context</i></td></tr>
+<tr><th id="568">568</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="569">569</th><td><em>void</em> <dfn class="decl" id="ff_rtsp_close_streams" title='ff_rtsp_close_streams' data-ref="ff_rtsp_close_streams">ff_rtsp_close_streams</dfn>(<a class="typedef" href="avformat.h.html#AVFormatContext" title='AVFormatContext' data-type='struct AVFormatContext' data-ref="AVFormatContext">AVFormatContext</a> *<dfn class="local col6 decl" id="136s" title='s' data-type='AVFormatContext *' data-ref="136s">s</dfn>);</td></tr>
+<tr><th id="570">570</th><td></td></tr>
+<tr><th id="571">571</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="572">572</th><td><i class="doc"> * Close all connection handles within the RTSP (de)muxer</i></td></tr>
+<tr><th id="573">573</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="574">574</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">s</span> RTSP (de)muxer context</i></td></tr>
+<tr><th id="575">575</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="576">576</th><td><em>void</em> <dfn class="decl" id="ff_rtsp_close_connections" title='ff_rtsp_close_connections' data-ref="ff_rtsp_close_connections">ff_rtsp_close_connections</dfn>(<a class="typedef" href="avformat.h.html#AVFormatContext" title='AVFormatContext' data-type='struct AVFormatContext' data-ref="AVFormatContext">AVFormatContext</a> *<dfn class="local col7 decl" id="137s" title='s' data-type='AVFormatContext *' data-ref="137s">s</dfn>);</td></tr>
+<tr><th id="577">577</th><td></td></tr>
+<tr><th id="578">578</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="579">579</th><td><i class="doc"> * Get the description of the stream and set up the RTSPStream child</i></td></tr>
+<tr><th id="580">580</th><td><i class="doc"> * objects.</i></td></tr>
+<tr><th id="581">581</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="582">582</th><td><em>int</em> <dfn class="decl" id="ff_rtsp_setup_input_streams" title='ff_rtsp_setup_input_streams' data-ref="ff_rtsp_setup_input_streams">ff_rtsp_setup_input_streams</dfn>(<a class="typedef" href="avformat.h.html#AVFormatContext" title='AVFormatContext' data-type='struct AVFormatContext' data-ref="AVFormatContext">AVFormatContext</a> *<dfn class="local col8 decl" id="138s" title='s' data-type='AVFormatContext *' data-ref="138s">s</dfn>, <a class="typedef" href="#RTSPMessageHeader" title='RTSPMessageHeader' data-type='struct RTSPMessageHeader' data-ref="RTSPMessageHeader">RTSPMessageHeader</a> *<dfn class="local col9 decl" id="139reply" title='reply' data-type='RTSPMessageHeader *' data-ref="139reply">reply</dfn>);</td></tr>
+<tr><th id="583">583</th><td></td></tr>
+<tr><th id="584">584</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="585">585</th><td><i class="doc"> * Announce the stream to the server and set up the RTSPStream child</i></td></tr>
+<tr><th id="586">586</th><td><i class="doc"> * objects for each media stream.</i></td></tr>
+<tr><th id="587">587</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="588">588</th><td><em>int</em> <dfn class="decl" id="ff_rtsp_setup_output_streams" title='ff_rtsp_setup_output_streams' data-ref="ff_rtsp_setup_output_streams">ff_rtsp_setup_output_streams</dfn>(<a class="typedef" href="avformat.h.html#AVFormatContext" title='AVFormatContext' data-type='struct AVFormatContext' data-ref="AVFormatContext">AVFormatContext</a> *<dfn class="local col0 decl" id="140s" title='s' data-type='AVFormatContext *' data-ref="140s">s</dfn>, <em>const</em> <em>char</em> *<dfn class="local col1 decl" id="141addr" title='addr' data-type='const char *' data-ref="141addr">addr</dfn>);</td></tr>
+<tr><th id="589">589</th><td></td></tr>
+<tr><th id="590">590</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="591">591</th><td><i class="doc"> * Parse RTSP commands (OPTIONS, PAUSE and TEARDOWN) during streaming in</i></td></tr>
+<tr><th id="592">592</th><td><i class="doc"> * listen mode.</i></td></tr>
+<tr><th id="593">593</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="594">594</th><td><em>int</em> <dfn class="decl" id="ff_rtsp_parse_streaming_commands" title='ff_rtsp_parse_streaming_commands' data-ref="ff_rtsp_parse_streaming_commands">ff_rtsp_parse_streaming_commands</dfn>(<a class="typedef" href="avformat.h.html#AVFormatContext" title='AVFormatContext' data-type='struct AVFormatContext' data-ref="AVFormatContext">AVFormatContext</a> *<dfn class="local col2 decl" id="142s" title='s' data-type='AVFormatContext *' data-ref="142s">s</dfn>);</td></tr>
+<tr><th id="595">595</th><td></td></tr>
+<tr><th id="596">596</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="597">597</th><td><i class="doc"> * Parse an SDP description of streams by populating an RTSPState struct</i></td></tr>
+<tr><th id="598">598</th><td><i class="doc"> * within the AVFormatContext; also allocate the RTP streams and the</i></td></tr>
+<tr><th id="599">599</th><td><i class="doc"> * pollfd array used for UDP streams.</i></td></tr>
+<tr><th id="600">600</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="601">601</th><td><em>int</em> <dfn class="decl" id="ff_sdp_parse" title='ff_sdp_parse' data-ref="ff_sdp_parse">ff_sdp_parse</dfn>(<a class="typedef" href="avformat.h.html#AVFormatContext" title='AVFormatContext' data-type='struct AVFormatContext' data-ref="AVFormatContext">AVFormatContext</a> *<dfn class="local col3 decl" id="143s" title='s' data-type='AVFormatContext *' data-ref="143s">s</dfn>, <em>const</em> <em>char</em> *<dfn class="local col4 decl" id="144content" title='content' data-type='const char *' data-ref="144content">content</dfn>);</td></tr>
+<tr><th id="602">602</th><td></td></tr>
+<tr><th id="603">603</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="604">604</th><td><i class="doc"> * Receive one RTP packet from an TCP interleaved RTSP stream.</i></td></tr>
+<tr><th id="605">605</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="606">606</th><td><em>int</em> <dfn class="decl" id="ff_rtsp_tcp_read_packet" title='ff_rtsp_tcp_read_packet' data-ref="ff_rtsp_tcp_read_packet">ff_rtsp_tcp_read_packet</dfn>(<a class="typedef" href="avformat.h.html#AVFormatContext" title='AVFormatContext' data-type='struct AVFormatContext' data-ref="AVFormatContext">AVFormatContext</a> *<dfn class="local col5 decl" id="145s" title='s' data-type='AVFormatContext *' data-ref="145s">s</dfn>, <a class="typedef" href="#RTSPStream" title='RTSPStream' data-type='struct RTSPStream' data-ref="RTSPStream">RTSPStream</a> **<dfn class="local col6 decl" id="146prtsp_st" title='prtsp_st' data-type='RTSPStream **' data-ref="146prtsp_st">prtsp_st</dfn>,</td></tr>
+<tr><th id="607">607</th><td>                            <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col7 decl" id="147buf" title='buf' data-type='uint8_t *' data-ref="147buf">buf</dfn>, <em>int</em> <dfn class="local col8 decl" id="148buf_size" title='buf_size' data-type='int' data-ref="148buf_size">buf_size</dfn>);</td></tr>
+<tr><th id="608">608</th><td></td></tr>
+<tr><th id="609">609</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="610">610</th><td><i class="doc"> * Send buffered packets over TCP.</i></td></tr>
+<tr><th id="611">611</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="612">612</th><td><em>int</em> <dfn class="decl" id="ff_rtsp_tcp_write_packet" title='ff_rtsp_tcp_write_packet' data-ref="ff_rtsp_tcp_write_packet">ff_rtsp_tcp_write_packet</dfn>(<a class="typedef" href="avformat.h.html#AVFormatContext" title='AVFormatContext' data-type='struct AVFormatContext' data-ref="AVFormatContext">AVFormatContext</a> *<dfn class="local col9 decl" id="149s" title='s' data-type='AVFormatContext *' data-ref="149s">s</dfn>, <a class="typedef" href="#RTSPStream" title='RTSPStream' data-type='struct RTSPStream' data-ref="RTSPStream">RTSPStream</a> *<dfn class="local col0 decl" id="150rtsp_st" title='rtsp_st' data-type='RTSPStream *' data-ref="150rtsp_st">rtsp_st</dfn>);</td></tr>
+<tr><th id="613">613</th><td></td></tr>
+<tr><th id="614">614</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="615">615</th><td><i class="doc"> * Receive one packet from the RTSPStreams set up in the AVFormatContext</i></td></tr>
+<tr><th id="616">616</th><td><i class="doc"> * (which should contain a RTSPState struct as priv_data).</i></td></tr>
+<tr><th id="617">617</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="618">618</th><td><em>int</em> <dfn class="decl" id="ff_rtsp_fetch_packet" title='ff_rtsp_fetch_packet' data-ref="ff_rtsp_fetch_packet">ff_rtsp_fetch_packet</dfn>(<a class="typedef" href="avformat.h.html#AVFormatContext" title='AVFormatContext' data-type='struct AVFormatContext' data-ref="AVFormatContext">AVFormatContext</a> *<dfn class="local col1 decl" id="151s" title='s' data-type='AVFormatContext *' data-ref="151s">s</dfn>, <a class="typedef" href="../libavcodec/avcodec.h.html#AVPacket" title='AVPacket' data-type='struct AVPacket' data-ref="AVPacket">AVPacket</a> *<dfn class="local col2 decl" id="152pkt" title='pkt' data-type='AVPacket *' data-ref="152pkt">pkt</dfn>);</td></tr>
+<tr><th id="619">619</th><td></td></tr>
+<tr><th id="620">620</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="621">621</th><td><i class="doc"> * Do the SETUP requests for each stream for the chosen</i></td></tr>
+<tr><th id="622">622</th><td><i class="doc"> * lower transport mode.</i></td></tr>
+<tr><th id="623">623</th><td><i class="doc"> * <span class="command">@return</span> 0 on success, &lt;0 on error, 1 if protocol is unavailable</i></td></tr>
+<tr><th id="624">624</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="625">625</th><td><em>int</em> <dfn class="decl" id="ff_rtsp_make_setup_request" title='ff_rtsp_make_setup_request' data-ref="ff_rtsp_make_setup_request">ff_rtsp_make_setup_request</dfn>(<a class="typedef" href="avformat.h.html#AVFormatContext" title='AVFormatContext' data-type='struct AVFormatContext' data-ref="AVFormatContext">AVFormatContext</a> *<dfn class="local col3 decl" id="153s" title='s' data-type='AVFormatContext *' data-ref="153s">s</dfn>, <em>const</em> <em>char</em> *<dfn class="local col4 decl" id="154host" title='host' data-type='const char *' data-ref="154host">host</dfn>, <em>int</em> <dfn class="local col5 decl" id="155port" title='port' data-type='int' data-ref="155port">port</dfn>,</td></tr>
+<tr><th id="626">626</th><td>                               <em>int</em> <dfn class="local col6 decl" id="156lower_transport" title='lower_transport' data-type='int' data-ref="156lower_transport">lower_transport</dfn>, <em>const</em> <em>char</em> *<dfn class="local col7 decl" id="157real_challenge" title='real_challenge' data-type='const char *' data-ref="157real_challenge">real_challenge</dfn>);</td></tr>
+<tr><th id="627">627</th><td></td></tr>
+<tr><th id="628">628</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="629">629</th><td><i class="doc"> * Undo the effect of ff_rtsp_make_setup_request, close the</i></td></tr>
+<tr><th id="630">630</th><td><i class="doc"> * transport_priv and rtp_handle fields.</i></td></tr>
+<tr><th id="631">631</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="632">632</th><td><em>void</em> <dfn class="decl" id="ff_rtsp_undo_setup" title='ff_rtsp_undo_setup' data-ref="ff_rtsp_undo_setup">ff_rtsp_undo_setup</dfn>(<a class="typedef" href="avformat.h.html#AVFormatContext" title='AVFormatContext' data-type='struct AVFormatContext' data-ref="AVFormatContext">AVFormatContext</a> *<dfn class="local col8 decl" id="158s" title='s' data-type='AVFormatContext *' data-ref="158s">s</dfn>, <em>int</em> <dfn class="local col9 decl" id="159send_packets" title='send_packets' data-type='int' data-ref="159send_packets">send_packets</dfn>);</td></tr>
+<tr><th id="633">633</th><td></td></tr>
+<tr><th id="634">634</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="635">635</th><td><i class="doc"> * Open RTSP transport context.</i></td></tr>
+<tr><th id="636">636</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="637">637</th><td><em>int</em> <dfn class="decl" id="ff_rtsp_open_transport_ctx" title='ff_rtsp_open_transport_ctx' data-ref="ff_rtsp_open_transport_ctx">ff_rtsp_open_transport_ctx</dfn>(<a class="typedef" href="avformat.h.html#AVFormatContext" title='AVFormatContext' data-type='struct AVFormatContext' data-ref="AVFormatContext">AVFormatContext</a> *<dfn class="local col0 decl" id="160s" title='s' data-type='AVFormatContext *' data-ref="160s">s</dfn>, <a class="typedef" href="#RTSPStream" title='RTSPStream' data-type='struct RTSPStream' data-ref="RTSPStream">RTSPStream</a> *<dfn class="local col1 decl" id="161rtsp_st" title='rtsp_st' data-type='RTSPStream *' data-ref="161rtsp_st">rtsp_st</dfn>);</td></tr>
+<tr><th id="638">638</th><td></td></tr>
+<tr><th id="639">639</th><td><b>extern</b> <em>const</em> <a class="typedef" href="../libavutil/opt.h.html#AVOption" title='AVOption' data-type='struct AVOption' data-ref="AVOption">AVOption</a> <dfn class="decl" id="ff_rtsp_options" title='ff_rtsp_options' data-ref="ff_rtsp_options">ff_rtsp_options</dfn>[];</td></tr>
+<tr><th id="640">640</th><td></td></tr>
+<tr><th id="641">641</th><td><u>#<span data-ppcond="21">endif</span> /* AVFORMAT_RTSP_H */</u></td></tr>
+<tr><th id="642">642</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated while processing <a href='../ffserver.c.html'>ffmpeg/ffserver.c</a><br/>Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

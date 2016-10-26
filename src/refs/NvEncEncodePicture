@@ -1,0 +1,178 @@
+<dec f='ffmpeg/compat/nvenc/nvEncodeAPI.h' l='2467' type='NVENCSTATUS NvEncEncodePicture(void * encoder, NV_ENC_PIC_PARAMS * encodePicParams)'/>
+<doc f='ffmpeg/compat/nvenc/nvEncodeAPI.h' l='2290'>/**
+ * \brief Submit an input picture for encoding.
+ *
+ * This function is used to submit an input picture buffer for encoding. The
+ * encoding parameters are passed using \p *encodePicParams which is a pointer
+ * to the ::_NV_ENC_PIC_PARAMS structure.
+ *
+ * If the client has set NV_ENC_INITIALIZE_PARAMS::enablePTD to 0, then it must
+ * send a valid value for the following fields.
+ * - NV_ENC_PIC_PARAMS::pictureType
+ * - NV_ENC_PIC_PARAMS_H264::displayPOCSyntax (H264 only)
+ * - NV_ENC_PIC_PARAMS_H264::frameNumSyntax(H264 only)
+ * - NV_ENC_PIC_PARAMS_H264::refPicFlag(H264 only)
+ *
+ *
+ *\par Asynchronous Encoding
+ * If the client has enabled asynchronous mode of encoding by setting
+ * NV_ENC_INITIALIZE_PARAMS::enableEncodeAsync to 1 in the ::NvEncInitializeEncoder()
+ * API ,then the client must send a valid NV_ENC_PIC_PARAMS::completionEvent.
+ * Incase of asynchronous mode of operation, client can queue the ::NvEncEncodePicture()
+ * API commands from the main thread and then queue output buffers to be processed
+ * to a secondary worker thread. Before the locking the output buffers in the
+ * secondary thread , the client must wait on NV_ENC_PIC_PARAMS::completionEvent
+ * it has queued in ::NvEncEncodePicture() API call. The client must always process
+ * completion event and the output buffer in the same order in which they have been
+ * submitted for encoding. The NvEncodeAPI interface is responsible for any
+ * re-ordering required for B frames and will always ensure that encoded bitstream
+ * data is written in the same order in which output buffer is submitted.
+ *\code
+  The below example shows how  asynchronous encoding in case of 1 B frames
+  ------------------------------------------------------------------------
+  Suppose the client allocated 4 input buffers(I1,I2..), 4 output buffers(O1,O2..)
+  and 4 completion events(E1, E2, ...). The NvEncodeAPI interface will need to
+  keep a copy of the input buffers for re-ordering and it allocates following
+  internal buffers (NvI1, NvI2...). These internal buffers are managed by NvEncodeAPI
+  and the client is not responsible for the allocating or freeing the memory of
+  the internal buffers.
+
+  a) The client main thread will queue the following encode frame calls.
+  Note the picture type is unknown to the client, the decision is being taken by
+  NvEncodeAPI interface. The client should pass ::_NV_ENC_PIC_PARAMS parameter
+  consisting of allocated input buffer, output buffer and output events in successive
+  ::NvEncEncodePicture() API calls along with other required encode picture params.
+  For example:
+  1st EncodePicture parameters - (I1, O1, E1)
+  2nd EncodePicture parameters - (I2, O2, E2)
+  3rd EncodePicture parameters - (I3, O3, E3)
+
+  b) NvEncodeAPI SW will receive the following encode Commands from the client.
+  The left side shows input from client in the form (Input buffer, Output Buffer,
+  Output Event). The right hand side shows a possible picture type decision take by
+  the NvEncodeAPI interface.
+  (I1, O1, E1)    ---P1 Frame
+  (I2, O2, E2)    ---B2 Frame
+  (I3, O3, E3)    ---P3 Frame
+
+  c) NvEncodeAPI interface will make a copy of the input buffers to its internal
+   buffersfor re-ordering. These copies are done as part of nvEncEncodePicture
+   function call from the client and NvEncodeAPI interface is responsible for
+   synchronization of copy operation with the actual encoding operation.
+   I1 --&gt; NvI1
+   I2 --&gt; NvI2
+   I3 --&gt; NvI3
+
+  d) After returning from ::NvEncEncodePicture() call , the client must queue the output
+   bitstream  processing work to the secondary thread. The output bitstream processing
+   for asynchronous mode consist of first waiting on completion event(E1, E2..)
+   and then locking the output bitstream buffer(O1, O2..) for reading the encoded
+   data. The work queued to the secondary thread by the client is in the following order
+   (I1, O1, E1)
+   (I2, O2, E2)
+   (I3, O3, E3)
+   Note they are in the same order in which client calls ::NvEncEncodePicture() API
+   in \p step a).
+
+  e) NvEncodeAPI interface  will do the re-ordering such that Encoder HW will receive
+  the following encode commands:
+  (NvI1, O1, E1)   ---P1 Frame
+  (NvI3, O2, E2)   ---P3 Frame
+  (NvI2, O3, E3)   ---B2 frame
+
+  f) After the encoding operations are completed, the events will be signalled
+  by NvEncodeAPI interface in the following order :
+  (O1, E1) ---P1 Frame ,output bitstream copied to O1 and event E1 signalled.
+  (O2, E2) ---P3 Frame ,output bitstream copied to O2 and event E2 signalled.
+  (O3, E3) ---B2 Frame ,output bitstream copied to O3 and event E3 signalled.
+
+  g) The client must lock the bitstream data using ::NvEncLockBitstream() API in
+   the order O1,O2,O3  to read the encoded data, after waiting for the events
+   to be signalled in the same order i.e E1, E2 and E3.The output processing is
+   done in the secondary thread in the following order:
+   Waits on E1, copies encoded bitstream from O1
+   Waits on E2, copies encoded bitstream from O2
+   Waits on E3, copies encoded bitstream from O3
+
+  -Note the client will receive the events signalling and output buffer in the
+   same order in which they have submitted for encoding.
+  -Note the LockBitstream will have picture type field which will notify the
+   output picture type to the clients.
+  -Note the input, output buffer and the output completion event are free to be
+   reused once NvEncodeAPI interfaced has signalled the event and the client has
+   copied the data from the output buffer.
+
+ * \endcode
+ *
+ *\par Synchronous Encoding
+ * The client can enable synchronous mode of encoding by setting
+ * NV_ENC_INITIALIZE_PARAMS::enableEncodeAsync to 0 in ::NvEncInitializeEncoder() API.
+ * The NvEncodeAPI interface may return ::NV_ENC_ERR_NEED_MORE_INPUT error code for
+ * some ::NvEncEncodePicture() API calls when NV_ENC_INITIALIZE_PARAMS::enablePTD
+ * is set to 1, but the client must not treat it as a fatal error. The NvEncodeAPI
+ * interface might not be able to submit an input picture buffer for encoding
+ * immediately due to re-ordering for B frames. The NvEncodeAPI interface cannot
+ * submit the input picture which is decided to be encoded as B frame as it waits
+ * for backward reference from  temporally subsequent frames. This input picture
+ * is buffered internally and waits for more input picture to arrive. The client
+ * must not call ::NvEncLockBitstream() API on the output buffers whose
+ * ::NvEncEncodePicture() API returns ::NV_ENC_ERR_NEED_MORE_INPUT. The client must
+ * wait for the NvEncodeAPI interface to return ::NV_ENC_SUCCESS before locking the
+ * output bitstreams to read the encoded bitstream data. The following example
+ * explains the scenario with synchronous encoding with 2 B frames.
+ *\code
+ The below example shows how  synchronous encoding works in case of 1 B frames
+ -----------------------------------------------------------------------------
+ Suppose the client allocated 4 input buffers(I1,I2..), 4 output buffers(O1,O2..)
+ and 4 completion events(E1, E2, ...). The NvEncodeAPI interface will need to
+ keep a copy of the input buffers for re-ordering and it allocates following
+ internal buffers (NvI1, NvI2...). These internal buffers are managed by NvEncodeAPI
+ and the client is not responsible for the allocating or freeing the memory of
+ the internal buffers.
+
+ The client calls ::NvEncEncodePicture() API with input buffer I1 and output buffer O1.
+ The NvEncodeAPI decides to encode I1 as P frame and submits it to encoder
+ HW and returns ::NV_ENC_SUCCESS.
+ The client can now read the encoded data by locking the output O1 by calling
+ NvEncLockBitstream API.
+
+ The client calls ::NvEncEncodePicture() API with input buffer I2 and output buffer O2.
+ The NvEncodeAPI decides to encode I2 as B frame and buffers I2 by copying it
+ to internal buffer and returns ::NV_ENC_ERR_NEED_MORE_INPUT.
+ The error is not fatal and it notifies client that it cannot read the encoded
+ data by locking the output O2 by calling ::NvEncLockBitstream() API without submitting
+ more work to the NvEncodeAPI interface.
+
+ The client calls ::NvEncEncodePicture() with input buffer I3 and output buffer O3.
+ The NvEncodeAPI decides to encode I3 as P frame and it first submits I3 for
+ encoding which will be used as backward reference frame for I2.
+ The NvEncodeAPI then submits I2 for encoding and returns ::NV_ENC_SUCESS. Both
+ the submission are part of the same ::NvEncEncodePicture() function call.
+ The client can now read the encoded data for both the frames by locking the output
+ O2 followed by  O3 ,by calling ::NvEncLockBitstream() API.
+
+ The client must always lock the output in the same order in which it has submitted
+ to receive the encoded bitstream in correct encoding order.
+
+ * \endcode
+ *
+ * \param [in] encoder
+ *   Pointer to the NvEncodeAPI interface.
+ * \param [in,out] encodePicParams
+ *   Pointer to the ::_NV_ENC_PIC_PARAMS structure.
+ *
+ * \return
+ * ::NV_ENC_SUCCESS \n
+ * ::NV_ENC_ERR_INVALID_PTR \n
+ * ::NV_ENC_ERR_INVALID_ENCODERDEVICE \n
+ * ::NV_ENC_ERR_DEVICE_NOT_EXIST \n
+ * ::NV_ENC_ERR_UNSUPPORTED_PARAM \n
+ * ::NV_ENC_ERR_OUT_OF_MEMORY \n
+ * ::NV_ENC_ERR_INVALID_PARAM \n
+ * ::NV_ENC_ERR_INVALID_VERSION \n
+ * ::NV_ENC_ERR_ENCODER_BUSY \n
+ * ::NV_ENC_ERR_NEED_MORE_INPUT \n
+ * ::NV_ENC_ERR_ENCODER_NOT_INITIALIZED \n
+ * ::NV_ENC_ERR_GENERIC \n
+ *
+ */</doc>

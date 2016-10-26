@@ -1,0 +1,94 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>vorbiscomment.c source code [ffmpeg/libavformat/vorbiscomment.c] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavformat/vorbiscomment.c'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavformat</a>/<a href='vorbiscomment.c.html'>vorbiscomment.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * VorbisComment writer</i></td></tr>
+<tr><th id="3">3</th><td><i> * Copyright (c) 2009 James Darnley</i></td></tr>
+<tr><th id="4">4</th><td><i> *</i></td></tr>
+<tr><th id="5">5</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="8">8</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="9">9</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="10">10</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="11">11</th><td><i> *</i></td></tr>
+<tr><th id="12">12</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="13">13</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="14">14</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="15">15</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="16">16</th><td><i> *</i></td></tr>
+<tr><th id="17">17</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="18">18</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="19">19</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="20">20</th><td><i> */</i></td></tr>
+<tr><th id="21">21</th><td></td></tr>
+<tr><th id="22">22</th><td><u>#include <a href="avformat.h.html">"avformat.h"</a></u></td></tr>
+<tr><th id="23">23</th><td><u>#include <a href="metadata.h.html">"metadata.h"</a></u></td></tr>
+<tr><th id="24">24</th><td><u>#include <a href="vorbiscomment.h.html">"vorbiscomment.h"</a></u></td></tr>
+<tr><th id="25">25</th><td><u>#include <a href="../libavcodec/bytestream.h.html">"libavcodec/bytestream.h"</a></u></td></tr>
+<tr><th id="26">26</th><td><u>#include <a href="../libavutil/dict.h.html">"libavutil/dict.h"</a></u></td></tr>
+<tr><th id="27">27</th><td></td></tr>
+<tr><th id="28">28</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="29">29</th><td><i class="doc"> * VorbisComment metadata conversion mapping.</i></td></tr>
+<tr><th id="30">30</th><td><i class="doc"> * from Ogg Vorbis I format specification: comment field and header specification</i></td></tr>
+<tr><th id="31">31</th><td><i class="doc"> * <a href="http://xiph.org/vorbis/doc/v-comment.html">http://xiph.org/vorbis/doc/v-comment.html</a></i></td></tr>
+<tr><th id="32">32</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="33">33</th><td><em>const</em> <a class="typedef" href="metadata.h.html#AVMetadataConv" title='AVMetadataConv' data-type='struct AVMetadataConv' data-ref="AVMetadataConv">AVMetadataConv</a> <dfn class="decl def" id="ff_vorbiscomment_metadata_conv" title='ff_vorbiscomment_metadata_conv' data-ref="ff_vorbiscomment_metadata_conv">ff_vorbiscomment_metadata_conv</dfn>[] = {</td></tr>
+<tr><th id="34">34</th><td>    { <q>"ALBUMARTIST"</q>, <q>"album_artist"</q>},</td></tr>
+<tr><th id="35">35</th><td>    { <q>"TRACKNUMBER"</q>, <q>"track"</q>  },</td></tr>
+<tr><th id="36">36</th><td>    { <q>"DISCNUMBER"</q>,  <q>"disc"</q>   },</td></tr>
+<tr><th id="37">37</th><td>    { <q>"DESCRIPTION"</q>, <q>"comment"</q> },</td></tr>
+<tr><th id="38">38</th><td>    { <var>0</var> }</td></tr>
+<tr><th id="39">39</th><td>};</td></tr>
+<tr><th id="40">40</th><td></td></tr>
+<tr><th id="41">41</th><td><a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="decl def" id="ff_vorbiscomment_length" title='ff_vorbiscomment_length' data-ref="ff_vorbiscomment_length">ff_vorbiscomment_length</dfn>(<a class="typedef" href="../libavutil/dict.h.html#AVDictionary" title='AVDictionary' data-type='struct AVDictionary' data-ref="AVDictionary">AVDictionary</a> *<dfn class="local col1 decl" id="1m" title='m' data-type='AVDictionary *' data-ref="1m">m</dfn>, <em>const</em> <em>char</em> *<dfn class="local col2 decl" id="2vendor_string" title='vendor_string' data-type='const char *' data-ref="2vendor_string">vendor_string</dfn>)</td></tr>
+<tr><th id="42">42</th><td>{</td></tr>
+<tr><th id="43">43</th><td>    <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="local col3 decl" id="3len" title='len' data-type='int64_t' data-ref="3len">len</dfn> = <var>8</var>;</td></tr>
+<tr><th id="44">44</th><td>    <a class="local col3 ref" href="#3len" title='len' data-ref="3len">len</a> += <a class="ref" href="../../include/string.h.html#strlen" title='strlen' data-ref="strlen">strlen</a>(<a class="local col2 ref" href="#2vendor_string" title='vendor_string' data-ref="2vendor_string">vendor_string</a>);</td></tr>
+<tr><th id="45">45</th><td>    <b>if</b> (<a class="local col1 ref" href="#1m" title='m' data-ref="1m">m</a>) {</td></tr>
+<tr><th id="46">46</th><td>        <a class="typedef" href="../libavutil/dict.h.html#AVDictionaryEntry" title='AVDictionaryEntry' data-type='struct AVDictionaryEntry' data-ref="AVDictionaryEntry">AVDictionaryEntry</a> *<dfn class="local col4 decl" id="4tag" title='tag' data-type='AVDictionaryEntry *' data-ref="4tag">tag</dfn> = <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="47">47</th><td>        <b>while</b> ((<a class="local col4 ref" href="#4tag" title='tag' data-ref="4tag">tag</a> = <a class="ref" href="../libavutil/dict.h.html#av_dict_get" title='av_dict_get' data-ref="av_dict_get">av_dict_get</a>(<a class="local col1 ref" href="#1m" title='m' data-ref="1m">m</a>, <q>""</q>, <a class="local col4 ref" href="#4tag" title='tag' data-ref="4tag">tag</a>, <a class="macro" href="../libavutil/dict.h.html#70" title="2" data-ref="_M/AV_DICT_IGNORE_SUFFIX">AV_DICT_IGNORE_SUFFIX</a>))) {</td></tr>
+<tr><th id="48">48</th><td>            <a class="local col3 ref" href="#3len" title='len' data-ref="3len">len</a> += <var>4</var> +<a class="ref" href="../../include/string.h.html#strlen" title='strlen' data-ref="strlen">strlen</a>(<a class="local col4 ref" href="#4tag" title='tag' data-ref="4tag">tag</a>-&gt;<a class="ref" href="../libavutil/dict.h.html#AVDictionaryEntry::key" title='AVDictionaryEntry::key' data-ref="AVDictionaryEntry::key">key</a>) + <var>1</var> + <a class="ref" href="../../include/string.h.html#strlen" title='strlen' data-ref="strlen">strlen</a>(<a class="local col4 ref" href="#4tag" title='tag' data-ref="4tag">tag</a>-&gt;<a class="ref" href="../libavutil/dict.h.html#AVDictionaryEntry::value" title='AVDictionaryEntry::value' data-ref="AVDictionaryEntry::value">value</a>);</td></tr>
+<tr><th id="49">49</th><td>        }</td></tr>
+<tr><th id="50">50</th><td>    }</td></tr>
+<tr><th id="51">51</th><td>    <b>return</b> <a class="local col3 ref" href="#3len" title='len' data-ref="3len">len</a>;</td></tr>
+<tr><th id="52">52</th><td>}</td></tr>
+<tr><th id="53">53</th><td></td></tr>
+<tr><th id="54">54</th><td><em>int</em> <dfn class="decl def" id="ff_vorbiscomment_write" title='ff_vorbiscomment_write' data-ref="ff_vorbiscomment_write">ff_vorbiscomment_write</dfn>(<a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> **<dfn class="local col5 decl" id="5p" title='p' data-type='uint8_t **' data-ref="5p">p</dfn>, <a class="typedef" href="../libavutil/dict.h.html#AVDictionary" title='AVDictionary' data-type='struct AVDictionary' data-ref="AVDictionary">AVDictionary</a> **<dfn class="local col6 decl" id="6m" title='m' data-type='AVDictionary **' data-ref="6m">m</dfn>,</td></tr>
+<tr><th id="55">55</th><td>                           <em>const</em> <em>char</em> *<dfn class="local col7 decl" id="7vendor_string" title='vendor_string' data-type='const char *' data-ref="7vendor_string">vendor_string</dfn>)</td></tr>
+<tr><th id="56">56</th><td>{</td></tr>
+<tr><th id="57">57</th><td>    <a class="ref" href="../libavcodec/bytestream.h.html#88" title='bytestream_put_le32' data-ref="bytestream_put_le32">bytestream_put_le32</a>(<a class="local col5 ref" href="#5p" title='p' data-ref="5p">p</a>, <a class="ref" href="../../include/string.h.html#strlen" title='strlen' data-ref="strlen">strlen</a>(<a class="local col7 ref" href="#7vendor_string" title='vendor_string' data-ref="7vendor_string">vendor_string</a>));</td></tr>
+<tr><th id="58">58</th><td>    <a class="ref" href="../libavcodec/bytestream.h.html#bytestream_put_buffer" title='bytestream_put_buffer' data-ref="bytestream_put_buffer">bytestream_put_buffer</a>(<a class="local col5 ref" href="#5p" title='p' data-ref="5p">p</a>, <a class="local col7 ref" href="#7vendor_string" title='vendor_string' data-ref="7vendor_string">vendor_string</a>, <a class="ref" href="../../include/string.h.html#strlen" title='strlen' data-ref="strlen">strlen</a>(<a class="local col7 ref" href="#7vendor_string" title='vendor_string' data-ref="7vendor_string">vendor_string</a>));</td></tr>
+<tr><th id="59">59</th><td>    <b>if</b> (*<a class="local col6 ref" href="#6m" title='m' data-ref="6m">m</a>) {</td></tr>
+<tr><th id="60">60</th><td>        <em>int</em> <dfn class="local col8 decl" id="8count" title='count' data-type='int' data-ref="8count">count</dfn> = <a class="ref" href="../libavutil/dict.h.html#av_dict_count" title='av_dict_count' data-ref="av_dict_count">av_dict_count</a>(*<a class="local col6 ref" href="#6m" title='m' data-ref="6m">m</a>);</td></tr>
+<tr><th id="61">61</th><td>        <a class="typedef" href="../libavutil/dict.h.html#AVDictionaryEntry" title='AVDictionaryEntry' data-type='struct AVDictionaryEntry' data-ref="AVDictionaryEntry">AVDictionaryEntry</a> *<dfn class="local col9 decl" id="9tag" title='tag' data-type='AVDictionaryEntry *' data-ref="9tag">tag</dfn> = <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="62">62</th><td>        <a class="ref" href="../libavcodec/bytestream.h.html#88" title='bytestream_put_le32' data-ref="bytestream_put_le32">bytestream_put_le32</a>(<a class="local col5 ref" href="#5p" title='p' data-ref="5p">p</a>, <a class="local col8 ref" href="#8count" title='count' data-ref="8count">count</a>);</td></tr>
+<tr><th id="63">63</th><td>        <b>while</b> ((<a class="local col9 ref" href="#9tag" title='tag' data-ref="9tag">tag</a> = <a class="ref" href="../libavutil/dict.h.html#av_dict_get" title='av_dict_get' data-ref="av_dict_get">av_dict_get</a>(*<a class="local col6 ref" href="#6m" title='m' data-ref="6m">m</a>, <q>""</q>, <a class="local col9 ref" href="#9tag" title='tag' data-ref="9tag">tag</a>, <a class="macro" href="../libavutil/dict.h.html#70" title="2" data-ref="_M/AV_DICT_IGNORE_SUFFIX">AV_DICT_IGNORE_SUFFIX</a>))) {</td></tr>
+<tr><th id="64">64</th><td>            <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="local col0 decl" id="10len1" title='len1' data-type='int64_t' data-ref="10len1">len1</dfn> = <a class="ref" href="../../include/string.h.html#strlen" title='strlen' data-ref="strlen">strlen</a>(<a class="local col9 ref" href="#9tag" title='tag' data-ref="9tag">tag</a>-&gt;<a class="ref" href="../libavutil/dict.h.html#AVDictionaryEntry::key" title='AVDictionaryEntry::key' data-ref="AVDictionaryEntry::key">key</a>);</td></tr>
+<tr><th id="65">65</th><td>            <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="local col1 decl" id="11len2" title='len2' data-type='int64_t' data-ref="11len2">len2</dfn> = <a class="ref" href="../../include/string.h.html#strlen" title='strlen' data-ref="strlen">strlen</a>(<a class="local col9 ref" href="#9tag" title='tag' data-ref="9tag">tag</a>-&gt;<a class="ref" href="../libavutil/dict.h.html#AVDictionaryEntry::value" title='AVDictionaryEntry::value' data-ref="AVDictionaryEntry::value">value</a>);</td></tr>
+<tr><th id="66">66</th><td>            <b>if</b> (<a class="local col0 ref" href="#10len1" title='len1' data-ref="10len1">len1</a>+<var>1</var>+<a class="local col1 ref" href="#11len2" title='len2' data-ref="11len2">len2</a> &gt; <a class="macro" href="../../include/stdint.h.html#168" title="(4294967295U)" data-ref="_M/UINT32_MAX">UINT32_MAX</a>)</td></tr>
+<tr><th id="67">67</th><td>                <b>return</b> <a class="macro" href="../libavutil/error.h.html#39" title="(-(22))" data-ref="_M/AVERROR">AVERROR</a>(<a class="macro" href="../../include/asm-generic/errno-base.h.html#25" title="22" data-ref="_M/EINVAL">EINVAL</a>);</td></tr>
+<tr><th id="68">68</th><td>            <a class="ref" href="../libavcodec/bytestream.h.html#88" title='bytestream_put_le32' data-ref="bytestream_put_le32">bytestream_put_le32</a>(<a class="local col5 ref" href="#5p" title='p' data-ref="5p">p</a>, <a class="local col0 ref" href="#10len1" title='len1' data-ref="10len1">len1</a>+<var>1</var>+<a class="local col1 ref" href="#11len2" title='len2' data-ref="11len2">len2</a>);</td></tr>
+<tr><th id="69">69</th><td>            <a class="ref" href="../libavcodec/bytestream.h.html#bytestream_put_buffer" title='bytestream_put_buffer' data-ref="bytestream_put_buffer">bytestream_put_buffer</a>(<a class="local col5 ref" href="#5p" title='p' data-ref="5p">p</a>, <a class="local col9 ref" href="#9tag" title='tag' data-ref="9tag">tag</a>-&gt;<a class="ref" href="../libavutil/dict.h.html#AVDictionaryEntry::key" title='AVDictionaryEntry::key' data-ref="AVDictionaryEntry::key">key</a>, <a class="local col0 ref" href="#10len1" title='len1' data-ref="10len1">len1</a>);</td></tr>
+<tr><th id="70">70</th><td>            <a class="ref" href="../libavcodec/bytestream.h.html#95" title='bytestream_put_byte' data-ref="bytestream_put_byte">bytestream_put_byte</a>(<a class="local col5 ref" href="#5p" title='p' data-ref="5p">p</a>, <kbd>'='</kbd>);</td></tr>
+<tr><th id="71">71</th><td>            <a class="ref" href="../libavcodec/bytestream.h.html#bytestream_put_buffer" title='bytestream_put_buffer' data-ref="bytestream_put_buffer">bytestream_put_buffer</a>(<a class="local col5 ref" href="#5p" title='p' data-ref="5p">p</a>, <a class="local col9 ref" href="#9tag" title='tag' data-ref="9tag">tag</a>-&gt;<a class="ref" href="../libavutil/dict.h.html#AVDictionaryEntry::value" title='AVDictionaryEntry::value' data-ref="AVDictionaryEntry::value">value</a>, <a class="local col1 ref" href="#11len2" title='len2' data-ref="11len2">len2</a>);</td></tr>
+<tr><th id="72">72</th><td>        }</td></tr>
+<tr><th id="73">73</th><td>    } <b>else</b></td></tr>
+<tr><th id="74">74</th><td>        <a class="ref" href="../libavcodec/bytestream.h.html#88" title='bytestream_put_le32' data-ref="bytestream_put_le32">bytestream_put_le32</a>(<a class="local col5 ref" href="#5p" title='p' data-ref="5p">p</a>, <var>0</var>);</td></tr>
+<tr><th id="75">75</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="76">76</th><td>}</td></tr>
+<tr><th id="77">77</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

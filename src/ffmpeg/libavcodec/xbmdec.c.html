@@ -1,0 +1,155 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>xbmdec.c source code [ffmpeg/libavcodec/xbmdec.c] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavcodec/xbmdec.c'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavcodec</a>/<a href='xbmdec.c.html'>xbmdec.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * XBM image format</i></td></tr>
+<tr><th id="3">3</th><td><i> *</i></td></tr>
+<tr><th id="4">4</th><td><i> * Copyright (c) 2012 Paul B Mahol</i></td></tr>
+<tr><th id="5">5</th><td><i> *</i></td></tr>
+<tr><th id="6">6</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="7">7</th><td><i> *</i></td></tr>
+<tr><th id="8">8</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="9">9</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="10">10</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="11">11</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="12">12</th><td><i> *</i></td></tr>
+<tr><th id="13">13</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="14">14</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="15">15</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="16">16</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="17">17</th><td><i> *</i></td></tr>
+<tr><th id="18">18</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="19">19</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="20">20</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="21">21</th><td><i> */</i></td></tr>
+<tr><th id="22">22</th><td></td></tr>
+<tr><th id="23">23</th><td><u>#include <a href="../libavutil/avstring.h.html">"libavutil/avstring.h"</a></u></td></tr>
+<tr><th id="24">24</th><td></td></tr>
+<tr><th id="25">25</th><td><u>#include <a href="avcodec.h.html">"avcodec.h"</a></u></td></tr>
+<tr><th id="26">26</th><td><u>#include <a href="internal.h.html">"internal.h"</a></u></td></tr>
+<tr><th id="27">27</th><td><u>#include <a href="mathops.h.html">"mathops.h"</a></u></td></tr>
+<tr><th id="28">28</th><td></td></tr>
+<tr><th id="29">29</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="convert" title='convert' data-type='int convert(uint8_t x)' data-ref="convert">convert</dfn>(<a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="local col1 decl" id="1x" title='x' data-type='uint8_t' data-ref="1x">x</dfn>)</td></tr>
+<tr><th id="30">30</th><td>{</td></tr>
+<tr><th id="31">31</th><td>    <b>if</b> (<a class="local col1 ref" href="#1x" title='x' data-ref="1x">x</a> &gt;= <kbd>'a'</kbd>)</td></tr>
+<tr><th id="32">32</th><td>        <a class="local col1 ref" href="#1x" title='x' data-ref="1x">x</a> -= <var>87</var>;</td></tr>
+<tr><th id="33">33</th><td>    <b>else</b> <b>if</b> (<a class="local col1 ref" href="#1x" title='x' data-ref="1x">x</a> &gt;= <kbd>'A'</kbd>)</td></tr>
+<tr><th id="34">34</th><td>        <a class="local col1 ref" href="#1x" title='x' data-ref="1x">x</a> -= <var>55</var>;</td></tr>
+<tr><th id="35">35</th><td>    <b>else</b></td></tr>
+<tr><th id="36">36</th><td>        <a class="local col1 ref" href="#1x" title='x' data-ref="1x">x</a> -= <kbd>'0'</kbd>;</td></tr>
+<tr><th id="37">37</th><td>    <b>return</b> <a class="local col1 ref" href="#1x" title='x' data-ref="1x">x</a>;</td></tr>
+<tr><th id="38">38</th><td>}</td></tr>
+<tr><th id="39">39</th><td></td></tr>
+<tr><th id="40">40</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="parse_str_int" title='parse_str_int' data-type='int parse_str_int(const uint8_t * p, int len, const uint8_t * key)' data-ref="parse_str_int">parse_str_int</dfn>(<em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col2 decl" id="2p" title='p' data-type='const uint8_t *' data-ref="2p">p</dfn>, <em>int</em> <dfn class="local col3 decl" id="3len" title='len' data-type='int' data-ref="3len">len</dfn>, <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col4 decl" id="4key" title='key' data-type='const uint8_t *' data-ref="4key">key</dfn>)</td></tr>
+<tr><th id="41">41</th><td>{</td></tr>
+<tr><th id="42">42</th><td>    <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col5 decl" id="5end" title='end' data-type='const uint8_t *' data-ref="5end">end</dfn> = <a class="local col2 ref" href="#2p" title='p' data-ref="2p">p</a> + <a class="local col3 ref" href="#3len" title='len' data-ref="3len">len</a>;</td></tr>
+<tr><th id="43">43</th><td></td></tr>
+<tr><th id="44">44</th><td>    <b>for</b>(; <a class="local col2 ref" href="#2p" title='p' data-ref="2p">p</a>&lt;<a class="local col5 ref" href="#5end" title='end' data-ref="5end">end</a> - <a class="ref" href="../../include/string.h.html#strlen" title='strlen' data-ref="strlen">strlen</a>(<a class="local col4 ref" href="#4key" title='key' data-ref="4key">key</a>); <a class="local col2 ref" href="#2p" title='p' data-ref="2p">p</a>++) {</td></tr>
+<tr><th id="45">45</th><td>        <b>if</b> (!<a class="ref" href="../../include/string.h.html#memcmp" title='memcmp' data-ref="memcmp">memcmp</a>(<a class="local col2 ref" href="#2p" title='p' data-ref="2p">p</a>, <a class="local col4 ref" href="#4key" title='key' data-ref="4key">key</a>, <a class="ref" href="../../include/string.h.html#strlen" title='strlen' data-ref="strlen">strlen</a>(<a class="local col4 ref" href="#4key" title='key' data-ref="4key">key</a>)))</td></tr>
+<tr><th id="46">46</th><td>            <b>break</b>;</td></tr>
+<tr><th id="47">47</th><td>    }</td></tr>
+<tr><th id="48">48</th><td>    <a class="local col2 ref" href="#2p" title='p' data-ref="2p">p</a> += <a class="ref" href="../../include/string.h.html#strlen" title='strlen' data-ref="strlen">strlen</a>(<a class="local col4 ref" href="#4key" title='key' data-ref="4key">key</a>);</td></tr>
+<tr><th id="49">49</th><td>    <b>if</b> (<a class="local col2 ref" href="#2p" title='p' data-ref="2p">p</a> &gt;= <a class="local col5 ref" href="#5end" title='end' data-ref="5end">end</a>)</td></tr>
+<tr><th id="50">50</th><td>        <b>return</b> <span class="macro" title="(-2147483647 -1)" data-ref="_M/INT_MIN">INT_MIN</span>;</td></tr>
+<tr><th id="51">51</th><td></td></tr>
+<tr><th id="52">52</th><td>    <b>for</b>(; <a class="local col2 ref" href="#2p" title='p' data-ref="2p">p</a>&lt;<a class="local col5 ref" href="#5end" title='end' data-ref="5end">end</a>; <a class="local col2 ref" href="#2p" title='p' data-ref="2p">p</a>++) {</td></tr>
+<tr><th id="53">53</th><td>        <em>char</em> *<dfn class="local col6 decl" id="6eptr" title='eptr' data-type='char *' data-ref="6eptr">eptr</dfn>;</td></tr>
+<tr><th id="54">54</th><td>        <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="local col7 decl" id="7ret" title='ret' data-type='int64_t' data-ref="7ret">ret</dfn> = <a class="ref" href="../../include/stdlib.h.html#strtol" title='strtol' data-ref="strtol">strtol</a>(<a class="local col2 ref" href="#2p" title='p' data-ref="2p">p</a>, &amp;<a class="local col6 ref" href="#6eptr" title='eptr' data-ref="6eptr">eptr</a>, <var>10</var>);</td></tr>
+<tr><th id="55">55</th><td>        <b>if</b> ((<em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *)<a class="local col6 ref" href="#6eptr" title='eptr' data-ref="6eptr">eptr</a> != <a class="local col2 ref" href="#2p" title='p' data-ref="2p">p</a>)</td></tr>
+<tr><th id="56">56</th><td>            <b>return</b> <a class="local col7 ref" href="#7ret" title='ret' data-ref="7ret">ret</a>;</td></tr>
+<tr><th id="57">57</th><td>    }</td></tr>
+<tr><th id="58">58</th><td>    <b>return</b> <span class="macro" title="(-2147483647 -1)" data-ref="_M/INT_MIN">INT_MIN</span>;</td></tr>
+<tr><th id="59">59</th><td>}</td></tr>
+<tr><th id="60">60</th><td></td></tr>
+<tr><th id="61">61</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="xbm_decode_frame" title='xbm_decode_frame' data-type='int xbm_decode_frame(AVCodecContext * avctx, void * data, int * got_frame, AVPacket * avpkt)' data-ref="xbm_decode_frame">xbm_decode_frame</dfn>(<a class="typedef" href="avcodec.h.html#AVCodecContext" title='AVCodecContext' data-type='struct AVCodecContext' data-ref="AVCodecContext">AVCodecContext</a> *<dfn class="local col8 decl" id="8avctx" title='avctx' data-type='AVCodecContext *' data-ref="8avctx">avctx</dfn>, <em>void</em> *<dfn class="local col9 decl" id="9data" title='data' data-type='void *' data-ref="9data">data</dfn>,</td></tr>
+<tr><th id="62">62</th><td>                            <em>int</em> *<dfn class="local col0 decl" id="10got_frame" title='got_frame' data-type='int *' data-ref="10got_frame">got_frame</dfn>, <a class="typedef" href="avcodec.h.html#AVPacket" title='AVPacket' data-type='struct AVPacket' data-ref="AVPacket">AVPacket</a> *<dfn class="local col1 decl" id="11avpkt" title='avpkt' data-type='AVPacket *' data-ref="11avpkt">avpkt</dfn>)</td></tr>
+<tr><th id="63">63</th><td>{</td></tr>
+<tr><th id="64">64</th><td>    <a class="typedef" href="../libavutil/frame.h.html#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col2 decl" id="12p" title='p' data-type='AVFrame *' data-ref="12p">p</dfn> = <a class="local col9 ref" href="#9data" title='data' data-ref="9data">data</a>;</td></tr>
+<tr><th id="65">65</th><td>    <em>int</em> <dfn class="local col3 decl" id="13ret" title='ret' data-type='int' data-ref="13ret">ret</dfn>, <dfn class="local col4 decl" id="14linesize" title='linesize' data-type='int' data-ref="14linesize">linesize</dfn>, <dfn class="local col5 decl" id="15i" title='i' data-type='int' data-ref="15i">i</dfn>, <dfn class="local col6 decl" id="16j" title='j' data-type='int' data-ref="16j">j</dfn>;</td></tr>
+<tr><th id="66">66</th><td>    <em>int</em> <dfn class="local col7 decl" id="17width" title='width' data-type='int' data-ref="17width">width</dfn>  = <var>0</var>;</td></tr>
+<tr><th id="67">67</th><td>    <em>int</em> <dfn class="local col8 decl" id="18height" title='height' data-type='int' data-ref="18height">height</dfn> = <var>0</var>;</td></tr>
+<tr><th id="68">68</th><td>    <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col9 decl" id="19end" title='end' data-type='const uint8_t *' data-ref="19end">end</dfn>, *<dfn class="local col0 decl" id="20ptr" title='ptr' data-type='const uint8_t *' data-ref="20ptr">ptr</dfn> = <a class="local col1 ref" href="#11avpkt" title='avpkt' data-ref="11avpkt">avpkt</a>-&gt;<a class="ref" href="avcodec.h.html#AVPacket::data" title='AVPacket::data' data-ref="AVPacket::data">data</a>;</td></tr>
+<tr><th id="69">69</th><td>    <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col1 decl" id="21next" title='next' data-type='const uint8_t *' data-ref="21next">next</dfn>;</td></tr>
+<tr><th id="70">70</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col2 decl" id="22dst" title='dst' data-type='uint8_t *' data-ref="22dst">dst</dfn>;</td></tr>
+<tr><th id="71">71</th><td></td></tr>
+<tr><th id="72">72</th><td>    <a class="local col8 ref" href="#8avctx" title='avctx' data-ref="8avctx">avctx</a>-&gt;<a class="ref" href="avcodec.h.html#AVCodecContext::pix_fmt" title='AVCodecContext::pix_fmt' data-ref="AVCodecContext::pix_fmt">pix_fmt</a> = <a class="enum" href="../libavutil/pixfmt.h.html#AVPixelFormat::AV_PIX_FMT_MONOWHITE" title='AVPixelFormat::AV_PIX_FMT_MONOWHITE' data-ref="AVPixelFormat::AV_PIX_FMT_MONOWHITE">AV_PIX_FMT_MONOWHITE</a>;</td></tr>
+<tr><th id="73">73</th><td>    <a class="local col9 ref" href="#19end" title='end' data-ref="19end">end</a> = <a class="local col1 ref" href="#11avpkt" title='avpkt' data-ref="11avpkt">avpkt</a>-&gt;<a class="ref" href="avcodec.h.html#AVPacket::data" title='AVPacket::data' data-ref="AVPacket::data">data</a> + <a class="local col1 ref" href="#11avpkt" title='avpkt' data-ref="11avpkt">avpkt</a>-&gt;<a class="ref" href="avcodec.h.html#AVPacket::size" title='AVPacket::size' data-ref="AVPacket::size">size</a>;</td></tr>
+<tr><th id="74">74</th><td></td></tr>
+<tr><th id="75">75</th><td>    <a class="local col7 ref" href="#17width" title='width' data-ref="17width">width</a>  = <a class="tu ref" href="#parse_str_int" title='parse_str_int' data-use='c' data-ref="parse_str_int">parse_str_int</a>(<a class="local col1 ref" href="#11avpkt" title='avpkt' data-ref="11avpkt">avpkt</a>-&gt;<a class="ref" href="avcodec.h.html#AVPacket::data" title='AVPacket::data' data-ref="AVPacket::data">data</a>, <a class="local col1 ref" href="#11avpkt" title='avpkt' data-ref="11avpkt">avpkt</a>-&gt;<a class="ref" href="avcodec.h.html#AVPacket::size" title='AVPacket::size' data-ref="AVPacket::size">size</a>, <q>"_width"</q>);</td></tr>
+<tr><th id="76">76</th><td>    <a class="local col8 ref" href="#18height" title='height' data-ref="18height">height</a> = <a class="tu ref" href="#parse_str_int" title='parse_str_int' data-use='c' data-ref="parse_str_int">parse_str_int</a>(<a class="local col1 ref" href="#11avpkt" title='avpkt' data-ref="11avpkt">avpkt</a>-&gt;<a class="ref" href="avcodec.h.html#AVPacket::data" title='AVPacket::data' data-ref="AVPacket::data">data</a>, <a class="local col1 ref" href="#11avpkt" title='avpkt' data-ref="11avpkt">avpkt</a>-&gt;<a class="ref" href="avcodec.h.html#AVPacket::size" title='AVPacket::size' data-ref="AVPacket::size">size</a>, <q>"_height"</q>);</td></tr>
+<tr><th id="77">77</th><td></td></tr>
+<tr><th id="78">78</th><td>    <b>if</b> ((<a class="local col3 ref" href="#13ret" title='ret' data-ref="13ret">ret</a> = <a class="ref" href="internal.h.html#ff_set_dimensions" title='ff_set_dimensions' data-ref="ff_set_dimensions">ff_set_dimensions</a>(<a class="local col8 ref" href="#8avctx" title='avctx' data-ref="8avctx">avctx</a>, <a class="local col7 ref" href="#17width" title='width' data-ref="17width">width</a>, <a class="local col8 ref" href="#18height" title='height' data-ref="18height">height</a>)) &lt; <var>0</var>)</td></tr>
+<tr><th id="79">79</th><td>        <b>return</b> <a class="local col3 ref" href="#13ret" title='ret' data-ref="13ret">ret</a>;</td></tr>
+<tr><th id="80">80</th><td></td></tr>
+<tr><th id="81">81</th><td>    <b>if</b> ((<a class="local col3 ref" href="#13ret" title='ret' data-ref="13ret">ret</a> = <a class="ref" href="internal.h.html#ff_get_buffer" title='ff_get_buffer' data-ref="ff_get_buffer">ff_get_buffer</a>(<a class="local col8 ref" href="#8avctx" title='avctx' data-ref="8avctx">avctx</a>, <a class="local col2 ref" href="#12p" title='p' data-ref="12p">p</a>, <var>0</var>)) &lt; <var>0</var>)</td></tr>
+<tr><th id="82">82</th><td>        <b>return</b> <a class="local col3 ref" href="#13ret" title='ret' data-ref="13ret">ret</a>;</td></tr>
+<tr><th id="83">83</th><td></td></tr>
+<tr><th id="84">84</th><td>    <i>// goto start of image data</i></td></tr>
+<tr><th id="85">85</th><td>    <a class="local col1 ref" href="#21next" title='next' data-ref="21next">next</a> = <a class="ref" href="../../include/string.h.html#memchr" title='memchr' data-ref="memchr">memchr</a>(<a class="local col0 ref" href="#20ptr" title='ptr' data-ref="20ptr">ptr</a>, <kbd>'{'</kbd>, <a class="local col1 ref" href="#11avpkt" title='avpkt' data-ref="11avpkt">avpkt</a>-&gt;<a class="ref" href="avcodec.h.html#AVPacket::size" title='AVPacket::size' data-ref="AVPacket::size">size</a>);</td></tr>
+<tr><th id="86">86</th><td>    <b>if</b> (!<a class="local col1 ref" href="#21next" title='next' data-ref="21next">next</a>)</td></tr>
+<tr><th id="87">87</th><td>        <a class="local col1 ref" href="#21next" title='next' data-ref="21next">next</a> = <a class="ref" href="../../include/string.h.html#memchr" title='memchr' data-ref="memchr">memchr</a>(<a class="local col0 ref" href="#20ptr" title='ptr' data-ref="20ptr">ptr</a>, <kbd>'('</kbd>, <a class="local col1 ref" href="#11avpkt" title='avpkt' data-ref="11avpkt">avpkt</a>-&gt;<a class="ref" href="avcodec.h.html#AVPacket::size" title='AVPacket::size' data-ref="AVPacket::size">size</a>);</td></tr>
+<tr><th id="88">88</th><td>    <b>if</b> (!<a class="local col1 ref" href="#21next" title='next' data-ref="21next">next</a>)</td></tr>
+<tr><th id="89">89</th><td>        <b>return</b> <a class="macro" href="../libavutil/error.h.html#59" title="(-(int)((&apos;I&apos;) | ((&apos;N&apos;) &lt;&lt; 8) | ((&apos;D&apos;) &lt;&lt; 16) | ((unsigned)(&apos;A&apos;) &lt;&lt; 24)))" data-ref="_M/AVERROR_INVALIDDATA">AVERROR_INVALIDDATA</a>;</td></tr>
+<tr><th id="90">90</th><td>    <a class="local col0 ref" href="#20ptr" title='ptr' data-ref="20ptr">ptr</a> = <a class="local col1 ref" href="#21next" title='next' data-ref="21next">next</a> + <var>1</var>;</td></tr>
+<tr><th id="91">91</th><td></td></tr>
+<tr><th id="92">92</th><td>    <a class="local col4 ref" href="#14linesize" title='linesize' data-ref="14linesize">linesize</a> = (<a class="local col8 ref" href="#8avctx" title='avctx' data-ref="8avctx">avctx</a>-&gt;<a class="ref" href="avcodec.h.html#AVCodecContext::width" title='AVCodecContext::width' data-ref="AVCodecContext::width">width</a> + <var>7</var>) / <var>8</var>;</td></tr>
+<tr><th id="93">93</th><td>    <b>for</b> (<a class="local col5 ref" href="#15i" title='i' data-ref="15i">i</a> = <var>0</var>; <a class="local col5 ref" href="#15i" title='i' data-ref="15i">i</a> &lt; <a class="local col8 ref" href="#8avctx" title='avctx' data-ref="8avctx">avctx</a>-&gt;<a class="ref" href="avcodec.h.html#AVCodecContext::height" title='AVCodecContext::height' data-ref="AVCodecContext::height">height</a>; <a class="local col5 ref" href="#15i" title='i' data-ref="15i">i</a>++) {</td></tr>
+<tr><th id="94">94</th><td>        <a class="local col2 ref" href="#22dst" title='dst' data-ref="22dst">dst</a> = <a class="local col2 ref" href="#12p" title='p' data-ref="12p">p</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::data" title='AVFrame::data' data-ref="AVFrame::data">data</a>[<var>0</var>] + <a class="local col5 ref" href="#15i" title='i' data-ref="15i">i</a> * <a class="local col2 ref" href="#12p" title='p' data-ref="12p">p</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::linesize" title='AVFrame::linesize' data-ref="AVFrame::linesize">linesize</a>[<var>0</var>];</td></tr>
+<tr><th id="95">95</th><td>        <b>for</b> (<a class="local col6 ref" href="#16j" title='j' data-ref="16j">j</a> = <var>0</var>; <a class="local col6 ref" href="#16j" title='j' data-ref="16j">j</a> &lt; <a class="local col4 ref" href="#14linesize" title='linesize' data-ref="14linesize">linesize</a>; <a class="local col6 ref" href="#16j" title='j' data-ref="16j">j</a>++) {</td></tr>
+<tr><th id="96">96</th><td>            <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="local col3 decl" id="23val" title='val' data-type='uint8_t' data-ref="23val">val</dfn>;</td></tr>
+<tr><th id="97">97</th><td></td></tr>
+<tr><th id="98">98</th><td>            <b>while</b> (<a class="local col0 ref" href="#20ptr" title='ptr' data-ref="20ptr">ptr</a> &lt; <a class="local col9 ref" href="#19end" title='end' data-ref="19end">end</a> &amp;&amp; *<a class="local col0 ref" href="#20ptr" title='ptr' data-ref="20ptr">ptr</a> != <kbd>'x'</kbd> &amp;&amp; *<a class="local col0 ref" href="#20ptr" title='ptr' data-ref="20ptr">ptr</a> != <kbd>'$'</kbd>)</td></tr>
+<tr><th id="99">99</th><td>                <a class="local col0 ref" href="#20ptr" title='ptr' data-ref="20ptr">ptr</a>++;</td></tr>
+<tr><th id="100">100</th><td></td></tr>
+<tr><th id="101">101</th><td>            <a class="local col0 ref" href="#20ptr" title='ptr' data-ref="20ptr">ptr</a> ++;</td></tr>
+<tr><th id="102">102</th><td>            <b>if</b> (<a class="local col0 ref" href="#20ptr" title='ptr' data-ref="20ptr">ptr</a> &lt; <a class="local col9 ref" href="#19end" title='end' data-ref="19end">end</a> &amp;&amp; <a class="ref" href="../libavutil/avstring.h.html#av_isxdigit" title='av_isxdigit' data-ref="av_isxdigit">av_isxdigit</a>(*<a class="local col0 ref" href="#20ptr" title='ptr' data-ref="20ptr">ptr</a>)) {</td></tr>
+<tr><th id="103">103</th><td>                <a class="local col3 ref" href="#23val" title='val' data-ref="23val">val</a> = <a class="tu ref" href="#convert" title='convert' data-use='c' data-ref="convert">convert</a>(*<a class="local col0 ref" href="#20ptr" title='ptr' data-ref="20ptr">ptr</a>++);</td></tr>
+<tr><th id="104">104</th><td>                <b>if</b> (<a class="ref" href="../libavutil/avstring.h.html#av_isxdigit" title='av_isxdigit' data-ref="av_isxdigit">av_isxdigit</a>(*<a class="local col0 ref" href="#20ptr" title='ptr' data-ref="20ptr">ptr</a>))</td></tr>
+<tr><th id="105">105</th><td>                    <a class="local col3 ref" href="#23val" title='val' data-ref="23val">val</a> = (<a class="local col3 ref" href="#23val" title='val' data-ref="23val">val</a> &lt;&lt; <var>4</var>) + <a class="tu ref" href="#convert" title='convert' data-use='c' data-ref="convert">convert</a>(*<a class="local col0 ref" href="#20ptr" title='ptr' data-ref="20ptr">ptr</a>++);</td></tr>
+<tr><th id="106">106</th><td>                *<a class="local col2 ref" href="#22dst" title='dst' data-ref="22dst">dst</a>++ = <a class="ref" href="../libavutil/internal.h.html#ff_reverse" title='ff_reverse' data-ref="ff_reverse">ff_reverse</a>[<a class="local col3 ref" href="#23val" title='val' data-ref="23val">val</a>];</td></tr>
+<tr><th id="107">107</th><td>                <b>if</b> (<a class="ref" href="../libavutil/avstring.h.html#av_isxdigit" title='av_isxdigit' data-ref="av_isxdigit">av_isxdigit</a>(*<a class="local col0 ref" href="#20ptr" title='ptr' data-ref="20ptr">ptr</a>) &amp;&amp; <a class="local col6 ref" href="#16j" title='j' data-ref="16j">j</a>+<var>1</var> &lt; <a class="local col4 ref" href="#14linesize" title='linesize' data-ref="14linesize">linesize</a>) {</td></tr>
+<tr><th id="108">108</th><td>                    <a class="local col6 ref" href="#16j" title='j' data-ref="16j">j</a>++;</td></tr>
+<tr><th id="109">109</th><td>                    <a class="local col3 ref" href="#23val" title='val' data-ref="23val">val</a> = <a class="tu ref" href="#convert" title='convert' data-use='c' data-ref="convert">convert</a>(*<a class="local col0 ref" href="#20ptr" title='ptr' data-ref="20ptr">ptr</a>++);</td></tr>
+<tr><th id="110">110</th><td>                    <b>if</b> (<a class="ref" href="../libavutil/avstring.h.html#av_isxdigit" title='av_isxdigit' data-ref="av_isxdigit">av_isxdigit</a>(*<a class="local col0 ref" href="#20ptr" title='ptr' data-ref="20ptr">ptr</a>))</td></tr>
+<tr><th id="111">111</th><td>                        <a class="local col3 ref" href="#23val" title='val' data-ref="23val">val</a> = (<a class="local col3 ref" href="#23val" title='val' data-ref="23val">val</a> &lt;&lt; <var>4</var>) + <a class="tu ref" href="#convert" title='convert' data-use='c' data-ref="convert">convert</a>(*<a class="local col0 ref" href="#20ptr" title='ptr' data-ref="20ptr">ptr</a>++);</td></tr>
+<tr><th id="112">112</th><td>                    *<a class="local col2 ref" href="#22dst" title='dst' data-ref="22dst">dst</a>++ = <a class="ref" href="../libavutil/internal.h.html#ff_reverse" title='ff_reverse' data-ref="ff_reverse">ff_reverse</a>[<a class="local col3 ref" href="#23val" title='val' data-ref="23val">val</a>];</td></tr>
+<tr><th id="113">113</th><td>                }</td></tr>
+<tr><th id="114">114</th><td>            } <b>else</b> {</td></tr>
+<tr><th id="115">115</th><td>                <a class="ref" href="../libavutil/log.h.html#av_log" title='av_log' data-ref="av_log">av_log</a>(<a class="local col8 ref" href="#8avctx" title='avctx' data-ref="8avctx">avctx</a>, <a class="macro" href="../libavutil/log.h.html#176" title="16" data-ref="_M/AV_LOG_ERROR">AV_LOG_ERROR</a>,</td></tr>
+<tr><th id="116">116</th><td>                       <q>"Unexpected data at %.8s.\n"</q>, <a class="local col0 ref" href="#20ptr" title='ptr' data-ref="20ptr">ptr</a>);</td></tr>
+<tr><th id="117">117</th><td>                <b>return</b> <a class="macro" href="../libavutil/error.h.html#59" title="(-(int)((&apos;I&apos;) | ((&apos;N&apos;) &lt;&lt; 8) | ((&apos;D&apos;) &lt;&lt; 16) | ((unsigned)(&apos;A&apos;) &lt;&lt; 24)))" data-ref="_M/AVERROR_INVALIDDATA">AVERROR_INVALIDDATA</a>;</td></tr>
+<tr><th id="118">118</th><td>            }</td></tr>
+<tr><th id="119">119</th><td>        }</td></tr>
+<tr><th id="120">120</th><td>    }</td></tr>
+<tr><th id="121">121</th><td></td></tr>
+<tr><th id="122">122</th><td>    <a class="local col2 ref" href="#12p" title='p' data-ref="12p">p</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::key_frame" title='AVFrame::key_frame' data-ref="AVFrame::key_frame">key_frame</a> = <var>1</var>;</td></tr>
+<tr><th id="123">123</th><td>    <a class="local col2 ref" href="#12p" title='p' data-ref="12p">p</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::pict_type" title='AVFrame::pict_type' data-ref="AVFrame::pict_type">pict_type</a> = <a class="enum" href="../libavutil/avutil.h.html#AVPictureType::AV_PICTURE_TYPE_I" title='AVPictureType::AV_PICTURE_TYPE_I' data-ref="AVPictureType::AV_PICTURE_TYPE_I">AV_PICTURE_TYPE_I</a>;</td></tr>
+<tr><th id="124">124</th><td></td></tr>
+<tr><th id="125">125</th><td>    *<a class="local col0 ref" href="#10got_frame" title='got_frame' data-ref="10got_frame">got_frame</a>       = <var>1</var>;</td></tr>
+<tr><th id="126">126</th><td></td></tr>
+<tr><th id="127">127</th><td>    <b>return</b> <a class="local col1 ref" href="#11avpkt" title='avpkt' data-ref="11avpkt">avpkt</a>-&gt;<a class="ref" href="avcodec.h.html#AVPacket::size" title='AVPacket::size' data-ref="AVPacket::size">size</a>;</td></tr>
+<tr><th id="128">128</th><td>}</td></tr>
+<tr><th id="129">129</th><td></td></tr>
+<tr><th id="130">130</th><td><a class="typedef" href="avcodec.h.html#AVCodec" title='AVCodec' data-type='struct AVCodec' data-ref="AVCodec">AVCodec</a> <dfn class="decl def" id="ff_xbm_decoder" title='ff_xbm_decoder' data-ref="ff_xbm_decoder">ff_xbm_decoder</dfn> = {</td></tr>
+<tr><th id="131">131</th><td>    .<a class="ref" href="avcodec.h.html#AVCodec::name" title='AVCodec::name' data-ref="AVCodec::name">name</a>         = <q>"xbm"</q>,</td></tr>
+<tr><th id="132">132</th><td>    .<a class="ref" href="avcodec.h.html#AVCodec::long_name" title='AVCodec::long_name' data-ref="AVCodec::long_name">long_name</a>    = <a class="macro" href="../libavutil/internal.h.html#176" title="&quot;XBM (X BitMap) image&quot;" data-ref="_M/NULL_IF_CONFIG_SMALL">NULL_IF_CONFIG_SMALL</a>(<q>"XBM (X BitMap) image"</q>),</td></tr>
+<tr><th id="133">133</th><td>    .<a class="ref" href="avcodec.h.html#AVCodec::type" title='AVCodec::type' data-ref="AVCodec::type">type</a>         = <a class="enum" href="../libavutil/avutil.h.html#AVMediaType::AVMEDIA_TYPE_VIDEO" title='AVMediaType::AVMEDIA_TYPE_VIDEO' data-ref="AVMediaType::AVMEDIA_TYPE_VIDEO">AVMEDIA_TYPE_VIDEO</a>,</td></tr>
+<tr><th id="134">134</th><td>    .<a class="ref" href="avcodec.h.html#AVCodec::id" title='AVCodec::id' data-ref="AVCodec::id">id</a>           = <a class="enum" href="avcodec.h.html#AVCodecID::AV_CODEC_ID_XBM" title='AVCodecID::AV_CODEC_ID_XBM' data-ref="AVCodecID::AV_CODEC_ID_XBM">AV_CODEC_ID_XBM</a>,</td></tr>
+<tr><th id="135">135</th><td>    .<a class="ref" href="avcodec.h.html#AVCodec::decode" title='AVCodec::decode' data-ref="AVCodec::decode">decode</a>       = <a class="tu ref" href="#xbm_decode_frame" title='xbm_decode_frame' data-use='r' data-ref="xbm_decode_frame">xbm_decode_frame</a>,</td></tr>
+<tr><th id="136">136</th><td>    .<a class="ref" href="avcodec.h.html#AVCodec::capabilities" title='AVCodec::capabilities' data-ref="AVCodec::capabilities">capabilities</a> = <a class="macro" href="avcodec.h.html#959" title="(1 &lt;&lt; 1)" data-ref="_M/AV_CODEC_CAP_DR1">AV_CODEC_CAP_DR1</a>,</td></tr>
+<tr><th id="137">137</th><td>};</td></tr>
+<tr><th id="138">138</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

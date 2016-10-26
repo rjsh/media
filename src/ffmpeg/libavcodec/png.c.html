@@ -1,0 +1,90 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>png.c source code [ffmpeg/libavcodec/png.c] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavcodec/png.c'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavcodec</a>/<a href='png.c.html'>png.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * PNG image format</i></td></tr>
+<tr><th id="3">3</th><td><i> * Copyright (c) 2003 Fabrice Bellard</i></td></tr>
+<tr><th id="4">4</th><td><i> *</i></td></tr>
+<tr><th id="5">5</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="8">8</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="9">9</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="10">10</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="11">11</th><td><i> *</i></td></tr>
+<tr><th id="12">12</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="13">13</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="14">14</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="15">15</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="16">16</th><td><i> *</i></td></tr>
+<tr><th id="17">17</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="18">18</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="19">19</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="20">20</th><td><i> */</i></td></tr>
+<tr><th id="21">21</th><td><u>#include <a href="avcodec.h.html">"avcodec.h"</a></u></td></tr>
+<tr><th id="22">22</th><td><u>#include <a href="png.h.html">"png.h"</a></u></td></tr>
+<tr><th id="23">23</th><td></td></tr>
+<tr><th id="24">24</th><td><i>/* Mask to determine which y pixels are valid in a pass */</i></td></tr>
+<tr><th id="25">25</th><td><em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl def" id="ff_png_pass_ymask" title='ff_png_pass_ymask' data-ref="ff_png_pass_ymask">ff_png_pass_ymask</dfn>[<a class="macro" href="png.h.html#50" title="7" data-ref="_M/NB_PASSES">NB_PASSES</a>] = {</td></tr>
+<tr><th id="26">26</th><td>    <var>0x80</var>, <var>0x80</var>, <var>0x08</var>, <var>0x88</var>, <var>0x22</var>, <var>0xaa</var>, <var>0x55</var>,</td></tr>
+<tr><th id="27">27</th><td>};</td></tr>
+<tr><th id="28">28</th><td></td></tr>
+<tr><th id="29">29</th><td><i  data-doc="ff_png_pass_xmin">/* minimum x value */</i></td></tr>
+<tr><th id="30">30</th><td><em>static</em> <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="tu decl def" id="ff_png_pass_xmin" title='ff_png_pass_xmin' data-type='const uint8_t [7]' data-ref="ff_png_pass_xmin">ff_png_pass_xmin</dfn>[<a class="macro" href="png.h.html#50" title="7" data-ref="_M/NB_PASSES">NB_PASSES</a>] = {</td></tr>
+<tr><th id="31">31</th><td>    <var>0</var>, <var>4</var>, <var>0</var>, <var>2</var>, <var>0</var>, <var>1</var>, <var>0</var></td></tr>
+<tr><th id="32">32</th><td>};</td></tr>
+<tr><th id="33">33</th><td></td></tr>
+<tr><th id="34">34</th><td><i  data-doc="ff_png_pass_xshift">/* x shift to get row width */</i></td></tr>
+<tr><th id="35">35</th><td><em>static</em> <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="tu decl def" id="ff_png_pass_xshift" title='ff_png_pass_xshift' data-type='const uint8_t [7]' data-ref="ff_png_pass_xshift">ff_png_pass_xshift</dfn>[<a class="macro" href="png.h.html#50" title="7" data-ref="_M/NB_PASSES">NB_PASSES</a>] = {</td></tr>
+<tr><th id="36">36</th><td>    <var>3</var>, <var>3</var>, <var>2</var>, <var>2</var>, <var>1</var>, <var>1</var>, <var>0</var></td></tr>
+<tr><th id="37">37</th><td>};</td></tr>
+<tr><th id="38">38</th><td></td></tr>
+<tr><th id="39">39</th><td><em>void</em> *<dfn class="decl def" id="ff_png_zalloc" title='ff_png_zalloc' data-ref="ff_png_zalloc">ff_png_zalloc</dfn>(<em>void</em> *<dfn class="local col5 decl" id="15opaque" title='opaque' data-type='void *' data-ref="15opaque">opaque</dfn>, <em>unsigned</em> <em>int</em> <dfn class="local col6 decl" id="16items" title='items' data-type='unsigned int' data-ref="16items">items</dfn>, <em>unsigned</em> <em>int</em> <dfn class="local col7 decl" id="17size" title='size' data-type='unsigned int' data-ref="17size">size</dfn>)</td></tr>
+<tr><th id="40">40</th><td>{</td></tr>
+<tr><th id="41">41</th><td>    <b>return</b> <a class="ref" href="../libavutil/mem.h.html#av_mallocz_array" title='av_mallocz_array' data-ref="av_mallocz_array">av_mallocz_array</a>(<a class="local col6 ref" href="#16items" title='items' data-ref="16items">items</a>, <a class="local col7 ref" href="#17size" title='size' data-ref="17size">size</a>);</td></tr>
+<tr><th id="42">42</th><td>}</td></tr>
+<tr><th id="43">43</th><td></td></tr>
+<tr><th id="44">44</th><td><em>void</em> <dfn class="decl def" id="ff_png_zfree" title='ff_png_zfree' data-ref="ff_png_zfree">ff_png_zfree</dfn>(<em>void</em> *<dfn class="local col8 decl" id="18opaque" title='opaque' data-type='void *' data-ref="18opaque">opaque</dfn>, <em>void</em> *<dfn class="local col9 decl" id="19ptr" title='ptr' data-type='void *' data-ref="19ptr">ptr</dfn>)</td></tr>
+<tr><th id="45">45</th><td>{</td></tr>
+<tr><th id="46">46</th><td>    <a class="ref" href="../libavutil/mem.h.html#av_free" title='av_free' data-ref="av_free">av_free</a>(<a class="local col9 ref" href="#19ptr" title='ptr' data-ref="19ptr">ptr</a>);</td></tr>
+<tr><th id="47">47</th><td>}</td></tr>
+<tr><th id="48">48</th><td></td></tr>
+<tr><th id="49">49</th><td><em>int</em> <dfn class="decl def" id="ff_png_get_nb_channels" title='ff_png_get_nb_channels' data-ref="ff_png_get_nb_channels">ff_png_get_nb_channels</dfn>(<em>int</em> <dfn class="local col0 decl" id="20color_type" title='color_type' data-type='int' data-ref="20color_type">color_type</dfn>)</td></tr>
+<tr><th id="50">50</th><td>{</td></tr>
+<tr><th id="51">51</th><td>    <em>int</em> <dfn class="local col1 decl" id="21channels" title='channels' data-type='int' data-ref="21channels">channels</dfn>;</td></tr>
+<tr><th id="52">52</th><td>    <a class="local col1 ref" href="#21channels" title='channels' data-ref="21channels">channels</a> = <var>1</var>;</td></tr>
+<tr><th id="53">53</th><td>    <b>if</b> ((<a class="local col0 ref" href="#20color_type" title='color_type' data-ref="20color_type">color_type</a> &amp; (<a class="macro" href="png.h.html#28" title="2" data-ref="_M/PNG_COLOR_MASK_COLOR">PNG_COLOR_MASK_COLOR</a> | <a class="macro" href="png.h.html#27" title="1" data-ref="_M/PNG_COLOR_MASK_PALETTE">PNG_COLOR_MASK_PALETTE</a>)) ==</td></tr>
+<tr><th id="54">54</th><td>        <a class="macro" href="png.h.html#28" title="2" data-ref="_M/PNG_COLOR_MASK_COLOR">PNG_COLOR_MASK_COLOR</a>)</td></tr>
+<tr><th id="55">55</th><td>        <a class="local col1 ref" href="#21channels" title='channels' data-ref="21channels">channels</a> = <var>3</var>;</td></tr>
+<tr><th id="56">56</th><td>    <b>if</b> (<a class="local col0 ref" href="#20color_type" title='color_type' data-ref="20color_type">color_type</a> &amp; <a class="macro" href="png.h.html#29" title="4" data-ref="_M/PNG_COLOR_MASK_ALPHA">PNG_COLOR_MASK_ALPHA</a>)</td></tr>
+<tr><th id="57">57</th><td>        <a class="local col1 ref" href="#21channels" title='channels' data-ref="21channels">channels</a>++;</td></tr>
+<tr><th id="58">58</th><td>    <b>return</b> <a class="local col1 ref" href="#21channels" title='channels' data-ref="21channels">channels</a>;</td></tr>
+<tr><th id="59">59</th><td>}</td></tr>
+<tr><th id="60">60</th><td></td></tr>
+<tr><th id="61">61</th><td><i>/* compute the row size of an interleaved pass */</i></td></tr>
+<tr><th id="62">62</th><td><em>int</em> <dfn class="decl def" id="ff_png_pass_row_size" title='ff_png_pass_row_size' data-ref="ff_png_pass_row_size">ff_png_pass_row_size</dfn>(<em>int</em> <dfn class="local col2 decl" id="22pass" title='pass' data-type='int' data-ref="22pass">pass</dfn>, <em>int</em> <dfn class="local col3 decl" id="23bits_per_pixel" title='bits_per_pixel' data-type='int' data-ref="23bits_per_pixel">bits_per_pixel</dfn>, <em>int</em> <dfn class="local col4 decl" id="24width" title='width' data-type='int' data-ref="24width">width</dfn>)</td></tr>
+<tr><th id="63">63</th><td>{</td></tr>
+<tr><th id="64">64</th><td>    <em>int</em> <dfn class="local col5 decl" id="25shift" title='shift' data-type='int' data-ref="25shift">shift</dfn>, <dfn class="local col6 decl" id="26xmin" title='xmin' data-type='int' data-ref="26xmin">xmin</dfn>, <dfn class="local col7 decl" id="27pass_width" title='pass_width' data-type='int' data-ref="27pass_width">pass_width</dfn>;</td></tr>
+<tr><th id="65">65</th><td></td></tr>
+<tr><th id="66">66</th><td>    <a class="local col6 ref" href="#26xmin" title='xmin' data-ref="26xmin">xmin</a> = <a class="tu ref" href="#ff_png_pass_xmin" title='ff_png_pass_xmin' data-use='r' data-ref="ff_png_pass_xmin">ff_png_pass_xmin</a>[<a class="local col2 ref" href="#22pass" title='pass' data-ref="22pass">pass</a>];</td></tr>
+<tr><th id="67">67</th><td>    <b>if</b> (<a class="local col4 ref" href="#24width" title='width' data-ref="24width">width</a> &lt;= <a class="local col6 ref" href="#26xmin" title='xmin' data-ref="26xmin">xmin</a>)</td></tr>
+<tr><th id="68">68</th><td>        <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="69">69</th><td>    <a class="local col5 ref" href="#25shift" title='shift' data-ref="25shift">shift</a>      = <a class="tu ref" href="#ff_png_pass_xshift" title='ff_png_pass_xshift' data-use='r' data-ref="ff_png_pass_xshift">ff_png_pass_xshift</a>[<a class="local col2 ref" href="#22pass" title='pass' data-ref="22pass">pass</a>];</td></tr>
+<tr><th id="70">70</th><td>    <a class="local col7 ref" href="#27pass_width" title='pass_width' data-ref="27pass_width">pass_width</a> = (<a class="local col4 ref" href="#24width" title='width' data-ref="24width">width</a> - <a class="local col6 ref" href="#26xmin" title='xmin' data-ref="26xmin">xmin</a> + (<var>1</var> &lt;&lt; <a class="local col5 ref" href="#25shift" title='shift' data-ref="25shift">shift</a>) - <var>1</var>) &gt;&gt; <a class="local col5 ref" href="#25shift" title='shift' data-ref="25shift">shift</a>;</td></tr>
+<tr><th id="71">71</th><td>    <b>return</b> (<a class="local col7 ref" href="#27pass_width" title='pass_width' data-ref="27pass_width">pass_width</a> * <a class="local col3 ref" href="#23bits_per_pixel" title='bits_per_pixel' data-ref="23bits_per_pixel">bits_per_pixel</a> + <var>7</var>) &gt;&gt; <var>3</var>;</td></tr>
+<tr><th id="72">72</th><td>}</td></tr>
+<tr><th id="73">73</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

@@ -1,0 +1,125 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>rand.c source code [vlc/src/misc/rand.c] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'vlc/src/misc/rand.c'; var root_path = '../../..'; var data_path = '../../../../data';</script>
+<script src='../../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='../..'>vlc</a>/<a href='..'>src</a>/<a href='./'>misc</a>/<a href='rand.c.html'>rand.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*****************************************************************************</i></td></tr>
+<tr><th id="2">2</th><td><i> * rand.c : non-predictible random bytes generator</i></td></tr>
+<tr><th id="3">3</th><td><i> *****************************************************************************</i></td></tr>
+<tr><th id="4">4</th><td><i> * Copyright © 2007 Rémi Denis-Courmont</i></td></tr>
+<tr><th id="5">5</th><td><i> * $Id: 0c6ab651468bb9ed116f067b83118d659a3d80bd $</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * This program is free software; you can redistribute it and/or modify it</i></td></tr>
+<tr><th id="8">8</th><td><i> * under the terms of the GNU Lesser General Public License as published by</i></td></tr>
+<tr><th id="9">9</th><td><i> * the Free Software Foundation; either version 2.1 of the License, or</i></td></tr>
+<tr><th id="10">10</th><td><i> * (at your option) any later version.</i></td></tr>
+<tr><th id="11">11</th><td><i> *</i></td></tr>
+<tr><th id="12">12</th><td><i> * This program is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="13">13</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="14">14</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</i></td></tr>
+<tr><th id="15">15</th><td><i> * GNU Lesser General Public License for more details.</i></td></tr>
+<tr><th id="16">16</th><td><i> *</i></td></tr>
+<tr><th id="17">17</th><td><i> * You should have received a copy of the GNU Lesser General Public License</i></td></tr>
+<tr><th id="18">18</th><td><i> * along with this program; if not, write to the Free Software Foundation,</i></td></tr>
+<tr><th id="19">19</th><td><i> * Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.</i></td></tr>
+<tr><th id="20">20</th><td><i> *****************************************************************************/</i></td></tr>
+<tr><th id="21">21</th><td></td></tr>
+<tr><th id="22">22</th><td><u>#<span data-ppcond="22">ifdef</span> <span class="macro" data-ref="_M/HAVE_CONFIG_H">HAVE_CONFIG_H</span></u></td></tr>
+<tr><th id="23">23</th><td><u># include <a href="../../config.h.html">"config.h"</a></u></td></tr>
+<tr><th id="24">24</th><td><u>#<span data-ppcond="22">endif</span></u></td></tr>
+<tr><th id="25">25</th><td></td></tr>
+<tr><th id="26">26</th><td><u>#include <a href="../../include/vlc_common.h.html">&lt;vlc_common.h&gt;</a></u></td></tr>
+<tr><th id="27">27</th><td><u>#include <a href="../../include/vlc_rand.h.html">&lt;vlc_rand.h&gt;</a></u></td></tr>
+<tr><th id="28">28</th><td></td></tr>
+<tr><th id="29">29</th><td><em>static</em> <b>struct</b></td></tr>
+<tr><th id="30">30</th><td>{</td></tr>
+<tr><th id="31">31</th><td>    <span class="macro" title="_Bool" data-ref="_M/bool">bool</span>           <dfn class="local col1 decl" id="1init" title='init' data-type='_Bool' data-ref="1init">init</dfn>;</td></tr>
+<tr><th id="32">32</th><td>    <em>unsigned</em> <em>short</em> <dfn class="local col2 decl" id="2subi" title='subi' data-type='unsigned short [3]' data-ref="2subi">subi</dfn>[<var>3</var>];</td></tr>
+<tr><th id="33">33</th><td>    <a class="typedef" href="../../include/vlc_threads.h.html#vlc_mutex_t" title='vlc_mutex_t' data-type='pthread_mutex_t' data-ref="vlc_mutex_t">vlc_mutex_t</a>    <dfn class="local col3 decl" id="3lock" title='lock' data-type='vlc_mutex_t' data-ref="3lock">lock</dfn>;</td></tr>
+<tr><th id="34">34</th><td>} <dfn class="tu decl def" id="rand48" title='rand48' data-type='struct &lt;anonymous struct at /usr/local/google/home/robertshih/git/vlc/src/misc/rand.c:29:8&gt;' data-ref="rand48">rand48</dfn> = { <span class="macro" title="0" data-ref="_M/false">false</span>, { <var>0</var>, <var>0</var>, <var>0</var>, }, <a class="macro" href="../../include/vlc_threads.h.html#187" title="{ { 0, 0, 0, 0, 0, 0, 0, { 0, 0 } } }" data-ref="_M/VLC_STATIC_MUTEX">VLC_STATIC_MUTEX</a>, };</td></tr>
+<tr><th id="35">35</th><td></td></tr>
+<tr><th id="36">36</th><td><em>static</em> <em>void</em> <dfn class="tu decl def" id="init_rand48" title='init_rand48' data-type='void init_rand48()' data-ref="init_rand48">init_rand48</dfn> (<em>void</em>)</td></tr>
+<tr><th id="37">37</th><td>{</td></tr>
+<tr><th id="38">38</th><td>    <b>if</b> (!<a class="tu ref" href="#rand48" title='rand48' data-use='m' data-ref="rand48">rand48</a>.<a class="local col1 ref" href="#1init" title='init' data-ref="1init">init</a>)</td></tr>
+<tr><th id="39">39</th><td>    {</td></tr>
+<tr><th id="40">40</th><td>        <a class="ref" href="../../include/vlc_rand.h.html#vlc_rand_bytes" title='vlc_rand_bytes' data-ref="vlc_rand_bytes">vlc_rand_bytes</a> (<a class="tu ref" href="#rand48" title='rand48' data-use='m' data-ref="rand48">rand48</a>.<a class="local col2 ref" href="#2subi" title='subi' data-ref="2subi">subi</a>, <b>sizeof</b> (<a class="tu ref" href="#rand48" title='rand48' data-use='m' data-ref="rand48">rand48</a>.<a class="local col2 ref" href="#2subi" title='subi' data-ref="2subi">subi</a>));</td></tr>
+<tr><th id="41">41</th><td>        <a class="tu ref" href="#rand48" title='rand48' data-use='m' data-ref="rand48">rand48</a>.<a class="local col1 ref" href="#1init" title='init' data-ref="1init">init</a> = <span class="macro" title="1" data-ref="_M/true">true</span>;</td></tr>
+<tr><th id="42">42</th><td><u>#<span data-ppcond="42">if</span> 0 // short would be more than 16-bits ?</u></td></tr>
+<tr><th id="43">43</th><td>        <b>for</b> (<em>unsigned</em> i = <var>0</var>; i &lt; <var>3</var>; i++)</td></tr>
+<tr><th id="44">44</th><td>            subi[i] &amp;= <var>0xffff</var>;</td></tr>
+<tr><th id="45">45</th><td><u>#<span data-ppcond="42">endif</span></u></td></tr>
+<tr><th id="46">46</th><td>    }</td></tr>
+<tr><th id="47">47</th><td>}</td></tr>
+<tr><th id="48">48</th><td></td></tr>
+<tr><th id="49">49</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="50">50</th><td><i class="doc"> * PRNG uniformly distributed between 0.0 and 1.0 with 48-bits precision.</i></td></tr>
+<tr><th id="51">51</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="52">52</th><td><i class="doc"> * <span class="command">@note</span> Contrary to POSIX drand48(), this function is thread-safe.</i></td></tr>
+<tr><th id="53">53</th><td><i class="doc"> * <span class="command">@warning</span> Series generated by this function are not reproducible.</i></td></tr>
+<tr><th id="54">54</th><td><i class="doc"> * Use erand48() if you need reproducible series.</i></td></tr>
+<tr><th id="55">55</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="56">56</th><td><i class="doc"> * <span class="command">@return</span> a double value within [0.0, 1.0] inclusive</i></td></tr>
+<tr><th id="57">57</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="58">58</th><td><em>double</em> <dfn class="decl def" id="vlc_drand48" title='vlc_drand48' data-ref="vlc_drand48">vlc_drand48</dfn> (<em>void</em>)</td></tr>
+<tr><th id="59">59</th><td>{</td></tr>
+<tr><th id="60">60</th><td>    <em>double</em> <dfn class="local col4 decl" id="4ret" title='ret' data-type='double' data-ref="4ret">ret</dfn>;</td></tr>
+<tr><th id="61">61</th><td></td></tr>
+<tr><th id="62">62</th><td>    <a class="ref" href="../../include/vlc_threads.h.html#vlc_mutex_lock" title='vlc_mutex_lock' data-ref="vlc_mutex_lock">vlc_mutex_lock</a> (&amp;<a class="tu ref" href="#rand48" title='rand48' data-use='m' data-ref="rand48">rand48</a>.<a class="local col3 ref" href="#3lock" title='lock' data-ref="3lock">lock</a>);</td></tr>
+<tr><th id="63">63</th><td>    <a class="tu ref" href="#init_rand48" title='init_rand48' data-use='c' data-ref="init_rand48">init_rand48</a> ();</td></tr>
+<tr><th id="64">64</th><td>    <a class="local col4 ref" href="#4ret" title='ret' data-ref="4ret">ret</a> = <a class="ref" href="../../../include/stdlib.h.html#erand48" title='erand48' data-ref="erand48">erand48</a> (<a class="tu ref" href="#rand48" title='rand48' data-use='m' data-ref="rand48">rand48</a>.<a class="local col2 ref" href="#2subi" title='subi' data-ref="2subi">subi</a>);</td></tr>
+<tr><th id="65">65</th><td>    <a class="ref" href="../../include/vlc_threads.h.html#vlc_mutex_unlock" title='vlc_mutex_unlock' data-ref="vlc_mutex_unlock">vlc_mutex_unlock</a> (&amp;<a class="tu ref" href="#rand48" title='rand48' data-use='m' data-ref="rand48">rand48</a>.<a class="local col3 ref" href="#3lock" title='lock' data-ref="3lock">lock</a>);</td></tr>
+<tr><th id="66">66</th><td>    <b>return</b> <a class="local col4 ref" href="#4ret" title='ret' data-ref="4ret">ret</a>;</td></tr>
+<tr><th id="67">67</th><td>}</td></tr>
+<tr><th id="68">68</th><td></td></tr>
+<tr><th id="69">69</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="70">70</th><td><i class="doc"> * PRNG uniformly distributed between 0 and 2^32 - 1.</i></td></tr>
+<tr><th id="71">71</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="72">72</th><td><i class="doc"> * <span class="command">@note</span> Contrary to POSIX lrand48(), this function is thread-safe.</i></td></tr>
+<tr><th id="73">73</th><td><i class="doc"> * <span class="command">@warning</span> Series generated by this function are not reproducible.</i></td></tr>
+<tr><th id="74">74</th><td><i class="doc"> * Use nrand48() if you need reproducible series.</i></td></tr>
+<tr><th id="75">75</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="76">76</th><td><i class="doc"> * <span class="command">@return</span> an integral value within [0.0, 2^32-1] inclusive</i></td></tr>
+<tr><th id="77">77</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="78">78</th><td><em>long</em> <dfn class="decl def" id="vlc_lrand48" title='vlc_lrand48' data-ref="vlc_lrand48">vlc_lrand48</dfn> (<em>void</em>)</td></tr>
+<tr><th id="79">79</th><td>{</td></tr>
+<tr><th id="80">80</th><td>    <em>long</em> <dfn class="local col5 decl" id="5ret" title='ret' data-type='long' data-ref="5ret">ret</dfn>;</td></tr>
+<tr><th id="81">81</th><td></td></tr>
+<tr><th id="82">82</th><td>    <a class="ref" href="../../include/vlc_threads.h.html#vlc_mutex_lock" title='vlc_mutex_lock' data-ref="vlc_mutex_lock">vlc_mutex_lock</a> (&amp;<a class="tu ref" href="#rand48" title='rand48' data-use='m' data-ref="rand48">rand48</a>.<a class="local col3 ref" href="#3lock" title='lock' data-ref="3lock">lock</a>);</td></tr>
+<tr><th id="83">83</th><td>    <a class="tu ref" href="#init_rand48" title='init_rand48' data-use='c' data-ref="init_rand48">init_rand48</a> ();</td></tr>
+<tr><th id="84">84</th><td>    <a class="local col5 ref" href="#5ret" title='ret' data-ref="5ret">ret</a> = <a class="ref" href="../../../include/stdlib.h.html#nrand48" title='nrand48' data-ref="nrand48">nrand48</a> (<a class="tu ref" href="#rand48" title='rand48' data-use='m' data-ref="rand48">rand48</a>.<a class="local col2 ref" href="#2subi" title='subi' data-ref="2subi">subi</a>);</td></tr>
+<tr><th id="85">85</th><td>    <a class="ref" href="../../include/vlc_threads.h.html#vlc_mutex_unlock" title='vlc_mutex_unlock' data-ref="vlc_mutex_unlock">vlc_mutex_unlock</a> (&amp;<a class="tu ref" href="#rand48" title='rand48' data-use='m' data-ref="rand48">rand48</a>.<a class="local col3 ref" href="#3lock" title='lock' data-ref="3lock">lock</a>);</td></tr>
+<tr><th id="86">86</th><td>    <b>return</b> <a class="local col5 ref" href="#5ret" title='ret' data-ref="5ret">ret</a>;</td></tr>
+<tr><th id="87">87</th><td>}</td></tr>
+<tr><th id="88">88</th><td></td></tr>
+<tr><th id="89">89</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="90">90</th><td><i class="doc"> * PRNG uniformly distributed between -2^32 and 2^32 - 1.</i></td></tr>
+<tr><th id="91">91</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="92">92</th><td><i class="doc"> * <span class="command">@note</span> Contrary to POSIX mrand48(), this function is thread-safe.</i></td></tr>
+<tr><th id="93">93</th><td><i class="doc"> * <span class="command">@warning</span> Series generated by this function are not reproducible.</i></td></tr>
+<tr><th id="94">94</th><td><i class="doc"> * Use jrand48() if you need reproducible series.</i></td></tr>
+<tr><th id="95">95</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="96">96</th><td><i class="doc"> * <span class="command">@return</span> an integral value within [-2^32, 2^32-1] inclusive</i></td></tr>
+<tr><th id="97">97</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="98">98</th><td><em>long</em> <dfn class="decl def" id="vlc_mrand48" title='vlc_mrand48' data-ref="vlc_mrand48">vlc_mrand48</dfn> (<em>void</em>)</td></tr>
+<tr><th id="99">99</th><td>{</td></tr>
+<tr><th id="100">100</th><td>    <em>long</em> <dfn class="local col6 decl" id="6ret" title='ret' data-type='long' data-ref="6ret">ret</dfn>;</td></tr>
+<tr><th id="101">101</th><td></td></tr>
+<tr><th id="102">102</th><td>    <a class="ref" href="../../include/vlc_threads.h.html#vlc_mutex_lock" title='vlc_mutex_lock' data-ref="vlc_mutex_lock">vlc_mutex_lock</a> (&amp;<a class="tu ref" href="#rand48" title='rand48' data-use='m' data-ref="rand48">rand48</a>.<a class="local col3 ref" href="#3lock" title='lock' data-ref="3lock">lock</a>);</td></tr>
+<tr><th id="103">103</th><td>    <a class="tu ref" href="#init_rand48" title='init_rand48' data-use='c' data-ref="init_rand48">init_rand48</a> ();</td></tr>
+<tr><th id="104">104</th><td>    <a class="local col6 ref" href="#6ret" title='ret' data-ref="6ret">ret</a> = <a class="ref" href="../../../include/stdlib.h.html#jrand48" title='jrand48' data-ref="jrand48">jrand48</a> (<a class="tu ref" href="#rand48" title='rand48' data-use='m' data-ref="rand48">rand48</a>.<a class="local col2 ref" href="#2subi" title='subi' data-ref="2subi">subi</a>);</td></tr>
+<tr><th id="105">105</th><td>    <a class="ref" href="../../include/vlc_threads.h.html#vlc_mutex_unlock" title='vlc_mutex_unlock' data-ref="vlc_mutex_unlock">vlc_mutex_unlock</a> (&amp;<a class="tu ref" href="#rand48" title='rand48' data-use='m' data-ref="rand48">rand48</a>.<a class="local col3 ref" href="#3lock" title='lock' data-ref="3lock">lock</a>);</td></tr>
+<tr><th id="106">106</th><td>    <b>return</b> <a class="local col6 ref" href="#6ret" title='ret' data-ref="6ret">ret</a>;</td></tr>
+<tr><th id="107">107</th><td>}</td></tr>
+<tr><th id="108">108</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project vlc revision <em>2.2.0-git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

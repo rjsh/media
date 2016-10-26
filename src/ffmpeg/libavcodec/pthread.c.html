@@ -1,0 +1,106 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>pthread.c source code [ffmpeg/libavcodec/pthread.c] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavcodec/pthread.c'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavcodec</a>/<a href='pthread.c.html'>pthread.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * Copyright (c) 2004 Roman Shaposhnik</i></td></tr>
+<tr><th id="3">3</th><td><i> * Copyright (c) 2008 Alexander Strange (astrange@ithinksw.com)</i></td></tr>
+<tr><th id="4">4</th><td><i> *</i></td></tr>
+<tr><th id="5">5</th><td><i> * Many thanks to Steven M. Schultz for providing clever ideas and</i></td></tr>
+<tr><th id="6">6</th><td><i> * to Michael Niedermayer &lt;michaelni@gmx.at&gt; for writing initial</i></td></tr>
+<tr><th id="7">7</th><td><i> * implementation.</i></td></tr>
+<tr><th id="8">8</th><td><i> *</i></td></tr>
+<tr><th id="9">9</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="10">10</th><td><i> *</i></td></tr>
+<tr><th id="11">11</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="12">12</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="13">13</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="14">14</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="15">15</th><td><i> *</i></td></tr>
+<tr><th id="16">16</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="17">17</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="18">18</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="19">19</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="20">20</th><td><i> *</i></td></tr>
+<tr><th id="21">21</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="22">22</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="23">23</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="24">24</th><td><i> */</i></td></tr>
+<tr><th id="25">25</th><td></td></tr>
+<tr><th id="26">26</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="27">27</th><td><i class="doc"> *<span class="command"> @file</span></i></td></tr>
+<tr><th id="28">28</th><td><i class="doc"> * Multithreading support functions</i></td></tr>
+<tr><th id="29">29</th><td><i class="doc"> * <span class="command">@see</span> doc/multithreading.txt</i></td></tr>
+<tr><th id="30">30</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="31">31</th><td></td></tr>
+<tr><th id="32">32</th><td><u>#include <a href="avcodec.h.html">"avcodec.h"</a></u></td></tr>
+<tr><th id="33">33</th><td><u>#include <a href="internal.h.html">"internal.h"</a></u></td></tr>
+<tr><th id="34">34</th><td><u>#include <a href="pthread_internal.h.html">"pthread_internal.h"</a></u></td></tr>
+<tr><th id="35">35</th><td><u>#include <a href="thread.h.html">"thread.h"</a></u></td></tr>
+<tr><th id="36">36</th><td></td></tr>
+<tr><th id="37">37</th><td><i class="doc" data-doc="validate_thread_parameters">/**</i></td></tr>
+<tr><th id="38">38</th><td><i class="doc" data-doc="validate_thread_parameters"> * Set the threading algorithms used.</i></td></tr>
+<tr><th id="39">39</th><td><i class="doc" data-doc="validate_thread_parameters"> *</i></td></tr>
+<tr><th id="40">40</th><td><i class="doc" data-doc="validate_thread_parameters"> * Threading requires more than one thread.</i></td></tr>
+<tr><th id="41">41</th><td><i class="doc" data-doc="validate_thread_parameters"> * Frame threading requires entire frames to be passed to the codec,</i></td></tr>
+<tr><th id="42">42</th><td><i class="doc" data-doc="validate_thread_parameters"> * and introduces extra decoding delay, so is incompatible with low_delay.</i></td></tr>
+<tr><th id="43">43</th><td><i class="doc" data-doc="validate_thread_parameters"> *</i></td></tr>
+<tr><th id="44">44</th><td><i class="doc" data-doc="validate_thread_parameters"> * <span class="command">@param</span> <span class="arg">avctx</span> The context.</i></td></tr>
+<tr><th id="45">45</th><td><i class="doc" data-doc="validate_thread_parameters"> */</i></td></tr>
+<tr><th id="46">46</th><td><em>static</em> <em>void</em> <dfn class="tu decl def" id="validate_thread_parameters" title='validate_thread_parameters' data-type='void validate_thread_parameters(AVCodecContext * avctx)' data-ref="validate_thread_parameters">validate_thread_parameters</dfn>(<a class="typedef" href="avcodec.h.html#AVCodecContext" title='AVCodecContext' data-type='struct AVCodecContext' data-ref="AVCodecContext">AVCodecContext</a> *<dfn class="local col6 decl" id="6avctx" title='avctx' data-type='AVCodecContext *' data-ref="6avctx">avctx</dfn>)</td></tr>
+<tr><th id="47">47</th><td>{</td></tr>
+<tr><th id="48">48</th><td>    <em>int</em> <dfn class="local col7 decl" id="7frame_threading_supported" title='frame_threading_supported' data-type='int' data-ref="7frame_threading_supported">frame_threading_supported</dfn> = (<a class="local col6 ref" href="#6avctx" title='avctx' data-ref="6avctx">avctx</a>-&gt;<a class="ref" href="avcodec.h.html#AVCodecContext::codec" title='AVCodecContext::codec' data-ref="AVCodecContext::codec">codec</a>-&gt;<a class="ref" href="avcodec.h.html#AVCodec::capabilities" title='AVCodec::capabilities' data-ref="AVCodec::capabilities">capabilities</a> &amp; <a class="macro" href="avcodec.h.html#1022" title="(1 &lt;&lt; 12)" data-ref="_M/AV_CODEC_CAP_FRAME_THREADS">AV_CODEC_CAP_FRAME_THREADS</a>)</td></tr>
+<tr><th id="49">49</th><td>                                &amp;&amp; !(<a class="local col6 ref" href="#6avctx" title='avctx' data-ref="6avctx">avctx</a>-&gt;<a class="ref" href="avcodec.h.html#AVCodecContext::flags" title='AVCodecContext::flags' data-ref="AVCodecContext::flags">flags</a>  &amp; <a class="macro" href="avcodec.h.html#870" title="(1 &lt;&lt; 16)" data-ref="_M/AV_CODEC_FLAG_TRUNCATED">AV_CODEC_FLAG_TRUNCATED</a>)</td></tr>
+<tr><th id="50">50</th><td>                                &amp;&amp; !(<a class="local col6 ref" href="#6avctx" title='avctx' data-ref="6avctx">avctx</a>-&gt;<a class="ref" href="avcodec.h.html#AVCodecContext::flags" title='AVCodecContext::flags' data-ref="AVCodecContext::flags">flags</a>  &amp; <a class="macro" href="avcodec.h.html#878" title="(1 &lt;&lt; 19)" data-ref="_M/AV_CODEC_FLAG_LOW_DELAY">AV_CODEC_FLAG_LOW_DELAY</a>)</td></tr>
+<tr><th id="51">51</th><td>                                &amp;&amp; !(<a class="local col6 ref" href="#6avctx" title='avctx' data-ref="6avctx">avctx</a>-&gt;<a class="ref" href="avcodec.h.html#AVCodecContext::flags2" title='AVCodecContext::flags2' data-ref="AVCodecContext::flags2">flags2</a> &amp; <a class="macro" href="avcodec.h.html#920" title="(1 &lt;&lt; 15)" data-ref="_M/AV_CODEC_FLAG2_CHUNKS">AV_CODEC_FLAG2_CHUNKS</a>);</td></tr>
+<tr><th id="52">52</th><td>    <b>if</b> (<a class="local col6 ref" href="#6avctx" title='avctx' data-ref="6avctx">avctx</a>-&gt;<a class="ref" href="avcodec.h.html#AVCodecContext::thread_count" title='AVCodecContext::thread_count' data-ref="AVCodecContext::thread_count">thread_count</a> == <var>1</var>) {</td></tr>
+<tr><th id="53">53</th><td>        <a class="local col6 ref" href="#6avctx" title='avctx' data-ref="6avctx">avctx</a>-&gt;<a class="ref" href="avcodec.h.html#AVCodecContext::active_thread_type" title='AVCodecContext::active_thread_type' data-ref="AVCodecContext::active_thread_type">active_thread_type</a> = <var>0</var>;</td></tr>
+<tr><th id="54">54</th><td>    } <b>else</b> <b>if</b> (<a class="local col7 ref" href="#7frame_threading_supported" title='frame_threading_supported' data-ref="7frame_threading_supported">frame_threading_supported</a> &amp;&amp; (<a class="local col6 ref" href="#6avctx" title='avctx' data-ref="6avctx">avctx</a>-&gt;<a class="ref" href="avcodec.h.html#AVCodecContext::thread_type" title='AVCodecContext::thread_type' data-ref="AVCodecContext::thread_type">thread_type</a> &amp; <a class="macro" href="avcodec.h.html#3118" title="1" data-ref="_M/FF_THREAD_FRAME">FF_THREAD_FRAME</a>)) {</td></tr>
+<tr><th id="55">55</th><td>        <a class="local col6 ref" href="#6avctx" title='avctx' data-ref="6avctx">avctx</a>-&gt;<a class="ref" href="avcodec.h.html#AVCodecContext::active_thread_type" title='AVCodecContext::active_thread_type' data-ref="AVCodecContext::active_thread_type">active_thread_type</a> = <a class="macro" href="avcodec.h.html#3118" title="1" data-ref="_M/FF_THREAD_FRAME">FF_THREAD_FRAME</a>;</td></tr>
+<tr><th id="56">56</th><td>    } <b>else</b> <b>if</b> (<a class="local col6 ref" href="#6avctx" title='avctx' data-ref="6avctx">avctx</a>-&gt;<a class="ref" href="avcodec.h.html#AVCodecContext::codec" title='AVCodecContext::codec' data-ref="AVCodecContext::codec">codec</a>-&gt;<a class="ref" href="avcodec.h.html#AVCodec::capabilities" title='AVCodec::capabilities' data-ref="AVCodec::capabilities">capabilities</a> &amp; <a class="macro" href="avcodec.h.html#1026" title="(1 &lt;&lt; 13)" data-ref="_M/AV_CODEC_CAP_SLICE_THREADS">AV_CODEC_CAP_SLICE_THREADS</a> &amp;&amp;</td></tr>
+<tr><th id="57">57</th><td>               <a class="local col6 ref" href="#6avctx" title='avctx' data-ref="6avctx">avctx</a>-&gt;<a class="ref" href="avcodec.h.html#AVCodecContext::thread_type" title='AVCodecContext::thread_type' data-ref="AVCodecContext::thread_type">thread_type</a> &amp; <a class="macro" href="avcodec.h.html#3119" title="2" data-ref="_M/FF_THREAD_SLICE">FF_THREAD_SLICE</a>) {</td></tr>
+<tr><th id="58">58</th><td>        <a class="local col6 ref" href="#6avctx" title='avctx' data-ref="6avctx">avctx</a>-&gt;<a class="ref" href="avcodec.h.html#AVCodecContext::active_thread_type" title='AVCodecContext::active_thread_type' data-ref="AVCodecContext::active_thread_type">active_thread_type</a> = <a class="macro" href="avcodec.h.html#3119" title="2" data-ref="_M/FF_THREAD_SLICE">FF_THREAD_SLICE</a>;</td></tr>
+<tr><th id="59">59</th><td>    } <b>else</b> <b>if</b> (!(<a class="local col6 ref" href="#6avctx" title='avctx' data-ref="6avctx">avctx</a>-&gt;<a class="ref" href="avcodec.h.html#AVCodecContext::codec" title='AVCodecContext::codec' data-ref="AVCodecContext::codec">codec</a>-&gt;<a class="ref" href="avcodec.h.html#AVCodec::capabilities" title='AVCodec::capabilities' data-ref="AVCodec::capabilities">capabilities</a> &amp; <a class="macro" href="avcodec.h.html#1034" title="(1 &lt;&lt; 15)" data-ref="_M/AV_CODEC_CAP_AUTO_THREADS">AV_CODEC_CAP_AUTO_THREADS</a>)) {</td></tr>
+<tr><th id="60">60</th><td>        <a class="local col6 ref" href="#6avctx" title='avctx' data-ref="6avctx">avctx</a>-&gt;<a class="ref" href="avcodec.h.html#AVCodecContext::thread_count" title='AVCodecContext::thread_count' data-ref="AVCodecContext::thread_count">thread_count</a>       = <var>1</var>;</td></tr>
+<tr><th id="61">61</th><td>        <a class="local col6 ref" href="#6avctx" title='avctx' data-ref="6avctx">avctx</a>-&gt;<a class="ref" href="avcodec.h.html#AVCodecContext::active_thread_type" title='AVCodecContext::active_thread_type' data-ref="AVCodecContext::active_thread_type">active_thread_type</a> = <var>0</var>;</td></tr>
+<tr><th id="62">62</th><td>    }</td></tr>
+<tr><th id="63">63</th><td></td></tr>
+<tr><th id="64">64</th><td>    <b>if</b> (<a class="local col6 ref" href="#6avctx" title='avctx' data-ref="6avctx">avctx</a>-&gt;<a class="ref" href="avcodec.h.html#AVCodecContext::thread_count" title='AVCodecContext::thread_count' data-ref="AVCodecContext::thread_count">thread_count</a> &gt; <a class="macro" href="pthread_internal.h.html#26" title="16" data-ref="_M/MAX_AUTO_THREADS">MAX_AUTO_THREADS</a>)</td></tr>
+<tr><th id="65">65</th><td>        <a class="ref" href="../libavutil/log.h.html#av_log" title='av_log' data-ref="av_log">av_log</a>(<a class="local col6 ref" href="#6avctx" title='avctx' data-ref="6avctx">avctx</a>, <a class="macro" href="../libavutil/log.h.html#182" title="24" data-ref="_M/AV_LOG_WARNING">AV_LOG_WARNING</a>,</td></tr>
+<tr><th id="66">66</th><td>               <q>"Application has requested %d threads. Using a thread count greater than %d is not recommended.\n"</q>,</td></tr>
+<tr><th id="67">67</th><td>               <a class="local col6 ref" href="#6avctx" title='avctx' data-ref="6avctx">avctx</a>-&gt;<a class="ref" href="avcodec.h.html#AVCodecContext::thread_count" title='AVCodecContext::thread_count' data-ref="AVCodecContext::thread_count">thread_count</a>, <a class="macro" href="pthread_internal.h.html#26" title="16" data-ref="_M/MAX_AUTO_THREADS">MAX_AUTO_THREADS</a>);</td></tr>
+<tr><th id="68">68</th><td>}</td></tr>
+<tr><th id="69">69</th><td></td></tr>
+<tr><th id="70">70</th><td><em>int</em> <dfn class="decl def" id="ff_thread_init" title='ff_thread_init' data-ref="ff_thread_init">ff_thread_init</dfn>(<a class="typedef" href="avcodec.h.html#AVCodecContext" title='AVCodecContext' data-type='struct AVCodecContext' data-ref="AVCodecContext">AVCodecContext</a> *<dfn class="local col8 decl" id="8avctx" title='avctx' data-type='AVCodecContext *' data-ref="8avctx">avctx</dfn>)</td></tr>
+<tr><th id="71">71</th><td>{</td></tr>
+<tr><th id="72">72</th><td>    <a class="tu ref" href="#validate_thread_parameters" title='validate_thread_parameters' data-use='c' data-ref="validate_thread_parameters">validate_thread_parameters</a>(<a class="local col8 ref" href="#8avctx" title='avctx' data-ref="8avctx">avctx</a>);</td></tr>
+<tr><th id="73">73</th><td></td></tr>
+<tr><th id="74">74</th><td>    <b>if</b> (<a class="local col8 ref" href="#8avctx" title='avctx' data-ref="8avctx">avctx</a>-&gt;<a class="ref" href="avcodec.h.html#AVCodecContext::active_thread_type" title='AVCodecContext::active_thread_type' data-ref="AVCodecContext::active_thread_type">active_thread_type</a>&amp;<a class="macro" href="avcodec.h.html#3119" title="2" data-ref="_M/FF_THREAD_SLICE">FF_THREAD_SLICE</a>)</td></tr>
+<tr><th id="75">75</th><td>        <b>return</b> <a class="ref" href="pthread_internal.h.html#ff_slice_thread_init" title='ff_slice_thread_init' data-ref="ff_slice_thread_init">ff_slice_thread_init</a>(<a class="local col8 ref" href="#8avctx" title='avctx' data-ref="8avctx">avctx</a>);</td></tr>
+<tr><th id="76">76</th><td>    <b>else</b> <b>if</b> (<a class="local col8 ref" href="#8avctx" title='avctx' data-ref="8avctx">avctx</a>-&gt;<a class="ref" href="avcodec.h.html#AVCodecContext::active_thread_type" title='AVCodecContext::active_thread_type' data-ref="AVCodecContext::active_thread_type">active_thread_type</a>&amp;<a class="macro" href="avcodec.h.html#3118" title="1" data-ref="_M/FF_THREAD_FRAME">FF_THREAD_FRAME</a>)</td></tr>
+<tr><th id="77">77</th><td>        <b>return</b> <a class="ref" href="pthread_internal.h.html#ff_frame_thread_init" title='ff_frame_thread_init' data-ref="ff_frame_thread_init">ff_frame_thread_init</a>(<a class="local col8 ref" href="#8avctx" title='avctx' data-ref="8avctx">avctx</a>);</td></tr>
+<tr><th id="78">78</th><td></td></tr>
+<tr><th id="79">79</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="80">80</th><td>}</td></tr>
+<tr><th id="81">81</th><td></td></tr>
+<tr><th id="82">82</th><td><em>void</em> <dfn class="decl def" id="ff_thread_free" title='ff_thread_free' data-ref="ff_thread_free">ff_thread_free</dfn>(<a class="typedef" href="avcodec.h.html#AVCodecContext" title='AVCodecContext' data-type='struct AVCodecContext' data-ref="AVCodecContext">AVCodecContext</a> *<dfn class="local col9 decl" id="9avctx" title='avctx' data-type='AVCodecContext *' data-ref="9avctx">avctx</dfn>)</td></tr>
+<tr><th id="83">83</th><td>{</td></tr>
+<tr><th id="84">84</th><td>    <b>if</b> (<a class="local col9 ref" href="#9avctx" title='avctx' data-ref="9avctx">avctx</a>-&gt;<a class="ref" href="avcodec.h.html#AVCodecContext::active_thread_type" title='AVCodecContext::active_thread_type' data-ref="AVCodecContext::active_thread_type">active_thread_type</a>&amp;<a class="macro" href="avcodec.h.html#3118" title="1" data-ref="_M/FF_THREAD_FRAME">FF_THREAD_FRAME</a>)</td></tr>
+<tr><th id="85">85</th><td>        <a class="ref" href="pthread_internal.h.html#ff_frame_thread_free" title='ff_frame_thread_free' data-ref="ff_frame_thread_free">ff_frame_thread_free</a>(<a class="local col9 ref" href="#9avctx" title='avctx' data-ref="9avctx">avctx</a>, <a class="local col9 ref" href="#9avctx" title='avctx' data-ref="9avctx">avctx</a>-&gt;<a class="ref" href="avcodec.h.html#AVCodecContext::thread_count" title='AVCodecContext::thread_count' data-ref="AVCodecContext::thread_count">thread_count</a>);</td></tr>
+<tr><th id="86">86</th><td>    <b>else</b></td></tr>
+<tr><th id="87">87</th><td>        <a class="ref" href="pthread_internal.h.html#ff_slice_thread_free" title='ff_slice_thread_free' data-ref="ff_slice_thread_free">ff_slice_thread_free</a>(<a class="local col9 ref" href="#9avctx" title='avctx' data-ref="9avctx">avctx</a>);</td></tr>
+<tr><th id="88">88</th><td>}</td></tr>
+<tr><th id="89">89</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

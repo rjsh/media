@@ -1,0 +1,330 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>vp8.h source code [ffmpeg/libavcodec/vp8.h] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="VP8Context,VP8FilterStrength,VP8Frame,VP8Macroblock,VP8ThreadData,VP8intmv,dct_token,inter_mvmode,inter_splitmvmode "/>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavcodec/vp8.h'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavcodec</a>/<a href='vp8.h.html'>vp8.h</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * VP8 compatible video decoder</i></td></tr>
+<tr><th id="3">3</th><td><i> *</i></td></tr>
+<tr><th id="4">4</th><td><i> * Copyright (C) 2010 David Conrad</i></td></tr>
+<tr><th id="5">5</th><td><i> * Copyright (C) 2010 Ronald S. Bultje</i></td></tr>
+<tr><th id="6">6</th><td><i> * Copyright (C) 2010 Fiona Glaser</i></td></tr>
+<tr><th id="7">7</th><td><i> * Copyright (C) 2012 Daniel Kang</i></td></tr>
+<tr><th id="8">8</th><td><i> *</i></td></tr>
+<tr><th id="9">9</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="10">10</th><td><i> *</i></td></tr>
+<tr><th id="11">11</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="12">12</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="13">13</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="14">14</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="15">15</th><td><i> *</i></td></tr>
+<tr><th id="16">16</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="17">17</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="18">18</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="19">19</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="20">20</th><td><i> *</i></td></tr>
+<tr><th id="21">21</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="22">22</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="23">23</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="24">24</th><td><i> */</i></td></tr>
+<tr><th id="25">25</th><td></td></tr>
+<tr><th id="26">26</th><td><u>#<span data-ppcond="26">ifndef</span> <span class="macro" data-ref="_M/AVCODEC_VP8_H">AVCODEC_VP8_H</span></u></td></tr>
+<tr><th id="27">27</th><td><u>#define <dfn class="macro" id="_M/AVCODEC_VP8_H" data-ref="_M/AVCODEC_VP8_H">AVCODEC_VP8_H</dfn></u></td></tr>
+<tr><th id="28">28</th><td></td></tr>
+<tr><th id="29">29</th><td><u>#include <a href="../libavutil/buffer.h.html">"libavutil/buffer.h"</a></u></td></tr>
+<tr><th id="30">30</th><td><u>#include <a href="../libavutil/thread.h.html">"libavutil/thread.h"</a></u></td></tr>
+<tr><th id="31">31</th><td></td></tr>
+<tr><th id="32">32</th><td><u>#include <a href="h264pred.h.html">"h264pred.h"</a></u></td></tr>
+<tr><th id="33">33</th><td><u>#include <a href="thread.h.html">"thread.h"</a></u></td></tr>
+<tr><th id="34">34</th><td><u>#include <a href="vp56.h.html">"vp56.h"</a></u></td></tr>
+<tr><th id="35">35</th><td><u>#include <a href="vp8dsp.h.html">"vp8dsp.h"</a></u></td></tr>
+<tr><th id="36">36</th><td></td></tr>
+<tr><th id="37">37</th><td><u>#define <dfn class="macro" id="_M/VP8_MAX_QUANT" data-ref="_M/VP8_MAX_QUANT">VP8_MAX_QUANT</dfn> 127</u></td></tr>
+<tr><th id="38">38</th><td></td></tr>
+<tr><th id="39">39</th><td><b>enum</b> <dfn class="type def" id="dct_token" title='dct_token' data-ref="dct_token">dct_token</dfn> {</td></tr>
+<tr><th id="40">40</th><td>    <dfn class="enum" id="dct_token::DCT_0" title='dct_token::DCT_0' data-ref="dct_token::DCT_0">DCT_0</dfn>,</td></tr>
+<tr><th id="41">41</th><td>    <dfn class="enum" id="dct_token::DCT_1" title='dct_token::DCT_1' data-ref="dct_token::DCT_1">DCT_1</dfn>,</td></tr>
+<tr><th id="42">42</th><td>    <dfn class="enum" id="dct_token::DCT_2" title='dct_token::DCT_2' data-ref="dct_token::DCT_2">DCT_2</dfn>,</td></tr>
+<tr><th id="43">43</th><td>    <dfn class="enum" id="dct_token::DCT_3" title='dct_token::DCT_3' data-ref="dct_token::DCT_3">DCT_3</dfn>,</td></tr>
+<tr><th id="44">44</th><td>    <dfn class="enum" id="dct_token::DCT_4" title='dct_token::DCT_4' data-ref="dct_token::DCT_4">DCT_4</dfn>,</td></tr>
+<tr><th id="45">45</th><td>    <dfn class="enum" id="dct_token::DCT_CAT1" title='dct_token::DCT_CAT1' data-ref="dct_token::DCT_CAT1">DCT_CAT1</dfn>,</td></tr>
+<tr><th id="46">46</th><td>    <dfn class="enum" id="dct_token::DCT_CAT2" title='dct_token::DCT_CAT2' data-ref="dct_token::DCT_CAT2">DCT_CAT2</dfn>,</td></tr>
+<tr><th id="47">47</th><td>    <dfn class="enum" id="dct_token::DCT_CAT3" title='dct_token::DCT_CAT3' data-ref="dct_token::DCT_CAT3">DCT_CAT3</dfn>,</td></tr>
+<tr><th id="48">48</th><td>    <dfn class="enum" id="dct_token::DCT_CAT4" title='dct_token::DCT_CAT4' data-ref="dct_token::DCT_CAT4">DCT_CAT4</dfn>,</td></tr>
+<tr><th id="49">49</th><td>    <dfn class="enum" id="dct_token::DCT_CAT5" title='dct_token::DCT_CAT5' data-ref="dct_token::DCT_CAT5">DCT_CAT5</dfn>,</td></tr>
+<tr><th id="50">50</th><td>    <dfn class="enum" id="dct_token::DCT_CAT6" title='dct_token::DCT_CAT6' data-ref="dct_token::DCT_CAT6">DCT_CAT6</dfn>,</td></tr>
+<tr><th id="51">51</th><td>    <dfn class="enum" id="dct_token::DCT_EOB" title='dct_token::DCT_EOB' data-ref="dct_token::DCT_EOB">DCT_EOB</dfn>,</td></tr>
+<tr><th id="52">52</th><td></td></tr>
+<tr><th id="53">53</th><td>    <dfn class="enum" id="dct_token::NUM_DCT_TOKENS" title='dct_token::NUM_DCT_TOKENS' data-ref="dct_token::NUM_DCT_TOKENS">NUM_DCT_TOKENS</dfn></td></tr>
+<tr><th id="54">54</th><td>};</td></tr>
+<tr><th id="55">55</th><td></td></tr>
+<tr><th id="56">56</th><td><i>// used to signal 4x4 intra pred in luma MBs</i></td></tr>
+<tr><th id="57">57</th><td><u>#define <dfn class="macro" id="_M/MODE_I4x4" data-ref="_M/MODE_I4x4">MODE_I4x4</dfn> 4</u></td></tr>
+<tr><th id="58">58</th><td></td></tr>
+<tr><th id="59">59</th><td><b>enum</b> <dfn class="type def" id="inter_mvmode" title='inter_mvmode' data-ref="inter_mvmode">inter_mvmode</dfn> {</td></tr>
+<tr><th id="60">60</th><td>    <dfn class="enum" id="inter_mvmode::VP8_MVMODE_ZERO" title='inter_mvmode::VP8_MVMODE_ZERO' data-ref="inter_mvmode::VP8_MVMODE_ZERO">VP8_MVMODE_ZERO</dfn> = <a class="macro" href="#57" title="4" data-ref="_M/MODE_I4x4">MODE_I4x4</a> + <var>1</var>,</td></tr>
+<tr><th id="61">61</th><td>    <dfn class="enum" id="inter_mvmode::VP8_MVMODE_MV" title='inter_mvmode::VP8_MVMODE_MV' data-ref="inter_mvmode::VP8_MVMODE_MV">VP8_MVMODE_MV</dfn>,</td></tr>
+<tr><th id="62">62</th><td>    <dfn class="enum" id="inter_mvmode::VP8_MVMODE_SPLIT" title='inter_mvmode::VP8_MVMODE_SPLIT' data-ref="inter_mvmode::VP8_MVMODE_SPLIT">VP8_MVMODE_SPLIT</dfn></td></tr>
+<tr><th id="63">63</th><td>};</td></tr>
+<tr><th id="64">64</th><td></td></tr>
+<tr><th id="65">65</th><td><b>enum</b> <dfn class="type def" id="inter_splitmvmode" title='inter_splitmvmode' data-ref="inter_splitmvmode">inter_splitmvmode</dfn> {</td></tr>
+<tr><th id="66">66</th><td>    <dfn class="enum" id="inter_splitmvmode::VP8_SPLITMVMODE_16x8" title='inter_splitmvmode::VP8_SPLITMVMODE_16x8' data-ref="inter_splitmvmode::VP8_SPLITMVMODE_16x8">VP8_SPLITMVMODE_16x8</dfn> = <var>0</var>,    <i class="doc">///&lt; 2 16x8 blocks (vertical)</i></td></tr>
+<tr><th id="67">67</th><td>    <dfn class="enum" id="inter_splitmvmode::VP8_SPLITMVMODE_8x16" title='inter_splitmvmode::VP8_SPLITMVMODE_8x16' data-ref="inter_splitmvmode::VP8_SPLITMVMODE_8x16">VP8_SPLITMVMODE_8x16</dfn>,        <i class="doc">///&lt; 2 8x16 blocks (horizontal)</i></td></tr>
+<tr><th id="68">68</th><td>    <dfn class="enum" id="inter_splitmvmode::VP8_SPLITMVMODE_8x8" title='inter_splitmvmode::VP8_SPLITMVMODE_8x8' data-ref="inter_splitmvmode::VP8_SPLITMVMODE_8x8">VP8_SPLITMVMODE_8x8</dfn>,         <i class="doc">///&lt; 2x2 blocks of 8x8px each</i></td></tr>
+<tr><th id="69">69</th><td>    <dfn class="enum" id="inter_splitmvmode::VP8_SPLITMVMODE_4x4" title='inter_splitmvmode::VP8_SPLITMVMODE_4x4' data-ref="inter_splitmvmode::VP8_SPLITMVMODE_4x4">VP8_SPLITMVMODE_4x4</dfn>,         <i class="doc">///&lt; 4x4 blocks of 4x4px each</i></td></tr>
+<tr><th id="70">70</th><td>    <dfn class="enum" id="inter_splitmvmode::VP8_SPLITMVMODE_NONE" title='inter_splitmvmode::VP8_SPLITMVMODE_NONE' data-ref="inter_splitmvmode::VP8_SPLITMVMODE_NONE">VP8_SPLITMVMODE_NONE</dfn>,        <i class="doc">///&lt; (only used in prediction) no split MVs</i></td></tr>
+<tr><th id="71">71</th><td>};</td></tr>
+<tr><th id="72">72</th><td></td></tr>
+<tr><th id="73">73</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="VP8FilterStrength" title='VP8FilterStrength' data-ref="VP8FilterStrength"><a class="type" href="#VP8FilterStrength" title='VP8FilterStrength' data-ref="VP8FilterStrength">VP8FilterStrength</a></dfn> {</td></tr>
+<tr><th id="74">74</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="VP8FilterStrength::filter_level" title='VP8FilterStrength::filter_level' data-ref="VP8FilterStrength::filter_level">filter_level</dfn>;</td></tr>
+<tr><th id="75">75</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="VP8FilterStrength::inner_limit" title='VP8FilterStrength::inner_limit' data-ref="VP8FilterStrength::inner_limit">inner_limit</dfn>;</td></tr>
+<tr><th id="76">76</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="VP8FilterStrength::inner_filter" title='VP8FilterStrength::inner_filter' data-ref="VP8FilterStrength::inner_filter">inner_filter</dfn>;</td></tr>
+<tr><th id="77">77</th><td>} <dfn class="typedef" id="VP8FilterStrength" title='VP8FilterStrength' data-type='struct VP8FilterStrength' data-ref="VP8FilterStrength">VP8FilterStrength</dfn>;</td></tr>
+<tr><th id="78">78</th><td></td></tr>
+<tr><th id="79">79</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="VP8Macroblock" title='VP8Macroblock' data-ref="VP8Macroblock"><a class="type" href="#VP8Macroblock" title='VP8Macroblock' data-ref="VP8Macroblock">VP8Macroblock</a></dfn> {</td></tr>
+<tr><th id="80">80</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="VP8Macroblock::skip" title='VP8Macroblock::skip' data-ref="VP8Macroblock::skip">skip</dfn>;</td></tr>
+<tr><th id="81">81</th><td>    <i>// TODO: make it possible to check for at least (i4x4 or split_mv)</i></td></tr>
+<tr><th id="82">82</th><td><i>    // in one op. are others needed?</i></td></tr>
+<tr><th id="83">83</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="VP8Macroblock::mode" title='VP8Macroblock::mode' data-ref="VP8Macroblock::mode">mode</dfn>;</td></tr>
+<tr><th id="84">84</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="VP8Macroblock::ref_frame" title='VP8Macroblock::ref_frame' data-ref="VP8Macroblock::ref_frame">ref_frame</dfn>;</td></tr>
+<tr><th id="85">85</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="VP8Macroblock::partitioning" title='VP8Macroblock::partitioning' data-ref="VP8Macroblock::partitioning">partitioning</dfn>;</td></tr>
+<tr><th id="86">86</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="VP8Macroblock::chroma_pred_mode" title='VP8Macroblock::chroma_pred_mode' data-ref="VP8Macroblock::chroma_pred_mode">chroma_pred_mode</dfn>;</td></tr>
+<tr><th id="87">87</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="VP8Macroblock::segment" title='VP8Macroblock::segment' data-ref="VP8Macroblock::segment">segment</dfn>;</td></tr>
+<tr><th id="88">88</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="VP8Macroblock::intra4x4_pred_mode_mb" title='VP8Macroblock::intra4x4_pred_mode_mb' data-ref="VP8Macroblock::intra4x4_pred_mode_mb">intra4x4_pred_mode_mb</dfn>[<var>16</var>];</td></tr>
+<tr><th id="89">89</th><td>    <a class="macro" href="../libavutil/mem.h.html#101" title="uint8_t __attribute__ ((aligned (4))) intra4x4_pred_mode_top" data-ref="_M/DECLARE_ALIGNED">DECLARE_ALIGNED</a>(<var>4</var>, <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a>, <dfn class="decl" id="VP8Macroblock::intra4x4_pred_mode_top" title='VP8Macroblock::intra4x4_pred_mode_top' data-ref="VP8Macroblock::intra4x4_pred_mode_top">intra4x4_pred_mode_top</dfn>)[<var>4</var>];</td></tr>
+<tr><th id="90">90</th><td>    <a class="typedef" href="vp56.h.html#VP56mv" title='VP56mv' data-type='struct VP56mv' data-ref="VP56mv">VP56mv</a> <dfn class="decl" id="VP8Macroblock::mv" title='VP8Macroblock::mv' data-ref="VP8Macroblock::mv">mv</dfn>;</td></tr>
+<tr><th id="91">91</th><td>    <a class="typedef" href="vp56.h.html#VP56mv" title='VP56mv' data-type='struct VP56mv' data-ref="VP56mv">VP56mv</a> <dfn class="decl" id="VP8Macroblock::bmv" title='VP8Macroblock::bmv' data-ref="VP8Macroblock::bmv">bmv</dfn>[<var>16</var>];</td></tr>
+<tr><th id="92">92</th><td>} <dfn class="typedef" id="VP8Macroblock" title='VP8Macroblock' data-type='struct VP8Macroblock' data-ref="VP8Macroblock">VP8Macroblock</dfn>;</td></tr>
+<tr><th id="93">93</th><td></td></tr>
+<tr><th id="94">94</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="VP8ThreadData" title='VP8ThreadData' data-ref="VP8ThreadData"><a class="type" href="#VP8ThreadData" title='VP8ThreadData' data-ref="VP8ThreadData">VP8ThreadData</a></dfn> {</td></tr>
+<tr><th id="95">95</th><td>    <a class="macro" href="../libavutil/mem.h.html#101" title="int16_t __attribute__ ((aligned (16))) block" data-ref="_M/DECLARE_ALIGNED">DECLARE_ALIGNED</a>(<var>16</var>, <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a>, <dfn class="decl" id="VP8ThreadData::block" title='VP8ThreadData::block' data-ref="VP8ThreadData::block">block</dfn>)[<var>6</var>][<var>4</var>][<var>16</var>];</td></tr>
+<tr><th id="96">96</th><td>    <a class="macro" href="../libavutil/mem.h.html#101" title="int16_t __attribute__ ((aligned (16))) block_dc" data-ref="_M/DECLARE_ALIGNED">DECLARE_ALIGNED</a>(<var>16</var>, <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a>, <dfn class="decl" id="VP8ThreadData::block_dc" title='VP8ThreadData::block_dc' data-ref="VP8ThreadData::block_dc">block_dc</dfn>)[<var>16</var>];</td></tr>
+<tr><th id="97">97</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="98">98</th><td><i class="doc">     * This is the index plus one of the last non-zero coeff</i></td></tr>
+<tr><th id="99">99</th><td><i class="doc">     * for each of the blocks in the current macroblock.</i></td></tr>
+<tr><th id="100">100</th><td><i class="doc">     * So, 0 -&gt; no coeffs</i></td></tr>
+<tr><th id="101">101</th><td><i class="doc">     *     1 -&gt; dc-only (special transform)</i></td></tr>
+<tr><th id="102">102</th><td><i class="doc">     *     2+-&gt; full transform</i></td></tr>
+<tr><th id="103">103</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="104">104</th><td>    <a class="macro" href="../libavutil/mem.h.html#101" title="uint8_t __attribute__ ((aligned (16))) non_zero_count_cache" data-ref="_M/DECLARE_ALIGNED">DECLARE_ALIGNED</a>(<var>16</var>, <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a>, <dfn class="decl" id="VP8ThreadData::non_zero_count_cache" title='VP8ThreadData::non_zero_count_cache' data-ref="VP8ThreadData::non_zero_count_cache">non_zero_count_cache</dfn>)[<var>6</var>][<var>4</var>];</td></tr>
+<tr><th id="105">105</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="106">106</th><td><i class="doc">     * For coeff decode, we need to know whether the above block had non-zero</i></td></tr>
+<tr><th id="107">107</th><td><i class="doc">     * coefficients. This means for each macroblock, we need data for 4 luma</i></td></tr>
+<tr><th id="108">108</th><td><i class="doc">     * blocks, 2 u blocks, 2 v blocks, and the luma dc block, for a total of 9</i></td></tr>
+<tr><th id="109">109</th><td><i class="doc">     * per macroblock. We keep the last row in top_nnz.</i></td></tr>
+<tr><th id="110">110</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="111">111</th><td>    <a class="macro" href="../libavutil/mem.h.html#101" title="uint8_t __attribute__ ((aligned (8))) left_nnz" data-ref="_M/DECLARE_ALIGNED">DECLARE_ALIGNED</a>(<var>8</var>, <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a>, <dfn class="decl" id="VP8ThreadData::left_nnz" title='VP8ThreadData::left_nnz' data-ref="VP8ThreadData::left_nnz">left_nnz</dfn>)[<var>9</var>];</td></tr>
+<tr><th id="112">112</th><td>    <em>int</em> <dfn class="decl" id="VP8ThreadData::thread_nr" title='VP8ThreadData::thread_nr' data-ref="VP8ThreadData::thread_nr">thread_nr</dfn>;</td></tr>
+<tr><th id="113">113</th><td><u>#<span data-ppcond="113">if</span> <a class="macro" href="../config.h.html#386" title="1" data-ref="_M/HAVE_THREADS">HAVE_THREADS</a></u></td></tr>
+<tr><th id="114">114</th><td>    <a class="typedef" href="../../include/x86_64-linux-gnu/bits/pthreadtypes.h.html#pthread_mutex_t" title='pthread_mutex_t' data-type='union pthread_mutex_t' data-ref="pthread_mutex_t">pthread_mutex_t</a> <dfn class="decl" id="VP8ThreadData::lock" title='VP8ThreadData::lock' data-ref="VP8ThreadData::lock">lock</dfn>;</td></tr>
+<tr><th id="115">115</th><td>    <a class="typedef" href="../../include/x86_64-linux-gnu/bits/pthreadtypes.h.html#pthread_cond_t" title='pthread_cond_t' data-type='union pthread_cond_t' data-ref="pthread_cond_t">pthread_cond_t</a> <dfn class="decl" id="VP8ThreadData::cond" title='VP8ThreadData::cond' data-ref="VP8ThreadData::cond">cond</dfn>;</td></tr>
+<tr><th id="116">116</th><td><u>#<span data-ppcond="113">endif</span></u></td></tr>
+<tr><th id="117">117</th><td>    <em>int</em> <dfn class="decl" id="VP8ThreadData::thread_mb_pos" title='VP8ThreadData::thread_mb_pos' data-ref="VP8ThreadData::thread_mb_pos">thread_mb_pos</dfn>; <i>// (mb_y &lt;&lt; 16) | (mb_x &amp; 0xFFFF)</i></td></tr>
+<tr><th id="118">118</th><td>    <em>int</em> <dfn class="decl" id="VP8ThreadData::wait_mb_pos" title='VP8ThreadData::wait_mb_pos' data-ref="VP8ThreadData::wait_mb_pos">wait_mb_pos</dfn>; <i>// What the current thread is waiting on.</i></td></tr>
+<tr><th id="119">119</th><td></td></tr>
+<tr><th id="120">120</th><td><u>#define <dfn class="macro" id="_M/EDGE_EMU_LINESIZE" data-ref="_M/EDGE_EMU_LINESIZE">EDGE_EMU_LINESIZE</dfn> 32</u></td></tr>
+<tr><th id="121">121</th><td>    <a class="macro" href="../libavutil/mem.h.html#101" title="uint8_t __attribute__ ((aligned (16))) edge_emu_buffer" data-ref="_M/DECLARE_ALIGNED">DECLARE_ALIGNED</a>(<var>16</var>, <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a>, <dfn class="decl" id="VP8ThreadData::edge_emu_buffer" title='VP8ThreadData::edge_emu_buffer' data-ref="VP8ThreadData::edge_emu_buffer">edge_emu_buffer</dfn>)[<var>21</var> * <a class="macro" href="#120" title="32" data-ref="_M/EDGE_EMU_LINESIZE">EDGE_EMU_LINESIZE</a>];</td></tr>
+<tr><th id="122">122</th><td>    <a class="typedef" href="#VP8FilterStrength" title='VP8FilterStrength' data-type='struct VP8FilterStrength' data-ref="VP8FilterStrength">VP8FilterStrength</a> *<dfn class="decl" id="VP8ThreadData::filter_strength" title='VP8ThreadData::filter_strength' data-ref="VP8ThreadData::filter_strength">filter_strength</dfn>;</td></tr>
+<tr><th id="123">123</th><td>} <dfn class="typedef" id="VP8ThreadData" title='VP8ThreadData' data-type='struct VP8ThreadData' data-ref="VP8ThreadData">VP8ThreadData</dfn>;</td></tr>
+<tr><th id="124">124</th><td></td></tr>
+<tr><th id="125">125</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="VP8Frame" title='VP8Frame' data-ref="VP8Frame"><a class="type" href="#VP8Frame" title='VP8Frame' data-ref="VP8Frame">VP8Frame</a></dfn> {</td></tr>
+<tr><th id="126">126</th><td>    <a class="typedef" href="thread.h.html#ThreadFrame" title='ThreadFrame' data-type='struct ThreadFrame' data-ref="ThreadFrame">ThreadFrame</a> <dfn class="decl" id="VP8Frame::tf" title='VP8Frame::tf' data-ref="VP8Frame::tf">tf</dfn>;</td></tr>
+<tr><th id="127">127</th><td>    <a class="typedef" href="../libavutil/buffer.h.html#AVBufferRef" title='AVBufferRef' data-type='struct AVBufferRef' data-ref="AVBufferRef">AVBufferRef</a> *<dfn class="decl" id="VP8Frame::seg_map" title='VP8Frame::seg_map' data-ref="VP8Frame::seg_map">seg_map</dfn>;</td></tr>
+<tr><th id="128">128</th><td>} <dfn class="typedef" id="VP8Frame" title='VP8Frame' data-type='struct VP8Frame' data-ref="VP8Frame">VP8Frame</dfn>;</td></tr>
+<tr><th id="129">129</th><td></td></tr>
+<tr><th id="130">130</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="VP8intmv" title='VP8intmv' data-ref="VP8intmv"><a class="type" href="#VP8intmv" title='VP8intmv' data-ref="VP8intmv">VP8intmv</a></dfn> {</td></tr>
+<tr><th id="131">131</th><td>    <em>int</em> <dfn class="decl" id="VP8intmv::x" title='VP8intmv::x' data-ref="VP8intmv::x">x</dfn>;</td></tr>
+<tr><th id="132">132</th><td>    <em>int</em> <dfn class="decl" id="VP8intmv::y" title='VP8intmv::y' data-ref="VP8intmv::y">y</dfn>;</td></tr>
+<tr><th id="133">133</th><td>} <dfn class="typedef" id="VP8intmv" title='VP8intmv' data-type='struct VP8intmv' data-ref="VP8intmv">VP8intmv</dfn>;</td></tr>
+<tr><th id="134">134</th><td></td></tr>
+<tr><th id="135">135</th><td><u>#define <dfn class="macro" id="_M/MAX_THREADS" data-ref="_M/MAX_THREADS">MAX_THREADS</dfn> 8</u></td></tr>
+<tr><th id="136">136</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="VP8Context" title='VP8Context' data-ref="VP8Context"><a class="type" href="#VP8Context" title='VP8Context' data-ref="VP8Context">VP8Context</a></dfn> {</td></tr>
+<tr><th id="137">137</th><td>    <a class="typedef" href="#VP8ThreadData" title='VP8ThreadData' data-type='struct VP8ThreadData' data-ref="VP8ThreadData">VP8ThreadData</a> *<dfn class="decl" id="VP8Context::thread_data" title='VP8Context::thread_data' data-ref="VP8Context::thread_data">thread_data</dfn>;</td></tr>
+<tr><th id="138">138</th><td>    <a class="typedef" href="avcodec.h.html#AVCodecContext" title='AVCodecContext' data-type='struct AVCodecContext' data-ref="AVCodecContext">AVCodecContext</a> *<dfn class="decl" id="VP8Context::avctx" title='VP8Context::avctx' data-ref="VP8Context::avctx">avctx</dfn>;</td></tr>
+<tr><th id="139">139</th><td>    <a class="typedef" href="#VP8Frame" title='VP8Frame' data-type='struct VP8Frame' data-ref="VP8Frame">VP8Frame</a> *<dfn class="decl" id="VP8Context::framep" title='VP8Context::framep' data-ref="VP8Context::framep">framep</dfn>[<var>4</var>];</td></tr>
+<tr><th id="140">140</th><td>    <a class="typedef" href="#VP8Frame" title='VP8Frame' data-type='struct VP8Frame' data-ref="VP8Frame">VP8Frame</a> *<dfn class="decl" id="VP8Context::next_framep" title='VP8Context::next_framep' data-ref="VP8Context::next_framep">next_framep</dfn>[<var>4</var>];</td></tr>
+<tr><th id="141">141</th><td>    <a class="typedef" href="#VP8Frame" title='VP8Frame' data-type='struct VP8Frame' data-ref="VP8Frame">VP8Frame</a> *<dfn class="decl" id="VP8Context::curframe" title='VP8Context::curframe' data-ref="VP8Context::curframe">curframe</dfn>;</td></tr>
+<tr><th id="142">142</th><td>    <a class="typedef" href="#VP8Frame" title='VP8Frame' data-type='struct VP8Frame' data-ref="VP8Frame">VP8Frame</a> *<dfn class="decl" id="VP8Context::prev_frame" title='VP8Context::prev_frame' data-ref="VP8Context::prev_frame">prev_frame</dfn>;</td></tr>
+<tr><th id="143">143</th><td></td></tr>
+<tr><th id="144">144</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> <dfn class="decl" id="VP8Context::mb_width" title='VP8Context::mb_width' data-ref="VP8Context::mb_width">mb_width</dfn>;   <i>/* number of horizontal MB */</i></td></tr>
+<tr><th id="145">145</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> <dfn class="decl" id="VP8Context::mb_height" title='VP8Context::mb_height' data-ref="VP8Context::mb_height">mb_height</dfn>;  <i>/* number of vertical MB */</i></td></tr>
+<tr><th id="146">146</th><td>    <em>int</em> <dfn class="decl" id="VP8Context::linesize" title='VP8Context::linesize' data-ref="VP8Context::linesize">linesize</dfn>;</td></tr>
+<tr><th id="147">147</th><td>    <em>int</em> <dfn class="decl" id="VP8Context::uvlinesize" title='VP8Context::uvlinesize' data-ref="VP8Context::uvlinesize">uvlinesize</dfn>;</td></tr>
+<tr><th id="148">148</th><td></td></tr>
+<tr><th id="149">149</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="VP8Context::keyframe" title='VP8Context::keyframe' data-ref="VP8Context::keyframe">keyframe</dfn>;</td></tr>
+<tr><th id="150">150</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="VP8Context::deblock_filter" title='VP8Context::deblock_filter' data-ref="VP8Context::deblock_filter">deblock_filter</dfn>;</td></tr>
+<tr><th id="151">151</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="VP8Context::mbskip_enabled" title='VP8Context::mbskip_enabled' data-ref="VP8Context::mbskip_enabled">mbskip_enabled</dfn>;</td></tr>
+<tr><th id="152">152</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="VP8Context::profile" title='VP8Context::profile' data-ref="VP8Context::profile">profile</dfn>;</td></tr>
+<tr><th id="153">153</th><td>    <a class="typedef" href="#VP8intmv" title='VP8intmv' data-type='struct VP8intmv' data-ref="VP8intmv">VP8intmv</a> <dfn class="decl" id="VP8Context::mv_min" title='VP8Context::mv_min' data-ref="VP8Context::mv_min">mv_min</dfn>;</td></tr>
+<tr><th id="154">154</th><td>    <a class="typedef" href="#VP8intmv" title='VP8intmv' data-type='struct VP8intmv' data-ref="VP8intmv">VP8intmv</a> <dfn class="decl" id="VP8Context::mv_max" title='VP8Context::mv_max' data-ref="VP8Context::mv_max">mv_max</dfn>;</td></tr>
+<tr><th id="155">155</th><td></td></tr>
+<tr><th id="156">156</th><td>    <a class="typedef" href="../../include/stdint.h.html#int8_t" title='int8_t' data-type='signed char' data-ref="int8_t">int8_t</a> <dfn class="decl" id="VP8Context::sign_bias" title='VP8Context::sign_bias' data-ref="VP8Context::sign_bias">sign_bias</dfn>[<var>4</var>]; <i class="doc">///&lt; one state [0, 1] per ref frame type</i></td></tr>
+<tr><th id="157">157</th><td>    <em>int</em> <dfn class="decl" id="VP8Context::ref_count" title='VP8Context::ref_count' data-ref="VP8Context::ref_count">ref_count</dfn>[<var>3</var>];</td></tr>
+<tr><th id="158">158</th><td></td></tr>
+<tr><th id="159">159</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="160">160</th><td><i class="doc">     * Base parameters for segmentation, i.e. per-macroblock parameters.</i></td></tr>
+<tr><th id="161">161</th><td><i class="doc">     * These must be kept unchanged even if segmentation is not used for</i></td></tr>
+<tr><th id="162">162</th><td><i class="doc">     * a frame, since the values persist between interframes.</i></td></tr>
+<tr><th id="163">163</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="164">164</th><td>    <b>struct</b> {</td></tr>
+<tr><th id="165">165</th><td>        <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="VP8Context::{anonymous}::enabled" title='VP8Context::&lt;anonymous struct&gt;::enabled' data-ref="VP8Context::{anonymous}::enabled">enabled</dfn>;</td></tr>
+<tr><th id="166">166</th><td>        <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="VP8Context::{anonymous}::absolute_vals" title='VP8Context::&lt;anonymous struct&gt;::absolute_vals' data-ref="VP8Context::{anonymous}::absolute_vals">absolute_vals</dfn>;</td></tr>
+<tr><th id="167">167</th><td>        <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="VP8Context::{anonymous}::update_map" title='VP8Context::&lt;anonymous struct&gt;::update_map' data-ref="VP8Context::{anonymous}::update_map">update_map</dfn>;</td></tr>
+<tr><th id="168">168</th><td>        <a class="typedef" href="../../include/stdint.h.html#int8_t" title='int8_t' data-type='signed char' data-ref="int8_t">int8_t</a> <dfn class="decl" id="VP8Context::{anonymous}::base_quant" title='VP8Context::&lt;anonymous struct&gt;::base_quant' data-ref="VP8Context::{anonymous}::base_quant">base_quant</dfn>[<var>4</var>];</td></tr>
+<tr><th id="169">169</th><td>        <a class="typedef" href="../../include/stdint.h.html#int8_t" title='int8_t' data-type='signed char' data-ref="int8_t">int8_t</a> <dfn class="decl" id="VP8Context::{anonymous}::filter_level" title='VP8Context::&lt;anonymous struct&gt;::filter_level' data-ref="VP8Context::{anonymous}::filter_level">filter_level</dfn>[<var>4</var>];     <i class="doc">///&lt; base loop filter level</i></td></tr>
+<tr><th id="170">170</th><td>    } <dfn class="decl" id="VP8Context::segmentation" title='VP8Context::segmentation' data-ref="VP8Context::segmentation">segmentation</dfn>;</td></tr>
+<tr><th id="171">171</th><td></td></tr>
+<tr><th id="172">172</th><td>    <b>struct</b> {</td></tr>
+<tr><th id="173">173</th><td>        <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="VP8Context::{anonymous}::simple" title='VP8Context::&lt;anonymous struct&gt;::simple' data-ref="VP8Context::{anonymous}::simple">simple</dfn>;</td></tr>
+<tr><th id="174">174</th><td>        <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="VP8Context::{anonymous}::level" title='VP8Context::&lt;anonymous struct&gt;::level' data-ref="VP8Context::{anonymous}::level">level</dfn>;</td></tr>
+<tr><th id="175">175</th><td>        <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="VP8Context::{anonymous}::sharpness" title='VP8Context::&lt;anonymous struct&gt;::sharpness' data-ref="VP8Context::{anonymous}::sharpness">sharpness</dfn>;</td></tr>
+<tr><th id="176">176</th><td>    } <dfn class="decl" id="VP8Context::filter" title='VP8Context::filter' data-ref="VP8Context::filter">filter</dfn>;</td></tr>
+<tr><th id="177">177</th><td></td></tr>
+<tr><th id="178">178</th><td>    <a class="typedef" href="#VP8Macroblock" title='VP8Macroblock' data-type='struct VP8Macroblock' data-ref="VP8Macroblock">VP8Macroblock</a> *<dfn class="decl" id="VP8Context::macroblocks" title='VP8Context::macroblocks' data-ref="VP8Context::macroblocks">macroblocks</dfn>;</td></tr>
+<tr><th id="179">179</th><td></td></tr>
+<tr><th id="180">180</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="decl" id="VP8Context::intra4x4_pred_mode_top" title='VP8Context::intra4x4_pred_mode_top' data-ref="VP8Context::intra4x4_pred_mode_top">intra4x4_pred_mode_top</dfn>;</td></tr>
+<tr><th id="181">181</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="VP8Context::intra4x4_pred_mode_left" title='VP8Context::intra4x4_pred_mode_left' data-ref="VP8Context::intra4x4_pred_mode_left">intra4x4_pred_mode_left</dfn>[<var>4</var>];</td></tr>
+<tr><th id="182">182</th><td></td></tr>
+<tr><th id="183">183</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="184">184</th><td><i class="doc">     * Macroblocks can have one of 4 different quants in a frame when</i></td></tr>
+<tr><th id="185">185</th><td><i class="doc">     * segmentation is enabled.</i></td></tr>
+<tr><th id="186">186</th><td><i class="doc">     * If segmentation is disabled, only the first segment's values are used.</i></td></tr>
+<tr><th id="187">187</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="188">188</th><td>    <b>struct</b> {</td></tr>
+<tr><th id="189">189</th><td>        <i>// [0] - DC qmul  [1] - AC qmul</i></td></tr>
+<tr><th id="190">190</th><td>        <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> <dfn class="decl" id="VP8Context::{anonymous}::luma_qmul" title='VP8Context::&lt;anonymous struct&gt;::luma_qmul' data-ref="VP8Context::{anonymous}::luma_qmul">luma_qmul</dfn>[<var>2</var>];</td></tr>
+<tr><th id="191">191</th><td>        <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> <dfn class="decl" id="VP8Context::{anonymous}::luma_dc_qmul" title='VP8Context::&lt;anonymous struct&gt;::luma_dc_qmul' data-ref="VP8Context::{anonymous}::luma_dc_qmul">luma_dc_qmul</dfn>[<var>2</var>];    <i class="doc">///&lt; luma dc-only block quant</i></td></tr>
+<tr><th id="192">192</th><td>        <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> <dfn class="decl" id="VP8Context::{anonymous}::chroma_qmul" title='VP8Context::&lt;anonymous struct&gt;::chroma_qmul' data-ref="VP8Context::{anonymous}::chroma_qmul">chroma_qmul</dfn>[<var>2</var>];</td></tr>
+<tr><th id="193">193</th><td>    } <dfn class="decl" id="VP8Context::qmat" title='VP8Context::qmat' data-ref="VP8Context::qmat">qmat</dfn>[<var>4</var>];</td></tr>
+<tr><th id="194">194</th><td></td></tr>
+<tr><th id="195">195</th><td>    <b>struct</b> {</td></tr>
+<tr><th id="196">196</th><td>        <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="VP8Context::{anonymous}::enabled" title='VP8Context::&lt;anonymous struct&gt;::enabled' data-ref="VP8Context::{anonymous}::enabled">enabled</dfn>;    <i class="doc">///&lt; whether each mb can have a different strength based on mode/ref</i></td></tr>
+<tr><th id="197">197</th><td></td></tr>
+<tr><th id="198">198</th><td>        <i class="doc">/**</i></td></tr>
+<tr><th id="199">199</th><td><i class="doc">         * filter strength adjustment for the following macroblock modes:</i></td></tr>
+<tr><th id="200">200</th><td><i class="doc">         * [0-3] - i16x16 (always zero)</i></td></tr>
+<tr><th id="201">201</th><td><i class="doc">         * [4]   - i4x4</i></td></tr>
+<tr><th id="202">202</th><td><i class="doc">         * [5]   - zero mv</i></td></tr>
+<tr><th id="203">203</th><td><i class="doc">         * [6]   - inter modes except for zero or split mv</i></td></tr>
+<tr><th id="204">204</th><td><i class="doc">         * [7]   - split mv</i></td></tr>
+<tr><th id="205">205</th><td><i class="doc">         *  i16x16 modes never have any adjustment</i></td></tr>
+<tr><th id="206">206</th><td><i class="doc">         */</i></td></tr>
+<tr><th id="207">207</th><td>        <a class="typedef" href="../../include/stdint.h.html#int8_t" title='int8_t' data-type='signed char' data-ref="int8_t">int8_t</a> <dfn class="decl" id="VP8Context::{anonymous}::mode" title='VP8Context::&lt;anonymous struct&gt;::mode' data-ref="VP8Context::{anonymous}::mode">mode</dfn>[<a class="enum" href="#inter_mvmode::VP8_MVMODE_SPLIT" title='inter_mvmode::VP8_MVMODE_SPLIT' data-ref="inter_mvmode::VP8_MVMODE_SPLIT">VP8_MVMODE_SPLIT</a> + <var>1</var>];</td></tr>
+<tr><th id="208">208</th><td></td></tr>
+<tr><th id="209">209</th><td>        <i class="doc">/**</i></td></tr>
+<tr><th id="210">210</th><td><i class="doc">         * filter strength adjustment for macroblocks that reference:</i></td></tr>
+<tr><th id="211">211</th><td><i class="doc">         * [0] - intra / VP56_FRAME_CURRENT</i></td></tr>
+<tr><th id="212">212</th><td><i class="doc">         * [1] - VP56_FRAME_PREVIOUS</i></td></tr>
+<tr><th id="213">213</th><td><i class="doc">         * [2] - VP56_FRAME_GOLDEN</i></td></tr>
+<tr><th id="214">214</th><td><i class="doc">         * [3] - altref / VP56_FRAME_GOLDEN2</i></td></tr>
+<tr><th id="215">215</th><td><i class="doc">         */</i></td></tr>
+<tr><th id="216">216</th><td>        <a class="typedef" href="../../include/stdint.h.html#int8_t" title='int8_t' data-type='signed char' data-ref="int8_t">int8_t</a> <dfn class="decl" id="VP8Context::{anonymous}::ref" title='VP8Context::&lt;anonymous struct&gt;::ref' data-ref="VP8Context::{anonymous}::ref">ref</dfn>[<var>4</var>];</td></tr>
+<tr><th id="217">217</th><td>    } <dfn class="decl" id="VP8Context::lf_delta" title='VP8Context::lf_delta' data-ref="VP8Context::lf_delta">lf_delta</dfn>;</td></tr>
+<tr><th id="218">218</th><td></td></tr>
+<tr><th id="219">219</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> (*<dfn class="decl" id="VP8Context::top_border" title='VP8Context::top_border' data-ref="VP8Context::top_border">top_border</dfn>)[<var>16</var> + <var>8</var> + <var>8</var>];</td></tr>
+<tr><th id="220">220</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> (*<dfn class="decl" id="VP8Context::top_nnz" title='VP8Context::top_nnz' data-ref="VP8Context::top_nnz">top_nnz</dfn>)[<var>9</var>];</td></tr>
+<tr><th id="221">221</th><td></td></tr>
+<tr><th id="222">222</th><td>    <a class="typedef" href="vp56.h.html#VP56RangeCoder" title='VP56RangeCoder' data-type='struct VP56RangeCoder' data-ref="VP56RangeCoder">VP56RangeCoder</a> <dfn class="decl" id="VP8Context::c" title='VP8Context::c' data-ref="VP8Context::c">c</dfn>;   <i class="doc">///&lt; header context, includes mb modes and motion vectors</i></td></tr>
+<tr><th id="223">223</th><td></td></tr>
+<tr><th id="224">224</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="225">225</th><td><i class="doc">     * These are all of the updatable probabilities for binary decisions.</i></td></tr>
+<tr><th id="226">226</th><td><i class="doc">     * They are only implicitly reset on keyframes, making it quite likely</i></td></tr>
+<tr><th id="227">227</th><td><i class="doc">     * for an interframe to desync if a prior frame's header was corrupt</i></td></tr>
+<tr><th id="228">228</th><td><i class="doc">     * or missing outright!</i></td></tr>
+<tr><th id="229">229</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="230">230</th><td>    <b>struct</b> {</td></tr>
+<tr><th id="231">231</th><td>        <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="VP8Context::{anonymous}::segmentid" title='VP8Context::&lt;anonymous struct&gt;::segmentid' data-ref="VP8Context::{anonymous}::segmentid">segmentid</dfn>[<var>3</var>];</td></tr>
+<tr><th id="232">232</th><td>        <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="VP8Context::{anonymous}::mbskip" title='VP8Context::&lt;anonymous struct&gt;::mbskip' data-ref="VP8Context::{anonymous}::mbskip">mbskip</dfn>;</td></tr>
+<tr><th id="233">233</th><td>        <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="VP8Context::{anonymous}::intra" title='VP8Context::&lt;anonymous struct&gt;::intra' data-ref="VP8Context::{anonymous}::intra">intra</dfn>;</td></tr>
+<tr><th id="234">234</th><td>        <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="VP8Context::{anonymous}::last" title='VP8Context::&lt;anonymous struct&gt;::last' data-ref="VP8Context::{anonymous}::last">last</dfn>;</td></tr>
+<tr><th id="235">235</th><td>        <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="VP8Context::{anonymous}::golden" title='VP8Context::&lt;anonymous struct&gt;::golden' data-ref="VP8Context::{anonymous}::golden">golden</dfn>;</td></tr>
+<tr><th id="236">236</th><td>        <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="VP8Context::{anonymous}::pred16x16" title='VP8Context::&lt;anonymous struct&gt;::pred16x16' data-ref="VP8Context::{anonymous}::pred16x16">pred16x16</dfn>[<var>4</var>];</td></tr>
+<tr><th id="237">237</th><td>        <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="VP8Context::{anonymous}::pred8x8c" title='VP8Context::&lt;anonymous struct&gt;::pred8x8c' data-ref="VP8Context::{anonymous}::pred8x8c">pred8x8c</dfn>[<var>3</var>];</td></tr>
+<tr><th id="238">238</th><td>        <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="VP8Context::{anonymous}::token" title='VP8Context::&lt;anonymous struct&gt;::token' data-ref="VP8Context::{anonymous}::token">token</dfn>[<var>4</var>][<var>16</var>][<var>3</var>][<a class="enum" href="#dct_token::NUM_DCT_TOKENS" title='dct_token::NUM_DCT_TOKENS' data-ref="dct_token::NUM_DCT_TOKENS">NUM_DCT_TOKENS</a> - <var>1</var>];</td></tr>
+<tr><th id="239">239</th><td>        <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="VP8Context::{anonymous}::mvc" title='VP8Context::&lt;anonymous struct&gt;::mvc' data-ref="VP8Context::{anonymous}::mvc">mvc</dfn>[<var>2</var>][<var>19</var>];</td></tr>
+<tr><th id="240">240</th><td>        <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="VP8Context::{anonymous}::scan" title='VP8Context::&lt;anonymous struct&gt;::scan' data-ref="VP8Context::{anonymous}::scan">scan</dfn>[<var>16</var>];</td></tr>
+<tr><th id="241">241</th><td>    } <dfn class="decl" id="VP8Context::prob" title='VP8Context::prob' data-ref="VP8Context::prob">prob</dfn>[<var>2</var>];</td></tr>
+<tr><th id="242">242</th><td></td></tr>
+<tr><th id="243">243</th><td>    <a class="typedef" href="#VP8Macroblock" title='VP8Macroblock' data-type='struct VP8Macroblock' data-ref="VP8Macroblock">VP8Macroblock</a> *<dfn class="decl" id="VP8Context::macroblocks_base" title='VP8Context::macroblocks_base' data-ref="VP8Context::macroblocks_base">macroblocks_base</dfn>;</td></tr>
+<tr><th id="244">244</th><td>    <em>int</em> <dfn class="decl" id="VP8Context::invisible" title='VP8Context::invisible' data-ref="VP8Context::invisible">invisible</dfn>;</td></tr>
+<tr><th id="245">245</th><td>    <em>int</em> <dfn class="decl" id="VP8Context::update_last" title='VP8Context::update_last' data-ref="VP8Context::update_last">update_last</dfn>;    <i class="doc">///&lt; update VP56_FRAME_PREVIOUS with the current one</i></td></tr>
+<tr><th id="246">246</th><td>    <em>int</em> <dfn class="decl" id="VP8Context::update_golden" title='VP8Context::update_golden' data-ref="VP8Context::update_golden">update_golden</dfn>;  <i class="doc">///&lt; VP56_FRAME_NONE if not updated, or which frame to copy if so</i></td></tr>
+<tr><th id="247">247</th><td>    <em>int</em> <dfn class="decl" id="VP8Context::update_altref" title='VP8Context::update_altref' data-ref="VP8Context::update_altref">update_altref</dfn>;</td></tr>
+<tr><th id="248">248</th><td></td></tr>
+<tr><th id="249">249</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="250">250</th><td><i class="doc">     * If this flag is not set, all the probability updates</i></td></tr>
+<tr><th id="251">251</th><td><i class="doc">     * are discarded after this frame is decoded.</i></td></tr>
+<tr><th id="252">252</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="253">253</th><td>    <em>int</em> <dfn class="decl" id="VP8Context::update_probabilities" title='VP8Context::update_probabilities' data-ref="VP8Context::update_probabilities">update_probabilities</dfn>;</td></tr>
+<tr><th id="254">254</th><td></td></tr>
+<tr><th id="255">255</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="256">256</th><td><i class="doc">     * All coefficients are contained in separate arith coding contexts.</i></td></tr>
+<tr><th id="257">257</th><td><i class="doc">     * There can be 1, 2, 4, or 8 of these after the header context.</i></td></tr>
+<tr><th id="258">258</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="259">259</th><td>    <em>int</em> <dfn class="decl" id="VP8Context::num_coeff_partitions" title='VP8Context::num_coeff_partitions' data-ref="VP8Context::num_coeff_partitions">num_coeff_partitions</dfn>;</td></tr>
+<tr><th id="260">260</th><td>    <a class="typedef" href="vp56.h.html#VP56RangeCoder" title='VP56RangeCoder' data-type='struct VP56RangeCoder' data-ref="VP56RangeCoder">VP56RangeCoder</a> <dfn class="decl" id="VP8Context::coeff_partition" title='VP8Context::coeff_partition' data-ref="VP8Context::coeff_partition">coeff_partition</dfn>[<var>8</var>];</td></tr>
+<tr><th id="261">261</th><td>    <a class="typedef" href="videodsp.h.html#VideoDSPContext" title='VideoDSPContext' data-type='struct VideoDSPContext' data-ref="VideoDSPContext">VideoDSPContext</a> <dfn class="decl" id="VP8Context::vdsp" title='VP8Context::vdsp' data-ref="VP8Context::vdsp">vdsp</dfn>;</td></tr>
+<tr><th id="262">262</th><td>    <a class="typedef" href="vp8dsp.h.html#VP8DSPContext" title='VP8DSPContext' data-type='struct VP8DSPContext' data-ref="VP8DSPContext">VP8DSPContext</a> <dfn class="decl" id="VP8Context::vp8dsp" title='VP8Context::vp8dsp' data-ref="VP8Context::vp8dsp">vp8dsp</dfn>;</td></tr>
+<tr><th id="263">263</th><td>    <a class="typedef" href="h264pred.h.html#H264PredContext" title='H264PredContext' data-type='struct H264PredContext' data-ref="H264PredContext">H264PredContext</a> <dfn class="decl" id="VP8Context::hpc" title='VP8Context::hpc' data-ref="VP8Context::hpc">hpc</dfn>;</td></tr>
+<tr><th id="264">264</th><td>    <a class="typedef" href="vp8dsp.h.html#vp8_mc_func" title='vp8_mc_func' data-type='void (*)(uint8_t *, ptrdiff_t, uint8_t *, ptrdiff_t, int, int, int)' data-ref="vp8_mc_func">vp8_mc_func</a> <dfn class="decl" id="VP8Context::put_pixels_tab" title='VP8Context::put_pixels_tab' data-ref="VP8Context::put_pixels_tab">put_pixels_tab</dfn>[<var>3</var>][<var>3</var>][<var>3</var>];</td></tr>
+<tr><th id="265">265</th><td>    <a class="typedef" href="#VP8Frame" title='VP8Frame' data-type='struct VP8Frame' data-ref="VP8Frame">VP8Frame</a> <dfn class="decl" id="VP8Context::frames" title='VP8Context::frames' data-ref="VP8Context::frames">frames</dfn>[<var>5</var>];</td></tr>
+<tr><th id="266">266</th><td></td></tr>
+<tr><th id="267">267</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="VP8Context::colorspace" title='VP8Context::colorspace' data-ref="VP8Context::colorspace">colorspace</dfn>; <i class="doc">///&lt; 0 is the only value allowed (meaning bt601)</i></td></tr>
+<tr><th id="268">268</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="VP8Context::fullrange" title='VP8Context::fullrange' data-ref="VP8Context::fullrange">fullrange</dfn>;  <i class="doc">///&lt; whether we can skip clamping in dsp functions</i></td></tr>
+<tr><th id="269">269</th><td></td></tr>
+<tr><th id="270">270</th><td>    <em>int</em> <dfn class="decl" id="VP8Context::num_jobs" title='VP8Context::num_jobs' data-ref="VP8Context::num_jobs">num_jobs</dfn>;</td></tr>
+<tr><th id="271">271</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="272">272</th><td><i class="doc">     * This describes the macroblock memory layout.</i></td></tr>
+<tr><th id="273">273</th><td><i class="doc">     * 0 -&gt; Only width+height*2+1 macroblocks allocated (frame/single thread).</i></td></tr>
+<tr><th id="274">274</th><td><i class="doc">     * 1 -&gt; Macroblocks for entire frame allocated (sliced thread).</i></td></tr>
+<tr><th id="275">275</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="276">276</th><td>    <em>int</em> <dfn class="decl" id="VP8Context::mb_layout" title='VP8Context::mb_layout' data-ref="VP8Context::mb_layout">mb_layout</dfn>;</td></tr>
+<tr><th id="277">277</th><td></td></tr>
+<tr><th id="278">278</th><td>    <em>void</em> (*<dfn class="decl" id="VP8Context::decode_mb_row_no_filter" title='VP8Context::decode_mb_row_no_filter' data-ref="VP8Context::decode_mb_row_no_filter">decode_mb_row_no_filter</dfn>)(<a class="typedef" href="avcodec.h.html#AVCodecContext" title='AVCodecContext' data-type='struct AVCodecContext' data-ref="AVCodecContext">AVCodecContext</a> *<dfn class="local col1 decl" id="101avctx" title='avctx' data-type='AVCodecContext *' data-ref="101avctx">avctx</dfn>, <em>void</em> *<dfn class="local col2 decl" id="102tdata" title='tdata' data-type='void *' data-ref="102tdata">tdata</dfn>, <em>int</em> <dfn class="local col3 decl" id="103jobnr" title='jobnr' data-type='int' data-ref="103jobnr">jobnr</dfn>, <em>int</em> <dfn class="local col4 decl" id="104threadnr" title='threadnr' data-type='int' data-ref="104threadnr">threadnr</dfn>);</td></tr>
+<tr><th id="279">279</th><td>    <em>void</em> (*<dfn class="decl" id="VP8Context::filter_mb_row" title='VP8Context::filter_mb_row' data-ref="VP8Context::filter_mb_row">filter_mb_row</dfn>)(<a class="typedef" href="avcodec.h.html#AVCodecContext" title='AVCodecContext' data-type='struct AVCodecContext' data-ref="AVCodecContext">AVCodecContext</a> *<dfn class="local col5 decl" id="105avctx" title='avctx' data-type='AVCodecContext *' data-ref="105avctx">avctx</dfn>, <em>void</em> *<dfn class="local col6 decl" id="106tdata" title='tdata' data-type='void *' data-ref="106tdata">tdata</dfn>, <em>int</em> <dfn class="local col7 decl" id="107jobnr" title='jobnr' data-type='int' data-ref="107jobnr">jobnr</dfn>, <em>int</em> <dfn class="local col8 decl" id="108threadnr" title='threadnr' data-type='int' data-ref="108threadnr">threadnr</dfn>);</td></tr>
+<tr><th id="280">280</th><td></td></tr>
+<tr><th id="281">281</th><td>    <em>int</em> <dfn class="decl" id="VP8Context::vp7" title='VP8Context::vp7' data-ref="VP8Context::vp7">vp7</dfn>;</td></tr>
+<tr><th id="282">282</th><td></td></tr>
+<tr><th id="283">283</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="284">284</th><td><i class="doc">     * Fade bit present in bitstream (VP7)</i></td></tr>
+<tr><th id="285">285</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="286">286</th><td>    <em>int</em> <dfn class="decl" id="VP8Context::fade_present" title='VP8Context::fade_present' data-ref="VP8Context::fade_present">fade_present</dfn>;</td></tr>
+<tr><th id="287">287</th><td></td></tr>
+<tr><th id="288">288</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="289">289</th><td><i class="doc">     * Interframe DC prediction (VP7)</i></td></tr>
+<tr><th id="290">290</th><td><i class="doc">     * [0] VP56_FRAME_PREVIOUS</i></td></tr>
+<tr><th id="291">291</th><td><i class="doc">     * [1] VP56_FRAME_GOLDEN</i></td></tr>
+<tr><th id="292">292</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="293">293</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> <dfn class="decl" id="VP8Context::inter_dc_pred" title='VP8Context::inter_dc_pred' data-ref="VP8Context::inter_dc_pred">inter_dc_pred</dfn>[<var>2</var>][<var>2</var>];</td></tr>
+<tr><th id="294">294</th><td></td></tr>
+<tr><th id="295">295</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="296">296</th><td><i class="doc">     * Macroblock features (VP7)</i></td></tr>
+<tr><th id="297">297</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="298">298</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="VP8Context::feature_enabled" title='VP8Context::feature_enabled' data-ref="VP8Context::feature_enabled">feature_enabled</dfn>[<var>4</var>];</td></tr>
+<tr><th id="299">299</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="VP8Context::feature_present_prob" title='VP8Context::feature_present_prob' data-ref="VP8Context::feature_present_prob">feature_present_prob</dfn>[<var>4</var>];</td></tr>
+<tr><th id="300">300</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="VP8Context::feature_index_prob" title='VP8Context::feature_index_prob' data-ref="VP8Context::feature_index_prob">feature_index_prob</dfn>[<var>4</var>][<var>3</var>];</td></tr>
+<tr><th id="301">301</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="VP8Context::feature_value" title='VP8Context::feature_value' data-ref="VP8Context::feature_value">feature_value</dfn>[<var>4</var>][<var>4</var>];</td></tr>
+<tr><th id="302">302</th><td>} <dfn class="typedef" id="VP8Context" title='VP8Context' data-type='struct VP8Context' data-ref="VP8Context">VP8Context</dfn>;</td></tr>
+<tr><th id="303">303</th><td></td></tr>
+<tr><th id="304">304</th><td><em>int</em> <a class="decl" href="vp8.c.html#ff_vp8_decode_init" title='ff_vp8_decode_init' data-ref="ff_vp8_decode_init" id="ff_vp8_decode_init">ff_vp8_decode_init</a>(<a class="typedef" href="avcodec.h.html#AVCodecContext" title='AVCodecContext' data-type='struct AVCodecContext' data-ref="AVCodecContext">AVCodecContext</a> *<dfn class="local col9 decl" id="109avctx" title='avctx' data-type='AVCodecContext *' data-ref="109avctx">avctx</dfn>);</td></tr>
+<tr><th id="305">305</th><td></td></tr>
+<tr><th id="306">306</th><td><em>int</em> <a class="decl" href="vp8.c.html#ff_vp8_decode_frame" title='ff_vp8_decode_frame' data-ref="ff_vp8_decode_frame" id="ff_vp8_decode_frame">ff_vp8_decode_frame</a>(<a class="typedef" href="avcodec.h.html#AVCodecContext" title='AVCodecContext' data-type='struct AVCodecContext' data-ref="AVCodecContext">AVCodecContext</a> *<dfn class="local col0 decl" id="110avctx" title='avctx' data-type='AVCodecContext *' data-ref="110avctx">avctx</dfn>, <em>void</em> *<dfn class="local col1 decl" id="111data" title='data' data-type='void *' data-ref="111data">data</dfn>, <em>int</em> *<dfn class="local col2 decl" id="112got_frame" title='got_frame' data-type='int *' data-ref="112got_frame">got_frame</dfn>,</td></tr>
+<tr><th id="307">307</th><td>                        <a class="typedef" href="avcodec.h.html#AVPacket" title='AVPacket' data-type='struct AVPacket' data-ref="AVPacket">AVPacket</a> *<dfn class="local col3 decl" id="113avpkt" title='avpkt' data-type='AVPacket *' data-ref="113avpkt">avpkt</dfn>);</td></tr>
+<tr><th id="308">308</th><td></td></tr>
+<tr><th id="309">309</th><td><em>int</em> <a class="decl" href="vp8.c.html#ff_vp8_decode_free" title='ff_vp8_decode_free' data-ref="ff_vp8_decode_free" id="ff_vp8_decode_free">ff_vp8_decode_free</a>(<a class="typedef" href="avcodec.h.html#AVCodecContext" title='AVCodecContext' data-type='struct AVCodecContext' data-ref="AVCodecContext">AVCodecContext</a> *<dfn class="local col4 decl" id="114avctx" title='avctx' data-type='AVCodecContext *' data-ref="114avctx">avctx</dfn>);</td></tr>
+<tr><th id="310">310</th><td></td></tr>
+<tr><th id="311">311</th><td><u>#<span data-ppcond="26">endif</span> /* AVCODEC_VP8_H */</u></td></tr>
+<tr><th id="312">312</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated while processing <a href='vp8.c.html'>ffmpeg/libavcodec/vp8.c</a><br/>Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

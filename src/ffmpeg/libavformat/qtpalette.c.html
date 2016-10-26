@@ -1,0 +1,134 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>qtpalette.c source code [ffmpeg/libavformat/qtpalette.c] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavformat/qtpalette.c'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavformat</a>/<a href='qtpalette.c.html'>qtpalette.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * QuickTime palette handling</i></td></tr>
+<tr><th id="3">3</th><td><i> * Copyright (c) 2001 Fabrice Bellard</i></td></tr>
+<tr><th id="4">4</th><td><i> * Copyright (c) 2009 Baptiste Coudurier &lt;baptiste dot coudurier at gmail dot com&gt;</i></td></tr>
+<tr><th id="5">5</th><td><i> * Copyright (c) 2015 Mats Peterson</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="8">8</th><td><i> *</i></td></tr>
+<tr><th id="9">9</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="10">10</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="11">11</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="12">12</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="13">13</th><td><i> *</i></td></tr>
+<tr><th id="14">14</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="15">15</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="16">16</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="17">17</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="18">18</th><td><i> *</i></td></tr>
+<tr><th id="19">19</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="20">20</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="21">21</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="22">22</th><td><i> */</i></td></tr>
+<tr><th id="23">23</th><td></td></tr>
+<tr><th id="24">24</th><td><u>#include <a href="../../include/stdio.h.html">&lt;stdio.h&gt;</a></u></td></tr>
+<tr><th id="25">25</th><td><u>#include &lt;stdint.h&gt;</u></td></tr>
+<tr><th id="26">26</th><td></td></tr>
+<tr><th id="27">27</th><td><u>#include <a href="avformat.h.html">"avformat.h"</a></u></td></tr>
+<tr><th id="28">28</th><td><u>#include <a href="../libavutil/intreadwrite.h.html">"libavutil/intreadwrite.h"</a></u></td></tr>
+<tr><th id="29">29</th><td><u>#include <a href="qtpalette.h.html">"qtpalette.h"</a></u></td></tr>
+<tr><th id="30">30</th><td></td></tr>
+<tr><th id="31">31</th><td><em>int</em> <dfn class="decl def" id="ff_get_qtpalette" title='ff_get_qtpalette' data-ref="ff_get_qtpalette">ff_get_qtpalette</dfn>(<em>int</em> <dfn class="local col1 decl" id="1codec_id" title='codec_id' data-type='int' data-ref="1codec_id">codec_id</dfn>, <a class="typedef" href="avio.h.html#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> *<dfn class="local col2 decl" id="2pb" title='pb' data-type='AVIOContext *' data-ref="2pb">pb</dfn>, <a class="typedef" href="../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a> *<dfn class="local col3 decl" id="3palette" title='palette' data-type='uint32_t *' data-ref="3palette">palette</dfn>)</td></tr>
+<tr><th id="32">32</th><td>{</td></tr>
+<tr><th id="33">33</th><td>    <em>int</em> <dfn class="local col4 decl" id="4tmp" title='tmp' data-type='int' data-ref="4tmp">tmp</dfn>, <dfn class="local col5 decl" id="5bit_depth" title='bit_depth' data-type='int' data-ref="5bit_depth">bit_depth</dfn>, <dfn class="local col6 decl" id="6color_table_id" title='color_table_id' data-type='int' data-ref="6color_table_id">color_table_id</dfn>, <dfn class="local col7 decl" id="7greyscale" title='greyscale' data-type='int' data-ref="7greyscale">greyscale</dfn>, <dfn class="local col8 decl" id="8i" title='i' data-type='int' data-ref="8i">i</dfn>;</td></tr>
+<tr><th id="34">34</th><td></td></tr>
+<tr><th id="35">35</th><td>    <a class="ref" href="avio.h.html#avio_seek" title='avio_seek' data-ref="avio_seek">avio_seek</a>(<a class="local col2 ref" href="#2pb" title='pb' data-ref="2pb">pb</a>, <var>82</var>, <a class="macro" href="../../include/stdio.h.html#141" title="1" data-ref="_M/SEEK_CUR">SEEK_CUR</a>);</td></tr>
+<tr><th id="36">36</th><td></td></tr>
+<tr><th id="37">37</th><td>    <i>/* Get the bit depth and greyscale state */</i></td></tr>
+<tr><th id="38">38</th><td>    <a class="local col4 ref" href="#4tmp" title='tmp' data-ref="4tmp">tmp</a> = <a class="ref" href="avio.h.html#avio_rb16" title='avio_rb16' data-ref="avio_rb16">avio_rb16</a>(<a class="local col2 ref" href="#2pb" title='pb' data-ref="2pb">pb</a>);</td></tr>
+<tr><th id="39">39</th><td>    <a class="local col5 ref" href="#5bit_depth" title='bit_depth' data-ref="5bit_depth">bit_depth</a> = <a class="local col4 ref" href="#4tmp" title='tmp' data-ref="4tmp">tmp</a> &amp; <var>0x1F</var>;</td></tr>
+<tr><th id="40">40</th><td>    <a class="local col7 ref" href="#7greyscale" title='greyscale' data-ref="7greyscale">greyscale</a> = <a class="local col4 ref" href="#4tmp" title='tmp' data-ref="4tmp">tmp</a> &amp; <var>0x20</var>;</td></tr>
+<tr><th id="41">41</th><td></td></tr>
+<tr><th id="42">42</th><td>    <i>/* Get the color table ID */</i></td></tr>
+<tr><th id="43">43</th><td>    <a class="local col6 ref" href="#6color_table_id" title='color_table_id' data-ref="6color_table_id">color_table_id</a> = <a class="ref" href="avio.h.html#avio_rb16" title='avio_rb16' data-ref="avio_rb16">avio_rb16</a>(<a class="local col2 ref" href="#2pb" title='pb' data-ref="2pb">pb</a>);</td></tr>
+<tr><th id="44">44</th><td></td></tr>
+<tr><th id="45">45</th><td>    <i>/* Do not create a greyscale palette for Cinepak */</i></td></tr>
+<tr><th id="46">46</th><td>    <b>if</b> (<a class="local col7 ref" href="#7greyscale" title='greyscale' data-ref="7greyscale">greyscale</a> &amp;&amp; <a class="local col1 ref" href="#1codec_id" title='codec_id' data-ref="1codec_id">codec_id</a> == <a class="enum" href="../libavcodec/avcodec.h.html#AVCodecID::AV_CODEC_ID_CINEPAK" title='AVCodecID::AV_CODEC_ID_CINEPAK' data-ref="AVCodecID::AV_CODEC_ID_CINEPAK">AV_CODEC_ID_CINEPAK</a>)</td></tr>
+<tr><th id="47">47</th><td>        <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="48">48</th><td></td></tr>
+<tr><th id="49">49</th><td>    <i>/* If the depth is 1, 2, 4, or 8 bpp, file is palettized. */</i></td></tr>
+<tr><th id="50">50</th><td>    <b>if</b> ((<a class="local col5 ref" href="#5bit_depth" title='bit_depth' data-ref="5bit_depth">bit_depth</a> == <var>1</var> || <a class="local col5 ref" href="#5bit_depth" title='bit_depth' data-ref="5bit_depth">bit_depth</a> == <var>2</var> || <a class="local col5 ref" href="#5bit_depth" title='bit_depth' data-ref="5bit_depth">bit_depth</a> == <var>4</var> || <a class="local col5 ref" href="#5bit_depth" title='bit_depth' data-ref="5bit_depth">bit_depth</a> == <var>8</var>)) {</td></tr>
+<tr><th id="51">51</th><td>        <a class="typedef" href="../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a> <dfn class="local col9 decl" id="9color_count" title='color_count' data-type='uint32_t' data-ref="9color_count">color_count</dfn>, <dfn class="local col0 decl" id="10color_start" title='color_start' data-type='uint32_t' data-ref="10color_start">color_start</dfn>, <dfn class="local col1 decl" id="11color_end" title='color_end' data-type='uint32_t' data-ref="11color_end">color_end</dfn>;</td></tr>
+<tr><th id="52">52</th><td>        <a class="typedef" href="../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a> <dfn class="local col2 decl" id="12a" title='a' data-type='uint32_t' data-ref="12a">a</dfn>, <dfn class="local col3 decl" id="13r" title='r' data-type='uint32_t' data-ref="13r">r</dfn>, <dfn class="local col4 decl" id="14g" title='g' data-type='uint32_t' data-ref="14g">g</dfn>, <dfn class="local col5 decl" id="15b" title='b' data-type='uint32_t' data-ref="15b">b</dfn>;</td></tr>
+<tr><th id="53">53</th><td></td></tr>
+<tr><th id="54">54</th><td>        <i>/* Ignore the greyscale bit for 1-bit video and sample</i></td></tr>
+<tr><th id="55">55</th><td><i>         * descriptions containing a color table. */</i></td></tr>
+<tr><th id="56">56</th><td>        <b>if</b> (<a class="local col7 ref" href="#7greyscale" title='greyscale' data-ref="7greyscale">greyscale</a> &amp;&amp; <a class="local col5 ref" href="#5bit_depth" title='bit_depth' data-ref="5bit_depth">bit_depth</a> &gt; <var>1</var> &amp;&amp; <a class="local col6 ref" href="#6color_table_id" title='color_table_id' data-ref="6color_table_id">color_table_id</a>) {</td></tr>
+<tr><th id="57">57</th><td>            <em>int</em> <dfn class="local col6 decl" id="16color_index" title='color_index' data-type='int' data-ref="16color_index">color_index</dfn>, <dfn class="local col7 decl" id="17color_dec" title='color_dec' data-type='int' data-ref="17color_dec">color_dec</dfn>;</td></tr>
+<tr><th id="58">58</th><td>            <i>/* compute the greyscale palette */</i></td></tr>
+<tr><th id="59">59</th><td>            <a class="local col9 ref" href="#9color_count" title='color_count' data-ref="9color_count">color_count</a> = <var>1</var> &lt;&lt; <a class="local col5 ref" href="#5bit_depth" title='bit_depth' data-ref="5bit_depth">bit_depth</a>;</td></tr>
+<tr><th id="60">60</th><td>            <a class="local col6 ref" href="#16color_index" title='color_index' data-ref="16color_index">color_index</a> = <var>255</var>;</td></tr>
+<tr><th id="61">61</th><td>            <a class="local col7 ref" href="#17color_dec" title='color_dec' data-ref="17color_dec">color_dec</a>   = <var>256</var> / (<a class="local col9 ref" href="#9color_count" title='color_count' data-ref="9color_count">color_count</a> - <var>1</var>);</td></tr>
+<tr><th id="62">62</th><td>            <b>for</b> (<a class="local col8 ref" href="#8i" title='i' data-ref="8i">i</a> = <var>0</var>; <a class="local col8 ref" href="#8i" title='i' data-ref="8i">i</a> &lt; <a class="local col9 ref" href="#9color_count" title='color_count' data-ref="9color_count">color_count</a>; <a class="local col8 ref" href="#8i" title='i' data-ref="8i">i</a>++) {</td></tr>
+<tr><th id="63">63</th><td>                <a class="local col3 ref" href="#13r" title='r' data-ref="13r">r</a> = <a class="local col4 ref" href="#14g" title='g' data-ref="14g">g</a> = <a class="local col5 ref" href="#15b" title='b' data-ref="15b">b</a> = <a class="local col6 ref" href="#16color_index" title='color_index' data-ref="16color_index">color_index</a>;</td></tr>
+<tr><th id="64">64</th><td>                <a class="local col3 ref" href="#3palette" title='palette' data-ref="3palette">palette</a>[<a class="local col8 ref" href="#8i" title='i' data-ref="8i">i</a>] = (<var>0xFFU</var> &lt;&lt; <var>24</var>) | (<a class="local col3 ref" href="#13r" title='r' data-ref="13r">r</a> &lt;&lt; <var>16</var>) | (<a class="local col4 ref" href="#14g" title='g' data-ref="14g">g</a> &lt;&lt; <var>8</var>) | (<a class="local col5 ref" href="#15b" title='b' data-ref="15b">b</a>);</td></tr>
+<tr><th id="65">65</th><td>                <a class="local col6 ref" href="#16color_index" title='color_index' data-ref="16color_index">color_index</a> -= <a class="local col7 ref" href="#17color_dec" title='color_dec' data-ref="17color_dec">color_dec</a>;</td></tr>
+<tr><th id="66">66</th><td>                <b>if</b> (<a class="local col6 ref" href="#16color_index" title='color_index' data-ref="16color_index">color_index</a> &lt; <var>0</var>)</td></tr>
+<tr><th id="67">67</th><td>                    <a class="local col6 ref" href="#16color_index" title='color_index' data-ref="16color_index">color_index</a> = <var>0</var>;</td></tr>
+<tr><th id="68">68</th><td>            }</td></tr>
+<tr><th id="69">69</th><td>        } <b>else</b> <b>if</b> (<a class="local col6 ref" href="#6color_table_id" title='color_table_id' data-ref="6color_table_id">color_table_id</a>) {</td></tr>
+<tr><th id="70">70</th><td>            <i>/* The color table ID is non-zero. Interpret this as</i></td></tr>
+<tr><th id="71">71</th><td><i>             * being -1, which means use the default Macintosh</i></td></tr>
+<tr><th id="72">72</th><td><i>             * color table */</i></td></tr>
+<tr><th id="73">73</th><td>            <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col8 decl" id="18color_table" title='color_table' data-type='const uint8_t *' data-ref="18color_table">color_table</dfn>;</td></tr>
+<tr><th id="74">74</th><td>            <a class="local col9 ref" href="#9color_count" title='color_count' data-ref="9color_count">color_count</a> = <var>1</var> &lt;&lt; <a class="local col5 ref" href="#5bit_depth" title='bit_depth' data-ref="5bit_depth">bit_depth</a>;</td></tr>
+<tr><th id="75">75</th><td>            <b>if</b> (<a class="local col5 ref" href="#5bit_depth" title='bit_depth' data-ref="5bit_depth">bit_depth</a> == <var>1</var>)</td></tr>
+<tr><th id="76">76</th><td>                <a class="local col8 ref" href="#18color_table" title='color_table' data-ref="18color_table">color_table</a> = <a class="ref" href="qtpalette.h.html#ff_qt_default_palette_2" title='ff_qt_default_palette_2' data-ref="ff_qt_default_palette_2">ff_qt_default_palette_2</a>;</td></tr>
+<tr><th id="77">77</th><td>            <b>else</b> <b>if</b> (<a class="local col5 ref" href="#5bit_depth" title='bit_depth' data-ref="5bit_depth">bit_depth</a> == <var>2</var>)</td></tr>
+<tr><th id="78">78</th><td>                <a class="local col8 ref" href="#18color_table" title='color_table' data-ref="18color_table">color_table</a> = <a class="ref" href="qtpalette.h.html#ff_qt_default_palette_4" title='ff_qt_default_palette_4' data-ref="ff_qt_default_palette_4">ff_qt_default_palette_4</a>;</td></tr>
+<tr><th id="79">79</th><td>            <b>else</b> <b>if</b> (<a class="local col5 ref" href="#5bit_depth" title='bit_depth' data-ref="5bit_depth">bit_depth</a> == <var>4</var>)</td></tr>
+<tr><th id="80">80</th><td>                <a class="local col8 ref" href="#18color_table" title='color_table' data-ref="18color_table">color_table</a> = <a class="ref" href="qtpalette.h.html#ff_qt_default_palette_16" title='ff_qt_default_palette_16' data-ref="ff_qt_default_palette_16">ff_qt_default_palette_16</a>;</td></tr>
+<tr><th id="81">81</th><td>            <b>else</b></td></tr>
+<tr><th id="82">82</th><td>                <a class="local col8 ref" href="#18color_table" title='color_table' data-ref="18color_table">color_table</a> = <a class="ref" href="qtpalette.h.html#ff_qt_default_palette_256" title='ff_qt_default_palette_256' data-ref="ff_qt_default_palette_256">ff_qt_default_palette_256</a>;</td></tr>
+<tr><th id="83">83</th><td>            <b>for</b> (<a class="local col8 ref" href="#8i" title='i' data-ref="8i">i</a> = <var>0</var>; <a class="local col8 ref" href="#8i" title='i' data-ref="8i">i</a> &lt; <a class="local col9 ref" href="#9color_count" title='color_count' data-ref="9color_count">color_count</a>; <a class="local col8 ref" href="#8i" title='i' data-ref="8i">i</a>++) {</td></tr>
+<tr><th id="84">84</th><td>                <a class="local col3 ref" href="#13r" title='r' data-ref="13r">r</a> = <a class="local col8 ref" href="#18color_table" title='color_table' data-ref="18color_table">color_table</a>[<a class="local col8 ref" href="#8i" title='i' data-ref="8i">i</a> * <var>3</var> + <var>0</var>];</td></tr>
+<tr><th id="85">85</th><td>                <a class="local col4 ref" href="#14g" title='g' data-ref="14g">g</a> = <a class="local col8 ref" href="#18color_table" title='color_table' data-ref="18color_table">color_table</a>[<a class="local col8 ref" href="#8i" title='i' data-ref="8i">i</a> * <var>3</var> + <var>1</var>];</td></tr>
+<tr><th id="86">86</th><td>                <a class="local col5 ref" href="#15b" title='b' data-ref="15b">b</a> = <a class="local col8 ref" href="#18color_table" title='color_table' data-ref="18color_table">color_table</a>[<a class="local col8 ref" href="#8i" title='i' data-ref="8i">i</a> * <var>3</var> + <var>2</var>];</td></tr>
+<tr><th id="87">87</th><td>                <a class="local col3 ref" href="#3palette" title='palette' data-ref="3palette">palette</a>[<a class="local col8 ref" href="#8i" title='i' data-ref="8i">i</a>] = (<var>0xFFU</var> &lt;&lt; <var>24</var>) | (<a class="local col3 ref" href="#13r" title='r' data-ref="13r">r</a> &lt;&lt; <var>16</var>) | (<a class="local col4 ref" href="#14g" title='g' data-ref="14g">g</a> &lt;&lt; <var>8</var>) | (<a class="local col5 ref" href="#15b" title='b' data-ref="15b">b</a>);</td></tr>
+<tr><th id="88">88</th><td>            }</td></tr>
+<tr><th id="89">89</th><td>        } <b>else</b> {</td></tr>
+<tr><th id="90">90</th><td>            <i>/* The color table ID is 0; the color table is in the sample</i></td></tr>
+<tr><th id="91">91</th><td><i>             * description */</i></td></tr>
+<tr><th id="92">92</th><td>            <a class="local col0 ref" href="#10color_start" title='color_start' data-ref="10color_start">color_start</a> = <a class="ref" href="avio.h.html#avio_rb32" title='avio_rb32' data-ref="avio_rb32">avio_rb32</a>(<a class="local col2 ref" href="#2pb" title='pb' data-ref="2pb">pb</a>);</td></tr>
+<tr><th id="93">93</th><td>            <a class="ref" href="avio.h.html#avio_rb16" title='avio_rb16' data-ref="avio_rb16">avio_rb16</a>(<a class="local col2 ref" href="#2pb" title='pb' data-ref="2pb">pb</a>); <i>/* color table flags */</i></td></tr>
+<tr><th id="94">94</th><td>            <a class="local col1 ref" href="#11color_end" title='color_end' data-ref="11color_end">color_end</a> = <a class="ref" href="avio.h.html#avio_rb16" title='avio_rb16' data-ref="avio_rb16">avio_rb16</a>(<a class="local col2 ref" href="#2pb" title='pb' data-ref="2pb">pb</a>);</td></tr>
+<tr><th id="95">95</th><td>            <b>if</b> ((<a class="local col0 ref" href="#10color_start" title='color_start' data-ref="10color_start">color_start</a> &lt;= <var>255</var>) &amp;&amp; (<a class="local col1 ref" href="#11color_end" title='color_end' data-ref="11color_end">color_end</a> &lt;= <var>255</var>)) {</td></tr>
+<tr><th id="96">96</th><td>                <b>for</b> (<a class="local col8 ref" href="#8i" title='i' data-ref="8i">i</a> = <a class="local col0 ref" href="#10color_start" title='color_start' data-ref="10color_start">color_start</a>; <a class="local col8 ref" href="#8i" title='i' data-ref="8i">i</a> &lt;= <a class="local col1 ref" href="#11color_end" title='color_end' data-ref="11color_end">color_end</a>; <a class="local col8 ref" href="#8i" title='i' data-ref="8i">i</a>++) {</td></tr>
+<tr><th id="97">97</th><td>                    <i>/* each A, R, G, or B component is 16 bits;</i></td></tr>
+<tr><th id="98">98</th><td><i>                     * only use the top 8 bits */</i></td></tr>
+<tr><th id="99">99</th><td>                    <a class="local col2 ref" href="#12a" title='a' data-ref="12a">a</a> = <a class="ref" href="avio.h.html#avio_r8" title='avio_r8' data-ref="avio_r8">avio_r8</a>(<a class="local col2 ref" href="#2pb" title='pb' data-ref="2pb">pb</a>);</td></tr>
+<tr><th id="100">100</th><td>                    <a class="ref" href="avio.h.html#avio_r8" title='avio_r8' data-ref="avio_r8">avio_r8</a>(<a class="local col2 ref" href="#2pb" title='pb' data-ref="2pb">pb</a>);</td></tr>
+<tr><th id="101">101</th><td>                    <a class="local col3 ref" href="#13r" title='r' data-ref="13r">r</a> = <a class="ref" href="avio.h.html#avio_r8" title='avio_r8' data-ref="avio_r8">avio_r8</a>(<a class="local col2 ref" href="#2pb" title='pb' data-ref="2pb">pb</a>);</td></tr>
+<tr><th id="102">102</th><td>                    <a class="ref" href="avio.h.html#avio_r8" title='avio_r8' data-ref="avio_r8">avio_r8</a>(<a class="local col2 ref" href="#2pb" title='pb' data-ref="2pb">pb</a>);</td></tr>
+<tr><th id="103">103</th><td>                    <a class="local col4 ref" href="#14g" title='g' data-ref="14g">g</a> = <a class="ref" href="avio.h.html#avio_r8" title='avio_r8' data-ref="avio_r8">avio_r8</a>(<a class="local col2 ref" href="#2pb" title='pb' data-ref="2pb">pb</a>);</td></tr>
+<tr><th id="104">104</th><td>                    <a class="ref" href="avio.h.html#avio_r8" title='avio_r8' data-ref="avio_r8">avio_r8</a>(<a class="local col2 ref" href="#2pb" title='pb' data-ref="2pb">pb</a>);</td></tr>
+<tr><th id="105">105</th><td>                    <a class="local col5 ref" href="#15b" title='b' data-ref="15b">b</a> = <a class="ref" href="avio.h.html#avio_r8" title='avio_r8' data-ref="avio_r8">avio_r8</a>(<a class="local col2 ref" href="#2pb" title='pb' data-ref="2pb">pb</a>);</td></tr>
+<tr><th id="106">106</th><td>                    <a class="ref" href="avio.h.html#avio_r8" title='avio_r8' data-ref="avio_r8">avio_r8</a>(<a class="local col2 ref" href="#2pb" title='pb' data-ref="2pb">pb</a>);</td></tr>
+<tr><th id="107">107</th><td>                    <a class="local col3 ref" href="#3palette" title='palette' data-ref="3palette">palette</a>[<a class="local col8 ref" href="#8i" title='i' data-ref="8i">i</a>] = (<a class="local col2 ref" href="#12a" title='a' data-ref="12a">a</a> &lt;&lt; <var>24</var> ) | (<a class="local col3 ref" href="#13r" title='r' data-ref="13r">r</a> &lt;&lt; <var>16</var>) | (<a class="local col4 ref" href="#14g" title='g' data-ref="14g">g</a> &lt;&lt; <var>8</var>) | (<a class="local col5 ref" href="#15b" title='b' data-ref="15b">b</a>);</td></tr>
+<tr><th id="108">108</th><td>                }</td></tr>
+<tr><th id="109">109</th><td>            }</td></tr>
+<tr><th id="110">110</th><td>        }</td></tr>
+<tr><th id="111">111</th><td></td></tr>
+<tr><th id="112">112</th><td>        <b>return</b> <var>1</var>;</td></tr>
+<tr><th id="113">113</th><td>    }</td></tr>
+<tr><th id="114">114</th><td></td></tr>
+<tr><th id="115">115</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="116">116</th><td>}</td></tr>
+<tr><th id="117">117</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

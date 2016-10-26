@@ -1,0 +1,15 @@
+<dec f='include/qt4/QtCore/qmap.h' l='155' type='QMapData::Node *'/>
+<doc f='include/qt4/QtCore/qmap.h' l='141'>// QMap::e is a pointer to QMapData::Node, which matches the member
+    // below. However, the memory allocation node in QMapData::node_create
+    // allocates sizeof(QMapPayloNode) and incorrectly calculates the offset
+    // of &apos;backward&apos; below. If the alignment of QMapPayloadNode is larger
+    // than the alignment of a pointer, the &apos;backward&apos; member is aligned to
+    // the end of this structure, not to &apos;value&apos; above, and will occupy the
+    // tail-padding area.
+    //
+    //  e.g., on a 32-bit archictecture with Key = int and
+    //        sizeof(T) = alignof(T) = 8
+    //   0        4        8        12       16       20       24  byte
+    //   |   key  |   PAD  |      value      |backward|  PAD   |   correct layout
+    //   |   key  |   PAD  |      value      |        |backward|   how it&apos;s actually used
+    //   |&lt;-----  value of QMap::payload() = 20 -----&gt;|</doc>

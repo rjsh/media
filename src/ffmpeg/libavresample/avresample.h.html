@@ -1,0 +1,522 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>avresample.h source code [ffmpeg/libavresample/avresample.h] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="AVMixCoeffType,AVResampleDitherMethod,AVResampleFilterType "/>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavresample/avresample.h'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavresample</a>/<a href='avresample.h.html'>avresample.h</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * Copyright (c) 2012 Justin Ruggles &lt;justin.ruggles@gmail.com&gt;</i></td></tr>
+<tr><th id="3">3</th><td><i> *</i></td></tr>
+<tr><th id="4">4</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="5">5</th><td><i> *</i></td></tr>
+<tr><th id="6">6</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="7">7</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="8">8</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="9">9</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="10">10</th><td><i> *</i></td></tr>
+<tr><th id="11">11</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="12">12</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="13">13</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="14">14</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="15">15</th><td><i> *</i></td></tr>
+<tr><th id="16">16</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="17">17</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="18">18</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="19">19</th><td><i> */</i></td></tr>
+<tr><th id="20">20</th><td></td></tr>
+<tr><th id="21">21</th><td><u>#<span data-ppcond="21">ifndef</span> <span class="macro" data-ref="_M/AVRESAMPLE_AVRESAMPLE_H">AVRESAMPLE_AVRESAMPLE_H</span></u></td></tr>
+<tr><th id="22">22</th><td><u>#define <dfn class="macro" id="_M/AVRESAMPLE_AVRESAMPLE_H" data-ref="_M/AVRESAMPLE_AVRESAMPLE_H">AVRESAMPLE_AVRESAMPLE_H</dfn></u></td></tr>
+<tr><th id="23">23</th><td></td></tr>
+<tr><th id="24">24</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="25">25</th><td><i class="doc"> *<span class="command"> @file</span></i></td></tr>
+<tr><th id="26">26</th><td><i class="doc"> * <span class="command">@ingroup</span> <span class="verb">lavr</span></i></td></tr>
+<tr><th id="27">27</th><td><i class="doc"> * external API header</i></td></tr>
+<tr><th id="28">28</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="29">29</th><td></td></tr>
+<tr><th id="30">30</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="31">31</th><td><i class="doc"> * <span class="command">@defgroup</span> <span class="verb">lavr libavresample</span></i></td></tr>
+<tr><th id="32">32</th><td><i class="doc"> * @{</i></td></tr>
+<tr><th id="33">33</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="34">34</th><td><i class="doc"> * Libavresample (lavr) is a library that handles audio resampling, sample</i></td></tr>
+<tr><th id="35">35</th><td><i class="doc"> * format conversion and mixing.</i></td></tr>
+<tr><th id="36">36</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="37">37</th><td><i class="doc"> * Interaction with lavr is done through AVAudioResampleContext, which is</i></td></tr>
+<tr><th id="38">38</th><td><i class="doc"> * allocated with avresample_alloc_context(). It is opaque, so all parameters</i></td></tr>
+<tr><th id="39">39</th><td><i class="doc"> * must be set with the <span class="command">@ref</span> <span class="verb">avoptions API.</span></i></td></tr>
+<tr><th id="40">40</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="41">41</th><td><i class="doc"> * For example the following code will setup conversion from planar float sample</i></td></tr>
+<tr><th id="42">42</th><td><i class="doc"> * format to interleaved signed 16-bit integer, downsampling from 48kHz to</i></td></tr>
+<tr><th id="43">43</th><td><i class="doc"> * 44.1kHz and downmixing from 5.1 channels to stereo (using the default mixing</i></td></tr>
+<tr><th id="44">44</th><td><i class="doc"> * matrix):</i></td></tr>
+<tr><th id="45">45</th><td><i class="doc"> * <span class="command">@code</span></i></td></tr>
+<tr><th id="46">46</th><td><i class="doc"> *<span class="verb"> AVAudioResampleContext *avr = avresample_alloc_context();</span></i></td></tr>
+<tr><th id="47">47</th><td><i class="doc"><span class="verb"></span> *<span class="verb"> av_opt_set_int(avr, "in_channel_layout",  AV_CH_LAYOUT_5POINT1, 0);</span></i></td></tr>
+<tr><th id="48">48</th><td><i class="doc"><span class="verb"></span> *<span class="verb"> av_opt_set_int(avr, "out_channel_layout", AV_CH_LAYOUT_STEREO,  0);</span></i></td></tr>
+<tr><th id="49">49</th><td><i class="doc"><span class="verb"></span> *<span class="verb"> av_opt_set_int(avr, "in_sample_rate",     48000,                0);</span></i></td></tr>
+<tr><th id="50">50</th><td><i class="doc"><span class="verb"></span> *<span class="verb"> av_opt_set_int(avr, "out_sample_rate",    44100,                0);</span></i></td></tr>
+<tr><th id="51">51</th><td><i class="doc"><span class="verb"></span> *<span class="verb"> av_opt_set_int(avr, "in_sample_fmt",      AV_SAMPLE_FMT_FLTP,   0);</span></i></td></tr>
+<tr><th id="52">52</th><td><i class="doc"><span class="verb"></span> *<span class="verb"> av_opt_set_int(avr, "out_sample_fmt",     AV_SAMPLE_FMT_S16,    0);</span></i></td></tr>
+<tr><th id="53">53</th><td><i class="doc"><span class="verb"></span> * @endcode</i></td></tr>
+<tr><th id="54">54</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="55">55</th><td><i class="doc"> * Once the context is initialized, it must be opened with avresample_open(). If</i></td></tr>
+<tr><th id="56">56</th><td><i class="doc"> * you need to change the conversion parameters, you must close the context with</i></td></tr>
+<tr><th id="57">57</th><td><i class="doc"> * avresample_close(), change the parameters as described above, then reopen it</i></td></tr>
+<tr><th id="58">58</th><td><i class="doc"> * again.</i></td></tr>
+<tr><th id="59">59</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="60">60</th><td><i class="doc"> * The conversion itself is done by repeatedly calling avresample_convert().</i></td></tr>
+<tr><th id="61">61</th><td><i class="doc"> * Note that the samples may get buffered in two places in lavr. The first one</i></td></tr>
+<tr><th id="62">62</th><td><i class="doc"> * is the output FIFO, where the samples end up if the output buffer is not</i></td></tr>
+<tr><th id="63">63</th><td><i class="doc"> * large enough. The data stored in there may be retrieved at any time with</i></td></tr>
+<tr><th id="64">64</th><td><i class="doc"> * avresample_read(). The second place is the resampling delay buffer,</i></td></tr>
+<tr><th id="65">65</th><td><i class="doc"> * applicable only when resampling is done. The samples in it require more input</i></td></tr>
+<tr><th id="66">66</th><td><i class="doc"> * before they can be processed. Their current amount is returned by</i></td></tr>
+<tr><th id="67">67</th><td><i class="doc"> * avresample_get_delay(). At the end of conversion the resampling buffer can be</i></td></tr>
+<tr><th id="68">68</th><td><i class="doc"> * flushed by calling avresample_convert() with NULL input.</i></td></tr>
+<tr><th id="69">69</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="70">70</th><td><i class="doc"> * The following code demonstrates the conversion loop assuming the parameters</i></td></tr>
+<tr><th id="71">71</th><td><i class="doc"> * from above and caller-defined functions get_input() and handle_output():</i></td></tr>
+<tr><th id="72">72</th><td><i class="doc"> * <span class="command">@code</span></i></td></tr>
+<tr><th id="73">73</th><td><i class="doc"> *<span class="verb"> uint8_t **input;</span></i></td></tr>
+<tr><th id="74">74</th><td><i class="doc"><span class="verb"></span> *<span class="verb"> int in_linesize, in_samples;</span></i></td></tr>
+<tr><th id="75">75</th><td><i class="doc"><span class="verb"></span> *<span class="verb"></span></i></td></tr>
+<tr><th id="76">76</th><td><i class="doc"><span class="verb"></span> *<span class="verb"> while (get_input(&amp;input, &amp;in_linesize, &amp;in_samples)) {</span></i></td></tr>
+<tr><th id="77">77</th><td><i class="doc"><span class="verb"></span> *<span class="verb">     uint8_t *output</span></i></td></tr>
+<tr><th id="78">78</th><td><i class="doc"><span class="verb"></span> *<span class="verb">     int out_linesize;</span></i></td></tr>
+<tr><th id="79">79</th><td><i class="doc"><span class="verb"></span> *<span class="verb">     int out_samples = avresample_get_out_samples(avr, in_samples);</span></i></td></tr>
+<tr><th id="80">80</th><td><i class="doc"><span class="verb"></span> *<span class="verb"></span></i></td></tr>
+<tr><th id="81">81</th><td><i class="doc"><span class="verb"></span> *<span class="verb">     av_samples_alloc(&amp;output, &amp;out_linesize, 2, out_samples,</span></i></td></tr>
+<tr><th id="82">82</th><td><i class="doc"><span class="verb"></span> *<span class="verb">                      AV_SAMPLE_FMT_S16, 0);</span></i></td></tr>
+<tr><th id="83">83</th><td><i class="doc"><span class="verb"></span> *<span class="verb">     out_samples = avresample_convert(avr, &amp;output, out_linesize, out_samples,</span></i></td></tr>
+<tr><th id="84">84</th><td><i class="doc"><span class="verb"></span> *<span class="verb">                                      input, in_linesize, in_samples);</span></i></td></tr>
+<tr><th id="85">85</th><td><i class="doc"><span class="verb"></span> *<span class="verb">     handle_output(output, out_linesize, out_samples);</span></i></td></tr>
+<tr><th id="86">86</th><td><i class="doc"><span class="verb"></span> *<span class="verb">     av_freep(&amp;output);</span></i></td></tr>
+<tr><th id="87">87</th><td><i class="doc"><span class="verb"></span> *<span class="verb">  }</span></i></td></tr>
+<tr><th id="88">88</th><td><i class="doc"><span class="verb"></span> *  @endcode</i></td></tr>
+<tr><th id="89">89</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="90">90</th><td><i class="doc"> *  When the conversion is finished and the FIFOs are flushed if required, the</i></td></tr>
+<tr><th id="91">91</th><td><i class="doc"> *  conversion context and everything associated with it must be freed with</i></td></tr>
+<tr><th id="92">92</th><td><i class="doc"> *  avresample_free().</i></td></tr>
+<tr><th id="93">93</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="94">94</th><td></td></tr>
+<tr><th id="95">95</th><td><u>#include <a href="../libavutil/avutil.h.html">"libavutil/avutil.h"</a></u></td></tr>
+<tr><th id="96">96</th><td><u>#include <a href="../libavutil/channel_layout.h.html">"libavutil/channel_layout.h"</a></u></td></tr>
+<tr><th id="97">97</th><td><u>#include <a href="../libavutil/dict.h.html">"libavutil/dict.h"</a></u></td></tr>
+<tr><th id="98">98</th><td><u>#include <a href="../libavutil/frame.h.html">"libavutil/frame.h"</a></u></td></tr>
+<tr><th id="99">99</th><td><u>#include <a href="../libavutil/log.h.html">"libavutil/log.h"</a></u></td></tr>
+<tr><th id="100">100</th><td><u>#include <a href="../libavutil/mathematics.h.html">"libavutil/mathematics.h"</a></u></td></tr>
+<tr><th id="101">101</th><td></td></tr>
+<tr><th id="102">102</th><td><u>#include <a href="version.h.html">"libavresample/version.h"</a></u></td></tr>
+<tr><th id="103">103</th><td></td></tr>
+<tr><th id="104">104</th><td><u>#define <dfn class="macro" id="_M/AVRESAMPLE_MAX_CHANNELS" data-ref="_M/AVRESAMPLE_MAX_CHANNELS">AVRESAMPLE_MAX_CHANNELS</dfn> 32</u></td></tr>
+<tr><th id="105">105</th><td></td></tr>
+<tr><th id="106">106</th><td><b>typedef</b> <b>struct</b> <dfn class="type" id="AVAudioResampleContext" title='AVAudioResampleContext' data-ref="AVAudioResampleContext"><a class="type" href="#AVAudioResampleContext" title='AVAudioResampleContext' data-ref="AVAudioResampleContext">AVAudioResampleContext</a></dfn> <dfn class="typedef" id="AVAudioResampleContext" title='AVAudioResampleContext' data-type='struct AVAudioResampleContext' data-ref="AVAudioResampleContext">AVAudioResampleContext</dfn>;</td></tr>
+<tr><th id="107">107</th><td></td></tr>
+<tr><th id="108">108</th><td><i class="doc">/** Mixing Coefficient Types */</i></td></tr>
+<tr><th id="109">109</th><td><b>enum</b> <dfn class="type def" id="AVMixCoeffType" title='AVMixCoeffType' data-ref="AVMixCoeffType">AVMixCoeffType</dfn> {</td></tr>
+<tr><th id="110">110</th><td>    <dfn class="enum" id="AVMixCoeffType::AV_MIX_COEFF_TYPE_Q8" title='AVMixCoeffType::AV_MIX_COEFF_TYPE_Q8' data-ref="AVMixCoeffType::AV_MIX_COEFF_TYPE_Q8">AV_MIX_COEFF_TYPE_Q8</dfn>,   <i class="doc">/** 16-bit 8.8 fixed-point                      */</i></td></tr>
+<tr><th id="111">111</th><td>    <dfn class="enum" id="AVMixCoeffType::AV_MIX_COEFF_TYPE_Q15" title='AVMixCoeffType::AV_MIX_COEFF_TYPE_Q15' data-ref="AVMixCoeffType::AV_MIX_COEFF_TYPE_Q15">AV_MIX_COEFF_TYPE_Q15</dfn>,  <i class="doc">/** 32-bit 17.15 fixed-point                    */</i></td></tr>
+<tr><th id="112">112</th><td>    <dfn class="enum" id="AVMixCoeffType::AV_MIX_COEFF_TYPE_FLT" title='AVMixCoeffType::AV_MIX_COEFF_TYPE_FLT' data-ref="AVMixCoeffType::AV_MIX_COEFF_TYPE_FLT">AV_MIX_COEFF_TYPE_FLT</dfn>,  <i class="doc">/** floating-point                              */</i></td></tr>
+<tr><th id="113">113</th><td>    <dfn class="enum" id="AVMixCoeffType::AV_MIX_COEFF_TYPE_NB" title='AVMixCoeffType::AV_MIX_COEFF_TYPE_NB' data-ref="AVMixCoeffType::AV_MIX_COEFF_TYPE_NB">AV_MIX_COEFF_TYPE_NB</dfn>,   <i class="doc">/** Number of coeff types. Not part of ABI      */</i></td></tr>
+<tr><th id="114">114</th><td>};</td></tr>
+<tr><th id="115">115</th><td></td></tr>
+<tr><th id="116">116</th><td><i class="doc">/** Resampling Filter Types */</i></td></tr>
+<tr><th id="117">117</th><td><b>enum</b> <dfn class="type def" id="AVResampleFilterType" title='AVResampleFilterType' data-ref="AVResampleFilterType">AVResampleFilterType</dfn> {</td></tr>
+<tr><th id="118">118</th><td>    <dfn class="enum" id="AVResampleFilterType::AV_RESAMPLE_FILTER_TYPE_CUBIC" title='AVResampleFilterType::AV_RESAMPLE_FILTER_TYPE_CUBIC' data-ref="AVResampleFilterType::AV_RESAMPLE_FILTER_TYPE_CUBIC">AV_RESAMPLE_FILTER_TYPE_CUBIC</dfn>,              <i class="doc">/**&lt; Cubic */</i></td></tr>
+<tr><th id="119">119</th><td>    <dfn class="enum" id="AVResampleFilterType::AV_RESAMPLE_FILTER_TYPE_BLACKMAN_NUTTALL" title='AVResampleFilterType::AV_RESAMPLE_FILTER_TYPE_BLACKMAN_NUTTALL' data-ref="AVResampleFilterType::AV_RESAMPLE_FILTER_TYPE_BLACKMAN_NUTTALL">AV_RESAMPLE_FILTER_TYPE_BLACKMAN_NUTTALL</dfn>,   <i class="doc">/**&lt; Blackman Nuttall Windowed Sinc */</i></td></tr>
+<tr><th id="120">120</th><td>    <dfn class="enum" id="AVResampleFilterType::AV_RESAMPLE_FILTER_TYPE_KAISER" title='AVResampleFilterType::AV_RESAMPLE_FILTER_TYPE_KAISER' data-ref="AVResampleFilterType::AV_RESAMPLE_FILTER_TYPE_KAISER">AV_RESAMPLE_FILTER_TYPE_KAISER</dfn>,             <i class="doc">/**&lt; Kaiser Windowed Sinc */</i></td></tr>
+<tr><th id="121">121</th><td>};</td></tr>
+<tr><th id="122">122</th><td></td></tr>
+<tr><th id="123">123</th><td><b>enum</b> <dfn class="type def" id="AVResampleDitherMethod" title='AVResampleDitherMethod' data-ref="AVResampleDitherMethod">AVResampleDitherMethod</dfn> {</td></tr>
+<tr><th id="124">124</th><td>    <dfn class="enum" id="AVResampleDitherMethod::AV_RESAMPLE_DITHER_NONE" title='AVResampleDitherMethod::AV_RESAMPLE_DITHER_NONE' data-ref="AVResampleDitherMethod::AV_RESAMPLE_DITHER_NONE">AV_RESAMPLE_DITHER_NONE</dfn>,            <i class="doc">/**&lt; Do not use dithering */</i></td></tr>
+<tr><th id="125">125</th><td>    <dfn class="enum" id="AVResampleDitherMethod::AV_RESAMPLE_DITHER_RECTANGULAR" title='AVResampleDitherMethod::AV_RESAMPLE_DITHER_RECTANGULAR' data-ref="AVResampleDitherMethod::AV_RESAMPLE_DITHER_RECTANGULAR">AV_RESAMPLE_DITHER_RECTANGULAR</dfn>,     <i class="doc">/**&lt; Rectangular Dither */</i></td></tr>
+<tr><th id="126">126</th><td>    <dfn class="enum" id="AVResampleDitherMethod::AV_RESAMPLE_DITHER_TRIANGULAR" title='AVResampleDitherMethod::AV_RESAMPLE_DITHER_TRIANGULAR' data-ref="AVResampleDitherMethod::AV_RESAMPLE_DITHER_TRIANGULAR">AV_RESAMPLE_DITHER_TRIANGULAR</dfn>,      <i class="doc">/**&lt; Triangular Dither*/</i></td></tr>
+<tr><th id="127">127</th><td>    <dfn class="enum" id="AVResampleDitherMethod::AV_RESAMPLE_DITHER_TRIANGULAR_HP" title='AVResampleDitherMethod::AV_RESAMPLE_DITHER_TRIANGULAR_HP' data-ref="AVResampleDitherMethod::AV_RESAMPLE_DITHER_TRIANGULAR_HP">AV_RESAMPLE_DITHER_TRIANGULAR_HP</dfn>,   <i class="doc">/**&lt; Triangular Dither with High Pass */</i></td></tr>
+<tr><th id="128">128</th><td>    <dfn class="enum" id="AVResampleDitherMethod::AV_RESAMPLE_DITHER_TRIANGULAR_NS" title='AVResampleDitherMethod::AV_RESAMPLE_DITHER_TRIANGULAR_NS' data-ref="AVResampleDitherMethod::AV_RESAMPLE_DITHER_TRIANGULAR_NS">AV_RESAMPLE_DITHER_TRIANGULAR_NS</dfn>,   <i class="doc">/**&lt; Triangular Dither with Noise Shaping */</i></td></tr>
+<tr><th id="129">129</th><td>    <dfn class="enum" id="AVResampleDitherMethod::AV_RESAMPLE_DITHER_NB" title='AVResampleDitherMethod::AV_RESAMPLE_DITHER_NB' data-ref="AVResampleDitherMethod::AV_RESAMPLE_DITHER_NB">AV_RESAMPLE_DITHER_NB</dfn>,              <i class="doc">/**&lt; Number of dither types. Not part of ABI. */</i></td></tr>
+<tr><th id="130">130</th><td>};</td></tr>
+<tr><th id="131">131</th><td></td></tr>
+<tr><th id="132">132</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="133">133</th><td><i class="doc"> * Return the LIBAVRESAMPLE_VERSION_INT constant.</i></td></tr>
+<tr><th id="134">134</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="135">135</th><td><em>unsigned</em> <dfn class="decl" id="avresample_version" title='avresample_version' data-ref="avresample_version">avresample_version</dfn>(<em>void</em>);</td></tr>
+<tr><th id="136">136</th><td></td></tr>
+<tr><th id="137">137</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="138">138</th><td><i class="doc"> * Return the libavresample build-time configuration.</i></td></tr>
+<tr><th id="139">139</th><td><i class="doc"> * <span class="command">@return</span>  configure string</i></td></tr>
+<tr><th id="140">140</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="141">141</th><td><em>const</em> <em>char</em> *<dfn class="decl" id="avresample_configuration" title='avresample_configuration' data-ref="avresample_configuration">avresample_configuration</dfn>(<em>void</em>);</td></tr>
+<tr><th id="142">142</th><td></td></tr>
+<tr><th id="143">143</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="144">144</th><td><i class="doc"> * Return the libavresample license.</i></td></tr>
+<tr><th id="145">145</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="146">146</th><td><em>const</em> <em>char</em> *<dfn class="decl" id="avresample_license" title='avresample_license' data-ref="avresample_license">avresample_license</dfn>(<em>void</em>);</td></tr>
+<tr><th id="147">147</th><td></td></tr>
+<tr><th id="148">148</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="149">149</th><td><i class="doc"> * Get the AVClass for AVAudioResampleContext.</i></td></tr>
+<tr><th id="150">150</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="151">151</th><td><i class="doc"> * Can be used in combination with AV_OPT_SEARCH_FAKE_OBJ for examining options</i></td></tr>
+<tr><th id="152">152</th><td><i class="doc"> * without allocating a context.</i></td></tr>
+<tr><th id="153">153</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="154">154</th><td><i class="doc"> * <span class="command">@see</span> av_opt_find().</i></td></tr>
+<tr><th id="155">155</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="156">156</th><td><i class="doc"> * <span class="command">@return</span> AVClass for AVAudioResampleContext</i></td></tr>
+<tr><th id="157">157</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="158">158</th><td><em>const</em> <a class="typedef" href="../libavutil/log.h.html#AVClass" title='AVClass' data-type='struct AVClass' data-ref="AVClass">AVClass</a> *<dfn class="decl" id="avresample_get_class" title='avresample_get_class' data-ref="avresample_get_class">avresample_get_class</dfn>(<em>void</em>);</td></tr>
+<tr><th id="159">159</th><td></td></tr>
+<tr><th id="160">160</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="161">161</th><td><i class="doc"> * Allocate AVAudioResampleContext and set options.</i></td></tr>
+<tr><th id="162">162</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="163">163</th><td><i class="doc"> * <span class="command">@return</span>  allocated audio resample context, or NULL on failure</i></td></tr>
+<tr><th id="164">164</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="165">165</th><td><a class="typedef" href="#AVAudioResampleContext" title='AVAudioResampleContext' data-type='struct AVAudioResampleContext' data-ref="AVAudioResampleContext">AVAudioResampleContext</a> *<dfn class="decl" id="avresample_alloc_context" title='avresample_alloc_context' data-ref="avresample_alloc_context">avresample_alloc_context</dfn>(<em>void</em>);</td></tr>
+<tr><th id="166">166</th><td></td></tr>
+<tr><th id="167">167</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="168">168</th><td><i class="doc"> * Initialize AVAudioResampleContext.</i></td></tr>
+<tr><th id="169">169</th><td><i class="doc"> * <span class="command">@note</span> The context must be configured using the AVOption API.</i></td></tr>
+<tr><th id="170">170</th><td><i class="doc"> * <span class="command">@note</span> The fields "in_channel_layout", "out_channel_layout",</i></td></tr>
+<tr><th id="171">171</th><td><i class="doc"> *       "in_sample_rate", "out_sample_rate", "in_sample_fmt",</i></td></tr>
+<tr><th id="172">172</th><td><i class="doc"> *       "out_sample_fmt" must be set.</i></td></tr>
+<tr><th id="173">173</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="174">174</th><td><i class="doc"> * <span class="command">@see</span> av_opt_set_int()</i></td></tr>
+<tr><th id="175">175</th><td><i class="doc"> * <span class="command">@see</span> av_opt_set_dict()</i></td></tr>
+<tr><th id="176">176</th><td><i class="doc"> * <span class="command">@see</span> av_get_default_channel_layout()</i></td></tr>
+<tr><th id="177">177</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="178">178</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">avr</span>  audio resample context</i></td></tr>
+<tr><th id="179">179</th><td><i class="doc"> * <span class="command">@return</span>     0 on success, negative AVERROR code on failure</i></td></tr>
+<tr><th id="180">180</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="181">181</th><td><em>int</em> <dfn class="decl" id="avresample_open" title='avresample_open' data-ref="avresample_open">avresample_open</dfn>(<a class="typedef" href="#AVAudioResampleContext" title='AVAudioResampleContext' data-type='struct AVAudioResampleContext' data-ref="AVAudioResampleContext">AVAudioResampleContext</a> *<dfn class="local col1 decl" id="1avr" title='avr' data-type='AVAudioResampleContext *' data-ref="1avr">avr</dfn>);</td></tr>
+<tr><th id="182">182</th><td></td></tr>
+<tr><th id="183">183</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="184">184</th><td><i class="doc"> * Check whether an AVAudioResampleContext is open or closed.</i></td></tr>
+<tr><th id="185">185</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="186">186</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">avr</span> AVAudioResampleContext to check</i></td></tr>
+<tr><th id="187">187</th><td><i class="doc"> * <span class="command">@return</span> 1 if avr is open, 0 if avr is closed.</i></td></tr>
+<tr><th id="188">188</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="189">189</th><td><em>int</em> <dfn class="decl" id="avresample_is_open" title='avresample_is_open' data-ref="avresample_is_open">avresample_is_open</dfn>(<a class="typedef" href="#AVAudioResampleContext" title='AVAudioResampleContext' data-type='struct AVAudioResampleContext' data-ref="AVAudioResampleContext">AVAudioResampleContext</a> *<dfn class="local col2 decl" id="2avr" title='avr' data-type='AVAudioResampleContext *' data-ref="2avr">avr</dfn>);</td></tr>
+<tr><th id="190">190</th><td></td></tr>
+<tr><th id="191">191</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="192">192</th><td><i class="doc"> * Close AVAudioResampleContext.</i></td></tr>
+<tr><th id="193">193</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="194">194</th><td><i class="doc"> * This closes the context, but it does not change the parameters. The context</i></td></tr>
+<tr><th id="195">195</th><td><i class="doc"> * can be reopened with avresample_open(). It does, however, clear the output</i></td></tr>
+<tr><th id="196">196</th><td><i class="doc"> * FIFO and any remaining leftover samples in the resampling delay buffer. If</i></td></tr>
+<tr><th id="197">197</th><td><i class="doc"> * there was a custom matrix being used, that is also cleared.</i></td></tr>
+<tr><th id="198">198</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="199">199</th><td><i class="doc"> * <span class="command">@see</span> avresample_convert()</i></td></tr>
+<tr><th id="200">200</th><td><i class="doc"> * <span class="command">@see</span> avresample_set_matrix()</i></td></tr>
+<tr><th id="201">201</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="202">202</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">avr</span>  audio resample context</i></td></tr>
+<tr><th id="203">203</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="204">204</th><td><em>void</em> <dfn class="decl" id="avresample_close" title='avresample_close' data-ref="avresample_close">avresample_close</dfn>(<a class="typedef" href="#AVAudioResampleContext" title='AVAudioResampleContext' data-type='struct AVAudioResampleContext' data-ref="AVAudioResampleContext">AVAudioResampleContext</a> *<dfn class="local col3 decl" id="3avr" title='avr' data-type='AVAudioResampleContext *' data-ref="3avr">avr</dfn>);</td></tr>
+<tr><th id="205">205</th><td></td></tr>
+<tr><th id="206">206</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="207">207</th><td><i class="doc"> * Free AVAudioResampleContext and associated AVOption values.</i></td></tr>
+<tr><th id="208">208</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="209">209</th><td><i class="doc"> * This also calls avresample_close() before freeing.</i></td></tr>
+<tr><th id="210">210</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="211">211</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">avr</span>  audio resample context</i></td></tr>
+<tr><th id="212">212</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="213">213</th><td><em>void</em> <dfn class="decl" id="avresample_free" title='avresample_free' data-ref="avresample_free">avresample_free</dfn>(<a class="typedef" href="#AVAudioResampleContext" title='AVAudioResampleContext' data-type='struct AVAudioResampleContext' data-ref="AVAudioResampleContext">AVAudioResampleContext</a> **<dfn class="local col4 decl" id="4avr" title='avr' data-type='AVAudioResampleContext **' data-ref="4avr">avr</dfn>);</td></tr>
+<tr><th id="214">214</th><td></td></tr>
+<tr><th id="215">215</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="216">216</th><td><i class="doc"> * Generate a channel mixing matrix.</i></td></tr>
+<tr><th id="217">217</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="218">218</th><td><i class="doc"> * This function is the one used internally by libavresample for building the</i></td></tr>
+<tr><th id="219">219</th><td><i class="doc"> * default mixing matrix. It is made public just as a utility function for</i></td></tr>
+<tr><th id="220">220</th><td><i class="doc"> * building custom matrices.</i></td></tr>
+<tr><th id="221">221</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="222">222</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">in_layout</span>           input channel layout</i></td></tr>
+<tr><th id="223">223</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">out_layout</span>          output channel layout</i></td></tr>
+<tr><th id="224">224</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">center_mix_level</span>    mix level for the center channel</i></td></tr>
+<tr><th id="225">225</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">surround_mix_level</span>  mix level for the surround channel(s)</i></td></tr>
+<tr><th id="226">226</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">lfe_mix_level</span>       mix level for the low-frequency effects channel</i></td></tr>
+<tr><th id="227">227</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">normalize</span>           if 1, coefficients will be normalized to prevent</i></td></tr>
+<tr><th id="228">228</th><td><i class="doc"> *                            overflow. if 0, coefficients will not be</i></td></tr>
+<tr><th id="229">229</th><td><i class="doc"> *                            normalized.</i></td></tr>
+<tr><th id="230">230</th><td><i class="doc"> * <span class="command">@param</span>[out] <span class="arg">matrix</span>         mixing coefficients; matrix[i + stride * o] is</i></td></tr>
+<tr><th id="231">231</th><td><i class="doc"> *                            the weight of input channel i in output channel o.</i></td></tr>
+<tr><th id="232">232</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">stride</span>              distance between adjacent input channels in the</i></td></tr>
+<tr><th id="233">233</th><td><i class="doc"> *                            matrix array</i></td></tr>
+<tr><th id="234">234</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">matrix_encoding</span>     matrixed stereo downmix mode (e.g. dplii)</i></td></tr>
+<tr><th id="235">235</th><td><i class="doc"> * <span class="command">@return</span>                    0 on success, negative AVERROR code on failure</i></td></tr>
+<tr><th id="236">236</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="237">237</th><td><em>int</em> <dfn class="decl" id="avresample_build_matrix" title='avresample_build_matrix' data-ref="avresample_build_matrix">avresample_build_matrix</dfn>(<a class="typedef" href="../../include/stdint.h.html#uint64_t" title='uint64_t' data-type='unsigned long' data-ref="uint64_t">uint64_t</a> <dfn class="local col5 decl" id="5in_layout" title='in_layout' data-type='uint64_t' data-ref="5in_layout">in_layout</dfn>, <a class="typedef" href="../../include/stdint.h.html#uint64_t" title='uint64_t' data-type='unsigned long' data-ref="uint64_t">uint64_t</a> <dfn class="local col6 decl" id="6out_layout" title='out_layout' data-type='uint64_t' data-ref="6out_layout">out_layout</dfn>,</td></tr>
+<tr><th id="238">238</th><td>                            <em>double</em> <dfn class="local col7 decl" id="7center_mix_level" title='center_mix_level' data-type='double' data-ref="7center_mix_level">center_mix_level</dfn>, <em>double</em> <dfn class="local col8 decl" id="8surround_mix_level" title='surround_mix_level' data-type='double' data-ref="8surround_mix_level">surround_mix_level</dfn>,</td></tr>
+<tr><th id="239">239</th><td>                            <em>double</em> <dfn class="local col9 decl" id="9lfe_mix_level" title='lfe_mix_level' data-type='double' data-ref="9lfe_mix_level">lfe_mix_level</dfn>, <em>int</em> <dfn class="local col0 decl" id="10normalize" title='normalize' data-type='int' data-ref="10normalize">normalize</dfn>, <em>double</em> *<dfn class="local col1 decl" id="11matrix" title='matrix' data-type='double *' data-ref="11matrix">matrix</dfn>,</td></tr>
+<tr><th id="240">240</th><td>                            <em>int</em> <dfn class="local col2 decl" id="12stride" title='stride' data-type='int' data-ref="12stride">stride</dfn>, <b>enum</b> <a class="type" href="../libavutil/channel_layout.h.html#AVMatrixEncoding" title='AVMatrixEncoding' data-ref="AVMatrixEncoding">AVMatrixEncoding</a> <dfn class="local col3 decl" id="13matrix_encoding" title='matrix_encoding' data-type='enum AVMatrixEncoding' data-ref="13matrix_encoding">matrix_encoding</dfn>);</td></tr>
+<tr><th id="241">241</th><td></td></tr>
+<tr><th id="242">242</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="243">243</th><td><i class="doc"> * Get the current channel mixing matrix.</i></td></tr>
+<tr><th id="244">244</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="245">245</th><td><i class="doc"> * If no custom matrix has been previously set or the AVAudioResampleContext is</i></td></tr>
+<tr><th id="246">246</th><td><i class="doc"> * not open, an error is returned.</i></td></tr>
+<tr><th id="247">247</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="248">248</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">avr</span>     audio resample context</i></td></tr>
+<tr><th id="249">249</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">matrix</span>  mixing coefficients; matrix[i + stride * o] is the weight of</i></td></tr>
+<tr><th id="250">250</th><td><i class="doc"> *                input channel i in output channel o.</i></td></tr>
+<tr><th id="251">251</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">stride</span>  distance between adjacent input channels in the matrix array</i></td></tr>
+<tr><th id="252">252</th><td><i class="doc"> * <span class="command">@return</span>        0 on success, negative AVERROR code on failure</i></td></tr>
+<tr><th id="253">253</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="254">254</th><td><em>int</em> <dfn class="decl" id="avresample_get_matrix" title='avresample_get_matrix' data-ref="avresample_get_matrix">avresample_get_matrix</dfn>(<a class="typedef" href="#AVAudioResampleContext" title='AVAudioResampleContext' data-type='struct AVAudioResampleContext' data-ref="AVAudioResampleContext">AVAudioResampleContext</a> *<dfn class="local col4 decl" id="14avr" title='avr' data-type='AVAudioResampleContext *' data-ref="14avr">avr</dfn>, <em>double</em> *<dfn class="local col5 decl" id="15matrix" title='matrix' data-type='double *' data-ref="15matrix">matrix</dfn>,</td></tr>
+<tr><th id="255">255</th><td>                          <em>int</em> <dfn class="local col6 decl" id="16stride" title='stride' data-type='int' data-ref="16stride">stride</dfn>);</td></tr>
+<tr><th id="256">256</th><td></td></tr>
+<tr><th id="257">257</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="258">258</th><td><i class="doc"> * Set channel mixing matrix.</i></td></tr>
+<tr><th id="259">259</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="260">260</th><td><i class="doc"> * Allows for setting a custom mixing matrix, overriding the default matrix</i></td></tr>
+<tr><th id="261">261</th><td><i class="doc"> * generated internally during avresample_open(). This function can be called</i></td></tr>
+<tr><th id="262">262</th><td><i class="doc"> * anytime on an allocated context, either before or after calling</i></td></tr>
+<tr><th id="263">263</th><td><i class="doc"> * avresample_open(), as long as the channel layouts have been set.</i></td></tr>
+<tr><th id="264">264</th><td><i class="doc"> * avresample_convert() always uses the current matrix.</i></td></tr>
+<tr><th id="265">265</th><td><i class="doc"> * Calling avresample_close() on the context will clear the current matrix.</i></td></tr>
+<tr><th id="266">266</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="267">267</th><td><i class="doc"> * <span class="command">@see</span> avresample_close()</i></td></tr>
+<tr><th id="268">268</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="269">269</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">avr</span>     audio resample context</i></td></tr>
+<tr><th id="270">270</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">matrix</span>  mixing coefficients; matrix[i + stride * o] is the weight of</i></td></tr>
+<tr><th id="271">271</th><td><i class="doc"> *                input channel i in output channel o.</i></td></tr>
+<tr><th id="272">272</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">stride</span>  distance between adjacent input channels in the matrix array</i></td></tr>
+<tr><th id="273">273</th><td><i class="doc"> * <span class="command">@return</span>        0 on success, negative AVERROR code on failure</i></td></tr>
+<tr><th id="274">274</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="275">275</th><td><em>int</em> <dfn class="decl" id="avresample_set_matrix" title='avresample_set_matrix' data-ref="avresample_set_matrix">avresample_set_matrix</dfn>(<a class="typedef" href="#AVAudioResampleContext" title='AVAudioResampleContext' data-type='struct AVAudioResampleContext' data-ref="AVAudioResampleContext">AVAudioResampleContext</a> *<dfn class="local col7 decl" id="17avr" title='avr' data-type='AVAudioResampleContext *' data-ref="17avr">avr</dfn>, <em>const</em> <em>double</em> *<dfn class="local col8 decl" id="18matrix" title='matrix' data-type='const double *' data-ref="18matrix">matrix</dfn>,</td></tr>
+<tr><th id="276">276</th><td>                          <em>int</em> <dfn class="local col9 decl" id="19stride" title='stride' data-type='int' data-ref="19stride">stride</dfn>);</td></tr>
+<tr><th id="277">277</th><td></td></tr>
+<tr><th id="278">278</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="279">279</th><td><i class="doc"> * Set a customized input channel mapping.</i></td></tr>
+<tr><th id="280">280</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="281">281</th><td><i class="doc"> * This function can only be called when the allocated context is not open.</i></td></tr>
+<tr><th id="282">282</th><td><i class="doc"> * Also, the input channel layout must have already been set.</i></td></tr>
+<tr><th id="283">283</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="284">284</th><td><i class="doc"> * Calling avresample_close() on the context will clear the channel mapping.</i></td></tr>
+<tr><th id="285">285</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="286">286</th><td><i class="doc"> * The map for each input channel specifies the channel index in the source to</i></td></tr>
+<tr><th id="287">287</th><td><i class="doc"> * use for that particular channel, or -1 to mute the channel. Source channels</i></td></tr>
+<tr><th id="288">288</th><td><i class="doc"> * can be duplicated by using the same index for multiple input channels.</i></td></tr>
+<tr><th id="289">289</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="290">290</th><td><i class="doc"> * Examples:</i></td></tr>
+<tr><th id="291">291</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="292">292</th><td><i class="doc"> * Reordering 5.1 AAC order (C,L,R,Ls,Rs,LFE) to FFmpeg order (L,R,C,LFE,Ls,Rs):</i></td></tr>
+<tr><th id="293">293</th><td><i class="doc"> * { 1, 2, 0, 5, 3, 4 }</i></td></tr>
+<tr><th id="294">294</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="295">295</th><td><i class="doc"> * Muting the 3rd channel in 4-channel input:</i></td></tr>
+<tr><th id="296">296</th><td><i class="doc"> * { 0, 1, -1, 3 }</i></td></tr>
+<tr><th id="297">297</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="298">298</th><td><i class="doc"> * Duplicating the left channel of stereo input:</i></td></tr>
+<tr><th id="299">299</th><td><i class="doc"> * { 0, 0 }</i></td></tr>
+<tr><th id="300">300</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="301">301</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">avr</span>         audio resample context</i></td></tr>
+<tr><th id="302">302</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">channel_map</span> customized input channel mapping</i></td></tr>
+<tr><th id="303">303</th><td><i class="doc"> * <span class="command">@return</span>            0 on success, negative AVERROR code on failure</i></td></tr>
+<tr><th id="304">304</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="305">305</th><td><em>int</em> <dfn class="decl" id="avresample_set_channel_mapping" title='avresample_set_channel_mapping' data-ref="avresample_set_channel_mapping">avresample_set_channel_mapping</dfn>(<a class="typedef" href="#AVAudioResampleContext" title='AVAudioResampleContext' data-type='struct AVAudioResampleContext' data-ref="AVAudioResampleContext">AVAudioResampleContext</a> *<dfn class="local col0 decl" id="20avr" title='avr' data-type='AVAudioResampleContext *' data-ref="20avr">avr</dfn>,</td></tr>
+<tr><th id="306">306</th><td>                                   <em>const</em> <em>int</em> *<dfn class="local col1 decl" id="21channel_map" title='channel_map' data-type='const int *' data-ref="21channel_map">channel_map</dfn>);</td></tr>
+<tr><th id="307">307</th><td></td></tr>
+<tr><th id="308">308</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="309">309</th><td><i class="doc"> * Set compensation for resampling.</i></td></tr>
+<tr><th id="310">310</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="311">311</th><td><i class="doc"> * This can be called anytime after avresample_open(). If resampling is not</i></td></tr>
+<tr><th id="312">312</th><td><i class="doc"> * automatically enabled because of a sample rate conversion, the</i></td></tr>
+<tr><th id="313">313</th><td><i class="doc"> * "force_resampling" option must have been set to 1 when opening the context</i></td></tr>
+<tr><th id="314">314</th><td><i class="doc"> * in order to use resampling compensation.</i></td></tr>
+<tr><th id="315">315</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="316">316</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">avr</span>                    audio resample context</i></td></tr>
+<tr><th id="317">317</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">sample_delta</span>           compensation delta, in samples</i></td></tr>
+<tr><th id="318">318</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">compensation_distance</span>  compensation distance, in samples</i></td></tr>
+<tr><th id="319">319</th><td><i class="doc"> * <span class="command">@return</span>                       0 on success, negative AVERROR code on failure</i></td></tr>
+<tr><th id="320">320</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="321">321</th><td><em>int</em> <dfn class="decl" id="avresample_set_compensation" title='avresample_set_compensation' data-ref="avresample_set_compensation">avresample_set_compensation</dfn>(<a class="typedef" href="#AVAudioResampleContext" title='AVAudioResampleContext' data-type='struct AVAudioResampleContext' data-ref="AVAudioResampleContext">AVAudioResampleContext</a> *<dfn class="local col2 decl" id="22avr" title='avr' data-type='AVAudioResampleContext *' data-ref="22avr">avr</dfn>, <em>int</em> <dfn class="local col3 decl" id="23sample_delta" title='sample_delta' data-type='int' data-ref="23sample_delta">sample_delta</dfn>,</td></tr>
+<tr><th id="322">322</th><td>                                <em>int</em> <dfn class="local col4 decl" id="24compensation_distance" title='compensation_distance' data-type='int' data-ref="24compensation_distance">compensation_distance</dfn>);</td></tr>
+<tr><th id="323">323</th><td></td></tr>
+<tr><th id="324">324</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="325">325</th><td><i class="doc"> * Provide the upper bound on the number of samples the configured</i></td></tr>
+<tr><th id="326">326</th><td><i class="doc"> * conversion would output.</i></td></tr>
+<tr><th id="327">327</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="328">328</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">avr</span>           audio resample context</i></td></tr>
+<tr><th id="329">329</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">in_nb_samples</span> number of input samples</i></td></tr>
+<tr><th id="330">330</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="331">331</th><td><i class="doc"> * <span class="command">@return</span>              number of samples or AVERROR(EINVAL) if the value</i></td></tr>
+<tr><th id="332">332</th><td><i class="doc"> *                      would exceed INT_MAX</i></td></tr>
+<tr><th id="333">333</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="334">334</th><td></td></tr>
+<tr><th id="335">335</th><td><em>int</em> <dfn class="decl" id="avresample_get_out_samples" title='avresample_get_out_samples' data-ref="avresample_get_out_samples">avresample_get_out_samples</dfn>(<a class="typedef" href="#AVAudioResampleContext" title='AVAudioResampleContext' data-type='struct AVAudioResampleContext' data-ref="AVAudioResampleContext">AVAudioResampleContext</a> *<dfn class="local col5 decl" id="25avr" title='avr' data-type='AVAudioResampleContext *' data-ref="25avr">avr</dfn>, <em>int</em> <dfn class="local col6 decl" id="26in_nb_samples" title='in_nb_samples' data-type='int' data-ref="26in_nb_samples">in_nb_samples</dfn>);</td></tr>
+<tr><th id="336">336</th><td></td></tr>
+<tr><th id="337">337</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="338">338</th><td><i class="doc"> * Convert input samples and write them to the output FIFO.</i></td></tr>
+<tr><th id="339">339</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="340">340</th><td><i class="doc"> * The upper bound on the number of output samples can be obtained through</i></td></tr>
+<tr><th id="341">341</th><td><i class="doc"> * avresample_get_out_samples().</i></td></tr>
+<tr><th id="342">342</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="343">343</th><td><i class="doc"> * The output data can be NULL or have fewer allocated samples than required.</i></td></tr>
+<tr><th id="344">344</th><td><i class="doc"> * In this case, any remaining samples not written to the output will be added</i></td></tr>
+<tr><th id="345">345</th><td><i class="doc"> * to an internal FIFO buffer, to be returned at the next call to this function</i></td></tr>
+<tr><th id="346">346</th><td><i class="doc"> * or to avresample_read().</i></td></tr>
+<tr><th id="347">347</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="348">348</th><td><i class="doc"> * If converting sample rate, there may be data remaining in the internal</i></td></tr>
+<tr><th id="349">349</th><td><i class="doc"> * resampling delay buffer. avresample_get_delay() tells the number of remaining</i></td></tr>
+<tr><th id="350">350</th><td><i class="doc"> * samples. To get this data as output, call avresample_convert() with NULL</i></td></tr>
+<tr><th id="351">351</th><td><i class="doc"> * input.</i></td></tr>
+<tr><th id="352">352</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="353">353</th><td><i class="doc"> * At the end of the conversion process, there may be data remaining in the</i></td></tr>
+<tr><th id="354">354</th><td><i class="doc"> * internal FIFO buffer. avresample_available() tells the number of remaining</i></td></tr>
+<tr><th id="355">355</th><td><i class="doc"> * samples. To get this data as output, either call avresample_convert() with</i></td></tr>
+<tr><th id="356">356</th><td><i class="doc"> * NULL input or call avresample_read().</i></td></tr>
+<tr><th id="357">357</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="358">358</th><td><i class="doc"> * <span class="command">@see</span> avresample_get_out_samples()</i></td></tr>
+<tr><th id="359">359</th><td><i class="doc"> * <span class="command">@see</span> avresample_read()</i></td></tr>
+<tr><th id="360">360</th><td><i class="doc"> * <span class="command">@see</span> avresample_get_delay()</i></td></tr>
+<tr><th id="361">361</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="362">362</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">avr</span>             audio resample context</i></td></tr>
+<tr><th id="363">363</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">output</span>          output data pointers</i></td></tr>
+<tr><th id="364">364</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">out_plane_size</span>  output plane size, in bytes.</i></td></tr>
+<tr><th id="365">365</th><td><i class="doc"> *                        This can be 0 if unknown, but that will lead to</i></td></tr>
+<tr><th id="366">366</th><td><i class="doc"> *                        optimized functions not being used directly on the</i></td></tr>
+<tr><th id="367">367</th><td><i class="doc"> *                        output, which could slow down some conversions.</i></td></tr>
+<tr><th id="368">368</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">out_samples</span>     maximum number of samples that the output buffer can hold</i></td></tr>
+<tr><th id="369">369</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">input</span>           input data pointers</i></td></tr>
+<tr><th id="370">370</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">in_plane_size</span>   input plane size, in bytes</i></td></tr>
+<tr><th id="371">371</th><td><i class="doc"> *                        This can be 0 if unknown, but that will lead to</i></td></tr>
+<tr><th id="372">372</th><td><i class="doc"> *                        optimized functions not being used directly on the</i></td></tr>
+<tr><th id="373">373</th><td><i class="doc"> *                        input, which could slow down some conversions.</i></td></tr>
+<tr><th id="374">374</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">in_samples</span>      number of input samples to convert</i></td></tr>
+<tr><th id="375">375</th><td><i class="doc"> * <span class="command">@return</span>                number of samples written to the output buffer,</i></td></tr>
+<tr><th id="376">376</th><td><i class="doc"> *                        not including converted samples added to the internal</i></td></tr>
+<tr><th id="377">377</th><td><i class="doc"> *                        output FIFO</i></td></tr>
+<tr><th id="378">378</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="379">379</th><td><em>int</em> <dfn class="decl" id="avresample_convert" title='avresample_convert' data-ref="avresample_convert">avresample_convert</dfn>(<a class="typedef" href="#AVAudioResampleContext" title='AVAudioResampleContext' data-type='struct AVAudioResampleContext' data-ref="AVAudioResampleContext">AVAudioResampleContext</a> *<dfn class="local col7 decl" id="27avr" title='avr' data-type='AVAudioResampleContext *' data-ref="27avr">avr</dfn>, <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> **<dfn class="local col8 decl" id="28output" title='output' data-type='uint8_t **' data-ref="28output">output</dfn>,</td></tr>
+<tr><th id="380">380</th><td>                       <em>int</em> <dfn class="local col9 decl" id="29out_plane_size" title='out_plane_size' data-type='int' data-ref="29out_plane_size">out_plane_size</dfn>, <em>int</em> <dfn class="local col0 decl" id="30out_samples" title='out_samples' data-type='int' data-ref="30out_samples">out_samples</dfn>,</td></tr>
+<tr><th id="381">381</th><td>                       <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> * <em>const</em> *<dfn class="local col1 decl" id="31input" title='input' data-type='uint8_t *const *' data-ref="31input">input</dfn>, <em>int</em> <dfn class="local col2 decl" id="32in_plane_size" title='in_plane_size' data-type='int' data-ref="32in_plane_size">in_plane_size</dfn>,</td></tr>
+<tr><th id="382">382</th><td>                       <em>int</em> <dfn class="local col3 decl" id="33in_samples" title='in_samples' data-type='int' data-ref="33in_samples">in_samples</dfn>);</td></tr>
+<tr><th id="383">383</th><td></td></tr>
+<tr><th id="384">384</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="385">385</th><td><i class="doc"> * Return the number of samples currently in the resampling delay buffer.</i></td></tr>
+<tr><th id="386">386</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="387">387</th><td><i class="doc"> * When resampling, there may be a delay between the input and output. Any</i></td></tr>
+<tr><th id="388">388</th><td><i class="doc"> * unconverted samples in each call are stored internally in a delay buffer.</i></td></tr>
+<tr><th id="389">389</th><td><i class="doc"> * This function allows the user to determine the current number of samples in</i></td></tr>
+<tr><th id="390">390</th><td><i class="doc"> * the delay buffer, which can be useful for synchronization.</i></td></tr>
+<tr><th id="391">391</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="392">392</th><td><i class="doc"> * <span class="command">@see</span> avresample_convert()</i></td></tr>
+<tr><th id="393">393</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="394">394</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">avr</span>  audio resample context</i></td></tr>
+<tr><th id="395">395</th><td><i class="doc"> * <span class="command">@return</span>     number of samples currently in the resampling delay buffer</i></td></tr>
+<tr><th id="396">396</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="397">397</th><td><em>int</em> <dfn class="decl" id="avresample_get_delay" title='avresample_get_delay' data-ref="avresample_get_delay">avresample_get_delay</dfn>(<a class="typedef" href="#AVAudioResampleContext" title='AVAudioResampleContext' data-type='struct AVAudioResampleContext' data-ref="AVAudioResampleContext">AVAudioResampleContext</a> *<dfn class="local col4 decl" id="34avr" title='avr' data-type='AVAudioResampleContext *' data-ref="34avr">avr</dfn>);</td></tr>
+<tr><th id="398">398</th><td></td></tr>
+<tr><th id="399">399</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="400">400</th><td><i class="doc"> * Return the number of available samples in the output FIFO.</i></td></tr>
+<tr><th id="401">401</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="402">402</th><td><i class="doc"> * During conversion, if the user does not specify an output buffer or</i></td></tr>
+<tr><th id="403">403</th><td><i class="doc"> * specifies an output buffer that is smaller than what is needed, remaining</i></td></tr>
+<tr><th id="404">404</th><td><i class="doc"> * samples that are not written to the output are stored to an internal FIFO</i></td></tr>
+<tr><th id="405">405</th><td><i class="doc"> * buffer. The samples in the FIFO can be read with avresample_read() or</i></td></tr>
+<tr><th id="406">406</th><td><i class="doc"> * avresample_convert().</i></td></tr>
+<tr><th id="407">407</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="408">408</th><td><i class="doc"> * <span class="command">@see</span> avresample_read()</i></td></tr>
+<tr><th id="409">409</th><td><i class="doc"> * <span class="command">@see</span> avresample_convert()</i></td></tr>
+<tr><th id="410">410</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="411">411</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">avr</span>  audio resample context</i></td></tr>
+<tr><th id="412">412</th><td><i class="doc"> * <span class="command">@return</span>     number of samples available for reading</i></td></tr>
+<tr><th id="413">413</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="414">414</th><td><em>int</em> <dfn class="decl" id="avresample_available" title='avresample_available' data-ref="avresample_available">avresample_available</dfn>(<a class="typedef" href="#AVAudioResampleContext" title='AVAudioResampleContext' data-type='struct AVAudioResampleContext' data-ref="AVAudioResampleContext">AVAudioResampleContext</a> *<dfn class="local col5 decl" id="35avr" title='avr' data-type='AVAudioResampleContext *' data-ref="35avr">avr</dfn>);</td></tr>
+<tr><th id="415">415</th><td></td></tr>
+<tr><th id="416">416</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="417">417</th><td><i class="doc"> * Read samples from the output FIFO.</i></td></tr>
+<tr><th id="418">418</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="419">419</th><td><i class="doc"> * During conversion, if the user does not specify an output buffer or</i></td></tr>
+<tr><th id="420">420</th><td><i class="doc"> * specifies an output buffer that is smaller than what is needed, remaining</i></td></tr>
+<tr><th id="421">421</th><td><i class="doc"> * samples that are not written to the output are stored to an internal FIFO</i></td></tr>
+<tr><th id="422">422</th><td><i class="doc"> * buffer. This function can be used to read samples from that internal FIFO.</i></td></tr>
+<tr><th id="423">423</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="424">424</th><td><i class="doc"> * <span class="command">@see</span> avresample_available()</i></td></tr>
+<tr><th id="425">425</th><td><i class="doc"> * <span class="command">@see</span> avresample_convert()</i></td></tr>
+<tr><th id="426">426</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="427">427</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">avr</span>         audio resample context</i></td></tr>
+<tr><th id="428">428</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">output</span>      output data pointers. May be NULL, in which case</i></td></tr>
+<tr><th id="429">429</th><td><i class="doc"> *                    nb_samples of data is discarded from output FIFO.</i></td></tr>
+<tr><th id="430">430</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">nb_samples</span>  number of samples to read from the FIFO</i></td></tr>
+<tr><th id="431">431</th><td><i class="doc"> * <span class="command">@return</span>            the number of samples written to output</i></td></tr>
+<tr><th id="432">432</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="433">433</th><td><em>int</em> <dfn class="decl" id="avresample_read" title='avresample_read' data-ref="avresample_read">avresample_read</dfn>(<a class="typedef" href="#AVAudioResampleContext" title='AVAudioResampleContext' data-type='struct AVAudioResampleContext' data-ref="AVAudioResampleContext">AVAudioResampleContext</a> *<dfn class="local col6 decl" id="36avr" title='avr' data-type='AVAudioResampleContext *' data-ref="36avr">avr</dfn>, <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> **<dfn class="local col7 decl" id="37output" title='output' data-type='uint8_t **' data-ref="37output">output</dfn>, <em>int</em> <dfn class="local col8 decl" id="38nb_samples" title='nb_samples' data-type='int' data-ref="38nb_samples">nb_samples</dfn>);</td></tr>
+<tr><th id="434">434</th><td></td></tr>
+<tr><th id="435">435</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="436">436</th><td><i class="doc"> * Convert the samples in the input AVFrame and write them to the output AVFrame.</i></td></tr>
+<tr><th id="437">437</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="438">438</th><td><i class="doc"> * Input and output AVFrames must have channel_layout, sample_rate and format set.</i></td></tr>
+<tr><th id="439">439</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="440">440</th><td><i class="doc"> * The upper bound on the number of output samples is obtained through</i></td></tr>
+<tr><th id="441">441</th><td><i class="doc"> * avresample_get_out_samples().</i></td></tr>
+<tr><th id="442">442</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="443">443</th><td><i class="doc"> * If the output AVFrame does not have the data pointers allocated the nb_samples</i></td></tr>
+<tr><th id="444">444</th><td><i class="doc"> * field will be set using avresample_get_out_samples() and av_frame_get_buffer()</i></td></tr>
+<tr><th id="445">445</th><td><i class="doc"> * is called to allocate the frame.</i></td></tr>
+<tr><th id="446">446</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="447">447</th><td><i class="doc"> * The output AVFrame can be NULL or have fewer allocated samples than required.</i></td></tr>
+<tr><th id="448">448</th><td><i class="doc"> * In this case, any remaining samples not written to the output will be added</i></td></tr>
+<tr><th id="449">449</th><td><i class="doc"> * to an internal FIFO buffer, to be returned at the next call to this function</i></td></tr>
+<tr><th id="450">450</th><td><i class="doc"> * or to avresample_convert() or to avresample_read().</i></td></tr>
+<tr><th id="451">451</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="452">452</th><td><i class="doc"> * If converting sample rate, there may be data remaining in the internal</i></td></tr>
+<tr><th id="453">453</th><td><i class="doc"> * resampling delay buffer. avresample_get_delay() tells the number of</i></td></tr>
+<tr><th id="454">454</th><td><i class="doc"> * remaining samples. To get this data as output, call this function or</i></td></tr>
+<tr><th id="455">455</th><td><i class="doc"> * avresample_convert() with NULL input.</i></td></tr>
+<tr><th id="456">456</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="457">457</th><td><i class="doc"> * At the end of the conversion process, there may be data remaining in the</i></td></tr>
+<tr><th id="458">458</th><td><i class="doc"> * internal FIFO buffer. avresample_available() tells the number of remaining</i></td></tr>
+<tr><th id="459">459</th><td><i class="doc"> * samples. To get this data as output, either call this function or</i></td></tr>
+<tr><th id="460">460</th><td><i class="doc"> * avresample_convert() with NULL input or call avresample_read().</i></td></tr>
+<tr><th id="461">461</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="462">462</th><td><i class="doc"> * If the AVAudioResampleContext configuration does not match the output and</i></td></tr>
+<tr><th id="463">463</th><td><i class="doc"> * input AVFrame settings the conversion does not take place and depending on</i></td></tr>
+<tr><th id="464">464</th><td><i class="doc"> * which AVFrame is not matching AVERROR_OUTPUT_CHANGED, AVERROR_INPUT_CHANGED</i></td></tr>
+<tr><th id="465">465</th><td><i class="doc"> * or AVERROR_OUTPUT_CHANGED|AVERROR_INPUT_CHANGED is returned.</i></td></tr>
+<tr><th id="466">466</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="467">467</th><td><i class="doc"> * <span class="command">@see</span> avresample_get_out_samples()</i></td></tr>
+<tr><th id="468">468</th><td><i class="doc"> * <span class="command">@see</span> avresample_available()</i></td></tr>
+<tr><th id="469">469</th><td><i class="doc"> * <span class="command">@see</span> avresample_convert()</i></td></tr>
+<tr><th id="470">470</th><td><i class="doc"> * <span class="command">@see</span> avresample_read()</i></td></tr>
+<tr><th id="471">471</th><td><i class="doc"> * <span class="command">@see</span> avresample_get_delay()</i></td></tr>
+<tr><th id="472">472</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="473">473</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">avr</span>             audio resample context</i></td></tr>
+<tr><th id="474">474</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">output</span>          output AVFrame</i></td></tr>
+<tr><th id="475">475</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">input</span>           input AVFrame</i></td></tr>
+<tr><th id="476">476</th><td><i class="doc"> * <span class="command">@return</span>                0 on success, AVERROR on failure or nonmatching</i></td></tr>
+<tr><th id="477">477</th><td><i class="doc"> *                        configuration.</i></td></tr>
+<tr><th id="478">478</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="479">479</th><td><em>int</em> <dfn class="decl" id="avresample_convert_frame" title='avresample_convert_frame' data-ref="avresample_convert_frame">avresample_convert_frame</dfn>(<a class="typedef" href="#AVAudioResampleContext" title='AVAudioResampleContext' data-type='struct AVAudioResampleContext' data-ref="AVAudioResampleContext">AVAudioResampleContext</a> *<dfn class="local col9 decl" id="39avr" title='avr' data-type='AVAudioResampleContext *' data-ref="39avr">avr</dfn>,</td></tr>
+<tr><th id="480">480</th><td>                             <a class="typedef" href="../libavutil/frame.h.html#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col0 decl" id="40output" title='output' data-type='AVFrame *' data-ref="40output">output</dfn>, <a class="typedef" href="../libavutil/frame.h.html#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col1 decl" id="41input" title='input' data-type='AVFrame *' data-ref="41input">input</dfn>);</td></tr>
+<tr><th id="481">481</th><td></td></tr>
+<tr><th id="482">482</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="483">483</th><td><i class="doc"> * Configure or reconfigure the AVAudioResampleContext using the information</i></td></tr>
+<tr><th id="484">484</th><td><i class="doc"> * provided by the AVFrames.</i></td></tr>
+<tr><th id="485">485</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="486">486</th><td><i class="doc"> * The original resampling context is reset even on failure.</i></td></tr>
+<tr><th id="487">487</th><td><i class="doc"> * The function calls avresample_close() internally if the context is open.</i></td></tr>
+<tr><th id="488">488</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="489">489</th><td><i class="doc"> * <span class="command">@see</span> avresample_open();</i></td></tr>
+<tr><th id="490">490</th><td><i class="doc"> * <span class="command">@see</span> avresample_close();</i></td></tr>
+<tr><th id="491">491</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="492">492</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">avr</span>             audio resample context</i></td></tr>
+<tr><th id="493">493</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">output</span>          output AVFrame</i></td></tr>
+<tr><th id="494">494</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">input</span>           input AVFrame</i></td></tr>
+<tr><th id="495">495</th><td><i class="doc"> * <span class="command">@return</span>                0 on success, AVERROR on failure.</i></td></tr>
+<tr><th id="496">496</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="497">497</th><td><em>int</em> <dfn class="decl" id="avresample_config" title='avresample_config' data-ref="avresample_config">avresample_config</dfn>(<a class="typedef" href="#AVAudioResampleContext" title='AVAudioResampleContext' data-type='struct AVAudioResampleContext' data-ref="AVAudioResampleContext">AVAudioResampleContext</a> *<dfn class="local col2 decl" id="42avr" title='avr' data-type='AVAudioResampleContext *' data-ref="42avr">avr</dfn>, <a class="typedef" href="../libavutil/frame.h.html#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col3 decl" id="43out" title='out' data-type='AVFrame *' data-ref="43out">out</dfn>, <a class="typedef" href="../libavutil/frame.h.html#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col4 decl" id="44in" title='in' data-type='AVFrame *' data-ref="44in">in</dfn>);</td></tr>
+<tr><th id="498">498</th><td></td></tr>
+<tr><th id="499">499</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="500">500</th><td><i class="doc"> * @}</i></td></tr>
+<tr><th id="501">501</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="502">502</th><td></td></tr>
+<tr><th id="503">503</th><td><u>#<span data-ppcond="21">endif</span> /* AVRESAMPLE_AVRESAMPLE_H */</u></td></tr>
+<tr><th id="504">504</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated while processing <a href='../cmdutils.c.html'>ffmpeg/cmdutils.c</a><br/>Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

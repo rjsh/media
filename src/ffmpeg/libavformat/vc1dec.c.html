@@ -1,0 +1,99 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>vc1dec.c source code [ffmpeg/libavformat/vc1dec.c] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavformat/vc1dec.c'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavformat</a>/<a href='vc1dec.c.html'>vc1dec.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * VC-1 demuxer</i></td></tr>
+<tr><th id="3">3</th><td><i> * Copyright (c) 2015 Carl Eugen Hoyos</i></td></tr>
+<tr><th id="4">4</th><td><i> *</i></td></tr>
+<tr><th id="5">5</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="8">8</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="9">9</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="10">10</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="11">11</th><td><i> *</i></td></tr>
+<tr><th id="12">12</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="13">13</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="14">14</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="15">15</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="16">16</th><td><i> *</i></td></tr>
+<tr><th id="17">17</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="18">18</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="19">19</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="20">20</th><td><i> */</i></td></tr>
+<tr><th id="21">21</th><td></td></tr>
+<tr><th id="22">22</th><td><u>#include <a href="avformat.h.html">"avformat.h"</a></u></td></tr>
+<tr><th id="23">23</th><td><u>#include <a href="rawdec.h.html">"rawdec.h"</a></u></td></tr>
+<tr><th id="24">24</th><td><u>#include <a href="../libavutil/intreadwrite.h.html">"libavutil/intreadwrite.h"</a></u></td></tr>
+<tr><th id="25">25</th><td><u>#include <a href="../libavcodec/vc1_common.h.html">"libavcodec/vc1_common.h"</a></u></td></tr>
+<tr><th id="26">26</th><td></td></tr>
+<tr><th id="27">27</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="vc1_probe" title='vc1_probe' data-type='int vc1_probe(AVProbeData * p)' data-ref="vc1_probe">vc1_probe</dfn>(<a class="typedef" href="avformat.h.html#AVProbeData" title='AVProbeData' data-type='struct AVProbeData' data-ref="AVProbeData">AVProbeData</a> *<dfn class="local col1 decl" id="1p" title='p' data-type='AVProbeData *' data-ref="1p">p</dfn>)</td></tr>
+<tr><th id="28">28</th><td>{</td></tr>
+<tr><th id="29">29</th><td>    <em>int</em> <dfn class="local col2 decl" id="2seq" title='seq' data-type='int' data-ref="2seq">seq</dfn> = <var>0</var>, <dfn class="local col3 decl" id="3entry" title='entry' data-type='int' data-ref="3entry">entry</dfn> = <var>0</var>, <dfn class="local col4 decl" id="4frame" title='frame' data-type='int' data-ref="4frame">frame</dfn> = <var>0</var>, <dfn class="local col5 decl" id="5i" title='i' data-type='int' data-ref="5i">i</dfn>;</td></tr>
+<tr><th id="30">30</th><td></td></tr>
+<tr><th id="31">31</th><td>    <b>for</b> (<a class="local col5 ref" href="#5i" title='i' data-ref="5i">i</a> = <var>0</var>; <a class="local col5 ref" href="#5i" title='i' data-ref="5i">i</a> &lt; <a class="local col1 ref" href="#1p" title='p' data-ref="1p">p</a>-&gt;<a class="ref" href="avformat.h.html#AVProbeData::buf_size" title='AVProbeData::buf_size' data-ref="AVProbeData::buf_size">buf_size</a> + <var>5</var>; <a class="local col5 ref" href="#5i" title='i' data-ref="5i">i</a>++) {</td></tr>
+<tr><th id="32">32</th><td>        <a class="typedef" href="../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a> <dfn class="local col6 decl" id="6code" title='code' data-type='uint32_t' data-ref="6code">code</dfn> = <a class="macro" href="../libavutil/intreadwrite.h.html#416" title="av_bswap32((((const union unaligned_32 *) (p-&gt;buf + i))-&gt;l))" data-ref="_M/AV_RB32">AV_RB32</a>(<a class="local col1 ref" href="#1p" title='p' data-ref="1p">p</a>-&gt;<a class="ref" href="avformat.h.html#AVProbeData::buf" title='AVProbeData::buf' data-ref="AVProbeData::buf">buf</a> + <a class="local col5 ref" href="#5i" title='i' data-ref="5i">i</a>);</td></tr>
+<tr><th id="33">33</th><td>        <b>if</b> ((<a class="local col6 ref" href="#6code" title='code' data-ref="6code">code</a> &amp; <var>0xffffffe0</var>) == <var>0x100</var>) {</td></tr>
+<tr><th id="34">34</th><td>            <em>int</em> <dfn class="local col7 decl" id="7type" title='type' data-type='int' data-ref="7type">type</dfn> = <a class="local col6 ref" href="#6code" title='code' data-ref="6code">code</a> &amp; <var>0x11f</var>;</td></tr>
+<tr><th id="35">35</th><td>            <a class="local col5 ref" href="#5i" title='i' data-ref="5i">i</a> += <var>4</var>;</td></tr>
+<tr><th id="36">36</th><td>            <b>switch</b> (<a class="local col7 ref" href="#7type" title='type' data-ref="7type">type</a>) {</td></tr>
+<tr><th id="37">37</th><td>            <b>case</b> <a class="enum" href="../libavcodec/vc1_common.h.html#VC1Code::VC1_CODE_SEQHDR" title='VC1Code::VC1_CODE_SEQHDR' data-ref="VC1Code::VC1_CODE_SEQHDR">VC1_CODE_SEQHDR</a>: {</td></tr>
+<tr><th id="38">38</th><td>                <em>int</em> <dfn class="local col8 decl" id="8profile" title='profile' data-type='int' data-ref="8profile">profile</dfn>, <dfn class="local col9 decl" id="9level" title='level' data-type='int' data-ref="9level">level</dfn>, <dfn class="local col0 decl" id="10chromaformat" title='chromaformat' data-type='int' data-ref="10chromaformat">chromaformat</dfn>;</td></tr>
+<tr><th id="39">39</th><td>                <a class="local col8 ref" href="#8profile" title='profile' data-ref="8profile">profile</a> = (<a class="local col1 ref" href="#1p" title='p' data-ref="1p">p</a>-&gt;<a class="ref" href="avformat.h.html#AVProbeData::buf" title='AVProbeData::buf' data-ref="AVProbeData::buf">buf</a>[<a class="local col5 ref" href="#5i" title='i' data-ref="5i">i</a>] &amp; <var>0xc0</var>) &gt;&gt; <var>6</var>;</td></tr>
+<tr><th id="40">40</th><td>                <b>if</b> (<a class="local col8 ref" href="#8profile" title='profile' data-ref="8profile">profile</a> != <a class="enum" href="../libavcodec/vc1_common.h.html#Profile::PROFILE_ADVANCED" title='Profile::PROFILE_ADVANCED' data-ref="Profile::PROFILE_ADVANCED">PROFILE_ADVANCED</a>) {</td></tr>
+<tr><th id="41">41</th><td>                    <a class="local col2 ref" href="#2seq" title='seq' data-ref="2seq">seq</a> = <var>0</var>;</td></tr>
+<tr><th id="42">42</th><td>                    <b>continue</b>;</td></tr>
+<tr><th id="43">43</th><td>                }</td></tr>
+<tr><th id="44">44</th><td>                <a class="local col9 ref" href="#9level" title='level' data-ref="9level">level</a> = (<a class="local col1 ref" href="#1p" title='p' data-ref="1p">p</a>-&gt;<a class="ref" href="avformat.h.html#AVProbeData::buf" title='AVProbeData::buf' data-ref="AVProbeData::buf">buf</a>[<a class="local col5 ref" href="#5i" title='i' data-ref="5i">i</a>] &amp; <var>0x38</var>) &gt;&gt; <var>3</var>;</td></tr>
+<tr><th id="45">45</th><td>                <b>if</b> (<a class="local col9 ref" href="#9level" title='level' data-ref="9level">level</a> &gt;= <var>5</var>) {</td></tr>
+<tr><th id="46">46</th><td>                    <a class="local col2 ref" href="#2seq" title='seq' data-ref="2seq">seq</a> = <var>0</var>;</td></tr>
+<tr><th id="47">47</th><td>                    <b>continue</b>;</td></tr>
+<tr><th id="48">48</th><td>                }</td></tr>
+<tr><th id="49">49</th><td>                <a class="local col0 ref" href="#10chromaformat" title='chromaformat' data-ref="10chromaformat">chromaformat</a> = (<a class="local col1 ref" href="#1p" title='p' data-ref="1p">p</a>-&gt;<a class="ref" href="avformat.h.html#AVProbeData::buf" title='AVProbeData::buf' data-ref="AVProbeData::buf">buf</a>[<a class="local col5 ref" href="#5i" title='i' data-ref="5i">i</a>] &amp; <var>0x6</var>) &gt;&gt; <var>1</var>;</td></tr>
+<tr><th id="50">50</th><td>                <b>if</b> (<a class="local col0 ref" href="#10chromaformat" title='chromaformat' data-ref="10chromaformat">chromaformat</a> != <var>1</var>) {</td></tr>
+<tr><th id="51">51</th><td>                    <a class="local col2 ref" href="#2seq" title='seq' data-ref="2seq">seq</a> = <var>0</var>;</td></tr>
+<tr><th id="52">52</th><td>                    <b>continue</b>;</td></tr>
+<tr><th id="53">53</th><td>                }</td></tr>
+<tr><th id="54">54</th><td>                <a class="local col2 ref" href="#2seq" title='seq' data-ref="2seq">seq</a>++;</td></tr>
+<tr><th id="55">55</th><td>                <a class="local col5 ref" href="#5i" title='i' data-ref="5i">i</a> += <var>6</var>;</td></tr>
+<tr><th id="56">56</th><td>                <b>break</b>;</td></tr>
+<tr><th id="57">57</th><td>            }</td></tr>
+<tr><th id="58">58</th><td>            <b>case</b> <a class="enum" href="../libavcodec/vc1_common.h.html#VC1Code::VC1_CODE_ENTRYPOINT" title='VC1Code::VC1_CODE_ENTRYPOINT' data-ref="VC1Code::VC1_CODE_ENTRYPOINT">VC1_CODE_ENTRYPOINT</a>:</td></tr>
+<tr><th id="59">59</th><td>                <b>if</b> (!<a class="local col2 ref" href="#2seq" title='seq' data-ref="2seq">seq</a>)</td></tr>
+<tr><th id="60">60</th><td>                    <b>continue</b>;</td></tr>
+<tr><th id="61">61</th><td>                <a class="local col3 ref" href="#3entry" title='entry' data-ref="3entry">entry</a>++;</td></tr>
+<tr><th id="62">62</th><td>                <a class="local col5 ref" href="#5i" title='i' data-ref="5i">i</a> += <var>2</var>;</td></tr>
+<tr><th id="63">63</th><td>                <b>break</b>;</td></tr>
+<tr><th id="64">64</th><td>            <b>case</b> <a class="enum" href="../libavcodec/vc1_common.h.html#VC1Code::VC1_CODE_FRAME" title='VC1Code::VC1_CODE_FRAME' data-ref="VC1Code::VC1_CODE_FRAME">VC1_CODE_FRAME</a>:</td></tr>
+<tr><th id="65">65</th><td>            <b>case</b> <a class="enum" href="../libavcodec/vc1_common.h.html#VC1Code::VC1_CODE_FIELD" title='VC1Code::VC1_CODE_FIELD' data-ref="VC1Code::VC1_CODE_FIELD">VC1_CODE_FIELD</a>:</td></tr>
+<tr><th id="66">66</th><td>            <b>case</b> <a class="enum" href="../libavcodec/vc1_common.h.html#VC1Code::VC1_CODE_SLICE" title='VC1Code::VC1_CODE_SLICE' data-ref="VC1Code::VC1_CODE_SLICE">VC1_CODE_SLICE</a>:</td></tr>
+<tr><th id="67">67</th><td>                <b>if</b> (<a class="local col2 ref" href="#2seq" title='seq' data-ref="2seq">seq</a> &amp;&amp; <a class="local col3 ref" href="#3entry" title='entry' data-ref="3entry">entry</a>)</td></tr>
+<tr><th id="68">68</th><td>                    <a class="local col4 ref" href="#4frame" title='frame' data-ref="4frame">frame</a>++;</td></tr>
+<tr><th id="69">69</th><td>                <b>break</b>;</td></tr>
+<tr><th id="70">70</th><td>            }</td></tr>
+<tr><th id="71">71</th><td>        }</td></tr>
+<tr><th id="72">72</th><td>    }</td></tr>
+<tr><th id="73">73</th><td></td></tr>
+<tr><th id="74">74</th><td>    <b>if</b> (<a class="local col4 ref" href="#4frame" title='frame' data-ref="4frame">frame</a> &gt; <var>1</var>)</td></tr>
+<tr><th id="75">75</th><td>        <b>return</b> <a class="macro" href="avformat.h.html#471" title="50" data-ref="_M/AVPROBE_SCORE_EXTENSION">AVPROBE_SCORE_EXTENSION</a> / <var>2</var> + <var>1</var>;</td></tr>
+<tr><th id="76">76</th><td>    <b>if</b> (<a class="local col4 ref" href="#4frame" title='frame' data-ref="4frame">frame</a> == <var>1</var>)</td></tr>
+<tr><th id="77">77</th><td>        <b>return</b> <a class="macro" href="avformat.h.html#471" title="50" data-ref="_M/AVPROBE_SCORE_EXTENSION">AVPROBE_SCORE_EXTENSION</a> / <var>4</var>;</td></tr>
+<tr><th id="78">78</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="79">79</th><td>}</td></tr>
+<tr><th id="80">80</th><td></td></tr>
+<tr><th id="81">81</th><td><a class="macro" href="rawdec.h.html#54" title="static const AVClass vc1_demuxer_class = { .class_name = &quot;vc1&quot; &quot; demuxer&quot;, .item_name = av_default_item_name, .option = ff_rawvideo_options, .version = ((55)&lt;&lt;16 | (33)&lt;&lt;8 | (100)),};AVInputFormat ff_vc1_demuxer = { .name = &quot;vc1&quot;, .long_name = &quot;raw VC-1&quot;, .read_probe = vc1_probe, .read_header = ff_raw_video_read_header, .read_packet = ff_raw_read_partial_packet, .extensions = &quot;vc1&quot;, .flags = 0x0100|0x0080, .raw_codec_id = AV_CODEC_ID_VC1, .priv_data_size = sizeof(FFRawVideoDemuxerContext), .priv_class = &amp;vc1_demuxer_class,};" data-ref="_M/FF_DEF_RAWVIDEO_DEMUXER2">FF_DEF_RAWVIDEO_DEMUXER2</a>(vc1, <q>"raw VC-1"</q>, <a class="tu ref" href="#vc1_probe" title='vc1_probe' data-ref="vc1_probe">vc1_probe</a>, <q>"vc1"</q>, <a class="enum" href="../libavcodec/avcodec.h.html#AVCodecID::AV_CODEC_ID_VC1" title='AVCodecID::AV_CODEC_ID_VC1' data-ref="AVCodecID::AV_CODEC_ID_VC1">AV_CODEC_ID_VC1</a>, <a class="macro" href="avformat.h.html#487" title="0x0100" data-ref="_M/AVFMT_GENERIC_INDEX">AVFMT_GENERIC_INDEX</a>|<a class="macro" href="avformat.h.html#486" title="0x0080" data-ref="_M/AVFMT_NOTIMESTAMPS">AVFMT_NOTIMESTAMPS</a>)</td></tr>
+<tr><th id="82">82</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

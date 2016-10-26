@@ -1,0 +1,112 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>h261_parser.c source code [ffmpeg/libavcodec/h261_parser.c] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavcodec/h261_parser.c'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavcodec</a>/<a href='h261_parser.c.html'>h261_parser.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * H.261 parser</i></td></tr>
+<tr><th id="3">3</th><td><i> * Copyright (c) 2002-2004 Michael Niedermayer &lt;michaelni@gmx.at&gt;</i></td></tr>
+<tr><th id="4">4</th><td><i> * Copyright (c) 2004 Maarten Daniels</i></td></tr>
+<tr><th id="5">5</th><td><i> *</i></td></tr>
+<tr><th id="6">6</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="7">7</th><td><i> *</i></td></tr>
+<tr><th id="8">8</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="9">9</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="10">10</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="11">11</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="12">12</th><td><i> *</i></td></tr>
+<tr><th id="13">13</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="14">14</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="15">15</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="16">16</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="17">17</th><td><i> *</i></td></tr>
+<tr><th id="18">18</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="19">19</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="20">20</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="21">21</th><td><i> */</i></td></tr>
+<tr><th id="22">22</th><td></td></tr>
+<tr><th id="23">23</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="24">24</th><td><i class="doc"> *<span class="command"> @file</span></i></td></tr>
+<tr><th id="25">25</th><td><i class="doc"> * H.261 parser</i></td></tr>
+<tr><th id="26">26</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="27">27</th><td></td></tr>
+<tr><th id="28">28</th><td><u>#include <a href="parser.h.html">"parser.h"</a></u></td></tr>
+<tr><th id="29">29</th><td></td></tr>
+<tr><th id="30">30</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="h261_find_frame_end" title='h261_find_frame_end' data-type='int h261_find_frame_end(ParseContext * pc, AVCodecContext * avctx, const uint8_t * buf, int buf_size)' data-ref="h261_find_frame_end">h261_find_frame_end</dfn>(<a class="typedef" href="parser.h.html#ParseContext" title='ParseContext' data-type='struct ParseContext' data-ref="ParseContext">ParseContext</a> *<dfn class="local col1 decl" id="1pc" title='pc' data-type='ParseContext *' data-ref="1pc">pc</dfn>, <a class="typedef" href="avcodec.h.html#AVCodecContext" title='AVCodecContext' data-type='struct AVCodecContext' data-ref="AVCodecContext">AVCodecContext</a> *<dfn class="local col2 decl" id="2avctx" title='avctx' data-type='AVCodecContext *' data-ref="2avctx">avctx</dfn>,</td></tr>
+<tr><th id="31">31</th><td>                               <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col3 decl" id="3buf" title='buf' data-type='const uint8_t *' data-ref="3buf">buf</dfn>, <em>int</em> <dfn class="local col4 decl" id="4buf_size" title='buf_size' data-type='int' data-ref="4buf_size">buf_size</dfn>)</td></tr>
+<tr><th id="32">32</th><td>{</td></tr>
+<tr><th id="33">33</th><td>    <em>int</em> <dfn class="local col5 decl" id="5vop_found" title='vop_found' data-type='int' data-ref="5vop_found">vop_found</dfn>, <dfn class="local col6 decl" id="6i" title='i' data-type='int' data-ref="6i">i</dfn>, <dfn class="local col7 decl" id="7j" title='j' data-type='int' data-ref="7j">j</dfn>;</td></tr>
+<tr><th id="34">34</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a> <dfn class="local col8 decl" id="8state" title='state' data-type='uint32_t' data-ref="8state">state</dfn>;</td></tr>
+<tr><th id="35">35</th><td></td></tr>
+<tr><th id="36">36</th><td>    <a class="local col5 ref" href="#5vop_found" title='vop_found' data-ref="5vop_found">vop_found</a> = <a class="local col1 ref" href="#1pc" title='pc' data-ref="1pc">pc</a>-&gt;<a class="ref" href="parser.h.html#ParseContext::frame_start_found" title='ParseContext::frame_start_found' data-ref="ParseContext::frame_start_found">frame_start_found</a>;</td></tr>
+<tr><th id="37">37</th><td>    <a class="local col8 ref" href="#8state" title='state' data-ref="8state">state</a>     = <a class="local col1 ref" href="#1pc" title='pc' data-ref="1pc">pc</a>-&gt;<a class="ref" href="parser.h.html#ParseContext::state" title='ParseContext::state' data-ref="ParseContext::state">state</a>;</td></tr>
+<tr><th id="38">38</th><td></td></tr>
+<tr><th id="39">39</th><td>    <b>for</b> (<a class="local col6 ref" href="#6i" title='i' data-ref="6i">i</a> = <var>0</var>; <a class="local col6 ref" href="#6i" title='i' data-ref="6i">i</a> &lt; <a class="local col4 ref" href="#4buf_size" title='buf_size' data-ref="4buf_size">buf_size</a> &amp;&amp; !<a class="local col5 ref" href="#5vop_found" title='vop_found' data-ref="5vop_found">vop_found</a>; <a class="local col6 ref" href="#6i" title='i' data-ref="6i">i</a>++) {</td></tr>
+<tr><th id="40">40</th><td>        <a class="local col8 ref" href="#8state" title='state' data-ref="8state">state</a> = (<a class="local col8 ref" href="#8state" title='state' data-ref="8state">state</a> &lt;&lt; <var>8</var>) | <a class="local col3 ref" href="#3buf" title='buf' data-ref="3buf">buf</a>[<a class="local col6 ref" href="#6i" title='i' data-ref="6i">i</a>];</td></tr>
+<tr><th id="41">41</th><td>        <b>for</b> (<a class="local col7 ref" href="#7j" title='j' data-ref="7j">j</a> = <var>0</var>; <a class="local col7 ref" href="#7j" title='j' data-ref="7j">j</a> &lt; <var>8</var>; <a class="local col7 ref" href="#7j" title='j' data-ref="7j">j</a>++) {</td></tr>
+<tr><th id="42">42</th><td>            <b>if</b> (((<a class="local col8 ref" href="#8state" title='state' data-ref="8state">state</a> &gt;&gt; <a class="local col7 ref" href="#7j" title='j' data-ref="7j">j</a>) &amp; <var>0xFFFFF0</var>) == <var>0x000100</var>) {</td></tr>
+<tr><th id="43">43</th><td>                <a class="local col5 ref" href="#5vop_found" title='vop_found' data-ref="5vop_found">vop_found</a> = <var>1</var>;</td></tr>
+<tr><th id="44">44</th><td>                <b>break</b>;</td></tr>
+<tr><th id="45">45</th><td>            }</td></tr>
+<tr><th id="46">46</th><td>        }</td></tr>
+<tr><th id="47">47</th><td>    }</td></tr>
+<tr><th id="48">48</th><td>    <b>if</b> (<a class="local col5 ref" href="#5vop_found" title='vop_found' data-ref="5vop_found">vop_found</a>) {</td></tr>
+<tr><th id="49">49</th><td>        <b>for</b> (; <a class="local col6 ref" href="#6i" title='i' data-ref="6i">i</a> &lt; <a class="local col4 ref" href="#4buf_size" title='buf_size' data-ref="4buf_size">buf_size</a>; <a class="local col6 ref" href="#6i" title='i' data-ref="6i">i</a>++) {</td></tr>
+<tr><th id="50">50</th><td>            <a class="local col8 ref" href="#8state" title='state' data-ref="8state">state</a> = (<a class="local col8 ref" href="#8state" title='state' data-ref="8state">state</a> &lt;&lt; <var>8</var>) | <a class="local col3 ref" href="#3buf" title='buf' data-ref="3buf">buf</a>[<a class="local col6 ref" href="#6i" title='i' data-ref="6i">i</a>];</td></tr>
+<tr><th id="51">51</th><td>            <b>for</b> (<a class="local col7 ref" href="#7j" title='j' data-ref="7j">j</a> = <var>0</var>; <a class="local col7 ref" href="#7j" title='j' data-ref="7j">j</a> &lt; <var>8</var>; <a class="local col7 ref" href="#7j" title='j' data-ref="7j">j</a>++) {</td></tr>
+<tr><th id="52">52</th><td>                <b>if</b> (((<a class="local col8 ref" href="#8state" title='state' data-ref="8state">state</a> &gt;&gt; <a class="local col7 ref" href="#7j" title='j' data-ref="7j">j</a>) &amp; <var>0xFFFFF0</var>) == <var>0x000100</var>) {</td></tr>
+<tr><th id="53">53</th><td>                    <a class="local col1 ref" href="#1pc" title='pc' data-ref="1pc">pc</a>-&gt;<a class="ref" href="parser.h.html#ParseContext::frame_start_found" title='ParseContext::frame_start_found' data-ref="ParseContext::frame_start_found">frame_start_found</a> = <var>0</var>;</td></tr>
+<tr><th id="54">54</th><td>                    <a class="local col1 ref" href="#1pc" title='pc' data-ref="1pc">pc</a>-&gt;<a class="ref" href="parser.h.html#ParseContext::state" title='ParseContext::state' data-ref="ParseContext::state">state</a>             = (<a class="local col8 ref" href="#8state" title='state' data-ref="8state">state</a> &gt;&gt; (<var>3</var> * <var>8</var>)) + <var>0xFF00</var>;</td></tr>
+<tr><th id="55">55</th><td>                    <b>return</b> <a class="local col6 ref" href="#6i" title='i' data-ref="6i">i</a> - <var>2</var>;</td></tr>
+<tr><th id="56">56</th><td>                }</td></tr>
+<tr><th id="57">57</th><td>            }</td></tr>
+<tr><th id="58">58</th><td>        }</td></tr>
+<tr><th id="59">59</th><td>    }</td></tr>
+<tr><th id="60">60</th><td></td></tr>
+<tr><th id="61">61</th><td>    <a class="local col1 ref" href="#1pc" title='pc' data-ref="1pc">pc</a>-&gt;<a class="ref" href="parser.h.html#ParseContext::frame_start_found" title='ParseContext::frame_start_found' data-ref="ParseContext::frame_start_found">frame_start_found</a> = <a class="local col5 ref" href="#5vop_found" title='vop_found' data-ref="5vop_found">vop_found</a>;</td></tr>
+<tr><th id="62">62</th><td>    <a class="local col1 ref" href="#1pc" title='pc' data-ref="1pc">pc</a>-&gt;<a class="ref" href="parser.h.html#ParseContext::state" title='ParseContext::state' data-ref="ParseContext::state">state</a>             = <a class="local col8 ref" href="#8state" title='state' data-ref="8state">state</a>;</td></tr>
+<tr><th id="63">63</th><td>    <b>return</b> <a class="macro" href="parser.h.html#40" title="(-100)" data-ref="_M/END_NOT_FOUND">END_NOT_FOUND</a>;</td></tr>
+<tr><th id="64">64</th><td>}</td></tr>
+<tr><th id="65">65</th><td></td></tr>
+<tr><th id="66">66</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="h261_parse" title='h261_parse' data-type='int h261_parse(AVCodecParserContext * s, AVCodecContext * avctx, const uint8_t ** poutbuf, int * poutbuf_size, const uint8_t * buf, int buf_size)' data-ref="h261_parse">h261_parse</dfn>(<a class="typedef" href="avcodec.h.html#AVCodecParserContext" title='AVCodecParserContext' data-type='struct AVCodecParserContext' data-ref="AVCodecParserContext">AVCodecParserContext</a> *<dfn class="local col9 decl" id="9s" title='s' data-type='AVCodecParserContext *' data-ref="9s">s</dfn>,</td></tr>
+<tr><th id="67">67</th><td>                      <a class="typedef" href="avcodec.h.html#AVCodecContext" title='AVCodecContext' data-type='struct AVCodecContext' data-ref="AVCodecContext">AVCodecContext</a> *<dfn class="local col0 decl" id="10avctx" title='avctx' data-type='AVCodecContext *' data-ref="10avctx">avctx</dfn>,</td></tr>
+<tr><th id="68">68</th><td>                      <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> **<dfn class="local col1 decl" id="11poutbuf" title='poutbuf' data-type='const uint8_t **' data-ref="11poutbuf">poutbuf</dfn>, <em>int</em> *<dfn class="local col2 decl" id="12poutbuf_size" title='poutbuf_size' data-type='int *' data-ref="12poutbuf_size">poutbuf_size</dfn>,</td></tr>
+<tr><th id="69">69</th><td>                      <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col3 decl" id="13buf" title='buf' data-type='const uint8_t *' data-ref="13buf">buf</dfn>, <em>int</em> <dfn class="local col4 decl" id="14buf_size" title='buf_size' data-type='int' data-ref="14buf_size">buf_size</dfn>)</td></tr>
+<tr><th id="70">70</th><td>{</td></tr>
+<tr><th id="71">71</th><td>    <a class="typedef" href="parser.h.html#ParseContext" title='ParseContext' data-type='struct ParseContext' data-ref="ParseContext">ParseContext</a> *<dfn class="local col5 decl" id="15pc" title='pc' data-type='ParseContext *' data-ref="15pc">pc</dfn> = <a class="local col9 ref" href="#9s" title='s' data-ref="9s">s</a>-&gt;<a class="ref" href="avcodec.h.html#AVCodecParserContext::priv_data" title='AVCodecParserContext::priv_data' data-ref="AVCodecParserContext::priv_data">priv_data</a>;</td></tr>
+<tr><th id="72">72</th><td>    <em>int</em> <dfn class="local col6 decl" id="16next" title='next' data-type='int' data-ref="16next">next</dfn>;</td></tr>
+<tr><th id="73">73</th><td></td></tr>
+<tr><th id="74">74</th><td>    <b>if</b> (<a class="local col9 ref" href="#9s" title='s' data-ref="9s">s</a>-&gt;<a class="ref" href="avcodec.h.html#AVCodecParserContext::flags" title='AVCodecParserContext::flags' data-ref="AVCodecParserContext::flags">flags</a> &amp; <a class="macro" href="avcodec.h.html#5015" title="0x0001" data-ref="_M/PARSER_FLAG_COMPLETE_FRAMES">PARSER_FLAG_COMPLETE_FRAMES</a>) {</td></tr>
+<tr><th id="75">75</th><td>        <a class="local col6 ref" href="#16next" title='next' data-ref="16next">next</a> = <a class="local col4 ref" href="#14buf_size" title='buf_size' data-ref="14buf_size">buf_size</a>;</td></tr>
+<tr><th id="76">76</th><td>    } <b>else</b> {</td></tr>
+<tr><th id="77">77</th><td>        <a class="local col6 ref" href="#16next" title='next' data-ref="16next">next</a> = <a class="tu ref" href="#h261_find_frame_end" title='h261_find_frame_end' data-use='c' data-ref="h261_find_frame_end">h261_find_frame_end</a>(<a class="local col5 ref" href="#15pc" title='pc' data-ref="15pc">pc</a>, <a class="local col0 ref" href="#10avctx" title='avctx' data-ref="10avctx">avctx</a>, <a class="local col3 ref" href="#13buf" title='buf' data-ref="13buf">buf</a>, <a class="local col4 ref" href="#14buf_size" title='buf_size' data-ref="14buf_size">buf_size</a>);</td></tr>
+<tr><th id="78">78</th><td>        <b>if</b> (<a class="ref" href="parser.h.html#ff_combine_frame" title='ff_combine_frame' data-ref="ff_combine_frame">ff_combine_frame</a>(<a class="local col5 ref" href="#15pc" title='pc' data-ref="15pc">pc</a>, <a class="local col6 ref" href="#16next" title='next' data-ref="16next">next</a>, &amp;<a class="local col3 ref" href="#13buf" title='buf' data-ref="13buf">buf</a>, &amp;<a class="local col4 ref" href="#14buf_size" title='buf_size' data-ref="14buf_size">buf_size</a>) &lt; <var>0</var>) {</td></tr>
+<tr><th id="79">79</th><td>            *<a class="local col1 ref" href="#11poutbuf" title='poutbuf' data-ref="11poutbuf">poutbuf</a>      = <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="80">80</th><td>            *<a class="local col2 ref" href="#12poutbuf_size" title='poutbuf_size' data-ref="12poutbuf_size">poutbuf_size</a> = <var>0</var>;</td></tr>
+<tr><th id="81">81</th><td>            <b>return</b> <a class="local col4 ref" href="#14buf_size" title='buf_size' data-ref="14buf_size">buf_size</a>;</td></tr>
+<tr><th id="82">82</th><td>        }</td></tr>
+<tr><th id="83">83</th><td>    }</td></tr>
+<tr><th id="84">84</th><td>    *<a class="local col1 ref" href="#11poutbuf" title='poutbuf' data-ref="11poutbuf">poutbuf</a>      = <a class="local col3 ref" href="#13buf" title='buf' data-ref="13buf">buf</a>;</td></tr>
+<tr><th id="85">85</th><td>    *<a class="local col2 ref" href="#12poutbuf_size" title='poutbuf_size' data-ref="12poutbuf_size">poutbuf_size</a> = <a class="local col4 ref" href="#14buf_size" title='buf_size' data-ref="14buf_size">buf_size</a>;</td></tr>
+<tr><th id="86">86</th><td>    <b>return</b> <a class="local col6 ref" href="#16next" title='next' data-ref="16next">next</a>;</td></tr>
+<tr><th id="87">87</th><td>}</td></tr>
+<tr><th id="88">88</th><td></td></tr>
+<tr><th id="89">89</th><td><a class="typedef" href="avcodec.h.html#AVCodecParser" title='AVCodecParser' data-type='struct AVCodecParser' data-ref="AVCodecParser">AVCodecParser</a> <dfn class="decl def" id="ff_h261_parser" title='ff_h261_parser' data-ref="ff_h261_parser">ff_h261_parser</dfn> = {</td></tr>
+<tr><th id="90">90</th><td>    .<a class="ref" href="avcodec.h.html#AVCodecParser::codec_ids" title='AVCodecParser::codec_ids' data-ref="AVCodecParser::codec_ids">codec_ids</a>      = { <a class="enum" href="avcodec.h.html#AVCodecID::AV_CODEC_ID_H261" title='AVCodecID::AV_CODEC_ID_H261' data-ref="AVCodecID::AV_CODEC_ID_H261">AV_CODEC_ID_H261</a> },</td></tr>
+<tr><th id="91">91</th><td>    .<a class="ref" href="avcodec.h.html#AVCodecParser::priv_data_size" title='AVCodecParser::priv_data_size' data-ref="AVCodecParser::priv_data_size">priv_data_size</a> = <b>sizeof</b>(<a class="typedef" href="parser.h.html#ParseContext" title='ParseContext' data-type='struct ParseContext' data-ref="ParseContext">ParseContext</a>),</td></tr>
+<tr><th id="92">92</th><td>    .<a class="ref" href="avcodec.h.html#AVCodecParser::parser_parse" title='AVCodecParser::parser_parse' data-ref="AVCodecParser::parser_parse">parser_parse</a>   = <a class="tu ref" href="#h261_parse" title='h261_parse' data-use='r' data-ref="h261_parse">h261_parse</a>,</td></tr>
+<tr><th id="93">93</th><td>    .<a class="ref" href="avcodec.h.html#AVCodecParser::parser_close" title='AVCodecParser::parser_close' data-ref="AVCodecParser::parser_close">parser_close</a>   = <a class="ref" href="parser.h.html#ff_parse_close" title='ff_parse_close' data-ref="ff_parse_close">ff_parse_close</a>,</td></tr>
+<tr><th id="94">94</th><td>};</td></tr>
+<tr><th id="95">95</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

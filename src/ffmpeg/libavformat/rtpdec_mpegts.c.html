@@ -1,0 +1,118 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>rtpdec_mpegts.c source code [ffmpeg/libavformat/rtpdec_mpegts.c] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="PayloadContext "/>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavformat/rtpdec_mpegts.c'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavformat</a>/<a href='rtpdec_mpegts.c.html'>rtpdec_mpegts.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * RTP MPEG2TS depacketizer</i></td></tr>
+<tr><th id="3">3</th><td><i> * Copyright (c) 2003 Fabrice Bellard</i></td></tr>
+<tr><th id="4">4</th><td><i> *</i></td></tr>
+<tr><th id="5">5</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="8">8</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="9">9</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="10">10</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="11">11</th><td><i> *</i></td></tr>
+<tr><th id="12">12</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="13">13</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="14">14</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="15">15</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="16">16</th><td><i> *</i></td></tr>
+<tr><th id="17">17</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="18">18</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="19">19</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="20">20</th><td><i> */</i></td></tr>
+<tr><th id="21">21</th><td></td></tr>
+<tr><th id="22">22</th><td><u>#include <a href="../libavutil/attributes.h.html">"libavutil/attributes.h"</a></u></td></tr>
+<tr><th id="23">23</th><td><u>#include <a href="mpegts.h.html">"mpegts.h"</a></u></td></tr>
+<tr><th id="24">24</th><td><u>#include <a href="rtpdec_formats.h.html">"rtpdec_formats.h"</a></u></td></tr>
+<tr><th id="25">25</th><td></td></tr>
+<tr><th id="26">26</th><td><b>struct</b> <dfn class="type def" id="PayloadContext" title='PayloadContext' data-ref="PayloadContext">PayloadContext</dfn> {</td></tr>
+<tr><th id="27">27</th><td>    <b>struct</b> <a class="type" href="mpegts.h.html#MpegTSContext" title='MpegTSContext' data-ref="MpegTSContext">MpegTSContext</a> *<dfn class="decl" id="PayloadContext::ts" title='PayloadContext::ts' data-ref="PayloadContext::ts">ts</dfn>;</td></tr>
+<tr><th id="28">28</th><td>    <em>int</em> <dfn class="decl" id="PayloadContext::read_buf_index" title='PayloadContext::read_buf_index' data-ref="PayloadContext::read_buf_index">read_buf_index</dfn>;</td></tr>
+<tr><th id="29">29</th><td>    <em>int</em> <dfn class="decl" id="PayloadContext::read_buf_size" title='PayloadContext::read_buf_size' data-ref="PayloadContext::read_buf_size">read_buf_size</dfn>;</td></tr>
+<tr><th id="30">30</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="PayloadContext::buf" title='PayloadContext::buf' data-ref="PayloadContext::buf">buf</dfn>[<a class="macro" href="rtpdec.h.html#36" title="8192" data-ref="_M/RTP_MAX_PACKET_LENGTH">RTP_MAX_PACKET_LENGTH</a>];</td></tr>
+<tr><th id="31">31</th><td>};</td></tr>
+<tr><th id="32">32</th><td></td></tr>
+<tr><th id="33">33</th><td><em>static</em> <em>void</em> <dfn class="tu decl def" id="mpegts_close_context" title='mpegts_close_context' data-type='void mpegts_close_context(PayloadContext * data)' data-ref="mpegts_close_context">mpegts_close_context</dfn>(<a class="typedef" href="rtpdec.h.html#PayloadContext" title='PayloadContext' data-type='struct PayloadContext' data-ref="PayloadContext">PayloadContext</a> *<dfn class="local col1 decl" id="1data" title='data' data-type='PayloadContext *' data-ref="1data">data</dfn>)</td></tr>
+<tr><th id="34">34</th><td>{</td></tr>
+<tr><th id="35">35</th><td>    <b>if</b> (!<a class="local col1 ref" href="#1data" title='data' data-ref="1data">data</a>)</td></tr>
+<tr><th id="36">36</th><td>        <b>return</b>;</td></tr>
+<tr><th id="37">37</th><td>    <b>if</b> (<a class="local col1 ref" href="#1data" title='data' data-ref="1data">data</a>-&gt;<a class="ref" href="#PayloadContext::ts" title='PayloadContext::ts' data-ref="PayloadContext::ts">ts</a>)</td></tr>
+<tr><th id="38">38</th><td>        <a class="ref" href="mpegts.h.html#avpriv_mpegts_parse_close" title='avpriv_mpegts_parse_close' data-ref="avpriv_mpegts_parse_close">avpriv_mpegts_parse_close</a>(<a class="local col1 ref" href="#1data" title='data' data-ref="1data">data</a>-&gt;<a class="ref" href="#PayloadContext::ts" title='PayloadContext::ts' data-ref="PayloadContext::ts">ts</a>);</td></tr>
+<tr><th id="39">39</th><td>}</td></tr>
+<tr><th id="40">40</th><td></td></tr>
+<tr><th id="41">41</th><td><em>static</em> <a class="macro" href="../libavutil/attributes.h.html#84" title="" data-ref="_M/av_cold">av_cold</a> <em>int</em> <dfn class="tu decl def" id="mpegts_init" title='mpegts_init' data-type='int mpegts_init(AVFormatContext * ctx, int st_index, PayloadContext * data)' data-ref="mpegts_init">mpegts_init</dfn>(<a class="typedef" href="avformat.h.html#AVFormatContext" title='AVFormatContext' data-type='struct AVFormatContext' data-ref="AVFormatContext">AVFormatContext</a> *<dfn class="local col2 decl" id="2ctx" title='ctx' data-type='AVFormatContext *' data-ref="2ctx">ctx</dfn>, <em>int</em> <dfn class="local col3 decl" id="3st_index" title='st_index' data-type='int' data-ref="3st_index">st_index</dfn>,</td></tr>
+<tr><th id="42">42</th><td>                               <a class="typedef" href="rtpdec.h.html#PayloadContext" title='PayloadContext' data-type='struct PayloadContext' data-ref="PayloadContext">PayloadContext</a> *<dfn class="local col4 decl" id="4data" title='data' data-type='PayloadContext *' data-ref="4data">data</dfn>)</td></tr>
+<tr><th id="43">43</th><td>{</td></tr>
+<tr><th id="44">44</th><td>    <a class="local col4 ref" href="#4data" title='data' data-ref="4data">data</a>-&gt;<a class="ref" href="#PayloadContext::ts" title='PayloadContext::ts' data-ref="PayloadContext::ts">ts</a> = <a class="ref" href="mpegts.h.html#avpriv_mpegts_parse_open" title='avpriv_mpegts_parse_open' data-ref="avpriv_mpegts_parse_open">avpriv_mpegts_parse_open</a>(<a class="local col2 ref" href="#2ctx" title='ctx' data-ref="2ctx">ctx</a>);</td></tr>
+<tr><th id="45">45</th><td>    <b>if</b> (!<a class="local col4 ref" href="#4data" title='data' data-ref="4data">data</a>-&gt;<a class="ref" href="#PayloadContext::ts" title='PayloadContext::ts' data-ref="PayloadContext::ts">ts</a>)</td></tr>
+<tr><th id="46">46</th><td>        <b>return</b> <a class="macro" href="../libavutil/error.h.html#39" title="(-(12))" data-ref="_M/AVERROR">AVERROR</a>(<a class="macro" href="../../include/asm-generic/errno-base.h.html#15" title="12" data-ref="_M/ENOMEM">ENOMEM</a>);</td></tr>
+<tr><th id="47">47</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="48">48</th><td>}</td></tr>
+<tr><th id="49">49</th><td></td></tr>
+<tr><th id="50">50</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="mpegts_handle_packet" title='mpegts_handle_packet' data-type='int mpegts_handle_packet(AVFormatContext * ctx, PayloadContext * data, AVStream * st, AVPacket * pkt, uint32_t * timestamp, const uint8_t * buf, int len, uint16_t seq, int flags)' data-ref="mpegts_handle_packet">mpegts_handle_packet</dfn>(<a class="typedef" href="avformat.h.html#AVFormatContext" title='AVFormatContext' data-type='struct AVFormatContext' data-ref="AVFormatContext">AVFormatContext</a> *<dfn class="local col5 decl" id="5ctx" title='ctx' data-type='AVFormatContext *' data-ref="5ctx">ctx</dfn>, <a class="typedef" href="rtpdec.h.html#PayloadContext" title='PayloadContext' data-type='struct PayloadContext' data-ref="PayloadContext">PayloadContext</a> *<dfn class="local col6 decl" id="6data" title='data' data-type='PayloadContext *' data-ref="6data">data</dfn>,</td></tr>
+<tr><th id="51">51</th><td>                                <a class="typedef" href="avformat.h.html#AVStream" title='AVStream' data-type='struct AVStream' data-ref="AVStream">AVStream</a> *<dfn class="local col7 decl" id="7st" title='st' data-type='AVStream *' data-ref="7st">st</dfn>, <a class="typedef" href="../libavcodec/avcodec.h.html#AVPacket" title='AVPacket' data-type='struct AVPacket' data-ref="AVPacket">AVPacket</a> *<dfn class="local col8 decl" id="8pkt" title='pkt' data-type='AVPacket *' data-ref="8pkt">pkt</dfn>, <a class="typedef" href="../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a> *<dfn class="local col9 decl" id="9timestamp" title='timestamp' data-type='uint32_t *' data-ref="9timestamp">timestamp</dfn>,</td></tr>
+<tr><th id="52">52</th><td>                                <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col0 decl" id="10buf" title='buf' data-type='const uint8_t *' data-ref="10buf">buf</dfn>, <em>int</em> <dfn class="local col1 decl" id="11len" title='len' data-type='int' data-ref="11len">len</dfn>, <a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> <dfn class="local col2 decl" id="12seq" title='seq' data-type='uint16_t' data-ref="12seq">seq</dfn>,</td></tr>
+<tr><th id="53">53</th><td>                                <em>int</em> <dfn class="local col3 decl" id="13flags" title='flags' data-type='int' data-ref="13flags">flags</dfn>)</td></tr>
+<tr><th id="54">54</th><td>{</td></tr>
+<tr><th id="55">55</th><td>    <em>int</em> <dfn class="local col4 decl" id="14ret" title='ret' data-type='int' data-ref="14ret">ret</dfn>;</td></tr>
+<tr><th id="56">56</th><td></td></tr>
+<tr><th id="57">57</th><td>    <i>// We don't want to use the RTP timestamps at all. If the mpegts demuxer</i></td></tr>
+<tr><th id="58">58</th><td><i>    // doesn't set any pts/dts, the generic rtpdec code shouldn't try to</i></td></tr>
+<tr><th id="59">59</th><td><i>    // fill it in either, since the mpegts and RTP timestamps are in totally</i></td></tr>
+<tr><th id="60">60</th><td><i>    // different ranges.</i></td></tr>
+<tr><th id="61">61</th><td>    *<a class="local col9 ref" href="#9timestamp" title='timestamp' data-ref="9timestamp">timestamp</a> = <a class="macro" href="rtpdec.h.html#40" title="((uint32_t)-1)" data-ref="_M/RTP_NOTS_VALUE">RTP_NOTS_VALUE</a>;</td></tr>
+<tr><th id="62">62</th><td></td></tr>
+<tr><th id="63">63</th><td>    <b>if</b> (!<a class="local col0 ref" href="#10buf" title='buf' data-ref="10buf">buf</a>) {</td></tr>
+<tr><th id="64">64</th><td>        <b>if</b> (<a class="local col6 ref" href="#6data" title='data' data-ref="6data">data</a>-&gt;<a class="ref" href="#PayloadContext::read_buf_index" title='PayloadContext::read_buf_index' data-ref="PayloadContext::read_buf_index">read_buf_index</a> &gt;= <a class="local col6 ref" href="#6data" title='data' data-ref="6data">data</a>-&gt;<a class="ref" href="#PayloadContext::read_buf_size" title='PayloadContext::read_buf_size' data-ref="PayloadContext::read_buf_size">read_buf_size</a>)</td></tr>
+<tr><th id="65">65</th><td>            <b>return</b> <a class="macro" href="../libavutil/error.h.html#39" title="(-(11))" data-ref="_M/AVERROR">AVERROR</a>(<a class="macro" href="../../include/asm-generic/errno-base.h.html#14" title="11" data-ref="_M/EAGAIN">EAGAIN</a>);</td></tr>
+<tr><th id="66">66</th><td>        <a class="local col4 ref" href="#14ret" title='ret' data-ref="14ret">ret</a> = <a class="ref" href="mpegts.h.html#avpriv_mpegts_parse_packet" title='avpriv_mpegts_parse_packet' data-ref="avpriv_mpegts_parse_packet">avpriv_mpegts_parse_packet</a>(<a class="local col6 ref" href="#6data" title='data' data-ref="6data">data</a>-&gt;<a class="ref" href="#PayloadContext::ts" title='PayloadContext::ts' data-ref="PayloadContext::ts">ts</a>, <a class="local col8 ref" href="#8pkt" title='pkt' data-ref="8pkt">pkt</a>, <a class="local col6 ref" href="#6data" title='data' data-ref="6data">data</a>-&gt;<a class="ref" href="#PayloadContext::buf" title='PayloadContext::buf' data-ref="PayloadContext::buf">buf</a> + <a class="local col6 ref" href="#6data" title='data' data-ref="6data">data</a>-&gt;<a class="ref" href="#PayloadContext::read_buf_index" title='PayloadContext::read_buf_index' data-ref="PayloadContext::read_buf_index">read_buf_index</a>,</td></tr>
+<tr><th id="67">67</th><td>                                         <a class="local col6 ref" href="#6data" title='data' data-ref="6data">data</a>-&gt;<a class="ref" href="#PayloadContext::read_buf_size" title='PayloadContext::read_buf_size' data-ref="PayloadContext::read_buf_size">read_buf_size</a> - <a class="local col6 ref" href="#6data" title='data' data-ref="6data">data</a>-&gt;<a class="ref" href="#PayloadContext::read_buf_index" title='PayloadContext::read_buf_index' data-ref="PayloadContext::read_buf_index">read_buf_index</a>);</td></tr>
+<tr><th id="68">68</th><td>        <b>if</b> (<a class="local col4 ref" href="#14ret" title='ret' data-ref="14ret">ret</a> &lt; <var>0</var>)</td></tr>
+<tr><th id="69">69</th><td>            <b>return</b> <a class="macro" href="../libavutil/error.h.html#39" title="(-(11))" data-ref="_M/AVERROR">AVERROR</a>(<a class="macro" href="../../include/asm-generic/errno-base.h.html#14" title="11" data-ref="_M/EAGAIN">EAGAIN</a>);</td></tr>
+<tr><th id="70">70</th><td>        <a class="local col6 ref" href="#6data" title='data' data-ref="6data">data</a>-&gt;<a class="ref" href="#PayloadContext::read_buf_index" title='PayloadContext::read_buf_index' data-ref="PayloadContext::read_buf_index">read_buf_index</a> += <a class="local col4 ref" href="#14ret" title='ret' data-ref="14ret">ret</a>;</td></tr>
+<tr><th id="71">71</th><td>        <b>if</b> (<a class="local col6 ref" href="#6data" title='data' data-ref="6data">data</a>-&gt;<a class="ref" href="#PayloadContext::read_buf_index" title='PayloadContext::read_buf_index' data-ref="PayloadContext::read_buf_index">read_buf_index</a> &lt; <a class="local col6 ref" href="#6data" title='data' data-ref="6data">data</a>-&gt;<a class="ref" href="#PayloadContext::read_buf_size" title='PayloadContext::read_buf_size' data-ref="PayloadContext::read_buf_size">read_buf_size</a>)</td></tr>
+<tr><th id="72">72</th><td>            <b>return</b> <var>1</var>;</td></tr>
+<tr><th id="73">73</th><td>        <b>else</b></td></tr>
+<tr><th id="74">74</th><td>            <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="75">75</th><td>    }</td></tr>
+<tr><th id="76">76</th><td></td></tr>
+<tr><th id="77">77</th><td>    <a class="local col4 ref" href="#14ret" title='ret' data-ref="14ret">ret</a> = <a class="ref" href="mpegts.h.html#avpriv_mpegts_parse_packet" title='avpriv_mpegts_parse_packet' data-ref="avpriv_mpegts_parse_packet">avpriv_mpegts_parse_packet</a>(<a class="local col6 ref" href="#6data" title='data' data-ref="6data">data</a>-&gt;<a class="ref" href="#PayloadContext::ts" title='PayloadContext::ts' data-ref="PayloadContext::ts">ts</a>, <a class="local col8 ref" href="#8pkt" title='pkt' data-ref="8pkt">pkt</a>, <a class="local col0 ref" href="#10buf" title='buf' data-ref="10buf">buf</a>, <a class="local col1 ref" href="#11len" title='len' data-ref="11len">len</a>);</td></tr>
+<tr><th id="78">78</th><td>    <i>/* The only error that can be returned from avpriv_mpegts_parse_packet</i></td></tr>
+<tr><th id="79">79</th><td><i>     * is "no more data to return from the provided buffer", so return</i></td></tr>
+<tr><th id="80">80</th><td><i>     * AVERROR(EAGAIN) for all errors */</i></td></tr>
+<tr><th id="81">81</th><td>    <b>if</b> (<a class="local col4 ref" href="#14ret" title='ret' data-ref="14ret">ret</a> &lt; <var>0</var>)</td></tr>
+<tr><th id="82">82</th><td>        <b>return</b> <a class="macro" href="../libavutil/error.h.html#39" title="(-(11))" data-ref="_M/AVERROR">AVERROR</a>(<a class="macro" href="../../include/asm-generic/errno-base.h.html#14" title="11" data-ref="_M/EAGAIN">EAGAIN</a>);</td></tr>
+<tr><th id="83">83</th><td>    <b>if</b> (<a class="local col4 ref" href="#14ret" title='ret' data-ref="14ret">ret</a> &lt; <a class="local col1 ref" href="#11len" title='len' data-ref="11len">len</a>) {</td></tr>
+<tr><th id="84">84</th><td>        <a class="local col6 ref" href="#6data" title='data' data-ref="6data">data</a>-&gt;<a class="ref" href="#PayloadContext::read_buf_size" title='PayloadContext::read_buf_size' data-ref="PayloadContext::read_buf_size">read_buf_size</a> = <a class="macro" href="../libavutil/common.h.html#96" title="((len - ret) &gt; (sizeof(data-&gt;buf)) ? (sizeof(data-&gt;buf)) : (len - ret))" data-ref="_M/FFMIN">FFMIN</a>(<a class="local col1 ref" href="#11len" title='len' data-ref="11len">len</a> - <a class="local col4 ref" href="#14ret" title='ret' data-ref="14ret">ret</a>, <b>sizeof</b>(<a class="local col6 ref" href="#6data" title='data' data-ref="6data">data</a>-&gt;<a class="ref" href="#PayloadContext::buf" title='PayloadContext::buf' data-ref="PayloadContext::buf">buf</a>));</td></tr>
+<tr><th id="85">85</th><td>        <a class="ref" href="../../include/string.h.html#memcpy" title='memcpy' data-ref="memcpy">memcpy</a>(<a class="local col6 ref" href="#6data" title='data' data-ref="6data">data</a>-&gt;<a class="ref" href="#PayloadContext::buf" title='PayloadContext::buf' data-ref="PayloadContext::buf">buf</a>, <a class="local col0 ref" href="#10buf" title='buf' data-ref="10buf">buf</a> + <a class="local col4 ref" href="#14ret" title='ret' data-ref="14ret">ret</a>, <a class="local col6 ref" href="#6data" title='data' data-ref="6data">data</a>-&gt;<a class="ref" href="#PayloadContext::read_buf_size" title='PayloadContext::read_buf_size' data-ref="PayloadContext::read_buf_size">read_buf_size</a>);</td></tr>
+<tr><th id="86">86</th><td>        <a class="local col6 ref" href="#6data" title='data' data-ref="6data">data</a>-&gt;<a class="ref" href="#PayloadContext::read_buf_index" title='PayloadContext::read_buf_index' data-ref="PayloadContext::read_buf_index">read_buf_index</a> = <var>0</var>;</td></tr>
+<tr><th id="87">87</th><td>        <b>return</b> <var>1</var>;</td></tr>
+<tr><th id="88">88</th><td>    }</td></tr>
+<tr><th id="89">89</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="90">90</th><td>}</td></tr>
+<tr><th id="91">91</th><td></td></tr>
+<tr><th id="92">92</th><td><a class="typedef" href="rtpdec.h.html#RTPDynamicProtocolHandler" title='RTPDynamicProtocolHandler' data-type='struct RTPDynamicProtocolHandler' data-ref="RTPDynamicProtocolHandler">RTPDynamicProtocolHandler</a> <dfn class="decl def" id="ff_mpegts_dynamic_handler" title='ff_mpegts_dynamic_handler' data-ref="ff_mpegts_dynamic_handler">ff_mpegts_dynamic_handler</dfn> = {</td></tr>
+<tr><th id="93">93</th><td>    .<a class="ref" href="rtpdec.h.html#RTPDynamicProtocolHandler::codec_type" title='RTPDynamicProtocolHandler::codec_type' data-ref="RTPDynamicProtocolHandler::codec_type">codec_type</a>        = <a class="enum" href="../libavutil/avutil.h.html#AVMediaType::AVMEDIA_TYPE_DATA" title='AVMediaType::AVMEDIA_TYPE_DATA' data-ref="AVMediaType::AVMEDIA_TYPE_DATA">AVMEDIA_TYPE_DATA</a>,</td></tr>
+<tr><th id="94">94</th><td>    .<a class="ref" href="rtpdec.h.html#RTPDynamicProtocolHandler::priv_data_size" title='RTPDynamicProtocolHandler::priv_data_size' data-ref="RTPDynamicProtocolHandler::priv_data_size">priv_data_size</a>    = <b>sizeof</b>(<a class="typedef" href="rtpdec.h.html#PayloadContext" title='PayloadContext' data-type='struct PayloadContext' data-ref="PayloadContext">PayloadContext</a>),</td></tr>
+<tr><th id="95">95</th><td>    .<a class="ref" href="rtpdec.h.html#RTPDynamicProtocolHandler::parse_packet" title='RTPDynamicProtocolHandler::parse_packet' data-ref="RTPDynamicProtocolHandler::parse_packet">parse_packet</a>      = <a class="tu ref" href="#mpegts_handle_packet" title='mpegts_handle_packet' data-use='r' data-ref="mpegts_handle_packet">mpegts_handle_packet</a>,</td></tr>
+<tr><th id="96">96</th><td>    .<a class="ref" href="rtpdec.h.html#RTPDynamicProtocolHandler::init" title='RTPDynamicProtocolHandler::init' data-ref="RTPDynamicProtocolHandler::init">init</a>              = <a class="tu ref" href="#mpegts_init" title='mpegts_init' data-use='r' data-ref="mpegts_init">mpegts_init</a>,</td></tr>
+<tr><th id="97">97</th><td>    .<a class="ref" href="rtpdec.h.html#RTPDynamicProtocolHandler::close" title='RTPDynamicProtocolHandler::close' data-ref="RTPDynamicProtocolHandler::close">close</a>             = <a class="tu ref" href="#mpegts_close_context" title='mpegts_close_context' data-use='r' data-ref="mpegts_close_context">mpegts_close_context</a>,</td></tr>
+<tr><th id="98">98</th><td>    .<a class="ref" href="rtpdec.h.html#RTPDynamicProtocolHandler::static_payload_id" title='RTPDynamicProtocolHandler::static_payload_id' data-ref="RTPDynamicProtocolHandler::static_payload_id">static_payload_id</a> = <var>33</var>,</td></tr>
+<tr><th id="99">99</th><td>};</td></tr>
+<tr><th id="100">100</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

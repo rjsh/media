@@ -1,0 +1,119 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>txd.c source code [ffmpeg/libavformat/txd.c] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavformat/txd.c'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavformat</a>/<a href='txd.c.html'>txd.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * Renderware TeXture Dictionary (.txd) demuxer</i></td></tr>
+<tr><th id="3">3</th><td><i> * Copyright (c) 2007 Ivo van Poorten</i></td></tr>
+<tr><th id="4">4</th><td><i> *</i></td></tr>
+<tr><th id="5">5</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="8">8</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="9">9</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="10">10</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="11">11</th><td><i> *</i></td></tr>
+<tr><th id="12">12</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="13">13</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="14">14</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="15">15</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="16">16</th><td><i> *</i></td></tr>
+<tr><th id="17">17</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="18">18</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="19">19</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="20">20</th><td><i> */</i></td></tr>
+<tr><th id="21">21</th><td></td></tr>
+<tr><th id="22">22</th><td><u>#include <a href="../libavutil/intreadwrite.h.html">"libavutil/intreadwrite.h"</a></u></td></tr>
+<tr><th id="23">23</th><td><u>#include <a href="avformat.h.html">"avformat.h"</a></u></td></tr>
+<tr><th id="24">24</th><td><u>#include <a href="internal.h.html">"internal.h"</a></u></td></tr>
+<tr><th id="25">25</th><td></td></tr>
+<tr><th id="26">26</th><td><u>#define <dfn class="macro" id="_M/TXD_FILE" data-ref="_M/TXD_FILE">TXD_FILE</dfn>            0x16</u></td></tr>
+<tr><th id="27">27</th><td><u>#define <dfn class="macro" id="_M/TXD_INFO" data-ref="_M/TXD_INFO">TXD_INFO</dfn>            0x01</u></td></tr>
+<tr><th id="28">28</th><td><u>#define <dfn class="macro" id="_M/TXD_EXTRA" data-ref="_M/TXD_EXTRA">TXD_EXTRA</dfn>           0x03</u></td></tr>
+<tr><th id="29">29</th><td><u>#define <dfn class="macro" id="_M/TXD_TEXTURE" data-ref="_M/TXD_TEXTURE">TXD_TEXTURE</dfn>         0x15</u></td></tr>
+<tr><th id="30">30</th><td><u>#define <dfn class="macro" id="_M/TXD_TEXTURE_DATA" data-ref="_M/TXD_TEXTURE_DATA">TXD_TEXTURE_DATA</dfn>    0x01</u></td></tr>
+<tr><th id="31">31</th><td><u>#define <dfn class="macro" id="_M/TXD_MARKER" data-ref="_M/TXD_MARKER">TXD_MARKER</dfn>          0x1803ffff</u></td></tr>
+<tr><th id="32">32</th><td><u>#define <dfn class="macro" id="_M/TXD_MARKER2" data-ref="_M/TXD_MARKER2">TXD_MARKER2</dfn>         0x1003ffff</u></td></tr>
+<tr><th id="33">33</th><td></td></tr>
+<tr><th id="34">34</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="txd_probe" title='txd_probe' data-type='int txd_probe(AVProbeData * pd)' data-ref="txd_probe">txd_probe</dfn>(<a class="typedef" href="avformat.h.html#AVProbeData" title='AVProbeData' data-type='struct AVProbeData' data-ref="AVProbeData">AVProbeData</a> * <dfn class="local col1 decl" id="1pd" title='pd' data-type='AVProbeData *' data-ref="1pd">pd</dfn>) {</td></tr>
+<tr><th id="35">35</th><td>    <b>if</b> (<a class="macro" href="../libavutil/intreadwrite.h.html#423" title="(((const union unaligned_32 *) (pd-&gt;buf))-&gt;l)" data-ref="_M/AV_RL32">AV_RL32</a>(<a class="local col1 ref" href="#1pd" title='pd' data-ref="1pd">pd</a>-&gt;<a class="ref" href="avformat.h.html#AVProbeData::buf" title='AVProbeData::buf' data-ref="AVProbeData::buf">buf</a>  ) == <a class="macro" href="#26" title="0x16" data-ref="_M/TXD_FILE">TXD_FILE</a> &amp;&amp;</td></tr>
+<tr><th id="36">36</th><td>       (<a class="macro" href="../libavutil/intreadwrite.h.html#423" title="(((const union unaligned_32 *) (pd-&gt;buf+8))-&gt;l)" data-ref="_M/AV_RL32">AV_RL32</a>(<a class="local col1 ref" href="#1pd" title='pd' data-ref="1pd">pd</a>-&gt;<a class="ref" href="avformat.h.html#AVProbeData::buf" title='AVProbeData::buf' data-ref="AVProbeData::buf">buf</a>+<var>8</var>) == <a class="macro" href="#31" title="0x1803ffff" data-ref="_M/TXD_MARKER">TXD_MARKER</a> || <a class="macro" href="../libavutil/intreadwrite.h.html#423" title="(((const union unaligned_32 *) (pd-&gt;buf+8))-&gt;l)" data-ref="_M/AV_RL32">AV_RL32</a>(<a class="local col1 ref" href="#1pd" title='pd' data-ref="1pd">pd</a>-&gt;<a class="ref" href="avformat.h.html#AVProbeData::buf" title='AVProbeData::buf' data-ref="AVProbeData::buf">buf</a>+<var>8</var>) == <a class="macro" href="#32" title="0x1003ffff" data-ref="_M/TXD_MARKER2">TXD_MARKER2</a>))</td></tr>
+<tr><th id="37">37</th><td>        <b>return</b> <a class="macro" href="avformat.h.html#473" title="100" data-ref="_M/AVPROBE_SCORE_MAX">AVPROBE_SCORE_MAX</a>;</td></tr>
+<tr><th id="38">38</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="39">39</th><td>}</td></tr>
+<tr><th id="40">40</th><td></td></tr>
+<tr><th id="41">41</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="txd_read_header" title='txd_read_header' data-type='int txd_read_header(AVFormatContext * s)' data-ref="txd_read_header">txd_read_header</dfn>(<a class="typedef" href="avformat.h.html#AVFormatContext" title='AVFormatContext' data-type='struct AVFormatContext' data-ref="AVFormatContext">AVFormatContext</a> *<dfn class="local col2 decl" id="2s" title='s' data-type='AVFormatContext *' data-ref="2s">s</dfn>) {</td></tr>
+<tr><th id="42">42</th><td>    <a class="typedef" href="avformat.h.html#AVStream" title='AVStream' data-type='struct AVStream' data-ref="AVStream">AVStream</a> *<dfn class="local col3 decl" id="3st" title='st' data-type='AVStream *' data-ref="3st">st</dfn>;</td></tr>
+<tr><th id="43">43</th><td></td></tr>
+<tr><th id="44">44</th><td>    <a class="local col3 ref" href="#3st" title='st' data-ref="3st">st</a> = <a class="ref" href="avformat.h.html#avformat_new_stream" title='avformat_new_stream' data-ref="avformat_new_stream">avformat_new_stream</a>(<a class="local col2 ref" href="#2s" title='s' data-ref="2s">s</a>, <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>);</td></tr>
+<tr><th id="45">45</th><td>    <b>if</b> (!<a class="local col3 ref" href="#3st" title='st' data-ref="3st">st</a>)</td></tr>
+<tr><th id="46">46</th><td>        <b>return</b> <a class="macro" href="../libavutil/error.h.html#39" title="(-(12))" data-ref="_M/AVERROR">AVERROR</a>(<a class="macro" href="../../include/asm-generic/errno-base.h.html#15" title="12" data-ref="_M/ENOMEM">ENOMEM</a>);</td></tr>
+<tr><th id="47">47</th><td>    <a class="local col3 ref" href="#3st" title='st' data-ref="3st">st</a>-&gt;<a class="ref" href="avformat.h.html#AVStream::codecpar" title='AVStream::codecpar' data-ref="AVStream::codecpar">codecpar</a>-&gt;<a class="ref" href="../libavcodec/avcodec.h.html#AVCodecParameters::codec_type" title='AVCodecParameters::codec_type' data-ref="AVCodecParameters::codec_type">codec_type</a> = <a class="enum" href="../libavutil/avutil.h.html#AVMediaType::AVMEDIA_TYPE_VIDEO" title='AVMediaType::AVMEDIA_TYPE_VIDEO' data-ref="AVMediaType::AVMEDIA_TYPE_VIDEO">AVMEDIA_TYPE_VIDEO</a>;</td></tr>
+<tr><th id="48">48</th><td>    <a class="local col3 ref" href="#3st" title='st' data-ref="3st">st</a>-&gt;<a class="ref" href="avformat.h.html#AVStream::codecpar" title='AVStream::codecpar' data-ref="AVStream::codecpar">codecpar</a>-&gt;<a class="ref" href="../libavcodec/avcodec.h.html#AVCodecParameters::codec_id" title='AVCodecParameters::codec_id' data-ref="AVCodecParameters::codec_id">codec_id</a> = <a class="enum" href="../libavcodec/avcodec.h.html#AVCodecID::AV_CODEC_ID_TXD" title='AVCodecID::AV_CODEC_ID_TXD' data-ref="AVCodecID::AV_CODEC_ID_TXD">AV_CODEC_ID_TXD</a>;</td></tr>
+<tr><th id="49">49</th><td>    <a class="ref" href="internal.h.html#avpriv_set_pts_info" title='avpriv_set_pts_info' data-ref="avpriv_set_pts_info">avpriv_set_pts_info</a>(<a class="local col3 ref" href="#3st" title='st' data-ref="3st">st</a>, <var>64</var>, <var>1</var>, <var>5</var>);</td></tr>
+<tr><th id="50">50</th><td>    <a class="local col3 ref" href="#3st" title='st' data-ref="3st">st</a>-&gt;<a class="ref" href="avformat.h.html#AVStream::avg_frame_rate" title='AVStream::avg_frame_rate' data-ref="AVStream::avg_frame_rate">avg_frame_rate</a> = <a class="ref" href="../libavutil/rational.h.html#av_inv_q" title='av_inv_q' data-ref="av_inv_q">av_inv_q</a>(<a class="local col3 ref" href="#3st" title='st' data-ref="3st">st</a>-&gt;<a class="ref" href="avformat.h.html#AVStream::time_base" title='AVStream::time_base' data-ref="AVStream::time_base">time_base</a>);</td></tr>
+<tr><th id="51">51</th><td>    <i>/* the parameters will be extracted from the compressed bitstream */</i></td></tr>
+<tr><th id="52">52</th><td></td></tr>
+<tr><th id="53">53</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="54">54</th><td>}</td></tr>
+<tr><th id="55">55</th><td></td></tr>
+<tr><th id="56">56</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="txd_read_packet" title='txd_read_packet' data-type='int txd_read_packet(AVFormatContext * s, AVPacket * pkt)' data-ref="txd_read_packet">txd_read_packet</dfn>(<a class="typedef" href="avformat.h.html#AVFormatContext" title='AVFormatContext' data-type='struct AVFormatContext' data-ref="AVFormatContext">AVFormatContext</a> *<dfn class="local col4 decl" id="4s" title='s' data-type='AVFormatContext *' data-ref="4s">s</dfn>, <a class="typedef" href="../libavcodec/avcodec.h.html#AVPacket" title='AVPacket' data-type='struct AVPacket' data-ref="AVPacket">AVPacket</a> *<dfn class="local col5 decl" id="5pkt" title='pkt' data-type='AVPacket *' data-ref="5pkt">pkt</dfn>) {</td></tr>
+<tr><th id="57">57</th><td>    <a class="typedef" href="avio.h.html#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> *<dfn class="local col6 decl" id="6pb" title='pb' data-type='AVIOContext *' data-ref="6pb">pb</dfn> = <a class="local col4 ref" href="#4s" title='s' data-ref="4s">s</a>-&gt;<a class="ref" href="avformat.h.html#AVFormatContext::pb" title='AVFormatContext::pb' data-ref="AVFormatContext::pb">pb</a>;</td></tr>
+<tr><th id="58">58</th><td>    <em>unsigned</em> <em>int</em> <dfn class="local col7 decl" id="7id" title='id' data-type='unsigned int' data-ref="7id">id</dfn>, <dfn class="local col8 decl" id="8chunk_size" title='chunk_size' data-type='unsigned int' data-ref="8chunk_size">chunk_size</dfn>, <dfn class="local col9 decl" id="9marker" title='marker' data-type='unsigned int' data-ref="9marker">marker</dfn>;</td></tr>
+<tr><th id="59">59</th><td>    <em>int</em> <dfn class="local col0 decl" id="10ret" title='ret' data-type='int' data-ref="10ret">ret</dfn>;</td></tr>
+<tr><th id="60">60</th><td></td></tr>
+<tr><th id="61">61</th><td><dfn class="lbl" id="11next_chunk" data-ref="11next_chunk">next_chunk</dfn>:</td></tr>
+<tr><th id="62">62</th><td>    <a class="local col7 ref" href="#7id" title='id' data-ref="7id">id</a>         = <a class="ref" href="avio.h.html#avio_rl32" title='avio_rl32' data-ref="avio_rl32">avio_rl32</a>(<a class="local col6 ref" href="#6pb" title='pb' data-ref="6pb">pb</a>);</td></tr>
+<tr><th id="63">63</th><td>    <a class="local col8 ref" href="#8chunk_size" title='chunk_size' data-ref="8chunk_size">chunk_size</a> = <a class="ref" href="avio.h.html#avio_rl32" title='avio_rl32' data-ref="avio_rl32">avio_rl32</a>(<a class="local col6 ref" href="#6pb" title='pb' data-ref="6pb">pb</a>);</td></tr>
+<tr><th id="64">64</th><td>    <a class="local col9 ref" href="#9marker" title='marker' data-ref="9marker">marker</a>     = <a class="ref" href="avio.h.html#avio_rl32" title='avio_rl32' data-ref="avio_rl32">avio_rl32</a>(<a class="local col6 ref" href="#6pb" title='pb' data-ref="6pb">pb</a>);</td></tr>
+<tr><th id="65">65</th><td></td></tr>
+<tr><th id="66">66</th><td>    <b>if</b> (<a class="ref" href="avio.h.html#avio_feof" title='avio_feof' data-ref="avio_feof">avio_feof</a>(<a class="local col4 ref" href="#4s" title='s' data-ref="4s">s</a>-&gt;<a class="ref" href="avformat.h.html#AVFormatContext::pb" title='AVFormatContext::pb' data-ref="AVFormatContext::pb">pb</a>))</td></tr>
+<tr><th id="67">67</th><td>        <b>return</b> <a class="macro" href="../libavutil/error.h.html#55" title="(-(int)((&apos;E&apos;) | ((&apos;O&apos;) &lt;&lt; 8) | ((&apos;F&apos;) &lt;&lt; 16) | ((unsigned)(&apos; &apos;) &lt;&lt; 24)))" data-ref="_M/AVERROR_EOF">AVERROR_EOF</a>;</td></tr>
+<tr><th id="68">68</th><td>    <b>if</b> (<a class="local col9 ref" href="#9marker" title='marker' data-ref="9marker">marker</a> != <a class="macro" href="#31" title="0x1803ffff" data-ref="_M/TXD_MARKER">TXD_MARKER</a> &amp;&amp; <a class="local col9 ref" href="#9marker" title='marker' data-ref="9marker">marker</a> != <a class="macro" href="#32" title="0x1003ffff" data-ref="_M/TXD_MARKER2">TXD_MARKER2</a>) {</td></tr>
+<tr><th id="69">69</th><td>        <a class="ref" href="../libavutil/log.h.html#av_log" title='av_log' data-ref="av_log">av_log</a>(<a class="local col4 ref" href="#4s" title='s' data-ref="4s">s</a>, <a class="macro" href="../libavutil/log.h.html#176" title="16" data-ref="_M/AV_LOG_ERROR">AV_LOG_ERROR</a>, <q>"marker does not match\n"</q>);</td></tr>
+<tr><th id="70">70</th><td>        <b>return</b> <a class="macro" href="../libavutil/error.h.html#59" title="(-(int)((&apos;I&apos;) | ((&apos;N&apos;) &lt;&lt; 8) | ((&apos;D&apos;) &lt;&lt; 16) | ((unsigned)(&apos;A&apos;) &lt;&lt; 24)))" data-ref="_M/AVERROR_INVALIDDATA">AVERROR_INVALIDDATA</a>;</td></tr>
+<tr><th id="71">71</th><td>    }</td></tr>
+<tr><th id="72">72</th><td></td></tr>
+<tr><th id="73">73</th><td>    <b>switch</b> (<a class="local col7 ref" href="#7id" title='id' data-ref="7id">id</a>) {</td></tr>
+<tr><th id="74">74</th><td>    <b>case</b> <a class="macro" href="#27" title="0x01" data-ref="_M/TXD_INFO">TXD_INFO</a>:</td></tr>
+<tr><th id="75">75</th><td>        <b>if</b> (<a class="local col8 ref" href="#8chunk_size" title='chunk_size' data-ref="8chunk_size">chunk_size</a> &gt; <var>100</var>)</td></tr>
+<tr><th id="76">76</th><td>            <b>break</b>;</td></tr>
+<tr><th id="77">77</th><td>    <b>case</b> <a class="macro" href="#28" title="0x03" data-ref="_M/TXD_EXTRA">TXD_EXTRA</a>:</td></tr>
+<tr><th id="78">78</th><td>        <a class="ref" href="avio.h.html#avio_skip" title='avio_skip' data-ref="avio_skip">avio_skip</a>(<a class="local col4 ref" href="#4s" title='s' data-ref="4s">s</a>-&gt;<a class="ref" href="avformat.h.html#AVFormatContext::pb" title='AVFormatContext::pb' data-ref="AVFormatContext::pb">pb</a>, <a class="local col8 ref" href="#8chunk_size" title='chunk_size' data-ref="8chunk_size">chunk_size</a>);</td></tr>
+<tr><th id="79">79</th><td>    <b>case</b> <a class="macro" href="#26" title="0x16" data-ref="_M/TXD_FILE">TXD_FILE</a>:</td></tr>
+<tr><th id="80">80</th><td>    <b>case</b> <a class="macro" href="#29" title="0x15" data-ref="_M/TXD_TEXTURE">TXD_TEXTURE</a>:</td></tr>
+<tr><th id="81">81</th><td>        <b>goto</b> <a class="lbl" href="#11next_chunk" data-ref="11next_chunk">next_chunk</a>;</td></tr>
+<tr><th id="82">82</th><td>    <b>default</b>:</td></tr>
+<tr><th id="83">83</th><td>        <a class="ref" href="../libavutil/log.h.html#av_log" title='av_log' data-ref="av_log">av_log</a>(<a class="local col4 ref" href="#4s" title='s' data-ref="4s">s</a>, <a class="macro" href="../libavutil/log.h.html#176" title="16" data-ref="_M/AV_LOG_ERROR">AV_LOG_ERROR</a>, <q>"unknown chunk id %i\n"</q>, <a class="local col7 ref" href="#7id" title='id' data-ref="7id">id</a>);</td></tr>
+<tr><th id="84">84</th><td>        <b>return</b> <a class="macro" href="../libavutil/error.h.html#59" title="(-(int)((&apos;I&apos;) | ((&apos;N&apos;) &lt;&lt; 8) | ((&apos;D&apos;) &lt;&lt; 16) | ((unsigned)(&apos;A&apos;) &lt;&lt; 24)))" data-ref="_M/AVERROR_INVALIDDATA">AVERROR_INVALIDDATA</a>;</td></tr>
+<tr><th id="85">85</th><td>    }</td></tr>
+<tr><th id="86">86</th><td></td></tr>
+<tr><th id="87">87</th><td>    <a class="local col0 ref" href="#10ret" title='ret' data-ref="10ret">ret</a> = <a class="ref" href="avformat.h.html#av_get_packet" title='av_get_packet' data-ref="av_get_packet">av_get_packet</a>(<a class="local col4 ref" href="#4s" title='s' data-ref="4s">s</a>-&gt;<a class="ref" href="avformat.h.html#AVFormatContext::pb" title='AVFormatContext::pb' data-ref="AVFormatContext::pb">pb</a>, <a class="local col5 ref" href="#5pkt" title='pkt' data-ref="5pkt">pkt</a>, <a class="local col8 ref" href="#8chunk_size" title='chunk_size' data-ref="8chunk_size">chunk_size</a>);</td></tr>
+<tr><th id="88">88</th><td>    <b>if</b> (<a class="local col0 ref" href="#10ret" title='ret' data-ref="10ret">ret</a> &lt; <var>0</var>)</td></tr>
+<tr><th id="89">89</th><td>        <b>return</b> <a class="local col0 ref" href="#10ret" title='ret' data-ref="10ret">ret</a>;</td></tr>
+<tr><th id="90">90</th><td>    <a class="local col5 ref" href="#5pkt" title='pkt' data-ref="5pkt">pkt</a>-&gt;<a class="ref" href="../libavcodec/avcodec.h.html#AVPacket::stream_index" title='AVPacket::stream_index' data-ref="AVPacket::stream_index">stream_index</a> = <var>0</var>;</td></tr>
+<tr><th id="91">91</th><td></td></tr>
+<tr><th id="92">92</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="93">93</th><td>}</td></tr>
+<tr><th id="94">94</th><td></td></tr>
+<tr><th id="95">95</th><td><a class="typedef" href="avformat.h.html#AVInputFormat" title='AVInputFormat' data-type='struct AVInputFormat' data-ref="AVInputFormat">AVInputFormat</a> <dfn class="decl def" id="ff_txd_demuxer" title='ff_txd_demuxer' data-ref="ff_txd_demuxer">ff_txd_demuxer</dfn> = {</td></tr>
+<tr><th id="96">96</th><td>    .<a class="ref" href="avformat.h.html#AVInputFormat::name" title='AVInputFormat::name' data-ref="AVInputFormat::name">name</a>        = <q>"txd"</q>,</td></tr>
+<tr><th id="97">97</th><td>    .<a class="ref" href="avformat.h.html#AVInputFormat::long_name" title='AVInputFormat::long_name' data-ref="AVInputFormat::long_name">long_name</a>   = <a class="macro" href="../libavutil/internal.h.html#176" title="&quot;Renderware TeXture Dictionary&quot;" data-ref="_M/NULL_IF_CONFIG_SMALL">NULL_IF_CONFIG_SMALL</a>(<q>"Renderware TeXture Dictionary"</q>),</td></tr>
+<tr><th id="98">98</th><td>    .<a class="ref" href="avformat.h.html#AVInputFormat::read_probe" title='AVInputFormat::read_probe' data-ref="AVInputFormat::read_probe">read_probe</a>  = <a class="tu ref" href="#txd_probe" title='txd_probe' data-use='r' data-ref="txd_probe">txd_probe</a>,</td></tr>
+<tr><th id="99">99</th><td>    .<a class="ref" href="avformat.h.html#AVInputFormat::read_header" title='AVInputFormat::read_header' data-ref="AVInputFormat::read_header">read_header</a> = <a class="tu ref" href="#txd_read_header" title='txd_read_header' data-use='r' data-ref="txd_read_header">txd_read_header</a>,</td></tr>
+<tr><th id="100">100</th><td>    .<a class="ref" href="avformat.h.html#AVInputFormat::read_packet" title='AVInputFormat::read_packet' data-ref="AVInputFormat::read_packet">read_packet</a> = <a class="tu ref" href="#txd_read_packet" title='txd_read_packet' data-use='r' data-ref="txd_read_packet">txd_read_packet</a>,</td></tr>
+<tr><th id="101">101</th><td>};</td></tr>
+<tr><th id="102">102</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

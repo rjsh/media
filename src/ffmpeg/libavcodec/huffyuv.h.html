@@ -1,0 +1,119 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>huffyuv.h source code [ffmpeg/libavcodec/huffyuv.h] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="HYuvContext,Predictor "/>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavcodec/huffyuv.h'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavcodec</a>/<a href='huffyuv.h.html'>huffyuv.h</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * Copyright (c) 2002-2014 Michael Niedermayer &lt;michaelni@gmx.at&gt;</i></td></tr>
+<tr><th id="3">3</th><td><i> *</i></td></tr>
+<tr><th id="4">4</th><td><i> * see <a href="http://www.pcisys.net/~melanson/codecs/huffyuv.txt">http://www.pcisys.net/~melanson/codecs/huffyuv.txt</a> for a description of</i></td></tr>
+<tr><th id="5">5</th><td><i> * the algorithm used</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="8">8</th><td><i> *</i></td></tr>
+<tr><th id="9">9</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="10">10</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="11">11</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="12">12</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="13">13</th><td><i> *</i></td></tr>
+<tr><th id="14">14</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="15">15</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="16">16</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="17">17</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="18">18</th><td><i> *</i></td></tr>
+<tr><th id="19">19</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="20">20</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="21">21</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="22">22</th><td><i> */</i></td></tr>
+<tr><th id="23">23</th><td></td></tr>
+<tr><th id="24">24</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="25">25</th><td><i class="doc"> *<span class="command"> @file</span></i></td></tr>
+<tr><th id="26">26</th><td><i class="doc"> * huffyuv codec for libavcodec.</i></td></tr>
+<tr><th id="27">27</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="28">28</th><td></td></tr>
+<tr><th id="29">29</th><td><u>#<span data-ppcond="29">ifndef</span> <span class="macro" data-ref="_M/AVCODEC_HUFFYUV_H">AVCODEC_HUFFYUV_H</span></u></td></tr>
+<tr><th id="30">30</th><td><u>#define <dfn class="macro" id="_M/AVCODEC_HUFFYUV_H" data-ref="_M/AVCODEC_HUFFYUV_H">AVCODEC_HUFFYUV_H</dfn></u></td></tr>
+<tr><th id="31">31</th><td></td></tr>
+<tr><th id="32">32</th><td><u>#include &lt;stdint.h&gt;</u></td></tr>
+<tr><th id="33">33</th><td></td></tr>
+<tr><th id="34">34</th><td><u>#include <a href="avcodec.h.html">"avcodec.h"</a></u></td></tr>
+<tr><th id="35">35</th><td><u>#include <a href="bswapdsp.h.html">"bswapdsp.h"</a></u></td></tr>
+<tr><th id="36">36</th><td><u>#include <a href="get_bits.h.html">"get_bits.h"</a></u></td></tr>
+<tr><th id="37">37</th><td><u>#include <a href="huffyuvdsp.h.html">"huffyuvdsp.h"</a></u></td></tr>
+<tr><th id="38">38</th><td><u>#include <a href="huffyuvencdsp.h.html">"huffyuvencdsp.h"</a></u></td></tr>
+<tr><th id="39">39</th><td><u>#include <a href="put_bits.h.html">"put_bits.h"</a></u></td></tr>
+<tr><th id="40">40</th><td><u>#include <a href="lossless_videodsp.h.html">"lossless_videodsp.h"</a></u></td></tr>
+<tr><th id="41">41</th><td></td></tr>
+<tr><th id="42">42</th><td><u>#define <dfn class="macro" id="_M/VLC_BITS" data-ref="_M/VLC_BITS">VLC_BITS</dfn> 12</u></td></tr>
+<tr><th id="43">43</th><td></td></tr>
+<tr><th id="44">44</th><td><u>#define <dfn class="macro" id="_M/MAX_BITS" data-ref="_M/MAX_BITS">MAX_BITS</dfn> 16</u></td></tr>
+<tr><th id="45">45</th><td><u>#define <dfn class="macro" id="_M/MAX_N" data-ref="_M/MAX_N">MAX_N</dfn> (1&lt;&lt;MAX_BITS)</u></td></tr>
+<tr><th id="46">46</th><td><u>#define <dfn class="macro" id="_M/MAX_VLC_N" data-ref="_M/MAX_VLC_N">MAX_VLC_N</dfn> 16384</u></td></tr>
+<tr><th id="47">47</th><td></td></tr>
+<tr><th id="48">48</th><td><b>typedef</b> <b>enum</b> <dfn class="type def" id="Predictor" title='Predictor' data-ref="Predictor"><a class="type" href="#Predictor" title='Predictor' data-ref="Predictor">Predictor</a></dfn> {</td></tr>
+<tr><th id="49">49</th><td>    <dfn class="enum" id="Predictor::LEFT" title='Predictor::LEFT' data-ref="Predictor::LEFT">LEFT</dfn> = <var>0</var>,</td></tr>
+<tr><th id="50">50</th><td>    <dfn class="enum" id="Predictor::PLANE" title='Predictor::PLANE' data-ref="Predictor::PLANE">PLANE</dfn>,</td></tr>
+<tr><th id="51">51</th><td>    <dfn class="enum" id="Predictor::MEDIAN" title='Predictor::MEDIAN' data-ref="Predictor::MEDIAN">MEDIAN</dfn>,</td></tr>
+<tr><th id="52">52</th><td>} <dfn class="typedef" id="Predictor" title='Predictor' data-type='enum Predictor' data-ref="Predictor">Predictor</dfn>;</td></tr>
+<tr><th id="53">53</th><td></td></tr>
+<tr><th id="54">54</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="HYuvContext" title='HYuvContext' data-ref="HYuvContext"><a class="type" href="#HYuvContext" title='HYuvContext' data-ref="HYuvContext">HYuvContext</a></dfn> {</td></tr>
+<tr><th id="55">55</th><td>    <a class="typedef" href="../libavutil/log.h.html#AVClass" title='AVClass' data-type='struct AVClass' data-ref="AVClass">AVClass</a> *<dfn class="decl" id="HYuvContext::class" title='HYuvContext::class' data-ref="HYuvContext::class">class</dfn>;</td></tr>
+<tr><th id="56">56</th><td>    <a class="typedef" href="avcodec.h.html#AVCodecContext" title='AVCodecContext' data-type='struct AVCodecContext' data-ref="AVCodecContext">AVCodecContext</a> *<dfn class="decl" id="HYuvContext::avctx" title='HYuvContext::avctx' data-ref="HYuvContext::avctx">avctx</dfn>;</td></tr>
+<tr><th id="57">57</th><td>    <a class="typedef" href="#Predictor" title='Predictor' data-type='enum Predictor' data-ref="Predictor">Predictor</a> <dfn class="decl" id="HYuvContext::predictor" title='HYuvContext::predictor' data-ref="HYuvContext::predictor">predictor</dfn>;</td></tr>
+<tr><th id="58">58</th><td>    <a class="typedef" href="get_bits.h.html#GetBitContext" title='GetBitContext' data-type='struct GetBitContext' data-ref="GetBitContext">GetBitContext</a> <dfn class="decl" id="HYuvContext::gb" title='HYuvContext::gb' data-ref="HYuvContext::gb">gb</dfn>;</td></tr>
+<tr><th id="59">59</th><td>    <a class="typedef" href="put_bits.h.html#PutBitContext" title='PutBitContext' data-type='struct PutBitContext' data-ref="PutBitContext">PutBitContext</a> <dfn class="decl" id="HYuvContext::pb" title='HYuvContext::pb' data-ref="HYuvContext::pb">pb</dfn>;</td></tr>
+<tr><th id="60">60</th><td>    <em>int</em> <dfn class="decl" id="HYuvContext::interlaced" title='HYuvContext::interlaced' data-ref="HYuvContext::interlaced">interlaced</dfn>;</td></tr>
+<tr><th id="61">61</th><td>    <em>int</em> <dfn class="decl" id="HYuvContext::decorrelate" title='HYuvContext::decorrelate' data-ref="HYuvContext::decorrelate">decorrelate</dfn>;</td></tr>
+<tr><th id="62">62</th><td>    <em>int</em> <dfn class="decl" id="HYuvContext::bitstream_bpp" title='HYuvContext::bitstream_bpp' data-ref="HYuvContext::bitstream_bpp">bitstream_bpp</dfn>;</td></tr>
+<tr><th id="63">63</th><td>    <em>int</em> <dfn class="decl" id="HYuvContext::version" title='HYuvContext::version' data-ref="HYuvContext::version">version</dfn>;</td></tr>
+<tr><th id="64">64</th><td>    <em>int</em> <dfn class="decl" id="HYuvContext::yuy2" title='HYuvContext::yuy2' data-ref="HYuvContext::yuy2">yuy2</dfn>;                               <i>//use yuy2 instead of 422P</i></td></tr>
+<tr><th id="65">65</th><td>    <em>int</em> <dfn class="decl" id="HYuvContext::bgr32" title='HYuvContext::bgr32' data-ref="HYuvContext::bgr32">bgr32</dfn>;                              <i>//use bgr32 instead of bgr24</i></td></tr>
+<tr><th id="66">66</th><td>    <em>int</em> <dfn class="decl" id="HYuvContext::bps" title='HYuvContext::bps' data-ref="HYuvContext::bps">bps</dfn>;</td></tr>
+<tr><th id="67">67</th><td>    <em>int</em> <dfn class="decl" id="HYuvContext::n" title='HYuvContext::n' data-ref="HYuvContext::n">n</dfn>;                                  <i>// 1&lt;&lt;bps</i></td></tr>
+<tr><th id="68">68</th><td>    <em>int</em> <dfn class="decl" id="HYuvContext::vlc_n" title='HYuvContext::vlc_n' data-ref="HYuvContext::vlc_n">vlc_n</dfn>;                              <i>// number of vlc codes (FFMIN(1&lt;&lt;bps, MAX_VLC_N))</i></td></tr>
+<tr><th id="69">69</th><td>    <em>int</em> <dfn class="decl" id="HYuvContext::alpha" title='HYuvContext::alpha' data-ref="HYuvContext::alpha">alpha</dfn>;</td></tr>
+<tr><th id="70">70</th><td>    <em>int</em> <dfn class="decl" id="HYuvContext::chroma" title='HYuvContext::chroma' data-ref="HYuvContext::chroma">chroma</dfn>;</td></tr>
+<tr><th id="71">71</th><td>    <em>int</em> <dfn class="decl" id="HYuvContext::yuv" title='HYuvContext::yuv' data-ref="HYuvContext::yuv">yuv</dfn>;</td></tr>
+<tr><th id="72">72</th><td>    <em>int</em> <dfn class="decl" id="HYuvContext::chroma_h_shift" title='HYuvContext::chroma_h_shift' data-ref="HYuvContext::chroma_h_shift">chroma_h_shift</dfn>;</td></tr>
+<tr><th id="73">73</th><td>    <em>int</em> <dfn class="decl" id="HYuvContext::chroma_v_shift" title='HYuvContext::chroma_v_shift' data-ref="HYuvContext::chroma_v_shift">chroma_v_shift</dfn>;</td></tr>
+<tr><th id="74">74</th><td>    <em>int</em> <dfn class="decl" id="HYuvContext::width" title='HYuvContext::width' data-ref="HYuvContext::width">width</dfn>, <dfn class="decl" id="HYuvContext::height" title='HYuvContext::height' data-ref="HYuvContext::height">height</dfn>;</td></tr>
+<tr><th id="75">75</th><td>    <em>int</em> <dfn class="decl" id="HYuvContext::flags" title='HYuvContext::flags' data-ref="HYuvContext::flags">flags</dfn>;</td></tr>
+<tr><th id="76">76</th><td>    <em>int</em> <dfn class="decl" id="HYuvContext::context" title='HYuvContext::context' data-ref="HYuvContext::context">context</dfn>;</td></tr>
+<tr><th id="77">77</th><td>    <em>int</em> <dfn class="decl" id="HYuvContext::picture_number" title='HYuvContext::picture_number' data-ref="HYuvContext::picture_number">picture_number</dfn>;</td></tr>
+<tr><th id="78">78</th><td>    <em>int</em> <dfn class="decl" id="HYuvContext::last_slice_end" title='HYuvContext::last_slice_end' data-ref="HYuvContext::last_slice_end">last_slice_end</dfn>;</td></tr>
+<tr><th id="79">79</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="decl" id="HYuvContext::temp" title='HYuvContext::temp' data-ref="HYuvContext::temp">temp</dfn>[<var>3</var>];</td></tr>
+<tr><th id="80">80</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> *<dfn class="decl" id="HYuvContext::temp16" title='HYuvContext::temp16' data-ref="HYuvContext::temp16">temp16</dfn>[<var>3</var>];                    <i class="doc">///&lt; identical to temp but 16bit type</i></td></tr>
+<tr><th id="81">81</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint64_t" title='uint64_t' data-type='unsigned long' data-ref="uint64_t">uint64_t</a> <dfn class="decl" id="HYuvContext::stats" title='HYuvContext::stats' data-ref="HYuvContext::stats">stats</dfn>[<var>4</var>][<a class="macro" href="#46" title="16384" data-ref="_M/MAX_VLC_N">MAX_VLC_N</a>];</td></tr>
+<tr><th id="82">82</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="HYuvContext::len" title='HYuvContext::len' data-ref="HYuvContext::len">len</dfn>[<var>4</var>][<a class="macro" href="#46" title="16384" data-ref="_M/MAX_VLC_N">MAX_VLC_N</a>];</td></tr>
+<tr><th id="83">83</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a> <dfn class="decl" id="HYuvContext::bits" title='HYuvContext::bits' data-ref="HYuvContext::bits">bits</dfn>[<var>4</var>][<a class="macro" href="#46" title="16384" data-ref="_M/MAX_VLC_N">MAX_VLC_N</a>];</td></tr>
+<tr><th id="84">84</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a> <dfn class="decl" id="HYuvContext::pix_bgr_map" title='HYuvContext::pix_bgr_map' data-ref="HYuvContext::pix_bgr_map">pix_bgr_map</dfn>[<var>1</var>&lt;&lt;<a class="macro" href="#42" title="12" data-ref="_M/VLC_BITS">VLC_BITS</a>];</td></tr>
+<tr><th id="85">85</th><td>    <a class="typedef" href="vlc.h.html#VLC" title='VLC' data-type='struct VLC' data-ref="VLC">VLC</a> <dfn class="decl" id="HYuvContext::vlc" title='HYuvContext::vlc' data-ref="HYuvContext::vlc">vlc</dfn>[<var>8</var>];                             <i>//Y,U,V,A,YY,YU,YV,AA</i></td></tr>
+<tr><th id="86">86</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="decl" id="HYuvContext::bitstream_buffer" title='HYuvContext::bitstream_buffer' data-ref="HYuvContext::bitstream_buffer">bitstream_buffer</dfn>;</td></tr>
+<tr><th id="87">87</th><td>    <em>unsigned</em> <em>int</em> <dfn class="decl" id="HYuvContext::bitstream_buffer_size" title='HYuvContext::bitstream_buffer_size' data-ref="HYuvContext::bitstream_buffer_size">bitstream_buffer_size</dfn>;</td></tr>
+<tr><th id="88">88</th><td>    <a class="typedef" href="bswapdsp.h.html#BswapDSPContext" title='BswapDSPContext' data-type='struct BswapDSPContext' data-ref="BswapDSPContext">BswapDSPContext</a> <dfn class="decl" id="HYuvContext::bdsp" title='HYuvContext::bdsp' data-ref="HYuvContext::bdsp">bdsp</dfn>;</td></tr>
+<tr><th id="89">89</th><td>    <a class="typedef" href="huffyuvdsp.h.html#HuffYUVDSPContext" title='HuffYUVDSPContext' data-type='struct HuffYUVDSPContext' data-ref="HuffYUVDSPContext">HuffYUVDSPContext</a> <dfn class="decl" id="HYuvContext::hdsp" title='HYuvContext::hdsp' data-ref="HYuvContext::hdsp">hdsp</dfn>;</td></tr>
+<tr><th id="90">90</th><td>    <a class="typedef" href="huffyuvencdsp.h.html#HuffYUVEncDSPContext" title='HuffYUVEncDSPContext' data-type='struct HuffYUVEncDSPContext' data-ref="HuffYUVEncDSPContext">HuffYUVEncDSPContext</a> <dfn class="decl" id="HYuvContext::hencdsp" title='HYuvContext::hencdsp' data-ref="HYuvContext::hencdsp">hencdsp</dfn>;</td></tr>
+<tr><th id="91">91</th><td>    <a class="typedef" href="lossless_videodsp.h.html#LLVidDSPContext" title='LLVidDSPContext' data-type='struct LLVidDSPContext' data-ref="LLVidDSPContext">LLVidDSPContext</a> <dfn class="decl" id="HYuvContext::llviddsp" title='HYuvContext::llviddsp' data-ref="HYuvContext::llviddsp">llviddsp</dfn>;</td></tr>
+<tr><th id="92">92</th><td>    <em>int</em> <dfn class="decl" id="HYuvContext::non_determ" title='HYuvContext::non_determ' data-ref="HYuvContext::non_determ">non_determ</dfn>; <i>// non-deterministic, multi-threaded encoder allowed</i></td></tr>
+<tr><th id="93">93</th><td>} <dfn class="typedef" id="HYuvContext" title='HYuvContext' data-type='struct HYuvContext' data-ref="HYuvContext">HYuvContext</dfn>;</td></tr>
+<tr><th id="94">94</th><td></td></tr>
+<tr><th id="95">95</th><td><em>void</em> <a class="decl" href="huffyuv.c.html#ff_huffyuv_common_init" title='ff_huffyuv_common_init' data-ref="ff_huffyuv_common_init" id="ff_huffyuv_common_init">ff_huffyuv_common_init</a>(<a class="typedef" href="avcodec.h.html#AVCodecContext" title='AVCodecContext' data-type='struct AVCodecContext' data-ref="AVCodecContext">AVCodecContext</a> *<dfn class="local col5 decl" id="65s" title='s' data-type='AVCodecContext *' data-ref="65s">s</dfn>);</td></tr>
+<tr><th id="96">96</th><td><em>void</em> <a class="decl" href="huffyuv.c.html#ff_huffyuv_common_end" title='ff_huffyuv_common_end' data-ref="ff_huffyuv_common_end" id="ff_huffyuv_common_end">ff_huffyuv_common_end</a>(<a class="typedef" href="#HYuvContext" title='HYuvContext' data-type='struct HYuvContext' data-ref="HYuvContext">HYuvContext</a> *<dfn class="local col6 decl" id="66s" title='s' data-type='HYuvContext *' data-ref="66s">s</dfn>);</td></tr>
+<tr><th id="97">97</th><td><em>int</em>  <a class="decl" href="huffyuv.c.html#ff_huffyuv_alloc_temp" title='ff_huffyuv_alloc_temp' data-ref="ff_huffyuv_alloc_temp" id="ff_huffyuv_alloc_temp">ff_huffyuv_alloc_temp</a>(<a class="typedef" href="#HYuvContext" title='HYuvContext' data-type='struct HYuvContext' data-ref="HYuvContext">HYuvContext</a> *<dfn class="local col7 decl" id="67s" title='s' data-type='HYuvContext *' data-ref="67s">s</dfn>);</td></tr>
+<tr><th id="98">98</th><td><em>int</em> <a class="decl" href="huffyuv.c.html#ff_huffyuv_generate_bits_table" title='ff_huffyuv_generate_bits_table' data-ref="ff_huffyuv_generate_bits_table" id="ff_huffyuv_generate_bits_table">ff_huffyuv_generate_bits_table</a>(<a class="typedef" href="../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a> *<dfn class="local col8 decl" id="68dst" title='dst' data-type='uint32_t *' data-ref="68dst">dst</dfn>, <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col9 decl" id="69len_table" title='len_table' data-type='const uint8_t *' data-ref="69len_table">len_table</dfn>, <em>int</em> <dfn class="local col0 decl" id="70n" title='n' data-type='int' data-ref="70n">n</dfn>);</td></tr>
+<tr><th id="99">99</th><td></td></tr>
+<tr><th id="100">100</th><td><u>#<span data-ppcond="29">endif</span> /* AVCODEC_HUFFYUV_H */</u></td></tr>
+<tr><th id="101">101</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated while processing <a href='huffyuv.c.html'>ffmpeg/libavcodec/huffyuv.c</a><br/>Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

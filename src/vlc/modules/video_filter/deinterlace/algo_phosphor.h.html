@@ -1,0 +1,192 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>algo_phosphor.h source code [vlc/modules/video_filter/deinterlace/algo_phosphor.h] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'vlc/modules/video_filter/deinterlace/algo_phosphor.h'; var root_path = '../../../..'; var data_path = '../../../../../data';</script>
+<script src='../../../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='../../..'>vlc</a>/<a href='../..'>modules</a>/<a href='..'>video_filter</a>/<a href='./'>deinterlace</a>/<a href='algo_phosphor.h.html'>algo_phosphor.h</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*****************************************************************************</i></td></tr>
+<tr><th id="2">2</th><td><i> * algo_phosphor.h : Phosphor algorithm for the VLC deinterlacer</i></td></tr>
+<tr><th id="3">3</th><td><i> *****************************************************************************</i></td></tr>
+<tr><th id="4">4</th><td><i> * Copyright (C) 2011 VLC authors and VideoLAN</i></td></tr>
+<tr><th id="5">5</th><td><i> * $Id: 8159adb37474ccd1a3d64a1836ead2e9690a3284 $</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * Author: Juha Jeronen &lt;juha.jeronen@jyu.fi&gt;</i></td></tr>
+<tr><th id="8">8</th><td><i> *</i></td></tr>
+<tr><th id="9">9</th><td><i> * This program is free software; you can redistribute it and/or modify it</i></td></tr>
+<tr><th id="10">10</th><td><i> * under the terms of the GNU Lesser General Public License as published by</i></td></tr>
+<tr><th id="11">11</th><td><i> * the Free Software Foundation; either version 2.1 of the License, or</i></td></tr>
+<tr><th id="12">12</th><td><i> * (at your option) any later version.</i></td></tr>
+<tr><th id="13">13</th><td><i> *</i></td></tr>
+<tr><th id="14">14</th><td><i> * This program is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="15">15</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="16">16</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</i></td></tr>
+<tr><th id="17">17</th><td><i> * GNU Lesser General Public License for more details.</i></td></tr>
+<tr><th id="18">18</th><td><i> *</i></td></tr>
+<tr><th id="19">19</th><td><i> * You should have received a copy of the GNU Lesser General Public License</i></td></tr>
+<tr><th id="20">20</th><td><i> * along with this program; if not, write to the Free Software Foundation,</i></td></tr>
+<tr><th id="21">21</th><td><i> * Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.</i></td></tr>
+<tr><th id="22">22</th><td><i> *****************************************************************************/</i></td></tr>
+<tr><th id="23">23</th><td></td></tr>
+<tr><th id="24">24</th><td><u>#<span data-ppcond="24">ifndef</span> <span class="macro" data-ref="_M/VLC_DEINTERLACE_ALGO_PHOSPHOR_H">VLC_DEINTERLACE_ALGO_PHOSPHOR_H</span></u></td></tr>
+<tr><th id="25">25</th><td><u>#define <dfn class="macro" id="_M/VLC_DEINTERLACE_ALGO_PHOSPHOR_H" data-ref="_M/VLC_DEINTERLACE_ALGO_PHOSPHOR_H">VLC_DEINTERLACE_ALGO_PHOSPHOR_H</dfn> 1</u></td></tr>
+<tr><th id="26">26</th><td></td></tr>
+<tr><th id="27">27</th><td><i>/* Forward declarations */</i></td></tr>
+<tr><th id="28">28</th><td><b>struct</b> <a class="type" href="../../../include/vlc_filter.h.html#filter_t" title='filter_t' data-ref="filter_t" id="filter_t">filter_t</a>;</td></tr>
+<tr><th id="29">29</th><td><b>struct</b> <a class="type" href="../../../include/vlc_picture.h.html#picture_t" title='picture_t' data-ref="picture_t" id="picture_t">picture_t</a>;</td></tr>
+<tr><th id="30">30</th><td></td></tr>
+<tr><th id="31">31</th><td><i>/*****************************************************************************</i></td></tr>
+<tr><th id="32">32</th><td><i> * Data structures etc.</i></td></tr>
+<tr><th id="33">33</th><td><i> *****************************************************************************/</i></td></tr>
+<tr><th id="34">34</th><td></td></tr>
+<tr><th id="35">35</th><td><i>/* These numbers, and phosphor_chroma_list[], should be in the same order</i></td></tr>
+<tr><th id="36">36</th><td><i>   as phosphor_chroma_list_text[]. The value 0 is reserved, because</i></td></tr>
+<tr><th id="37">37</th><td><i>   var_GetInteger() returns 0 in case of error. */</i></td></tr>
+<tr><th id="38">38</th><td><i class="doc">/** Valid Phosphor 4:2:0 chroma handling modes. */</i></td></tr>
+<tr><th id="39">39</th><td><b>typedef</b> <b>enum</b> { <dfn class="enum" id="::PC_LATEST" title='::PC_LATEST' data-ref="::PC_LATEST">PC_LATEST</dfn> = <var>1</var>, <dfn class="enum" id="::PC_ALTLINE" title='::PC_ALTLINE' data-ref="::PC_ALTLINE">PC_ALTLINE</dfn>   = <var>2</var>,</td></tr>
+<tr><th id="40">40</th><td>               <dfn class="enum" id="::PC_BLEND" title='::PC_BLEND' data-ref="::PC_BLEND">PC_BLEND</dfn>  = <var>3</var>, <dfn class="enum" id="::PC_UPCONVERT" title='::PC_UPCONVERT' data-ref="::PC_UPCONVERT">PC_UPCONVERT</dfn> = <var>4</var> } <dfn class="typedef" id="phosphor_chroma_t" title='phosphor_chroma_t' data-type='enum phosphor_chroma_t' data-ref="phosphor_chroma_t">phosphor_chroma_t</dfn>;</td></tr>
+<tr><th id="41">41</th><td><i class="doc">/** Phosphor 4:2:0 chroma handling modes (config item). */</i></td></tr>
+<tr><th id="42">42</th><td><em>static</em> <em>const</em> <em>int</em> <dfn class="decl def" id="phosphor_chroma_list" title='phosphor_chroma_list' data-ref="phosphor_chroma_list">phosphor_chroma_list</dfn>[] = { <a class="enum" href="#::PC_LATEST" title='::PC_LATEST' data-ref="::PC_LATEST">PC_LATEST</a>, <a class="enum" href="#::PC_ALTLINE" title='::PC_ALTLINE' data-ref="::PC_ALTLINE">PC_ALTLINE</a>,</td></tr>
+<tr><th id="43">43</th><td>                                            <a class="enum" href="#::PC_BLEND" title='::PC_BLEND' data-ref="::PC_BLEND">PC_BLEND</a>,  <a class="enum" href="#::PC_UPCONVERT" title='::PC_UPCONVERT' data-ref="::PC_UPCONVERT">PC_UPCONVERT</a> };</td></tr>
+<tr><th id="44">44</th><td><i class="doc">/** User labels for Phosphor 4:2:0 chroma handling modes (config item). */</i></td></tr>
+<tr><th id="45">45</th><td><em>static</em> <em>const</em> <em>char</em> *<em>const</em> <dfn class="decl def" id="phosphor_chroma_list_text" title='phosphor_chroma_list_text' data-ref="phosphor_chroma_list_text">phosphor_chroma_list_text</dfn>[] = { <a class="macro" href="../../../include/vlc_fixups.h.html#256" title="(&quot;Latest&quot;)" data-ref="_M/N_">N_</a>(<q>"Latest"</q>),</td></tr>
+<tr><th id="46">46</th><td>                                                         <a class="macro" href="../../../include/vlc_fixups.h.html#256" title="(&quot;AltLine&quot;)" data-ref="_M/N_">N_</a>(<q>"AltLine"</q>),</td></tr>
+<tr><th id="47">47</th><td>                                                         <a class="macro" href="../../../include/vlc_fixups.h.html#256" title="(&quot;Blend&quot;)" data-ref="_M/N_">N_</a>(<q>"Blend"</q>),</td></tr>
+<tr><th id="48">48</th><td>                                                         <a class="macro" href="../../../include/vlc_fixups.h.html#256" title="(&quot;Upconvert&quot;)" data-ref="_M/N_">N_</a>(<q>"Upconvert"</q>) };</td></tr>
+<tr><th id="49">49</th><td></td></tr>
+<tr><th id="50">50</th><td><i>/* Same here. Same order as in phosphor_dimmer_list_text[],</i></td></tr>
+<tr><th id="51">51</th><td><i>   and the value 0 is reserved for config error. */</i></td></tr>
+<tr><th id="52">52</th><td><i class="doc">/** Phosphor dimmer strengths (config item). */</i></td></tr>
+<tr><th id="53">53</th><td><em>static</em> <em>const</em> <em>int</em> <dfn class="decl def" id="phosphor_dimmer_list" title='phosphor_dimmer_list' data-ref="phosphor_dimmer_list">phosphor_dimmer_list</dfn>[] = { <var>1</var>, <var>2</var>, <var>3</var>, <var>4</var> };</td></tr>
+<tr><th id="54">54</th><td><i class="doc">/** User labels for Phosphor dimmer strengths (config item). */</i></td></tr>
+<tr><th id="55">55</th><td><em>static</em> <em>const</em> <em>char</em> *<em>const</em> <dfn class="decl def" id="phosphor_dimmer_list_text" title='phosphor_dimmer_list_text' data-ref="phosphor_dimmer_list_text">phosphor_dimmer_list_text</dfn>[] = { <a class="macro" href="../../../include/vlc_fixups.h.html#256" title="(&quot;Off&quot;)" data-ref="_M/N_">N_</a>(<q>"Off"</q>),</td></tr>
+<tr><th id="56">56</th><td>                                                         <a class="macro" href="../../../include/vlc_fixups.h.html#256" title="(&quot;Low&quot;)" data-ref="_M/N_">N_</a>(<q>"Low"</q>),</td></tr>
+<tr><th id="57">57</th><td>                                                         <a class="macro" href="../../../include/vlc_fixups.h.html#256" title="(&quot;Medium&quot;)" data-ref="_M/N_">N_</a>(<q>"Medium"</q>),</td></tr>
+<tr><th id="58">58</th><td>                                                         <a class="macro" href="../../../include/vlc_fixups.h.html#256" title="(&quot;High&quot;)" data-ref="_M/N_">N_</a>(<q>"High"</q>) };</td></tr>
+<tr><th id="59">59</th><td></td></tr>
+<tr><th id="60">60</th><td><i class="doc">/** Algorithm-specific state for Phosphor. */</i></td></tr>
+<tr><th id="61">61</th><td><b>typedef</b> <b>struct</b></td></tr>
+<tr><th id="62">62</th><td>{</td></tr>
+<tr><th id="63">63</th><td>    <a class="typedef" href="#phosphor_chroma_t" title='phosphor_chroma_t' data-type='enum phosphor_chroma_t' data-ref="phosphor_chroma_t">phosphor_chroma_t</a> <dfn class="decl" id="{anonymous}::i_chroma_for_420" title='&lt;anonymous struct&gt;::i_chroma_for_420' data-ref="{anonymous}::i_chroma_for_420">i_chroma_for_420</dfn>;</td></tr>
+<tr><th id="64">64</th><td>    <em>int</em> <dfn class="decl" id="{anonymous}::i_dimmer_strength" title='&lt;anonymous struct&gt;::i_dimmer_strength' data-ref="{anonymous}::i_dimmer_strength">i_dimmer_strength</dfn>;</td></tr>
+<tr><th id="65">65</th><td>} <dfn class="typedef" id="phosphor_sys_t" title='phosphor_sys_t' data-type='struct phosphor_sys_t' data-ref="phosphor_sys_t">phosphor_sys_t</dfn>;</td></tr>
+<tr><th id="66">66</th><td></td></tr>
+<tr><th id="67">67</th><td><i>/*****************************************************************************</i></td></tr>
+<tr><th id="68">68</th><td><i> * Functions</i></td></tr>
+<tr><th id="69">69</th><td><i> *****************************************************************************/</i></td></tr>
+<tr><th id="70">70</th><td></td></tr>
+<tr><th id="71">71</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="72">72</th><td><i class="doc"> * "Phosphor" deinterlace algorithm: framerate-doubling CRT TV simulator.</i></td></tr>
+<tr><th id="73">73</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="74">74</th><td><i class="doc"> * There is no "1x" mode in this filter; only framerate doubling is supported.</i></td></tr>
+<tr><th id="75">75</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="76">76</th><td><i class="doc"> * There is no input frame parameter, because the input frames</i></td></tr>
+<tr><th id="77">77</th><td><i class="doc"> * are taken from the history buffer.</i></td></tr>
+<tr><th id="78">78</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="79">79</th><td><i class="doc"> * Soft field repeat (repeat_pict) is supported. Note that the generated</i></td></tr>
+<tr><th id="80">80</th><td><i class="doc"> * "repeated" output picture is unique because of the simulated light decay.</i></td></tr>
+<tr><th id="81">81</th><td><i class="doc"> * Its "old" field comes from the same input frame as the "new" one, unlike</i></td></tr>
+<tr><th id="82">82</th><td><i class="doc"> * the first output picture of the same frame.</i></td></tr>
+<tr><th id="83">83</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="84">84</th><td><i class="doc"> * As many output frames should be requested for each input frame as is</i></td></tr>
+<tr><th id="85">85</th><td><i class="doc"> * indicated by p_src-&gt;i_nb_fields. This is done by calling this function</i></td></tr>
+<tr><th id="86">86</th><td><i class="doc"> * several times, first with i_order = 0, and then with all other parameters</i></td></tr>
+<tr><th id="87">87</th><td><i class="doc"> * the same, but a new p_dst, increasing i_order (1 for second field,</i></td></tr>
+<tr><th id="88">88</th><td><i class="doc"> * and then if i_nb_fields = 3, also i_order = 2 to get the repeated first</i></td></tr>
+<tr><th id="89">89</th><td><i class="doc"> * field), and alternating i_field (starting, at i_order = 0, with the field</i></td></tr>
+<tr><th id="90">90</th><td><i class="doc"> * according to p_src-&gt;b_top_field_first). See Deinterlace() for an example.</i></td></tr>
+<tr><th id="91">91</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="92">92</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">p_filter</span> The filter instance. Must be non-NULL.</i></td></tr>
+<tr><th id="93">93</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">p_dst</span> Output frame. Must be allocated by caller.</i></td></tr>
+<tr><th id="94">94</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">i_order</span> Temporal field number: 0 = first, 1 = second, 2 = rep. first.</i></td></tr>
+<tr><th id="95">95</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">i_field</span> Render which field? 0 = top field, 1 = bottom field.</i></td></tr>
+<tr><th id="96">96</th><td><i class="doc"> * <span class="command">@return</span> VLC error code (int).</i></td></tr>
+<tr><th id="97">97</th><td><i class="doc"> *<span class="command"> @retval</span> VLC_SUCCESS The requested field was rendered into p_dst.</i></td></tr>
+<tr><th id="98">98</th><td><i class="doc"> *<span class="command"> @retval</span> VLC_EGENERIC No pictures in history buffer, cannot render.</i></td></tr>
+<tr><th id="99">99</th><td><i class="doc"> * <span class="command">@see</span> RenderBob()</i></td></tr>
+<tr><th id="100">100</th><td><i class="doc"> * <span class="command">@see</span> RenderLinear()</i></td></tr>
+<tr><th id="101">101</th><td><i class="doc"> * <span class="command">@see</span> Deinterlace()</i></td></tr>
+<tr><th id="102">102</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="103">103</th><td><em>int</em> <dfn class="decl" id="RenderPhosphor" title='RenderPhosphor' data-ref="RenderPhosphor">RenderPhosphor</dfn>( <a class="typedef" href="../../../include/vlc_common.h.html#filter_t" title='filter_t' data-type='struct filter_t' data-ref="filter_t">filter_t</a> *<dfn class="local col2 decl" id="32p_filter" title='p_filter' data-type='filter_t *' data-ref="32p_filter">p_filter</dfn>,</td></tr>
+<tr><th id="104">104</th><td>                    <a class="typedef" href="../../../include/vlc_common.h.html#picture_t" title='picture_t' data-type='struct picture_t' data-ref="picture_t">picture_t</a> *<dfn class="local col3 decl" id="33p_dst" title='p_dst' data-type='picture_t *' data-ref="33p_dst">p_dst</dfn>,</td></tr>
+<tr><th id="105">105</th><td>                    <em>int</em> <dfn class="local col4 decl" id="34i_order" title='i_order' data-type='int' data-ref="34i_order">i_order</dfn>, <em>int</em> <dfn class="local col5 decl" id="35i_field" title='i_field' data-type='int' data-ref="35i_field">i_field</dfn> );</td></tr>
+<tr><th id="106">106</th><td></td></tr>
+<tr><th id="107">107</th><td><i>/*****************************************************************************</i></td></tr>
+<tr><th id="108">108</th><td><i> * Extra documentation</i></td></tr>
+<tr><th id="109">109</th><td><i> *****************************************************************************/</i></td></tr>
+<tr><th id="110">110</th><td></td></tr>
+<tr><th id="111">111</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="112">112</th><td><i class="doc"> *<span class="command"> \file</span></i></td></tr>
+<tr><th id="113">113</th><td><i class="doc"> * "Phosphor" deinterlace algorithm. This simulates the rendering mechanism</i></td></tr>
+<tr><th id="114">114</th><td><i class="doc"> * of an interlaced CRT TV, actually producing *interlaced* output.</i></td></tr>
+<tr><th id="115">115</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="116">116</th><td><i class="doc"> * The main use case for this filter is anime for which IVTC is not applicable.</i></td></tr>
+<tr><th id="117">117</th><td><i class="doc"> * This is the case, if 24fps telecined material has been mixed with 60fps</i></td></tr>
+<tr><th id="118">118</th><td><i class="doc"> * interlaced effects, such as in Sol Bianca or Silent Mobius. It can also</i></td></tr>
+<tr><th id="119">119</th><td><i class="doc"> * be used for true interlaced video, such as most camcorder recordings.</i></td></tr>
+<tr><th id="120">120</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="121">121</th><td><i class="doc"> * The filter has several modes for handling 4:2:0 chroma for those output</i></td></tr>
+<tr><th id="122">122</th><td><i class="doc"> * frames that fall across input frame temporal boundaries (i.e. fields come</i></td></tr>
+<tr><th id="123">123</th><td><i class="doc"> * from different frames). Upconvert (to 4:2:2) provides the most accurate</i></td></tr>
+<tr><th id="124">124</th><td><i class="doc"> * CRT simulation, but requires more CPU and memory bandwidth than the other</i></td></tr>
+<tr><th id="125">125</th><td><i class="doc"> * modes. The other modes keep the chroma at 4:2:0.</i></td></tr>
+<tr><th id="126">126</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="127">127</th><td><i class="doc"> * About these modes: telecined input (such as NTSC anime DVDs) works better</i></td></tr>
+<tr><th id="128">128</th><td><i class="doc"> * with AltLine, while true interlaced input works better with Latest.</i></td></tr>
+<tr><th id="129">129</th><td><i class="doc"> * Merge is a compromise, which may or may not look acceptable.</i></td></tr>
+<tr><th id="130">130</th><td><i class="doc"> * The mode can be set in the VLC advanced configuration,</i></td></tr>
+<tr><th id="131">131</th><td><i class="doc"> * All settings &gt; Video &gt; Filters &gt; Deinterlace</i></td></tr>
+<tr><th id="132">132</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="133">133</th><td><i class="doc"> * Technically speaking, this is an interlaced field renderer targeted for</i></td></tr>
+<tr><th id="134">134</th><td><i class="doc"> * progressive displays. It works by framerate doubling, and simulating one</i></td></tr>
+<tr><th id="135">135</th><td><i class="doc"> * step of light output decay of the "old" field during the "new" field,</i></td></tr>
+<tr><th id="136">136</th><td><i class="doc"> * until the next new field comes in to replace the "old" one.</i></td></tr>
+<tr><th id="137">137</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="138">138</th><td><i class="doc"> * While playback is running, the simulated light decay gives the picture an</i></td></tr>
+<tr><th id="139">139</th><td><i class="doc"> * appearance of visible "scanlines", much like on a real TV. Only when the</i></td></tr>
+<tr><th id="140">140</th><td><i class="doc"> * video is paused, it is clearly visible that one of the fields is actually</i></td></tr>
+<tr><th id="141">141</th><td><i class="doc"> * brighter than the other.</i></td></tr>
+<tr><th id="142">142</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="143">143</th><td><i class="doc"> * The main differences to the Bob algorithm are:</i></td></tr>
+<tr><th id="144">144</th><td><i class="doc"> *  - in addition to the current field, the previous one (fading out)</i></td></tr>
+<tr><th id="145">145</th><td><i class="doc"> *    is also rendered</i></td></tr>
+<tr><th id="146">146</th><td><i class="doc"> *  - some horizontal lines don't seem to flicker as much</i></td></tr>
+<tr><th id="147">147</th><td><i class="doc"> *  - scanline visual effect (adjustable; the dimmer strength can be set</i></td></tr>
+<tr><th id="148">148</th><td><i class="doc"> *    in the VLC advanced configuration)</i></td></tr>
+<tr><th id="149">149</th><td><i class="doc"> *  - the picture appears 25%, 38% or 44% darker on average (for dimmer</i></td></tr>
+<tr><th id="150">150</th><td><i class="doc"> *    strengths 1, 2 and 3)</i></td></tr>
+<tr><th id="151">151</th><td><i class="doc"> *  - if the input has 4:2:0 chroma, the colours may look messed up in some</i></td></tr>
+<tr><th id="152">152</th><td><i class="doc"> *    output frames. This is a limitation of the 4:2:0 chroma format, and due</i></td></tr>
+<tr><th id="153">153</th><td><i class="doc"> *    to the fact that both fields are present in each output picture. Usually</i></td></tr>
+<tr><th id="154">154</th><td><i class="doc"> *    this doesn't matter in practice, but see the 4:2:0 chroma mode setting</i></td></tr>
+<tr><th id="155">155</th><td><i class="doc"> *    in the configuration if needed (it may help a bit).</i></td></tr>
+<tr><th id="156">156</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="157">157</th><td><i class="doc"> * In addition, when this filter is used on an LCD computer monitor,</i></td></tr>
+<tr><th id="158">158</th><td><i class="doc"> * the main differences to a real CRT TV are:</i></td></tr>
+<tr><th id="159">159</th><td><i class="doc"> *  - Pixel shape and grid layout; CRT TVs were designed for interlaced</i></td></tr>
+<tr><th id="160">160</th><td><i class="doc"> *    field rendering, while LCD monitors weren't.</i></td></tr>
+<tr><th id="161">161</th><td><i class="doc"> *  - No scan flicker even though the display runs (usually) at 60Hz.</i></td></tr>
+<tr><th id="162">162</th><td><i class="doc"> *    (This at least is a good thing.)</i></td></tr>
+<tr><th id="163">163</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="164">164</th><td><i class="doc"> * The output vertical resolution should be large enough for the scaling</i></td></tr>
+<tr><th id="165">165</th><td><i class="doc"> * not to have a too adverse effect on the regular scanline pattern.</i></td></tr>
+<tr><th id="166">166</th><td><i class="doc"> * In practice, NTSC video can be acceptably rendered already at 1024x600</i></td></tr>
+<tr><th id="167">167</th><td><i class="doc"> * if fullscreen even on an LCD. PAL video requires more.</i></td></tr>
+<tr><th id="168">168</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="169">169</th><td><i class="doc"> * Just like Bob, this filter works properly only if the input framerate</i></td></tr>
+<tr><th id="170">170</th><td><i class="doc"> * is stable. Otherwise the scanline effect breaks down and the picture</i></td></tr>
+<tr><th id="171">171</th><td><i class="doc"> * will flicker.</i></td></tr>
+<tr><th id="172">172</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="173">173</th><td></td></tr>
+<tr><th id="174">174</th><td><u>#<span data-ppcond="24">endif</span></u></td></tr>
+<tr><th id="175">175</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated while processing <a href='algo_basic.c.html'>vlc/modules/video_filter/deinterlace/algo_basic.c</a><br/>Generated on <em>2016-Oct-25</em> from project vlc revision <em>2.2.0-git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

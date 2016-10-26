@@ -1,0 +1,128 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>sipr.h source code [ffmpeg/libavcodec/sipr.h] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="SiprContext,SiprParameters "/>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavcodec/sipr.h'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavcodec</a>/<a href='sipr.h.html'>sipr.h</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * SIPR / ACELP.NET decoder</i></td></tr>
+<tr><th id="3">3</th><td><i> *</i></td></tr>
+<tr><th id="4">4</th><td><i> * Copyright (c) 2008 Vladimir Voroshilov</i></td></tr>
+<tr><th id="5">5</th><td><i> * Copyright (c) 2009 Vitor Sessak</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="8">8</th><td><i> *</i></td></tr>
+<tr><th id="9">9</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="10">10</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="11">11</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="12">12</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="13">13</th><td><i> *</i></td></tr>
+<tr><th id="14">14</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="15">15</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="16">16</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="17">17</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="18">18</th><td><i> *</i></td></tr>
+<tr><th id="19">19</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="20">20</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="21">21</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="22">22</th><td><i> */</i></td></tr>
+<tr><th id="23">23</th><td></td></tr>
+<tr><th id="24">24</th><td><u>#<span data-ppcond="24">ifndef</span> <span class="macro" data-ref="_M/AVCODEC_SIPR_H">AVCODEC_SIPR_H</span></u></td></tr>
+<tr><th id="25">25</th><td><u>#define <dfn class="macro" id="_M/AVCODEC_SIPR_H" data-ref="_M/AVCODEC_SIPR_H">AVCODEC_SIPR_H</dfn></u></td></tr>
+<tr><th id="26">26</th><td></td></tr>
+<tr><th id="27">27</th><td><u>#include <a href="avcodec.h.html">"avcodec.h"</a></u></td></tr>
+<tr><th id="28">28</th><td><u>#include <a href="acelp_pitch_delay.h.html">"acelp_pitch_delay.h"</a></u></td></tr>
+<tr><th id="29">29</th><td><u>#include <a href="../libavutil/mem.h.html">"libavutil/mem.h"</a></u></td></tr>
+<tr><th id="30">30</th><td></td></tr>
+<tr><th id="31">31</th><td><u>#define <dfn class="macro" id="_M/LP_FILTER_ORDER_16k" data-ref="_M/LP_FILTER_ORDER_16k">LP_FILTER_ORDER_16k</dfn>  16</u></td></tr>
+<tr><th id="32">32</th><td><u>#define <dfn class="macro" id="_M/L_SUBFR_16k" data-ref="_M/L_SUBFR_16k">L_SUBFR_16k</dfn>          80</u></td></tr>
+<tr><th id="33">33</th><td><u>#define <dfn class="macro" id="_M/PITCH_MIN" data-ref="_M/PITCH_MIN">PITCH_MIN</dfn>            30</u></td></tr>
+<tr><th id="34">34</th><td><u>#define <dfn class="macro" id="_M/PITCH_MAX" data-ref="_M/PITCH_MAX">PITCH_MAX</dfn>            281</u></td></tr>
+<tr><th id="35">35</th><td></td></tr>
+<tr><th id="36">36</th><td><u>#define <dfn class="macro" id="_M/LSFQ_DIFF_MIN" data-ref="_M/LSFQ_DIFF_MIN">LSFQ_DIFF_MIN</dfn>        (0.0125 * M_PI)</u></td></tr>
+<tr><th id="37">37</th><td></td></tr>
+<tr><th id="38">38</th><td><u>#define <dfn class="macro" id="_M/LP_FILTER_ORDER" data-ref="_M/LP_FILTER_ORDER">LP_FILTER_ORDER</dfn>      10</u></td></tr>
+<tr><th id="39">39</th><td></td></tr>
+<tr><th id="40">40</th><td><i class="doc">/** Number of past samples needed for excitation interpolation */</i></td></tr>
+<tr><th id="41">41</th><td><u>#define <dfn class="macro" id="_M/L_INTERPOL" data-ref="_M/L_INTERPOL">L_INTERPOL</dfn>           (LP_FILTER_ORDER + 1)</u></td></tr>
+<tr><th id="42">42</th><td></td></tr>
+<tr><th id="43">43</th><td><i class="doc">/**  Subframe size for all modes except 16k */</i></td></tr>
+<tr><th id="44">44</th><td><u>#define <dfn class="macro" id="_M/SUBFR_SIZE" data-ref="_M/SUBFR_SIZE">SUBFR_SIZE</dfn>           48</u></td></tr>
+<tr><th id="45">45</th><td></td></tr>
+<tr><th id="46">46</th><td><u>#define <dfn class="macro" id="_M/SUBFRAME_COUNT_16k" data-ref="_M/SUBFRAME_COUNT_16k">SUBFRAME_COUNT_16k</dfn>   2</u></td></tr>
+<tr><th id="47">47</th><td></td></tr>
+<tr><th id="48">48</th><td><b>typedef</b> <b>enum</b> {</td></tr>
+<tr><th id="49">49</th><td>    <dfn class="enum" id="::MODE_16k" title='::MODE_16k' data-ref="::MODE_16k">MODE_16k</dfn>,</td></tr>
+<tr><th id="50">50</th><td>    <dfn class="enum" id="::MODE_8k5" title='::MODE_8k5' data-ref="::MODE_8k5">MODE_8k5</dfn>,</td></tr>
+<tr><th id="51">51</th><td>    <dfn class="enum" id="::MODE_6k5" title='::MODE_6k5' data-ref="::MODE_6k5">MODE_6k5</dfn>,</td></tr>
+<tr><th id="52">52</th><td>    <dfn class="enum" id="::MODE_5k0" title='::MODE_5k0' data-ref="::MODE_5k0">MODE_5k0</dfn>,</td></tr>
+<tr><th id="53">53</th><td>    <dfn class="enum" id="::MODE_COUNT" title='::MODE_COUNT' data-ref="::MODE_COUNT">MODE_COUNT</dfn></td></tr>
+<tr><th id="54">54</th><td>} <dfn class="typedef" id="SiprMode" title='SiprMode' data-type='enum SiprMode' data-ref="SiprMode">SiprMode</dfn>;</td></tr>
+<tr><th id="55">55</th><td></td></tr>
+<tr><th id="56">56</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="SiprParameters" title='SiprParameters' data-ref="SiprParameters"><a class="type" href="#SiprParameters" title='SiprParameters' data-ref="SiprParameters">SiprParameters</a></dfn> {</td></tr>
+<tr><th id="57">57</th><td>    <em>int</em> <dfn class="decl" id="SiprParameters::ma_pred_switch" title='SiprParameters::ma_pred_switch' data-ref="SiprParameters::ma_pred_switch">ma_pred_switch</dfn>;        <i class="doc">///&lt; switched moving average predictor</i></td></tr>
+<tr><th id="58">58</th><td>    <em>int</em> <dfn class="decl" id="SiprParameters::vq_indexes" title='SiprParameters::vq_indexes' data-ref="SiprParameters::vq_indexes">vq_indexes</dfn>[<var>5</var>];</td></tr>
+<tr><th id="59">59</th><td>    <em>int</em> <dfn class="decl" id="SiprParameters::pitch_delay" title='SiprParameters::pitch_delay' data-ref="SiprParameters::pitch_delay">pitch_delay</dfn>[<var>5</var>];        <i class="doc">///&lt; pitch delay</i></td></tr>
+<tr><th id="60">60</th><td>    <em>int</em> <dfn class="decl" id="SiprParameters::gp_index" title='SiprParameters::gp_index' data-ref="SiprParameters::gp_index">gp_index</dfn>[<var>5</var>];           <i class="doc">///&lt; adaptive-codebook gain indexes</i></td></tr>
+<tr><th id="61">61</th><td>    <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> <dfn class="decl" id="SiprParameters::fc_indexes" title='SiprParameters::fc_indexes' data-ref="SiprParameters::fc_indexes">fc_indexes</dfn>[<var>5</var>][<var>10</var>]; <i class="doc">///&lt; fixed-codebook indexes</i></td></tr>
+<tr><th id="62">62</th><td>    <em>int</em> <dfn class="decl" id="SiprParameters::gc_index" title='SiprParameters::gc_index' data-ref="SiprParameters::gc_index">gc_index</dfn>[<var>5</var>];           <i class="doc">///&lt; fixed-codebook gain indexes</i></td></tr>
+<tr><th id="63">63</th><td>} <dfn class="typedef" id="SiprParameters" title='SiprParameters' data-type='struct SiprParameters' data-ref="SiprParameters">SiprParameters</dfn>;</td></tr>
+<tr><th id="64">64</th><td></td></tr>
+<tr><th id="65">65</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="SiprContext" title='SiprContext' data-ref="SiprContext"><a class="type" href="#SiprContext" title='SiprContext' data-ref="SiprContext">SiprContext</a></dfn> {</td></tr>
+<tr><th id="66">66</th><td>    <a class="typedef" href="avcodec.h.html#AVCodecContext" title='AVCodecContext' data-type='struct AVCodecContext' data-ref="AVCodecContext">AVCodecContext</a> *<dfn class="decl" id="SiprContext::avctx" title='SiprContext::avctx' data-ref="SiprContext::avctx">avctx</dfn>;</td></tr>
+<tr><th id="67">67</th><td></td></tr>
+<tr><th id="68">68</th><td>    <a class="typedef" href="#SiprMode" title='SiprMode' data-type='enum SiprMode' data-ref="SiprMode">SiprMode</a> <dfn class="decl" id="SiprContext::mode" title='SiprContext::mode' data-ref="SiprContext::mode">mode</dfn>;</td></tr>
+<tr><th id="69">69</th><td></td></tr>
+<tr><th id="70">70</th><td>    <em>float</em> <dfn class="decl" id="SiprContext::past_pitch_gain" title='SiprContext::past_pitch_gain' data-ref="SiprContext::past_pitch_gain">past_pitch_gain</dfn>;</td></tr>
+<tr><th id="71">71</th><td>    <em>float</em> <dfn class="decl" id="SiprContext::lsf_history" title='SiprContext::lsf_history' data-ref="SiprContext::lsf_history">lsf_history</dfn>[<a class="macro" href="#31" title="16" data-ref="_M/LP_FILTER_ORDER_16k">LP_FILTER_ORDER_16k</a>];</td></tr>
+<tr><th id="72">72</th><td></td></tr>
+<tr><th id="73">73</th><td>    <em>float</em> <dfn class="decl" id="SiprContext::excitation" title='SiprContext::excitation' data-ref="SiprContext::excitation">excitation</dfn>[<a class="macro" href="#41" title="(10 + 1)" data-ref="_M/L_INTERPOL">L_INTERPOL</a> + <a class="macro" href="#34" title="281" data-ref="_M/PITCH_MAX">PITCH_MAX</a> + <var>2</var> * <a class="macro" href="#32" title="80" data-ref="_M/L_SUBFR_16k">L_SUBFR_16k</a>];</td></tr>
+<tr><th id="74">74</th><td></td></tr>
+<tr><th id="75">75</th><td>    <a class="macro" href="../libavutil/mem.h.html#101" title="float __attribute__ ((aligned (16))) synth_buf" data-ref="_M/DECLARE_ALIGNED">DECLARE_ALIGNED</a>(<var>16</var>, <em>float</em>, <dfn class="decl" id="SiprContext::synth_buf" title='SiprContext::synth_buf' data-ref="SiprContext::synth_buf">synth_buf</dfn>)[<a class="macro" href="#38" title="10" data-ref="_M/LP_FILTER_ORDER">LP_FILTER_ORDER</a> + <var>5</var>*<a class="macro" href="#44" title="48" data-ref="_M/SUBFR_SIZE">SUBFR_SIZE</a> + <var>6</var>];</td></tr>
+<tr><th id="76">76</th><td></td></tr>
+<tr><th id="77">77</th><td>    <em>float</em> <dfn class="decl" id="SiprContext::lsp_history" title='SiprContext::lsp_history' data-ref="SiprContext::lsp_history">lsp_history</dfn>[<a class="macro" href="#38" title="10" data-ref="_M/LP_FILTER_ORDER">LP_FILTER_ORDER</a>];</td></tr>
+<tr><th id="78">78</th><td>    <em>float</em> <dfn class="decl" id="SiprContext::gain_mem" title='SiprContext::gain_mem' data-ref="SiprContext::gain_mem">gain_mem</dfn>;</td></tr>
+<tr><th id="79">79</th><td>    <em>float</em> <dfn class="decl" id="SiprContext::energy_history" title='SiprContext::energy_history' data-ref="SiprContext::energy_history">energy_history</dfn>[<var>4</var>];</td></tr>
+<tr><th id="80">80</th><td>    <em>float</em> <dfn class="decl" id="SiprContext::highpass_filt_mem" title='SiprContext::highpass_filt_mem' data-ref="SiprContext::highpass_filt_mem">highpass_filt_mem</dfn>[<var>2</var>];</td></tr>
+<tr><th id="81">81</th><td>    <em>float</em> <dfn class="decl" id="SiprContext::postfilter_mem" title='SiprContext::postfilter_mem' data-ref="SiprContext::postfilter_mem">postfilter_mem</dfn>[<a class="macro" href="acelp_pitch_delay.h.html#31" title="143" data-ref="_M/PITCH_DELAY_MAX">PITCH_DELAY_MAX</a> + <a class="macro" href="#38" title="10" data-ref="_M/LP_FILTER_ORDER">LP_FILTER_ORDER</a>];</td></tr>
+<tr><th id="82">82</th><td></td></tr>
+<tr><th id="83">83</th><td>    <i>/* 5k0 */</i></td></tr>
+<tr><th id="84">84</th><td>    <em>float</em> <dfn class="decl" id="SiprContext::tilt_mem" title='SiprContext::tilt_mem' data-ref="SiprContext::tilt_mem">tilt_mem</dfn>;</td></tr>
+<tr><th id="85">85</th><td>    <em>float</em> <dfn class="decl" id="SiprContext::postfilter_agc" title='SiprContext::postfilter_agc' data-ref="SiprContext::postfilter_agc">postfilter_agc</dfn>;</td></tr>
+<tr><th id="86">86</th><td>    <em>float</em> <dfn class="decl" id="SiprContext::postfilter_mem5k0" title='SiprContext::postfilter_mem5k0' data-ref="SiprContext::postfilter_mem5k0">postfilter_mem5k0</dfn>[<a class="macro" href="acelp_pitch_delay.h.html#31" title="143" data-ref="_M/PITCH_DELAY_MAX">PITCH_DELAY_MAX</a> + <a class="macro" href="#38" title="10" data-ref="_M/LP_FILTER_ORDER">LP_FILTER_ORDER</a>];</td></tr>
+<tr><th id="87">87</th><td>    <em>float</em> <dfn class="decl" id="SiprContext::postfilter_syn5k0" title='SiprContext::postfilter_syn5k0' data-ref="SiprContext::postfilter_syn5k0">postfilter_syn5k0</dfn>[<a class="macro" href="#38" title="10" data-ref="_M/LP_FILTER_ORDER">LP_FILTER_ORDER</a> + <a class="macro" href="#44" title="48" data-ref="_M/SUBFR_SIZE">SUBFR_SIZE</a>*<var>5</var>];</td></tr>
+<tr><th id="88">88</th><td></td></tr>
+<tr><th id="89">89</th><td>    <i>/* 16k */</i></td></tr>
+<tr><th id="90">90</th><td>    <em>int</em> <dfn class="decl" id="SiprContext::pitch_lag_prev" title='SiprContext::pitch_lag_prev' data-ref="SiprContext::pitch_lag_prev">pitch_lag_prev</dfn>;</td></tr>
+<tr><th id="91">91</th><td>    <em>float</em> <dfn class="decl" id="SiprContext::iir_mem" title='SiprContext::iir_mem' data-ref="SiprContext::iir_mem">iir_mem</dfn>[<a class="macro" href="#31" title="16" data-ref="_M/LP_FILTER_ORDER_16k">LP_FILTER_ORDER_16k</a>+<var>1</var>];</td></tr>
+<tr><th id="92">92</th><td>    <em>float</em> <dfn class="decl" id="SiprContext::filt_buf" title='SiprContext::filt_buf' data-ref="SiprContext::filt_buf">filt_buf</dfn>[<var>2</var>][<a class="macro" href="#31" title="16" data-ref="_M/LP_FILTER_ORDER_16k">LP_FILTER_ORDER_16k</a>+<var>1</var>];</td></tr>
+<tr><th id="93">93</th><td>    <em>float</em> *<dfn class="decl" id="SiprContext::filt_mem" title='SiprContext::filt_mem' data-ref="SiprContext::filt_mem">filt_mem</dfn>[<var>2</var>];</td></tr>
+<tr><th id="94">94</th><td>    <em>float</em> <dfn class="decl" id="SiprContext::mem_preemph" title='SiprContext::mem_preemph' data-ref="SiprContext::mem_preemph">mem_preemph</dfn>[<a class="macro" href="#31" title="16" data-ref="_M/LP_FILTER_ORDER_16k">LP_FILTER_ORDER_16k</a>];</td></tr>
+<tr><th id="95">95</th><td>    <em>float</em> <dfn class="decl" id="SiprContext::synth" title='SiprContext::synth' data-ref="SiprContext::synth">synth</dfn>[<a class="macro" href="#31" title="16" data-ref="_M/LP_FILTER_ORDER_16k">LP_FILTER_ORDER_16k</a>];</td></tr>
+<tr><th id="96">96</th><td>    <em>double</em> <dfn class="decl" id="SiprContext::lsp_history_16k" title='SiprContext::lsp_history_16k' data-ref="SiprContext::lsp_history_16k">lsp_history_16k</dfn>[<var>16</var>];</td></tr>
+<tr><th id="97">97</th><td></td></tr>
+<tr><th id="98">98</th><td>    <em>void</em> (*<dfn class="decl" id="SiprContext::decode_frame" title='SiprContext::decode_frame' data-ref="SiprContext::decode_frame">decode_frame</dfn>)(<b>struct</b> <a class="type" href="#SiprContext" title='SiprContext' data-ref="SiprContext">SiprContext</a> *<dfn class="local col1 decl" id="1ctx" title='ctx' data-type='struct SiprContext *' data-ref="1ctx">ctx</dfn>, <a class="typedef" href="#SiprParameters" title='SiprParameters' data-type='struct SiprParameters' data-ref="SiprParameters">SiprParameters</a> *<dfn class="local col2 decl" id="2params" title='params' data-type='SiprParameters *' data-ref="2params">params</dfn>,</td></tr>
+<tr><th id="99">99</th><td>                         <em>float</em> *<dfn class="local col3 decl" id="3out_data" title='out_data' data-type='float *' data-ref="3out_data">out_data</dfn>);</td></tr>
+<tr><th id="100">100</th><td>} <dfn class="typedef" id="SiprContext" title='SiprContext' data-type='struct SiprContext' data-ref="SiprContext">SiprContext</dfn>;</td></tr>
+<tr><th id="101">101</th><td></td></tr>
+<tr><th id="102">102</th><td><b>extern</b> <em>const</em> <em>float</em> <dfn class="decl" id="ff_pow_0_5" title='ff_pow_0_5' data-ref="ff_pow_0_5">ff_pow_0_5</dfn>[<var>16</var>];</td></tr>
+<tr><th id="103">103</th><td></td></tr>
+<tr><th id="104">104</th><td><em>void</em> <dfn class="decl" id="ff_sipr_init_16k" title='ff_sipr_init_16k' data-ref="ff_sipr_init_16k">ff_sipr_init_16k</dfn>(<a class="typedef" href="#SiprContext" title='SiprContext' data-type='struct SiprContext' data-ref="SiprContext">SiprContext</a> *<dfn class="local col4 decl" id="4ctx" title='ctx' data-type='SiprContext *' data-ref="4ctx">ctx</dfn>);</td></tr>
+<tr><th id="105">105</th><td></td></tr>
+<tr><th id="106">106</th><td><em>void</em> <dfn class="decl" id="ff_sipr_decode_frame_16k" title='ff_sipr_decode_frame_16k' data-ref="ff_sipr_decode_frame_16k">ff_sipr_decode_frame_16k</dfn>(<a class="typedef" href="#SiprContext" title='SiprContext' data-type='struct SiprContext' data-ref="SiprContext">SiprContext</a> *<dfn class="local col5 decl" id="5ctx" title='ctx' data-type='SiprContext *' data-ref="5ctx">ctx</dfn>, <a class="typedef" href="#SiprParameters" title='SiprParameters' data-type='struct SiprParameters' data-ref="SiprParameters">SiprParameters</a> *<dfn class="local col6 decl" id="6params" title='params' data-type='SiprParameters *' data-ref="6params">params</dfn>,</td></tr>
+<tr><th id="107">107</th><td>                              <em>float</em> *<dfn class="local col7 decl" id="7out_data" title='out_data' data-type='float *' data-ref="7out_data">out_data</dfn>);</td></tr>
+<tr><th id="108">108</th><td></td></tr>
+<tr><th id="109">109</th><td><u>#<span data-ppcond="24">endif</span> /* AVCODEC_SIPR_H */</u></td></tr>
+<tr><th id="110">110</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated while processing <a href='sipr.c.html'>ffmpeg/libavcodec/sipr.c</a><br/>Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

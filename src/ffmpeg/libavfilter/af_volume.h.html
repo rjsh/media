@@ -1,0 +1,112 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>af_volume.h source code [ffmpeg/libavfilter/af_volume.h] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="EvalMode,PrecisionType,ReplayGainType,VolumeContext,VolumeVarName "/>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavfilter/af_volume.h'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavfilter</a>/<a href='af_volume.h.html'>af_volume.h</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="3">3</th><td><i> *</i></td></tr>
+<tr><th id="4">4</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="5">5</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="6">6</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="7">7</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="8">8</th><td><i> *</i></td></tr>
+<tr><th id="9">9</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="10">10</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="11">11</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="12">12</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="13">13</th><td><i> *</i></td></tr>
+<tr><th id="14">14</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="15">15</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="16">16</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="17">17</th><td><i> */</i></td></tr>
+<tr><th id="18">18</th><td></td></tr>
+<tr><th id="19">19</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="20">20</th><td><i class="doc"> *<span class="command"> @file</span></i></td></tr>
+<tr><th id="21">21</th><td><i class="doc"> * audio volume filter</i></td></tr>
+<tr><th id="22">22</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="23">23</th><td></td></tr>
+<tr><th id="24">24</th><td><u>#<span data-ppcond="24">ifndef</span> <span class="macro" data-ref="_M/AVFILTER_VOLUME_H">AVFILTER_VOLUME_H</span></u></td></tr>
+<tr><th id="25">25</th><td><u>#define <dfn class="macro" id="_M/AVFILTER_VOLUME_H" data-ref="_M/AVFILTER_VOLUME_H">AVFILTER_VOLUME_H</dfn></u></td></tr>
+<tr><th id="26">26</th><td></td></tr>
+<tr><th id="27">27</th><td><u>#include <a href="../libavutil/common.h.html">"libavutil/common.h"</a></u></td></tr>
+<tr><th id="28">28</th><td><u>#include <a href="../libavutil/eval.h.html">"libavutil/eval.h"</a></u></td></tr>
+<tr><th id="29">29</th><td><u>#include <a href="../libavutil/float_dsp.h.html">"libavutil/float_dsp.h"</a></u></td></tr>
+<tr><th id="30">30</th><td><u>#include <a href="../libavutil/opt.h.html">"libavutil/opt.h"</a></u></td></tr>
+<tr><th id="31">31</th><td><u>#include <a href="../libavutil/samplefmt.h.html">"libavutil/samplefmt.h"</a></u></td></tr>
+<tr><th id="32">32</th><td></td></tr>
+<tr><th id="33">33</th><td><b>enum</b> <dfn class="type def" id="PrecisionType" title='PrecisionType' data-ref="PrecisionType">PrecisionType</dfn> {</td></tr>
+<tr><th id="34">34</th><td>    <dfn class="enum" id="PrecisionType::PRECISION_FIXED" title='PrecisionType::PRECISION_FIXED' data-ref="PrecisionType::PRECISION_FIXED">PRECISION_FIXED</dfn> = <var>0</var>,</td></tr>
+<tr><th id="35">35</th><td>    <dfn class="enum" id="PrecisionType::PRECISION_FLOAT" title='PrecisionType::PRECISION_FLOAT' data-ref="PrecisionType::PRECISION_FLOAT">PRECISION_FLOAT</dfn>,</td></tr>
+<tr><th id="36">36</th><td>    <dfn class="enum" id="PrecisionType::PRECISION_DOUBLE" title='PrecisionType::PRECISION_DOUBLE' data-ref="PrecisionType::PRECISION_DOUBLE">PRECISION_DOUBLE</dfn>,</td></tr>
+<tr><th id="37">37</th><td>};</td></tr>
+<tr><th id="38">38</th><td></td></tr>
+<tr><th id="39">39</th><td><b>enum</b> <dfn class="type def" id="EvalMode" title='EvalMode' data-ref="EvalMode">EvalMode</dfn> {</td></tr>
+<tr><th id="40">40</th><td>    <dfn class="enum" id="EvalMode::EVAL_MODE_ONCE" title='EvalMode::EVAL_MODE_ONCE' data-ref="EvalMode::EVAL_MODE_ONCE">EVAL_MODE_ONCE</dfn>,</td></tr>
+<tr><th id="41">41</th><td>    <dfn class="enum" id="EvalMode::EVAL_MODE_FRAME" title='EvalMode::EVAL_MODE_FRAME' data-ref="EvalMode::EVAL_MODE_FRAME">EVAL_MODE_FRAME</dfn>,</td></tr>
+<tr><th id="42">42</th><td>    <dfn class="enum" id="EvalMode::EVAL_MODE_NB" title='EvalMode::EVAL_MODE_NB' data-ref="EvalMode::EVAL_MODE_NB">EVAL_MODE_NB</dfn></td></tr>
+<tr><th id="43">43</th><td>};</td></tr>
+<tr><th id="44">44</th><td></td></tr>
+<tr><th id="45">45</th><td><b>enum</b> <dfn class="type def" id="VolumeVarName" title='VolumeVarName' data-ref="VolumeVarName">VolumeVarName</dfn> {</td></tr>
+<tr><th id="46">46</th><td>    <dfn class="enum" id="VolumeVarName::VAR_N" title='VolumeVarName::VAR_N' data-ref="VolumeVarName::VAR_N">VAR_N</dfn>,</td></tr>
+<tr><th id="47">47</th><td>    <dfn class="enum" id="VolumeVarName::VAR_NB_CHANNELS" title='VolumeVarName::VAR_NB_CHANNELS' data-ref="VolumeVarName::VAR_NB_CHANNELS">VAR_NB_CHANNELS</dfn>,</td></tr>
+<tr><th id="48">48</th><td>    <dfn class="enum" id="VolumeVarName::VAR_NB_CONSUMED_SAMPLES" title='VolumeVarName::VAR_NB_CONSUMED_SAMPLES' data-ref="VolumeVarName::VAR_NB_CONSUMED_SAMPLES">VAR_NB_CONSUMED_SAMPLES</dfn>,</td></tr>
+<tr><th id="49">49</th><td>    <dfn class="enum" id="VolumeVarName::VAR_NB_SAMPLES" title='VolumeVarName::VAR_NB_SAMPLES' data-ref="VolumeVarName::VAR_NB_SAMPLES">VAR_NB_SAMPLES</dfn>,</td></tr>
+<tr><th id="50">50</th><td>    <dfn class="enum" id="VolumeVarName::VAR_POS" title='VolumeVarName::VAR_POS' data-ref="VolumeVarName::VAR_POS">VAR_POS</dfn>,</td></tr>
+<tr><th id="51">51</th><td>    <dfn class="enum" id="VolumeVarName::VAR_PTS" title='VolumeVarName::VAR_PTS' data-ref="VolumeVarName::VAR_PTS">VAR_PTS</dfn>,</td></tr>
+<tr><th id="52">52</th><td>    <dfn class="enum" id="VolumeVarName::VAR_SAMPLE_RATE" title='VolumeVarName::VAR_SAMPLE_RATE' data-ref="VolumeVarName::VAR_SAMPLE_RATE">VAR_SAMPLE_RATE</dfn>,</td></tr>
+<tr><th id="53">53</th><td>    <dfn class="enum" id="VolumeVarName::VAR_STARTPTS" title='VolumeVarName::VAR_STARTPTS' data-ref="VolumeVarName::VAR_STARTPTS">VAR_STARTPTS</dfn>,</td></tr>
+<tr><th id="54">54</th><td>    <dfn class="enum" id="VolumeVarName::VAR_STARTT" title='VolumeVarName::VAR_STARTT' data-ref="VolumeVarName::VAR_STARTT">VAR_STARTT</dfn>,</td></tr>
+<tr><th id="55">55</th><td>    <dfn class="enum" id="VolumeVarName::VAR_T" title='VolumeVarName::VAR_T' data-ref="VolumeVarName::VAR_T">VAR_T</dfn>,</td></tr>
+<tr><th id="56">56</th><td>    <dfn class="enum" id="VolumeVarName::VAR_TB" title='VolumeVarName::VAR_TB' data-ref="VolumeVarName::VAR_TB">VAR_TB</dfn>,</td></tr>
+<tr><th id="57">57</th><td>    <dfn class="enum" id="VolumeVarName::VAR_VOLUME" title='VolumeVarName::VAR_VOLUME' data-ref="VolumeVarName::VAR_VOLUME">VAR_VOLUME</dfn>,</td></tr>
+<tr><th id="58">58</th><td>    <dfn class="enum" id="VolumeVarName::VAR_VARS_NB" title='VolumeVarName::VAR_VARS_NB' data-ref="VolumeVarName::VAR_VARS_NB">VAR_VARS_NB</dfn></td></tr>
+<tr><th id="59">59</th><td>};</td></tr>
+<tr><th id="60">60</th><td></td></tr>
+<tr><th id="61">61</th><td><b>enum</b> <dfn class="type def" id="ReplayGainType" title='ReplayGainType' data-ref="ReplayGainType">ReplayGainType</dfn> {</td></tr>
+<tr><th id="62">62</th><td>    <dfn class="enum" id="ReplayGainType::REPLAYGAIN_DROP" title='ReplayGainType::REPLAYGAIN_DROP' data-ref="ReplayGainType::REPLAYGAIN_DROP">REPLAYGAIN_DROP</dfn>,</td></tr>
+<tr><th id="63">63</th><td>    <dfn class="enum" id="ReplayGainType::REPLAYGAIN_IGNORE" title='ReplayGainType::REPLAYGAIN_IGNORE' data-ref="ReplayGainType::REPLAYGAIN_IGNORE">REPLAYGAIN_IGNORE</dfn>,</td></tr>
+<tr><th id="64">64</th><td>    <dfn class="enum" id="ReplayGainType::REPLAYGAIN_TRACK" title='ReplayGainType::REPLAYGAIN_TRACK' data-ref="ReplayGainType::REPLAYGAIN_TRACK">REPLAYGAIN_TRACK</dfn>,</td></tr>
+<tr><th id="65">65</th><td>    <dfn class="enum" id="ReplayGainType::REPLAYGAIN_ALBUM" title='ReplayGainType::REPLAYGAIN_ALBUM' data-ref="ReplayGainType::REPLAYGAIN_ALBUM">REPLAYGAIN_ALBUM</dfn>,</td></tr>
+<tr><th id="66">66</th><td>};</td></tr>
+<tr><th id="67">67</th><td></td></tr>
+<tr><th id="68">68</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="VolumeContext" title='VolumeContext' data-ref="VolumeContext"><a class="type" href="#VolumeContext" title='VolumeContext' data-ref="VolumeContext">VolumeContext</a></dfn> {</td></tr>
+<tr><th id="69">69</th><td>    <em>const</em> <a class="typedef" href="../libavutil/log.h.html#AVClass" title='AVClass' data-type='struct AVClass' data-ref="AVClass">AVClass</a> *<dfn class="decl" id="VolumeContext::class" title='VolumeContext::class' data-ref="VolumeContext::class">class</dfn>;</td></tr>
+<tr><th id="70">70</th><td>    <a class="typedef" href="../libavutil/float_dsp.h.html#AVFloatDSPContext" title='AVFloatDSPContext' data-type='struct AVFloatDSPContext' data-ref="AVFloatDSPContext">AVFloatDSPContext</a> *<dfn class="decl" id="VolumeContext::fdsp" title='VolumeContext::fdsp' data-ref="VolumeContext::fdsp">fdsp</dfn>;</td></tr>
+<tr><th id="71">71</th><td>    <em>int</em> <dfn class="decl" id="VolumeContext::precision" title='VolumeContext::precision' data-ref="VolumeContext::precision">precision</dfn>;</td></tr>
+<tr><th id="72">72</th><td>    <em>int</em> <dfn class="decl" id="VolumeContext::eval_mode" title='VolumeContext::eval_mode' data-ref="VolumeContext::eval_mode">eval_mode</dfn>;</td></tr>
+<tr><th id="73">73</th><td>    <em>const</em> <em>char</em> *<dfn class="decl" id="VolumeContext::volume_expr" title='VolumeContext::volume_expr' data-ref="VolumeContext::volume_expr">volume_expr</dfn>;</td></tr>
+<tr><th id="74">74</th><td>    <a class="typedef" href="../libavutil/eval.h.html#AVExpr" title='AVExpr' data-type='struct AVExpr' data-ref="AVExpr">AVExpr</a> *<dfn class="decl" id="VolumeContext::volume_pexpr" title='VolumeContext::volume_pexpr' data-ref="VolumeContext::volume_pexpr">volume_pexpr</dfn>;</td></tr>
+<tr><th id="75">75</th><td>    <em>double</em> <dfn class="decl" id="VolumeContext::var_values" title='VolumeContext::var_values' data-ref="VolumeContext::var_values">var_values</dfn>[<a class="enum" href="#VolumeVarName::VAR_VARS_NB" title='VolumeVarName::VAR_VARS_NB' data-ref="VolumeVarName::VAR_VARS_NB">VAR_VARS_NB</a>];</td></tr>
+<tr><th id="76">76</th><td></td></tr>
+<tr><th id="77">77</th><td>    <em>int</em> <dfn class="decl" id="VolumeContext::replaygain" title='VolumeContext::replaygain' data-ref="VolumeContext::replaygain">replaygain</dfn>;</td></tr>
+<tr><th id="78">78</th><td>    <em>double</em> <dfn class="decl" id="VolumeContext::replaygain_preamp" title='VolumeContext::replaygain_preamp' data-ref="VolumeContext::replaygain_preamp">replaygain_preamp</dfn>;</td></tr>
+<tr><th id="79">79</th><td>    <em>int</em>    <dfn class="decl" id="VolumeContext::replaygain_noclip" title='VolumeContext::replaygain_noclip' data-ref="VolumeContext::replaygain_noclip">replaygain_noclip</dfn>;</td></tr>
+<tr><th id="80">80</th><td>    <em>double</em> <dfn class="decl" id="VolumeContext::volume" title='VolumeContext::volume' data-ref="VolumeContext::volume">volume</dfn>;</td></tr>
+<tr><th id="81">81</th><td>    <em>int</em>    <dfn class="decl" id="VolumeContext::volume_i" title='VolumeContext::volume_i' data-ref="VolumeContext::volume_i">volume_i</dfn>;</td></tr>
+<tr><th id="82">82</th><td>    <em>int</em>    <dfn class="decl" id="VolumeContext::channels" title='VolumeContext::channels' data-ref="VolumeContext::channels">channels</dfn>;</td></tr>
+<tr><th id="83">83</th><td>    <em>int</em>    <dfn class="decl" id="VolumeContext::planes" title='VolumeContext::planes' data-ref="VolumeContext::planes">planes</dfn>;</td></tr>
+<tr><th id="84">84</th><td>    <b>enum</b> <a class="type" href="../libavutil/samplefmt.h.html#AVSampleFormat" title='AVSampleFormat' data-ref="AVSampleFormat">AVSampleFormat</a> <dfn class="decl" id="VolumeContext::sample_fmt" title='VolumeContext::sample_fmt' data-ref="VolumeContext::sample_fmt">sample_fmt</dfn>;</td></tr>
+<tr><th id="85">85</th><td></td></tr>
+<tr><th id="86">86</th><td>    <em>void</em> (*<dfn class="decl" id="VolumeContext::scale_samples" title='VolumeContext::scale_samples' data-ref="VolumeContext::scale_samples">scale_samples</dfn>)(<a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col1 decl" id="1dst" title='dst' data-type='uint8_t *' data-ref="1dst">dst</dfn>, <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col2 decl" id="2src" title='src' data-type='const uint8_t *' data-ref="2src">src</dfn>, <em>int</em> <dfn class="local col3 decl" id="3nb_samples" title='nb_samples' data-type='int' data-ref="3nb_samples">nb_samples</dfn>,</td></tr>
+<tr><th id="87">87</th><td>                          <em>int</em> <dfn class="local col4 decl" id="4volume" title='volume' data-type='int' data-ref="4volume">volume</dfn>);</td></tr>
+<tr><th id="88">88</th><td>    <em>int</em> <dfn class="decl" id="VolumeContext::samples_align" title='VolumeContext::samples_align' data-ref="VolumeContext::samples_align">samples_align</dfn>;</td></tr>
+<tr><th id="89">89</th><td>} <dfn class="typedef" id="VolumeContext" title='VolumeContext' data-type='struct VolumeContext' data-ref="VolumeContext">VolumeContext</dfn>;</td></tr>
+<tr><th id="90">90</th><td></td></tr>
+<tr><th id="91">91</th><td><em>void</em> <dfn class="decl" id="ff_volume_init_x86" title='ff_volume_init_x86' data-ref="ff_volume_init_x86">ff_volume_init_x86</dfn>(<a class="typedef" href="#VolumeContext" title='VolumeContext' data-type='struct VolumeContext' data-ref="VolumeContext">VolumeContext</a> *<dfn class="local col5 decl" id="5vol" title='vol' data-type='VolumeContext *' data-ref="5vol">vol</dfn>);</td></tr>
+<tr><th id="92">92</th><td></td></tr>
+<tr><th id="93">93</th><td><u>#<span data-ppcond="24">endif</span> /* AVFILTER_VOLUME_H */</u></td></tr>
+<tr><th id="94">94</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated while processing <a href='af_volume.c.html'>ffmpeg/libavfilter/af_volume.c</a><br/>Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

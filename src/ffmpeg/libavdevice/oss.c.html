@@ -1,0 +1,162 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>oss.c source code [ffmpeg/libavdevice/oss.c] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavdevice/oss.c'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavdevice</a>/<a href='oss.c.html'>oss.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * Linux audio play and grab interface</i></td></tr>
+<tr><th id="3">3</th><td><i> * Copyright (c) 2000, 2001 Fabrice Bellard</i></td></tr>
+<tr><th id="4">4</th><td><i> *</i></td></tr>
+<tr><th id="5">5</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="8">8</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="9">9</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="10">10</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="11">11</th><td><i> *</i></td></tr>
+<tr><th id="12">12</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="13">13</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="14">14</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="15">15</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="16">16</th><td><i> *</i></td></tr>
+<tr><th id="17">17</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="18">18</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="19">19</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="20">20</th><td><i> */</i></td></tr>
+<tr><th id="21">21</th><td></td></tr>
+<tr><th id="22">22</th><td><u>#include <a href="../config.h.html">"config.h"</a></u></td></tr>
+<tr><th id="23">23</th><td></td></tr>
+<tr><th id="24">24</th><td><u>#include <a href="../../include/string.h.html">&lt;string.h&gt;</a></u></td></tr>
+<tr><th id="25">25</th><td></td></tr>
+<tr><th id="26">26</th><td><u>#<span data-ppcond="26">if</span> <a class="macro" href="../config.h.html#232" title="0" data-ref="_M/HAVE_SOUNDCARD_H">HAVE_SOUNDCARD_H</a></u></td></tr>
+<tr><th id="27">27</th><td><u>#include &lt;soundcard.h&gt;</u></td></tr>
+<tr><th id="28">28</th><td><u>#<span data-ppcond="26">else</span></u></td></tr>
+<tr><th id="29">29</th><td><u>#include <a href="../../include/x86_64-linux-gnu/sys/soundcard.h.html">&lt;sys/soundcard.h&gt;</a></u></td></tr>
+<tr><th id="30">30</th><td><u>#<span data-ppcond="26">endif</span></u></td></tr>
+<tr><th id="31">31</th><td></td></tr>
+<tr><th id="32">32</th><td><u>#<span data-ppcond="32">if</span> <a class="macro" href="../config.h.html#243" title="1" data-ref="_M/HAVE_UNISTD_H">HAVE_UNISTD_H</a></u></td></tr>
+<tr><th id="33">33</th><td><u>#include <a href="../../include/unistd.h.html">&lt;unistd.h&gt;</a></u></td></tr>
+<tr><th id="34">34</th><td><u>#<span data-ppcond="32">endif</span></u></td></tr>
+<tr><th id="35">35</th><td><u>#include <a href="../../include/fcntl.h.html">&lt;fcntl.h&gt;</a></u></td></tr>
+<tr><th id="36">36</th><td><u>#include <a href="../../include/x86_64-linux-gnu/sys/ioctl.h.html">&lt;sys/ioctl.h&gt;</a></u></td></tr>
+<tr><th id="37">37</th><td></td></tr>
+<tr><th id="38">38</th><td><u>#include <a href="../libavutil/log.h.html">"libavutil/log.h"</a></u></td></tr>
+<tr><th id="39">39</th><td></td></tr>
+<tr><th id="40">40</th><td><u>#include <a href="../libavcodec/avcodec.h.html">"libavcodec/avcodec.h"</a></u></td></tr>
+<tr><th id="41">41</th><td><u>#include <a href="avdevice.h.html">"avdevice.h"</a></u></td></tr>
+<tr><th id="42">42</th><td></td></tr>
+<tr><th id="43">43</th><td><u>#include <a href="oss.h.html">"oss.h"</a></u></td></tr>
+<tr><th id="44">44</th><td></td></tr>
+<tr><th id="45">45</th><td><em>int</em> <dfn class="decl def" id="ff_oss_audio_open" title='ff_oss_audio_open' data-ref="ff_oss_audio_open">ff_oss_audio_open</dfn>(<a class="typedef" href="../libavformat/avformat.h.html#AVFormatContext" title='AVFormatContext' data-type='struct AVFormatContext' data-ref="AVFormatContext">AVFormatContext</a> *<dfn class="local col5 decl" id="5s1" title='s1' data-type='AVFormatContext *' data-ref="5s1">s1</dfn>, <em>int</em> <dfn class="local col6 decl" id="6is_output" title='is_output' data-type='int' data-ref="6is_output">is_output</dfn>,</td></tr>
+<tr><th id="46">46</th><td>                      <em>const</em> <em>char</em> *<dfn class="local col7 decl" id="7audio_device" title='audio_device' data-type='const char *' data-ref="7audio_device">audio_device</dfn>)</td></tr>
+<tr><th id="47">47</th><td>{</td></tr>
+<tr><th id="48">48</th><td>    <a class="typedef" href="oss.h.html#OSSAudioData" title='OSSAudioData' data-type='struct OSSAudioData' data-ref="OSSAudioData">OSSAudioData</a> *<dfn class="local col8 decl" id="8s" title='s' data-type='OSSAudioData *' data-ref="8s">s</dfn> = <a class="local col5 ref" href="#5s1" title='s1' data-ref="5s1">s1</a>-&gt;<a class="ref" href="../libavformat/avformat.h.html#AVFormatContext::priv_data" title='AVFormatContext::priv_data' data-ref="AVFormatContext::priv_data">priv_data</a>;</td></tr>
+<tr><th id="49">49</th><td>    <em>int</em> <dfn class="local col9 decl" id="9audio_fd" title='audio_fd' data-type='int' data-ref="9audio_fd">audio_fd</dfn>;</td></tr>
+<tr><th id="50">50</th><td>    <em>int</em> <dfn class="local col0 decl" id="10tmp" title='tmp' data-type='int' data-ref="10tmp">tmp</dfn>, <dfn class="local col1 decl" id="11err" title='err' data-type='int' data-ref="11err">err</dfn>;</td></tr>
+<tr><th id="51">51</th><td>    <em>char</em> *<dfn class="local col2 decl" id="12flip" title='flip' data-type='char *' data-ref="12flip">flip</dfn> = <a class="ref" href="../../include/stdlib.h.html#getenv" title='getenv' data-ref="getenv">getenv</a>(<q>"AUDIO_FLIP_LEFT"</q>);</td></tr>
+<tr><th id="52">52</th><td></td></tr>
+<tr><th id="53">53</th><td>    <b>if</b> (<a class="local col6 ref" href="#6is_output" title='is_output' data-ref="6is_output">is_output</a>)</td></tr>
+<tr><th id="54">54</th><td>        <a class="local col9 ref" href="#9audio_fd" title='audio_fd' data-ref="9audio_fd">audio_fd</a> = <a class="ref" href="../libavutil/internal.h.html#avpriv_open" title='avpriv_open' data-ref="avpriv_open">avpriv_open</a>(<a class="local col7 ref" href="#7audio_device" title='audio_device' data-ref="7audio_device">audio_device</a>, <a class="macro" href="../../include/x86_64-linux-gnu/bits/fcntl-linux.h.html#44" title="01" data-ref="_M/O_WRONLY">O_WRONLY</a>);</td></tr>
+<tr><th id="55">55</th><td>    <b>else</b></td></tr>
+<tr><th id="56">56</th><td>        <a class="local col9 ref" href="#9audio_fd" title='audio_fd' data-ref="9audio_fd">audio_fd</a> = <a class="ref" href="../libavutil/internal.h.html#avpriv_open" title='avpriv_open' data-ref="avpriv_open">avpriv_open</a>(<a class="local col7 ref" href="#7audio_device" title='audio_device' data-ref="7audio_device">audio_device</a>, <a class="macro" href="../../include/x86_64-linux-gnu/bits/fcntl-linux.h.html#43" title="00" data-ref="_M/O_RDONLY">O_RDONLY</a>);</td></tr>
+<tr><th id="57">57</th><td>    <b>if</b> (<a class="local col9 ref" href="#9audio_fd" title='audio_fd' data-ref="9audio_fd">audio_fd</a> &lt; <var>0</var>) {</td></tr>
+<tr><th id="58">58</th><td>        <a class="ref" href="../libavutil/log.h.html#av_log" title='av_log' data-ref="av_log">av_log</a>(<a class="local col5 ref" href="#5s1" title='s1' data-ref="5s1">s1</a>, <a class="macro" href="../libavutil/log.h.html#176" title="16" data-ref="_M/AV_LOG_ERROR">AV_LOG_ERROR</a>, <q>"%s: %s\n"</q>, <a class="local col7 ref" href="#7audio_device" title='audio_device' data-ref="7audio_device">audio_device</a>, <a class="macro" href="../libavutil/error.h.html#119" title="av_make_error_string((char[64]){0}, 64, (-((*__errno_location ()))))" data-ref="_M/av_err2str">av_err2str</a>(<a class="macro" href="../libavutil/error.h.html#39" title="(-((*__errno_location ())))" data-ref="_M/AVERROR">AVERROR</a>(<a class="macro" href="../../include/x86_64-linux-gnu/bits/errno.h.html#54" title="(*__errno_location ())" data-ref="_M/errno">errno</a>)));</td></tr>
+<tr><th id="59">59</th><td>        <b>return</b> <a class="macro" href="../libavutil/error.h.html#39" title="(-(5))" data-ref="_M/AVERROR">AVERROR</a>(<a class="macro" href="../../include/asm-generic/errno-base.h.html#8" title="5" data-ref="_M/EIO">EIO</a>);</td></tr>
+<tr><th id="60">60</th><td>    }</td></tr>
+<tr><th id="61">61</th><td></td></tr>
+<tr><th id="62">62</th><td>    <b>if</b> (<a class="local col2 ref" href="#12flip" title='flip' data-ref="12flip">flip</a> &amp;&amp; *<a class="local col2 ref" href="#12flip" title='flip' data-ref="12flip">flip</a> == <kbd>'1'</kbd>) {</td></tr>
+<tr><th id="63">63</th><td>        <a class="local col8 ref" href="#8s" title='s' data-ref="8s">s</a>-&gt;<a class="ref" href="oss.h.html#OSSAudioData::flip_left" title='OSSAudioData::flip_left' data-ref="OSSAudioData::flip_left">flip_left</a> = <var>1</var>;</td></tr>
+<tr><th id="64">64</th><td>    }</td></tr>
+<tr><th id="65">65</th><td></td></tr>
+<tr><th id="66">66</th><td>    <i>/* non blocking mode */</i></td></tr>
+<tr><th id="67">67</th><td>    <b>if</b> (!<a class="local col6 ref" href="#6is_output" title='is_output' data-ref="6is_output">is_output</a>) {</td></tr>
+<tr><th id="68">68</th><td>        <b>if</b> (<a class="ref" href="../../include/fcntl.h.html#fcntl" title='fcntl' data-ref="fcntl">fcntl</a>(<a class="local col9 ref" href="#9audio_fd" title='audio_fd' data-ref="9audio_fd">audio_fd</a>, <a class="macro" href="../../include/x86_64-linux-gnu/bits/fcntl-linux.h.html#154" title="4" data-ref="_M/F_SETFL">F_SETFL</a>, <a class="macro" href="../../include/x86_64-linux-gnu/bits/fcntl-linux.h.html#62" title="04000" data-ref="_M/O_NONBLOCK">O_NONBLOCK</a>) &lt; <var>0</var>) {</td></tr>
+<tr><th id="69">69</th><td>            <a class="ref" href="../libavutil/log.h.html#av_log" title='av_log' data-ref="av_log">av_log</a>(<a class="local col5 ref" href="#5s1" title='s1' data-ref="5s1">s1</a>, <a class="macro" href="../libavutil/log.h.html#182" title="24" data-ref="_M/AV_LOG_WARNING">AV_LOG_WARNING</a>, <q>"%s: Could not enable non block mode (%s)\n"</q>, <a class="local col7 ref" href="#7audio_device" title='audio_device' data-ref="7audio_device">audio_device</a>, <a class="macro" href="../libavutil/error.h.html#119" title="av_make_error_string((char[64]){0}, 64, (-((*__errno_location ()))))" data-ref="_M/av_err2str">av_err2str</a>(<a class="macro" href="../libavutil/error.h.html#39" title="(-((*__errno_location ())))" data-ref="_M/AVERROR">AVERROR</a>(<a class="macro" href="../../include/x86_64-linux-gnu/bits/errno.h.html#54" title="(*__errno_location ())" data-ref="_M/errno">errno</a>)));</td></tr>
+<tr><th id="70">70</th><td>        }</td></tr>
+<tr><th id="71">71</th><td>    }</td></tr>
+<tr><th id="72">72</th><td></td></tr>
+<tr><th id="73">73</th><td>    <a class="local col8 ref" href="#8s" title='s' data-ref="8s">s</a>-&gt;<a class="ref" href="oss.h.html#OSSAudioData::frame_size" title='OSSAudioData::frame_size' data-ref="OSSAudioData::frame_size">frame_size</a> = <a class="macro" href="oss.h.html#26" title="4096" data-ref="_M/OSS_AUDIO_BLOCK_SIZE">OSS_AUDIO_BLOCK_SIZE</a>;</td></tr>
+<tr><th id="74">74</th><td></td></tr>
+<tr><th id="75">75</th><td><u>#define <dfn class="macro" id="_M/CHECK_IOCTL_ERROR" data-ref="_M/CHECK_IOCTL_ERROR">CHECK_IOCTL_ERROR</dfn>(event)                                              \</u></td></tr>
+<tr><th id="76">76</th><td><u>    if (<a class="local col1 ref" href="#11err" title='err' data-ref="11err">err</a> &lt; 0) {                                                            \</u></td></tr>
+<tr><th id="77">77</th><td><u>        <a class="ref" href="../libavutil/log.h.html#av_log" title='av_log' data-ref="av_log">av_log</a>(<a class="local col5 ref" href="#5s1" title='s1' data-ref="5s1">s1</a>, AV_LOG_ERROR, #event ": %s\n", av_err2str(AVERROR(errno)));\</u></td></tr>
+<tr><th id="78">78</th><td><u>        goto <a class="lbl" href="#13fail" data-ref="13fail">fail</a>;                                                            \</u></td></tr>
+<tr><th id="79">79</th><td><u>    }</u></td></tr>
+<tr><th id="80">80</th><td></td></tr>
+<tr><th id="81">81</th><td>    <i>/* select format : favour native format</i></td></tr>
+<tr><th id="82">82</th><td><i>     * We don't CHECK_IOCTL_ERROR here because even if failed OSS still may be</i></td></tr>
+<tr><th id="83">83</th><td><i>     * usable. If OSS is not usable the SNDCTL_DSP_SETFMTS later is going to</i></td></tr>
+<tr><th id="84">84</th><td><i>     * fail anyway. */</i></td></tr>
+<tr><th id="85">85</th><td>    <a class="local col1 ref" href="#11err" title='err' data-ref="11err">err</a> = <a class="ref" href="../../include/x86_64-linux-gnu/sys/ioctl.h.html#ioctl" title='ioctl' data-ref="ioctl">ioctl</a>(<a class="local col9 ref" href="#9audio_fd" title='audio_fd' data-ref="9audio_fd">audio_fd</a>, <a class="macro" href="../../include/linux/soundcard.h.html#550" title="(((2U) &lt;&lt; (((0+8)+8)+14)) | (((&apos;P&apos;)) &lt;&lt; (0+8)) | (((11)) &lt;&lt; 0) | ((((sizeof(int)))) &lt;&lt; ((0+8)+8)))" data-ref="_M/SNDCTL_DSP_GETFMTS">SNDCTL_DSP_GETFMTS</a>, &amp;<a class="local col0 ref" href="#10tmp" title='tmp' data-ref="10tmp">tmp</a>);</td></tr>
+<tr><th id="86">86</th><td>    <b>if</b> (<a class="local col1 ref" href="#11err" title='err' data-ref="11err">err</a> &lt; <var>0</var>) {</td></tr>
+<tr><th id="87">87</th><td>        <a class="ref" href="../libavutil/log.h.html#av_log" title='av_log' data-ref="av_log">av_log</a>(<a class="local col5 ref" href="#5s1" title='s1' data-ref="5s1">s1</a>, <a class="macro" href="../libavutil/log.h.html#182" title="24" data-ref="_M/AV_LOG_WARNING">AV_LOG_WARNING</a>, <q>"SNDCTL_DSP_GETFMTS: %s\n"</q>, <a class="macro" href="../libavutil/error.h.html#119" title="av_make_error_string((char[64]){0}, 64, (-((*__errno_location ()))))" data-ref="_M/av_err2str">av_err2str</a>(<a class="macro" href="../libavutil/error.h.html#39" title="(-((*__errno_location ())))" data-ref="_M/AVERROR">AVERROR</a>(<a class="macro" href="../../include/x86_64-linux-gnu/bits/errno.h.html#54" title="(*__errno_location ())" data-ref="_M/errno">errno</a>)));</td></tr>
+<tr><th id="88">88</th><td>    }</td></tr>
+<tr><th id="89">89</th><td></td></tr>
+<tr><th id="90">90</th><td><u>#<span data-ppcond="90">if</span> <a class="macro" href="../config.h.html#198" title="0" data-ref="_M/HAVE_BIGENDIAN">HAVE_BIGENDIAN</a></u></td></tr>
+<tr><th id="91">91</th><td>    <b>if</b> (tmp &amp; AFMT_S16_BE) {</td></tr>
+<tr><th id="92">92</th><td>        tmp = AFMT_S16_BE;</td></tr>
+<tr><th id="93">93</th><td>    } <b>else</b> <b>if</b> (tmp &amp; AFMT_S16_LE) {</td></tr>
+<tr><th id="94">94</th><td>        tmp = AFMT_S16_LE;</td></tr>
+<tr><th id="95">95</th><td>    } <b>else</b> {</td></tr>
+<tr><th id="96">96</th><td>        tmp = <var>0</var>;</td></tr>
+<tr><th id="97">97</th><td>    }</td></tr>
+<tr><th id="98">98</th><td><u>#<span data-ppcond="90">else</span></u></td></tr>
+<tr><th id="99">99</th><td>    <b>if</b> (<a class="local col0 ref" href="#10tmp" title='tmp' data-ref="10tmp">tmp</a> &amp; <a class="macro" href="../../include/linux/soundcard.h.html#557" title="0x00000010" data-ref="_M/AFMT_S16_LE">AFMT_S16_LE</a>) {</td></tr>
+<tr><th id="100">100</th><td>        <a class="local col0 ref" href="#10tmp" title='tmp' data-ref="10tmp">tmp</a> = <a class="macro" href="../../include/linux/soundcard.h.html#557" title="0x00000010" data-ref="_M/AFMT_S16_LE">AFMT_S16_LE</a>;</td></tr>
+<tr><th id="101">101</th><td>    } <b>else</b> <b>if</b> (<a class="local col0 ref" href="#10tmp" title='tmp' data-ref="10tmp">tmp</a> &amp; <a class="macro" href="../../include/linux/soundcard.h.html#558" title="0x00000020" data-ref="_M/AFMT_S16_BE">AFMT_S16_BE</a>) {</td></tr>
+<tr><th id="102">102</th><td>        <a class="local col0 ref" href="#10tmp" title='tmp' data-ref="10tmp">tmp</a> = <a class="macro" href="../../include/linux/soundcard.h.html#558" title="0x00000020" data-ref="_M/AFMT_S16_BE">AFMT_S16_BE</a>;</td></tr>
+<tr><th id="103">103</th><td>    } <b>else</b> {</td></tr>
+<tr><th id="104">104</th><td>        <a class="local col0 ref" href="#10tmp" title='tmp' data-ref="10tmp">tmp</a> = <var>0</var>;</td></tr>
+<tr><th id="105">105</th><td>    }</td></tr>
+<tr><th id="106">106</th><td><u>#<span data-ppcond="90">endif</span></u></td></tr>
+<tr><th id="107">107</th><td></td></tr>
+<tr><th id="108">108</th><td>    <b>switch</b>(<a class="local col0 ref" href="#10tmp" title='tmp' data-ref="10tmp">tmp</a>) {</td></tr>
+<tr><th id="109">109</th><td>    <b>case</b> <a class="macro" href="../../include/linux/soundcard.h.html#557" title="0x00000010" data-ref="_M/AFMT_S16_LE">AFMT_S16_LE</a>:</td></tr>
+<tr><th id="110">110</th><td>        <a class="local col8 ref" href="#8s" title='s' data-ref="8s">s</a>-&gt;<a class="ref" href="oss.h.html#OSSAudioData::codec_id" title='OSSAudioData::codec_id' data-ref="OSSAudioData::codec_id">codec_id</a> = <a class="enum" href="../libavcodec/avcodec.h.html#AVCodecID::AV_CODEC_ID_PCM_S16LE" title='AVCodecID::AV_CODEC_ID_PCM_S16LE' data-ref="AVCodecID::AV_CODEC_ID_PCM_S16LE">AV_CODEC_ID_PCM_S16LE</a>;</td></tr>
+<tr><th id="111">111</th><td>        <b>break</b>;</td></tr>
+<tr><th id="112">112</th><td>    <b>case</b> <a class="macro" href="../../include/linux/soundcard.h.html#558" title="0x00000020" data-ref="_M/AFMT_S16_BE">AFMT_S16_BE</a>:</td></tr>
+<tr><th id="113">113</th><td>        <a class="local col8 ref" href="#8s" title='s' data-ref="8s">s</a>-&gt;<a class="ref" href="oss.h.html#OSSAudioData::codec_id" title='OSSAudioData::codec_id' data-ref="OSSAudioData::codec_id">codec_id</a> = <a class="enum" href="../libavcodec/avcodec.h.html#AVCodecID::AV_CODEC_ID_PCM_S16BE" title='AVCodecID::AV_CODEC_ID_PCM_S16BE' data-ref="AVCodecID::AV_CODEC_ID_PCM_S16BE">AV_CODEC_ID_PCM_S16BE</a>;</td></tr>
+<tr><th id="114">114</th><td>        <b>break</b>;</td></tr>
+<tr><th id="115">115</th><td>    <b>default</b>:</td></tr>
+<tr><th id="116">116</th><td>        <a class="ref" href="../libavutil/log.h.html#av_log" title='av_log' data-ref="av_log">av_log</a>(<a class="local col5 ref" href="#5s1" title='s1' data-ref="5s1">s1</a>, <a class="macro" href="../libavutil/log.h.html#176" title="16" data-ref="_M/AV_LOG_ERROR">AV_LOG_ERROR</a>, <q>"Soundcard does not support 16 bit sample format\n"</q>);</td></tr>
+<tr><th id="117">117</th><td>        <a class="ref" href="../../include/unistd.h.html#close" title='close' data-ref="close">close</a>(<a class="local col9 ref" href="#9audio_fd" title='audio_fd' data-ref="9audio_fd">audio_fd</a>);</td></tr>
+<tr><th id="118">118</th><td>        <b>return</b> <a class="macro" href="../libavutil/error.h.html#39" title="(-(5))" data-ref="_M/AVERROR">AVERROR</a>(<a class="macro" href="../../include/asm-generic/errno-base.h.html#8" title="5" data-ref="_M/EIO">EIO</a>);</td></tr>
+<tr><th id="119">119</th><td>    }</td></tr>
+<tr><th id="120">120</th><td>    <a class="local col1 ref" href="#11err" title='err' data-ref="11err">err</a>=<a class="ref" href="../../include/x86_64-linux-gnu/sys/ioctl.h.html#ioctl" title='ioctl' data-ref="ioctl">ioctl</a>(<a class="local col9 ref" href="#9audio_fd" title='audio_fd' data-ref="9audio_fd">audio_fd</a>, <a class="macro" href="../../include/linux/soundcard.h.html#551" title="(((2U|1U) &lt;&lt; (((0+8)+8)+14)) | (((&apos;P&apos;)) &lt;&lt; (0+8)) | (((5)) &lt;&lt; 0) | ((((sizeof(int)))) &lt;&lt; ((0+8)+8)))" data-ref="_M/SNDCTL_DSP_SETFMT">SNDCTL_DSP_SETFMT</a>, &amp;<a class="local col0 ref" href="#10tmp" title='tmp' data-ref="10tmp">tmp</a>);</td></tr>
+<tr><th id="121">121</th><td>    <a class="macro" href="#75" title="if (err &lt; 0) { av_log(s1, 16, &quot;SNDCTL_DSP_SETFMTS&quot; &quot;: %s\n&quot;, av_make_error_string((char[64]){0}, 64, (-((*__errno_location ()))))); goto fail; }" data-ref="_M/CHECK_IOCTL_ERROR">CHECK_IOCTL_ERROR</a>(SNDCTL_DSP_SETFMTS)</td></tr>
+<tr><th id="122">122</th><td></td></tr>
+<tr><th id="123">123</th><td>    <a class="local col0 ref" href="#10tmp" title='tmp' data-ref="10tmp">tmp</a> = (<a class="local col8 ref" href="#8s" title='s' data-ref="8s">s</a>-&gt;<a class="ref" href="oss.h.html#OSSAudioData::channels" title='OSSAudioData::channels' data-ref="OSSAudioData::channels">channels</a> == <var>2</var>);</td></tr>
+<tr><th id="124">124</th><td>    <a class="local col1 ref" href="#11err" title='err' data-ref="11err">err</a> = <a class="ref" href="../../include/x86_64-linux-gnu/sys/ioctl.h.html#ioctl" title='ioctl' data-ref="ioctl">ioctl</a>(<a class="local col9 ref" href="#9audio_fd" title='audio_fd' data-ref="9audio_fd">audio_fd</a>, <a class="macro" href="../../include/linux/soundcard.h.html#539" title="(((2U|1U) &lt;&lt; (((0+8)+8)+14)) | (((&apos;P&apos;)) &lt;&lt; (0+8)) | (((3)) &lt;&lt; 0) | ((((sizeof(int)))) &lt;&lt; ((0+8)+8)))" data-ref="_M/SNDCTL_DSP_STEREO">SNDCTL_DSP_STEREO</a>, &amp;<a class="local col0 ref" href="#10tmp" title='tmp' data-ref="10tmp">tmp</a>);</td></tr>
+<tr><th id="125">125</th><td>    <a class="macro" href="#75" title="if (err &lt; 0) { av_log(s1, 16, &quot;SNDCTL_DSP_STEREO&quot; &quot;: %s\n&quot;, av_make_error_string((char[64]){0}, 64, (-((*__errno_location ()))))); goto fail; }" data-ref="_M/CHECK_IOCTL_ERROR">CHECK_IOCTL_ERROR</a>(SNDCTL_DSP_STEREO)</td></tr>
+<tr><th id="126">126</th><td></td></tr>
+<tr><th id="127">127</th><td>    <a class="local col0 ref" href="#10tmp" title='tmp' data-ref="10tmp">tmp</a> = <a class="local col8 ref" href="#8s" title='s' data-ref="8s">s</a>-&gt;<a class="ref" href="oss.h.html#OSSAudioData::sample_rate" title='OSSAudioData::sample_rate' data-ref="OSSAudioData::sample_rate">sample_rate</a>;</td></tr>
+<tr><th id="128">128</th><td>    <a class="local col1 ref" href="#11err" title='err' data-ref="11err">err</a> = <a class="ref" href="../../include/x86_64-linux-gnu/sys/ioctl.h.html#ioctl" title='ioctl' data-ref="ioctl">ioctl</a>(<a class="local col9 ref" href="#9audio_fd" title='audio_fd' data-ref="9audio_fd">audio_fd</a>, <a class="macro" href="../../include/linux/soundcard.h.html#538" title="(((2U|1U) &lt;&lt; (((0+8)+8)+14)) | (((&apos;P&apos;)) &lt;&lt; (0+8)) | (((2)) &lt;&lt; 0) | ((((sizeof(int)))) &lt;&lt; ((0+8)+8)))" data-ref="_M/SNDCTL_DSP_SPEED">SNDCTL_DSP_SPEED</a>, &amp;<a class="local col0 ref" href="#10tmp" title='tmp' data-ref="10tmp">tmp</a>);</td></tr>
+<tr><th id="129">129</th><td>    <a class="macro" href="#75" title="if (err &lt; 0) { av_log(s1, 16, &quot;SNDCTL_DSP_SPEED&quot; &quot;: %s\n&quot;, av_make_error_string((char[64]){0}, 64, (-((*__errno_location ()))))); goto fail; }" data-ref="_M/CHECK_IOCTL_ERROR">CHECK_IOCTL_ERROR</a>(SNDCTL_DSP_SPEED)</td></tr>
+<tr><th id="130">130</th><td>    <a class="local col8 ref" href="#8s" title='s' data-ref="8s">s</a>-&gt;<a class="ref" href="oss.h.html#OSSAudioData::sample_rate" title='OSSAudioData::sample_rate' data-ref="OSSAudioData::sample_rate">sample_rate</a> = <a class="local col0 ref" href="#10tmp" title='tmp' data-ref="10tmp">tmp</a>; <i>/* store real sample rate */</i></td></tr>
+<tr><th id="131">131</th><td>    <a class="local col8 ref" href="#8s" title='s' data-ref="8s">s</a>-&gt;<a class="ref" href="oss.h.html#OSSAudioData::fd" title='OSSAudioData::fd' data-ref="OSSAudioData::fd">fd</a> = <a class="local col9 ref" href="#9audio_fd" title='audio_fd' data-ref="9audio_fd">audio_fd</a>;</td></tr>
+<tr><th id="132">132</th><td></td></tr>
+<tr><th id="133">133</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="134">134</th><td> <dfn class="lbl" id="13fail" data-ref="13fail">fail</dfn>:</td></tr>
+<tr><th id="135">135</th><td>    <a class="ref" href="../../include/unistd.h.html#close" title='close' data-ref="close">close</a>(<a class="local col9 ref" href="#9audio_fd" title='audio_fd' data-ref="9audio_fd">audio_fd</a>);</td></tr>
+<tr><th id="136">136</th><td>    <b>return</b> <a class="macro" href="../libavutil/error.h.html#39" title="(-(5))" data-ref="_M/AVERROR">AVERROR</a>(<a class="macro" href="../../include/asm-generic/errno-base.h.html#8" title="5" data-ref="_M/EIO">EIO</a>);</td></tr>
+<tr><th id="137">137</th><td><u>#undef <a class="macro" href="#75" data-ref="_M/CHECK_IOCTL_ERROR">CHECK_IOCTL_ERROR</a></u></td></tr>
+<tr><th id="138">138</th><td>}</td></tr>
+<tr><th id="139">139</th><td></td></tr>
+<tr><th id="140">140</th><td><em>int</em> <dfn class="decl def" id="ff_oss_audio_close" title='ff_oss_audio_close' data-ref="ff_oss_audio_close">ff_oss_audio_close</dfn>(<a class="typedef" href="oss.h.html#OSSAudioData" title='OSSAudioData' data-type='struct OSSAudioData' data-ref="OSSAudioData">OSSAudioData</a> *<dfn class="local col4 decl" id="14s" title='s' data-type='OSSAudioData *' data-ref="14s">s</dfn>)</td></tr>
+<tr><th id="141">141</th><td>{</td></tr>
+<tr><th id="142">142</th><td>    <a class="ref" href="../../include/unistd.h.html#close" title='close' data-ref="close">close</a>(<a class="local col4 ref" href="#14s" title='s' data-ref="14s">s</a>-&gt;<a class="ref" href="oss.h.html#OSSAudioData::fd" title='OSSAudioData::fd' data-ref="OSSAudioData::fd">fd</a>);</td></tr>
+<tr><th id="143">143</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="144">144</th><td>}</td></tr>
+<tr><th id="145">145</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

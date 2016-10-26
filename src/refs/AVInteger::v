@@ -1,0 +1,27 @@
+<dec f='ffmpeg/libavutil/integer.h' l='37' type='uint16_t [8]'/>
+<use f='ffmpeg/libavutil/integer.c' l='38' u='r' c='av_add_i'/>
+<use f='ffmpeg/libavutil/integer.c' l='38' u='r' c='av_add_i'/>
+<use f='ffmpeg/libavutil/integer.c' l='39' u='w' c='av_add_i'/>
+<use f='ffmpeg/libavutil/integer.c' l='48' u='r' c='av_sub_i'/>
+<use f='ffmpeg/libavutil/integer.c' l='48' u='r' c='av_sub_i'/>
+<use f='ffmpeg/libavutil/integer.c' l='49' u='w' c='av_sub_i'/>
+<use f='ffmpeg/libavutil/integer.c' l='58' u='r' c='av_log2_i'/>
+<use f='ffmpeg/libavutil/integer.c' l='59' u='r' c='av_log2_i'/>
+<use f='ffmpeg/libavutil/integer.c' l='75' u='r' c='av_mul_i'/>
+<use f='ffmpeg/libavutil/integer.c' l='77' u='r' c='av_mul_i'/>
+<use f='ffmpeg/libavutil/integer.c' l='77' u='r' c='av_mul_i'/>
+<use f='ffmpeg/libavutil/integer.c' l='77' u='r' c='av_mul_i'/>
+<use f='ffmpeg/libavutil/integer.c' l='78' u='w' c='av_mul_i'/>
+<use f='ffmpeg/libavutil/integer.c' l='87' u='r' c='av_cmp_i'/>
+<use f='ffmpeg/libavutil/integer.c' l='87' u='r' c='av_cmp_i'/>
+<use f='ffmpeg/libavutil/integer.c' l='91' u='r' c='av_cmp_i'/>
+<use f='ffmpeg/libavutil/integer.c' l='91' u='r' c='av_cmp_i'/>
+<use f='ffmpeg/libavutil/integer.c' l='104' u='r' c='av_shr_i'/>
+<use f='ffmpeg/libavutil/integer.c' l='105' u='r' c='av_shr_i'/>
+<use f='ffmpeg/libavutil/integer.c' l='106' u='w' c='av_shr_i'/>
+<use f='ffmpeg/libavutil/integer.c' l='116' u='r' c='av_mod_i'/>
+<use f='ffmpeg/libavutil/integer.c' l='134' u='w' c='av_mod_i'/>
+<use f='ffmpeg/libavutil/integer.c' l='152' u='w' c='av_int2i'/>
+<use f='ffmpeg/libavutil/integer.c' l='160' u='r' c='av_i2int'/>
+<use f='ffmpeg/libavutil/integer.c' l='163' u='r' c='av_i2int'/>
+<offset>0</offset>

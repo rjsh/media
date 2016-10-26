@@ -1,0 +1,298 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>cavs.h source code [ffmpeg/libavcodec/cavs.h] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="AVSContext,AVSFrame,cavs_block,cavs_intra_chroma,cavs_intra_luma,cavs_mb,cavs_mv_loc,cavs_mv_pred,cavs_sub_mb,dec_2dvlc "/>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavcodec/cavs.h'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavcodec</a>/<a href='cavs.h.html'>cavs.h</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * Chinese AVS video (AVS1-P2, JiZhun profile) decoder.</i></td></tr>
+<tr><th id="3">3</th><td><i> * Copyright (c) 2006  Stefan Gehrer &lt;stefan.gehrer@gmx.de&gt;</i></td></tr>
+<tr><th id="4">4</th><td><i> *</i></td></tr>
+<tr><th id="5">5</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="8">8</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="9">9</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="10">10</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="11">11</th><td><i> *</i></td></tr>
+<tr><th id="12">12</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="13">13</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="14">14</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="15">15</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="16">16</th><td><i> *</i></td></tr>
+<tr><th id="17">17</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="18">18</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="19">19</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="20">20</th><td><i> */</i></td></tr>
+<tr><th id="21">21</th><td></td></tr>
+<tr><th id="22">22</th><td><u>#<span data-ppcond="22">ifndef</span> <span class="macro" data-ref="_M/AVCODEC_CAVS_H">AVCODEC_CAVS_H</span></u></td></tr>
+<tr><th id="23">23</th><td><u>#define <dfn class="macro" id="_M/AVCODEC_CAVS_H" data-ref="_M/AVCODEC_CAVS_H">AVCODEC_CAVS_H</dfn></u></td></tr>
+<tr><th id="24">24</th><td></td></tr>
+<tr><th id="25">25</th><td><u>#include <a href="cavsdsp.h.html">"cavsdsp.h"</a></u></td></tr>
+<tr><th id="26">26</th><td><u>#include <a href="blockdsp.h.html">"blockdsp.h"</a></u></td></tr>
+<tr><th id="27">27</th><td><u>#include <a href="h264chroma.h.html">"h264chroma.h"</a></u></td></tr>
+<tr><th id="28">28</th><td><u>#include <a href="idctdsp.h.html">"idctdsp.h"</a></u></td></tr>
+<tr><th id="29">29</th><td><u>#include <a href="get_bits.h.html">"get_bits.h"</a></u></td></tr>
+<tr><th id="30">30</th><td><u>#include <a href="videodsp.h.html">"videodsp.h"</a></u></td></tr>
+<tr><th id="31">31</th><td></td></tr>
+<tr><th id="32">32</th><td><u>#define <dfn class="macro" id="_M/SLICE_MAX_START_CODE" data-ref="_M/SLICE_MAX_START_CODE">SLICE_MAX_START_CODE</dfn>    0x000001af</u></td></tr>
+<tr><th id="33">33</th><td><u>#define <dfn class="macro" id="_M/EXT_START_CODE" data-ref="_M/EXT_START_CODE">EXT_START_CODE</dfn>          0x000001b5</u></td></tr>
+<tr><th id="34">34</th><td><u>#define <dfn class="macro" id="_M/USER_START_CODE" data-ref="_M/USER_START_CODE">USER_START_CODE</dfn>         0x000001b2</u></td></tr>
+<tr><th id="35">35</th><td><u>#define <dfn class="macro" id="_M/CAVS_START_CODE" data-ref="_M/CAVS_START_CODE">CAVS_START_CODE</dfn>         0x000001b0</u></td></tr>
+<tr><th id="36">36</th><td><u>#define <dfn class="macro" id="_M/PIC_I_START_CODE" data-ref="_M/PIC_I_START_CODE">PIC_I_START_CODE</dfn>        0x000001b3</u></td></tr>
+<tr><th id="37">37</th><td><u>#define <dfn class="macro" id="_M/PIC_PB_START_CODE" data-ref="_M/PIC_PB_START_CODE">PIC_PB_START_CODE</dfn>       0x000001b6</u></td></tr>
+<tr><th id="38">38</th><td></td></tr>
+<tr><th id="39">39</th><td><u>#define <dfn class="macro" id="_M/A_AVAIL" data-ref="_M/A_AVAIL">A_AVAIL</dfn>                          1</u></td></tr>
+<tr><th id="40">40</th><td><u>#define <dfn class="macro" id="_M/B_AVAIL" data-ref="_M/B_AVAIL">B_AVAIL</dfn>                          2</u></td></tr>
+<tr><th id="41">41</th><td><u>#define <dfn class="macro" id="_M/C_AVAIL" data-ref="_M/C_AVAIL">C_AVAIL</dfn>                          4</u></td></tr>
+<tr><th id="42">42</th><td><u>#define <dfn class="macro" id="_M/D_AVAIL" data-ref="_M/D_AVAIL">D_AVAIL</dfn>                          8</u></td></tr>
+<tr><th id="43">43</th><td><u>#define <dfn class="macro" id="_M/NOT_AVAIL" data-ref="_M/NOT_AVAIL">NOT_AVAIL</dfn>                       -1</u></td></tr>
+<tr><th id="44">44</th><td><u>#define <dfn class="macro" id="_M/REF_INTRA" data-ref="_M/REF_INTRA">REF_INTRA</dfn>                       -2</u></td></tr>
+<tr><th id="45">45</th><td><u>#define <dfn class="macro" id="_M/REF_DIR" data-ref="_M/REF_DIR">REF_DIR</dfn>                         -3</u></td></tr>
+<tr><th id="46">46</th><td></td></tr>
+<tr><th id="47">47</th><td><u>#define <dfn class="macro" id="_M/ESCAPE_CODE" data-ref="_M/ESCAPE_CODE">ESCAPE_CODE</dfn>                     59</u></td></tr>
+<tr><th id="48">48</th><td></td></tr>
+<tr><th id="49">49</th><td><u>#define <dfn class="macro" id="_M/FWD0" data-ref="_M/FWD0">FWD0</dfn>                          0x01</u></td></tr>
+<tr><th id="50">50</th><td><u>#define <dfn class="macro" id="_M/FWD1" data-ref="_M/FWD1">FWD1</dfn>                          0x02</u></td></tr>
+<tr><th id="51">51</th><td><u>#define <dfn class="macro" id="_M/BWD0" data-ref="_M/BWD0">BWD0</dfn>                          0x04</u></td></tr>
+<tr><th id="52">52</th><td><u>#define <dfn class="macro" id="_M/BWD1" data-ref="_M/BWD1">BWD1</dfn>                          0x08</u></td></tr>
+<tr><th id="53">53</th><td><u>#define <dfn class="macro" id="_M/SYM0" data-ref="_M/SYM0">SYM0</dfn>                          0x10</u></td></tr>
+<tr><th id="54">54</th><td><u>#define <dfn class="macro" id="_M/SYM1" data-ref="_M/SYM1">SYM1</dfn>                          0x20</u></td></tr>
+<tr><th id="55">55</th><td><u>#define <dfn class="macro" id="_M/SPLITH" data-ref="_M/SPLITH">SPLITH</dfn>                        0x40</u></td></tr>
+<tr><th id="56">56</th><td><u>#define <dfn class="macro" id="_M/SPLITV" data-ref="_M/SPLITV">SPLITV</dfn>                        0x80</u></td></tr>
+<tr><th id="57">57</th><td></td></tr>
+<tr><th id="58">58</th><td><u>#define <dfn class="macro" id="_M/MV_BWD_OFFS" data-ref="_M/MV_BWD_OFFS">MV_BWD_OFFS</dfn>                     12</u></td></tr>
+<tr><th id="59">59</th><td><u>#define <dfn class="macro" id="_M/MV_STRIDE" data-ref="_M/MV_STRIDE">MV_STRIDE</dfn>                        4</u></td></tr>
+<tr><th id="60">60</th><td></td></tr>
+<tr><th id="61">61</th><td><b>enum</b> <dfn class="type def" id="cavs_mb" title='cavs_mb' data-ref="cavs_mb">cavs_mb</dfn> {</td></tr>
+<tr><th id="62">62</th><td>  <dfn class="enum" id="cavs_mb::I_8X8" title='cavs_mb::I_8X8' data-ref="cavs_mb::I_8X8">I_8X8</dfn> = <var>0</var>,</td></tr>
+<tr><th id="63">63</th><td>  <dfn class="enum" id="cavs_mb::P_SKIP" title='cavs_mb::P_SKIP' data-ref="cavs_mb::P_SKIP">P_SKIP</dfn>,</td></tr>
+<tr><th id="64">64</th><td>  <dfn class="enum" id="cavs_mb::P_16X16" title='cavs_mb::P_16X16' data-ref="cavs_mb::P_16X16">P_16X16</dfn>,</td></tr>
+<tr><th id="65">65</th><td>  <dfn class="enum" id="cavs_mb::P_16X8" title='cavs_mb::P_16X8' data-ref="cavs_mb::P_16X8">P_16X8</dfn>,</td></tr>
+<tr><th id="66">66</th><td>  <dfn class="enum" id="cavs_mb::P_8X16" title='cavs_mb::P_8X16' data-ref="cavs_mb::P_8X16">P_8X16</dfn>,</td></tr>
+<tr><th id="67">67</th><td>  <dfn class="enum" id="cavs_mb::P_8X8" title='cavs_mb::P_8X8' data-ref="cavs_mb::P_8X8">P_8X8</dfn>,</td></tr>
+<tr><th id="68">68</th><td>  <dfn class="enum" id="cavs_mb::B_SKIP" title='cavs_mb::B_SKIP' data-ref="cavs_mb::B_SKIP">B_SKIP</dfn>,</td></tr>
+<tr><th id="69">69</th><td>  <dfn class="enum" id="cavs_mb::B_DIRECT" title='cavs_mb::B_DIRECT' data-ref="cavs_mb::B_DIRECT">B_DIRECT</dfn>,</td></tr>
+<tr><th id="70">70</th><td>  <dfn class="enum" id="cavs_mb::B_FWD_16X16" title='cavs_mb::B_FWD_16X16' data-ref="cavs_mb::B_FWD_16X16">B_FWD_16X16</dfn>,</td></tr>
+<tr><th id="71">71</th><td>  <dfn class="enum" id="cavs_mb::B_BWD_16X16" title='cavs_mb::B_BWD_16X16' data-ref="cavs_mb::B_BWD_16X16">B_BWD_16X16</dfn>,</td></tr>
+<tr><th id="72">72</th><td>  <dfn class="enum" id="cavs_mb::B_SYM_16X16" title='cavs_mb::B_SYM_16X16' data-ref="cavs_mb::B_SYM_16X16">B_SYM_16X16</dfn>,</td></tr>
+<tr><th id="73">73</th><td>  <dfn class="enum" id="cavs_mb::B_8X8" title='cavs_mb::B_8X8' data-ref="cavs_mb::B_8X8">B_8X8</dfn> = <var>29</var></td></tr>
+<tr><th id="74">74</th><td>};</td></tr>
+<tr><th id="75">75</th><td></td></tr>
+<tr><th id="76">76</th><td><b>enum</b> <dfn class="type def" id="cavs_sub_mb" title='cavs_sub_mb' data-ref="cavs_sub_mb">cavs_sub_mb</dfn> {</td></tr>
+<tr><th id="77">77</th><td>  <dfn class="enum" id="cavs_sub_mb::B_SUB_DIRECT" title='cavs_sub_mb::B_SUB_DIRECT' data-ref="cavs_sub_mb::B_SUB_DIRECT">B_SUB_DIRECT</dfn>,</td></tr>
+<tr><th id="78">78</th><td>  <dfn class="enum" id="cavs_sub_mb::B_SUB_FWD" title='cavs_sub_mb::B_SUB_FWD' data-ref="cavs_sub_mb::B_SUB_FWD">B_SUB_FWD</dfn>,</td></tr>
+<tr><th id="79">79</th><td>  <dfn class="enum" id="cavs_sub_mb::B_SUB_BWD" title='cavs_sub_mb::B_SUB_BWD' data-ref="cavs_sub_mb::B_SUB_BWD">B_SUB_BWD</dfn>,</td></tr>
+<tr><th id="80">80</th><td>  <dfn class="enum" id="cavs_sub_mb::B_SUB_SYM" title='cavs_sub_mb::B_SUB_SYM' data-ref="cavs_sub_mb::B_SUB_SYM">B_SUB_SYM</dfn></td></tr>
+<tr><th id="81">81</th><td>};</td></tr>
+<tr><th id="82">82</th><td></td></tr>
+<tr><th id="83">83</th><td><b>enum</b> <dfn class="type def" id="cavs_intra_luma" title='cavs_intra_luma' data-ref="cavs_intra_luma">cavs_intra_luma</dfn> {</td></tr>
+<tr><th id="84">84</th><td>  <dfn class="enum" id="cavs_intra_luma::INTRA_L_VERT" title='cavs_intra_luma::INTRA_L_VERT' data-ref="cavs_intra_luma::INTRA_L_VERT">INTRA_L_VERT</dfn>,</td></tr>
+<tr><th id="85">85</th><td>  <dfn class="enum" id="cavs_intra_luma::INTRA_L_HORIZ" title='cavs_intra_luma::INTRA_L_HORIZ' data-ref="cavs_intra_luma::INTRA_L_HORIZ">INTRA_L_HORIZ</dfn>,</td></tr>
+<tr><th id="86">86</th><td>  <dfn class="enum" id="cavs_intra_luma::INTRA_L_LP" title='cavs_intra_luma::INTRA_L_LP' data-ref="cavs_intra_luma::INTRA_L_LP">INTRA_L_LP</dfn>,</td></tr>
+<tr><th id="87">87</th><td>  <dfn class="enum" id="cavs_intra_luma::INTRA_L_DOWN_LEFT" title='cavs_intra_luma::INTRA_L_DOWN_LEFT' data-ref="cavs_intra_luma::INTRA_L_DOWN_LEFT">INTRA_L_DOWN_LEFT</dfn>,</td></tr>
+<tr><th id="88">88</th><td>  <dfn class="enum" id="cavs_intra_luma::INTRA_L_DOWN_RIGHT" title='cavs_intra_luma::INTRA_L_DOWN_RIGHT' data-ref="cavs_intra_luma::INTRA_L_DOWN_RIGHT">INTRA_L_DOWN_RIGHT</dfn>,</td></tr>
+<tr><th id="89">89</th><td>  <dfn class="enum" id="cavs_intra_luma::INTRA_L_LP_LEFT" title='cavs_intra_luma::INTRA_L_LP_LEFT' data-ref="cavs_intra_luma::INTRA_L_LP_LEFT">INTRA_L_LP_LEFT</dfn>,</td></tr>
+<tr><th id="90">90</th><td>  <dfn class="enum" id="cavs_intra_luma::INTRA_L_LP_TOP" title='cavs_intra_luma::INTRA_L_LP_TOP' data-ref="cavs_intra_luma::INTRA_L_LP_TOP">INTRA_L_LP_TOP</dfn>,</td></tr>
+<tr><th id="91">91</th><td>  <dfn class="enum" id="cavs_intra_luma::INTRA_L_DC_128" title='cavs_intra_luma::INTRA_L_DC_128' data-ref="cavs_intra_luma::INTRA_L_DC_128">INTRA_L_DC_128</dfn></td></tr>
+<tr><th id="92">92</th><td>};</td></tr>
+<tr><th id="93">93</th><td></td></tr>
+<tr><th id="94">94</th><td><b>enum</b> <dfn class="type def" id="cavs_intra_chroma" title='cavs_intra_chroma' data-ref="cavs_intra_chroma">cavs_intra_chroma</dfn> {</td></tr>
+<tr><th id="95">95</th><td>  <dfn class="enum" id="cavs_intra_chroma::INTRA_C_LP" title='cavs_intra_chroma::INTRA_C_LP' data-ref="cavs_intra_chroma::INTRA_C_LP">INTRA_C_LP</dfn>,</td></tr>
+<tr><th id="96">96</th><td>  <dfn class="enum" id="cavs_intra_chroma::INTRA_C_HORIZ" title='cavs_intra_chroma::INTRA_C_HORIZ' data-ref="cavs_intra_chroma::INTRA_C_HORIZ">INTRA_C_HORIZ</dfn>,</td></tr>
+<tr><th id="97">97</th><td>  <dfn class="enum" id="cavs_intra_chroma::INTRA_C_VERT" title='cavs_intra_chroma::INTRA_C_VERT' data-ref="cavs_intra_chroma::INTRA_C_VERT">INTRA_C_VERT</dfn>,</td></tr>
+<tr><th id="98">98</th><td>  <dfn class="enum" id="cavs_intra_chroma::INTRA_C_PLANE" title='cavs_intra_chroma::INTRA_C_PLANE' data-ref="cavs_intra_chroma::INTRA_C_PLANE">INTRA_C_PLANE</dfn>,</td></tr>
+<tr><th id="99">99</th><td>  <dfn class="enum" id="cavs_intra_chroma::INTRA_C_LP_LEFT" title='cavs_intra_chroma::INTRA_C_LP_LEFT' data-ref="cavs_intra_chroma::INTRA_C_LP_LEFT">INTRA_C_LP_LEFT</dfn>,</td></tr>
+<tr><th id="100">100</th><td>  <dfn class="enum" id="cavs_intra_chroma::INTRA_C_LP_TOP" title='cavs_intra_chroma::INTRA_C_LP_TOP' data-ref="cavs_intra_chroma::INTRA_C_LP_TOP">INTRA_C_LP_TOP</dfn>,</td></tr>
+<tr><th id="101">101</th><td>  <dfn class="enum" id="cavs_intra_chroma::INTRA_C_DC_128" title='cavs_intra_chroma::INTRA_C_DC_128' data-ref="cavs_intra_chroma::INTRA_C_DC_128">INTRA_C_DC_128</dfn>,</td></tr>
+<tr><th id="102">102</th><td>};</td></tr>
+<tr><th id="103">103</th><td></td></tr>
+<tr><th id="104">104</th><td><b>enum</b> <dfn class="type def" id="cavs_mv_pred" title='cavs_mv_pred' data-ref="cavs_mv_pred">cavs_mv_pred</dfn> {</td></tr>
+<tr><th id="105">105</th><td>  <dfn class="enum" id="cavs_mv_pred::MV_PRED_MEDIAN" title='cavs_mv_pred::MV_PRED_MEDIAN' data-ref="cavs_mv_pred::MV_PRED_MEDIAN">MV_PRED_MEDIAN</dfn>,</td></tr>
+<tr><th id="106">106</th><td>  <dfn class="enum" id="cavs_mv_pred::MV_PRED_LEFT" title='cavs_mv_pred::MV_PRED_LEFT' data-ref="cavs_mv_pred::MV_PRED_LEFT">MV_PRED_LEFT</dfn>,</td></tr>
+<tr><th id="107">107</th><td>  <dfn class="enum" id="cavs_mv_pred::MV_PRED_TOP" title='cavs_mv_pred::MV_PRED_TOP' data-ref="cavs_mv_pred::MV_PRED_TOP">MV_PRED_TOP</dfn>,</td></tr>
+<tr><th id="108">108</th><td>  <dfn class="enum" id="cavs_mv_pred::MV_PRED_TOPRIGHT" title='cavs_mv_pred::MV_PRED_TOPRIGHT' data-ref="cavs_mv_pred::MV_PRED_TOPRIGHT">MV_PRED_TOPRIGHT</dfn>,</td></tr>
+<tr><th id="109">109</th><td>  <dfn class="enum" id="cavs_mv_pred::MV_PRED_PSKIP" title='cavs_mv_pred::MV_PRED_PSKIP' data-ref="cavs_mv_pred::MV_PRED_PSKIP">MV_PRED_PSKIP</dfn>,</td></tr>
+<tr><th id="110">110</th><td>  <dfn class="enum" id="cavs_mv_pred::MV_PRED_BSKIP" title='cavs_mv_pred::MV_PRED_BSKIP' data-ref="cavs_mv_pred::MV_PRED_BSKIP">MV_PRED_BSKIP</dfn></td></tr>
+<tr><th id="111">111</th><td>};</td></tr>
+<tr><th id="112">112</th><td></td></tr>
+<tr><th id="113">113</th><td><b>enum</b> <dfn class="type def" id="cavs_block" title='cavs_block' data-ref="cavs_block">cavs_block</dfn> {</td></tr>
+<tr><th id="114">114</th><td>  <dfn class="enum" id="cavs_block::BLK_16X16" title='cavs_block::BLK_16X16' data-ref="cavs_block::BLK_16X16">BLK_16X16</dfn>,</td></tr>
+<tr><th id="115">115</th><td>  <dfn class="enum" id="cavs_block::BLK_16X8" title='cavs_block::BLK_16X8' data-ref="cavs_block::BLK_16X8">BLK_16X8</dfn>,</td></tr>
+<tr><th id="116">116</th><td>  <dfn class="enum" id="cavs_block::BLK_8X16" title='cavs_block::BLK_8X16' data-ref="cavs_block::BLK_8X16">BLK_8X16</dfn>,</td></tr>
+<tr><th id="117">117</th><td>  <dfn class="enum" id="cavs_block::BLK_8X8" title='cavs_block::BLK_8X8' data-ref="cavs_block::BLK_8X8">BLK_8X8</dfn></td></tr>
+<tr><th id="118">118</th><td>};</td></tr>
+<tr><th id="119">119</th><td></td></tr>
+<tr><th id="120">120</th><td><b>enum</b> <dfn class="type def" id="cavs_mv_loc" title='cavs_mv_loc' data-ref="cavs_mv_loc">cavs_mv_loc</dfn> {</td></tr>
+<tr><th id="121">121</th><td>  <dfn class="enum" id="cavs_mv_loc::MV_FWD_D3" title='cavs_mv_loc::MV_FWD_D3' data-ref="cavs_mv_loc::MV_FWD_D3">MV_FWD_D3</dfn> = <var>0</var>,</td></tr>
+<tr><th id="122">122</th><td>  <dfn class="enum" id="cavs_mv_loc::MV_FWD_B2" title='cavs_mv_loc::MV_FWD_B2' data-ref="cavs_mv_loc::MV_FWD_B2">MV_FWD_B2</dfn>,</td></tr>
+<tr><th id="123">123</th><td>  <dfn class="enum" id="cavs_mv_loc::MV_FWD_B3" title='cavs_mv_loc::MV_FWD_B3' data-ref="cavs_mv_loc::MV_FWD_B3">MV_FWD_B3</dfn>,</td></tr>
+<tr><th id="124">124</th><td>  <dfn class="enum" id="cavs_mv_loc::MV_FWD_C2" title='cavs_mv_loc::MV_FWD_C2' data-ref="cavs_mv_loc::MV_FWD_C2">MV_FWD_C2</dfn>,</td></tr>
+<tr><th id="125">125</th><td>  <dfn class="enum" id="cavs_mv_loc::MV_FWD_A1" title='cavs_mv_loc::MV_FWD_A1' data-ref="cavs_mv_loc::MV_FWD_A1">MV_FWD_A1</dfn>,</td></tr>
+<tr><th id="126">126</th><td>  <dfn class="enum" id="cavs_mv_loc::MV_FWD_X0" title='cavs_mv_loc::MV_FWD_X0' data-ref="cavs_mv_loc::MV_FWD_X0">MV_FWD_X0</dfn>,</td></tr>
+<tr><th id="127">127</th><td>  <dfn class="enum" id="cavs_mv_loc::MV_FWD_X1" title='cavs_mv_loc::MV_FWD_X1' data-ref="cavs_mv_loc::MV_FWD_X1">MV_FWD_X1</dfn>,</td></tr>
+<tr><th id="128">128</th><td>  <dfn class="enum" id="cavs_mv_loc::MV_FWD_A3" title='cavs_mv_loc::MV_FWD_A3' data-ref="cavs_mv_loc::MV_FWD_A3">MV_FWD_A3</dfn> = <var>8</var>,</td></tr>
+<tr><th id="129">129</th><td>  <dfn class="enum" id="cavs_mv_loc::MV_FWD_X2" title='cavs_mv_loc::MV_FWD_X2' data-ref="cavs_mv_loc::MV_FWD_X2">MV_FWD_X2</dfn>,</td></tr>
+<tr><th id="130">130</th><td>  <dfn class="enum" id="cavs_mv_loc::MV_FWD_X3" title='cavs_mv_loc::MV_FWD_X3' data-ref="cavs_mv_loc::MV_FWD_X3">MV_FWD_X3</dfn>,</td></tr>
+<tr><th id="131">131</th><td>  <dfn class="enum" id="cavs_mv_loc::MV_BWD_D3" title='cavs_mv_loc::MV_BWD_D3' data-ref="cavs_mv_loc::MV_BWD_D3">MV_BWD_D3</dfn> = <a class="macro" href="#58" title="12" data-ref="_M/MV_BWD_OFFS">MV_BWD_OFFS</a>,</td></tr>
+<tr><th id="132">132</th><td>  <dfn class="enum" id="cavs_mv_loc::MV_BWD_B2" title='cavs_mv_loc::MV_BWD_B2' data-ref="cavs_mv_loc::MV_BWD_B2">MV_BWD_B2</dfn>,</td></tr>
+<tr><th id="133">133</th><td>  <dfn class="enum" id="cavs_mv_loc::MV_BWD_B3" title='cavs_mv_loc::MV_BWD_B3' data-ref="cavs_mv_loc::MV_BWD_B3">MV_BWD_B3</dfn>,</td></tr>
+<tr><th id="134">134</th><td>  <dfn class="enum" id="cavs_mv_loc::MV_BWD_C2" title='cavs_mv_loc::MV_BWD_C2' data-ref="cavs_mv_loc::MV_BWD_C2">MV_BWD_C2</dfn>,</td></tr>
+<tr><th id="135">135</th><td>  <dfn class="enum" id="cavs_mv_loc::MV_BWD_A1" title='cavs_mv_loc::MV_BWD_A1' data-ref="cavs_mv_loc::MV_BWD_A1">MV_BWD_A1</dfn>,</td></tr>
+<tr><th id="136">136</th><td>  <dfn class="enum" id="cavs_mv_loc::MV_BWD_X0" title='cavs_mv_loc::MV_BWD_X0' data-ref="cavs_mv_loc::MV_BWD_X0">MV_BWD_X0</dfn>,</td></tr>
+<tr><th id="137">137</th><td>  <dfn class="enum" id="cavs_mv_loc::MV_BWD_X1" title='cavs_mv_loc::MV_BWD_X1' data-ref="cavs_mv_loc::MV_BWD_X1">MV_BWD_X1</dfn>,</td></tr>
+<tr><th id="138">138</th><td>  <dfn class="enum" id="cavs_mv_loc::MV_BWD_A3" title='cavs_mv_loc::MV_BWD_A3' data-ref="cavs_mv_loc::MV_BWD_A3">MV_BWD_A3</dfn> = <a class="macro" href="#58" title="12" data-ref="_M/MV_BWD_OFFS">MV_BWD_OFFS</a>+<var>8</var>,</td></tr>
+<tr><th id="139">139</th><td>  <dfn class="enum" id="cavs_mv_loc::MV_BWD_X2" title='cavs_mv_loc::MV_BWD_X2' data-ref="cavs_mv_loc::MV_BWD_X2">MV_BWD_X2</dfn>,</td></tr>
+<tr><th id="140">140</th><td>  <dfn class="enum" id="cavs_mv_loc::MV_BWD_X3" title='cavs_mv_loc::MV_BWD_X3' data-ref="cavs_mv_loc::MV_BWD_X3">MV_BWD_X3</dfn></td></tr>
+<tr><th id="141">141</th><td>};</td></tr>
+<tr><th id="142">142</th><td></td></tr>
+<tr><th id="143">143</th><td><a class="macro" href="../libavutil/mem.h.html#101" title="typedef __attribute__ ((aligned (8))) struct" data-ref="_M/DECLARE_ALIGNED">DECLARE_ALIGNED</a>(<var>8</var>, <b>typedef</b>, <b>struct</b>) {</td></tr>
+<tr><th id="144">144</th><td>    <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> <dfn class="decl" id="{anonymous}::x" title='&lt;anonymous struct&gt;::x' data-ref="{anonymous}::x">x</dfn>;</td></tr>
+<tr><th id="145">145</th><td>    <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> <dfn class="decl" id="{anonymous}::y" title='&lt;anonymous struct&gt;::y' data-ref="{anonymous}::y">y</dfn>;</td></tr>
+<tr><th id="146">146</th><td>    <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> <dfn class="decl" id="{anonymous}::dist" title='&lt;anonymous struct&gt;::dist' data-ref="{anonymous}::dist">dist</dfn>;</td></tr>
+<tr><th id="147">147</th><td>    <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> <dfn class="decl" id="{anonymous}::ref" title='&lt;anonymous struct&gt;::ref' data-ref="{anonymous}::ref">ref</dfn>;</td></tr>
+<tr><th id="148">148</th><td>} <dfn class="typedef" id="cavs_vector" title='cavs_vector' data-type='struct cavs_vector' data-ref="cavs_vector">cavs_vector</dfn>;</td></tr>
+<tr><th id="149">149</th><td></td></tr>
+<tr><th id="150">150</th><td><b>struct</b> <dfn class="type def" id="dec_2dvlc" title='dec_2dvlc' data-ref="dec_2dvlc">dec_2dvlc</dfn> {</td></tr>
+<tr><th id="151">151</th><td>  <a class="typedef" href="../../include/stdint.h.html#int8_t" title='int8_t' data-type='signed char' data-ref="int8_t">int8_t</a> <dfn class="decl" id="dec_2dvlc::rltab" title='dec_2dvlc::rltab' data-ref="dec_2dvlc::rltab">rltab</dfn>[<var>59</var>][<var>3</var>];</td></tr>
+<tr><th id="152">152</th><td>  <a class="typedef" href="../../include/stdint.h.html#int8_t" title='int8_t' data-type='signed char' data-ref="int8_t">int8_t</a> <dfn class="decl" id="dec_2dvlc::level_add" title='dec_2dvlc::level_add' data-ref="dec_2dvlc::level_add">level_add</dfn>[<var>27</var>];</td></tr>
+<tr><th id="153">153</th><td>  <a class="typedef" href="../../include/stdint.h.html#int8_t" title='int8_t' data-type='signed char' data-ref="int8_t">int8_t</a> <dfn class="decl" id="dec_2dvlc::golomb_order" title='dec_2dvlc::golomb_order' data-ref="dec_2dvlc::golomb_order">golomb_order</dfn>;</td></tr>
+<tr><th id="154">154</th><td>  <em>int</em> <dfn class="decl" id="dec_2dvlc::inc_limit" title='dec_2dvlc::inc_limit' data-ref="dec_2dvlc::inc_limit">inc_limit</dfn>;</td></tr>
+<tr><th id="155">155</th><td>  <a class="typedef" href="../../include/stdint.h.html#int8_t" title='int8_t' data-type='signed char' data-ref="int8_t">int8_t</a> <dfn class="decl" id="dec_2dvlc::max_run" title='dec_2dvlc::max_run' data-ref="dec_2dvlc::max_run">max_run</dfn>;</td></tr>
+<tr><th id="156">156</th><td>};</td></tr>
+<tr><th id="157">157</th><td></td></tr>
+<tr><th id="158">158</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="AVSFrame" title='AVSFrame' data-ref="AVSFrame"><a class="type" href="#AVSFrame" title='AVSFrame' data-ref="AVSFrame">AVSFrame</a></dfn> {</td></tr>
+<tr><th id="159">159</th><td>    <a class="typedef" href="../libavutil/frame.h.html#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="decl" id="AVSFrame::f" title='AVSFrame::f' data-ref="AVSFrame::f">f</dfn>;</td></tr>
+<tr><th id="160">160</th><td>    <em>int</em> <dfn class="decl" id="AVSFrame::poc" title='AVSFrame::poc' data-ref="AVSFrame::poc">poc</dfn>;</td></tr>
+<tr><th id="161">161</th><td>} <dfn class="typedef" id="AVSFrame" title='AVSFrame' data-type='struct AVSFrame' data-ref="AVSFrame">AVSFrame</dfn>;</td></tr>
+<tr><th id="162">162</th><td></td></tr>
+<tr><th id="163">163</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="AVSContext" title='AVSContext' data-ref="AVSContext"><a class="type" href="#AVSContext" title='AVSContext' data-ref="AVSContext">AVSContext</a></dfn> {</td></tr>
+<tr><th id="164">164</th><td>    <a class="typedef" href="avcodec.h.html#AVCodecContext" title='AVCodecContext' data-type='struct AVCodecContext' data-ref="AVCodecContext">AVCodecContext</a> *<dfn class="decl" id="AVSContext::avctx" title='AVSContext::avctx' data-ref="AVSContext::avctx">avctx</dfn>;</td></tr>
+<tr><th id="165">165</th><td>    <a class="typedef" href="blockdsp.h.html#BlockDSPContext" title='BlockDSPContext' data-type='struct BlockDSPContext' data-ref="BlockDSPContext">BlockDSPContext</a> <dfn class="decl" id="AVSContext::bdsp" title='AVSContext::bdsp' data-ref="AVSContext::bdsp">bdsp</dfn>;</td></tr>
+<tr><th id="166">166</th><td>    <a class="typedef" href="h264chroma.h.html#H264ChromaContext" title='H264ChromaContext' data-type='struct H264ChromaContext' data-ref="H264ChromaContext">H264ChromaContext</a> <dfn class="decl" id="AVSContext::h264chroma" title='AVSContext::h264chroma' data-ref="AVSContext::h264chroma">h264chroma</dfn>;</td></tr>
+<tr><th id="167">167</th><td>    <a class="typedef" href="idctdsp.h.html#IDCTDSPContext" title='IDCTDSPContext' data-type='struct IDCTDSPContext' data-ref="IDCTDSPContext">IDCTDSPContext</a> <dfn class="decl" id="AVSContext::idsp" title='AVSContext::idsp' data-ref="AVSContext::idsp">idsp</dfn>;</td></tr>
+<tr><th id="168">168</th><td>    <a class="typedef" href="videodsp.h.html#VideoDSPContext" title='VideoDSPContext' data-type='struct VideoDSPContext' data-ref="VideoDSPContext">VideoDSPContext</a> <dfn class="decl" id="AVSContext::vdsp" title='AVSContext::vdsp' data-ref="AVSContext::vdsp">vdsp</dfn>;</td></tr>
+<tr><th id="169">169</th><td>    <a class="typedef" href="cavsdsp.h.html#CAVSDSPContext" title='CAVSDSPContext' data-type='struct CAVSDSPContext' data-ref="CAVSDSPContext">CAVSDSPContext</a>  <dfn class="decl" id="AVSContext::cdsp" title='AVSContext::cdsp' data-ref="AVSContext::cdsp">cdsp</dfn>;</td></tr>
+<tr><th id="170">170</th><td>    <a class="typedef" href="get_bits.h.html#GetBitContext" title='GetBitContext' data-type='struct GetBitContext' data-ref="GetBitContext">GetBitContext</a> <dfn class="decl" id="AVSContext::gb" title='AVSContext::gb' data-ref="AVSContext::gb">gb</dfn>;</td></tr>
+<tr><th id="171">171</th><td>    <a class="typedef" href="#AVSFrame" title='AVSFrame' data-type='struct AVSFrame' data-ref="AVSFrame">AVSFrame</a> <dfn class="decl" id="AVSContext::cur" title='AVSContext::cur' data-ref="AVSContext::cur">cur</dfn>;     <i class="doc">///&lt; currently decoded frame</i></td></tr>
+<tr><th id="172">172</th><td>    <a class="typedef" href="#AVSFrame" title='AVSFrame' data-type='struct AVSFrame' data-ref="AVSFrame">AVSFrame</a> <dfn class="decl" id="AVSContext::DPB" title='AVSContext::DPB' data-ref="AVSContext::DPB">DPB</dfn>[<var>2</var>];  <i class="doc">///&lt; reference frames</i></td></tr>
+<tr><th id="173">173</th><td>    <em>int</em> <dfn class="decl" id="AVSContext::dist" title='AVSContext::dist' data-ref="AVSContext::dist">dist</dfn>[<var>2</var>];     <i class="doc">///&lt; temporal distances from current frame to ref frames</i></td></tr>
+<tr><th id="174">174</th><td>    <em>int</em> <dfn class="decl" id="AVSContext::low_delay" title='AVSContext::low_delay' data-ref="AVSContext::low_delay">low_delay</dfn>;</td></tr>
+<tr><th id="175">175</th><td>    <em>int</em> <dfn class="decl" id="AVSContext::profile" title='AVSContext::profile' data-ref="AVSContext::profile">profile</dfn>, <dfn class="decl" id="AVSContext::level" title='AVSContext::level' data-ref="AVSContext::level">level</dfn>;</td></tr>
+<tr><th id="176">176</th><td>    <em>int</em> <dfn class="decl" id="AVSContext::aspect_ratio" title='AVSContext::aspect_ratio' data-ref="AVSContext::aspect_ratio">aspect_ratio</dfn>;</td></tr>
+<tr><th id="177">177</th><td>    <em>int</em> <dfn class="decl" id="AVSContext::mb_width" title='AVSContext::mb_width' data-ref="AVSContext::mb_width">mb_width</dfn>, <dfn class="decl" id="AVSContext::mb_height" title='AVSContext::mb_height' data-ref="AVSContext::mb_height">mb_height</dfn>;</td></tr>
+<tr><th id="178">178</th><td>    <em>int</em> <dfn class="decl" id="AVSContext::width" title='AVSContext::width' data-ref="AVSContext::width">width</dfn>, <dfn class="decl" id="AVSContext::height" title='AVSContext::height' data-ref="AVSContext::height">height</dfn>;</td></tr>
+<tr><th id="179">179</th><td>    <em>int</em> <dfn class="decl" id="AVSContext::stream_revision" title='AVSContext::stream_revision' data-ref="AVSContext::stream_revision">stream_revision</dfn>; <i class="doc">///&lt;0 for samples from 2006, 1 for rm52j encoder</i></td></tr>
+<tr><th id="180">180</th><td>    <em>int</em> <dfn class="decl" id="AVSContext::progressive" title='AVSContext::progressive' data-ref="AVSContext::progressive">progressive</dfn>;</td></tr>
+<tr><th id="181">181</th><td>    <em>int</em> <dfn class="decl" id="AVSContext::pic_structure" title='AVSContext::pic_structure' data-ref="AVSContext::pic_structure">pic_structure</dfn>;</td></tr>
+<tr><th id="182">182</th><td>    <em>int</em> <dfn class="decl" id="AVSContext::skip_mode_flag" title='AVSContext::skip_mode_flag' data-ref="AVSContext::skip_mode_flag">skip_mode_flag</dfn>; <i class="doc">///&lt; select between skip_count or one skip_flag per MB</i></td></tr>
+<tr><th id="183">183</th><td>    <em>int</em> <dfn class="decl" id="AVSContext::loop_filter_disable" title='AVSContext::loop_filter_disable' data-ref="AVSContext::loop_filter_disable">loop_filter_disable</dfn>;</td></tr>
+<tr><th id="184">184</th><td>    <em>int</em> <dfn class="decl" id="AVSContext::alpha_offset" title='AVSContext::alpha_offset' data-ref="AVSContext::alpha_offset">alpha_offset</dfn>, <dfn class="decl" id="AVSContext::beta_offset" title='AVSContext::beta_offset' data-ref="AVSContext::beta_offset">beta_offset</dfn>;</td></tr>
+<tr><th id="185">185</th><td>    <em>int</em> <dfn class="decl" id="AVSContext::ref_flag" title='AVSContext::ref_flag' data-ref="AVSContext::ref_flag">ref_flag</dfn>;</td></tr>
+<tr><th id="186">186</th><td>    <em>int</em> <dfn class="decl" id="AVSContext::mbx" title='AVSContext::mbx' data-ref="AVSContext::mbx">mbx</dfn>, <dfn class="decl" id="AVSContext::mby" title='AVSContext::mby' data-ref="AVSContext::mby">mby</dfn>, <dfn class="decl" id="AVSContext::mbidx" title='AVSContext::mbidx' data-ref="AVSContext::mbidx">mbidx</dfn>; <i class="doc">///&lt; macroblock coordinates</i></td></tr>
+<tr><th id="187">187</th><td>    <em>int</em> <dfn class="decl" id="AVSContext::flags" title='AVSContext::flags' data-ref="AVSContext::flags">flags</dfn>;         <i class="doc">///&lt; availability flags of neighbouring macroblocks</i></td></tr>
+<tr><th id="188">188</th><td>    <em>int</em> <dfn class="decl" id="AVSContext::stc" title='AVSContext::stc' data-ref="AVSContext::stc">stc</dfn>;           <i class="doc">///&lt; last start code</i></td></tr>
+<tr><th id="189">189</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="decl" id="AVSContext::cy" title='AVSContext::cy' data-ref="AVSContext::cy">cy</dfn>, *<dfn class="decl" id="AVSContext::cu" title='AVSContext::cu' data-ref="AVSContext::cu">cu</dfn>, *<dfn class="decl" id="AVSContext::cv" title='AVSContext::cv' data-ref="AVSContext::cv">cv</dfn>; <i class="doc">///&lt; current MB sample pointers</i></td></tr>
+<tr><th id="190">190</th><td>    <em>int</em> <dfn class="decl" id="AVSContext::left_qp" title='AVSContext::left_qp' data-ref="AVSContext::left_qp">left_qp</dfn>;</td></tr>
+<tr><th id="191">191</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="decl" id="AVSContext::top_qp" title='AVSContext::top_qp' data-ref="AVSContext::top_qp">top_qp</dfn>;</td></tr>
+<tr><th id="192">192</th><td></td></tr>
+<tr><th id="193">193</th><td>    <i class="doc">/** mv motion vector cache</i></td></tr>
+<tr><th id="194">194</th><td><i class="doc">       0:    D3  B2  B3  C2</i></td></tr>
+<tr><th id="195">195</th><td><i class="doc">       4:    A1  X0  X1   -</i></td></tr>
+<tr><th id="196">196</th><td><i class="doc">       8:    A3  X2  X3   -</i></td></tr>
+<tr><th id="197">197</th><td><i class="doc"></i></td></tr>
+<tr><th id="198">198</th><td><i class="doc">       X are the vectors in the current macroblock (5,6,9,10)</i></td></tr>
+<tr><th id="199">199</th><td><i class="doc">       A is the macroblock to the left (4,8)</i></td></tr>
+<tr><th id="200">200</th><td><i class="doc">       B is the macroblock to the top (1,2)</i></td></tr>
+<tr><th id="201">201</th><td><i class="doc">       C is the macroblock to the top-right (3)</i></td></tr>
+<tr><th id="202">202</th><td><i class="doc">       D is the macroblock to the top-left (0)</i></td></tr>
+<tr><th id="203">203</th><td><i class="doc"></i></td></tr>
+<tr><th id="204">204</th><td><i class="doc">       the same is repeated for backward motion vectors */</i></td></tr>
+<tr><th id="205">205</th><td>    <a class="typedef" href="#cavs_vector" title='cavs_vector' data-type='struct cavs_vector' data-ref="cavs_vector">cavs_vector</a> <dfn class="decl" id="AVSContext::mv" title='AVSContext::mv' data-ref="AVSContext::mv">mv</dfn>[<var>2</var>*<var>4</var>*<var>3</var>];</td></tr>
+<tr><th id="206">206</th><td>    <a class="typedef" href="#cavs_vector" title='cavs_vector' data-type='struct cavs_vector' data-ref="cavs_vector">cavs_vector</a> *<dfn class="decl" id="AVSContext::top_mv" title='AVSContext::top_mv' data-ref="AVSContext::top_mv">top_mv</dfn>[<var>2</var>];</td></tr>
+<tr><th id="207">207</th><td>    <a class="typedef" href="#cavs_vector" title='cavs_vector' data-type='struct cavs_vector' data-ref="cavs_vector">cavs_vector</a> *<dfn class="decl" id="AVSContext::col_mv" title='AVSContext::col_mv' data-ref="AVSContext::col_mv">col_mv</dfn>;</td></tr>
+<tr><th id="208">208</th><td></td></tr>
+<tr><th id="209">209</th><td>    <i class="doc">/** luma pred mode cache</i></td></tr>
+<tr><th id="210">210</th><td><i class="doc">       0:    --  B2  B3</i></td></tr>
+<tr><th id="211">211</th><td><i class="doc">       3:    A1  X0  X1</i></td></tr>
+<tr><th id="212">212</th><td><i class="doc">       6:    A3  X2  X3   */</i></td></tr>
+<tr><th id="213">213</th><td>    <em>int</em> <dfn class="decl" id="AVSContext::pred_mode_Y" title='AVSContext::pred_mode_Y' data-ref="AVSContext::pred_mode_Y">pred_mode_Y</dfn>[<var>3</var>*<var>3</var>];</td></tr>
+<tr><th id="214">214</th><td>    <em>int</em> *<dfn class="decl" id="AVSContext::top_pred_Y" title='AVSContext::top_pred_Y' data-ref="AVSContext::top_pred_Y">top_pred_Y</dfn>;</td></tr>
+<tr><th id="215">215</th><td>    <span class='typedef' title='ptrdiff_t' data-type='long' data-ref="ptrdiff_t">ptrdiff_t</span> <dfn class="decl" id="AVSContext::l_stride" title='AVSContext::l_stride' data-ref="AVSContext::l_stride">l_stride</dfn>, <dfn class="decl" id="AVSContext::c_stride" title='AVSContext::c_stride' data-ref="AVSContext::c_stride">c_stride</dfn>;</td></tr>
+<tr><th id="216">216</th><td>    <em>int</em> <dfn class="decl" id="AVSContext::luma_scan" title='AVSContext::luma_scan' data-ref="AVSContext::luma_scan">luma_scan</dfn>[<var>4</var>];</td></tr>
+<tr><th id="217">217</th><td>    <em>int</em> <dfn class="decl" id="AVSContext::qp" title='AVSContext::qp' data-ref="AVSContext::qp">qp</dfn>;</td></tr>
+<tr><th id="218">218</th><td>    <em>int</em> <dfn class="decl" id="AVSContext::qp_fixed" title='AVSContext::qp_fixed' data-ref="AVSContext::qp_fixed">qp_fixed</dfn>;</td></tr>
+<tr><th id="219">219</th><td>    <em>int</em> <dfn class="decl" id="AVSContext::pic_qp_fixed" title='AVSContext::pic_qp_fixed' data-ref="AVSContext::pic_qp_fixed">pic_qp_fixed</dfn>;</td></tr>
+<tr><th id="220">220</th><td>    <em>int</em> <dfn class="decl" id="AVSContext::cbp" title='AVSContext::cbp' data-ref="AVSContext::cbp">cbp</dfn>;</td></tr>
+<tr><th id="221">221</th><td>    <a class="typedef" href="idctdsp.h.html#ScanTable" title='ScanTable' data-type='struct ScanTable' data-ref="ScanTable">ScanTable</a> <dfn class="decl" id="AVSContext::scantable" title='AVSContext::scantable' data-ref="AVSContext::scantable">scantable</dfn>;</td></tr>
+<tr><th id="222">222</th><td></td></tr>
+<tr><th id="223">223</th><td>    <i class="doc">/** intra prediction is done with un-deblocked samples</i></td></tr>
+<tr><th id="224">224</th><td><i class="doc">     they are saved here before deblocking the MB  */</i></td></tr>
+<tr><th id="225">225</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="decl" id="AVSContext::top_border_y" title='AVSContext::top_border_y' data-ref="AVSContext::top_border_y">top_border_y</dfn>, *<dfn class="decl" id="AVSContext::top_border_u" title='AVSContext::top_border_u' data-ref="AVSContext::top_border_u">top_border_u</dfn>, *<dfn class="decl" id="AVSContext::top_border_v" title='AVSContext::top_border_v' data-ref="AVSContext::top_border_v">top_border_v</dfn>;</td></tr>
+<tr><th id="226">226</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="AVSContext::left_border_y" title='AVSContext::left_border_y' data-ref="AVSContext::left_border_y">left_border_y</dfn>[<var>26</var>], <dfn class="decl" id="AVSContext::left_border_u" title='AVSContext::left_border_u' data-ref="AVSContext::left_border_u">left_border_u</dfn>[<var>10</var>], <dfn class="decl" id="AVSContext::left_border_v" title='AVSContext::left_border_v' data-ref="AVSContext::left_border_v">left_border_v</dfn>[<var>10</var>];</td></tr>
+<tr><th id="227">227</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="AVSContext::intern_border_y" title='AVSContext::intern_border_y' data-ref="AVSContext::intern_border_y">intern_border_y</dfn>[<var>26</var>];</td></tr>
+<tr><th id="228">228</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="AVSContext::topleft_border_y" title='AVSContext::topleft_border_y' data-ref="AVSContext::topleft_border_y">topleft_border_y</dfn>, <dfn class="decl" id="AVSContext::topleft_border_u" title='AVSContext::topleft_border_u' data-ref="AVSContext::topleft_border_u">topleft_border_u</dfn>, <dfn class="decl" id="AVSContext::topleft_border_v" title='AVSContext::topleft_border_v' data-ref="AVSContext::topleft_border_v">topleft_border_v</dfn>;</td></tr>
+<tr><th id="229">229</th><td></td></tr>
+<tr><th id="230">230</th><td>    <em>void</em> (*<dfn class="decl" id="AVSContext::intra_pred_l" title='AVSContext::intra_pred_l' data-ref="AVSContext::intra_pred_l">intra_pred_l</dfn>[<var>8</var>])(<a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col0 decl" id="230d" title='d' data-type='uint8_t *' data-ref="230d">d</dfn>,<a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col1 decl" id="231top" title='top' data-type='uint8_t *' data-ref="231top">top</dfn>,<a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col2 decl" id="232left" title='left' data-type='uint8_t *' data-ref="232left">left</dfn>,<em>int</em> <dfn class="local col3 decl" id="233stride" title='stride' data-type='int' data-ref="233stride">stride</dfn>);</td></tr>
+<tr><th id="231">231</th><td>    <em>void</em> (*<dfn class="decl" id="AVSContext::intra_pred_c" title='AVSContext::intra_pred_c' data-ref="AVSContext::intra_pred_c">intra_pred_c</dfn>[<var>7</var>])(<a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col4 decl" id="234d" title='d' data-type='uint8_t *' data-ref="234d">d</dfn>,<a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col5 decl" id="235top" title='top' data-type='uint8_t *' data-ref="235top">top</dfn>,<a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col6 decl" id="236left" title='left' data-type='uint8_t *' data-ref="236left">left</dfn>,<em>int</em> <dfn class="local col7 decl" id="237stride" title='stride' data-type='int' data-ref="237stride">stride</dfn>);</td></tr>
+<tr><th id="232">232</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="decl" id="AVSContext::col_type_base" title='AVSContext::col_type_base' data-ref="AVSContext::col_type_base">col_type_base</dfn>;</td></tr>
+<tr><th id="233">233</th><td></td></tr>
+<tr><th id="234">234</th><td>    <i>/* scaling factors for MV prediction */</i></td></tr>
+<tr><th id="235">235</th><td>    <em>int</em> <dfn class="decl" id="AVSContext::sym_factor" title='AVSContext::sym_factor' data-ref="AVSContext::sym_factor">sym_factor</dfn>;    <i class="doc">///&lt; for scaling in symmetrical B block</i></td></tr>
+<tr><th id="236">236</th><td>    <em>int</em> <dfn class="decl" id="AVSContext::direct_den" title='AVSContext::direct_den' data-ref="AVSContext::direct_den">direct_den</dfn>[<var>2</var>]; <i class="doc">///&lt; for scaling in direct B block</i></td></tr>
+<tr><th id="237">237</th><td>    <em>int</em> <dfn class="decl" id="AVSContext::scale_den" title='AVSContext::scale_den' data-ref="AVSContext::scale_den">scale_den</dfn>[<var>2</var>];  <i class="doc">///&lt; for scaling neighbouring MVs</i></td></tr>
+<tr><th id="238">238</th><td></td></tr>
+<tr><th id="239">239</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="decl" id="AVSContext::edge_emu_buffer" title='AVSContext::edge_emu_buffer' data-ref="AVSContext::edge_emu_buffer">edge_emu_buffer</dfn>;</td></tr>
+<tr><th id="240">240</th><td></td></tr>
+<tr><th id="241">241</th><td>    <em>int</em> <dfn class="decl" id="AVSContext::got_keyframe" title='AVSContext::got_keyframe' data-ref="AVSContext::got_keyframe">got_keyframe</dfn>;</td></tr>
+<tr><th id="242">242</th><td>    <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> *<dfn class="decl" id="AVSContext::block" title='AVSContext::block' data-ref="AVSContext::block">block</dfn>;</td></tr>
+<tr><th id="243">243</th><td>} <dfn class="typedef" id="AVSContext" title='AVSContext' data-type='struct AVSContext' data-ref="AVSContext">AVSContext</dfn>;</td></tr>
+<tr><th id="244">244</th><td></td></tr>
+<tr><th id="245">245</th><td><b>extern</b> <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a>     <dfn class="decl" id="ff_cavs_chroma_qp" title='ff_cavs_chroma_qp' data-ref="ff_cavs_chroma_qp">ff_cavs_chroma_qp</dfn>[<var>64</var>];</td></tr>
+<tr><th id="246">246</th><td><b>extern</b> <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a>     <dfn class="decl" id="ff_cavs_partition_flags" title='ff_cavs_partition_flags' data-ref="ff_cavs_partition_flags">ff_cavs_partition_flags</dfn>[<var>30</var>];</td></tr>
+<tr><th id="247">247</th><td><b>extern</b> <em>const</em> <a class="typedef" href="#cavs_vector" title='cavs_vector' data-type='struct cavs_vector' data-ref="cavs_vector">cavs_vector</a> <dfn class="decl" id="ff_cavs_intra_mv" title='ff_cavs_intra_mv' data-ref="ff_cavs_intra_mv">ff_cavs_intra_mv</dfn>;</td></tr>
+<tr><th id="248">248</th><td><b>extern</b> <em>const</em> <a class="typedef" href="#cavs_vector" title='cavs_vector' data-type='struct cavs_vector' data-ref="cavs_vector">cavs_vector</a> <dfn class="decl" id="ff_cavs_dir_mv" title='ff_cavs_dir_mv' data-ref="ff_cavs_dir_mv">ff_cavs_dir_mv</dfn>;</td></tr>
+<tr><th id="249">249</th><td></td></tr>
+<tr><th id="250">250</th><td><em>static</em> <b>inline</b> <em>void</em> <dfn class="decl def" id="set_mvs" title='set_mvs' data-ref="set_mvs">set_mvs</dfn>(<a class="typedef" href="#cavs_vector" title='cavs_vector' data-type='struct cavs_vector' data-ref="cavs_vector">cavs_vector</a> *<dfn class="local col8 decl" id="238mv" title='mv' data-type='cavs_vector *' data-ref="238mv">mv</dfn>, <b>enum</b> <a class="type" href="#cavs_block" title='cavs_block' data-ref="cavs_block">cavs_block</a> <dfn class="local col9 decl" id="239size" title='size' data-type='enum cavs_block' data-ref="239size">size</dfn>) {</td></tr>
+<tr><th id="251">251</th><td>    <b>switch</b>(<a class="local col9 ref" href="#239size" title='size' data-ref="239size">size</a>) {</td></tr>
+<tr><th id="252">252</th><td>    <b>case</b> <a class="enum" href="#cavs_block::BLK_16X16" title='cavs_block::BLK_16X16' data-ref="cavs_block::BLK_16X16">BLK_16X16</a>:</td></tr>
+<tr><th id="253">253</th><td>        <a class="local col8 ref" href="#238mv" title='mv' data-ref="238mv">mv</a>[<a class="macro" href="#59" title="4" data-ref="_M/MV_STRIDE">MV_STRIDE</a>  ] = <a class="local col8 ref" href="#238mv" title='mv' data-ref="238mv">mv</a>[<var>0</var>];</td></tr>
+<tr><th id="254">254</th><td>        <a class="local col8 ref" href="#238mv" title='mv' data-ref="238mv">mv</a>[<a class="macro" href="#59" title="4" data-ref="_M/MV_STRIDE">MV_STRIDE</a>+<var>1</var>] = <a class="local col8 ref" href="#238mv" title='mv' data-ref="238mv">mv</a>[<var>0</var>];</td></tr>
+<tr><th id="255">255</th><td>    <b>case</b> <a class="enum" href="#cavs_block::BLK_16X8" title='cavs_block::BLK_16X8' data-ref="cavs_block::BLK_16X8">BLK_16X8</a>:</td></tr>
+<tr><th id="256">256</th><td>        <a class="local col8 ref" href="#238mv" title='mv' data-ref="238mv">mv</a>[<var>1</var>] = <a class="local col8 ref" href="#238mv" title='mv' data-ref="238mv">mv</a>[<var>0</var>];</td></tr>
+<tr><th id="257">257</th><td>        <b>break</b>;</td></tr>
+<tr><th id="258">258</th><td>    <b>case</b> <a class="enum" href="#cavs_block::BLK_8X16" title='cavs_block::BLK_8X16' data-ref="cavs_block::BLK_8X16">BLK_8X16</a>:</td></tr>
+<tr><th id="259">259</th><td>        <a class="local col8 ref" href="#238mv" title='mv' data-ref="238mv">mv</a>[<a class="macro" href="#59" title="4" data-ref="_M/MV_STRIDE">MV_STRIDE</a>] = <a class="local col8 ref" href="#238mv" title='mv' data-ref="238mv">mv</a>[<var>0</var>];</td></tr>
+<tr><th id="260">260</th><td>        <b>break</b>;</td></tr>
+<tr><th id="261">261</th><td>    }</td></tr>
+<tr><th id="262">262</th><td>}</td></tr>
+<tr><th id="263">263</th><td></td></tr>
+<tr><th id="264">264</th><td><em>void</em> <a class="decl" href="cavs.c.html#ff_cavs_filter" title='ff_cavs_filter' data-ref="ff_cavs_filter" id="ff_cavs_filter">ff_cavs_filter</a>(<a class="typedef" href="#AVSContext" title='AVSContext' data-type='struct AVSContext' data-ref="AVSContext">AVSContext</a> *<dfn class="local col0 decl" id="240h" title='h' data-type='AVSContext *' data-ref="240h">h</dfn>, <b>enum</b> <a class="type" href="#cavs_mb" title='cavs_mb' data-ref="cavs_mb">cavs_mb</a> <dfn class="local col1 decl" id="241mb_type" title='mb_type' data-type='enum cavs_mb' data-ref="241mb_type">mb_type</dfn>);</td></tr>
+<tr><th id="265">265</th><td><em>void</em> <a class="decl" href="cavs.c.html#ff_cavs_load_intra_pred_luma" title='ff_cavs_load_intra_pred_luma' data-ref="ff_cavs_load_intra_pred_luma" id="ff_cavs_load_intra_pred_luma">ff_cavs_load_intra_pred_luma</a>(<a class="typedef" href="#AVSContext" title='AVSContext' data-type='struct AVSContext' data-ref="AVSContext">AVSContext</a> *<dfn class="local col2 decl" id="242h" title='h' data-type='AVSContext *' data-ref="242h">h</dfn>, <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col3 decl" id="243top" title='top' data-type='uint8_t *' data-ref="243top">top</dfn>, <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> **<dfn class="local col4 decl" id="244left" title='left' data-type='uint8_t **' data-ref="244left">left</dfn>,</td></tr>
+<tr><th id="266">266</th><td>                                  <em>int</em> <dfn class="local col5 decl" id="245block" title='block' data-type='int' data-ref="245block">block</dfn>);</td></tr>
+<tr><th id="267">267</th><td><em>void</em> <a class="decl" href="cavs.c.html#ff_cavs_load_intra_pred_chroma" title='ff_cavs_load_intra_pred_chroma' data-ref="ff_cavs_load_intra_pred_chroma" id="ff_cavs_load_intra_pred_chroma">ff_cavs_load_intra_pred_chroma</a>(<a class="typedef" href="#AVSContext" title='AVSContext' data-type='struct AVSContext' data-ref="AVSContext">AVSContext</a> *<dfn class="local col6 decl" id="246h" title='h' data-type='AVSContext *' data-ref="246h">h</dfn>);</td></tr>
+<tr><th id="268">268</th><td><em>void</em> <a class="decl" href="cavs.c.html#ff_cavs_modify_mb_i" title='ff_cavs_modify_mb_i' data-ref="ff_cavs_modify_mb_i" id="ff_cavs_modify_mb_i">ff_cavs_modify_mb_i</a>(<a class="typedef" href="#AVSContext" title='AVSContext' data-type='struct AVSContext' data-ref="AVSContext">AVSContext</a> *<dfn class="local col7 decl" id="247h" title='h' data-type='AVSContext *' data-ref="247h">h</dfn>, <em>int</em> *<dfn class="local col8 decl" id="248pred_mode_uv" title='pred_mode_uv' data-type='int *' data-ref="248pred_mode_uv">pred_mode_uv</dfn>);</td></tr>
+<tr><th id="269">269</th><td><em>void</em> <a class="decl" href="cavs.c.html#ff_cavs_inter" title='ff_cavs_inter' data-ref="ff_cavs_inter" id="ff_cavs_inter">ff_cavs_inter</a>(<a class="typedef" href="#AVSContext" title='AVSContext' data-type='struct AVSContext' data-ref="AVSContext">AVSContext</a> *<dfn class="local col9 decl" id="249h" title='h' data-type='AVSContext *' data-ref="249h">h</dfn>, <b>enum</b> <a class="type" href="#cavs_mb" title='cavs_mb' data-ref="cavs_mb">cavs_mb</a> <dfn class="local col0 decl" id="250mb_type" title='mb_type' data-type='enum cavs_mb' data-ref="250mb_type">mb_type</dfn>);</td></tr>
+<tr><th id="270">270</th><td><em>void</em> <a class="decl" href="cavs.c.html#ff_cavs_mv" title='ff_cavs_mv' data-ref="ff_cavs_mv" id="ff_cavs_mv">ff_cavs_mv</a>(<a class="typedef" href="#AVSContext" title='AVSContext' data-type='struct AVSContext' data-ref="AVSContext">AVSContext</a> *<dfn class="local col1 decl" id="251h" title='h' data-type='AVSContext *' data-ref="251h">h</dfn>, <b>enum</b> <a class="type" href="#cavs_mv_loc" title='cavs_mv_loc' data-ref="cavs_mv_loc">cavs_mv_loc</a> <dfn class="local col2 decl" id="252nP" title='nP' data-type='enum cavs_mv_loc' data-ref="252nP">nP</dfn>, <b>enum</b> <a class="type" href="#cavs_mv_loc" title='cavs_mv_loc' data-ref="cavs_mv_loc">cavs_mv_loc</a> <dfn class="local col3 decl" id="253nC" title='nC' data-type='enum cavs_mv_loc' data-ref="253nC">nC</dfn>,</td></tr>
+<tr><th id="271">271</th><td>                <b>enum</b> <a class="type" href="#cavs_mv_pred" title='cavs_mv_pred' data-ref="cavs_mv_pred">cavs_mv_pred</a> <dfn class="local col4 decl" id="254mode" title='mode' data-type='enum cavs_mv_pred' data-ref="254mode">mode</dfn>, <b>enum</b> <a class="type" href="#cavs_block" title='cavs_block' data-ref="cavs_block">cavs_block</a> <dfn class="local col5 decl" id="255size" title='size' data-type='enum cavs_block' data-ref="255size">size</dfn>, <em>int</em> <dfn class="local col6 decl" id="256ref" title='ref' data-type='int' data-ref="256ref">ref</dfn>);</td></tr>
+<tr><th id="272">272</th><td><em>void</em> <a class="decl" href="cavs.c.html#ff_cavs_init_mb" title='ff_cavs_init_mb' data-ref="ff_cavs_init_mb" id="ff_cavs_init_mb">ff_cavs_init_mb</a>(<a class="typedef" href="#AVSContext" title='AVSContext' data-type='struct AVSContext' data-ref="AVSContext">AVSContext</a> *<dfn class="local col7 decl" id="257h" title='h' data-type='AVSContext *' data-ref="257h">h</dfn>);</td></tr>
+<tr><th id="273">273</th><td><em>int</em>  <a class="decl" href="cavs.c.html#ff_cavs_next_mb" title='ff_cavs_next_mb' data-ref="ff_cavs_next_mb" id="ff_cavs_next_mb">ff_cavs_next_mb</a>(<a class="typedef" href="#AVSContext" title='AVSContext' data-type='struct AVSContext' data-ref="AVSContext">AVSContext</a> *<dfn class="local col8 decl" id="258h" title='h' data-type='AVSContext *' data-ref="258h">h</dfn>);</td></tr>
+<tr><th id="274">274</th><td><em>int</em> <a class="decl" href="cavs.c.html#ff_cavs_init_pic" title='ff_cavs_init_pic' data-ref="ff_cavs_init_pic" id="ff_cavs_init_pic">ff_cavs_init_pic</a>(<a class="typedef" href="#AVSContext" title='AVSContext' data-type='struct AVSContext' data-ref="AVSContext">AVSContext</a> *<dfn class="local col9 decl" id="259h" title='h' data-type='AVSContext *' data-ref="259h">h</dfn>);</td></tr>
+<tr><th id="275">275</th><td><em>int</em> <a class="decl" href="cavs.c.html#ff_cavs_init_top_lines" title='ff_cavs_init_top_lines' data-ref="ff_cavs_init_top_lines" id="ff_cavs_init_top_lines">ff_cavs_init_top_lines</a>(<a class="typedef" href="#AVSContext" title='AVSContext' data-type='struct AVSContext' data-ref="AVSContext">AVSContext</a> *<dfn class="local col0 decl" id="260h" title='h' data-type='AVSContext *' data-ref="260h">h</dfn>);</td></tr>
+<tr><th id="276">276</th><td><em>int</em> <a class="decl" href="cavs.c.html#ff_cavs_init" title='ff_cavs_init' data-ref="ff_cavs_init" id="ff_cavs_init">ff_cavs_init</a>(<a class="typedef" href="avcodec.h.html#AVCodecContext" title='AVCodecContext' data-type='struct AVCodecContext' data-ref="AVCodecContext">AVCodecContext</a> *<dfn class="local col1 decl" id="261avctx" title='avctx' data-type='AVCodecContext *' data-ref="261avctx">avctx</dfn>);</td></tr>
+<tr><th id="277">277</th><td><em>int</em> <a class="decl" href="cavs.c.html#ff_cavs_end" title='ff_cavs_end' data-ref="ff_cavs_end" id="ff_cavs_end">ff_cavs_end</a> (<a class="typedef" href="avcodec.h.html#AVCodecContext" title='AVCodecContext' data-type='struct AVCodecContext' data-ref="AVCodecContext">AVCodecContext</a> *<dfn class="local col2 decl" id="262avctx" title='avctx' data-type='AVCodecContext *' data-ref="262avctx">avctx</dfn>);</td></tr>
+<tr><th id="278">278</th><td></td></tr>
+<tr><th id="279">279</th><td><u>#<span data-ppcond="22">endif</span> /* AVCODEC_CAVS_H */</u></td></tr>
+<tr><th id="280">280</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated while processing <a href='cavs.c.html'>ffmpeg/libavcodec/cavs.c</a><br/>Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

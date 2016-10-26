@@ -1,0 +1,222 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>mlpdsp_init.c source code [ffmpeg/libavcodec/x86/mlpdsp_init.c] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavcodec/x86/mlpdsp_init.c'; var root_path = '../../..'; var data_path = '../../../../data';</script>
+<script src='../../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='../..'>ffmpeg</a>/<a href='..'>libavcodec</a>/<a href='./'>x86</a>/<a href='mlpdsp_init.c.html'>mlpdsp_init.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * MLP DSP functions x86-optimized</i></td></tr>
+<tr><th id="3">3</th><td><i> * Copyright (c) 2009 Ramiro Polla</i></td></tr>
+<tr><th id="4">4</th><td><i> *</i></td></tr>
+<tr><th id="5">5</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="8">8</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="9">9</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="10">10</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="11">11</th><td><i> *</i></td></tr>
+<tr><th id="12">12</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="13">13</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="14">14</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="15">15</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="16">16</th><td><i> *</i></td></tr>
+<tr><th id="17">17</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="18">18</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="19">19</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="20">20</th><td><i> */</i></td></tr>
+<tr><th id="21">21</th><td></td></tr>
+<tr><th id="22">22</th><td><u>#include <a href="../../libavutil/attributes.h.html">"libavutil/attributes.h"</a></u></td></tr>
+<tr><th id="23">23</th><td><u>#include <a href="../../libavutil/cpu.h.html">"libavutil/cpu.h"</a></u></td></tr>
+<tr><th id="24">24</th><td><u>#include <a href="../../libavutil/x86/asm.h.html">"libavutil/x86/asm.h"</a></u></td></tr>
+<tr><th id="25">25</th><td><u>#include <a href="../../libavutil/x86/cpu.h.html">"libavutil/x86/cpu.h"</a></u></td></tr>
+<tr><th id="26">26</th><td><u>#include <a href="../mlpdsp.h.html">"libavcodec/mlpdsp.h"</a></u></td></tr>
+<tr><th id="27">27</th><td><u>#include <a href="../mlp.h.html">"libavcodec/mlp.h"</a></u></td></tr>
+<tr><th id="28">28</th><td></td></tr>
+<tr><th id="29">29</th><td><u>#define <dfn class="macro" id="_M/REMATRIX_CHANNEL_FUNC" data-ref="_M/REMATRIX_CHANNEL_FUNC">REMATRIX_CHANNEL_FUNC</dfn>(opt) \</u></td></tr>
+<tr><th id="30">30</th><td><u>void ff_mlp_rematrix_channel_##opt(<a class="typedef" href="../../../include/stdint.h.html#int32_t" title='int32_t' data-type='int' data-ref="int32_t">int32_t</a> *<dfn class="local col1 decl" id="1samples" title='samples' data-type='int32_t *' data-ref="1samples"><dfn class="local col2 decl" id="12samples" title='samples' data-type='int32_t *' data-ref="12samples">samples</dfn></dfn>, \</u></td></tr>
+<tr><th id="31">31</th><td><u>                                   const <a class="typedef" href="../../../include/stdint.h.html#int32_t" title='int32_t' data-type='int' data-ref="int32_t">int32_t</a> *<dfn class="local col2 decl" id="2coeffs" title='coeffs' data-type='const int32_t *' data-ref="2coeffs"><dfn class="local col3 decl" id="13coeffs" title='coeffs' data-type='const int32_t *' data-ref="13coeffs">coeffs</dfn></dfn>, \</u></td></tr>
+<tr><th id="32">32</th><td><u>                                   const <a class="typedef" href="../../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col3 decl" id="3bypassed_lsbs" title='bypassed_lsbs' data-type='const uint8_t *' data-ref="3bypassed_lsbs"><dfn class="local col4 decl" id="14bypassed_lsbs" title='bypassed_lsbs' data-type='const uint8_t *' data-ref="14bypassed_lsbs">bypassed_lsbs</dfn></dfn>, \</u></td></tr>
+<tr><th id="33">33</th><td><u>                                   const <a class="typedef" href="../../../include/stdint.h.html#int8_t" title='int8_t' data-type='signed char' data-ref="int8_t">int8_t</a> *<dfn class="local col4 decl" id="4noise_buffer" title='noise_buffer' data-type='const int8_t *' data-ref="4noise_buffer"><dfn class="local col5 decl" id="15noise_buffer" title='noise_buffer' data-type='const int8_t *' data-ref="15noise_buffer">noise_buffer</dfn></dfn>, \</u></td></tr>
+<tr><th id="34">34</th><td><u>                                   int <dfn class="local col5 decl" id="5index" title='index' data-type='int' data-ref="5index"><dfn class="local col6 decl" id="16index" title='index' data-type='int' data-ref="16index">index</dfn></dfn>, \</u></td></tr>
+<tr><th id="35">35</th><td><u>                                   unsigned int <dfn class="local col6 decl" id="6dest_ch" title='dest_ch' data-type='unsigned int' data-ref="6dest_ch"><dfn class="local col7 decl" id="17dest_ch" title='dest_ch' data-type='unsigned int' data-ref="17dest_ch">dest_ch</dfn></dfn>, \</u></td></tr>
+<tr><th id="36">36</th><td><u>                                   <a class="typedef" href="../../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> <dfn class="local col7 decl" id="7blockpos" title='blockpos' data-type='uint16_t' data-ref="7blockpos"><dfn class="local col8 decl" id="18blockpos" title='blockpos' data-type='uint16_t' data-ref="18blockpos">blockpos</dfn></dfn>, \</u></td></tr>
+<tr><th id="37">37</th><td><u>                                   unsigned int <dfn class="local col8 decl" id="8maxchan" title='maxchan' data-type='unsigned int' data-ref="8maxchan"><dfn class="local col9 decl" id="19maxchan" title='maxchan' data-type='unsigned int' data-ref="19maxchan">maxchan</dfn></dfn>, \</u></td></tr>
+<tr><th id="38">38</th><td><u>                                   int <dfn class="local col9 decl" id="9matrix_noise_shift" title='matrix_noise_shift' data-type='int' data-ref="9matrix_noise_shift"><dfn class="local col0 decl" id="20matrix_noise_shift" title='matrix_noise_shift' data-type='int' data-ref="20matrix_noise_shift">matrix_noise_shift</dfn></dfn>, \</u></td></tr>
+<tr><th id="39">39</th><td><u>                                   int <dfn class="local col0 decl" id="10access_unit_size_pow2" title='access_unit_size_pow2' data-type='int' data-ref="10access_unit_size_pow2"><dfn class="local col1 decl" id="21access_unit_size_pow2" title='access_unit_size_pow2' data-type='int' data-ref="21access_unit_size_pow2">access_unit_size_pow2</dfn></dfn>, \</u></td></tr>
+<tr><th id="40">40</th><td><u>                                   <a class="typedef" href="../../../include/stdint.h.html#int32_t" title='int32_t' data-type='int' data-ref="int32_t">int32_t</a> <dfn class="local col1 decl" id="11mask" title='mask' data-type='int32_t' data-ref="11mask"><dfn class="local col2 decl" id="22mask" title='mask' data-type='int32_t' data-ref="22mask">mask</dfn></dfn>);</u></td></tr>
+<tr><th id="41">41</th><td></td></tr>
+<tr><th id="42">42</th><td><a class="macro" href="#29" title="void ff_mlp_rematrix_channel_sse4(int32_t *samples, const int32_t *coeffs, const uint8_t *bypassed_lsbs, const int8_t *noise_buffer, int index, unsigned int dest_ch, uint16_t blockpos, unsigned int maxchan, int matrix_noise_shift, int access_unit_size_pow2, int32_t mask);" data-ref="_M/REMATRIX_CHANNEL_FUNC">REMATRIX_CHANNEL_FUNC</a>(sse4)</td></tr>
+<tr><th id="43">43</th><td><a class="macro" href="#29" title="void ff_mlp_rematrix_channel_avx2_bmi2(int32_t *samples, const int32_t *coeffs, const uint8_t *bypassed_lsbs, const int8_t *noise_buffer, int index, unsigned int dest_ch, uint16_t blockpos, unsigned int maxchan, int matrix_noise_shift, int access_unit_size_pow2, int32_t mask);" data-ref="_M/REMATRIX_CHANNEL_FUNC">REMATRIX_CHANNEL_FUNC</a>(avx2_bmi2)</td></tr>
+<tr><th id="44">44</th><td></td></tr>
+<tr><th id="45">45</th><td><u>#<span data-ppcond="45">if</span> <a class="macro" href="../../libavutil/x86/asm.h.html#75" title="(1 || (1 &amp;&amp; 0))" data-ref="_M/HAVE_7REGS">HAVE_7REGS</a> &amp;&amp; <a class="macro" href="../../config.h.html#195" title="1" data-ref="_M/HAVE_INLINE_ASM">HAVE_INLINE_ASM</a> &amp;&amp; <a class="macro" href="../../config.h.html#348" title="1" data-ref="_M/HAVE_INLINE_ASM_NONLOCAL_LABELS">HAVE_INLINE_ASM_NONLOCAL_LABELS</a></u></td></tr>
+<tr><th id="46">46</th><td></td></tr>
+<tr><th id="47">47</th><td><b>extern</b> <em>char</em> <dfn class="decl" id="ff_mlp_firorder_8" title='ff_mlp_firorder_8' data-ref="ff_mlp_firorder_8">ff_mlp_firorder_8</dfn>;</td></tr>
+<tr><th id="48">48</th><td><b>extern</b> <em>char</em> <dfn class="decl" id="ff_mlp_firorder_7" title='ff_mlp_firorder_7' data-ref="ff_mlp_firorder_7">ff_mlp_firorder_7</dfn>;</td></tr>
+<tr><th id="49">49</th><td><b>extern</b> <em>char</em> <dfn class="decl" id="ff_mlp_firorder_6" title='ff_mlp_firorder_6' data-ref="ff_mlp_firorder_6">ff_mlp_firorder_6</dfn>;</td></tr>
+<tr><th id="50">50</th><td><b>extern</b> <em>char</em> <dfn class="decl" id="ff_mlp_firorder_5" title='ff_mlp_firorder_5' data-ref="ff_mlp_firorder_5">ff_mlp_firorder_5</dfn>;</td></tr>
+<tr><th id="51">51</th><td><b>extern</b> <em>char</em> <dfn class="decl" id="ff_mlp_firorder_4" title='ff_mlp_firorder_4' data-ref="ff_mlp_firorder_4">ff_mlp_firorder_4</dfn>;</td></tr>
+<tr><th id="52">52</th><td><b>extern</b> <em>char</em> <dfn class="decl" id="ff_mlp_firorder_3" title='ff_mlp_firorder_3' data-ref="ff_mlp_firorder_3">ff_mlp_firorder_3</dfn>;</td></tr>
+<tr><th id="53">53</th><td><b>extern</b> <em>char</em> <dfn class="decl" id="ff_mlp_firorder_2" title='ff_mlp_firorder_2' data-ref="ff_mlp_firorder_2">ff_mlp_firorder_2</dfn>;</td></tr>
+<tr><th id="54">54</th><td><b>extern</b> <em>char</em> <dfn class="decl" id="ff_mlp_firorder_1" title='ff_mlp_firorder_1' data-ref="ff_mlp_firorder_1">ff_mlp_firorder_1</dfn>;</td></tr>
+<tr><th id="55">55</th><td><b>extern</b> <em>char</em> <dfn class="decl" id="ff_mlp_firorder_0" title='ff_mlp_firorder_0' data-ref="ff_mlp_firorder_0">ff_mlp_firorder_0</dfn>;</td></tr>
+<tr><th id="56">56</th><td></td></tr>
+<tr><th id="57">57</th><td><b>extern</b> <em>char</em> <dfn class="decl" id="ff_mlp_iirorder_4" title='ff_mlp_iirorder_4' data-ref="ff_mlp_iirorder_4">ff_mlp_iirorder_4</dfn>;</td></tr>
+<tr><th id="58">58</th><td><b>extern</b> <em>char</em> <dfn class="decl" id="ff_mlp_iirorder_3" title='ff_mlp_iirorder_3' data-ref="ff_mlp_iirorder_3">ff_mlp_iirorder_3</dfn>;</td></tr>
+<tr><th id="59">59</th><td><b>extern</b> <em>char</em> <dfn class="decl" id="ff_mlp_iirorder_2" title='ff_mlp_iirorder_2' data-ref="ff_mlp_iirorder_2">ff_mlp_iirorder_2</dfn>;</td></tr>
+<tr><th id="60">60</th><td><b>extern</b> <em>char</em> <dfn class="decl" id="ff_mlp_iirorder_1" title='ff_mlp_iirorder_1' data-ref="ff_mlp_iirorder_1">ff_mlp_iirorder_1</dfn>;</td></tr>
+<tr><th id="61">61</th><td><b>extern</b> <em>char</em> <dfn class="decl" id="ff_mlp_iirorder_0" title='ff_mlp_iirorder_0' data-ref="ff_mlp_iirorder_0">ff_mlp_iirorder_0</dfn>;</td></tr>
+<tr><th id="62">62</th><td></td></tr>
+<tr><th id="63">63</th><td><em>static</em> <em>const</em> <em>void</em> * <em>const</em> <dfn class="tu decl def" id="firtable" title='firtable' data-type='const void *const [9]' data-ref="firtable">firtable</dfn>[<var>9</var>] = { &amp;<a class="ref" href="#ff_mlp_firorder_0" title='ff_mlp_firorder_0' data-ref="ff_mlp_firorder_0">ff_mlp_firorder_0</a>, &amp;<a class="ref" href="#ff_mlp_firorder_1" title='ff_mlp_firorder_1' data-ref="ff_mlp_firorder_1">ff_mlp_firorder_1</a>,</td></tr>
+<tr><th id="64">64</th><td>                                   &amp;<a class="ref" href="#ff_mlp_firorder_2" title='ff_mlp_firorder_2' data-ref="ff_mlp_firorder_2">ff_mlp_firorder_2</a>, &amp;<a class="ref" href="#ff_mlp_firorder_3" title='ff_mlp_firorder_3' data-ref="ff_mlp_firorder_3">ff_mlp_firorder_3</a>,</td></tr>
+<tr><th id="65">65</th><td>                                   &amp;<a class="ref" href="#ff_mlp_firorder_4" title='ff_mlp_firorder_4' data-ref="ff_mlp_firorder_4">ff_mlp_firorder_4</a>, &amp;<a class="ref" href="#ff_mlp_firorder_5" title='ff_mlp_firorder_5' data-ref="ff_mlp_firorder_5">ff_mlp_firorder_5</a>,</td></tr>
+<tr><th id="66">66</th><td>                                   &amp;<a class="ref" href="#ff_mlp_firorder_6" title='ff_mlp_firorder_6' data-ref="ff_mlp_firorder_6">ff_mlp_firorder_6</a>, &amp;<a class="ref" href="#ff_mlp_firorder_7" title='ff_mlp_firorder_7' data-ref="ff_mlp_firorder_7">ff_mlp_firorder_7</a>,</td></tr>
+<tr><th id="67">67</th><td>                                   &amp;<a class="ref" href="#ff_mlp_firorder_8" title='ff_mlp_firorder_8' data-ref="ff_mlp_firorder_8">ff_mlp_firorder_8</a> };</td></tr>
+<tr><th id="68">68</th><td><em>static</em> <em>const</em> <em>void</em> * <em>const</em> <dfn class="tu decl def" id="iirtable" title='iirtable' data-type='const void *const [5]' data-ref="iirtable">iirtable</dfn>[<var>5</var>] = { &amp;<a class="ref" href="#ff_mlp_iirorder_0" title='ff_mlp_iirorder_0' data-ref="ff_mlp_iirorder_0">ff_mlp_iirorder_0</a>, &amp;<a class="ref" href="#ff_mlp_iirorder_1" title='ff_mlp_iirorder_1' data-ref="ff_mlp_iirorder_1">ff_mlp_iirorder_1</a>,</td></tr>
+<tr><th id="69">69</th><td>                                   &amp;<a class="ref" href="#ff_mlp_iirorder_2" title='ff_mlp_iirorder_2' data-ref="ff_mlp_iirorder_2">ff_mlp_iirorder_2</a>, &amp;<a class="ref" href="#ff_mlp_iirorder_3" title='ff_mlp_iirorder_3' data-ref="ff_mlp_iirorder_3">ff_mlp_iirorder_3</a>,</td></tr>
+<tr><th id="70">70</th><td>                                   &amp;<a class="ref" href="#ff_mlp_iirorder_4" title='ff_mlp_iirorder_4' data-ref="ff_mlp_iirorder_4">ff_mlp_iirorder_4</a> };</td></tr>
+<tr><th id="71">71</th><td></td></tr>
+<tr><th id="72">72</th><td><u>#<span data-ppcond="72">if</span> <a class="macro" href="../../config.h.html#40" title="1" data-ref="_M/ARCH_X86_64">ARCH_X86_64</a></u></td></tr>
+<tr><th id="73">73</th><td></td></tr>
+<tr><th id="74">74</th><td><u>#define <dfn class="macro" id="_M/MLPMUL" data-ref="_M/MLPMUL">MLPMUL</dfn>(label, offset, offs, offc)   \</u></td></tr>
+<tr><th id="75">75</th><td><u>    LABEL_MANGLE(label)":             \n\t" \</u></td></tr>
+<tr><th id="76">76</th><td><u>    "movslq "offset"+"offs"(%0), %%rax\n\t" \</u></td></tr>
+<tr><th id="77">77</th><td><u>    "movslq "offset"+"offc"(%1), %%rdx\n\t" \</u></td></tr>
+<tr><th id="78">78</th><td><u>    "imul                 %%rdx, %%rax\n\t" \</u></td></tr>
+<tr><th id="79">79</th><td><u>    "add                  %%rax, %%rsi\n\t"</u></td></tr>
+<tr><th id="80">80</th><td></td></tr>
+<tr><th id="81">81</th><td><u>#define <dfn class="macro" id="_M/FIRMULREG" data-ref="_M/FIRMULREG">FIRMULREG</dfn>(label, offset, firc)\</u></td></tr>
+<tr><th id="82">82</th><td><u>    LABEL_MANGLE(label)":       \n\t" \</u></td></tr>
+<tr><th id="83">83</th><td><u>    "movslq "#offset"(%0), %%rax\n\t" \</u></td></tr>
+<tr><th id="84">84</th><td><u>    "imul        %"#firc", %%rax\n\t" \</u></td></tr>
+<tr><th id="85">85</th><td><u>    "add            %%rax, %%rsi\n\t"</u></td></tr>
+<tr><th id="86">86</th><td></td></tr>
+<tr><th id="87">87</th><td><u>#define <dfn class="macro" id="_M/CLEAR_ACCUM" data-ref="_M/CLEAR_ACCUM">CLEAR_ACCUM</dfn>                   \</u></td></tr>
+<tr><th id="88">88</th><td><u>    "xor            %%rsi, %%rsi\n\t"</u></td></tr>
+<tr><th id="89">89</th><td></td></tr>
+<tr><th id="90">90</th><td><u>#define <dfn class="macro" id="_M/SHIFT_ACCUM" data-ref="_M/SHIFT_ACCUM">SHIFT_ACCUM</dfn>                   \</u></td></tr>
+<tr><th id="91">91</th><td><u>    "shr     %%cl,         %%rsi\n\t"</u></td></tr>
+<tr><th id="92">92</th><td></td></tr>
+<tr><th id="93">93</th><td><u>#define <dfn class="macro" id="_M/ACCUM" data-ref="_M/ACCUM">ACCUM</dfn>    "%%rdx"</u></td></tr>
+<tr><th id="94">94</th><td><u>#define <dfn class="macro" id="_M/RESULT" data-ref="_M/RESULT">RESULT</dfn>   "%%rsi"</u></td></tr>
+<tr><th id="95">95</th><td><u>#define <dfn class="macro" id="_M/RESULT32" data-ref="_M/RESULT32">RESULT32</dfn> "%%esi"</u></td></tr>
+<tr><th id="96">96</th><td></td></tr>
+<tr><th id="97">97</th><td><u>#<span data-ppcond="72">else</span> /* if ARCH_X86_32 */</u></td></tr>
+<tr><th id="98">98</th><td></td></tr>
+<tr><th id="99">99</th><td><u>#define MLPMUL(label, offset, offs, offc)  \</u></td></tr>
+<tr><th id="100">100</th><td><u>    LABEL_MANGLE(label)":            \n\t" \</u></td></tr>
+<tr><th id="101">101</th><td><u>    "mov   "offset"+"offs"(%0), %%eax\n\t" \</u></td></tr>
+<tr><th id="102">102</th><td><u>    "imull "offset"+"offc"(%1)       \n\t" \</u></td></tr>
+<tr><th id="103">103</th><td><u>    "add                %%eax , %%esi\n\t" \</u></td></tr>
+<tr><th id="104">104</th><td><u>    "adc                %%edx , %%ecx\n\t"</u></td></tr>
+<tr><th id="105">105</th><td></td></tr>
+<tr><th id="106">106</th><td><u>#define FIRMULREG(label, offset, firc)  \</u></td></tr>
+<tr><th id="107">107</th><td><u>    MLPMUL(label, #offset, "0", "0")</u></td></tr>
+<tr><th id="108">108</th><td></td></tr>
+<tr><th id="109">109</th><td><u>#define CLEAR_ACCUM                  \</u></td></tr>
+<tr><th id="110">110</th><td><u>    "xor           %%esi, %%esi\n\t" \</u></td></tr>
+<tr><th id="111">111</th><td><u>    "xor           %%ecx, %%ecx\n\t"</u></td></tr>
+<tr><th id="112">112</th><td></td></tr>
+<tr><th id="113">113</th><td><u>#define SHIFT_ACCUM                  \</u></td></tr>
+<tr><th id="114">114</th><td><u>    "mov           %%ecx, %%edx\n\t" \</u></td></tr>
+<tr><th id="115">115</th><td><u>    "mov           %%esi, %%eax\n\t" \</u></td></tr>
+<tr><th id="116">116</th><td><u>    "movzbl        %7   , %%ecx\n\t" \</u></td></tr>
+<tr><th id="117">117</th><td><u>    "shrd    %%cl, %%edx, %%eax\n\t"</u> \</td></tr>
+<tr><th id="118">118</th><td></td></tr>
+<tr><th id="119">119</th><td><u>#define ACCUM    "%%edx"</u></td></tr>
+<tr><th id="120">120</th><td><u>#define RESULT   "%%eax"</u></td></tr>
+<tr><th id="121">121</th><td><u>#define RESULT32 "%%eax"</u></td></tr>
+<tr><th id="122">122</th><td></td></tr>
+<tr><th id="123">123</th><td><u>#<span data-ppcond="72">endif</span> /* !ARCH_X86_64 */</u></td></tr>
+<tr><th id="124">124</th><td></td></tr>
+<tr><th id="125">125</th><td><u>#define <dfn class="macro" id="_M/BINC" data-ref="_M/BINC">BINC</dfn>  AV_STRINGIFY(4* MAX_CHANNELS)</u></td></tr>
+<tr><th id="126">126</th><td><u>#define <dfn class="macro" id="_M/IOFFS" data-ref="_M/IOFFS">IOFFS</dfn> AV_STRINGIFY(4*(MAX_FIR_ORDER + MAX_BLOCKSIZE))</u></td></tr>
+<tr><th id="127">127</th><td><u>#define <dfn class="macro" id="_M/IOFFC" data-ref="_M/IOFFC">IOFFC</dfn> AV_STRINGIFY(4* MAX_FIR_ORDER)</u></td></tr>
+<tr><th id="128">128</th><td></td></tr>
+<tr><th id="129">129</th><td><u>#define <dfn class="macro" id="_M/FIRMUL" data-ref="_M/FIRMUL">FIRMUL</dfn>(label, offset) MLPMUL(label, #offset,   "0",   "0")</u></td></tr>
+<tr><th id="130">130</th><td><u>#define <dfn class="macro" id="_M/IIRMUL" data-ref="_M/IIRMUL">IIRMUL</dfn>(label, offset) MLPMUL(label, #offset, IOFFS, IOFFC)</u></td></tr>
+<tr><th id="131">131</th><td></td></tr>
+<tr><th id="132">132</th><td><em>static</em> <em>void</em> <dfn class="tu decl def" id="mlp_filter_channel_x86" title='mlp_filter_channel_x86' data-type='void mlp_filter_channel_x86(int32_t * state, const int32_t * coeff, int firorder, int iirorder, unsigned int filter_shift, int32_t mask, int blocksize, int32_t * sample_buffer)' data-ref="mlp_filter_channel_x86">mlp_filter_channel_x86</dfn>(<a class="typedef" href="../../../include/stdint.h.html#int32_t" title='int32_t' data-type='int' data-ref="int32_t">int32_t</a> *<dfn class="local col3 decl" id="23state" title='state' data-type='int32_t *' data-ref="23state">state</dfn>, <em>const</em> <a class="typedef" href="../../../include/stdint.h.html#int32_t" title='int32_t' data-type='int' data-ref="int32_t">int32_t</a> *<dfn class="local col4 decl" id="24coeff" title='coeff' data-type='const int32_t *' data-ref="24coeff">coeff</dfn>,</td></tr>
+<tr><th id="133">133</th><td>                                   <em>int</em> <dfn class="local col5 decl" id="25firorder" title='firorder' data-type='int' data-ref="25firorder">firorder</dfn>, <em>int</em> <dfn class="local col6 decl" id="26iirorder" title='iirorder' data-type='int' data-ref="26iirorder">iirorder</dfn>,</td></tr>
+<tr><th id="134">134</th><td>                                   <em>unsigned</em> <em>int</em> <dfn class="local col7 decl" id="27filter_shift" title='filter_shift' data-type='unsigned int' data-ref="27filter_shift">filter_shift</dfn>, <a class="typedef" href="../../../include/stdint.h.html#int32_t" title='int32_t' data-type='int' data-ref="int32_t">int32_t</a> <dfn class="local col8 decl" id="28mask" title='mask' data-type='int32_t' data-ref="28mask">mask</dfn>,</td></tr>
+<tr><th id="135">135</th><td>                                   <em>int</em> <dfn class="local col9 decl" id="29blocksize" title='blocksize' data-type='int' data-ref="29blocksize">blocksize</dfn>, <a class="typedef" href="../../../include/stdint.h.html#int32_t" title='int32_t' data-type='int' data-ref="int32_t">int32_t</a> *<dfn class="local col0 decl" id="30sample_buffer" title='sample_buffer' data-type='int32_t *' data-ref="30sample_buffer">sample_buffer</dfn>)</td></tr>
+<tr><th id="136">136</th><td>{</td></tr>
+<tr><th id="137">137</th><td>    <em>const</em> <em>void</em> *<dfn class="local col1 decl" id="31firjump" title='firjump' data-type='const void *' data-ref="31firjump">firjump</dfn> = <a class="tu ref" href="#firtable" title='firtable' data-use='r' data-ref="firtable">firtable</a>[<a class="local col5 ref" href="#25firorder" title='firorder' data-ref="25firorder">firorder</a>];</td></tr>
+<tr><th id="138">138</th><td>    <em>const</em> <em>void</em> *<dfn class="local col2 decl" id="32iirjump" title='iirjump' data-type='const void *' data-ref="32iirjump">iirjump</dfn> = <a class="tu ref" href="#iirtable" title='iirtable' data-use='r' data-ref="iirtable">iirtable</a>[<a class="local col6 ref" href="#26iirorder" title='iirorder' data-ref="26iirorder">iirorder</a>];</td></tr>
+<tr><th id="139">139</th><td></td></tr>
+<tr><th id="140">140</th><td>    <a class="local col9 ref" href="#29blocksize" title='blocksize' data-ref="29blocksize">blocksize</a> = -<a class="local col9 ref" href="#29blocksize" title='blocksize' data-ref="29blocksize">blocksize</a>;</td></tr>
+<tr><th id="141">141</th><td></td></tr>
+<tr><th id="142">142</th><td>    <b>__asm__</b> <em>volatile</em>(</td></tr>
+<tr><th id="143">143</th><td>        <q>"1:                           \n\t"</q></td></tr>
+<tr><th id="144">144</th><td>        <a class="macro" href="#87" title="&quot;xor            %%rsi, %%rsi\n\t&quot;" data-ref="_M/CLEAR_ACCUM">CLEAR_ACCUM</a></td></tr>
+<tr><th id="145">145</th><td>        <q>"jmp  *%5                     \n\t"</q></td></tr>
+<tr><th id="146">146</th><td>        <a class="macro" href="#129" title="&quot;&quot; &quot;ff_mlp_firorder_8&quot;&quot;:             \n\t&quot; &quot;movslq &quot;&quot;0x1c&quot;&quot;+&quot;&quot;0&quot;&quot;(%0), %%rax\n\t&quot; &quot;movslq &quot;&quot;0x1c&quot;&quot;+&quot;&quot;0&quot;&quot;(%1), %%rdx\n\t&quot; &quot;imul                 %%rdx, %%rax\n\t&quot; &quot;add                  %%rax, %%rsi\n\t&quot;" data-ref="_M/FIRMUL">FIRMUL</a>   (ff_mlp_firorder_8, <var>0x1c</var>   )</td></tr>
+<tr><th id="147">147</th><td>        <a class="macro" href="#129" title="&quot;&quot; &quot;ff_mlp_firorder_7&quot;&quot;:             \n\t&quot; &quot;movslq &quot;&quot;0x18&quot;&quot;+&quot;&quot;0&quot;&quot;(%0), %%rax\n\t&quot; &quot;movslq &quot;&quot;0x18&quot;&quot;+&quot;&quot;0&quot;&quot;(%1), %%rdx\n\t&quot; &quot;imul                 %%rdx, %%rax\n\t&quot; &quot;add                  %%rax, %%rsi\n\t&quot;" data-ref="_M/FIRMUL">FIRMUL</a>   (ff_mlp_firorder_7, <var>0x18</var>   )</td></tr>
+<tr><th id="148">148</th><td>        <a class="macro" href="#129" title="&quot;&quot; &quot;ff_mlp_firorder_6&quot;&quot;:             \n\t&quot; &quot;movslq &quot;&quot;0x14&quot;&quot;+&quot;&quot;0&quot;&quot;(%0), %%rax\n\t&quot; &quot;movslq &quot;&quot;0x14&quot;&quot;+&quot;&quot;0&quot;&quot;(%1), %%rdx\n\t&quot; &quot;imul                 %%rdx, %%rax\n\t&quot; &quot;add                  %%rax, %%rsi\n\t&quot;" data-ref="_M/FIRMUL">FIRMUL</a>   (ff_mlp_firorder_6, <var>0x14</var>   )</td></tr>
+<tr><th id="149">149</th><td>        <a class="macro" href="#129" title="&quot;&quot; &quot;ff_mlp_firorder_5&quot;&quot;:             \n\t&quot; &quot;movslq &quot;&quot;0x10&quot;&quot;+&quot;&quot;0&quot;&quot;(%0), %%rax\n\t&quot; &quot;movslq &quot;&quot;0x10&quot;&quot;+&quot;&quot;0&quot;&quot;(%1), %%rdx\n\t&quot; &quot;imul                 %%rdx, %%rax\n\t&quot; &quot;add                  %%rax, %%rsi\n\t&quot;" data-ref="_M/FIRMUL">FIRMUL</a>   (ff_mlp_firorder_5, <var>0x10</var>   )</td></tr>
+<tr><th id="150">150</th><td>        <a class="macro" href="#129" title="&quot;&quot; &quot;ff_mlp_firorder_4&quot;&quot;:             \n\t&quot; &quot;movslq &quot;&quot;0x0c&quot;&quot;+&quot;&quot;0&quot;&quot;(%0), %%rax\n\t&quot; &quot;movslq &quot;&quot;0x0c&quot;&quot;+&quot;&quot;0&quot;&quot;(%1), %%rdx\n\t&quot; &quot;imul                 %%rdx, %%rax\n\t&quot; &quot;add                  %%rax, %%rsi\n\t&quot;" data-ref="_M/FIRMUL">FIRMUL</a>   (ff_mlp_firorder_4, <var>0x0c</var>   )</td></tr>
+<tr><th id="151">151</th><td>        <a class="macro" href="#129" title="&quot;&quot; &quot;ff_mlp_firorder_3&quot;&quot;:             \n\t&quot; &quot;movslq &quot;&quot;0x08&quot;&quot;+&quot;&quot;0&quot;&quot;(%0), %%rax\n\t&quot; &quot;movslq &quot;&quot;0x08&quot;&quot;+&quot;&quot;0&quot;&quot;(%1), %%rdx\n\t&quot; &quot;imul                 %%rdx, %%rax\n\t&quot; &quot;add                  %%rax, %%rsi\n\t&quot;" data-ref="_M/FIRMUL">FIRMUL</a>   (ff_mlp_firorder_3, <var>0x08</var>   )</td></tr>
+<tr><th id="152">152</th><td>        <a class="macro" href="#129" title="&quot;&quot; &quot;ff_mlp_firorder_2&quot;&quot;:             \n\t&quot; &quot;movslq &quot;&quot;0x04&quot;&quot;+&quot;&quot;0&quot;&quot;(%0), %%rax\n\t&quot; &quot;movslq &quot;&quot;0x04&quot;&quot;+&quot;&quot;0&quot;&quot;(%1), %%rdx\n\t&quot; &quot;imul                 %%rdx, %%rax\n\t&quot; &quot;add                  %%rax, %%rsi\n\t&quot;" data-ref="_M/FIRMUL">FIRMUL</a>   (ff_mlp_firorder_2, <var>0x04</var>   )</td></tr>
+<tr><th id="153">153</th><td>        <a class="macro" href="#81" title="&quot;&quot; &quot;ff_mlp_firorder_1&quot;&quot;:       \n\t&quot; &quot;movslq &quot;&quot;0x00&quot;&quot;(%0), %%rax\n\t&quot; &quot;imul        %&quot;&quot;8&quot;&quot;, %%rax\n\t&quot; &quot;add            %%rax, %%rsi\n\t&quot;" data-ref="_M/FIRMULREG">FIRMULREG</a>(ff_mlp_firorder_1, <var>0x00</var>, <var>8</var>)</td></tr>
+<tr><th id="154">154</th><td>        <a class="macro" href="../../libavutil/x86/asm.h.html#103" title="&quot;&quot; &quot;ff_mlp_firorder_0&quot;" data-ref="_M/LABEL_MANGLE">LABEL_MANGLE</a>(ff_mlp_firorder_0)<q>":\n\t"</q></td></tr>
+<tr><th id="155">155</th><td>        <q>"jmp  *%6                     \n\t"</q></td></tr>
+<tr><th id="156">156</th><td>        <a class="macro" href="#130" title="&quot;&quot; &quot;ff_mlp_iirorder_4&quot;&quot;:             \n\t&quot; &quot;movslq &quot;&quot;0x0c&quot;&quot;+&quot;&quot;4*(8 + (40 * 4))&quot;&quot;(%0), %%rax\n\t&quot; &quot;movslq &quot;&quot;0x0c&quot;&quot;+&quot;&quot;4* 8&quot;&quot;(%1), %%rdx\n\t&quot; &quot;imul                 %%rdx, %%rax\n\t&quot; &quot;add                  %%rax, %%rsi\n\t&quot;" data-ref="_M/IIRMUL">IIRMUL</a>   (ff_mlp_iirorder_4, <var>0x0c</var>   )</td></tr>
+<tr><th id="157">157</th><td>        <a class="macro" href="#130" title="&quot;&quot; &quot;ff_mlp_iirorder_3&quot;&quot;:             \n\t&quot; &quot;movslq &quot;&quot;0x08&quot;&quot;+&quot;&quot;4*(8 + (40 * 4))&quot;&quot;(%0), %%rax\n\t&quot; &quot;movslq &quot;&quot;0x08&quot;&quot;+&quot;&quot;4* 8&quot;&quot;(%1), %%rdx\n\t&quot; &quot;imul                 %%rdx, %%rax\n\t&quot; &quot;add                  %%rax, %%rsi\n\t&quot;" data-ref="_M/IIRMUL">IIRMUL</a>   (ff_mlp_iirorder_3, <var>0x08</var>   )</td></tr>
+<tr><th id="158">158</th><td>        <a class="macro" href="#130" title="&quot;&quot; &quot;ff_mlp_iirorder_2&quot;&quot;:             \n\t&quot; &quot;movslq &quot;&quot;0x04&quot;&quot;+&quot;&quot;4*(8 + (40 * 4))&quot;&quot;(%0), %%rax\n\t&quot; &quot;movslq &quot;&quot;0x04&quot;&quot;+&quot;&quot;4* 8&quot;&quot;(%1), %%rdx\n\t&quot; &quot;imul                 %%rdx, %%rax\n\t&quot; &quot;add                  %%rax, %%rsi\n\t&quot;" data-ref="_M/IIRMUL">IIRMUL</a>   (ff_mlp_iirorder_2, <var>0x04</var>   )</td></tr>
+<tr><th id="159">159</th><td>        <a class="macro" href="#130" title="&quot;&quot; &quot;ff_mlp_iirorder_1&quot;&quot;:             \n\t&quot; &quot;movslq &quot;&quot;0x00&quot;&quot;+&quot;&quot;4*(8 + (40 * 4))&quot;&quot;(%0), %%rax\n\t&quot; &quot;movslq &quot;&quot;0x00&quot;&quot;+&quot;&quot;4* 8&quot;&quot;(%1), %%rdx\n\t&quot; &quot;imul                 %%rdx, %%rax\n\t&quot; &quot;add                  %%rax, %%rsi\n\t&quot;" data-ref="_M/IIRMUL">IIRMUL</a>   (ff_mlp_iirorder_1, <var>0x00</var>   )</td></tr>
+<tr><th id="160">160</th><td>        <a class="macro" href="../../libavutil/x86/asm.h.html#103" title="&quot;&quot; &quot;ff_mlp_iirorder_0&quot;" data-ref="_M/LABEL_MANGLE">LABEL_MANGLE</a>(ff_mlp_iirorder_0)<q>":\n\t"</q></td></tr>
+<tr><th id="161">161</th><td>        <a class="macro" href="#90" title="&quot;shr     %%cl,         %%rsi\n\t&quot;" data-ref="_M/SHIFT_ACCUM">SHIFT_ACCUM</a></td></tr>
+<tr><th id="162">162</th><td>        <q>"mov  "</q><a class="macro" href="#94" title="&quot;%%rsi&quot;" data-ref="_M/RESULT">RESULT</a><q>"  ,"</q><a class="macro" href="#93" title="&quot;%%rdx&quot;" data-ref="_M/ACCUM">ACCUM</a><q>"      \n\t"</q></td></tr>
+<tr><th id="163">163</th><td>        <q>"add  (%2)      ,"</q><a class="macro" href="#94" title="&quot;%%rsi&quot;" data-ref="_M/RESULT">RESULT</a><q>"     \n\t"</q></td></tr>
+<tr><th id="164">164</th><td>        <q>"and   %4       ,"</q><a class="macro" href="#94" title="&quot;%%rsi&quot;" data-ref="_M/RESULT">RESULT</a><q>"     \n\t"</q></td></tr>
+<tr><th id="165">165</th><td>        <q>"sub   $4       ,  %0         \n\t"</q></td></tr>
+<tr><th id="166">166</th><td>        <q>"mov  "</q><a class="macro" href="#95" title="&quot;%%esi&quot;" data-ref="_M/RESULT32">RESULT32</a><q>", (%0)        \n\t"</q></td></tr>
+<tr><th id="167">167</th><td>        <q>"mov  "</q><a class="macro" href="#95" title="&quot;%%esi&quot;" data-ref="_M/RESULT32">RESULT32</a><q>", (%2)        \n\t"</q></td></tr>
+<tr><th id="168">168</th><td>        <q>"add $"</q><a class="macro" href="#125" title="&quot;4* 8&quot;" data-ref="_M/BINC">BINC</a><q>"    ,  %2         \n\t"</q></td></tr>
+<tr><th id="169">169</th><td>        <q>"sub  "</q><a class="macro" href="#93" title="&quot;%%rdx&quot;" data-ref="_M/ACCUM">ACCUM</a><q>"   ,"</q><a class="macro" href="#94" title="&quot;%%rsi&quot;" data-ref="_M/RESULT">RESULT</a><q>"     \n\t"</q></td></tr>
+<tr><th id="170">170</th><td>        <q>"mov  "</q><a class="macro" href="#95" title="&quot;%%esi&quot;" data-ref="_M/RESULT32">RESULT32</a><q>","</q><a class="macro" href="#126" title="&quot;4*(8 + (40 * 4))&quot;" data-ref="_M/IOFFS">IOFFS</a><q>"(%0)  \n\t"</q></td></tr>
+<tr><th id="171">171</th><td>        <q>"incl              %3         \n\t"</q></td></tr>
+<tr><th id="172">172</th><td>        <q>"js 1b                        \n\t"</q></td></tr>
+<tr><th id="173">173</th><td>        : <i>/* 0*/</i><q>"+r"</q>(<a class="local col3 ref" href="#23state" title='state' data-ref="23state">state</a>),</td></tr>
+<tr><th id="174">174</th><td>          <i>/* 1*/</i><q>"+r"</q>(<a class="local col4 ref" href="#24coeff" title='coeff' data-ref="24coeff">coeff</a>),</td></tr>
+<tr><th id="175">175</th><td>          <i>/* 2*/</i><q>"+r"</q>(<a class="local col0 ref" href="#30sample_buffer" title='sample_buffer' data-ref="30sample_buffer">sample_buffer</a>),</td></tr>
+<tr><th id="176">176</th><td><u>#<span data-ppcond="176">if</span> <a class="macro" href="../../config.h.html#40" title="1" data-ref="_M/ARCH_X86_64">ARCH_X86_64</a></u></td></tr>
+<tr><th id="177">177</th><td>          <i>/* 3*/</i><q>"+r"</q>(<a class="local col9 ref" href="#29blocksize" title='blocksize' data-ref="29blocksize">blocksize</a>)</td></tr>
+<tr><th id="178">178</th><td>        : <i>/* 4*/</i><q>"r"</q>((<a class="typedef" href="../../libavutil/x86/asm.h.html#x86_reg" title='x86_reg' data-type='int64_t' data-ref="x86_reg">x86_reg</a>)<a class="local col8 ref" href="#28mask" title='mask' data-ref="28mask">mask</a>), <i>/* 5*/</i><q>"r"</q>(<a class="local col1 ref" href="#31firjump" title='firjump' data-ref="31firjump">firjump</a>),</td></tr>
+<tr><th id="179">179</th><td>          <i>/* 6*/</i><q>"r"</q>(<a class="local col2 ref" href="#32iirjump" title='iirjump' data-ref="32iirjump">iirjump</a>)      , <i>/* 7*/</i><q>"c"</q>(<a class="local col7 ref" href="#27filter_shift" title='filter_shift' data-ref="27filter_shift">filter_shift</a>)</td></tr>
+<tr><th id="180">180</th><td>        , <i>/* 8*/</i><q>"r"</q>((<a class="typedef" href="../../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a>)<a class="local col4 ref" href="#24coeff" title='coeff' data-ref="24coeff">coeff</a>[<var>0</var>])</td></tr>
+<tr><th id="181">181</th><td>        : <q>"rax"</q>, <q>"rdx"</q>, <q>"rsi"</q></td></tr>
+<tr><th id="182">182</th><td><u>#<span data-ppcond="176">else</span> /* ARCH_X86_32 */</u></td></tr>
+<tr><th id="183">183</th><td>          <i>/* 3*/</i><q>"+m"</q>(blocksize)</td></tr>
+<tr><th id="184">184</th><td>        : <i>/* 4*/</i><q>"m"</q>(         mask), <i>/* 5*/</i><q>"m"</q>(firjump),</td></tr>
+<tr><th id="185">185</th><td>          <i>/* 6*/</i><q>"m"</q>(iirjump)      , <i>/* 7*/</i><q>"m"</q>(filter_shift)</td></tr>
+<tr><th id="186">186</th><td>        : <q>"eax"</q>, <q>"edx"</q>, <q>"esi"</q>, <q>"ecx"</q></td></tr>
+<tr><th id="187">187</th><td><u>#<span data-ppcond="176">endif</span> /* !ARCH_X86_64 */</u></td></tr>
+<tr><th id="188">188</th><td>    );</td></tr>
+<tr><th id="189">189</th><td>}</td></tr>
+<tr><th id="190">190</th><td></td></tr>
+<tr><th id="191">191</th><td><u>#<span data-ppcond="45">endif</span> /* HAVE_7REGS &amp;&amp; HAVE_INLINE_ASM */</u></td></tr>
+<tr><th id="192">192</th><td></td></tr>
+<tr><th id="193">193</th><td><a class="macro" href="../../libavutil/attributes.h.html#84" title="" data-ref="_M/av_cold">av_cold</a> <em>void</em> <dfn class="decl def" id="ff_mlpdsp_init_x86" title='ff_mlpdsp_init_x86' data-ref="ff_mlpdsp_init_x86">ff_mlpdsp_init_x86</dfn>(<a class="typedef" href="../mlpdsp.h.html#MLPDSPContext" title='MLPDSPContext' data-type='struct MLPDSPContext' data-ref="MLPDSPContext">MLPDSPContext</a> *<dfn class="local col3 decl" id="33c" title='c' data-type='MLPDSPContext *' data-ref="33c">c</dfn>)</td></tr>
+<tr><th id="194">194</th><td>{</td></tr>
+<tr><th id="195">195</th><td>    <em>int</em> <dfn class="local col4 decl" id="34cpu_flags" title='cpu_flags' data-type='int' data-ref="34cpu_flags">cpu_flags</dfn> = <a class="ref" href="../../libavutil/cpu.h.html#av_get_cpu_flags" title='av_get_cpu_flags' data-ref="av_get_cpu_flags">av_get_cpu_flags</a>();</td></tr>
+<tr><th id="196">196</th><td><u>#<span data-ppcond="196">if</span> <a class="macro" href="../../libavutil/x86/asm.h.html#75" title="(1 || (1 &amp;&amp; 0))" data-ref="_M/HAVE_7REGS">HAVE_7REGS</a> &amp;&amp; <a class="macro" href="../../config.h.html#195" title="1" data-ref="_M/HAVE_INLINE_ASM">HAVE_INLINE_ASM</a> &amp;&amp; <a class="macro" href="../../config.h.html#348" title="1" data-ref="_M/HAVE_INLINE_ASM_NONLOCAL_LABELS">HAVE_INLINE_ASM_NONLOCAL_LABELS</a></u></td></tr>
+<tr><th id="197">197</th><td>    <b>if</b> (<a class="macro" href="../../libavutil/x86/cpu.h.html#81" title="(1 &amp;&amp; ((cpu_flags) &amp; 0x0001))" data-ref="_M/INLINE_MMX">INLINE_MMX</a>(<a class="local col4 ref" href="#34cpu_flags" title='cpu_flags' data-ref="34cpu_flags">cpu_flags</a>))</td></tr>
+<tr><th id="198">198</th><td>        <a class="local col3 ref" href="#33c" title='c' data-ref="33c">c</a>-&gt;<a class="ref" href="../mlpdsp.h.html#MLPDSPContext::mlp_filter_channel" title='MLPDSPContext::mlp_filter_channel' data-ref="MLPDSPContext::mlp_filter_channel">mlp_filter_channel</a> = <a class="tu ref" href="#mlp_filter_channel_x86" title='mlp_filter_channel_x86' data-use='r' data-ref="mlp_filter_channel_x86">mlp_filter_channel_x86</a>;</td></tr>
+<tr><th id="199">199</th><td><u>#<span data-ppcond="196">endif</span></u></td></tr>
+<tr><th id="200">200</th><td>    <b>if</b> (<a class="macro" href="../../config.h.html#40" title="1" data-ref="_M/ARCH_X86_64">ARCH_X86_64</a> &amp;&amp; <a class="macro" href="../../libavutil/x86/cpu.h.html#64" title="(1 &amp;&amp; ((cpu_flags) &amp; 0x0100))" data-ref="_M/EXTERNAL_SSE4">EXTERNAL_SSE4</a>(<a class="local col4 ref" href="#34cpu_flags" title='cpu_flags' data-ref="34cpu_flags">cpu_flags</a>))</td></tr>
+<tr><th id="201">201</th><td>        <a class="local col3 ref" href="#33c" title='c' data-ref="33c">c</a>-&gt;<a class="ref" href="../mlpdsp.h.html#MLPDSPContext::mlp_rematrix_channel" title='MLPDSPContext::mlp_rematrix_channel' data-ref="MLPDSPContext::mlp_rematrix_channel">mlp_rematrix_channel</a> = <a class="ref" href="#42" title='ff_mlp_rematrix_channel_sse4' data-ref="ff_mlp_rematrix_channel_sse4">ff_mlp_rematrix_channel_sse4</a>;</td></tr>
+<tr><th id="202">202</th><td>    <b>if</b> (<a class="macro" href="../../config.h.html#40" title="1" data-ref="_M/ARCH_X86_64">ARCH_X86_64</a> &amp;&amp; <a class="macro" href="../../libavutil/x86/cpu.h.html#75" title="(1 &amp;&amp; ((cpu_flags) &amp; 0x8000) &amp;&amp; !((cpu_flags) &amp; 0x8000000))" data-ref="_M/EXTERNAL_AVX2_FAST">EXTERNAL_AVX2_FAST</a>(<a class="local col4 ref" href="#34cpu_flags" title='cpu_flags' data-ref="34cpu_flags">cpu_flags</a>) &amp;&amp; <a class="local col4 ref" href="#34cpu_flags" title='cpu_flags' data-ref="34cpu_flags">cpu_flags</a> &amp; <a class="macro" href="../../libavutil/cpu.h.html#54" title="0x40000" data-ref="_M/AV_CPU_FLAG_BMI2">AV_CPU_FLAG_BMI2</a>)</td></tr>
+<tr><th id="203">203</th><td>        <a class="local col3 ref" href="#33c" title='c' data-ref="33c">c</a>-&gt;<a class="ref" href="../mlpdsp.h.html#MLPDSPContext::mlp_rematrix_channel" title='MLPDSPContext::mlp_rematrix_channel' data-ref="MLPDSPContext::mlp_rematrix_channel">mlp_rematrix_channel</a> = <a class="ref" href="#43" title='ff_mlp_rematrix_channel_avx2_bmi2' data-ref="ff_mlp_rematrix_channel_avx2_bmi2">ff_mlp_rematrix_channel_avx2_bmi2</a>;</td></tr>
+<tr><th id="204">204</th><td>}</td></tr>
+<tr><th id="205">205</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

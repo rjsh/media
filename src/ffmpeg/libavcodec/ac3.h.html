@@ -1,0 +1,281 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>ac3.h source code [ffmpeg/libavcodec/ac3.h] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="AC3BitAllocParameters,AC3DolbyHeadphoneMode,AC3DolbySurroundEXMode,AC3DolbySurroundMode,AC3HeaderInfo,AC3PreferredStereoDownmixMode "/>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavcodec/ac3.h'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavcodec</a>/<a href='ac3.h.html'>ac3.h</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * Common code between the AC-3 encoder and decoder</i></td></tr>
+<tr><th id="3">3</th><td><i> * Copyright (c) 2000, 2001, 2002 Fabrice Bellard</i></td></tr>
+<tr><th id="4">4</th><td><i> *</i></td></tr>
+<tr><th id="5">5</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="8">8</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="9">9</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="10">10</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="11">11</th><td><i> *</i></td></tr>
+<tr><th id="12">12</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="13">13</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="14">14</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="15">15</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="16">16</th><td><i> *</i></td></tr>
+<tr><th id="17">17</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="18">18</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="19">19</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="20">20</th><td><i> */</i></td></tr>
+<tr><th id="21">21</th><td></td></tr>
+<tr><th id="22">22</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="23">23</th><td><i class="doc"> *<span class="command"> @file</span></i></td></tr>
+<tr><th id="24">24</th><td><i class="doc"> * Common code between the AC-3 encoder and decoder.</i></td></tr>
+<tr><th id="25">25</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="26">26</th><td></td></tr>
+<tr><th id="27">27</th><td><u>#<span data-ppcond="27">ifndef</span> <span class="macro" data-ref="_M/AVCODEC_AC3_H">AVCODEC_AC3_H</span></u></td></tr>
+<tr><th id="28">28</th><td><u>#define <dfn class="macro" id="_M/AVCODEC_AC3_H" data-ref="_M/AVCODEC_AC3_H">AVCODEC_AC3_H</dfn></u></td></tr>
+<tr><th id="29">29</th><td></td></tr>
+<tr><th id="30">30</th><td><u>#define <dfn class="macro" id="_M/AC3_MAX_CODED_FRAME_SIZE" data-ref="_M/AC3_MAX_CODED_FRAME_SIZE">AC3_MAX_CODED_FRAME_SIZE</dfn> 3840 /* in bytes */</u></td></tr>
+<tr><th id="31">31</th><td><u>#define <dfn class="macro" id="_M/AC3_MAX_CHANNELS" data-ref="_M/AC3_MAX_CHANNELS">AC3_MAX_CHANNELS</dfn> 7            /**&lt; maximum number of channels, including coupling channel */</u></td></tr>
+<tr><th id="32">32</th><td><u>#define <dfn class="macro" id="_M/CPL_CH" data-ref="_M/CPL_CH">CPL_CH</dfn> 0                      /**&lt; coupling channel index */</u></td></tr>
+<tr><th id="33">33</th><td></td></tr>
+<tr><th id="34">34</th><td><u>#define <dfn class="macro" id="_M/AC3_MAX_COEFS" data-ref="_M/AC3_MAX_COEFS">AC3_MAX_COEFS</dfn>   256</u></td></tr>
+<tr><th id="35">35</th><td><u>#define <dfn class="macro" id="_M/AC3_BLOCK_SIZE" data-ref="_M/AC3_BLOCK_SIZE">AC3_BLOCK_SIZE</dfn>  256</u></td></tr>
+<tr><th id="36">36</th><td><u>#define <dfn class="macro" id="_M/AC3_MAX_BLOCKS" data-ref="_M/AC3_MAX_BLOCKS">AC3_MAX_BLOCKS</dfn>    6</u></td></tr>
+<tr><th id="37">37</th><td><u>#define <dfn class="macro" id="_M/AC3_FRAME_SIZE" data-ref="_M/AC3_FRAME_SIZE">AC3_FRAME_SIZE</dfn> (AC3_MAX_BLOCKS * 256)</u></td></tr>
+<tr><th id="38">38</th><td><u>#define <dfn class="macro" id="_M/AC3_WINDOW_SIZE" data-ref="_M/AC3_WINDOW_SIZE">AC3_WINDOW_SIZE</dfn> (AC3_BLOCK_SIZE * 2)</u></td></tr>
+<tr><th id="39">39</th><td><u>#define <dfn class="macro" id="_M/AC3_CRITICAL_BANDS" data-ref="_M/AC3_CRITICAL_BANDS">AC3_CRITICAL_BANDS</dfn> 50</u></td></tr>
+<tr><th id="40">40</th><td><u>#define <dfn class="macro" id="_M/AC3_MAX_CPL_BANDS" data-ref="_M/AC3_MAX_CPL_BANDS">AC3_MAX_CPL_BANDS</dfn>  18</u></td></tr>
+<tr><th id="41">41</th><td></td></tr>
+<tr><th id="42">42</th><td><u>#include <a href="../libavutil/opt.h.html">"libavutil/opt.h"</a></u></td></tr>
+<tr><th id="43">43</th><td><u>#include <a href="avcodec.h.html">"avcodec.h"</a></u></td></tr>
+<tr><th id="44">44</th><td><u>#include <a href="ac3tab.h.html">"ac3tab.h"</a></u></td></tr>
+<tr><th id="45">45</th><td></td></tr>
+<tr><th id="46">46</th><td><i>/* exponent encoding strategy */</i></td></tr>
+<tr><th id="47">47</th><td><u>#define <dfn class="macro" id="_M/EXP_REUSE" data-ref="_M/EXP_REUSE">EXP_REUSE</dfn> 0</u></td></tr>
+<tr><th id="48">48</th><td><u>#define <dfn class="macro" id="_M/EXP_NEW" data-ref="_M/EXP_NEW">EXP_NEW</dfn>   1</u></td></tr>
+<tr><th id="49">49</th><td></td></tr>
+<tr><th id="50">50</th><td><u>#define <dfn class="macro" id="_M/EXP_D15" data-ref="_M/EXP_D15">EXP_D15</dfn>   1</u></td></tr>
+<tr><th id="51">51</th><td><u>#define <dfn class="macro" id="_M/EXP_D25" data-ref="_M/EXP_D25">EXP_D25</dfn>   2</u></td></tr>
+<tr><th id="52">52</th><td><u>#define <dfn class="macro" id="_M/EXP_D45" data-ref="_M/EXP_D45">EXP_D45</dfn>   3</u></td></tr>
+<tr><th id="53">53</th><td></td></tr>
+<tr><th id="54">54</th><td><u>#<span data-ppcond="54">ifndef</span> <span class="macro" data-ref="_M/USE_FIXED">USE_FIXED</span></u></td></tr>
+<tr><th id="55">55</th><td><u>#define <dfn class="macro" id="_M/USE_FIXED" data-ref="_M/USE_FIXED">USE_FIXED</dfn> 0</u></td></tr>
+<tr><th id="56">56</th><td><u>#<span data-ppcond="54">endif</span></u></td></tr>
+<tr><th id="57">57</th><td></td></tr>
+<tr><th id="58">58</th><td><u>#<span data-ppcond="58">if</span> <a class="macro" href="#55" title="0" data-ref="_M/USE_FIXED">USE_FIXED</a></u></td></tr>
+<tr><th id="59">59</th><td></td></tr>
+<tr><th id="60">60</th><td><u>#define FFT_FLOAT 0</u></td></tr>
+<tr><th id="61">61</th><td></td></tr>
+<tr><th id="62">62</th><td><u>#define FIXR(a)                 ((int)((a) * 0 + 0.5))</u></td></tr>
+<tr><th id="63">63</th><td><u>#define FIXR12(a)               ((int)((a) * 4096 + 0.5))</u></td></tr>
+<tr><th id="64">64</th><td><u>#define FIXR15(a)               ((int)((a) * 32768 + 0.5))</u></td></tr>
+<tr><th id="65">65</th><td><u>#define ROUND15(x)              ((x) + 16384) &gt;&gt; 15</u></td></tr>
+<tr><th id="66">66</th><td></td></tr>
+<tr><th id="67">67</th><td><u>#define AC3_RENAME(x)           x ## _fixed</u></td></tr>
+<tr><th id="68">68</th><td><u>#define AC3_NORM(norm)          (1&lt;&lt;24)/(norm)</u></td></tr>
+<tr><th id="69">69</th><td><u>#define AC3_MUL(a,b)            ((((int64_t) (a)) * (b))&gt;&gt;12)</u></td></tr>
+<tr><th id="70">70</th><td><u>#define AC3_RANGE(x)            ((x)|(((x)&amp;128)&lt;&lt;1))</u></td></tr>
+<tr><th id="71">71</th><td><u>#define AC3_HEAVY_RANGE(x)      ((x)&lt;&lt;1)</u></td></tr>
+<tr><th id="72">72</th><td><u>#define AC3_DYNAMIC_RANGE(x)    (x)</u></td></tr>
+<tr><th id="73">73</th><td><u>#define AC3_SPX_BLEND(x)        (x)</u></td></tr>
+<tr><th id="74">74</th><td><u>#define AC3_DYNAMIC_RANGE1      0</u></td></tr>
+<tr><th id="75">75</th><td></td></tr>
+<tr><th id="76">76</th><td><b>typedef</b> <em>int</em>                     INTFLOAT;</td></tr>
+<tr><th id="77">77</th><td><b>typedef</b> int16_t                 SHORTFLOAT;</td></tr>
+<tr><th id="78">78</th><td></td></tr>
+<tr><th id="79">79</th><td><u>#<span data-ppcond="58">else</span> /* USE_FIXED */</u></td></tr>
+<tr><th id="80">80</th><td></td></tr>
+<tr><th id="81">81</th><td><u>#define <dfn class="macro" id="_M/FIXR" data-ref="_M/FIXR">FIXR</dfn>(x)                 ((float)(x))</u></td></tr>
+<tr><th id="82">82</th><td><u>#define <dfn class="macro" id="_M/FIXR12" data-ref="_M/FIXR12">FIXR12</dfn>(x)               ((float)(x))</u></td></tr>
+<tr><th id="83">83</th><td><u>#define <dfn class="macro" id="_M/FIXR15" data-ref="_M/FIXR15">FIXR15</dfn>(x)               ((float)(x))</u></td></tr>
+<tr><th id="84">84</th><td><u>#define <dfn class="macro" id="_M/ROUND15" data-ref="_M/ROUND15">ROUND15</dfn>(x)              (x)</u></td></tr>
+<tr><th id="85">85</th><td></td></tr>
+<tr><th id="86">86</th><td><u>#define <dfn class="macro" id="_M/AC3_RENAME" data-ref="_M/AC3_RENAME">AC3_RENAME</dfn>(x)           x</u></td></tr>
+<tr><th id="87">87</th><td><u>#define <dfn class="macro" id="_M/AC3_NORM" data-ref="_M/AC3_NORM">AC3_NORM</dfn>(norm)          (1.0f/(norm))</u></td></tr>
+<tr><th id="88">88</th><td><u>#define <dfn class="macro" id="_M/AC3_MUL" data-ref="_M/AC3_MUL">AC3_MUL</dfn>(a,b)            ((a) * (b))</u></td></tr>
+<tr><th id="89">89</th><td><u>#define <dfn class="macro" id="_M/AC3_RANGE" data-ref="_M/AC3_RANGE">AC3_RANGE</dfn>(x)            (dynamic_range_tab[(x)])</u></td></tr>
+<tr><th id="90">90</th><td><u>#define <dfn class="macro" id="_M/AC3_HEAVY_RANGE" data-ref="_M/AC3_HEAVY_RANGE">AC3_HEAVY_RANGE</dfn>(x)      (ff_ac3_heavy_dynamic_range_tab[(x)])</u></td></tr>
+<tr><th id="91">91</th><td><u>#define <dfn class="macro" id="_M/AC3_DYNAMIC_RANGE" data-ref="_M/AC3_DYNAMIC_RANGE">AC3_DYNAMIC_RANGE</dfn>(x)    (powf(x,  s-&gt;drc_scale))</u></td></tr>
+<tr><th id="92">92</th><td><u>#define <dfn class="macro" id="_M/AC3_SPX_BLEND" data-ref="_M/AC3_SPX_BLEND">AC3_SPX_BLEND</dfn>(x)        (x)* (1.0f/32)</u></td></tr>
+<tr><th id="93">93</th><td><u>#define <dfn class="macro" id="_M/AC3_DYNAMIC_RANGE1" data-ref="_M/AC3_DYNAMIC_RANGE1">AC3_DYNAMIC_RANGE1</dfn>      1.0f</u></td></tr>
+<tr><th id="94">94</th><td></td></tr>
+<tr><th id="95">95</th><td><b>typedef</b> <em>float</em>                   <dfn class="typedef" id="INTFLOAT" title='INTFLOAT' data-type='float' data-ref="INTFLOAT">INTFLOAT</dfn>;</td></tr>
+<tr><th id="96">96</th><td><b>typedef</b> <em>float</em>                   <dfn class="typedef" id="SHORTFLOAT" title='SHORTFLOAT' data-type='float' data-ref="SHORTFLOAT">SHORTFLOAT</dfn>;</td></tr>
+<tr><th id="97">97</th><td></td></tr>
+<tr><th id="98">98</th><td><u>#<span data-ppcond="58">endif</span> /* USE_FIXED */</u></td></tr>
+<tr><th id="99">99</th><td></td></tr>
+<tr><th id="100">100</th><td><u>#define <dfn class="macro" id="_M/AC3_LEVEL" data-ref="_M/AC3_LEVEL">AC3_LEVEL</dfn>(x)            ROUND15((x) * FIXR15(M_SQRT1_2))</u></td></tr>
+<tr><th id="101">101</th><td></td></tr>
+<tr><th id="102">102</th><td><i>/* pre-defined gain values */</i></td></tr>
+<tr><th id="103">103</th><td><u>#define <dfn class="macro" id="_M/LEVEL_PLUS_3DB" data-ref="_M/LEVEL_PLUS_3DB">LEVEL_PLUS_3DB</dfn>          M_SQRT2</u></td></tr>
+<tr><th id="104">104</th><td><u>#define <dfn class="macro" id="_M/LEVEL_PLUS_1POINT5DB" data-ref="_M/LEVEL_PLUS_1POINT5DB">LEVEL_PLUS_1POINT5DB</dfn>    1.1892071150027209</u></td></tr>
+<tr><th id="105">105</th><td><u>#define <dfn class="macro" id="_M/LEVEL_MINUS_1POINT5DB" data-ref="_M/LEVEL_MINUS_1POINT5DB">LEVEL_MINUS_1POINT5DB</dfn>   0.8408964152537145</u></td></tr>
+<tr><th id="106">106</th><td><u>#define <dfn class="macro" id="_M/LEVEL_MINUS_3DB" data-ref="_M/LEVEL_MINUS_3DB">LEVEL_MINUS_3DB</dfn>         M_SQRT1_2</u></td></tr>
+<tr><th id="107">107</th><td><u>#define <dfn class="macro" id="_M/LEVEL_MINUS_4POINT5DB" data-ref="_M/LEVEL_MINUS_4POINT5DB">LEVEL_MINUS_4POINT5DB</dfn>   0.5946035575013605</u></td></tr>
+<tr><th id="108">108</th><td><u>#define <dfn class="macro" id="_M/LEVEL_MINUS_6DB" data-ref="_M/LEVEL_MINUS_6DB">LEVEL_MINUS_6DB</dfn>         0.5000000000000000</u></td></tr>
+<tr><th id="109">109</th><td><u>#define <dfn class="macro" id="_M/LEVEL_MINUS_9DB" data-ref="_M/LEVEL_MINUS_9DB">LEVEL_MINUS_9DB</dfn>         0.3535533905932738</u></td></tr>
+<tr><th id="110">110</th><td><u>#define <dfn class="macro" id="_M/LEVEL_ZERO" data-ref="_M/LEVEL_ZERO">LEVEL_ZERO</dfn>              0.0000000000000000</u></td></tr>
+<tr><th id="111">111</th><td><u>#define <dfn class="macro" id="_M/LEVEL_ONE" data-ref="_M/LEVEL_ONE">LEVEL_ONE</dfn>               1.0000000000000000</u></td></tr>
+<tr><th id="112">112</th><td></td></tr>
+<tr><th id="113">113</th><td><i class="doc">/** Delta bit allocation strategy */</i></td></tr>
+<tr><th id="114">114</th><td><b>typedef</b> <b>enum</b> {</td></tr>
+<tr><th id="115">115</th><td>    <dfn class="enum" id="::DBA_REUSE" title='::DBA_REUSE' data-ref="::DBA_REUSE">DBA_REUSE</dfn> = <var>0</var>,</td></tr>
+<tr><th id="116">116</th><td>    <dfn class="enum" id="::DBA_NEW" title='::DBA_NEW' data-ref="::DBA_NEW">DBA_NEW</dfn>,</td></tr>
+<tr><th id="117">117</th><td>    <dfn class="enum" id="::DBA_NONE" title='::DBA_NONE' data-ref="::DBA_NONE">DBA_NONE</dfn>,</td></tr>
+<tr><th id="118">118</th><td>    <dfn class="enum" id="::DBA_RESERVED" title='::DBA_RESERVED' data-ref="::DBA_RESERVED">DBA_RESERVED</dfn></td></tr>
+<tr><th id="119">119</th><td>} <dfn class="typedef" id="AC3DeltaStrategy" title='AC3DeltaStrategy' data-type='enum AC3DeltaStrategy' data-ref="AC3DeltaStrategy">AC3DeltaStrategy</dfn>;</td></tr>
+<tr><th id="120">120</th><td></td></tr>
+<tr><th id="121">121</th><td><i class="doc">/** Channel mode (audio coding mode) */</i></td></tr>
+<tr><th id="122">122</th><td><b>typedef</b> <b>enum</b> {</td></tr>
+<tr><th id="123">123</th><td>    <dfn class="enum" id="::AC3_CHMODE_DUALMONO" title='::AC3_CHMODE_DUALMONO' data-ref="::AC3_CHMODE_DUALMONO">AC3_CHMODE_DUALMONO</dfn> = <var>0</var>,</td></tr>
+<tr><th id="124">124</th><td>    <dfn class="enum" id="::AC3_CHMODE_MONO" title='::AC3_CHMODE_MONO' data-ref="::AC3_CHMODE_MONO">AC3_CHMODE_MONO</dfn>,</td></tr>
+<tr><th id="125">125</th><td>    <dfn class="enum" id="::AC3_CHMODE_STEREO" title='::AC3_CHMODE_STEREO' data-ref="::AC3_CHMODE_STEREO">AC3_CHMODE_STEREO</dfn>,</td></tr>
+<tr><th id="126">126</th><td>    <dfn class="enum" id="::AC3_CHMODE_3F" title='::AC3_CHMODE_3F' data-ref="::AC3_CHMODE_3F">AC3_CHMODE_3F</dfn>,</td></tr>
+<tr><th id="127">127</th><td>    <dfn class="enum" id="::AC3_CHMODE_2F1R" title='::AC3_CHMODE_2F1R' data-ref="::AC3_CHMODE_2F1R">AC3_CHMODE_2F1R</dfn>,</td></tr>
+<tr><th id="128">128</th><td>    <dfn class="enum" id="::AC3_CHMODE_3F1R" title='::AC3_CHMODE_3F1R' data-ref="::AC3_CHMODE_3F1R">AC3_CHMODE_3F1R</dfn>,</td></tr>
+<tr><th id="129">129</th><td>    <dfn class="enum" id="::AC3_CHMODE_2F2R" title='::AC3_CHMODE_2F2R' data-ref="::AC3_CHMODE_2F2R">AC3_CHMODE_2F2R</dfn>,</td></tr>
+<tr><th id="130">130</th><td>    <dfn class="enum" id="::AC3_CHMODE_3F2R" title='::AC3_CHMODE_3F2R' data-ref="::AC3_CHMODE_3F2R">AC3_CHMODE_3F2R</dfn></td></tr>
+<tr><th id="131">131</th><td>} <dfn class="typedef" id="AC3ChannelMode" title='AC3ChannelMode' data-type='enum AC3ChannelMode' data-ref="AC3ChannelMode">AC3ChannelMode</dfn>;</td></tr>
+<tr><th id="132">132</th><td></td></tr>
+<tr><th id="133">133</th><td><i class="doc">/** Dolby Surround mode */</i></td></tr>
+<tr><th id="134">134</th><td><b>typedef</b> <b>enum</b> <dfn class="type def" id="AC3DolbySurroundMode" title='AC3DolbySurroundMode' data-ref="AC3DolbySurroundMode"><a class="type" href="#AC3DolbySurroundMode" title='AC3DolbySurroundMode' data-ref="AC3DolbySurroundMode">AC3DolbySurroundMode</a></dfn> {</td></tr>
+<tr><th id="135">135</th><td>    <dfn class="enum" id="AC3DolbySurroundMode::AC3_DSURMOD_NOTINDICATED" title='AC3DolbySurroundMode::AC3_DSURMOD_NOTINDICATED' data-ref="AC3DolbySurroundMode::AC3_DSURMOD_NOTINDICATED">AC3_DSURMOD_NOTINDICATED</dfn> = <var>0</var>,</td></tr>
+<tr><th id="136">136</th><td>    <dfn class="enum" id="AC3DolbySurroundMode::AC3_DSURMOD_OFF" title='AC3DolbySurroundMode::AC3_DSURMOD_OFF' data-ref="AC3DolbySurroundMode::AC3_DSURMOD_OFF">AC3_DSURMOD_OFF</dfn>,</td></tr>
+<tr><th id="137">137</th><td>    <dfn class="enum" id="AC3DolbySurroundMode::AC3_DSURMOD_ON" title='AC3DolbySurroundMode::AC3_DSURMOD_ON' data-ref="AC3DolbySurroundMode::AC3_DSURMOD_ON">AC3_DSURMOD_ON</dfn>,</td></tr>
+<tr><th id="138">138</th><td>    <dfn class="enum" id="AC3DolbySurroundMode::AC3_DSURMOD_RESERVED" title='AC3DolbySurroundMode::AC3_DSURMOD_RESERVED' data-ref="AC3DolbySurroundMode::AC3_DSURMOD_RESERVED">AC3_DSURMOD_RESERVED</dfn></td></tr>
+<tr><th id="139">139</th><td>} <dfn class="typedef" id="AC3DolbySurroundMode" title='AC3DolbySurroundMode' data-type='enum AC3DolbySurroundMode' data-ref="AC3DolbySurroundMode">AC3DolbySurroundMode</dfn>;</td></tr>
+<tr><th id="140">140</th><td></td></tr>
+<tr><th id="141">141</th><td><i class="doc">/** Dolby Surround EX mode */</i></td></tr>
+<tr><th id="142">142</th><td><b>typedef</b> <b>enum</b> <dfn class="type def" id="AC3DolbySurroundEXMode" title='AC3DolbySurroundEXMode' data-ref="AC3DolbySurroundEXMode"><a class="type" href="#AC3DolbySurroundEXMode" title='AC3DolbySurroundEXMode' data-ref="AC3DolbySurroundEXMode">AC3DolbySurroundEXMode</a></dfn> {</td></tr>
+<tr><th id="143">143</th><td>    <dfn class="enum" id="AC3DolbySurroundEXMode::AC3_DSUREXMOD_NOTINDICATED" title='AC3DolbySurroundEXMode::AC3_DSUREXMOD_NOTINDICATED' data-ref="AC3DolbySurroundEXMode::AC3_DSUREXMOD_NOTINDICATED">AC3_DSUREXMOD_NOTINDICATED</dfn> = <var>0</var>,</td></tr>
+<tr><th id="144">144</th><td>    <dfn class="enum" id="AC3DolbySurroundEXMode::AC3_DSUREXMOD_OFF" title='AC3DolbySurroundEXMode::AC3_DSUREXMOD_OFF' data-ref="AC3DolbySurroundEXMode::AC3_DSUREXMOD_OFF">AC3_DSUREXMOD_OFF</dfn>,</td></tr>
+<tr><th id="145">145</th><td>    <dfn class="enum" id="AC3DolbySurroundEXMode::AC3_DSUREXMOD_ON" title='AC3DolbySurroundEXMode::AC3_DSUREXMOD_ON' data-ref="AC3DolbySurroundEXMode::AC3_DSUREXMOD_ON">AC3_DSUREXMOD_ON</dfn>,</td></tr>
+<tr><th id="146">146</th><td>    <dfn class="enum" id="AC3DolbySurroundEXMode::AC3_DSUREXMOD_PLIIZ" title='AC3DolbySurroundEXMode::AC3_DSUREXMOD_PLIIZ' data-ref="AC3DolbySurroundEXMode::AC3_DSUREXMOD_PLIIZ">AC3_DSUREXMOD_PLIIZ</dfn></td></tr>
+<tr><th id="147">147</th><td>} <dfn class="typedef" id="AC3DolbySurroundEXMode" title='AC3DolbySurroundEXMode' data-type='enum AC3DolbySurroundEXMode' data-ref="AC3DolbySurroundEXMode">AC3DolbySurroundEXMode</dfn>;</td></tr>
+<tr><th id="148">148</th><td></td></tr>
+<tr><th id="149">149</th><td><i class="doc">/** Dolby Headphone mode */</i></td></tr>
+<tr><th id="150">150</th><td><b>typedef</b> <b>enum</b> <dfn class="type def" id="AC3DolbyHeadphoneMode" title='AC3DolbyHeadphoneMode' data-ref="AC3DolbyHeadphoneMode"><a class="type" href="#AC3DolbyHeadphoneMode" title='AC3DolbyHeadphoneMode' data-ref="AC3DolbyHeadphoneMode">AC3DolbyHeadphoneMode</a></dfn> {</td></tr>
+<tr><th id="151">151</th><td>    <dfn class="enum" id="AC3DolbyHeadphoneMode::AC3_DHEADPHONMOD_NOTINDICATED" title='AC3DolbyHeadphoneMode::AC3_DHEADPHONMOD_NOTINDICATED' data-ref="AC3DolbyHeadphoneMode::AC3_DHEADPHONMOD_NOTINDICATED">AC3_DHEADPHONMOD_NOTINDICATED</dfn> = <var>0</var>,</td></tr>
+<tr><th id="152">152</th><td>    <dfn class="enum" id="AC3DolbyHeadphoneMode::AC3_DHEADPHONMOD_OFF" title='AC3DolbyHeadphoneMode::AC3_DHEADPHONMOD_OFF' data-ref="AC3DolbyHeadphoneMode::AC3_DHEADPHONMOD_OFF">AC3_DHEADPHONMOD_OFF</dfn>,</td></tr>
+<tr><th id="153">153</th><td>    <dfn class="enum" id="AC3DolbyHeadphoneMode::AC3_DHEADPHONMOD_ON" title='AC3DolbyHeadphoneMode::AC3_DHEADPHONMOD_ON' data-ref="AC3DolbyHeadphoneMode::AC3_DHEADPHONMOD_ON">AC3_DHEADPHONMOD_ON</dfn>,</td></tr>
+<tr><th id="154">154</th><td>    <dfn class="enum" id="AC3DolbyHeadphoneMode::AC3_DHEADPHONMOD_RESERVED" title='AC3DolbyHeadphoneMode::AC3_DHEADPHONMOD_RESERVED' data-ref="AC3DolbyHeadphoneMode::AC3_DHEADPHONMOD_RESERVED">AC3_DHEADPHONMOD_RESERVED</dfn></td></tr>
+<tr><th id="155">155</th><td>} <dfn class="typedef" id="AC3DolbyHeadphoneMode" title='AC3DolbyHeadphoneMode' data-type='enum AC3DolbyHeadphoneMode' data-ref="AC3DolbyHeadphoneMode">AC3DolbyHeadphoneMode</dfn>;</td></tr>
+<tr><th id="156">156</th><td></td></tr>
+<tr><th id="157">157</th><td><i class="doc">/** Preferred Stereo Downmix mode */</i></td></tr>
+<tr><th id="158">158</th><td><b>typedef</b> <b>enum</b> <dfn class="type def" id="AC3PreferredStereoDownmixMode" title='AC3PreferredStereoDownmixMode' data-ref="AC3PreferredStereoDownmixMode"><a class="type" href="#AC3PreferredStereoDownmixMode" title='AC3PreferredStereoDownmixMode' data-ref="AC3PreferredStereoDownmixMode">AC3PreferredStereoDownmixMode</a></dfn> {</td></tr>
+<tr><th id="159">159</th><td>    <dfn class="enum" id="AC3PreferredStereoDownmixMode::AC3_DMIXMOD_NOTINDICATED" title='AC3PreferredStereoDownmixMode::AC3_DMIXMOD_NOTINDICATED' data-ref="AC3PreferredStereoDownmixMode::AC3_DMIXMOD_NOTINDICATED">AC3_DMIXMOD_NOTINDICATED</dfn> = <var>0</var>,</td></tr>
+<tr><th id="160">160</th><td>    <dfn class="enum" id="AC3PreferredStereoDownmixMode::AC3_DMIXMOD_LTRT" title='AC3PreferredStereoDownmixMode::AC3_DMIXMOD_LTRT' data-ref="AC3PreferredStereoDownmixMode::AC3_DMIXMOD_LTRT">AC3_DMIXMOD_LTRT</dfn>,</td></tr>
+<tr><th id="161">161</th><td>    <dfn class="enum" id="AC3PreferredStereoDownmixMode::AC3_DMIXMOD_LORO" title='AC3PreferredStereoDownmixMode::AC3_DMIXMOD_LORO' data-ref="AC3PreferredStereoDownmixMode::AC3_DMIXMOD_LORO">AC3_DMIXMOD_LORO</dfn>,</td></tr>
+<tr><th id="162">162</th><td>    <dfn class="enum" id="AC3PreferredStereoDownmixMode::AC3_DMIXMOD_DPLII" title='AC3PreferredStereoDownmixMode::AC3_DMIXMOD_DPLII' data-ref="AC3PreferredStereoDownmixMode::AC3_DMIXMOD_DPLII">AC3_DMIXMOD_DPLII</dfn> <i>// reserved value in A/52, but used by encoders to indicate DPL2</i></td></tr>
+<tr><th id="163">163</th><td>} <dfn class="typedef" id="AC3PreferredStereoDownmixMode" title='AC3PreferredStereoDownmixMode' data-type='enum AC3PreferredStereoDownmixMode' data-ref="AC3PreferredStereoDownmixMode">AC3PreferredStereoDownmixMode</dfn>;</td></tr>
+<tr><th id="164">164</th><td></td></tr>
+<tr><th id="165">165</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="AC3BitAllocParameters" title='AC3BitAllocParameters' data-ref="AC3BitAllocParameters"><a class="type" href="#AC3BitAllocParameters" title='AC3BitAllocParameters' data-ref="AC3BitAllocParameters">AC3BitAllocParameters</a></dfn> {</td></tr>
+<tr><th id="166">166</th><td>    <em>int</em> <dfn class="decl" id="AC3BitAllocParameters::sr_code" title='AC3BitAllocParameters::sr_code' data-ref="AC3BitAllocParameters::sr_code">sr_code</dfn>;</td></tr>
+<tr><th id="167">167</th><td>    <em>int</em> <dfn class="decl" id="AC3BitAllocParameters::sr_shift" title='AC3BitAllocParameters::sr_shift' data-ref="AC3BitAllocParameters::sr_shift">sr_shift</dfn>;</td></tr>
+<tr><th id="168">168</th><td>    <em>int</em> <dfn class="decl" id="AC3BitAllocParameters::slow_gain" title='AC3BitAllocParameters::slow_gain' data-ref="AC3BitAllocParameters::slow_gain">slow_gain</dfn>, <dfn class="decl" id="AC3BitAllocParameters::slow_decay" title='AC3BitAllocParameters::slow_decay' data-ref="AC3BitAllocParameters::slow_decay">slow_decay</dfn>, <dfn class="decl" id="AC3BitAllocParameters::fast_decay" title='AC3BitAllocParameters::fast_decay' data-ref="AC3BitAllocParameters::fast_decay">fast_decay</dfn>, <dfn class="decl" id="AC3BitAllocParameters::db_per_bit" title='AC3BitAllocParameters::db_per_bit' data-ref="AC3BitAllocParameters::db_per_bit">db_per_bit</dfn>, <dfn class="decl" id="AC3BitAllocParameters::floor" title='AC3BitAllocParameters::floor' data-ref="AC3BitAllocParameters::floor">floor</dfn>;</td></tr>
+<tr><th id="169">169</th><td>    <em>int</em> <dfn class="decl" id="AC3BitAllocParameters::cpl_fast_leak" title='AC3BitAllocParameters::cpl_fast_leak' data-ref="AC3BitAllocParameters::cpl_fast_leak">cpl_fast_leak</dfn>, <dfn class="decl" id="AC3BitAllocParameters::cpl_slow_leak" title='AC3BitAllocParameters::cpl_slow_leak' data-ref="AC3BitAllocParameters::cpl_slow_leak">cpl_slow_leak</dfn>;</td></tr>
+<tr><th id="170">170</th><td>} <dfn class="typedef" id="AC3BitAllocParameters" title='AC3BitAllocParameters' data-type='struct AC3BitAllocParameters' data-ref="AC3BitAllocParameters">AC3BitAllocParameters</dfn>;</td></tr>
+<tr><th id="171">171</th><td></td></tr>
+<tr><th id="172">172</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="173">173</th><td><i class="doc"> * <span class="command">@struct</span> <span class="verb" data-ref="AC3HeaderInfo">AC3HeaderInfo</span></i></td></tr>
+<tr><th id="174">174</th><td><i class="doc"> * Coded AC-3 header values up to the lfeon element, plus derived values.</i></td></tr>
+<tr><th id="175">175</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="176">176</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="AC3HeaderInfo" title='AC3HeaderInfo' data-ref="AC3HeaderInfo"><a class="type" href="#AC3HeaderInfo" title='AC3HeaderInfo' data-ref="AC3HeaderInfo">AC3HeaderInfo</a></dfn> {</td></tr>
+<tr><th id="177">177</th><td>    <i class="doc">/** <span class="command">@name</span> <span class="verb">Coded elements</span></i></td></tr>
+<tr><th id="178">178</th><td><i class="doc">     * @{</i></td></tr>
+<tr><th id="179">179</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="180">180</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> <dfn class="decl" id="AC3HeaderInfo::sync_word" title='AC3HeaderInfo::sync_word' data-ref="AC3HeaderInfo::sync_word">sync_word</dfn>;</td></tr>
+<tr><th id="181">181</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> <dfn class="decl" id="AC3HeaderInfo::crc1" title='AC3HeaderInfo::crc1' data-ref="AC3HeaderInfo::crc1">crc1</dfn>;</td></tr>
+<tr><th id="182">182</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="AC3HeaderInfo::sr_code" title='AC3HeaderInfo::sr_code' data-ref="AC3HeaderInfo::sr_code">sr_code</dfn>;</td></tr>
+<tr><th id="183">183</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="AC3HeaderInfo::bitstream_id" title='AC3HeaderInfo::bitstream_id' data-ref="AC3HeaderInfo::bitstream_id">bitstream_id</dfn>;</td></tr>
+<tr><th id="184">184</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="AC3HeaderInfo::bitstream_mode" title='AC3HeaderInfo::bitstream_mode' data-ref="AC3HeaderInfo::bitstream_mode">bitstream_mode</dfn>;</td></tr>
+<tr><th id="185">185</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="AC3HeaderInfo::channel_mode" title='AC3HeaderInfo::channel_mode' data-ref="AC3HeaderInfo::channel_mode">channel_mode</dfn>;</td></tr>
+<tr><th id="186">186</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="AC3HeaderInfo::lfe_on" title='AC3HeaderInfo::lfe_on' data-ref="AC3HeaderInfo::lfe_on">lfe_on</dfn>;</td></tr>
+<tr><th id="187">187</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="AC3HeaderInfo::frame_type" title='AC3HeaderInfo::frame_type' data-ref="AC3HeaderInfo::frame_type">frame_type</dfn>;</td></tr>
+<tr><th id="188">188</th><td>    <em>int</em> <dfn class="decl" id="AC3HeaderInfo::substreamid" title='AC3HeaderInfo::substreamid' data-ref="AC3HeaderInfo::substreamid">substreamid</dfn>;                        <i class="doc">///&lt; substream identification</i></td></tr>
+<tr><th id="189">189</th><td>    <em>int</em> <dfn class="decl" id="AC3HeaderInfo::center_mix_level" title='AC3HeaderInfo::center_mix_level' data-ref="AC3HeaderInfo::center_mix_level">center_mix_level</dfn>;                   <i class="doc">///&lt; Center mix level index</i></td></tr>
+<tr><th id="190">190</th><td>    <em>int</em> <dfn class="decl" id="AC3HeaderInfo::surround_mix_level" title='AC3HeaderInfo::surround_mix_level' data-ref="AC3HeaderInfo::surround_mix_level">surround_mix_level</dfn>;                 <i class="doc">///&lt; Surround mix level index</i></td></tr>
+<tr><th id="191">191</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> <dfn class="decl" id="AC3HeaderInfo::channel_map" title='AC3HeaderInfo::channel_map' data-ref="AC3HeaderInfo::channel_map">channel_map</dfn>;</td></tr>
+<tr><th id="192">192</th><td>    <em>int</em> <dfn class="decl" id="AC3HeaderInfo::num_blocks" title='AC3HeaderInfo::num_blocks' data-ref="AC3HeaderInfo::num_blocks">num_blocks</dfn>;                         <i class="doc">///&lt; number of audio blocks</i></td></tr>
+<tr><th id="193">193</th><td>    <em>int</em> <dfn class="decl" id="AC3HeaderInfo::dolby_surround_mode" title='AC3HeaderInfo::dolby_surround_mode' data-ref="AC3HeaderInfo::dolby_surround_mode">dolby_surround_mode</dfn>;</td></tr>
+<tr><th id="194">194</th><td>    <i class="doc">/** @} */</i></td></tr>
+<tr><th id="195">195</th><td></td></tr>
+<tr><th id="196">196</th><td>    <i class="doc">/** <span class="command">@name</span> <span class="verb">Derived values</span></i></td></tr>
+<tr><th id="197">197</th><td><i class="doc">     * @{</i></td></tr>
+<tr><th id="198">198</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="199">199</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="AC3HeaderInfo::sr_shift" title='AC3HeaderInfo::sr_shift' data-ref="AC3HeaderInfo::sr_shift">sr_shift</dfn>;</td></tr>
+<tr><th id="200">200</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> <dfn class="decl" id="AC3HeaderInfo::sample_rate" title='AC3HeaderInfo::sample_rate' data-ref="AC3HeaderInfo::sample_rate">sample_rate</dfn>;</td></tr>
+<tr><th id="201">201</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a> <dfn class="decl" id="AC3HeaderInfo::bit_rate" title='AC3HeaderInfo::bit_rate' data-ref="AC3HeaderInfo::bit_rate">bit_rate</dfn>;</td></tr>
+<tr><th id="202">202</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="AC3HeaderInfo::channels" title='AC3HeaderInfo::channels' data-ref="AC3HeaderInfo::channels">channels</dfn>;</td></tr>
+<tr><th id="203">203</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> <dfn class="decl" id="AC3HeaderInfo::frame_size" title='AC3HeaderInfo::frame_size' data-ref="AC3HeaderInfo::frame_size">frame_size</dfn>;</td></tr>
+<tr><th id="204">204</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint64_t" title='uint64_t' data-type='unsigned long' data-ref="uint64_t">uint64_t</a> <dfn class="decl" id="AC3HeaderInfo::channel_layout" title='AC3HeaderInfo::channel_layout' data-ref="AC3HeaderInfo::channel_layout">channel_layout</dfn>;</td></tr>
+<tr><th id="205">205</th><td>    <i class="doc">/** @} */</i></td></tr>
+<tr><th id="206">206</th><td>} <dfn class="typedef" id="AC3HeaderInfo" title='AC3HeaderInfo' data-type='struct AC3HeaderInfo' data-ref="AC3HeaderInfo">AC3HeaderInfo</dfn>;</td></tr>
+<tr><th id="207">207</th><td></td></tr>
+<tr><th id="208">208</th><td><b>typedef</b> <b>enum</b> {</td></tr>
+<tr><th id="209">209</th><td>    <dfn class="enum" id="::EAC3_FRAME_TYPE_INDEPENDENT" title='::EAC3_FRAME_TYPE_INDEPENDENT' data-ref="::EAC3_FRAME_TYPE_INDEPENDENT">EAC3_FRAME_TYPE_INDEPENDENT</dfn> = <var>0</var>,</td></tr>
+<tr><th id="210">210</th><td>    <dfn class="enum" id="::EAC3_FRAME_TYPE_DEPENDENT" title='::EAC3_FRAME_TYPE_DEPENDENT' data-ref="::EAC3_FRAME_TYPE_DEPENDENT">EAC3_FRAME_TYPE_DEPENDENT</dfn>,</td></tr>
+<tr><th id="211">211</th><td>    <dfn class="enum" id="::EAC3_FRAME_TYPE_AC3_CONVERT" title='::EAC3_FRAME_TYPE_AC3_CONVERT' data-ref="::EAC3_FRAME_TYPE_AC3_CONVERT">EAC3_FRAME_TYPE_AC3_CONVERT</dfn>,</td></tr>
+<tr><th id="212">212</th><td>    <dfn class="enum" id="::EAC3_FRAME_TYPE_RESERVED" title='::EAC3_FRAME_TYPE_RESERVED' data-ref="::EAC3_FRAME_TYPE_RESERVED">EAC3_FRAME_TYPE_RESERVED</dfn></td></tr>
+<tr><th id="213">213</th><td>} <dfn class="typedef" id="EAC3FrameType" title='EAC3FrameType' data-type='enum EAC3FrameType' data-ref="EAC3FrameType">EAC3FrameType</dfn>;</td></tr>
+<tr><th id="214">214</th><td></td></tr>
+<tr><th id="215">215</th><td><em>void</em> <dfn class="decl" id="ff_ac3_common_init" title='ff_ac3_common_init' data-ref="ff_ac3_common_init">ff_ac3_common_init</dfn>(<em>void</em>);</td></tr>
+<tr><th id="216">216</th><td></td></tr>
+<tr><th id="217">217</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="218">218</th><td><i class="doc"> * Calculate the log power-spectral density of the input signal.</i></td></tr>
+<tr><th id="219">219</th><td><i class="doc"> * This gives a rough estimate of signal power in the frequency domain by using</i></td></tr>
+<tr><th id="220">220</th><td><i class="doc"> * the spectral envelope (exponents).  The psd is also separately grouped</i></td></tr>
+<tr><th id="221">221</th><td><i class="doc"> * into critical bands for use in the calculating the masking curve.</i></td></tr>
+<tr><th id="222">222</th><td><i class="doc"> * 128 units in psd = -6 dB.  The dbknee parameter in AC3BitAllocParameters</i></td></tr>
+<tr><th id="223">223</th><td><i class="doc"> * determines the reference level.</i></td></tr>
+<tr><th id="224">224</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="225">225</th><td><i class="doc"> * <span class="command">@param</span>[in]  <span class="arg">exp</span>        frequency coefficient exponents</i></td></tr>
+<tr><th id="226">226</th><td><i class="doc"> * <span class="command">@param</span>[in]  <span class="arg">start</span>      starting bin location</i></td></tr>
+<tr><th id="227">227</th><td><i class="doc"> * <span class="command">@param</span>[in]  <span class="arg">end</span>        ending bin location</i></td></tr>
+<tr><th id="228">228</th><td><i class="doc"> * <span class="command">@param</span>[out] <span class="arg">psd</span>        signal power for each frequency bin</i></td></tr>
+<tr><th id="229">229</th><td><i class="doc"> * <span class="command">@param</span>[out] <span class="arg">band_psd</span>   signal power for each critical band</i></td></tr>
+<tr><th id="230">230</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="231">231</th><td><em>void</em> <a class="decl" href="ac3.c.html#ff_ac3_bit_alloc_calc_psd" title='ff_ac3_bit_alloc_calc_psd' data-ref="ff_ac3_bit_alloc_calc_psd" id="ff_ac3_bit_alloc_calc_psd">ff_ac3_bit_alloc_calc_psd</a>(<a class="typedef" href="../../include/stdint.h.html#int8_t" title='int8_t' data-type='signed char' data-ref="int8_t">int8_t</a> *<dfn class="local col1 decl" id="1exp" title='exp' data-type='int8_t *' data-ref="1exp">exp</dfn>, <em>int</em> <dfn class="local col2 decl" id="2start" title='start' data-type='int' data-ref="2start">start</dfn>, <em>int</em> <dfn class="local col3 decl" id="3end" title='end' data-type='int' data-ref="3end">end</dfn>, <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> *<dfn class="local col4 decl" id="4psd" title='psd' data-type='int16_t *' data-ref="4psd">psd</dfn>,</td></tr>
+<tr><th id="232">232</th><td>                               <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> *<dfn class="local col5 decl" id="5band_psd" title='band_psd' data-type='int16_t *' data-ref="5band_psd">band_psd</dfn>);</td></tr>
+<tr><th id="233">233</th><td></td></tr>
+<tr><th id="234">234</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="235">235</th><td><i class="doc"> * Calculate the masking curve.</i></td></tr>
+<tr><th id="236">236</th><td><i class="doc"> * First, the excitation is calculated using parameters in s and the signal</i></td></tr>
+<tr><th id="237">237</th><td><i class="doc"> * power in each critical band.  The excitation is compared with a predefined</i></td></tr>
+<tr><th id="238">238</th><td><i class="doc"> * hearing threshold table to produce the masking curve.  If delta bit</i></td></tr>
+<tr><th id="239">239</th><td><i class="doc"> * allocation information is provided, it is used for adjusting the masking</i></td></tr>
+<tr><th id="240">240</th><td><i class="doc"> * curve, usually to give a closer match to a better psychoacoustic model.</i></td></tr>
+<tr><th id="241">241</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="242">242</th><td><i class="doc"> * <span class="command">@param</span>[in]  <span class="arg">s</span>            adjustable bit allocation parameters</i></td></tr>
+<tr><th id="243">243</th><td><i class="doc"> * <span class="command">@param</span>[in]  <span class="arg">band_psd</span>     signal power for each critical band</i></td></tr>
+<tr><th id="244">244</th><td><i class="doc"> * <span class="command">@param</span>[in]  <span class="arg">start</span>        starting bin location</i></td></tr>
+<tr><th id="245">245</th><td><i class="doc"> * <span class="command">@param</span>[in]  <span class="arg">end</span>          ending bin location</i></td></tr>
+<tr><th id="246">246</th><td><i class="doc"> * <span class="command">@param</span>[in]  <span class="arg">fast_gain</span>    fast gain (estimated signal-to-mask ratio)</i></td></tr>
+<tr><th id="247">247</th><td><i class="doc"> * <span class="command">@param</span>[in]  <span class="arg">is_lfe</span>       whether or not the channel being processed is the LFE</i></td></tr>
+<tr><th id="248">248</th><td><i class="doc"> * <span class="command">@param</span>[in]  <span class="arg">dba_mode</span>     delta bit allocation mode (none, reuse, or new)</i></td></tr>
+<tr><th id="249">249</th><td><i class="doc"> * <span class="command">@param</span>[in]  <span class="arg">dba_nsegs</span>    number of delta segments</i></td></tr>
+<tr><th id="250">250</th><td><i class="doc"> * <span class="command">@param</span>[in]  <span class="arg">dba_offsets</span>  location offsets for each segment</i></td></tr>
+<tr><th id="251">251</th><td><i class="doc"> * <span class="command">@param</span>[in]  <span class="arg">dba_lengths</span>  length of each segment</i></td></tr>
+<tr><th id="252">252</th><td><i class="doc"> * <span class="command">@param</span>[in]  <span class="arg">dba_values</span>   delta bit allocation for each segment</i></td></tr>
+<tr><th id="253">253</th><td><i class="doc"> * <span class="command">@param</span>[out] <span class="arg">mask</span>         calculated masking curve</i></td></tr>
+<tr><th id="254">254</th><td><i class="doc"> * <span class="command">@return</span> returns 0 for success, non-zero for error</i></td></tr>
+<tr><th id="255">255</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="256">256</th><td><em>int</em> <a class="decl" href="ac3.c.html#ff_ac3_bit_alloc_calc_mask" title='ff_ac3_bit_alloc_calc_mask' data-ref="ff_ac3_bit_alloc_calc_mask" id="ff_ac3_bit_alloc_calc_mask">ff_ac3_bit_alloc_calc_mask</a>(<a class="typedef" href="#AC3BitAllocParameters" title='AC3BitAllocParameters' data-type='struct AC3BitAllocParameters' data-ref="AC3BitAllocParameters">AC3BitAllocParameters</a> *<dfn class="local col6 decl" id="6s" title='s' data-type='AC3BitAllocParameters *' data-ref="6s">s</dfn>, <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> *<dfn class="local col7 decl" id="7band_psd" title='band_psd' data-type='int16_t *' data-ref="7band_psd">band_psd</dfn>,</td></tr>
+<tr><th id="257">257</th><td>                               <em>int</em> <dfn class="local col8 decl" id="8start" title='start' data-type='int' data-ref="8start">start</dfn>, <em>int</em> <dfn class="local col9 decl" id="9end" title='end' data-type='int' data-ref="9end">end</dfn>, <em>int</em> <dfn class="local col0 decl" id="10fast_gain" title='fast_gain' data-type='int' data-ref="10fast_gain">fast_gain</dfn>, <em>int</em> <dfn class="local col1 decl" id="11is_lfe" title='is_lfe' data-type='int' data-ref="11is_lfe">is_lfe</dfn>,</td></tr>
+<tr><th id="258">258</th><td>                               <em>int</em> <dfn class="local col2 decl" id="12dba_mode" title='dba_mode' data-type='int' data-ref="12dba_mode">dba_mode</dfn>, <em>int</em> <dfn class="local col3 decl" id="13dba_nsegs" title='dba_nsegs' data-type='int' data-ref="13dba_nsegs">dba_nsegs</dfn>, <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col4 decl" id="14dba_offsets" title='dba_offsets' data-type='uint8_t *' data-ref="14dba_offsets">dba_offsets</dfn>,</td></tr>
+<tr><th id="259">259</th><td>                               <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col5 decl" id="15dba_lengths" title='dba_lengths' data-type='uint8_t *' data-ref="15dba_lengths">dba_lengths</dfn>, <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col6 decl" id="16dba_values" title='dba_values' data-type='uint8_t *' data-ref="16dba_values">dba_values</dfn>,</td></tr>
+<tr><th id="260">260</th><td>                               <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> *<dfn class="local col7 decl" id="17mask" title='mask' data-type='int16_t *' data-ref="17mask">mask</dfn>);</td></tr>
+<tr><th id="261">261</th><td></td></tr>
+<tr><th id="262">262</th><td><u>#<span data-ppcond="27">endif</span> /* AVCODEC_AC3_H */</u></td></tr>
+<tr><th id="263">263</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated while processing <a href='ac3.c.html'>ffmpeg/libavcodec/ac3.c</a><br/>Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

@@ -1,0 +1,177 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>pictures.c source code [vlc/modules/video_output/xcb/pictures.c] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'vlc/modules/video_output/xcb/pictures.c'; var root_path = '../../../..'; var data_path = '../../../../../data';</script>
+<script src='../../../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='../../..'>vlc</a>/<a href='../..'>modules</a>/<a href='..'>video_output</a>/<a href='./'>xcb</a>/<a href='pictures.c.html'>pictures.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="2">2</th><td><i class="doc"> *<span class="command"> @file</span> pictures.c</i></td></tr>
+<tr><th id="3">3</th><td><i class="doc"> * <span class="command">@brief</span> Pictures management code for XCB video output plugins</i></td></tr>
+<tr><th id="4">4</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="5">5</th><td><i>/*****************************************************************************</i></td></tr>
+<tr><th id="6">6</th><td><i> * Copyright © 2009-2013 Rémi Denis-Courmont</i></td></tr>
+<tr><th id="7">7</th><td><i> *</i></td></tr>
+<tr><th id="8">8</th><td><i> * This program is free software; you can redistribute it and/or modify it</i></td></tr>
+<tr><th id="9">9</th><td><i> * under the terms of the GNU Lesser General Public License as published by</i></td></tr>
+<tr><th id="10">10</th><td><i> * the Free Software Foundation; either version 2.1 of the License, or</i></td></tr>
+<tr><th id="11">11</th><td><i> * (at your option) any later version.</i></td></tr>
+<tr><th id="12">12</th><td><i> *</i></td></tr>
+<tr><th id="13">13</th><td><i> * This program is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="14">14</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="15">15</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</i></td></tr>
+<tr><th id="16">16</th><td><i> * GNU Lesser General Public License for more details.</i></td></tr>
+<tr><th id="17">17</th><td><i> *</i></td></tr>
+<tr><th id="18">18</th><td><i> * You should have received a copy of the GNU Lesser General Public License</i></td></tr>
+<tr><th id="19">19</th><td><i> * along with this program; if not, write to the Free Software Foundation,</i></td></tr>
+<tr><th id="20">20</th><td><i> * Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.</i></td></tr>
+<tr><th id="21">21</th><td><i> *****************************************************************************/</i></td></tr>
+<tr><th id="22">22</th><td></td></tr>
+<tr><th id="23">23</th><td><u>#<span data-ppcond="23">ifdef</span> <span class="macro" data-ref="_M/HAVE_CONFIG_H">HAVE_CONFIG_H</span></u></td></tr>
+<tr><th id="24">24</th><td><u># include <a href="../../../config.h.html">&lt;config.h&gt;</a></u></td></tr>
+<tr><th id="25">25</th><td><u>#<span data-ppcond="23">endif</span></u></td></tr>
+<tr><th id="26">26</th><td></td></tr>
+<tr><th id="27">27</th><td><u>#include <a href="../../../../include/stdlib.h.html">&lt;stdlib.h&gt;</a></u></td></tr>
+<tr><th id="28">28</th><td><u>#include <a href="../../../../include/assert.h.html">&lt;assert.h&gt;</a></u></td></tr>
+<tr><th id="29">29</th><td><u>#include <a href="../../../../include/errno.h.html">&lt;errno.h&gt;</a></u></td></tr>
+<tr><th id="30">30</th><td></td></tr>
+<tr><th id="31">31</th><td><u>#include <a href="../../../../include/x86_64-linux-gnu/sys/types.h.html">&lt;sys/types.h&gt;</a></u></td></tr>
+<tr><th id="32">32</th><td><u>#<span data-ppcond="32">ifdef</span> <a class="macro" href="../../../config.h.html#534" data-ref="_M/HAVE_SYS_SHM_H">HAVE_SYS_SHM_H</a></u></td></tr>
+<tr><th id="33">33</th><td><u># include <a href="../../../../include/x86_64-linux-gnu/sys/shm.h.html">&lt;sys/shm.h&gt;</a></u></td></tr>
+<tr><th id="34">34</th><td><u># include <a href="../../../../include/x86_64-linux-gnu/sys/stat.h.html">&lt;sys/stat.h&gt;</a></u></td></tr>
+<tr><th id="35">35</th><td><u>#<span data-ppcond="32">else</span></u></td></tr>
+<tr><th id="36">36</th><td><u># define shmdt(mem) free(mem)</u></td></tr>
+<tr><th id="37">37</th><td><u>#<span data-ppcond="32">endif</span></u></td></tr>
+<tr><th id="38">38</th><td></td></tr>
+<tr><th id="39">39</th><td><u>#include <a href="../../../../include/xcb/xcb.h.html">&lt;xcb/xcb.h&gt;</a></u></td></tr>
+<tr><th id="40">40</th><td><u>#include <a href="../../../../include/xcb/shm.h.html">&lt;xcb/shm.h&gt;</a></u></td></tr>
+<tr><th id="41">41</th><td></td></tr>
+<tr><th id="42">42</th><td><u>#include <a href="../../../include/vlc_common.h.html">&lt;vlc_common.h&gt;</a></u></td></tr>
+<tr><th id="43">43</th><td><u>#include <a href="../../../include/vlc_vout_display.h.html">&lt;vlc_vout_display.h&gt;</a></u></td></tr>
+<tr><th id="44">44</th><td></td></tr>
+<tr><th id="45">45</th><td><u>#include <a href="pictures.h.html">"pictures.h"</a></u></td></tr>
+<tr><th id="46">46</th><td><u>#include <a href="events.h.html">"events.h"</a></u></td></tr>
+<tr><th id="47">47</th><td></td></tr>
+<tr><th id="48">48</th><td><i class="doc">/** Check MIT-SHM shared memory support */</i></td></tr>
+<tr><th id="49">49</th><td><span class="macro" title="_Bool" data-ref="_M/bool">bool</span> <dfn class="decl def" id="XCB_shm_Check" title='XCB_shm_Check' data-ref="XCB_shm_Check">XCB_shm_Check</dfn> (<a class="typedef" href="../../../include/vlc_common.h.html#vlc_object_t" title='vlc_object_t' data-type='struct vlc_object_t' data-ref="vlc_object_t">vlc_object_t</a> *<dfn class="local col5 decl" id="5obj" title='obj' data-type='vlc_object_t *' data-ref="5obj">obj</dfn>, <a class="typedef" href="../../../../include/xcb/xcb.h.html#xcb_connection_t" title='xcb_connection_t' data-type='struct xcb_connection_t' data-ref="xcb_connection_t">xcb_connection_t</a> *<dfn class="local col6 decl" id="6conn" title='conn' data-type='xcb_connection_t *' data-ref="6conn">conn</dfn>)</td></tr>
+<tr><th id="50">50</th><td>{</td></tr>
+<tr><th id="51">51</th><td><u>#<span data-ppcond="51">ifdef</span> <a class="macro" href="../../../config.h.html#534" data-ref="_M/HAVE_SYS_SHM_H">HAVE_SYS_SHM_H</a></u></td></tr>
+<tr><th id="52">52</th><td>    <a class="typedef" href="../../../../include/xcb/shm.h.html#xcb_shm_query_version_cookie_t" title='xcb_shm_query_version_cookie_t' data-type='struct xcb_shm_query_version_cookie_t' data-ref="xcb_shm_query_version_cookie_t">xcb_shm_query_version_cookie_t</a> <dfn class="local col7 decl" id="7ck" title='ck' data-type='xcb_shm_query_version_cookie_t' data-ref="7ck">ck</dfn>;</td></tr>
+<tr><th id="53">53</th><td>    <a class="typedef" href="../../../../include/xcb/shm.h.html#xcb_shm_query_version_reply_t" title='xcb_shm_query_version_reply_t' data-type='struct xcb_shm_query_version_reply_t' data-ref="xcb_shm_query_version_reply_t">xcb_shm_query_version_reply_t</a> *<dfn class="local col8 decl" id="8r" title='r' data-type='xcb_shm_query_version_reply_t *' data-ref="8r">r</dfn>;</td></tr>
+<tr><th id="54">54</th><td></td></tr>
+<tr><th id="55">55</th><td>    <a class="local col7 ref" href="#7ck" title='ck' data-ref="7ck">ck</a> = <a class="ref" href="../../../../include/xcb/shm.h.html#xcb_shm_query_version" title='xcb_shm_query_version' data-ref="xcb_shm_query_version">xcb_shm_query_version</a> (<a class="local col6 ref" href="#6conn" title='conn' data-ref="6conn">conn</a>);</td></tr>
+<tr><th id="56">56</th><td>    <a class="local col8 ref" href="#8r" title='r' data-ref="8r">r</a> = <a class="ref" href="../../../../include/xcb/shm.h.html#xcb_shm_query_version_reply" title='xcb_shm_query_version_reply' data-ref="xcb_shm_query_version_reply">xcb_shm_query_version_reply</a> (<a class="local col6 ref" href="#6conn" title='conn' data-ref="6conn">conn</a>, <a class="local col7 ref" href="#7ck" title='ck' data-ref="7ck">ck</a>, <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>);</td></tr>
+<tr><th id="57">57</th><td>    <b>if</b> (<a class="local col8 ref" href="#8r" title='r' data-ref="8r">r</a> != <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>)</td></tr>
+<tr><th id="58">58</th><td>    {</td></tr>
+<tr><th id="59">59</th><td>        <a class="ref" href="../../../../include/stdlib.h.html#free" title='free' data-ref="free">free</a> (<a class="local col8 ref" href="#8r" title='r' data-ref="8r">r</a>);</td></tr>
+<tr><th id="60">60</th><td>        <b>return</b> <span class="macro" title="1" data-ref="_M/true">true</span>;</td></tr>
+<tr><th id="61">61</th><td>    }</td></tr>
+<tr><th id="62">62</th><td>    <a class="macro" href="../../../include/vlc_messages.h.html#73" title="vlc_Log( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(obj)), psz_object_type), (void)0 , (vlc_object_t *)(obj)), VLC_MSG_ERR, xcb_x11, &quot;shared memory (MIT-SHM) not available&quot; )" data-ref="_M/msg_Err">msg_Err</a> (obj, <q>"shared memory (MIT-SHM) not available"</q>);</td></tr>
+<tr><th id="63">63</th><td>    <a class="macro" href="../../../include/vlc_messages.h.html#75" title="vlc_Log( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(obj)), psz_object_type), (void)0 , (vlc_object_t *)(obj)), VLC_MSG_WARN, xcb_x11, &quot;display will be slow&quot; )" data-ref="_M/msg_Warn">msg_Warn</a> (obj, <q>"display will be slow"</q>);</td></tr>
+<tr><th id="64">64</th><td><u>#<span data-ppcond="51">else</span></u></td></tr>
+<tr><th id="65">65</th><td>    msg_Warn (obj, <q>"shared memory (MIT-SHM) not implemented"</q>);</td></tr>
+<tr><th id="66">66</th><td>    (<em>void</em>) conn;</td></tr>
+<tr><th id="67">67</th><td><u>#<span data-ppcond="51">endif</span></u></td></tr>
+<tr><th id="68">68</th><td>    <b>return</b> <span class="macro" title="0" data-ref="_M/false">false</span>;</td></tr>
+<tr><th id="69">69</th><td>}</td></tr>
+<tr><th id="70">70</th><td></td></tr>
+<tr><th id="71">71</th><td><i class="doc" data-doc="XCB_picture_Destroy">/**</i></td></tr>
+<tr><th id="72">72</th><td><i class="doc" data-doc="XCB_picture_Destroy"> * Release picture private data: detach the shared memory segment.</i></td></tr>
+<tr><th id="73">73</th><td><i class="doc" data-doc="XCB_picture_Destroy"> */</i></td></tr>
+<tr><th id="74">74</th><td><em>static</em> <em>void</em> <dfn class="tu decl def" id="XCB_picture_Destroy" title='XCB_picture_Destroy' data-type='void XCB_picture_Destroy(picture_t * pic)' data-ref="XCB_picture_Destroy">XCB_picture_Destroy</dfn> (<a class="typedef" href="../../../include/vlc_common.h.html#picture_t" title='picture_t' data-type='struct picture_t' data-ref="picture_t">picture_t</a> *<dfn class="local col9 decl" id="9pic" title='pic' data-type='picture_t *' data-ref="9pic">pic</dfn>)</td></tr>
+<tr><th id="75">75</th><td>{</td></tr>
+<tr><th id="76">76</th><td>    <a class="ref" href="../../../../include/x86_64-linux-gnu/sys/shm.h.html#shmdt" title='shmdt' data-ref="shmdt">shmdt</a> (<a class="local col9 ref" href="#9pic" title='pic' data-ref="9pic">pic</a>-&gt;<a class="ref" href="../../../include/vlc_picture.h.html#picture_t::p" title='picture_t::p' data-ref="picture_t::p">p</a>[<var>0</var>].<a class="ref" href="../../../include/vlc_picture.h.html#plane_t::p_pixels" title='plane_t::p_pixels' data-ref="plane_t::p_pixels">p_pixels</a>);</td></tr>
+<tr><th id="77">77</th><td>    <a class="ref" href="../../../../include/stdlib.h.html#free" title='free' data-ref="free">free</a> (<a class="local col9 ref" href="#9pic" title='pic' data-ref="9pic">pic</a>);</td></tr>
+<tr><th id="78">78</th><td>}</td></tr>
+<tr><th id="79">79</th><td></td></tr>
+<tr><th id="80">80</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="81">81</th><td><i class="doc"> * Initialize a picture buffer as shared memory, according to the video output</i></td></tr>
+<tr><th id="82">82</th><td><i class="doc"> * format. If a attach is true, the segment is attached to</i></td></tr>
+<tr><th id="83">83</th><td><i class="doc"> * the X server (MIT-SHM extension).</i></td></tr>
+<tr><th id="84">84</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="85">85</th><td><em>int</em> <dfn class="decl def" id="XCB_picture_Alloc" title='XCB_picture_Alloc' data-ref="XCB_picture_Alloc">XCB_picture_Alloc</dfn> (<a class="typedef" href="../../../include/vlc_vout_display.h.html#vout_display_t" title='vout_display_t' data-type='struct vout_display_t' data-ref="vout_display_t">vout_display_t</a> *<dfn class="local col0 decl" id="10vd" title='vd' data-type='vout_display_t *' data-ref="10vd">vd</dfn>, <a class="typedef" href="../../../include/vlc_picture.h.html#picture_resource_t" title='picture_resource_t' data-type='struct picture_resource_t' data-ref="picture_resource_t">picture_resource_t</a> *<dfn class="local col1 decl" id="11res" title='res' data-type='picture_resource_t *' data-ref="11res">res</dfn>,</td></tr>
+<tr><th id="86">86</th><td>                       <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="local col2 decl" id="12size" title='size' data-type='size_t' data-ref="12size">size</dfn>, <a class="typedef" href="../../../../include/xcb/xcb.h.html#xcb_connection_t" title='xcb_connection_t' data-type='struct xcb_connection_t' data-ref="xcb_connection_t">xcb_connection_t</a> *<dfn class="local col3 decl" id="13conn" title='conn' data-type='xcb_connection_t *' data-ref="13conn">conn</dfn>,</td></tr>
+<tr><th id="87">87</th><td>                       <a class="typedef" href="../../../../include/xcb/shm.h.html#xcb_shm_seg_t" title='xcb_shm_seg_t' data-type='uint32_t' data-ref="xcb_shm_seg_t">xcb_shm_seg_t</a> <dfn class="local col4 decl" id="14segment" title='segment' data-type='xcb_shm_seg_t' data-ref="14segment">segment</dfn>)</td></tr>
+<tr><th id="88">88</th><td>{</td></tr>
+<tr><th id="89">89</th><td><u>#<span data-ppcond="89">ifdef</span> <a class="macro" href="../../../config.h.html#534" data-ref="_M/HAVE_SYS_SHM_H">HAVE_SYS_SHM_H</a></u></td></tr>
+<tr><th id="90">90</th><td>    <i>/* Allocate shared memory segment */</i></td></tr>
+<tr><th id="91">91</th><td>    <em>int</em> <dfn class="local col5 decl" id="15id" title='id' data-type='int' data-ref="15id">id</dfn> = <a class="ref" href="../../../../include/x86_64-linux-gnu/sys/shm.h.html#shmget" title='shmget' data-ref="shmget">shmget</a> (<a class="macro" href="../../../../include/x86_64-linux-gnu/bits/ipc.h.html#38" title="((__key_t) 0)" data-ref="_M/IPC_PRIVATE">IPC_PRIVATE</a>, <a class="local col2 ref" href="#12size" title='size' data-ref="12size">size</a>, <a class="macro" href="../../../../include/x86_64-linux-gnu/bits/ipc.h.html#25" title="01000" data-ref="_M/IPC_CREAT">IPC_CREAT</a> | <a class="macro" href="../../../../include/x86_64-linux-gnu/sys/stat.h.html#176" title="(0400|0200|0100)" data-ref="_M/S_IRWXU">S_IRWXU</a>);</td></tr>
+<tr><th id="92">92</th><td>    <b>if</b> (<a class="local col5 ref" href="#15id" title='id' data-ref="15id">id</a> == -<var>1</var>)</td></tr>
+<tr><th id="93">93</th><td>    {</td></tr>
+<tr><th id="94">94</th><td>        <a class="macro" href="../../../include/vlc_messages.h.html#73" title="vlc_Log( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(vd)), psz_object_type), (void)0 , (vlc_object_t *)(vd)), VLC_MSG_ERR, xcb_x11, &quot;shared memory allocation error: %s&quot;, vlc_strerror_c((*__errno_location ())) )" data-ref="_M/msg_Err">msg_Err</a> (vd, <q>"shared memory allocation error: %s"</q>,</td></tr>
+<tr><th id="95">95</th><td>                 vlc_strerror_c(<a class="macro" href="../../../../include/x86_64-linux-gnu/bits/errno.h.html#54" title="(*__errno_location ())" data-ref="_M/errno">errno</a>));</td></tr>
+<tr><th id="96">96</th><td>        <b>return</b> -<var>1</var>;</td></tr>
+<tr><th id="97">97</th><td>    }</td></tr>
+<tr><th id="98">98</th><td></td></tr>
+<tr><th id="99">99</th><td>    <i>/* Attach the segment to VLC */</i></td></tr>
+<tr><th id="100">100</th><td>    <em>void</em> *<dfn class="local col6 decl" id="16shm" title='shm' data-type='void *' data-ref="16shm">shm</dfn> = <a class="ref" href="../../../../include/x86_64-linux-gnu/sys/shm.h.html#shmat" title='shmat' data-ref="shmat">shmat</a> (<a class="local col5 ref" href="#15id" title='id' data-ref="15id">id</a>, <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>, <var>0</var> <i>/* read/write */</i>);</td></tr>
+<tr><th id="101">101</th><td>    <b>if</b> (-<var>1</var> == (<a class="typedef" href="../../../../include/stdint.h.html#intptr_t" title='intptr_t' data-type='long' data-ref="intptr_t">intptr_t</a>)<a class="local col6 ref" href="#16shm" title='shm' data-ref="16shm">shm</a>)</td></tr>
+<tr><th id="102">102</th><td>    {</td></tr>
+<tr><th id="103">103</th><td>        <a class="macro" href="../../../include/vlc_messages.h.html#73" title="vlc_Log( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(vd)), psz_object_type), (void)0 , (vlc_object_t *)(vd)), VLC_MSG_ERR, xcb_x11, &quot;shared memory attachment error: %s&quot;, vlc_strerror_c((*__errno_location ())) )" data-ref="_M/msg_Err">msg_Err</a> (vd, <q>"shared memory attachment error: %s"</q>,</td></tr>
+<tr><th id="104">104</th><td>                 vlc_strerror_c(<a class="macro" href="../../../../include/x86_64-linux-gnu/bits/errno.h.html#54" title="(*__errno_location ())" data-ref="_M/errno">errno</a>));</td></tr>
+<tr><th id="105">105</th><td>        <a class="ref" href="../../../../include/x86_64-linux-gnu/sys/shm.h.html#shmctl" title='shmctl' data-ref="shmctl">shmctl</a> (<a class="local col5 ref" href="#15id" title='id' data-ref="15id">id</a>, <a class="macro" href="../../../../include/x86_64-linux-gnu/bits/ipc.h.html#30" title="0" data-ref="_M/IPC_RMID">IPC_RMID</a>, <var>0</var>);</td></tr>
+<tr><th id="106">106</th><td>        <b>return</b> -<var>1</var>;</td></tr>
+<tr><th id="107">107</th><td>    }</td></tr>
+<tr><th id="108">108</th><td></td></tr>
+<tr><th id="109">109</th><td>    <b>if</b> (<a class="local col4 ref" href="#14segment" title='segment' data-ref="14segment">segment</a> != <var>0</var>)</td></tr>
+<tr><th id="110">110</th><td>    {   <i>/* Attach the segment to X */</i></td></tr>
+<tr><th id="111">111</th><td>        <a class="typedef" href="../../../../include/xcb/xcb.h.html#xcb_void_cookie_t" title='xcb_void_cookie_t' data-type='struct xcb_void_cookie_t' data-ref="xcb_void_cookie_t">xcb_void_cookie_t</a> <dfn class="local col7 decl" id="17ck" title='ck' data-type='xcb_void_cookie_t' data-ref="17ck">ck</dfn> = <a class="ref" href="../../../../include/xcb/shm.h.html#xcb_shm_attach_checked" title='xcb_shm_attach_checked' data-ref="xcb_shm_attach_checked">xcb_shm_attach_checked</a> (<a class="local col3 ref" href="#13conn" title='conn' data-ref="13conn">conn</a>, <a class="local col4 ref" href="#14segment" title='segment' data-ref="14segment">segment</a>, <a class="local col5 ref" href="#15id" title='id' data-ref="15id">id</a>, <var>1</var>);</td></tr>
+<tr><th id="112">112</th><td>        <b>switch</b> (<a class="ref" href="events.h.html#XCB_error_Check" title='XCB_error_Check' data-ref="XCB_error_Check">XCB_error_Check</a> (<a class="local col0 ref" href="#10vd" title='vd' data-ref="10vd">vd</a>, <a class="local col3 ref" href="#13conn" title='conn' data-ref="13conn">conn</a>, <q>"shared memory server-side error"</q>,</td></tr>
+<tr><th id="113">113</th><td>                                 <a class="local col7 ref" href="#17ck" title='ck' data-ref="17ck">ck</a>))</td></tr>
+<tr><th id="114">114</th><td>        {</td></tr>
+<tr><th id="115">115</th><td>            <b>case</b> <var>0</var>:</td></tr>
+<tr><th id="116">116</th><td>                <b>break</b>;</td></tr>
+<tr><th id="117">117</th><td></td></tr>
+<tr><th id="118">118</th><td>            <b>case</b> <a class="macro" href="../../../../include/xcb/xproto.h.html#1287" title="10" data-ref="_M/XCB_ACCESS">XCB_ACCESS</a>:</td></tr>
+<tr><th id="119">119</th><td>            {</td></tr>
+<tr><th id="120">120</th><td>                <b>struct</b> <a class="type" href="../../../../include/x86_64-linux-gnu/bits/shm.h.html#shmid_ds" title='shmid_ds' data-ref="shmid_ds">shmid_ds</a> <dfn class="local col8 decl" id="18buf" title='buf' data-type='struct shmid_ds' data-ref="18buf">buf</dfn>;</td></tr>
+<tr><th id="121">121</th><td>                <i>/* Retry with promiscuous permissions */</i></td></tr>
+<tr><th id="122">122</th><td>                <a class="ref" href="../../../../include/x86_64-linux-gnu/sys/shm.h.html#shmctl" title='shmctl' data-ref="shmctl">shmctl</a> (<a class="local col5 ref" href="#15id" title='id' data-ref="15id">id</a>, <a class="macro" href="../../../../include/x86_64-linux-gnu/bits/ipc.h.html#32" title="2" data-ref="_M/IPC_STAT">IPC_STAT</a>, &amp;<a class="local col8 ref" href="#18buf" title='buf' data-ref="18buf">buf</a>);</td></tr>
+<tr><th id="123">123</th><td>                <a class="local col8 ref" href="#18buf" title='buf' data-ref="18buf">buf</a>.<a class="ref" href="../../../../include/x86_64-linux-gnu/bits/shm.h.html#shmid_ds::shm_perm" title='shmid_ds::shm_perm' data-ref="shmid_ds::shm_perm">shm_perm</a>.<a class="ref" href="../../../../include/x86_64-linux-gnu/bits/ipc.h.html#ipc_perm::mode" title='ipc_perm::mode' data-ref="ipc_perm::mode">mode</a> |= <a class="macro" href="../../../../include/x86_64-linux-gnu/sys/stat.h.html#184" title="(0400 &gt;&gt; 3)" data-ref="_M/S_IRGRP">S_IRGRP</a>|<a class="macro" href="../../../../include/x86_64-linux-gnu/sys/stat.h.html#190" title="((0400 &gt;&gt; 3) &gt;&gt; 3)" data-ref="_M/S_IROTH">S_IROTH</a>;</td></tr>
+<tr><th id="124">124</th><td>                <a class="ref" href="../../../../include/x86_64-linux-gnu/sys/shm.h.html#shmctl" title='shmctl' data-ref="shmctl">shmctl</a> (<a class="local col5 ref" href="#15id" title='id' data-ref="15id">id</a>, <a class="macro" href="../../../../include/x86_64-linux-gnu/bits/ipc.h.html#31" title="1" data-ref="_M/IPC_SET">IPC_SET</a>, &amp;<a class="local col8 ref" href="#18buf" title='buf' data-ref="18buf">buf</a>);</td></tr>
+<tr><th id="125">125</th><td>                <a class="local col7 ref" href="#17ck" title='ck' data-ref="17ck">ck</a> = <a class="ref" href="../../../../include/xcb/shm.h.html#xcb_shm_attach_checked" title='xcb_shm_attach_checked' data-ref="xcb_shm_attach_checked">xcb_shm_attach_checked</a> (<a class="local col3 ref" href="#13conn" title='conn' data-ref="13conn">conn</a>, <a class="local col4 ref" href="#14segment" title='segment' data-ref="14segment">segment</a>, <a class="local col5 ref" href="#15id" title='id' data-ref="15id">id</a>, <var>1</var>);</td></tr>
+<tr><th id="126">126</th><td>                <b>if</b> (<a class="ref" href="events.h.html#XCB_error_Check" title='XCB_error_Check' data-ref="XCB_error_Check">XCB_error_Check</a> (<a class="local col0 ref" href="#10vd" title='vd' data-ref="10vd">vd</a>, <a class="local col3 ref" href="#13conn" title='conn' data-ref="13conn">conn</a>, <q>"same error on retry"</q>, <a class="local col7 ref" href="#17ck" title='ck' data-ref="17ck">ck</a>) == <var>0</var>)</td></tr>
+<tr><th id="127">127</th><td>                    <b>break</b>;</td></tr>
+<tr><th id="128">128</th><td>                <i>/* fall through */</i></td></tr>
+<tr><th id="129">129</th><td>            }</td></tr>
+<tr><th id="130">130</th><td></td></tr>
+<tr><th id="131">131</th><td>            <b>default</b>:</td></tr>
+<tr><th id="132">132</th><td>                <a class="macro" href="../../../include/vlc_messages.h.html#71" title="vlc_Log( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(vd)), psz_object_type), (void)0 , (vlc_object_t *)(vd)), VLC_MSG_INFO, xcb_x11, &quot;using buggy X11 server - SSH proxying?&quot; )" data-ref="_M/msg_Info">msg_Info</a> (vd, <q>"using buggy X11 server - SSH proxying?"</q>);</td></tr>
+<tr><th id="133">133</th><td>                <a class="local col4 ref" href="#14segment" title='segment' data-ref="14segment">segment</a> = <var>0</var>;</td></tr>
+<tr><th id="134">134</th><td>        }</td></tr>
+<tr><th id="135">135</th><td>    }</td></tr>
+<tr><th id="136">136</th><td></td></tr>
+<tr><th id="137">137</th><td>    <a class="ref" href="../../../../include/x86_64-linux-gnu/sys/shm.h.html#shmctl" title='shmctl' data-ref="shmctl">shmctl</a> (<a class="local col5 ref" href="#15id" title='id' data-ref="15id">id</a>, <a class="macro" href="../../../../include/x86_64-linux-gnu/bits/ipc.h.html#30" title="0" data-ref="_M/IPC_RMID">IPC_RMID</a>, <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>);</td></tr>
+<tr><th id="138">138</th><td><u>#<span data-ppcond="89">else</span></u></td></tr>
+<tr><th id="139">139</th><td>    assert (segment == <var>0</var>);</td></tr>
+<tr><th id="140">140</th><td></td></tr>
+<tr><th id="141">141</th><td>    <i>/* XXX: align on 32 bytes for VLC chroma filters */</i></td></tr>
+<tr><th id="142">142</th><td>    <em>void</em> *shm = malloc (size);</td></tr>
+<tr><th id="143">143</th><td>    <b>if</b> (unlikely(shm == NULL))</td></tr>
+<tr><th id="144">144</th><td>        <b>return</b> -<var>1</var>;</td></tr>
+<tr><th id="145">145</th><td><u>#<span data-ppcond="89">endif</span></u></td></tr>
+<tr><th id="146">146</th><td>    <a class="local col1 ref" href="#11res" title='res' data-ref="11res">res</a>-&gt;<a class="ref" href="../../../include/vlc_picture.h.html#{anonymous}::p_sys" title='&lt;anonymous struct&gt;::p_sys' data-ref="{anonymous}::p_sys">p_sys</a> = (<em>void</em> *)(<a class="typedef" href="../../../../include/stdint.h.html#uintptr_t" title='uintptr_t' data-type='unsigned long' data-ref="uintptr_t">uintptr_t</a>)<a class="local col4 ref" href="#14segment" title='segment' data-ref="14segment">segment</a>;</td></tr>
+<tr><th id="147">147</th><td>    <a class="local col1 ref" href="#11res" title='res' data-ref="11res">res</a>-&gt;<a class="ref" href="../../../include/vlc_picture.h.html#{anonymous}::pf_destroy" title='&lt;anonymous struct&gt;::pf_destroy' data-ref="{anonymous}::pf_destroy">pf_destroy</a> = <a class="tu ref" href="#XCB_picture_Destroy" title='XCB_picture_Destroy' data-use='r' data-ref="XCB_picture_Destroy">XCB_picture_Destroy</a>;</td></tr>
+<tr><th id="148">148</th><td>    <a class="local col1 ref" href="#11res" title='res' data-ref="11res">res</a>-&gt;<a class="ref" href="../../../include/vlc_picture.h.html#{anonymous}::p" title='&lt;anonymous struct&gt;::p' data-ref="{anonymous}::p">p</a>[<var>0</var>].<a class="ref" href="../../../include/vlc_picture.h.html#{anonymousstruct}::{anonymous}::p_pixels" title='&lt;anonymous struct&gt;::&lt;anonymous struct&gt;::p_pixels' data-ref="{anonymousstruct}::{anonymous}::p_pixels">p_pixels</a> = <a class="local col6 ref" href="#16shm" title='shm' data-ref="16shm">shm</a>;</td></tr>
+<tr><th id="149">149</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="150">150</th><td>}</td></tr>
+<tr><th id="151">151</th><td></td></tr>
+<tr><th id="152">152</th><td><a class="typedef" href="../../../include/vlc_common.h.html#picture_t" title='picture_t' data-type='struct picture_t' data-ref="picture_t">picture_t</a> *<dfn class="decl def" id="XCB_picture_NewFromResource" title='XCB_picture_NewFromResource' data-ref="XCB_picture_NewFromResource">XCB_picture_NewFromResource</dfn> (<em>const</em> <a class="typedef" href="../../../include/vlc_common.h.html#video_format_t" title='video_format_t' data-type='struct video_format_t' data-ref="video_format_t">video_format_t</a> *<a class="macro" href="../../../config.h.html#765" title="__restrict" data-ref="_M/restrict"><b>restrict</b></a> <dfn class="local col9 decl" id="19fmt" title='fmt' data-type='const video_format_t *restrict' data-ref="19fmt">fmt</dfn>,</td></tr>
+<tr><th id="153">153</th><td>                                        <em>const</em> <a class="typedef" href="../../../include/vlc_picture.h.html#picture_resource_t" title='picture_resource_t' data-type='struct picture_resource_t' data-ref="picture_resource_t">picture_resource_t</a> *<a class="macro" href="../../../config.h.html#765" title="__restrict" data-ref="_M/restrict"><b>restrict</b></a> <dfn class="local col0 decl" id="20res" title='res' data-type='const picture_resource_t *restrict' data-ref="20res">res</dfn>)</td></tr>
+<tr><th id="154">154</th><td>{</td></tr>
+<tr><th id="155">155</th><td>    <a class="typedef" href="../../../include/vlc_common.h.html#picture_t" title='picture_t' data-type='struct picture_t' data-ref="picture_t">picture_t</a> *<dfn class="local col1 decl" id="21pic" title='pic' data-type='picture_t *' data-ref="21pic">pic</dfn> = <a class="ref" href="../../../include/vlc_picture.h.html#picture_NewFromResource" title='picture_NewFromResource' data-ref="picture_NewFromResource">picture_NewFromResource</a> (<a class="local col9 ref" href="#19fmt" title='fmt' data-ref="19fmt">fmt</a>, <a class="local col0 ref" href="#20res" title='res' data-ref="20res">res</a>);</td></tr>
+<tr><th id="156">156</th><td>    <b>if</b> (<a class="macro" href="../../../include/vlc_common.h.html#116" title="__builtin_expect(!!(pic == ((void*)0)), 0)" data-ref="_M/unlikely">unlikely</a>(<a class="local col1 ref" href="#21pic" title='pic' data-ref="21pic">pic</a> == <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>))</td></tr>
+<tr><th id="157">157</th><td>        <a class="ref" href="../../../../include/x86_64-linux-gnu/sys/shm.h.html#shmdt" title='shmdt' data-ref="shmdt">shmdt</a> (<a class="local col0 ref" href="#20res" title='res' data-ref="20res">res</a>-&gt;<a class="ref" href="../../../include/vlc_picture.h.html#{anonymous}::p" title='&lt;anonymous struct&gt;::p' data-ref="{anonymous}::p">p</a>[<var>0</var>].<a class="ref" href="../../../include/vlc_picture.h.html#{anonymousstruct}::{anonymous}::p_pixels" title='&lt;anonymous struct&gt;::&lt;anonymous struct&gt;::p_pixels' data-ref="{anonymousstruct}::{anonymous}::p_pixels">p_pixels</a>);</td></tr>
+<tr><th id="158">158</th><td>    <b>return</b> <a class="local col1 ref" href="#21pic" title='pic' data-ref="21pic">pic</a>;</td></tr>
+<tr><th id="159">159</th><td>}</td></tr>
+<tr><th id="160">160</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project vlc revision <em>2.2.0-git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

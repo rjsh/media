@@ -1,0 +1,251 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>filesystem.c source code [vlc/src/text/filesystem.c] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'vlc/src/text/filesystem.c'; var root_path = '../../..'; var data_path = '../../../../data';</script>
+<script src='../../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='../..'>vlc</a>/<a href='..'>src</a>/<a href='./'>text</a>/<a href='filesystem.c.html'>filesystem.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*****************************************************************************</i></td></tr>
+<tr><th id="2">2</th><td><i> * filesystem.c: Common file system helpers</i></td></tr>
+<tr><th id="3">3</th><td><i> *****************************************************************************</i></td></tr>
+<tr><th id="4">4</th><td><i> * Copyright (C) 2005-2006 VLC authors and VideoLAN</i></td></tr>
+<tr><th id="5">5</th><td><i> * Copyright © 2005-2008 Rémi Denis-Courmont</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * Authors: Rémi Denis-Courmont &lt;rem # videolan.org&gt;</i></td></tr>
+<tr><th id="8">8</th><td><i> *</i></td></tr>
+<tr><th id="9">9</th><td><i> * This program is free software; you can redistribute it and/or modify it</i></td></tr>
+<tr><th id="10">10</th><td><i> * under the terms of the GNU Lesser General Public License as published by</i></td></tr>
+<tr><th id="11">11</th><td><i> * the Free Software Foundation; either version 2.1 of the License, or</i></td></tr>
+<tr><th id="12">12</th><td><i> * (at your option) any later version.</i></td></tr>
+<tr><th id="13">13</th><td><i> *</i></td></tr>
+<tr><th id="14">14</th><td><i> * This program is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="15">15</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="16">16</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</i></td></tr>
+<tr><th id="17">17</th><td><i> * GNU Lesser General Public License for more details.</i></td></tr>
+<tr><th id="18">18</th><td><i> *</i></td></tr>
+<tr><th id="19">19</th><td><i> * You should have received a copy of the GNU Lesser General Public License</i></td></tr>
+<tr><th id="20">20</th><td><i> * along with this program; if not, write to the Free Software Foundation,</i></td></tr>
+<tr><th id="21">21</th><td><i> * Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.</i></td></tr>
+<tr><th id="22">22</th><td><i> *****************************************************************************/</i></td></tr>
+<tr><th id="23">23</th><td></td></tr>
+<tr><th id="24">24</th><td><i>/*****************************************************************************</i></td></tr>
+<tr><th id="25">25</th><td><i> * Preamble</i></td></tr>
+<tr><th id="26">26</th><td><i> *****************************************************************************/</i></td></tr>
+<tr><th id="27">27</th><td><u>#<span data-ppcond="27">ifdef</span> <span class="macro" data-ref="_M/HAVE_CONFIG_H">HAVE_CONFIG_H</span></u></td></tr>
+<tr><th id="28">28</th><td><u># include <a href="../../config.h.html">"config.h"</a></u></td></tr>
+<tr><th id="29">29</th><td><u>#<span data-ppcond="27">endif</span></u></td></tr>
+<tr><th id="30">30</th><td></td></tr>
+<tr><th id="31">31</th><td><u>#include <a href="../../include/vlc_common.h.html">&lt;vlc_common.h&gt;</a></u></td></tr>
+<tr><th id="32">32</th><td><u>#include <a href="../../include/vlc_fs.h.html">&lt;vlc_fs.h&gt;</a></u></td></tr>
+<tr><th id="33">33</th><td><u>#include <a href="../../include/vlc_rand.h.html">&lt;vlc_rand.h&gt;</a></u></td></tr>
+<tr><th id="34">34</th><td></td></tr>
+<tr><th id="35">35</th><td><u>#include <a href="../../../include/assert.h.html">&lt;assert.h&gt;</a></u></td></tr>
+<tr><th id="36">36</th><td></td></tr>
+<tr><th id="37">37</th><td><u>#include <a href="../../../include/stdio.h.html">&lt;stdio.h&gt;</a></u></td></tr>
+<tr><th id="38">38</th><td><u>#include <a href="../../../include/errno.h.html">&lt;errno.h&gt;</a></u></td></tr>
+<tr><th id="39">39</th><td><u>#include <a href="../../../include/x86_64-linux-gnu/sys/types.h.html">&lt;sys/types.h&gt;</a></u></td></tr>
+<tr><th id="40">40</th><td><u>#include <a href="../../../include/fcntl.h.html">&lt;fcntl.h&gt;</a></u></td></tr>
+<tr><th id="41">41</th><td><u>#include <a href="../../../include/unistd.h.html">&lt;unistd.h&gt;</a></u></td></tr>
+<tr><th id="42">42</th><td></td></tr>
+<tr><th id="43">43</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="44">44</th><td><i class="doc"> * Opens a FILE pointer.</i></td></tr>
+<tr><th id="45">45</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">filename</span> file path, using UTF-8 encoding</i></td></tr>
+<tr><th id="46">46</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">mode</span> fopen file open mode</i></td></tr>
+<tr><th id="47">47</th><td><i class="doc"> * <span class="command">@return</span> NULL on error, an open FILE pointer on success.</i></td></tr>
+<tr><th id="48">48</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="49">49</th><td><a class="typedef" href="../../../include/stdio.h.html#FILE" title='FILE' data-type='struct _IO_FILE' data-ref="FILE">FILE</a> *<dfn class="decl def" id="vlc_fopen" title='vlc_fopen' data-ref="vlc_fopen">vlc_fopen</dfn> (<em>const</em> <em>char</em> *<dfn class="local col1 decl" id="1filename" title='filename' data-type='const char *' data-ref="1filename">filename</dfn>, <em>const</em> <em>char</em> *<dfn class="local col2 decl" id="2mode" title='mode' data-type='const char *' data-ref="2mode">mode</dfn>)</td></tr>
+<tr><th id="50">50</th><td>{</td></tr>
+<tr><th id="51">51</th><td>    <em>int</em> <dfn class="local col3 decl" id="3rwflags" title='rwflags' data-type='int' data-ref="3rwflags">rwflags</dfn> = <var>0</var>, <dfn class="local col4 decl" id="4oflags" title='oflags' data-type='int' data-ref="4oflags">oflags</dfn> = <var>0</var>;</td></tr>
+<tr><th id="52">52</th><td></td></tr>
+<tr><th id="53">53</th><td>    <b>for</b> (<em>const</em> <em>char</em> *<dfn class="local col5 decl" id="5ptr" title='ptr' data-type='const char *' data-ref="5ptr">ptr</dfn> = <a class="local col2 ref" href="#2mode" title='mode' data-ref="2mode">mode</a>; *<a class="local col5 ref" href="#5ptr" title='ptr' data-ref="5ptr">ptr</a>; <a class="local col5 ref" href="#5ptr" title='ptr' data-ref="5ptr">ptr</a>++)</td></tr>
+<tr><th id="54">54</th><td>    {</td></tr>
+<tr><th id="55">55</th><td>        <b>switch</b> (*<a class="local col5 ref" href="#5ptr" title='ptr' data-ref="5ptr">ptr</a>)</td></tr>
+<tr><th id="56">56</th><td>        {</td></tr>
+<tr><th id="57">57</th><td>            <b>case</b> <kbd>'r'</kbd>:</td></tr>
+<tr><th id="58">58</th><td>                <a class="local col3 ref" href="#3rwflags" title='rwflags' data-ref="3rwflags">rwflags</a> = <a class="macro" href="../../../include/x86_64-linux-gnu/bits/fcntl-linux.h.html#43" title="00" data-ref="_M/O_RDONLY">O_RDONLY</a>;</td></tr>
+<tr><th id="59">59</th><td>                <b>break</b>;</td></tr>
+<tr><th id="60">60</th><td></td></tr>
+<tr><th id="61">61</th><td>            <b>case</b> <kbd>'a'</kbd>:</td></tr>
+<tr><th id="62">62</th><td>                <a class="local col3 ref" href="#3rwflags" title='rwflags' data-ref="3rwflags">rwflags</a> = <a class="macro" href="../../../include/x86_64-linux-gnu/bits/fcntl-linux.h.html#44" title="01" data-ref="_M/O_WRONLY">O_WRONLY</a>;</td></tr>
+<tr><th id="63">63</th><td>                <a class="local col4 ref" href="#4oflags" title='oflags' data-ref="4oflags">oflags</a> |= <a class="macro" href="../../../include/x86_64-linux-gnu/bits/fcntl-linux.h.html#47" title="0100" data-ref="_M/O_CREAT">O_CREAT</a> | <a class="macro" href="../../../include/x86_64-linux-gnu/bits/fcntl-linux.h.html#59" title="02000" data-ref="_M/O_APPEND">O_APPEND</a>;</td></tr>
+<tr><th id="64">64</th><td>                <b>break</b>;</td></tr>
+<tr><th id="65">65</th><td></td></tr>
+<tr><th id="66">66</th><td>            <b>case</b> <kbd>'w'</kbd>:</td></tr>
+<tr><th id="67">67</th><td>                <a class="local col3 ref" href="#3rwflags" title='rwflags' data-ref="3rwflags">rwflags</a> = <a class="macro" href="../../../include/x86_64-linux-gnu/bits/fcntl-linux.h.html#44" title="01" data-ref="_M/O_WRONLY">O_WRONLY</a>;</td></tr>
+<tr><th id="68">68</th><td>                <a class="local col4 ref" href="#4oflags" title='oflags' data-ref="4oflags">oflags</a> |= <a class="macro" href="../../../include/x86_64-linux-gnu/bits/fcntl-linux.h.html#47" title="0100" data-ref="_M/O_CREAT">O_CREAT</a> | <a class="macro" href="../../../include/x86_64-linux-gnu/bits/fcntl-linux.h.html#56" title="01000" data-ref="_M/O_TRUNC">O_TRUNC</a>;</td></tr>
+<tr><th id="69">69</th><td>                <b>break</b>;</td></tr>
+<tr><th id="70">70</th><td></td></tr>
+<tr><th id="71">71</th><td>            <b>case</b> <kbd>'x'</kbd>:</td></tr>
+<tr><th id="72">72</th><td>                <a class="local col4 ref" href="#4oflags" title='oflags' data-ref="4oflags">oflags</a> |= <a class="macro" href="../../../include/x86_64-linux-gnu/bits/fcntl-linux.h.html#50" title="0200" data-ref="_M/O_EXCL">O_EXCL</a>;</td></tr>
+<tr><th id="73">73</th><td>                <b>break</b>;</td></tr>
+<tr><th id="74">74</th><td></td></tr>
+<tr><th id="75">75</th><td>            <b>case</b> <kbd>'+'</kbd>:</td></tr>
+<tr><th id="76">76</th><td>                <a class="local col3 ref" href="#3rwflags" title='rwflags' data-ref="3rwflags">rwflags</a> = <a class="macro" href="../../../include/x86_64-linux-gnu/bits/fcntl-linux.h.html#45" title="02" data-ref="_M/O_RDWR">O_RDWR</a>;</td></tr>
+<tr><th id="77">77</th><td>                <b>break</b>;</td></tr>
+<tr><th id="78">78</th><td></td></tr>
+<tr><th id="79">79</th><td><u>#<span data-ppcond="79">ifdef</span> <span class="macro" data-ref="_M/O_BINARY">O_BINARY</span></u></td></tr>
+<tr><th id="80">80</th><td>            <b>case</b> <kbd>'b'</kbd>:</td></tr>
+<tr><th id="81">81</th><td>                oflags = (oflags &amp; ~O_TEXT) | O_BINARY;</td></tr>
+<tr><th id="82">82</th><td>                <b>break</b>;</td></tr>
+<tr><th id="83">83</th><td></td></tr>
+<tr><th id="84">84</th><td>            <b>case</b> <kbd>'t'</kbd>:</td></tr>
+<tr><th id="85">85</th><td>                oflags = (oflags &amp; ~O_BINARY) | O_TEXT;</td></tr>
+<tr><th id="86">86</th><td>                <b>break</b>;</td></tr>
+<tr><th id="87">87</th><td><u>#<span data-ppcond="79">endif</span></u></td></tr>
+<tr><th id="88">88</th><td>        }</td></tr>
+<tr><th id="89">89</th><td>    }</td></tr>
+<tr><th id="90">90</th><td></td></tr>
+<tr><th id="91">91</th><td>    <em>int</em> <dfn class="local col6 decl" id="6fd" title='fd' data-type='int' data-ref="6fd">fd</dfn> = <a class="ref" href="../../include/vlc_fs.h.html#vlc_open" title='vlc_open' data-ref="vlc_open">vlc_open</a> (<a class="local col1 ref" href="#1filename" title='filename' data-ref="1filename">filename</a>, <a class="local col3 ref" href="#3rwflags" title='rwflags' data-ref="3rwflags">rwflags</a> | <a class="local col4 ref" href="#4oflags" title='oflags' data-ref="4oflags">oflags</a>, <var>0666</var>);</td></tr>
+<tr><th id="92">92</th><td>    <b>if</b> (<a class="local col6 ref" href="#6fd" title='fd' data-ref="6fd">fd</a> == -<var>1</var>)</td></tr>
+<tr><th id="93">93</th><td>        <b>return</b> <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="94">94</th><td></td></tr>
+<tr><th id="95">95</th><td>    <a class="typedef" href="../../../include/stdio.h.html#FILE" title='FILE' data-type='struct _IO_FILE' data-ref="FILE">FILE</a> *<dfn class="local col7 decl" id="7stream" title='stream' data-type='FILE *' data-ref="7stream">stream</dfn> = <a class="ref" href="../../../include/stdio.h.html#fdopen" title='fdopen' data-ref="fdopen">fdopen</a> (<a class="local col6 ref" href="#6fd" title='fd' data-ref="6fd">fd</a>, <a class="local col2 ref" href="#2mode" title='mode' data-ref="2mode">mode</a>);</td></tr>
+<tr><th id="96">96</th><td>    <b>if</b> (<a class="local col7 ref" href="#7stream" title='stream' data-ref="7stream">stream</a> == <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>)</td></tr>
+<tr><th id="97">97</th><td>        <a class="ref" href="../../../include/unistd.h.html#close" title='close' data-ref="close">close</a> (<a class="local col6 ref" href="#6fd" title='fd' data-ref="6fd">fd</a>);</td></tr>
+<tr><th id="98">98</th><td></td></tr>
+<tr><th id="99">99</th><td>    <b>return</b> <a class="local col7 ref" href="#7stream" title='stream' data-ref="7stream">stream</a>;</td></tr>
+<tr><th id="100">100</th><td>}</td></tr>
+<tr><th id="101">101</th><td></td></tr>
+<tr><th id="102">102</th><td></td></tr>
+<tr><th id="103">103</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="dummy_select" title='dummy_select' data-type='int dummy_select(const char * str)' data-ref="dummy_select">dummy_select</dfn>( <em>const</em> <em>char</em> *<dfn class="local col8 decl" id="8str" title='str' data-type='const char *' data-ref="8str">str</dfn> )</td></tr>
+<tr><th id="104">104</th><td>{</td></tr>
+<tr><th id="105">105</th><td>    (<em>void</em>)<a class="local col8 ref" href="#8str" title='str' data-ref="8str">str</a>;</td></tr>
+<tr><th id="106">106</th><td>    <b>return</b> <var>1</var>;</td></tr>
+<tr><th id="107">107</th><td>}</td></tr>
+<tr><th id="108">108</th><td></td></tr>
+<tr><th id="109">109</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="110">110</th><td><i class="doc"> * Does the same as vlc_scandir(), but takes an open directory pointer</i></td></tr>
+<tr><th id="111">111</th><td><i class="doc"> * instead of a directory path.</i></td></tr>
+<tr><th id="112">112</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="113">113</th><td><em>int</em> <dfn class="decl def" id="vlc_loaddir" title='vlc_loaddir' data-ref="vlc_loaddir">vlc_loaddir</dfn>( <a class="typedef" href="../../../include/dirent.h.html#DIR" title='DIR' data-type='struct __dirstream' data-ref="DIR">DIR</a> *<dfn class="local col9 decl" id="9dir" title='dir' data-type='DIR *' data-ref="9dir">dir</dfn>, <em>char</em> ***<dfn class="local col0 decl" id="10namelist" title='namelist' data-type='char ***' data-ref="10namelist">namelist</dfn>,</td></tr>
+<tr><th id="114">114</th><td>                  <em>int</em> (*<dfn class="local col1 decl" id="11select" title='select' data-type='int (*)(const char *)' data-ref="11select">select</dfn>)( <em>const</em> <em>char</em> * ),</td></tr>
+<tr><th id="115">115</th><td>                  <em>int</em> (*<dfn class="local col2 decl" id="12compar" title='compar' data-type='int (*)(const char **, const char **)' data-ref="12compar">compar</dfn>)( <em>const</em> <em>char</em> **, <em>const</em> <em>char</em> ** ) )</td></tr>
+<tr><th id="116">116</th><td>{</td></tr>
+<tr><th id="117">117</th><td>    <a class="macro" href="../../../include/assert.h.html#88" title="((dir) ? (void) (0) : __assert_fail (&quot;dir&quot;, &quot;/usr/local/google/home/robertshih/git/vlc/src/text/filesystem.c&quot;, 117, __PRETTY_FUNCTION__))" data-ref="_M/assert">assert</a> (<a class="local col9 ref" href="#9dir" title='dir' data-ref="9dir">dir</a>);</td></tr>
+<tr><th id="118">118</th><td></td></tr>
+<tr><th id="119">119</th><td>    <b>if</b> (<a class="local col1 ref" href="#11select" title='select' data-ref="11select">select</a> == <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>)</td></tr>
+<tr><th id="120">120</th><td>        <a class="local col1 ref" href="#11select" title='select' data-ref="11select">select</a> = <a class="tu ref" href="#dummy_select" title='dummy_select' data-use='r' data-ref="dummy_select">dummy_select</a>;</td></tr>
+<tr><th id="121">121</th><td></td></tr>
+<tr><th id="122">122</th><td>    <em>char</em> **<dfn class="local col3 decl" id="13tab" title='tab' data-type='char **' data-ref="13tab">tab</dfn> = <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="123">123</th><td>    <em>unsigned</em> <dfn class="local col4 decl" id="14num" title='num' data-type='unsigned int' data-ref="14num">num</dfn> = <var>0</var>;</td></tr>
+<tr><th id="124">124</th><td></td></tr>
+<tr><th id="125">125</th><td>    <a class="ref" href="../../../include/dirent.h.html#rewinddir" title='rewinddir' data-ref="rewinddir">rewinddir</a> (<a class="local col9 ref" href="#9dir" title='dir' data-ref="9dir">dir</a>);</td></tr>
+<tr><th id="126">126</th><td></td></tr>
+<tr><th id="127">127</th><td>    <b>for</b> (<em>unsigned</em> <dfn class="local col5 decl" id="15size" title='size' data-type='unsigned int' data-ref="15size">size</dfn> = <var>0</var>;;)</td></tr>
+<tr><th id="128">128</th><td>    {</td></tr>
+<tr><th id="129">129</th><td>        <a class="macro" href="../../../include/x86_64-linux-gnu/bits/errno.h.html#54" title="(*__errno_location ())" data-ref="_M/errno">errno</a> = <var>0</var>;</td></tr>
+<tr><th id="130">130</th><td>        <em>const</em> <em>char</em> *<dfn class="local col6 decl" id="16entry" title='entry' data-type='const char *' data-ref="16entry">entry</dfn> = <a class="ref" href="../../include/vlc_fs.h.html#vlc_readdir" title='vlc_readdir' data-ref="vlc_readdir">vlc_readdir</a> (<a class="local col9 ref" href="#9dir" title='dir' data-ref="9dir">dir</a>);</td></tr>
+<tr><th id="131">131</th><td>        <b>if</b> (<a class="local col6 ref" href="#16entry" title='entry' data-ref="16entry">entry</a> == <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>)</td></tr>
+<tr><th id="132">132</th><td>        {</td></tr>
+<tr><th id="133">133</th><td>            <b>if</b> (<a class="macro" href="../../../include/x86_64-linux-gnu/bits/errno.h.html#54" title="(*__errno_location ())" data-ref="_M/errno">errno</a>)</td></tr>
+<tr><th id="134">134</th><td>                <b>goto</b> <a class="lbl" href="#17error" data-ref="17error">error</a>;</td></tr>
+<tr><th id="135">135</th><td>            <b>break</b>;</td></tr>
+<tr><th id="136">136</th><td>        }</td></tr>
+<tr><th id="137">137</th><td></td></tr>
+<tr><th id="138">138</th><td>        <b>if</b> (!<a class="local col1 ref" href="#11select" title='select' data-ref="11select">select</a> (<a class="local col6 ref" href="#16entry" title='entry' data-ref="16entry">entry</a>))</td></tr>
+<tr><th id="139">139</th><td>            <b>continue</b>;</td></tr>
+<tr><th id="140">140</th><td></td></tr>
+<tr><th id="141">141</th><td>        <b>if</b> (<a class="local col4 ref" href="#14num" title='num' data-ref="14num">num</a> &gt;= <a class="local col5 ref" href="#15size" title='size' data-ref="15size">size</a>)</td></tr>
+<tr><th id="142">142</th><td>        {</td></tr>
+<tr><th id="143">143</th><td>            <a class="local col5 ref" href="#15size" title='size' data-ref="15size">size</a> = <a class="local col5 ref" href="#15size" title='size' data-ref="15size">size</a> ? (<var>2</var> * <a class="local col5 ref" href="#15size" title='size' data-ref="15size">size</a>) : <var>16</var>;</td></tr>
+<tr><th id="144">144</th><td>            <em>char</em> **<dfn class="local col8 decl" id="18newtab" title='newtab' data-type='char **' data-ref="18newtab">newtab</dfn> = <a class="ref" href="../../../include/stdlib.h.html#realloc" title='realloc' data-ref="realloc">realloc</a> (<a class="local col3 ref" href="#13tab" title='tab' data-ref="13tab">tab</a>, <b>sizeof</b> (*<a class="local col3 ref" href="#13tab" title='tab' data-ref="13tab">tab</a>) * (<a class="local col5 ref" href="#15size" title='size' data-ref="15size">size</a>));</td></tr>
+<tr><th id="145">145</th><td></td></tr>
+<tr><th id="146">146</th><td>            <b>if</b> (<a class="macro" href="../../include/vlc_common.h.html#116" title="__builtin_expect(!!(newtab == ((void*)0)), 0)" data-ref="_M/unlikely">unlikely</a>(<a class="local col8 ref" href="#18newtab" title='newtab' data-ref="18newtab">newtab</a> == <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>))</td></tr>
+<tr><th id="147">147</th><td>                <b>goto</b> <a class="lbl" href="#17error" data-ref="17error">error</a>;</td></tr>
+<tr><th id="148">148</th><td>            <a class="local col3 ref" href="#13tab" title='tab' data-ref="13tab">tab</a> = <a class="local col8 ref" href="#18newtab" title='newtab' data-ref="18newtab">newtab</a>;</td></tr>
+<tr><th id="149">149</th><td>        }</td></tr>
+<tr><th id="150">150</th><td></td></tr>
+<tr><th id="151">151</th><td>        <a class="local col3 ref" href="#13tab" title='tab' data-ref="13tab">tab</a>[<a class="local col4 ref" href="#14num" title='num' data-ref="14num">num</a>] = <a class="macro" href="../../../include/x86_64-linux-gnu/bits/string2.h.html#1291" title="(__extension__ (__builtin_constant_p (entry) &amp;&amp; ((size_t)(const void *)((entry) + 1) - (size_t)(const void *)(entry) == 1) ? (((const char *) (entry))[0] == &apos;\0&apos; ? (char *) calloc ((size_t) 1, (size_t) 1) : ({ size_t __len = strlen (entry) + 1; char *__retval = (char *) malloc (__len); if (__retval != ((void*)0)) __retval = (char *) memcpy (__retval, entry, __len); __retval; })) : __strdup (entry)))" data-ref="_M/strdup">strdup</a>(<a class="local col6 ref" href="#16entry" title='entry' data-ref="16entry">entry</a>);</td></tr>
+<tr><th id="152">152</th><td>        <b>if</b> (<a class="macro" href="../../include/vlc_common.h.html#115" title="__builtin_expect(!!(tab[num] != ((void*)0)), 1)" data-ref="_M/likely">likely</a>(<a class="local col3 ref" href="#13tab" title='tab' data-ref="13tab">tab</a>[<a class="local col4 ref" href="#14num" title='num' data-ref="14num">num</a>] != <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>))</td></tr>
+<tr><th id="153">153</th><td>            <a class="local col4 ref" href="#14num" title='num' data-ref="14num">num</a>++;</td></tr>
+<tr><th id="154">154</th><td>    }</td></tr>
+<tr><th id="155">155</th><td></td></tr>
+<tr><th id="156">156</th><td>    <b>if</b> (<a class="local col2 ref" href="#12compar" title='compar' data-ref="12compar">compar</a> != <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>)</td></tr>
+<tr><th id="157">157</th><td>        <a class="ref" href="../../../include/stdlib.h.html#qsort" title='qsort' data-ref="qsort">qsort</a> (<a class="local col3 ref" href="#13tab" title='tab' data-ref="13tab">tab</a>, <a class="local col4 ref" href="#14num" title='num' data-ref="14num">num</a>, <b>sizeof</b> (*<a class="local col3 ref" href="#13tab" title='tab' data-ref="13tab">tab</a>),</td></tr>
+<tr><th id="158">158</th><td>               (<em>int</em> (*)( <em>const</em> <em>void</em> *, <em>const</em> <em>void</em> *))<a class="local col2 ref" href="#12compar" title='compar' data-ref="12compar">compar</a>);</td></tr>
+<tr><th id="159">159</th><td>    *<a class="local col0 ref" href="#10namelist" title='namelist' data-ref="10namelist">namelist</a> = <a class="local col3 ref" href="#13tab" title='tab' data-ref="13tab">tab</a>;</td></tr>
+<tr><th id="160">160</th><td>    <b>return</b> <a class="local col4 ref" href="#14num" title='num' data-ref="14num">num</a>;</td></tr>
+<tr><th id="161">161</th><td></td></tr>
+<tr><th id="162">162</th><td><dfn class="lbl" id="17error" data-ref="17error">error</dfn>:</td></tr>
+<tr><th id="163">163</th><td>    <b>for</b> (<em>unsigned</em> <dfn class="local col9 decl" id="19i" title='i' data-type='unsigned int' data-ref="19i">i</dfn> = <var>0</var>; <a class="local col9 ref" href="#19i" title='i' data-ref="19i">i</a> &lt; <a class="local col4 ref" href="#14num" title='num' data-ref="14num">num</a>; <a class="local col9 ref" href="#19i" title='i' data-ref="19i">i</a>++)</td></tr>
+<tr><th id="164">164</th><td>        <a class="ref" href="../../../include/stdlib.h.html#free" title='free' data-ref="free">free</a> (<a class="local col3 ref" href="#13tab" title='tab' data-ref="13tab">tab</a>[<a class="local col9 ref" href="#19i" title='i' data-ref="19i">i</a>]);</td></tr>
+<tr><th id="165">165</th><td>    <a class="ref" href="../../../include/stdlib.h.html#free" title='free' data-ref="free">free</a> (<a class="local col3 ref" href="#13tab" title='tab' data-ref="13tab">tab</a>);</td></tr>
+<tr><th id="166">166</th><td>    <b>return</b> -<var>1</var>;</td></tr>
+<tr><th id="167">167</th><td>}</td></tr>
+<tr><th id="168">168</th><td></td></tr>
+<tr><th id="169">169</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="170">170</th><td><i class="doc"> * Selects file entries from a directory, as GNU C scandir().</i></td></tr>
+<tr><th id="171">171</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="172">172</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">dirname</span> UTF-8 diretory path</i></td></tr>
+<tr><th id="173">173</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">pointer</span> [OUT] pointer set, on successful completion, to the address</i></td></tr>
+<tr><th id="174">174</th><td><i class="doc"> * of a table of UTF-8 filenames. All filenames must be freed with free().</i></td></tr>
+<tr><th id="175">175</th><td><i class="doc"> * The table itself must be freed with free() as well.</i></td></tr>
+<tr><th id="176">176</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="177">177</th><td><i class="doc"> * <span class="command">@return</span> How many file names were selected (possibly 0),</i></td></tr>
+<tr><th id="178">178</th><td><i class="doc"> * or -1 in case of error.</i></td></tr>
+<tr><th id="179">179</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="180">180</th><td><em>int</em> <dfn class="decl def" id="vlc_scandir" title='vlc_scandir' data-ref="vlc_scandir">vlc_scandir</dfn>( <em>const</em> <em>char</em> *<dfn class="local col0 decl" id="20dirname" title='dirname' data-type='const char *' data-ref="20dirname">dirname</dfn>, <em>char</em> ***<dfn class="local col1 decl" id="21namelist" title='namelist' data-type='char ***' data-ref="21namelist">namelist</dfn>,</td></tr>
+<tr><th id="181">181</th><td>                  <em>int</em> (*<dfn class="local col2 decl" id="22select" title='select' data-type='int (*)(const char *)' data-ref="22select">select</dfn>)( <em>const</em> <em>char</em> * ),</td></tr>
+<tr><th id="182">182</th><td>                  <em>int</em> (*<dfn class="local col3 decl" id="23compar" title='compar' data-type='int (*)(const char **, const char **)' data-ref="23compar">compar</dfn>)( <em>const</em> <em>char</em> **, <em>const</em> <em>char</em> ** ) )</td></tr>
+<tr><th id="183">183</th><td>{</td></tr>
+<tr><th id="184">184</th><td>    <a class="typedef" href="../../../include/dirent.h.html#DIR" title='DIR' data-type='struct __dirstream' data-ref="DIR">DIR</a> *<dfn class="local col4 decl" id="24dir" title='dir' data-type='DIR *' data-ref="24dir">dir</dfn> = <a class="ref" href="../../include/vlc_fs.h.html#vlc_opendir" title='vlc_opendir' data-ref="vlc_opendir">vlc_opendir</a> (<a class="local col0 ref" href="#20dirname" title='dirname' data-ref="20dirname">dirname</a>);</td></tr>
+<tr><th id="185">185</th><td>    <em>int</em> <dfn class="local col5 decl" id="25val" title='val' data-type='int' data-ref="25val">val</dfn> = -<var>1</var>;</td></tr>
+<tr><th id="186">186</th><td></td></tr>
+<tr><th id="187">187</th><td>    <b>if</b> (<a class="local col4 ref" href="#24dir" title='dir' data-ref="24dir">dir</a> != <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>)</td></tr>
+<tr><th id="188">188</th><td>    {</td></tr>
+<tr><th id="189">189</th><td>        <a class="local col5 ref" href="#25val" title='val' data-ref="25val">val</a> = <a class="ref" href="#vlc_loaddir" title='vlc_loaddir' data-ref="vlc_loaddir">vlc_loaddir</a> (<a class="local col4 ref" href="#24dir" title='dir' data-ref="24dir">dir</a>, <a class="local col1 ref" href="#21namelist" title='namelist' data-ref="21namelist">namelist</a>, <a class="local col2 ref" href="#22select" title='select' data-ref="22select">select</a>, <a class="local col3 ref" href="#23compar" title='compar' data-ref="23compar">compar</a>);</td></tr>
+<tr><th id="190">190</th><td>        <a class="ref" href="../../../include/dirent.h.html#closedir" title='closedir' data-ref="closedir">closedir</a> (<a class="local col4 ref" href="#24dir" title='dir' data-ref="24dir">dir</a>);</td></tr>
+<tr><th id="191">191</th><td>    }</td></tr>
+<tr><th id="192">192</th><td>    <b>return</b> <a class="local col5 ref" href="#25val" title='val' data-ref="25val">val</a>;</td></tr>
+<tr><th id="193">193</th><td>}</td></tr>
+<tr><th id="194">194</th><td></td></tr>
+<tr><th id="195">195</th><td><em>int</em> <dfn class="decl def" id="vlc_mkstemp" title='vlc_mkstemp' data-ref="vlc_mkstemp">vlc_mkstemp</dfn>( <em>char</em> *<dfn class="local col6 decl" id="26template" title='template' data-type='char *' data-ref="26template">template</dfn> )</td></tr>
+<tr><th id="196">196</th><td>{</td></tr>
+<tr><th id="197">197</th><td>    <em>static</em> <em>const</em> <em>char</em> <dfn class="local col7 decl" id="27digits" title='digits' data-type='const char [37]' data-ref="27digits">digits</dfn>[] = <q>"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"</q>;</td></tr>
+<tr><th id="198">198</th><td>    <em>static</em> <em>const</em> <em>int</em> <dfn class="local col8 decl" id="28i_digits" title='i_digits' data-type='const int' data-ref="28i_digits">i_digits</dfn> = <b>sizeof</b>(<a class="local col7 ref" href="#27digits" title='digits' data-ref="27digits">digits</a>)/<b>sizeof</b>(*<a class="local col7 ref" href="#27digits" title='digits' data-ref="27digits">digits</a>) - <var>1</var>;</td></tr>
+<tr><th id="199">199</th><td></td></tr>
+<tr><th id="200">200</th><td>    <i>/* */</i></td></tr>
+<tr><th id="201">201</th><td>    <a class="macro" href="../../../include/assert.h.html#88" title="((template) ? (void) (0) : __assert_fail (&quot;template&quot;, &quot;/usr/local/google/home/robertshih/git/vlc/src/text/filesystem.c&quot;, 201, __PRETTY_FUNCTION__))" data-ref="_M/assert">assert</a>( <a class="local col6 ref" href="#26template" title='template' data-ref="26template">template</a> );</td></tr>
+<tr><th id="202">202</th><td></td></tr>
+<tr><th id="203">203</th><td>    <i>/* Check template validity */</i></td></tr>
+<tr><th id="204">204</th><td>    <em>const</em> <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="local col9 decl" id="29i_length" title='i_length' data-type='const size_t' data-ref="29i_length">i_length</dfn> = <a class="ref" href="../../../include/string.h.html#strlen" title='strlen' data-ref="strlen">strlen</a>( <a class="local col6 ref" href="#26template" title='template' data-ref="26template">template</a> );</td></tr>
+<tr><th id="205">205</th><td>    <em>char</em> *<dfn class="local col0 decl" id="30psz_rand" title='psz_rand' data-type='char *' data-ref="30psz_rand">psz_rand</dfn> = &amp;<a class="local col6 ref" href="#26template" title='template' data-ref="26template">template</a>[<a class="local col9 ref" href="#29i_length" title='i_length' data-ref="29i_length">i_length</a>-<var>6</var>];</td></tr>
+<tr><th id="206">206</th><td></td></tr>
+<tr><th id="207">207</th><td>    <b>if</b>( <a class="local col9 ref" href="#29i_length" title='i_length' data-ref="29i_length">i_length</a> &lt; <var>6</var> || <a class="macro" href="../../../include/x86_64-linux-gnu/bits/string2.h.html#799" title="__extension__ ({ size_t __s1_len, __s2_len; (__builtin_constant_p (psz_rand) &amp;&amp; __builtin_constant_p (&quot;XXXXXX&quot;) &amp;&amp; (__s1_len = __builtin_strlen (psz_rand), __s2_len = __builtin_strlen (&quot;XXXXXX&quot;), (!((size_t)(const void *)((psz_rand) + 1) - (size_t)(const void *)(psz_rand) == 1) || __s1_len &gt;= 4) &amp;&amp; (!((size_t)(const void *)((&quot;XXXXXX&quot;) + 1) - (size_t)(const void *)(&quot;XXXXXX&quot;) == 1) || __s2_len &gt;= 4)) ? __builtin_strcmp (psz_rand, &quot;XXXXXX&quot;) : (__builtin_constant_p (psz_rand) &amp;&amp; ((size_t)(const void *)((psz_rand) + 1) - (size_t)(const void *)(psz_rand) == 1) &amp;&amp; (__s1_len = __builtin_strlen (psz_rand), __s1_len &lt; 4) ? (__builtin_constant_p (&quot;XXXXXX&quot;) &amp;&amp; ((size_t)(const void *)((&quot;XXXXXX&quot;) + 1) - (size_t)(const void *)(&quot;XXXXXX&quot;) == 1) ? __builtin_strcmp (psz_rand, &quot;XXXXXX&quot;) : (__extension__ ({ const unsigned char *__s2 = (const unsigned char *) (const char *) (&quot;XXXXXX&quot;); int __result = (((const unsigned char *) (const char *) (psz_rand))[0] - __s2[0]); if (__s1_len &gt; 0 &amp;&amp; __result == 0) { __result = (((const unsigned char *) (const char *) (psz_rand))[1] - __s2[1]); if (__s1_len &gt; 1 &amp;&amp; __result == 0) { __result = (((const unsigned char *) (const char *) (psz_rand))[2] - __s2[2]); if (__s1_len &gt; 2 &amp;&amp; __result == 0) __result = (((const unsigned char *) (const char *) (psz_rand))[3] - __s2[3]); } } __result; }))) : (__builtin_constant_p (&quot;XXXXXX&quot;) &amp;&amp; ((size_t)(const void *)((&quot;XXXXXX&quot;) + 1) - (size_t)(const void *)(&quot;XXXXXX&quot;) == 1) &amp;&amp; (__s2_len = __builtin_strlen (&quot;XXXXXX&quot;), __s2_len &lt; 4) ? (__builtin_constant_p (psz_rand) &amp;&amp; ((size_t)(const void *)((psz_rand) + 1) - (size_t)(const void *)(psz_rand) == 1) ? __builtin_strcmp (psz_rand, &quot;XXXXXX&quot;) : (- (__extension__ ({ const unsigned char *__s2 = (const unsigned char *) (const char *) (psz_rand); int __result = (((const unsigned char *) (const char *) (&quot;XXXXXX&quot;))[0] - __s2[0]); if (__s2_len &gt; 0 &amp;&amp; __result == 0) { __result = (((const unsigned char *) (const char *) (&quot;XXXXXX&quot;))[1] - __s2[1]); if (__s2_len &gt; 1 &amp;&amp; __result == 0) { __result = (((const unsigned char *) (const char *) (&quot;XXXXXX&quot;))[2] - __s2[2]); if (__s2_len &gt; 2 &amp;&amp; __result == 0) __result = (((const unsigned char *) (const char *) (&quot;XXXXXX&quot;))[3] - __s2[3]); } } __result; })))) : __builtin_strcmp (psz_rand, &quot;XXXXXX&quot;)))); })" data-ref="_M/strcmp">strcmp</a>( <a class="local col0 ref" href="#30psz_rand" title='psz_rand' data-ref="30psz_rand">psz_rand</a>, <q>"XXXXXX"</q> ) )</td></tr>
+<tr><th id="208">208</th><td>    {</td></tr>
+<tr><th id="209">209</th><td>        <a class="macro" href="../../../include/x86_64-linux-gnu/bits/errno.h.html#54" title="(*__errno_location ())" data-ref="_M/errno">errno</a> = <a class="macro" href="../../../include/asm-generic/errno-base.h.html#25" title="22" data-ref="_M/EINVAL">EINVAL</a>;</td></tr>
+<tr><th id="210">210</th><td>        <b>return</b> -<var>1</var>;</td></tr>
+<tr><th id="211">211</th><td>    }</td></tr>
+<tr><th id="212">212</th><td></td></tr>
+<tr><th id="213">213</th><td>    <i>/* */</i></td></tr>
+<tr><th id="214">214</th><td>    <b>for</b>( <em>int</em> <dfn class="local col1 decl" id="31i" title='i' data-type='int' data-ref="31i">i</dfn> = <var>0</var>; <a class="local col1 ref" href="#31i" title='i' data-ref="31i">i</a> &lt; <var>256</var>; <a class="local col1 ref" href="#31i" title='i' data-ref="31i">i</a>++ )</td></tr>
+<tr><th id="215">215</th><td>    {</td></tr>
+<tr><th id="216">216</th><td>        <i>/* Create a pseudo random file name */</i></td></tr>
+<tr><th id="217">217</th><td>        <a class="typedef" href="../../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="local col2 decl" id="32pi_rand" title='pi_rand' data-type='uint8_t [6]' data-ref="32pi_rand">pi_rand</dfn>[<var>6</var>];</td></tr>
+<tr><th id="218">218</th><td></td></tr>
+<tr><th id="219">219</th><td>        <a class="ref" href="../../include/vlc_rand.h.html#vlc_rand_bytes" title='vlc_rand_bytes' data-ref="vlc_rand_bytes">vlc_rand_bytes</a>( <a class="local col2 ref" href="#32pi_rand" title='pi_rand' data-ref="32pi_rand">pi_rand</a>, <b>sizeof</b>(<a class="local col2 ref" href="#32pi_rand" title='pi_rand' data-ref="32pi_rand">pi_rand</a>) );</td></tr>
+<tr><th id="220">220</th><td>        <b>for</b>( <em>int</em> <dfn class="local col3 decl" id="33j" title='j' data-type='int' data-ref="33j">j</dfn> = <var>0</var>; <a class="local col3 ref" href="#33j" title='j' data-ref="33j">j</a> &lt; <var>6</var>; <a class="local col3 ref" href="#33j" title='j' data-ref="33j">j</a>++ )</td></tr>
+<tr><th id="221">221</th><td>            <a class="local col0 ref" href="#30psz_rand" title='psz_rand' data-ref="30psz_rand">psz_rand</a>[<a class="local col3 ref" href="#33j" title='j' data-ref="33j">j</a>] = <a class="local col7 ref" href="#27digits" title='digits' data-ref="27digits">digits</a>[<a class="local col2 ref" href="#32pi_rand" title='pi_rand' data-ref="32pi_rand">pi_rand</a>[<a class="local col3 ref" href="#33j" title='j' data-ref="33j">j</a>] % <a class="local col8 ref" href="#28i_digits" title='i_digits' data-ref="28i_digits">i_digits</a>];</td></tr>
+<tr><th id="222">222</th><td></td></tr>
+<tr><th id="223">223</th><td>        <i>/* */</i></td></tr>
+<tr><th id="224">224</th><td>        <em>int</em> <dfn class="local col4 decl" id="34fd" title='fd' data-type='int' data-ref="34fd">fd</dfn> = <a class="ref" href="../../include/vlc_fs.h.html#vlc_open" title='vlc_open' data-ref="vlc_open">vlc_open</a>( <a class="local col6 ref" href="#26template" title='template' data-ref="26template">template</a>, <a class="macro" href="../../../include/x86_64-linux-gnu/bits/fcntl-linux.h.html#47" title="0100" data-ref="_M/O_CREAT">O_CREAT</a> | <a class="macro" href="../../../include/x86_64-linux-gnu/bits/fcntl-linux.h.html#50" title="0200" data-ref="_M/O_EXCL">O_EXCL</a> | <a class="macro" href="../../../include/x86_64-linux-gnu/bits/fcntl-linux.h.html#45" title="02" data-ref="_M/O_RDWR">O_RDWR</a>, <var>0600</var> );</td></tr>
+<tr><th id="225">225</th><td>        <b>if</b>( <a class="local col4 ref" href="#34fd" title='fd' data-ref="34fd">fd</a> &gt;= <var>0</var> )</td></tr>
+<tr><th id="226">226</th><td>            <b>return</b> <a class="local col4 ref" href="#34fd" title='fd' data-ref="34fd">fd</a>;</td></tr>
+<tr><th id="227">227</th><td>        <b>if</b>( <a class="macro" href="../../../include/x86_64-linux-gnu/bits/errno.h.html#54" title="(*__errno_location ())" data-ref="_M/errno">errno</a> != <a class="macro" href="../../../include/asm-generic/errno-base.h.html#20" title="17" data-ref="_M/EEXIST">EEXIST</a> )</td></tr>
+<tr><th id="228">228</th><td>            <b>return</b> -<var>1</var>;</td></tr>
+<tr><th id="229">229</th><td>    }</td></tr>
+<tr><th id="230">230</th><td></td></tr>
+<tr><th id="231">231</th><td>    <a class="macro" href="../../../include/x86_64-linux-gnu/bits/errno.h.html#54" title="(*__errno_location ())" data-ref="_M/errno">errno</a> = <a class="macro" href="../../../include/asm-generic/errno-base.h.html#20" title="17" data-ref="_M/EEXIST">EEXIST</a>;</td></tr>
+<tr><th id="232">232</th><td>    <b>return</b> -<var>1</var>;</td></tr>
+<tr><th id="233">233</th><td>}</td></tr>
+<tr><th id="234">234</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project vlc revision <em>2.2.0-git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

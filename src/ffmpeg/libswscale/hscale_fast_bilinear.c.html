@@ -1,0 +1,73 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>hscale_fast_bilinear.c source code [ffmpeg/libswscale/hscale_fast_bilinear.c] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libswscale/hscale_fast_bilinear.c'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libswscale</a>/<a href='hscale_fast_bilinear.c.html'>hscale_fast_bilinear.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * Copyright (C) 2001-2011 Michael Niedermayer &lt;michaelni@gmx.at&gt;</i></td></tr>
+<tr><th id="3">3</th><td><i> *</i></td></tr>
+<tr><th id="4">4</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="5">5</th><td><i> *</i></td></tr>
+<tr><th id="6">6</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="7">7</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="8">8</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="9">9</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="10">10</th><td><i> *</i></td></tr>
+<tr><th id="11">11</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="12">12</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="13">13</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="14">14</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="15">15</th><td><i> *</i></td></tr>
+<tr><th id="16">16</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="17">17</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="18">18</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="19">19</th><td><i> */</i></td></tr>
+<tr><th id="20">20</th><td></td></tr>
+<tr><th id="21">21</th><td><u>#include <a href="swscale_internal.h.html">"swscale_internal.h"</a></u></td></tr>
+<tr><th id="22">22</th><td></td></tr>
+<tr><th id="23">23</th><td><em>void</em> <dfn class="decl def" id="ff_hyscale_fast_c" title='ff_hyscale_fast_c' data-ref="ff_hyscale_fast_c">ff_hyscale_fast_c</dfn>(<a class="typedef" href="swscale_internal.h.html#SwsContext" title='SwsContext' data-type='struct SwsContext' data-ref="SwsContext">SwsContext</a> *<dfn class="local col1 decl" id="1c" title='c' data-type='SwsContext *' data-ref="1c">c</dfn>, <a class="typedef" href="../../include/x86_64-linux-gnu/sys/types.h.html#195" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> *<dfn class="local col2 decl" id="2dst" title='dst' data-type='int16_t *' data-ref="2dst">dst</dfn>, <em>int</em> <dfn class="local col3 decl" id="3dstWidth" title='dstWidth' data-type='int' data-ref="3dstWidth">dstWidth</dfn>,</td></tr>
+<tr><th id="24">24</th><td>                           <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col4 decl" id="4src" title='src' data-type='const uint8_t *' data-ref="4src">src</dfn>, <em>int</em> <dfn class="local col5 decl" id="5srcW" title='srcW' data-type='int' data-ref="5srcW">srcW</dfn>, <em>int</em> <dfn class="local col6 decl" id="6xInc" title='xInc' data-type='int' data-ref="6xInc">xInc</dfn>)</td></tr>
+<tr><th id="25">25</th><td>{</td></tr>
+<tr><th id="26">26</th><td>    <em>int</em> <dfn class="local col7 decl" id="7i" title='i' data-type='int' data-ref="7i">i</dfn>;</td></tr>
+<tr><th id="27">27</th><td>    <em>unsigned</em> <em>int</em> <dfn class="local col8 decl" id="8xpos" title='xpos' data-type='unsigned int' data-ref="8xpos">xpos</dfn> = <var>0</var>;</td></tr>
+<tr><th id="28">28</th><td>    <b>for</b> (<a class="local col7 ref" href="#7i" title='i' data-ref="7i">i</a> = <var>0</var>; <a class="local col7 ref" href="#7i" title='i' data-ref="7i">i</a> &lt; <a class="local col3 ref" href="#3dstWidth" title='dstWidth' data-ref="3dstWidth">dstWidth</a>; <a class="local col7 ref" href="#7i" title='i' data-ref="7i">i</a>++) {</td></tr>
+<tr><th id="29">29</th><td>        <em>register</em> <em>unsigned</em> <em>int</em> <dfn class="local col9 decl" id="9xx" title='xx' data-type='unsigned int' data-ref="9xx">xx</dfn>     = <a class="local col8 ref" href="#8xpos" title='xpos' data-ref="8xpos">xpos</a> &gt;&gt; <var>16</var>;</td></tr>
+<tr><th id="30">30</th><td>        <em>register</em> <em>unsigned</em> <em>int</em> <dfn class="local col0 decl" id="10xalpha" title='xalpha' data-type='unsigned int' data-ref="10xalpha">xalpha</dfn> = (<a class="local col8 ref" href="#8xpos" title='xpos' data-ref="8xpos">xpos</a> &amp; <var>0xFFFF</var>) &gt;&gt; <var>9</var>;</td></tr>
+<tr><th id="31">31</th><td>        <a class="local col2 ref" href="#2dst" title='dst' data-ref="2dst">dst</a>[<a class="local col7 ref" href="#7i" title='i' data-ref="7i">i</a>] = (<a class="local col4 ref" href="#4src" title='src' data-ref="4src">src</a>[<a class="local col9 ref" href="#9xx" title='xx' data-ref="9xx">xx</a>] &lt;&lt; <var>7</var>) + (<a class="local col4 ref" href="#4src" title='src' data-ref="4src">src</a>[<a class="local col9 ref" href="#9xx" title='xx' data-ref="9xx">xx</a> + <var>1</var>] - <a class="local col4 ref" href="#4src" title='src' data-ref="4src">src</a>[<a class="local col9 ref" href="#9xx" title='xx' data-ref="9xx">xx</a>]) * <a class="local col0 ref" href="#10xalpha" title='xalpha' data-ref="10xalpha">xalpha</a>;</td></tr>
+<tr><th id="32">32</th><td>        <a class="local col8 ref" href="#8xpos" title='xpos' data-ref="8xpos">xpos</a>  += <a class="local col6 ref" href="#6xInc" title='xInc' data-ref="6xInc">xInc</a>;</td></tr>
+<tr><th id="33">33</th><td>    }</td></tr>
+<tr><th id="34">34</th><td>    <b>for</b> (<a class="local col7 ref" href="#7i" title='i' data-ref="7i">i</a>=<a class="local col3 ref" href="#3dstWidth" title='dstWidth' data-ref="3dstWidth">dstWidth</a>-<var>1</var>; (<a class="local col7 ref" href="#7i" title='i' data-ref="7i">i</a>*<a class="local col6 ref" href="#6xInc" title='xInc' data-ref="6xInc">xInc</a>)&gt;&gt;<var>16</var> &gt;=<a class="local col5 ref" href="#5srcW" title='srcW' data-ref="5srcW">srcW</a>-<var>1</var>; <a class="local col7 ref" href="#7i" title='i' data-ref="7i">i</a>--)</td></tr>
+<tr><th id="35">35</th><td>        <a class="local col2 ref" href="#2dst" title='dst' data-ref="2dst">dst</a>[<a class="local col7 ref" href="#7i" title='i' data-ref="7i">i</a>] = <a class="local col4 ref" href="#4src" title='src' data-ref="4src">src</a>[<a class="local col5 ref" href="#5srcW" title='srcW' data-ref="5srcW">srcW</a>-<var>1</var>]*<var>128</var>;</td></tr>
+<tr><th id="36">36</th><td>}</td></tr>
+<tr><th id="37">37</th><td></td></tr>
+<tr><th id="38">38</th><td><em>void</em> <dfn class="decl def" id="ff_hcscale_fast_c" title='ff_hcscale_fast_c' data-ref="ff_hcscale_fast_c">ff_hcscale_fast_c</dfn>(<a class="typedef" href="swscale_internal.h.html#SwsContext" title='SwsContext' data-type='struct SwsContext' data-ref="SwsContext">SwsContext</a> *<dfn class="local col1 decl" id="11c" title='c' data-type='SwsContext *' data-ref="11c">c</dfn>, <a class="typedef" href="../../include/x86_64-linux-gnu/sys/types.h.html#195" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> *<dfn class="local col2 decl" id="12dst1" title='dst1' data-type='int16_t *' data-ref="12dst1">dst1</dfn>, <a class="typedef" href="../../include/x86_64-linux-gnu/sys/types.h.html#195" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> *<dfn class="local col3 decl" id="13dst2" title='dst2' data-type='int16_t *' data-ref="13dst2">dst2</dfn>,</td></tr>
+<tr><th id="39">39</th><td>                           <em>int</em> <dfn class="local col4 decl" id="14dstWidth" title='dstWidth' data-type='int' data-ref="14dstWidth">dstWidth</dfn>, <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col5 decl" id="15src1" title='src1' data-type='const uint8_t *' data-ref="15src1">src1</dfn>,</td></tr>
+<tr><th id="40">40</th><td>                           <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col6 decl" id="16src2" title='src2' data-type='const uint8_t *' data-ref="16src2">src2</dfn>, <em>int</em> <dfn class="local col7 decl" id="17srcW" title='srcW' data-type='int' data-ref="17srcW">srcW</dfn>, <em>int</em> <dfn class="local col8 decl" id="18xInc" title='xInc' data-type='int' data-ref="18xInc">xInc</dfn>)</td></tr>
+<tr><th id="41">41</th><td>{</td></tr>
+<tr><th id="42">42</th><td>    <em>int</em> <dfn class="local col9 decl" id="19i" title='i' data-type='int' data-ref="19i">i</dfn>;</td></tr>
+<tr><th id="43">43</th><td>    <em>unsigned</em> <em>int</em> <dfn class="local col0 decl" id="20xpos" title='xpos' data-type='unsigned int' data-ref="20xpos">xpos</dfn> = <var>0</var>;</td></tr>
+<tr><th id="44">44</th><td>    <b>for</b> (<a class="local col9 ref" href="#19i" title='i' data-ref="19i">i</a> = <var>0</var>; <a class="local col9 ref" href="#19i" title='i' data-ref="19i">i</a> &lt; <a class="local col4 ref" href="#14dstWidth" title='dstWidth' data-ref="14dstWidth">dstWidth</a>; <a class="local col9 ref" href="#19i" title='i' data-ref="19i">i</a>++) {</td></tr>
+<tr><th id="45">45</th><td>        <em>register</em> <em>unsigned</em> <em>int</em> <dfn class="local col1 decl" id="21xx" title='xx' data-type='unsigned int' data-ref="21xx">xx</dfn>     = <a class="local col0 ref" href="#20xpos" title='xpos' data-ref="20xpos">xpos</a> &gt;&gt; <var>16</var>;</td></tr>
+<tr><th id="46">46</th><td>        <em>register</em> <em>unsigned</em> <em>int</em> <dfn class="local col2 decl" id="22xalpha" title='xalpha' data-type='unsigned int' data-ref="22xalpha">xalpha</dfn> = (<a class="local col0 ref" href="#20xpos" title='xpos' data-ref="20xpos">xpos</a> &amp; <var>0xFFFF</var>) &gt;&gt; <var>9</var>;</td></tr>
+<tr><th id="47">47</th><td>        <a class="local col2 ref" href="#12dst1" title='dst1' data-ref="12dst1">dst1</a>[<a class="local col9 ref" href="#19i" title='i' data-ref="19i">i</a>] = (<a class="local col5 ref" href="#15src1" title='src1' data-ref="15src1">src1</a>[<a class="local col1 ref" href="#21xx" title='xx' data-ref="21xx">xx</a>] * (<a class="local col2 ref" href="#22xalpha" title='xalpha' data-ref="22xalpha">xalpha</a> ^ <var>127</var>) + <a class="local col5 ref" href="#15src1" title='src1' data-ref="15src1">src1</a>[<a class="local col1 ref" href="#21xx" title='xx' data-ref="21xx">xx</a> + <var>1</var>] * <a class="local col2 ref" href="#22xalpha" title='xalpha' data-ref="22xalpha">xalpha</a>);</td></tr>
+<tr><th id="48">48</th><td>        <a class="local col3 ref" href="#13dst2" title='dst2' data-ref="13dst2">dst2</a>[<a class="local col9 ref" href="#19i" title='i' data-ref="19i">i</a>] = (<a class="local col6 ref" href="#16src2" title='src2' data-ref="16src2">src2</a>[<a class="local col1 ref" href="#21xx" title='xx' data-ref="21xx">xx</a>] * (<a class="local col2 ref" href="#22xalpha" title='xalpha' data-ref="22xalpha">xalpha</a> ^ <var>127</var>) + <a class="local col6 ref" href="#16src2" title='src2' data-ref="16src2">src2</a>[<a class="local col1 ref" href="#21xx" title='xx' data-ref="21xx">xx</a> + <var>1</var>] * <a class="local col2 ref" href="#22xalpha" title='xalpha' data-ref="22xalpha">xalpha</a>);</td></tr>
+<tr><th id="49">49</th><td>        <a class="local col0 ref" href="#20xpos" title='xpos' data-ref="20xpos">xpos</a>   += <a class="local col8 ref" href="#18xInc" title='xInc' data-ref="18xInc">xInc</a>;</td></tr>
+<tr><th id="50">50</th><td>    }</td></tr>
+<tr><th id="51">51</th><td>    <b>for</b> (<a class="local col9 ref" href="#19i" title='i' data-ref="19i">i</a>=<a class="local col4 ref" href="#14dstWidth" title='dstWidth' data-ref="14dstWidth">dstWidth</a>-<var>1</var>; (<a class="local col9 ref" href="#19i" title='i' data-ref="19i">i</a>*<a class="local col8 ref" href="#18xInc" title='xInc' data-ref="18xInc">xInc</a>)&gt;&gt;<var>16</var> &gt;=<a class="local col7 ref" href="#17srcW" title='srcW' data-ref="17srcW">srcW</a>-<var>1</var>; <a class="local col9 ref" href="#19i" title='i' data-ref="19i">i</a>--) {</td></tr>
+<tr><th id="52">52</th><td>        <a class="local col2 ref" href="#12dst1" title='dst1' data-ref="12dst1">dst1</a>[<a class="local col9 ref" href="#19i" title='i' data-ref="19i">i</a>] = <a class="local col5 ref" href="#15src1" title='src1' data-ref="15src1">src1</a>[<a class="local col7 ref" href="#17srcW" title='srcW' data-ref="17srcW">srcW</a>-<var>1</var>]*<var>128</var>;</td></tr>
+<tr><th id="53">53</th><td>        <a class="local col3 ref" href="#13dst2" title='dst2' data-ref="13dst2">dst2</a>[<a class="local col9 ref" href="#19i" title='i' data-ref="19i">i</a>] = <a class="local col6 ref" href="#16src2" title='src2' data-ref="16src2">src2</a>[<a class="local col7 ref" href="#17srcW" title='srcW' data-ref="17srcW">srcW</a>-<var>1</var>]*<var>128</var>;</td></tr>
+<tr><th id="54">54</th><td>    }</td></tr>
+<tr><th id="55">55</th><td>}</td></tr>
+<tr><th id="56">56</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

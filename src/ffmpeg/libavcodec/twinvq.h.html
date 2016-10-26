@@ -1,0 +1,222 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>twinvq.h source code [ffmpeg/libavcodec/twinvq.h] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="TwinVQCodec,TwinVQContext,TwinVQFrameData,TwinVQFrameMode,TwinVQFrameType,TwinVQModeTab "/>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavcodec/twinvq.h'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavcodec</a>/<a href='twinvq.h.html'>twinvq.h</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * TwinVQ decoder</i></td></tr>
+<tr><th id="3">3</th><td><i> * Copyright (c) 2009 Vitor Sessak</i></td></tr>
+<tr><th id="4">4</th><td><i> *</i></td></tr>
+<tr><th id="5">5</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="8">8</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="9">9</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="10">10</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="11">11</th><td><i> *</i></td></tr>
+<tr><th id="12">12</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="13">13</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="14">14</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="15">15</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="16">16</th><td><i> *</i></td></tr>
+<tr><th id="17">17</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="18">18</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="19">19</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="20">20</th><td><i> */</i></td></tr>
+<tr><th id="21">21</th><td></td></tr>
+<tr><th id="22">22</th><td><u>#<span data-ppcond="22">ifndef</span> <span class="macro" data-ref="_M/AVCODEC_TWINVQ_H">AVCODEC_TWINVQ_H</span></u></td></tr>
+<tr><th id="23">23</th><td><u>#define <dfn class="macro" id="_M/AVCODEC_TWINVQ_H" data-ref="_M/AVCODEC_TWINVQ_H">AVCODEC_TWINVQ_H</dfn></u></td></tr>
+<tr><th id="24">24</th><td></td></tr>
+<tr><th id="25">25</th><td><u>#include <a href="../../include/math.h.html">&lt;math.h&gt;</a></u></td></tr>
+<tr><th id="26">26</th><td><u>#include &lt;stdint.h&gt;</u></td></tr>
+<tr><th id="27">27</th><td></td></tr>
+<tr><th id="28">28</th><td><u>#include <a href="../libavutil/common.h.html">"libavutil/common.h"</a></u></td></tr>
+<tr><th id="29">29</th><td><u>#include <a href="../libavutil/float_dsp.h.html">"libavutil/float_dsp.h"</a></u></td></tr>
+<tr><th id="30">30</th><td><u>#include <a href="avcodec.h.html">"avcodec.h"</a></u></td></tr>
+<tr><th id="31">31</th><td><u>#include <a href="fft.h.html">"fft.h"</a></u></td></tr>
+<tr><th id="32">32</th><td><u>#include <a href="internal.h.html">"internal.h"</a></u></td></tr>
+<tr><th id="33">33</th><td></td></tr>
+<tr><th id="34">34</th><td><b>enum</b> <dfn class="type def" id="TwinVQCodec" title='TwinVQCodec' data-ref="TwinVQCodec">TwinVQCodec</dfn> {</td></tr>
+<tr><th id="35">35</th><td>    <dfn class="enum" id="TwinVQCodec::TWINVQ_CODEC_VQF" title='TwinVQCodec::TWINVQ_CODEC_VQF' data-ref="TwinVQCodec::TWINVQ_CODEC_VQF">TWINVQ_CODEC_VQF</dfn>,</td></tr>
+<tr><th id="36">36</th><td>    <dfn class="enum" id="TwinVQCodec::TWINVQ_CODEC_METASOUND" title='TwinVQCodec::TWINVQ_CODEC_METASOUND' data-ref="TwinVQCodec::TWINVQ_CODEC_METASOUND">TWINVQ_CODEC_METASOUND</dfn>,</td></tr>
+<tr><th id="37">37</th><td>};</td></tr>
+<tr><th id="38">38</th><td></td></tr>
+<tr><th id="39">39</th><td><b>enum</b> <dfn class="type def" id="TwinVQFrameType" title='TwinVQFrameType' data-ref="TwinVQFrameType">TwinVQFrameType</dfn> {</td></tr>
+<tr><th id="40">40</th><td>    <dfn class="enum" id="TwinVQFrameType::TWINVQ_FT_SHORT" title='TwinVQFrameType::TWINVQ_FT_SHORT' data-ref="TwinVQFrameType::TWINVQ_FT_SHORT">TWINVQ_FT_SHORT</dfn> = <var>0</var>,  <i class="doc">///&lt; Short frame  (divided in n   sub-blocks)</i></td></tr>
+<tr><th id="41">41</th><td>    <dfn class="enum" id="TwinVQFrameType::TWINVQ_FT_MEDIUM" title='TwinVQFrameType::TWINVQ_FT_MEDIUM' data-ref="TwinVQFrameType::TWINVQ_FT_MEDIUM">TWINVQ_FT_MEDIUM</dfn>,     <i class="doc">///&lt; Medium frame (divided in m&lt;n sub-blocks)</i></td></tr>
+<tr><th id="42">42</th><td>    <dfn class="enum" id="TwinVQFrameType::TWINVQ_FT_LONG" title='TwinVQFrameType::TWINVQ_FT_LONG' data-ref="TwinVQFrameType::TWINVQ_FT_LONG">TWINVQ_FT_LONG</dfn>,       <i class="doc">///&lt; Long frame   (single sub-block + PPC)</i></td></tr>
+<tr><th id="43">43</th><td>    <dfn class="enum" id="TwinVQFrameType::TWINVQ_FT_PPC" title='TwinVQFrameType::TWINVQ_FT_PPC' data-ref="TwinVQFrameType::TWINVQ_FT_PPC">TWINVQ_FT_PPC</dfn>,        <i class="doc">///&lt; Periodic Peak Component (part of the long frame)</i></td></tr>
+<tr><th id="44">44</th><td>};</td></tr>
+<tr><th id="45">45</th><td></td></tr>
+<tr><th id="46">46</th><td><u>#define <dfn class="macro" id="_M/TWINVQ_PPC_SHAPE_CB_SIZE" data-ref="_M/TWINVQ_PPC_SHAPE_CB_SIZE">TWINVQ_PPC_SHAPE_CB_SIZE</dfn> 64</u></td></tr>
+<tr><th id="47">47</th><td><u>#define <dfn class="macro" id="_M/TWINVQ_PPC_SHAPE_LEN_MAX" data-ref="_M/TWINVQ_PPC_SHAPE_LEN_MAX">TWINVQ_PPC_SHAPE_LEN_MAX</dfn> 60</u></td></tr>
+<tr><th id="48">48</th><td><u>#define <dfn class="macro" id="_M/TWINVQ_SUB_AMP_MAX" data-ref="_M/TWINVQ_SUB_AMP_MAX">TWINVQ_SUB_AMP_MAX</dfn>       4500.0</u></td></tr>
+<tr><th id="49">49</th><td><u>#define <dfn class="macro" id="_M/TWINVQ_MULAW_MU" data-ref="_M/TWINVQ_MULAW_MU">TWINVQ_MULAW_MU</dfn>          100.0</u></td></tr>
+<tr><th id="50">50</th><td><u>#define <dfn class="macro" id="_M/TWINVQ_GAIN_BITS" data-ref="_M/TWINVQ_GAIN_BITS">TWINVQ_GAIN_BITS</dfn>         8</u></td></tr>
+<tr><th id="51">51</th><td><u>#define <dfn class="macro" id="_M/TWINVQ_AMP_MAX" data-ref="_M/TWINVQ_AMP_MAX">TWINVQ_AMP_MAX</dfn>           13000.0</u></td></tr>
+<tr><th id="52">52</th><td><u>#define <dfn class="macro" id="_M/TWINVQ_SUB_GAIN_BITS" data-ref="_M/TWINVQ_SUB_GAIN_BITS">TWINVQ_SUB_GAIN_BITS</dfn>     5</u></td></tr>
+<tr><th id="53">53</th><td><u>#define <dfn class="macro" id="_M/TWINVQ_WINDOW_TYPE_BITS" data-ref="_M/TWINVQ_WINDOW_TYPE_BITS">TWINVQ_WINDOW_TYPE_BITS</dfn>  4</u></td></tr>
+<tr><th id="54">54</th><td><u>#define <dfn class="macro" id="_M/TWINVQ_PGAIN_MU" data-ref="_M/TWINVQ_PGAIN_MU">TWINVQ_PGAIN_MU</dfn>          200</u></td></tr>
+<tr><th id="55">55</th><td><u>#define <dfn class="macro" id="_M/TWINVQ_LSP_COEFS_MAX" data-ref="_M/TWINVQ_LSP_COEFS_MAX">TWINVQ_LSP_COEFS_MAX</dfn>     20</u></td></tr>
+<tr><th id="56">56</th><td><u>#define <dfn class="macro" id="_M/TWINVQ_LSP_SPLIT_MAX" data-ref="_M/TWINVQ_LSP_SPLIT_MAX">TWINVQ_LSP_SPLIT_MAX</dfn>     4</u></td></tr>
+<tr><th id="57">57</th><td><u>#define <dfn class="macro" id="_M/TWINVQ_CHANNELS_MAX" data-ref="_M/TWINVQ_CHANNELS_MAX">TWINVQ_CHANNELS_MAX</dfn>      2</u></td></tr>
+<tr><th id="58">58</th><td><u>#define <dfn class="macro" id="_M/TWINVQ_SUBBLOCKS_MAX" data-ref="_M/TWINVQ_SUBBLOCKS_MAX">TWINVQ_SUBBLOCKS_MAX</dfn>     16</u></td></tr>
+<tr><th id="59">59</th><td><u>#define <dfn class="macro" id="_M/TWINVQ_BARK_N_COEF_MAX" data-ref="_M/TWINVQ_BARK_N_COEF_MAX">TWINVQ_BARK_N_COEF_MAX</dfn>   4</u></td></tr>
+<tr><th id="60">60</th><td></td></tr>
+<tr><th id="61">61</th><td><u>#define <dfn class="macro" id="_M/TWINVQ_MAX_FRAMES_PER_PACKET" data-ref="_M/TWINVQ_MAX_FRAMES_PER_PACKET">TWINVQ_MAX_FRAMES_PER_PACKET</dfn> 2</u></td></tr>
+<tr><th id="62">62</th><td></td></tr>
+<tr><th id="63">63</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="64">64</th><td><i class="doc"> * Parameters and tables that are different for each frame type</i></td></tr>
+<tr><th id="65">65</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="66">66</th><td><b>struct</b> <dfn class="type def" id="TwinVQFrameMode" title='TwinVQFrameMode' data-ref="TwinVQFrameMode">TwinVQFrameMode</dfn> {</td></tr>
+<tr><th id="67">67</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a>         <dfn class="decl" id="TwinVQFrameMode::sub" title='TwinVQFrameMode::sub' data-ref="TwinVQFrameMode::sub">sub</dfn>;      <i class="doc">///&lt; Number subblocks in each frame</i></td></tr>
+<tr><th id="68">68</th><td>    <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> *<dfn class="decl" id="TwinVQFrameMode::bark_tab" title='TwinVQFrameMode::bark_tab' data-ref="TwinVQFrameMode::bark_tab">bark_tab</dfn>;</td></tr>
+<tr><th id="69">69</th><td></td></tr>
+<tr><th id="70">70</th><td>    <i class="doc">/** number of distinct bark scale envelope values */</i></td></tr>
+<tr><th id="71">71</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a>         <dfn class="decl" id="TwinVQFrameMode::bark_env_size" title='TwinVQFrameMode::bark_env_size' data-ref="TwinVQFrameMode::bark_env_size">bark_env_size</dfn>;</td></tr>
+<tr><th id="72">72</th><td></td></tr>
+<tr><th id="73">73</th><td>    <em>const</em> <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a>  *<dfn class="decl" id="TwinVQFrameMode::bark_cb" title='TwinVQFrameMode::bark_cb' data-ref="TwinVQFrameMode::bark_cb">bark_cb</dfn>;    <i class="doc">///&lt; codebook for the bark scale envelope (BSE)</i></td></tr>
+<tr><th id="74">74</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a>         <dfn class="decl" id="TwinVQFrameMode::bark_n_coef" title='TwinVQFrameMode::bark_n_coef' data-ref="TwinVQFrameMode::bark_n_coef">bark_n_coef</dfn>;<i class="doc">///&lt; number of BSE CB coefficients to read</i></td></tr>
+<tr><th id="75">75</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a>         <dfn class="decl" id="TwinVQFrameMode::bark_n_bit" title='TwinVQFrameMode::bark_n_bit' data-ref="TwinVQFrameMode::bark_n_bit">bark_n_bit</dfn>; <i class="doc">///&lt; number of bits of the BSE coefs</i></td></tr>
+<tr><th id="76">76</th><td></td></tr>
+<tr><th id="77">77</th><td>    <i>//@{</i></td></tr>
+<tr><th id="78">78</th><td>    <i class="doc">/** main codebooks for spectrum data */</i></td></tr>
+<tr><th id="79">79</th><td>    <em>const</em> <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a>    *<dfn class="decl" id="TwinVQFrameMode::cb0" title='TwinVQFrameMode::cb0' data-ref="TwinVQFrameMode::cb0">cb0</dfn>;</td></tr>
+<tr><th id="80">80</th><td>    <em>const</em> <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a>    *<dfn class="decl" id="TwinVQFrameMode::cb1" title='TwinVQFrameMode::cb1' data-ref="TwinVQFrameMode::cb1">cb1</dfn>;</td></tr>
+<tr><th id="81">81</th><td>    <i>//@}</i></td></tr>
+<tr><th id="82">82</th><td></td></tr>
+<tr><th id="83">83</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a>         <dfn class="decl" id="TwinVQFrameMode::cb_len_read" title='TwinVQFrameMode::cb_len_read' data-ref="TwinVQFrameMode::cb_len_read">cb_len_read</dfn>; <i class="doc">///&lt; number of spectrum coefficients to read</i></td></tr>
+<tr><th id="84">84</th><td>};</td></tr>
+<tr><th id="85">85</th><td></td></tr>
+<tr><th id="86">86</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="TwinVQFrameData" title='TwinVQFrameData' data-ref="TwinVQFrameData"><a class="type" href="#TwinVQFrameData" title='TwinVQFrameData' data-ref="TwinVQFrameData">TwinVQFrameData</a></dfn> {</td></tr>
+<tr><th id="87">87</th><td>    <em>int</em>     <dfn class="decl" id="TwinVQFrameData::window_type" title='TwinVQFrameData::window_type' data-ref="TwinVQFrameData::window_type">window_type</dfn>;</td></tr>
+<tr><th id="88">88</th><td>    <b>enum</b> <a class="type" href="#TwinVQFrameType" title='TwinVQFrameType' data-ref="TwinVQFrameType">TwinVQFrameType</a> <dfn class="decl" id="TwinVQFrameData::ftype" title='TwinVQFrameData::ftype' data-ref="TwinVQFrameData::ftype">ftype</dfn>;</td></tr>
+<tr><th id="89">89</th><td></td></tr>
+<tr><th id="90">90</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="TwinVQFrameData::main_coeffs" title='TwinVQFrameData::main_coeffs' data-ref="TwinVQFrameData::main_coeffs">main_coeffs</dfn>[<var>1024</var>];</td></tr>
+<tr><th id="91">91</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="TwinVQFrameData::ppc_coeffs" title='TwinVQFrameData::ppc_coeffs' data-ref="TwinVQFrameData::ppc_coeffs">ppc_coeffs</dfn>[<a class="macro" href="#47" title="60" data-ref="_M/TWINVQ_PPC_SHAPE_LEN_MAX">TWINVQ_PPC_SHAPE_LEN_MAX</a>];</td></tr>
+<tr><th id="92">92</th><td></td></tr>
+<tr><th id="93">93</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="TwinVQFrameData::gain_bits" title='TwinVQFrameData::gain_bits' data-ref="TwinVQFrameData::gain_bits">gain_bits</dfn>[<a class="macro" href="#57" title="2" data-ref="_M/TWINVQ_CHANNELS_MAX">TWINVQ_CHANNELS_MAX</a>];</td></tr>
+<tr><th id="94">94</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="TwinVQFrameData::sub_gain_bits" title='TwinVQFrameData::sub_gain_bits' data-ref="TwinVQFrameData::sub_gain_bits">sub_gain_bits</dfn>[<a class="macro" href="#57" title="2" data-ref="_M/TWINVQ_CHANNELS_MAX">TWINVQ_CHANNELS_MAX</a> * <a class="macro" href="#58" title="16" data-ref="_M/TWINVQ_SUBBLOCKS_MAX">TWINVQ_SUBBLOCKS_MAX</a>];</td></tr>
+<tr><th id="95">95</th><td></td></tr>
+<tr><th id="96">96</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="TwinVQFrameData::bark1" title='TwinVQFrameData::bark1' data-ref="TwinVQFrameData::bark1">bark1</dfn>[<a class="macro" href="#57" title="2" data-ref="_M/TWINVQ_CHANNELS_MAX">TWINVQ_CHANNELS_MAX</a>][<a class="macro" href="#58" title="16" data-ref="_M/TWINVQ_SUBBLOCKS_MAX">TWINVQ_SUBBLOCKS_MAX</a>][<a class="macro" href="#59" title="4" data-ref="_M/TWINVQ_BARK_N_COEF_MAX">TWINVQ_BARK_N_COEF_MAX</a>];</td></tr>
+<tr><th id="97">97</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="TwinVQFrameData::bark_use_hist" title='TwinVQFrameData::bark_use_hist' data-ref="TwinVQFrameData::bark_use_hist">bark_use_hist</dfn>[<a class="macro" href="#57" title="2" data-ref="_M/TWINVQ_CHANNELS_MAX">TWINVQ_CHANNELS_MAX</a>][<a class="macro" href="#58" title="16" data-ref="_M/TWINVQ_SUBBLOCKS_MAX">TWINVQ_SUBBLOCKS_MAX</a>];</td></tr>
+<tr><th id="98">98</th><td></td></tr>
+<tr><th id="99">99</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="TwinVQFrameData::lpc_idx1" title='TwinVQFrameData::lpc_idx1' data-ref="TwinVQFrameData::lpc_idx1">lpc_idx1</dfn>[<a class="macro" href="#57" title="2" data-ref="_M/TWINVQ_CHANNELS_MAX">TWINVQ_CHANNELS_MAX</a>];</td></tr>
+<tr><th id="100">100</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="TwinVQFrameData::lpc_idx2" title='TwinVQFrameData::lpc_idx2' data-ref="TwinVQFrameData::lpc_idx2">lpc_idx2</dfn>[<a class="macro" href="#57" title="2" data-ref="_M/TWINVQ_CHANNELS_MAX">TWINVQ_CHANNELS_MAX</a>][<a class="macro" href="#56" title="4" data-ref="_M/TWINVQ_LSP_SPLIT_MAX">TWINVQ_LSP_SPLIT_MAX</a>];</td></tr>
+<tr><th id="101">101</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="TwinVQFrameData::lpc_hist_idx" title='TwinVQFrameData::lpc_hist_idx' data-ref="TwinVQFrameData::lpc_hist_idx">lpc_hist_idx</dfn>[<a class="macro" href="#57" title="2" data-ref="_M/TWINVQ_CHANNELS_MAX">TWINVQ_CHANNELS_MAX</a>];</td></tr>
+<tr><th id="102">102</th><td></td></tr>
+<tr><th id="103">103</th><td>    <em>int</em>     <dfn class="decl" id="TwinVQFrameData::p_coef" title='TwinVQFrameData::p_coef' data-ref="TwinVQFrameData::p_coef">p_coef</dfn>[<a class="macro" href="#57" title="2" data-ref="_M/TWINVQ_CHANNELS_MAX">TWINVQ_CHANNELS_MAX</a>];</td></tr>
+<tr><th id="104">104</th><td>    <em>int</em>     <dfn class="decl" id="TwinVQFrameData::g_coef" title='TwinVQFrameData::g_coef' data-ref="TwinVQFrameData::g_coef">g_coef</dfn>[<a class="macro" href="#57" title="2" data-ref="_M/TWINVQ_CHANNELS_MAX">TWINVQ_CHANNELS_MAX</a>];</td></tr>
+<tr><th id="105">105</th><td>} <dfn class="typedef" id="TwinVQFrameData" title='TwinVQFrameData' data-type='struct TwinVQFrameData' data-ref="TwinVQFrameData">TwinVQFrameData</dfn>;</td></tr>
+<tr><th id="106">106</th><td></td></tr>
+<tr><th id="107">107</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="108">108</th><td><i class="doc"> * Parameters and tables that are different for every combination of</i></td></tr>
+<tr><th id="109">109</th><td><i class="doc"> * bitrate/sample rate</i></td></tr>
+<tr><th id="110">110</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="111">111</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="TwinVQModeTab" title='TwinVQModeTab' data-ref="TwinVQModeTab"><a class="type" href="#TwinVQModeTab" title='TwinVQModeTab' data-ref="TwinVQModeTab">TwinVQModeTab</a></dfn> {</td></tr>
+<tr><th id="112">112</th><td>    <b>struct</b> <a class="type" href="#TwinVQFrameMode" title='TwinVQFrameMode' data-ref="TwinVQFrameMode">TwinVQFrameMode</a> <dfn class="decl" id="TwinVQModeTab::fmode" title='TwinVQModeTab::fmode' data-ref="TwinVQModeTab::fmode">fmode</dfn>[<var>3</var>]; <i class="doc">///&lt; frame type-dependent parameters</i></td></tr>
+<tr><th id="113">113</th><td></td></tr>
+<tr><th id="114">114</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a>     <dfn class="decl" id="TwinVQModeTab::size" title='TwinVQModeTab::size' data-ref="TwinVQModeTab::size">size</dfn>;        <i class="doc">///&lt; frame size in samples</i></td></tr>
+<tr><th id="115">115</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a>      <dfn class="decl" id="TwinVQModeTab::n_lsp" title='TwinVQModeTab::n_lsp' data-ref="TwinVQModeTab::n_lsp">n_lsp</dfn>;       <i class="doc">///&lt; number of lsp coefficients</i></td></tr>
+<tr><th id="116">116</th><td>    <em>const</em> <em>float</em> *<dfn class="decl" id="TwinVQModeTab::lspcodebook" title='TwinVQModeTab::lspcodebook' data-ref="TwinVQModeTab::lspcodebook">lspcodebook</dfn>;</td></tr>
+<tr><th id="117">117</th><td></td></tr>
+<tr><th id="118">118</th><td>    <i>/* number of bits of the different LSP CB coefficients */</i></td></tr>
+<tr><th id="119">119</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a>      <dfn class="decl" id="TwinVQModeTab::lsp_bit0" title='TwinVQModeTab::lsp_bit0' data-ref="TwinVQModeTab::lsp_bit0">lsp_bit0</dfn>;</td></tr>
+<tr><th id="120">120</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a>      <dfn class="decl" id="TwinVQModeTab::lsp_bit1" title='TwinVQModeTab::lsp_bit1' data-ref="TwinVQModeTab::lsp_bit1">lsp_bit1</dfn>;</td></tr>
+<tr><th id="121">121</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a>      <dfn class="decl" id="TwinVQModeTab::lsp_bit2" title='TwinVQModeTab::lsp_bit2' data-ref="TwinVQModeTab::lsp_bit2">lsp_bit2</dfn>;</td></tr>
+<tr><th id="122">122</th><td></td></tr>
+<tr><th id="123">123</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a>      <dfn class="decl" id="TwinVQModeTab::lsp_split" title='TwinVQModeTab::lsp_split' data-ref="TwinVQModeTab::lsp_split">lsp_split</dfn>;      <i class="doc">///&lt; number of CB entries for the LSP decoding</i></td></tr>
+<tr><th id="124">124</th><td>    <em>const</em> <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> *<dfn class="decl" id="TwinVQModeTab::ppc_shape_cb" title='TwinVQModeTab::ppc_shape_cb' data-ref="TwinVQModeTab::ppc_shape_cb">ppc_shape_cb</dfn>; <i class="doc">///&lt; PPC shape CB</i></td></tr>
+<tr><th id="125">125</th><td></td></tr>
+<tr><th id="126">126</th><td>    <i class="doc">/** number of the bits for the PPC period value */</i></td></tr>
+<tr><th id="127">127</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a>      <dfn class="decl" id="TwinVQModeTab::ppc_period_bit" title='TwinVQModeTab::ppc_period_bit' data-ref="TwinVQModeTab::ppc_period_bit">ppc_period_bit</dfn>;</td></tr>
+<tr><th id="128">128</th><td></td></tr>
+<tr><th id="129">129</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a>      <dfn class="decl" id="TwinVQModeTab::ppc_shape_bit" title='TwinVQModeTab::ppc_shape_bit' data-ref="TwinVQModeTab::ppc_shape_bit">ppc_shape_bit</dfn>;  <i class="doc">///&lt; number of bits of the PPC shape CB coeffs</i></td></tr>
+<tr><th id="130">130</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a>      <dfn class="decl" id="TwinVQModeTab::ppc_shape_len" title='TwinVQModeTab::ppc_shape_len' data-ref="TwinVQModeTab::ppc_shape_len">ppc_shape_len</dfn>;  <i class="doc">///&lt; size of PPC shape CB</i></td></tr>
+<tr><th id="131">131</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a>      <dfn class="decl" id="TwinVQModeTab::pgain_bit" title='TwinVQModeTab::pgain_bit' data-ref="TwinVQModeTab::pgain_bit">pgain_bit</dfn>;      <i class="doc">///&lt; bits for PPC gain</i></td></tr>
+<tr><th id="132">132</th><td></td></tr>
+<tr><th id="133">133</th><td>    <i class="doc">/** constant for peak period to peak width conversion */</i></td></tr>
+<tr><th id="134">134</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a>     <dfn class="decl" id="TwinVQModeTab::peak_per2wid" title='TwinVQModeTab::peak_per2wid' data-ref="TwinVQModeTab::peak_per2wid">peak_per2wid</dfn>;</td></tr>
+<tr><th id="135">135</th><td>} <dfn class="typedef" id="TwinVQModeTab" title='TwinVQModeTab' data-type='struct TwinVQModeTab' data-ref="TwinVQModeTab">TwinVQModeTab</dfn>;</td></tr>
+<tr><th id="136">136</th><td></td></tr>
+<tr><th id="137">137</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="TwinVQContext" title='TwinVQContext' data-ref="TwinVQContext"><a class="type" href="#TwinVQContext" title='TwinVQContext' data-ref="TwinVQContext">TwinVQContext</a></dfn> {</td></tr>
+<tr><th id="138">138</th><td>    <a class="typedef" href="avcodec.h.html#AVCodecContext" title='AVCodecContext' data-type='struct AVCodecContext' data-ref="AVCodecContext">AVCodecContext</a> *<dfn class="decl" id="TwinVQContext::avctx" title='TwinVQContext::avctx' data-ref="TwinVQContext::avctx">avctx</dfn>;</td></tr>
+<tr><th id="139">139</th><td>    <a class="typedef" href="../libavutil/float_dsp.h.html#AVFloatDSPContext" title='AVFloatDSPContext' data-type='struct AVFloatDSPContext' data-ref="AVFloatDSPContext">AVFloatDSPContext</a> *<dfn class="decl" id="TwinVQContext::fdsp" title='TwinVQContext::fdsp' data-ref="TwinVQContext::fdsp">fdsp</dfn>;</td></tr>
+<tr><th id="140">140</th><td>    <a class="typedef" href="avfft.h.html#FFTContext" title='FFTContext' data-type='struct FFTContext' data-ref="FFTContext">FFTContext</a> <dfn class="decl" id="TwinVQContext::mdct_ctx" title='TwinVQContext::mdct_ctx' data-ref="TwinVQContext::mdct_ctx">mdct_ctx</dfn>[<var>3</var>];</td></tr>
+<tr><th id="141">141</th><td></td></tr>
+<tr><th id="142">142</th><td>    <em>const</em> <a class="typedef" href="#TwinVQModeTab" title='TwinVQModeTab' data-type='struct TwinVQModeTab' data-ref="TwinVQModeTab">TwinVQModeTab</a> *<dfn class="decl" id="TwinVQContext::mtab" title='TwinVQContext::mtab' data-ref="TwinVQContext::mtab">mtab</dfn>;</td></tr>
+<tr><th id="143">143</th><td></td></tr>
+<tr><th id="144">144</th><td>    <em>int</em> <dfn class="decl" id="TwinVQContext::is_6kbps" title='TwinVQContext::is_6kbps' data-ref="TwinVQContext::is_6kbps">is_6kbps</dfn>;</td></tr>
+<tr><th id="145">145</th><td></td></tr>
+<tr><th id="146">146</th><td>    <i>// history</i></td></tr>
+<tr><th id="147">147</th><td>    <em>float</em> <dfn class="decl" id="TwinVQContext::lsp_hist" title='TwinVQContext::lsp_hist' data-ref="TwinVQContext::lsp_hist">lsp_hist</dfn>[<var>2</var>][<var>20</var>];           <i class="doc">///&lt; LSP coefficients of the last frame</i></td></tr>
+<tr><th id="148">148</th><td>    <em>float</em> <dfn class="decl" id="TwinVQContext::bark_hist" title='TwinVQContext::bark_hist' data-ref="TwinVQContext::bark_hist">bark_hist</dfn>[<var>3</var>][<var>2</var>][<var>40</var>];       <i class="doc">///&lt; BSE coefficients of last frame</i></td></tr>
+<tr><th id="149">149</th><td></td></tr>
+<tr><th id="150">150</th><td>    <i>// bitstream parameters</i></td></tr>
+<tr><th id="151">151</th><td>    <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> <dfn class="decl" id="TwinVQContext::permut" title='TwinVQContext::permut' data-ref="TwinVQContext::permut">permut</dfn>[<var>4</var>][<var>4096</var>];</td></tr>
+<tr><th id="152">152</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="TwinVQContext::length" title='TwinVQContext::length' data-ref="TwinVQContext::length">length</dfn>[<var>4</var>][<var>2</var>];            <i class="doc">///&lt; main codebook stride</i></td></tr>
+<tr><th id="153">153</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="TwinVQContext::length_change" title='TwinVQContext::length_change' data-ref="TwinVQContext::length_change">length_change</dfn>[<var>4</var>];</td></tr>
+<tr><th id="154">154</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="TwinVQContext::bits_main_spec" title='TwinVQContext::bits_main_spec' data-ref="TwinVQContext::bits_main_spec">bits_main_spec</dfn>[<var>2</var>][<var>4</var>][<var>2</var>]; <i class="doc">///&lt; bits for the main codebook</i></td></tr>
+<tr><th id="155">155</th><td>    <em>int</em> <dfn class="decl" id="TwinVQContext::bits_main_spec_change" title='TwinVQContext::bits_main_spec_change' data-ref="TwinVQContext::bits_main_spec_change">bits_main_spec_change</dfn>[<var>4</var>];</td></tr>
+<tr><th id="156">156</th><td>    <em>int</em> <dfn class="decl" id="TwinVQContext::n_div" title='TwinVQContext::n_div' data-ref="TwinVQContext::n_div">n_div</dfn>[<var>4</var>];</td></tr>
+<tr><th id="157">157</th><td></td></tr>
+<tr><th id="158">158</th><td>    <em>float</em> *<dfn class="decl" id="TwinVQContext::spectrum" title='TwinVQContext::spectrum' data-ref="TwinVQContext::spectrum">spectrum</dfn>;</td></tr>
+<tr><th id="159">159</th><td>    <em>float</em> *<dfn class="decl" id="TwinVQContext::curr_frame" title='TwinVQContext::curr_frame' data-ref="TwinVQContext::curr_frame">curr_frame</dfn>;               <i class="doc">///&lt; non-interleaved output</i></td></tr>
+<tr><th id="160">160</th><td>    <em>float</em> *<dfn class="decl" id="TwinVQContext::prev_frame" title='TwinVQContext::prev_frame' data-ref="TwinVQContext::prev_frame">prev_frame</dfn>;               <i class="doc">///&lt; non-interleaved previous frame</i></td></tr>
+<tr><th id="161">161</th><td>    <em>int</em> <dfn class="decl" id="TwinVQContext::last_block_pos" title='TwinVQContext::last_block_pos' data-ref="TwinVQContext::last_block_pos">last_block_pos</dfn>[<var>2</var>];</td></tr>
+<tr><th id="162">162</th><td>    <em>int</em> <dfn class="decl" id="TwinVQContext::discarded_packets" title='TwinVQContext::discarded_packets' data-ref="TwinVQContext::discarded_packets">discarded_packets</dfn>;</td></tr>
+<tr><th id="163">163</th><td></td></tr>
+<tr><th id="164">164</th><td>    <em>float</em> *<dfn class="decl" id="TwinVQContext::cos_tabs" title='TwinVQContext::cos_tabs' data-ref="TwinVQContext::cos_tabs">cos_tabs</dfn>[<var>3</var>];</td></tr>
+<tr><th id="165">165</th><td></td></tr>
+<tr><th id="166">166</th><td>    <i>// scratch buffers</i></td></tr>
+<tr><th id="167">167</th><td>    <em>float</em> *<dfn class="decl" id="TwinVQContext::tmp_buf" title='TwinVQContext::tmp_buf' data-ref="TwinVQContext::tmp_buf">tmp_buf</dfn>;</td></tr>
+<tr><th id="168">168</th><td></td></tr>
+<tr><th id="169">169</th><td>    <em>int</em> <dfn class="decl" id="TwinVQContext::frame_size" title='TwinVQContext::frame_size' data-ref="TwinVQContext::frame_size">frame_size</dfn>, <dfn class="decl" id="TwinVQContext::frames_per_packet" title='TwinVQContext::frames_per_packet' data-ref="TwinVQContext::frames_per_packet">frames_per_packet</dfn>, <dfn class="decl" id="TwinVQContext::cur_frame" title='TwinVQContext::cur_frame' data-ref="TwinVQContext::cur_frame">cur_frame</dfn>;</td></tr>
+<tr><th id="170">170</th><td>    <a class="typedef" href="#TwinVQFrameData" title='TwinVQFrameData' data-type='struct TwinVQFrameData' data-ref="TwinVQFrameData">TwinVQFrameData</a> <dfn class="decl" id="TwinVQContext::bits" title='TwinVQContext::bits' data-ref="TwinVQContext::bits">bits</dfn>[<a class="macro" href="#61" title="2" data-ref="_M/TWINVQ_MAX_FRAMES_PER_PACKET">TWINVQ_MAX_FRAMES_PER_PACKET</a>];</td></tr>
+<tr><th id="171">171</th><td></td></tr>
+<tr><th id="172">172</th><td>    <b>enum</b> <a class="type" href="#TwinVQCodec" title='TwinVQCodec' data-ref="TwinVQCodec">TwinVQCodec</a> <dfn class="decl" id="TwinVQContext::codec" title='TwinVQContext::codec' data-ref="TwinVQContext::codec">codec</dfn>;</td></tr>
+<tr><th id="173">173</th><td></td></tr>
+<tr><th id="174">174</th><td>    <em>int</em> (*<dfn class="decl" id="TwinVQContext::read_bitstream" title='TwinVQContext::read_bitstream' data-ref="TwinVQContext::read_bitstream">read_bitstream</dfn>)(<a class="typedef" href="avcodec.h.html#AVCodecContext" title='AVCodecContext' data-type='struct AVCodecContext' data-ref="AVCodecContext">AVCodecContext</a> *<dfn class="local col1 decl" id="1avctx" title='avctx' data-type='AVCodecContext *' data-ref="1avctx">avctx</dfn>, <b>struct</b> <a class="type" href="#TwinVQContext" title='TwinVQContext' data-ref="TwinVQContext">TwinVQContext</a> *<dfn class="local col2 decl" id="2tctx" title='tctx' data-type='struct TwinVQContext *' data-ref="2tctx">tctx</dfn>,</td></tr>
+<tr><th id="175">175</th><td>                          <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col3 decl" id="3buf" title='buf' data-type='const uint8_t *' data-ref="3buf">buf</dfn>, <em>int</em> <dfn class="local col4 decl" id="4buf_size" title='buf_size' data-type='int' data-ref="4buf_size">buf_size</dfn>);</td></tr>
+<tr><th id="176">176</th><td>    <em>void</em> (*<dfn class="decl" id="TwinVQContext::dec_bark_env" title='TwinVQContext::dec_bark_env' data-ref="TwinVQContext::dec_bark_env">dec_bark_env</dfn>)(<b>struct</b> <a class="type" href="#TwinVQContext" title='TwinVQContext' data-ref="TwinVQContext">TwinVQContext</a> *<dfn class="local col5 decl" id="5tctx" title='tctx' data-type='struct TwinVQContext *' data-ref="5tctx">tctx</dfn>, <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col6 decl" id="6in" title='in' data-type='const uint8_t *' data-ref="6in">in</dfn>,</td></tr>
+<tr><th id="177">177</th><td>                         <em>int</em> <dfn class="local col7 decl" id="7use_hist" title='use_hist' data-type='int' data-ref="7use_hist">use_hist</dfn>, <em>int</em> <dfn class="local col8 decl" id="8ch" title='ch' data-type='int' data-ref="8ch">ch</dfn>, <em>float</em> *<dfn class="local col9 decl" id="9out" title='out' data-type='float *' data-ref="9out">out</dfn>, <em>float</em> <dfn class="local col0 decl" id="10gain" title='gain' data-type='float' data-ref="10gain">gain</dfn>,</td></tr>
+<tr><th id="178">178</th><td>                         <b>enum</b> <a class="type" href="#TwinVQFrameType" title='TwinVQFrameType' data-ref="TwinVQFrameType">TwinVQFrameType</a> <dfn class="local col1 decl" id="11ftype" title='ftype' data-type='enum TwinVQFrameType' data-ref="11ftype">ftype</dfn>);</td></tr>
+<tr><th id="179">179</th><td>    <em>void</em> (*<dfn class="decl" id="TwinVQContext::decode_ppc" title='TwinVQContext::decode_ppc' data-ref="TwinVQContext::decode_ppc">decode_ppc</dfn>)(<b>struct</b> <a class="type" href="#TwinVQContext" title='TwinVQContext' data-ref="TwinVQContext">TwinVQContext</a> *<dfn class="local col2 decl" id="12tctx" title='tctx' data-type='struct TwinVQContext *' data-ref="12tctx">tctx</dfn>, <em>int</em> <dfn class="local col3 decl" id="13period_coef" title='period_coef' data-type='int' data-ref="13period_coef">period_coef</dfn>, <em>int</em> <dfn class="local col4 decl" id="14g_coef" title='g_coef' data-type='int' data-ref="14g_coef">g_coef</dfn>,</td></tr>
+<tr><th id="180">180</th><td>                       <em>const</em> <em>float</em> *<dfn class="local col5 decl" id="15shape" title='shape' data-type='const float *' data-ref="15shape">shape</dfn>, <em>float</em> *<dfn class="local col6 decl" id="16speech" title='speech' data-type='float *' data-ref="16speech">speech</dfn>);</td></tr>
+<tr><th id="181">181</th><td>} <dfn class="typedef" id="TwinVQContext" title='TwinVQContext' data-type='struct TwinVQContext' data-ref="TwinVQContext">TwinVQContext</dfn>;</td></tr>
+<tr><th id="182">182</th><td></td></tr>
+<tr><th id="183">183</th><td><b>extern</b> <em>const</em> <b>enum</b> <a class="type" href="#TwinVQFrameType" title='TwinVQFrameType' data-ref="TwinVQFrameType">TwinVQFrameType</a> <dfn class="decl" id="ff_twinvq_wtype_to_ftype_table" title='ff_twinvq_wtype_to_ftype_table' data-ref="ff_twinvq_wtype_to_ftype_table">ff_twinvq_wtype_to_ftype_table</dfn>[];</td></tr>
+<tr><th id="184">184</th><td></td></tr>
+<tr><th id="185">185</th><td><i class="doc">/** <span class="command">@note</span> not speed critical, hence not optimized */</i></td></tr>
+<tr><th id="186">186</th><td><em>static</em> <b>inline</b> <em>void</em> <dfn class="decl def" id="twinvq_memset_float" title='twinvq_memset_float' data-ref="twinvq_memset_float">twinvq_memset_float</dfn>(<em>float</em> *<dfn class="local col7 decl" id="17buf" title='buf' data-type='float *' data-ref="17buf">buf</dfn>, <em>float</em> <dfn class="local col8 decl" id="18val" title='val' data-type='float' data-ref="18val">val</dfn>, <em>int</em> <dfn class="local col9 decl" id="19size" title='size' data-type='int' data-ref="19size">size</dfn>)</td></tr>
+<tr><th id="187">187</th><td>{</td></tr>
+<tr><th id="188">188</th><td>    <b>while</b> (<a class="local col9 ref" href="#19size" title='size' data-ref="19size">size</a>--)</td></tr>
+<tr><th id="189">189</th><td>        *<a class="local col7 ref" href="#17buf" title='buf' data-ref="17buf">buf</a>++ = <a class="local col8 ref" href="#18val" title='val' data-ref="18val">val</a>;</td></tr>
+<tr><th id="190">190</th><td>}</td></tr>
+<tr><th id="191">191</th><td></td></tr>
+<tr><th id="192">192</th><td><em>static</em> <b>inline</b> <em>float</em> <dfn class="decl def" id="twinvq_mulawinv" title='twinvq_mulawinv' data-ref="twinvq_mulawinv">twinvq_mulawinv</dfn>(<em>float</em> <dfn class="local col0 decl" id="20y" title='y' data-type='float' data-ref="20y">y</dfn>, <em>float</em> <dfn class="local col1 decl" id="21clip" title='clip' data-type='float' data-ref="21clip">clip</dfn>, <em>float</em> <dfn class="local col2 decl" id="22mu" title='mu' data-type='float' data-ref="22mu">mu</dfn>)</td></tr>
+<tr><th id="193">193</th><td>{</td></tr>
+<tr><th id="194">194</th><td>    <a class="local col0 ref" href="#20y" title='y' data-ref="20y">y</a> = <a class="macro" href="../libavutil/x86/intmath.h.html#122" title="av_clipf_sse" data-ref="_M/av_clipf">av_clipf</a>(<a class="local col0 ref" href="#20y" title='y' data-ref="20y">y</a> / <a class="local col1 ref" href="#21clip" title='clip' data-ref="21clip">clip</a>, -<var>1</var>, <var>1</var>);</td></tr>
+<tr><th id="195">195</th><td>    <b>return</b> <a class="local col1 ref" href="#21clip" title='clip' data-ref="21clip">clip</a> * <a class="macro" href="../libavutil/common.h.html#73" title="((y) &gt; 0 ? 1 : -1)" data-ref="_M/FFSIGN">FFSIGN</a>(<a class="local col0 ref" href="#20y" title='y' data-ref="20y">y</a>) * (<a class="ref" href="../../include/x86_64-linux-gnu/bits/mathcalls.h.html#100" title='exp' data-ref="exp">exp</a>(<a class="ref" href="../../include/x86_64-linux-gnu/bits/mathcalls.h.html#109" title='log' data-ref="log">log</a>(<var>1</var> + <a class="local col2 ref" href="#22mu" title='mu' data-ref="22mu">mu</a>) * <a class="ref" href="../../include/x86_64-linux-gnu/bits/mathcalls.h.html#181" title='fabs' data-ref="fabs">fabs</a>(<a class="local col0 ref" href="#20y" title='y' data-ref="20y">y</a>)) - <var>1</var>) / <a class="local col2 ref" href="#22mu" title='mu' data-ref="22mu">mu</a>;</td></tr>
+<tr><th id="196">196</th><td>}</td></tr>
+<tr><th id="197">197</th><td></td></tr>
+<tr><th id="198">198</th><td><em>int</em> <dfn class="decl" id="ff_twinvq_decode_frame" title='ff_twinvq_decode_frame' data-ref="ff_twinvq_decode_frame">ff_twinvq_decode_frame</dfn>(<a class="typedef" href="avcodec.h.html#AVCodecContext" title='AVCodecContext' data-type='struct AVCodecContext' data-ref="AVCodecContext">AVCodecContext</a> *<dfn class="local col3 decl" id="23avctx" title='avctx' data-type='AVCodecContext *' data-ref="23avctx">avctx</dfn>, <em>void</em> *<dfn class="local col4 decl" id="24data" title='data' data-type='void *' data-ref="24data">data</dfn>,</td></tr>
+<tr><th id="199">199</th><td>                           <em>int</em> *<dfn class="local col5 decl" id="25got_frame_ptr" title='got_frame_ptr' data-type='int *' data-ref="25got_frame_ptr">got_frame_ptr</dfn>, <a class="typedef" href="avcodec.h.html#AVPacket" title='AVPacket' data-type='struct AVPacket' data-ref="AVPacket">AVPacket</a> *<dfn class="local col6 decl" id="26avpkt" title='avpkt' data-type='AVPacket *' data-ref="26avpkt">avpkt</dfn>);</td></tr>
+<tr><th id="200">200</th><td><em>int</em> <dfn class="decl" id="ff_twinvq_decode_close" title='ff_twinvq_decode_close' data-ref="ff_twinvq_decode_close">ff_twinvq_decode_close</dfn>(<a class="typedef" href="avcodec.h.html#AVCodecContext" title='AVCodecContext' data-type='struct AVCodecContext' data-ref="AVCodecContext">AVCodecContext</a> *<dfn class="local col7 decl" id="27avctx" title='avctx' data-type='AVCodecContext *' data-ref="27avctx">avctx</dfn>);</td></tr>
+<tr><th id="201">201</th><td><em>int</em> <dfn class="decl" id="ff_twinvq_decode_init" title='ff_twinvq_decode_init' data-ref="ff_twinvq_decode_init">ff_twinvq_decode_init</dfn>(<a class="typedef" href="avcodec.h.html#AVCodecContext" title='AVCodecContext' data-type='struct AVCodecContext' data-ref="AVCodecContext">AVCodecContext</a> *<dfn class="local col8 decl" id="28avctx" title='avctx' data-type='AVCodecContext *' data-ref="28avctx">avctx</dfn>);</td></tr>
+<tr><th id="202">202</th><td></td></tr>
+<tr><th id="203">203</th><td><u>#<span data-ppcond="22">endif</span> /* AVCODEC_TWINVQ_H */</u></td></tr>
+<tr><th id="204">204</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated while processing <a href='metasound.c.html'>ffmpeg/libavcodec/metasound.c</a><br/>Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

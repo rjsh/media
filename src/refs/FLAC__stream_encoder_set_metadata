@@ -1,0 +1,82 @@
+<dec f='include/FLAC/stream_encoder.h' l='1182' type='FLAC__bool FLAC__stream_encoder_set_metadata(FLAC__StreamEncoder * encoder, FLAC__StreamMetadata ** metadata, unsigned int num_blocks)'/>
+<doc f='include/FLAC/stream_encoder.h' l='1101'>/** Set the metadata blocks to be emitted to the stream before encoding.
+ *  A value of \c NULL, \c 0 implies no metadata; otherwise, supply an
+ *  array of pointers to metadata blocks.  The array is non-const since
+ *  the encoder may need to change the \a is_last flag inside them, and
+ *  in some cases update seek point offsets.  Otherwise, the encoder will
+ *  not modify or free the blocks.  It is up to the caller to free the
+ *  metadata blocks after encoding finishes.
+ *
+ * \note
+ * The encoder stores only copies of the pointers in the \a metadata array;
+ * the metadata blocks themselves must survive at least until after
+ * FLAC__stream_encoder_finish() returns.  Do not free the blocks until then.
+ *
+ * \note
+ * The STREAMINFO block is always written and no STREAMINFO block may
+ * occur in the supplied array.
+ *
+ * \note
+ * By default the encoder does not create a SEEKTABLE.  If one is supplied
+ * in the \a metadata array, but the client has specified that it does not
+ * support seeking, then the SEEKTABLE will be written verbatim.  However
+ * by itself this is not very useful as the client will not know the stream
+ * offsets for the seekpoints ahead of time.  In order to get a proper
+ * seektable the client must support seeking.  See next note.
+ *
+ * \note
+ * SEEKTABLE blocks are handled specially.  Since you will not know
+ * the values for the seek point stream offsets, you should pass in
+ * a SEEKTABLE &apos;template&apos;, that is, a SEEKTABLE object with the
+ * required sample numbers (or placeholder points), with \c 0 for the
+ * \a frame_samples and \a stream_offset fields for each point.  If the
+ * client has specified that it supports seeking by providing a seek
+ * callback to FLAC__stream_encoder_init_stream() or both seek AND read
+ * callback to FLAC__stream_encoder_init_ogg_stream() (or by using
+ * FLAC__stream_encoder_init*_file() or FLAC__stream_encoder_init*_FILE()),
+ * then while it is encoding the encoder will fill the stream offsets in
+ * for you and when encoding is finished, it will seek back and write the
+ * real values into the SEEKTABLE block in the stream.  There are helper
+ * routines for manipulating seektable template blocks; see metadata.h:
+ * FLAC__metadata_object_seektable_template_*().  If the client does
+ * not support seeking, the SEEKTABLE will have inaccurate offsets which
+ * will slow down or remove the ability to seek in the FLAC stream.
+ *
+ * \note
+ * The encoder instance \b will modify the first \c SEEKTABLE block
+ * as it transforms the template to a valid seektable while encoding,
+ * but it is still up to the caller to free all metadata blocks after
+ * encoding.
+ *
+ * \note
+ * A VORBIS_COMMENT block may be supplied.  The vendor string in it
+ * will be ignored.  libFLAC will use it&apos;s own vendor string. libFLAC
+ * will not modify the passed-in VORBIS_COMMENT&apos;s vendor string, it
+ * will simply write it&apos;s own into the stream.  If no VORBIS_COMMENT
+ * block is present in the \a metadata array, libFLAC will write an
+ * empty one, containing only the vendor string.
+ *
+ * \note The Ogg FLAC mapping requires that the VORBIS_COMMENT block be
+ * the second metadata block of the stream.  The encoder already supplies
+ * the STREAMINFO block automatically.  If \a metadata does not contain a
+ * VORBIS_COMMENT block, the encoder will supply that too.  Otherwise, if
+ * \a metadata does contain a VORBIS_COMMENT block and it is not the
+ * first, the init function will reorder \a metadata by moving the
+ * VORBIS_COMMENT block to the front; the relative ordering of the other
+ * blocks will remain as they were.
+ *
+ * \note The Ogg FLAC mapping limits the number of metadata blocks per
+ * stream to \c 65535.  If \a num_blocks exceeds this the function will
+ * return \c false.
+ *
+ * \default \c NULL, 0
+ * \param  encoder     An encoder instance to set.
+ * \param  metadata    See above.
+ * \param  num_blocks  See above.
+ * \assert
+ *    \code encoder != NULL \endcode
+ * \retval FLAC__bool
+ *    \c false if the encoder is already initialized, else \c true.
+ *    \c false if the encoder is already initialized, or if
+ *    \a num_blocks &gt; 65535 if encoding to Ogg FLAC, else \c true.
+ */</doc>

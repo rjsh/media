@@ -1,0 +1,145 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>h264pred.h source code [ffmpeg/libavcodec/h264pred.h] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="H264PredContext "/>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavcodec/h264pred.h'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavcodec</a>/<a href='h264pred.h.html'>h264pred.h</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * H.26L/H.264/AVC/JVT/14496-10/... encoder/decoder</i></td></tr>
+<tr><th id="3">3</th><td><i> * Copyright (c) 2003 Michael Niedermayer &lt;michaelni@gmx.at&gt;</i></td></tr>
+<tr><th id="4">4</th><td><i> *</i></td></tr>
+<tr><th id="5">5</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="8">8</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="9">9</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="10">10</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="11">11</th><td><i> *</i></td></tr>
+<tr><th id="12">12</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="13">13</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="14">14</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="15">15</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="16">16</th><td><i> *</i></td></tr>
+<tr><th id="17">17</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="18">18</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="19">19</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="20">20</th><td><i> */</i></td></tr>
+<tr><th id="21">21</th><td></td></tr>
+<tr><th id="22">22</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="23">23</th><td><i class="doc"> *<span class="command"> @file</span></i></td></tr>
+<tr><th id="24">24</th><td><i class="doc"> * H.264 / AVC / MPEG-4 prediction functions.</i></td></tr>
+<tr><th id="25">25</th><td><i class="doc"> * <span class="command">@author</span> Michael Niedermayer &lt;michaeln<span class="command">i@gmx</span>.at&gt;</i></td></tr>
+<tr><th id="26">26</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="27">27</th><td></td></tr>
+<tr><th id="28">28</th><td><u>#<span data-ppcond="28">ifndef</span> <span class="macro" data-ref="_M/AVCODEC_H264PRED_H">AVCODEC_H264PRED_H</span></u></td></tr>
+<tr><th id="29">29</th><td><u>#define <dfn class="macro" id="_M/AVCODEC_H264PRED_H" data-ref="_M/AVCODEC_H264PRED_H">AVCODEC_H264PRED_H</dfn></u></td></tr>
+<tr><th id="30">30</th><td></td></tr>
+<tr><th id="31">31</th><td><u>#include &lt;stddef.h&gt;</u></td></tr>
+<tr><th id="32">32</th><td><u>#include &lt;stdint.h&gt;</u></td></tr>
+<tr><th id="33">33</th><td></td></tr>
+<tr><th id="34">34</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="35">35</th><td><i class="doc"> * Prediction types</i></td></tr>
+<tr><th id="36">36</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="37">37</th><td><i class="doc">//@{</i></td></tr>
+<tr><th id="38">38</th><td><u>#define <dfn class="macro" id="_M/VERT_PRED" data-ref="_M/VERT_PRED">VERT_PRED</dfn>              0</u></td></tr>
+<tr><th id="39">39</th><td><u>#define <dfn class="macro" id="_M/HOR_PRED" data-ref="_M/HOR_PRED">HOR_PRED</dfn>               1</u></td></tr>
+<tr><th id="40">40</th><td><u>#define <dfn class="macro" id="_M/DC_PRED" data-ref="_M/DC_PRED">DC_PRED</dfn>                2</u></td></tr>
+<tr><th id="41">41</th><td><u>#define <dfn class="macro" id="_M/DIAG_DOWN_LEFT_PRED" data-ref="_M/DIAG_DOWN_LEFT_PRED">DIAG_DOWN_LEFT_PRED</dfn>    3</u></td></tr>
+<tr><th id="42">42</th><td><u>#define <dfn class="macro" id="_M/DIAG_DOWN_RIGHT_PRED" data-ref="_M/DIAG_DOWN_RIGHT_PRED">DIAG_DOWN_RIGHT_PRED</dfn>   4</u></td></tr>
+<tr><th id="43">43</th><td><u>#define <dfn class="macro" id="_M/VERT_RIGHT_PRED" data-ref="_M/VERT_RIGHT_PRED">VERT_RIGHT_PRED</dfn>        5</u></td></tr>
+<tr><th id="44">44</th><td><u>#define <dfn class="macro" id="_M/HOR_DOWN_PRED" data-ref="_M/HOR_DOWN_PRED">HOR_DOWN_PRED</dfn>          6</u></td></tr>
+<tr><th id="45">45</th><td><u>#define <dfn class="macro" id="_M/VERT_LEFT_PRED" data-ref="_M/VERT_LEFT_PRED">VERT_LEFT_PRED</dfn>         7</u></td></tr>
+<tr><th id="46">46</th><td><u>#define <dfn class="macro" id="_M/HOR_UP_PRED" data-ref="_M/HOR_UP_PRED">HOR_UP_PRED</dfn>            8</u></td></tr>
+<tr><th id="47">47</th><td></td></tr>
+<tr><th id="48">48</th><td><i>// DC edge (not for VP8)</i></td></tr>
+<tr><th id="49">49</th><td><u>#define <dfn class="macro" id="_M/LEFT_DC_PRED" data-ref="_M/LEFT_DC_PRED">LEFT_DC_PRED</dfn>           9</u></td></tr>
+<tr><th id="50">50</th><td><u>#define <dfn class="macro" id="_M/TOP_DC_PRED" data-ref="_M/TOP_DC_PRED">TOP_DC_PRED</dfn>           10</u></td></tr>
+<tr><th id="51">51</th><td><u>#define <dfn class="macro" id="_M/DC_128_PRED" data-ref="_M/DC_128_PRED">DC_128_PRED</dfn>           11</u></td></tr>
+<tr><th id="52">52</th><td></td></tr>
+<tr><th id="53">53</th><td><i>// RV40 specific</i></td></tr>
+<tr><th id="54">54</th><td><u>#define <dfn class="macro" id="_M/DIAG_DOWN_LEFT_PRED_RV40_NODOWN" data-ref="_M/DIAG_DOWN_LEFT_PRED_RV40_NODOWN">DIAG_DOWN_LEFT_PRED_RV40_NODOWN</dfn>   12</u></td></tr>
+<tr><th id="55">55</th><td><u>#define <dfn class="macro" id="_M/HOR_UP_PRED_RV40_NODOWN" data-ref="_M/HOR_UP_PRED_RV40_NODOWN">HOR_UP_PRED_RV40_NODOWN</dfn>           13</u></td></tr>
+<tr><th id="56">56</th><td><u>#define <dfn class="macro" id="_M/VERT_LEFT_PRED_RV40_NODOWN" data-ref="_M/VERT_LEFT_PRED_RV40_NODOWN">VERT_LEFT_PRED_RV40_NODOWN</dfn>        14</u></td></tr>
+<tr><th id="57">57</th><td></td></tr>
+<tr><th id="58">58</th><td><i>// VP8 specific</i></td></tr>
+<tr><th id="59">59</th><td><u>#define <dfn class="macro" id="_M/TM_VP8_PRED" data-ref="_M/TM_VP8_PRED">TM_VP8_PRED</dfn>            9    ///&lt; "True Motion", used instead of plane</u></td></tr>
+<tr><th id="60">60</th><td><u>#define <dfn class="macro" id="_M/VERT_VP8_PRED" data-ref="_M/VERT_VP8_PRED">VERT_VP8_PRED</dfn>         10    ///&lt; for VP8, #VERT_PRED is the average of</u></td></tr>
+<tr><th id="61">61</th><td>                                    <i class="doc">///&lt; (left col+cur col x2+right col) / 4;</i></td></tr>
+<tr><th id="62">62</th><td><i class="doc">                                    ///&lt; this is the "unaveraged" one</i></td></tr>
+<tr><th id="63">63</th><td><u>#define <dfn class="macro" id="_M/HOR_VP8_PRED" data-ref="_M/HOR_VP8_PRED">HOR_VP8_PRED</dfn>          14    ///&lt; unaveraged version of #HOR_PRED, see</u></td></tr>
+<tr><th id="64">64</th><td>                                    <i class="doc">///&lt; #VERT_VP8_PRED for details</i></td></tr>
+<tr><th id="65">65</th><td><u>#define <dfn class="macro" id="_M/DC_127_PRED" data-ref="_M/DC_127_PRED">DC_127_PRED</dfn>           12</u></td></tr>
+<tr><th id="66">66</th><td><u>#define <dfn class="macro" id="_M/DC_129_PRED" data-ref="_M/DC_129_PRED">DC_129_PRED</dfn>           13</u></td></tr>
+<tr><th id="67">67</th><td></td></tr>
+<tr><th id="68">68</th><td><u>#define <dfn class="macro" id="_M/DC_PRED8x8" data-ref="_M/DC_PRED8x8">DC_PRED8x8</dfn>             0</u></td></tr>
+<tr><th id="69">69</th><td><u>#define <dfn class="macro" id="_M/HOR_PRED8x8" data-ref="_M/HOR_PRED8x8">HOR_PRED8x8</dfn>            1</u></td></tr>
+<tr><th id="70">70</th><td><u>#define <dfn class="macro" id="_M/VERT_PRED8x8" data-ref="_M/VERT_PRED8x8">VERT_PRED8x8</dfn>           2</u></td></tr>
+<tr><th id="71">71</th><td><u>#define <dfn class="macro" id="_M/PLANE_PRED8x8" data-ref="_M/PLANE_PRED8x8">PLANE_PRED8x8</dfn>          3</u></td></tr>
+<tr><th id="72">72</th><td></td></tr>
+<tr><th id="73">73</th><td><i>// DC edge</i></td></tr>
+<tr><th id="74">74</th><td><u>#define <dfn class="macro" id="_M/LEFT_DC_PRED8x8" data-ref="_M/LEFT_DC_PRED8x8">LEFT_DC_PRED8x8</dfn>        4</u></td></tr>
+<tr><th id="75">75</th><td><u>#define <dfn class="macro" id="_M/TOP_DC_PRED8x8" data-ref="_M/TOP_DC_PRED8x8">TOP_DC_PRED8x8</dfn>         5</u></td></tr>
+<tr><th id="76">76</th><td><u>#define <dfn class="macro" id="_M/DC_128_PRED8x8" data-ref="_M/DC_128_PRED8x8">DC_128_PRED8x8</dfn>         6</u></td></tr>
+<tr><th id="77">77</th><td></td></tr>
+<tr><th id="78">78</th><td><i>// H.264/SVQ3 (8x8) specific</i></td></tr>
+<tr><th id="79">79</th><td><u>#define <dfn class="macro" id="_M/ALZHEIMER_DC_L0T_PRED8x8" data-ref="_M/ALZHEIMER_DC_L0T_PRED8x8">ALZHEIMER_DC_L0T_PRED8x8</dfn>  7</u></td></tr>
+<tr><th id="80">80</th><td><u>#define <dfn class="macro" id="_M/ALZHEIMER_DC_0LT_PRED8x8" data-ref="_M/ALZHEIMER_DC_0LT_PRED8x8">ALZHEIMER_DC_0LT_PRED8x8</dfn>  8</u></td></tr>
+<tr><th id="81">81</th><td><u>#define <dfn class="macro" id="_M/ALZHEIMER_DC_L00_PRED8x8" data-ref="_M/ALZHEIMER_DC_L00_PRED8x8">ALZHEIMER_DC_L00_PRED8x8</dfn>  9</u></td></tr>
+<tr><th id="82">82</th><td><u>#define <dfn class="macro" id="_M/ALZHEIMER_DC_0L0_PRED8x8" data-ref="_M/ALZHEIMER_DC_0L0_PRED8x8">ALZHEIMER_DC_0L0_PRED8x8</dfn> 10</u></td></tr>
+<tr><th id="83">83</th><td></td></tr>
+<tr><th id="84">84</th><td><i>// VP8 specific</i></td></tr>
+<tr><th id="85">85</th><td><u>#define <dfn class="macro" id="_M/DC_127_PRED8x8" data-ref="_M/DC_127_PRED8x8">DC_127_PRED8x8</dfn>         7</u></td></tr>
+<tr><th id="86">86</th><td><u>#define <dfn class="macro" id="_M/DC_129_PRED8x8" data-ref="_M/DC_129_PRED8x8">DC_129_PRED8x8</dfn>         8</u></td></tr>
+<tr><th id="87">87</th><td><i>//@}</i></td></tr>
+<tr><th id="88">88</th><td></td></tr>
+<tr><th id="89">89</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="90">90</th><td><i class="doc"> * Context for storing H.264 prediction functions</i></td></tr>
+<tr><th id="91">91</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="92">92</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="H264PredContext" title='H264PredContext' data-ref="H264PredContext"><a class="type" href="#H264PredContext" title='H264PredContext' data-ref="H264PredContext">H264PredContext</a></dfn> {</td></tr>
+<tr><th id="93">93</th><td>    <em>void</em>(*<dfn class="decl" id="H264PredContext::pred4x4" title='H264PredContext::pred4x4' data-ref="H264PredContext::pred4x4">pred4x4</dfn>[<var>9</var> + <var>3</var> + <var>3</var>])(<a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col3 decl" id="253src" title='src' data-type='uint8_t *' data-ref="253src">src</dfn>, <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col4 decl" id="254topright" title='topright' data-type='const uint8_t *' data-ref="254topright">topright</dfn>,</td></tr>
+<tr><th id="94">94</th><td>                              <span class='typedef' title='ptrdiff_t' data-type='long' data-ref="ptrdiff_t">ptrdiff_t</span> <dfn class="local col5 decl" id="255stride" title='stride' data-type='ptrdiff_t' data-ref="255stride">stride</dfn>);</td></tr>
+<tr><th id="95">95</th><td>    <em>void</em>(*<dfn class="decl" id="H264PredContext::pred8x8l" title='H264PredContext::pred8x8l' data-ref="H264PredContext::pred8x8l">pred8x8l</dfn>[<var>9</var> + <var>3</var>])(<a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col6 decl" id="256src" title='src' data-type='uint8_t *' data-ref="256src">src</dfn>, <em>int</em> <dfn class="local col7 decl" id="257topleft" title='topleft' data-type='int' data-ref="257topleft">topleft</dfn>, <em>int</em> <dfn class="local col8 decl" id="258topright" title='topright' data-type='int' data-ref="258topright">topright</dfn>,</td></tr>
+<tr><th id="96">96</th><td>                           <span class='typedef' title='ptrdiff_t' data-type='long' data-ref="ptrdiff_t">ptrdiff_t</span> <dfn class="local col9 decl" id="259stride" title='stride' data-type='ptrdiff_t' data-ref="259stride">stride</dfn>);</td></tr>
+<tr><th id="97">97</th><td>    <em>void</em>(*<dfn class="decl" id="H264PredContext::pred8x8" title='H264PredContext::pred8x8' data-ref="H264PredContext::pred8x8">pred8x8</dfn>[<var>4</var> + <var>3</var> + <var>4</var>])(<a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col0 decl" id="260src" title='src' data-type='uint8_t *' data-ref="260src">src</dfn>, <span class='typedef' title='ptrdiff_t' data-type='long' data-ref="ptrdiff_t">ptrdiff_t</span> <dfn class="local col1 decl" id="261stride" title='stride' data-type='ptrdiff_t' data-ref="261stride">stride</dfn>);</td></tr>
+<tr><th id="98">98</th><td>    <em>void</em>(*<dfn class="decl" id="H264PredContext::pred16x16" title='H264PredContext::pred16x16' data-ref="H264PredContext::pred16x16">pred16x16</dfn>[<var>4</var> + <var>3</var> + <var>2</var>])(<a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col2 decl" id="262src" title='src' data-type='uint8_t *' data-ref="262src">src</dfn>, <span class='typedef' title='ptrdiff_t' data-type='long' data-ref="ptrdiff_t">ptrdiff_t</span> <dfn class="local col3 decl" id="263stride" title='stride' data-type='ptrdiff_t' data-ref="263stride">stride</dfn>);</td></tr>
+<tr><th id="99">99</th><td></td></tr>
+<tr><th id="100">100</th><td>    <em>void</em>(*<dfn class="decl" id="H264PredContext::pred4x4_add" title='H264PredContext::pred4x4_add' data-ref="H264PredContext::pred4x4_add">pred4x4_add</dfn>[<var>2</var>])(<a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col4 decl" id="264pix" title='pix' data-type='uint8_t *' data-ref="264pix">pix</dfn> <i>/*align  4*/</i>,</td></tr>
+<tr><th id="101">101</th><td>                          <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> *<dfn class="local col5 decl" id="265block" title='block' data-type='int16_t *' data-ref="265block">block</dfn> <i>/*align 16*/</i>, <span class='typedef' title='ptrdiff_t' data-type='long' data-ref="ptrdiff_t">ptrdiff_t</span> <dfn class="local col6 decl" id="266stride" title='stride' data-type='ptrdiff_t' data-ref="266stride">stride</dfn>);</td></tr>
+<tr><th id="102">102</th><td>    <em>void</em>(*<dfn class="decl" id="H264PredContext::pred8x8l_add" title='H264PredContext::pred8x8l_add' data-ref="H264PredContext::pred8x8l_add">pred8x8l_add</dfn>[<var>2</var>])(<a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col7 decl" id="267pix" title='pix' data-type='uint8_t *' data-ref="267pix">pix</dfn> <i>/*align  8*/</i>,</td></tr>
+<tr><th id="103">103</th><td>                           <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> *<dfn class="local col8 decl" id="268block" title='block' data-type='int16_t *' data-ref="268block">block</dfn> <i>/*align 16*/</i>, <span class='typedef' title='ptrdiff_t' data-type='long' data-ref="ptrdiff_t">ptrdiff_t</span> <dfn class="local col9 decl" id="269stride" title='stride' data-type='ptrdiff_t' data-ref="269stride">stride</dfn>);</td></tr>
+<tr><th id="104">104</th><td>    <em>void</em>(*<dfn class="decl" id="H264PredContext::pred8x8l_filter_add" title='H264PredContext::pred8x8l_filter_add' data-ref="H264PredContext::pred8x8l_filter_add">pred8x8l_filter_add</dfn>[<var>2</var>])(<a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col0 decl" id="270pix" title='pix' data-type='uint8_t *' data-ref="270pix">pix</dfn> <i>/*align  8*/</i>,</td></tr>
+<tr><th id="105">105</th><td>                           <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> *<dfn class="local col1 decl" id="271block" title='block' data-type='int16_t *' data-ref="271block">block</dfn> <i>/*align 16*/</i>, <em>int</em> <dfn class="local col2 decl" id="272topleft" title='topleft' data-type='int' data-ref="272topleft">topleft</dfn>, <em>int</em> <dfn class="local col3 decl" id="273topright" title='topright' data-type='int' data-ref="273topright">topright</dfn>, <span class='typedef' title='ptrdiff_t' data-type='long' data-ref="ptrdiff_t">ptrdiff_t</span> <dfn class="local col4 decl" id="274stride" title='stride' data-type='ptrdiff_t' data-ref="274stride">stride</dfn>);</td></tr>
+<tr><th id="106">106</th><td>    <em>void</em>(*<dfn class="decl" id="H264PredContext::pred8x8_add" title='H264PredContext::pred8x8_add' data-ref="H264PredContext::pred8x8_add">pred8x8_add</dfn>[<var>3</var>])(<a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col5 decl" id="275pix" title='pix' data-type='uint8_t *' data-ref="275pix">pix</dfn> <i>/*align  8*/</i>,</td></tr>
+<tr><th id="107">107</th><td>                          <em>const</em> <em>int</em> *<dfn class="local col6 decl" id="276block_offset" title='block_offset' data-type='const int *' data-ref="276block_offset">block_offset</dfn>,</td></tr>
+<tr><th id="108">108</th><td>                          <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> *<dfn class="local col7 decl" id="277block" title='block' data-type='int16_t *' data-ref="277block">block</dfn> <i>/*align 16*/</i>, <span class='typedef' title='ptrdiff_t' data-type='long' data-ref="ptrdiff_t">ptrdiff_t</span> <dfn class="local col8 decl" id="278stride" title='stride' data-type='ptrdiff_t' data-ref="278stride">stride</dfn>);</td></tr>
+<tr><th id="109">109</th><td>    <em>void</em>(*<dfn class="decl" id="H264PredContext::pred16x16_add" title='H264PredContext::pred16x16_add' data-ref="H264PredContext::pred16x16_add">pred16x16_add</dfn>[<var>3</var>])(<a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col9 decl" id="279pix" title='pix' data-type='uint8_t *' data-ref="279pix">pix</dfn> <i>/*align 16*/</i>,</td></tr>
+<tr><th id="110">110</th><td>                            <em>const</em> <em>int</em> *<dfn class="local col0 decl" id="280block_offset" title='block_offset' data-type='const int *' data-ref="280block_offset">block_offset</dfn>,</td></tr>
+<tr><th id="111">111</th><td>                            <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> *<dfn class="local col1 decl" id="281block" title='block' data-type='int16_t *' data-ref="281block">block</dfn> <i>/*align 16*/</i>, <span class='typedef' title='ptrdiff_t' data-type='long' data-ref="ptrdiff_t">ptrdiff_t</span> <dfn class="local col2 decl" id="282stride" title='stride' data-type='ptrdiff_t' data-ref="282stride">stride</dfn>);</td></tr>
+<tr><th id="112">112</th><td>} <dfn class="typedef" id="H264PredContext" title='H264PredContext' data-type='struct H264PredContext' data-ref="H264PredContext">H264PredContext</dfn>;</td></tr>
+<tr><th id="113">113</th><td></td></tr>
+<tr><th id="114">114</th><td><em>void</em> <dfn class="decl" id="ff_h264_pred_init" title='ff_h264_pred_init' data-ref="ff_h264_pred_init">ff_h264_pred_init</dfn>(<a class="typedef" href="#H264PredContext" title='H264PredContext' data-type='struct H264PredContext' data-ref="H264PredContext">H264PredContext</a> *<dfn class="local col3 decl" id="283h" title='h' data-type='H264PredContext *' data-ref="283h">h</dfn>, <em>int</em> <dfn class="local col4 decl" id="284codec_id" title='codec_id' data-type='int' data-ref="284codec_id">codec_id</dfn>,</td></tr>
+<tr><th id="115">115</th><td>                       <em>const</em> <em>int</em> <dfn class="local col5 decl" id="285bit_depth" title='bit_depth' data-type='const int' data-ref="285bit_depth">bit_depth</dfn>, <em>const</em> <em>int</em> <dfn class="local col6 decl" id="286chroma_format_idc" title='chroma_format_idc' data-type='const int' data-ref="286chroma_format_idc">chroma_format_idc</dfn>);</td></tr>
+<tr><th id="116">116</th><td><em>void</em> <dfn class="decl" id="ff_h264_pred_init_aarch64" title='ff_h264_pred_init_aarch64' data-ref="ff_h264_pred_init_aarch64">ff_h264_pred_init_aarch64</dfn>(<a class="typedef" href="#H264PredContext" title='H264PredContext' data-type='struct H264PredContext' data-ref="H264PredContext">H264PredContext</a> *<dfn class="local col7 decl" id="287h" title='h' data-type='H264PredContext *' data-ref="287h">h</dfn>, <em>int</em> <dfn class="local col8 decl" id="288codec_id" title='codec_id' data-type='int' data-ref="288codec_id">codec_id</dfn>,</td></tr>
+<tr><th id="117">117</th><td>                               <em>const</em> <em>int</em> <dfn class="local col9 decl" id="289bit_depth" title='bit_depth' data-type='const int' data-ref="289bit_depth">bit_depth</dfn>,</td></tr>
+<tr><th id="118">118</th><td>                               <em>const</em> <em>int</em> <dfn class="local col0 decl" id="290chroma_format_idc" title='chroma_format_idc' data-type='const int' data-ref="290chroma_format_idc">chroma_format_idc</dfn>);</td></tr>
+<tr><th id="119">119</th><td><em>void</em> <dfn class="decl" id="ff_h264_pred_init_arm" title='ff_h264_pred_init_arm' data-ref="ff_h264_pred_init_arm">ff_h264_pred_init_arm</dfn>(<a class="typedef" href="#H264PredContext" title='H264PredContext' data-type='struct H264PredContext' data-ref="H264PredContext">H264PredContext</a> *<dfn class="local col1 decl" id="291h" title='h' data-type='H264PredContext *' data-ref="291h">h</dfn>, <em>int</em> <dfn class="local col2 decl" id="292codec_id" title='codec_id' data-type='int' data-ref="292codec_id">codec_id</dfn>,</td></tr>
+<tr><th id="120">120</th><td>                           <em>const</em> <em>int</em> <dfn class="local col3 decl" id="293bit_depth" title='bit_depth' data-type='const int' data-ref="293bit_depth">bit_depth</dfn>, <em>const</em> <em>int</em> <dfn class="local col4 decl" id="294chroma_format_idc" title='chroma_format_idc' data-type='const int' data-ref="294chroma_format_idc">chroma_format_idc</dfn>);</td></tr>
+<tr><th id="121">121</th><td><em>void</em> <dfn class="decl" id="ff_h264_pred_init_x86" title='ff_h264_pred_init_x86' data-ref="ff_h264_pred_init_x86">ff_h264_pred_init_x86</dfn>(<a class="typedef" href="#H264PredContext" title='H264PredContext' data-type='struct H264PredContext' data-ref="H264PredContext">H264PredContext</a> *<dfn class="local col5 decl" id="295h" title='h' data-type='H264PredContext *' data-ref="295h">h</dfn>, <em>int</em> <dfn class="local col6 decl" id="296codec_id" title='codec_id' data-type='int' data-ref="296codec_id">codec_id</dfn>,</td></tr>
+<tr><th id="122">122</th><td>                           <em>const</em> <em>int</em> <dfn class="local col7 decl" id="297bit_depth" title='bit_depth' data-type='const int' data-ref="297bit_depth">bit_depth</dfn>, <em>const</em> <em>int</em> <dfn class="local col8 decl" id="298chroma_format_idc" title='chroma_format_idc' data-type='const int' data-ref="298chroma_format_idc">chroma_format_idc</dfn>);</td></tr>
+<tr><th id="123">123</th><td><em>void</em> <dfn class="decl" id="ff_h264_pred_init_mips" title='ff_h264_pred_init_mips' data-ref="ff_h264_pred_init_mips">ff_h264_pred_init_mips</dfn>(<a class="typedef" href="#H264PredContext" title='H264PredContext' data-type='struct H264PredContext' data-ref="H264PredContext">H264PredContext</a> *<dfn class="local col9 decl" id="299h" title='h' data-type='H264PredContext *' data-ref="299h">h</dfn>, <em>int</em> <dfn class="local col0 decl" id="300codec_id" title='codec_id' data-type='int' data-ref="300codec_id">codec_id</dfn>,</td></tr>
+<tr><th id="124">124</th><td>                            <em>const</em> <em>int</em> <dfn class="local col1 decl" id="301bit_depth" title='bit_depth' data-type='const int' data-ref="301bit_depth">bit_depth</dfn>, <em>const</em> <em>int</em> <dfn class="local col2 decl" id="302chroma_format_idc" title='chroma_format_idc' data-type='const int' data-ref="302chroma_format_idc">chroma_format_idc</dfn>);</td></tr>
+<tr><th id="125">125</th><td></td></tr>
+<tr><th id="126">126</th><td><u>#<span data-ppcond="28">endif</span> /* AVCODEC_H264PRED_H */</u></td></tr>
+<tr><th id="127">127</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated while processing <a href='h263dec.c.html'>ffmpeg/libavcodec/h263dec.c</a><br/>Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

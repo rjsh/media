@@ -1,0 +1,74 @@
+<dec f='ffmpeg/libavcodec/acelp_pitch_delay.h' l='211' type='int16_t ff_acelp_decode_gain_code(AudioDSPContext * adsp, int gain_corr_factor, const int16_t * fc_v, int mr_energy, const int16_t * quant_energy, const int16_t * ma_prediction_coeff, int subframe_size, int max_pred_order)'/>
+<def f='ffmpeg/libavcodec/acelp_pitch_delay.c' l='94' type='int16_t ff_acelp_decode_gain_code(AudioDSPContext * adsp, int gain_corr_factor, const int16_t * fc_v, int mr_energy, const int16_t * quant_energy, const int16_t * ma_prediction_coeff, int subframe_size, int ma_pred_order)'/>
+<doc f='ffmpeg/libavcodec/acelp_pitch_delay.h' l='140'>/**
+ * @brief Decode the adaptive codebook gain and add
+ *        correction (4.1.5 and 3.9.1 of G.729).
+ * @param adsp initialized audio DSP context
+ * @param gain_corr_factor gain correction factor (2.13)
+ * @param fc_v fixed-codebook vector (2.13)
+ * @param mr_energy mean innovation energy and fixed-point correction (7.13)
+ * @param[in,out]  quant_energy  past quantized energies (5.10)
+ * @param subframe_size length of subframe
+ *
+ * @return quantized fixed-codebook gain (14.1)
+ *
+ * The routine implements equations 69, 66 and 71 of the G.729 specification (3.9.1)
+ *
+ *    Em   - mean innovation energy (dB, constant, depends on decoding algorithm)
+ *    Ep   - mean-removed predicted energy (dB)
+ *    Er   - mean-removed innovation energy (dB)
+ *    Ei   - mean energy of the fixed-codebook contribution (dB)
+ *    N    - subframe_size
+ *    M    - MA (Moving Average) prediction order
+ *    gc   - fixed-codebook gain
+ *    gc_p - predicted fixed-codebook gain
+ *
+ *    Fixed codebook gain is computed using predicted gain gc_p and
+ *    correction factor gain_corr_factor as shown below:
+ *
+ *        gc = gc_p * gain_corr_factor
+ *
+ *    The predicted fixed codebook gain gc_p is found by predicting
+ *    the energy of the fixed-codebook contribution from the energy
+ *    of previous fixed-codebook contributions.
+ *
+ *        mean = 1/N * sum(i,0,N){ fc_v[i] * fc_v[i] }
+ *
+ *        Ei = 10log(mean)
+ *
+ *        Er = 10log(1/N * gc^2 * mean) - Em = 20log(gc) + Ei - Em
+ *
+ *    Replacing Er with Ep and gc with gc_p we will receive:
+ *
+ *        Ep = 10log(1/N * gc_p^2 * mean) - Em = 20log(gc_p) + Ei - Em
+ *
+ *    and from above:
+ *
+ *        gc_p = 10^((Ep - Ei + Em) / 20)
+ *
+ *    Ep is predicted using past energies and prediction coefficients:
+ *
+ *        Ep = sum(i,0,M){ ma_prediction_coeff[i] * quant_energy[i] }
+ *
+ *    gc_p in fixed-point arithmetic is calculated as following:
+ *
+ *        mean = 1/N * sum(i,0,N){ (fc_v[i] / 2^13) * (fc_v[i] / 2^13) } =
+ *        = 1/N * sum(i,0,N) { fc_v[i] * fc_v[i] } / 2^26
+ *
+ *        Ei = 10log(mean) = -10log(N) - 10log(2^26) +
+ *        + 10log(sum(i,0,N) { fc_v[i] * fc_v[i] })
+ *
+ *        Ep - Ei + Em = Ep + Em + 10log(N) + 10log(2^26) -
+ *        - 10log(sum(i,0,N) { fc_v[i] * fc_v[i] }) =
+ *        = Ep + mr_energy - 10log(sum(i,0,N) { fc_v[i] * fc_v[i] })
+ *
+ *        gc_p = 10 ^ ((Ep - Ei + Em) / 20) =
+ *        = 2 ^ (3.3219 * (Ep - Ei + Em) / 20) = 2 ^ (0.166 * (Ep - Ei + Em))
+ *
+ *    where
+ *
+ *        mr_energy = Em + 10log(N) + 10log(2^26)
+ *
+ * @remark The routine is used in G.729 and AMR (all modes).
+ */</doc>
+<use f='ffmpeg/libavcodec/g729dec.c' l='573' u='c' c='decode_frame'/>

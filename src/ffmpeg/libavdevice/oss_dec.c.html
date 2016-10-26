@@ -1,0 +1,167 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>oss_dec.c source code [ffmpeg/libavdevice/oss_dec.c] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavdevice/oss_dec.c'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavdevice</a>/<a href='oss_dec.c.html'>oss_dec.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * Linux audio play interface</i></td></tr>
+<tr><th id="3">3</th><td><i> * Copyright (c) 2000, 2001 Fabrice Bellard</i></td></tr>
+<tr><th id="4">4</th><td><i> *</i></td></tr>
+<tr><th id="5">5</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="8">8</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="9">9</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="10">10</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="11">11</th><td><i> *</i></td></tr>
+<tr><th id="12">12</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="13">13</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="14">14</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="15">15</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="16">16</th><td><i> *</i></td></tr>
+<tr><th id="17">17</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="18">18</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="19">19</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="20">20</th><td><i> */</i></td></tr>
+<tr><th id="21">21</th><td></td></tr>
+<tr><th id="22">22</th><td><u>#include <a href="../config.h.html">"config.h"</a></u></td></tr>
+<tr><th id="23">23</th><td></td></tr>
+<tr><th id="24">24</th><td><u>#include &lt;stdint.h&gt;</u></td></tr>
+<tr><th id="25">25</th><td></td></tr>
+<tr><th id="26">26</th><td><u>#<span data-ppcond="26">if</span> <a class="macro" href="../config.h.html#232" title="0" data-ref="_M/HAVE_SOUNDCARD_H">HAVE_SOUNDCARD_H</a></u></td></tr>
+<tr><th id="27">27</th><td><u>#include &lt;soundcard.h&gt;</u></td></tr>
+<tr><th id="28">28</th><td><u>#<span data-ppcond="26">else</span></u></td></tr>
+<tr><th id="29">29</th><td><u>#include <a href="../../include/x86_64-linux-gnu/sys/soundcard.h.html">&lt;sys/soundcard.h&gt;</a></u></td></tr>
+<tr><th id="30">30</th><td><u>#<span data-ppcond="26">endif</span></u></td></tr>
+<tr><th id="31">31</th><td></td></tr>
+<tr><th id="32">32</th><td><u>#<span data-ppcond="32">if</span> <a class="macro" href="../config.h.html#243" title="1" data-ref="_M/HAVE_UNISTD_H">HAVE_UNISTD_H</a></u></td></tr>
+<tr><th id="33">33</th><td><u>#include <a href="../../include/unistd.h.html">&lt;unistd.h&gt;</a></u></td></tr>
+<tr><th id="34">34</th><td><u>#<span data-ppcond="32">endif</span></u></td></tr>
+<tr><th id="35">35</th><td><u>#include <a href="../../include/fcntl.h.html">&lt;fcntl.h&gt;</a></u></td></tr>
+<tr><th id="36">36</th><td><u>#include <a href="../../include/x86_64-linux-gnu/sys/ioctl.h.html">&lt;sys/ioctl.h&gt;</a></u></td></tr>
+<tr><th id="37">37</th><td></td></tr>
+<tr><th id="38">38</th><td><u>#include <a href="../libavutil/internal.h.html">"libavutil/internal.h"</a></u></td></tr>
+<tr><th id="39">39</th><td><u>#include <a href="../libavutil/opt.h.html">"libavutil/opt.h"</a></u></td></tr>
+<tr><th id="40">40</th><td><u>#include <a href="../libavutil/time.h.html">"libavutil/time.h"</a></u></td></tr>
+<tr><th id="41">41</th><td></td></tr>
+<tr><th id="42">42</th><td><u>#include <a href="../libavcodec/avcodec.h.html">"libavcodec/avcodec.h"</a></u></td></tr>
+<tr><th id="43">43</th><td></td></tr>
+<tr><th id="44">44</th><td><u>#include <a href="avdevice.h.html">"avdevice.h"</a></u></td></tr>
+<tr><th id="45">45</th><td><u>#include <a href="../libavformat/internal.h.html">"libavformat/internal.h"</a></u></td></tr>
+<tr><th id="46">46</th><td></td></tr>
+<tr><th id="47">47</th><td><u>#include <a href="oss.h.html">"oss.h"</a></u></td></tr>
+<tr><th id="48">48</th><td></td></tr>
+<tr><th id="49">49</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="audio_read_header" title='audio_read_header' data-type='int audio_read_header(AVFormatContext * s1)' data-ref="audio_read_header">audio_read_header</dfn>(<a class="typedef" href="../libavformat/avformat.h.html#AVFormatContext" title='AVFormatContext' data-type='struct AVFormatContext' data-ref="AVFormatContext">AVFormatContext</a> *<dfn class="local col1 decl" id="1s1" title='s1' data-type='AVFormatContext *' data-ref="1s1">s1</dfn>)</td></tr>
+<tr><th id="50">50</th><td>{</td></tr>
+<tr><th id="51">51</th><td>    <a class="typedef" href="oss.h.html#OSSAudioData" title='OSSAudioData' data-type='struct OSSAudioData' data-ref="OSSAudioData">OSSAudioData</a> *<dfn class="local col2 decl" id="2s" title='s' data-type='OSSAudioData *' data-ref="2s">s</dfn> = <a class="local col1 ref" href="#1s1" title='s1' data-ref="1s1">s1</a>-&gt;<a class="ref" href="../libavformat/avformat.h.html#AVFormatContext::priv_data" title='AVFormatContext::priv_data' data-ref="AVFormatContext::priv_data">priv_data</a>;</td></tr>
+<tr><th id="52">52</th><td>    <a class="typedef" href="../libavformat/avformat.h.html#AVStream" title='AVStream' data-type='struct AVStream' data-ref="AVStream">AVStream</a> *<dfn class="local col3 decl" id="3st" title='st' data-type='AVStream *' data-ref="3st">st</dfn>;</td></tr>
+<tr><th id="53">53</th><td>    <em>int</em> <dfn class="local col4 decl" id="4ret" title='ret' data-type='int' data-ref="4ret">ret</dfn>;</td></tr>
+<tr><th id="54">54</th><td></td></tr>
+<tr><th id="55">55</th><td>    <a class="local col3 ref" href="#3st" title='st' data-ref="3st">st</a> = <a class="ref" href="../libavformat/avformat.h.html#avformat_new_stream" title='avformat_new_stream' data-ref="avformat_new_stream">avformat_new_stream</a>(<a class="local col1 ref" href="#1s1" title='s1' data-ref="1s1">s1</a>, <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>);</td></tr>
+<tr><th id="56">56</th><td>    <b>if</b> (!<a class="local col3 ref" href="#3st" title='st' data-ref="3st">st</a>) {</td></tr>
+<tr><th id="57">57</th><td>        <b>return</b> <a class="macro" href="../libavutil/error.h.html#39" title="(-(12))" data-ref="_M/AVERROR">AVERROR</a>(<a class="macro" href="../../include/asm-generic/errno-base.h.html#15" title="12" data-ref="_M/ENOMEM">ENOMEM</a>);</td></tr>
+<tr><th id="58">58</th><td>    }</td></tr>
+<tr><th id="59">59</th><td></td></tr>
+<tr><th id="60">60</th><td>    <a class="local col4 ref" href="#4ret" title='ret' data-ref="4ret">ret</a> = <a class="ref" href="oss.h.html#ff_oss_audio_open" title='ff_oss_audio_open' data-ref="ff_oss_audio_open">ff_oss_audio_open</a>(<a class="local col1 ref" href="#1s1" title='s1' data-ref="1s1">s1</a>, <var>0</var>, <a class="local col1 ref" href="#1s1" title='s1' data-ref="1s1">s1</a>-&gt;<a class="ref" href="../libavformat/avformat.h.html#AVFormatContext::filename" title='AVFormatContext::filename' data-ref="AVFormatContext::filename">filename</a>);</td></tr>
+<tr><th id="61">61</th><td>    <b>if</b> (<a class="local col4 ref" href="#4ret" title='ret' data-ref="4ret">ret</a> &lt; <var>0</var>) {</td></tr>
+<tr><th id="62">62</th><td>        <b>return</b> <a class="macro" href="../libavutil/error.h.html#39" title="(-(5))" data-ref="_M/AVERROR">AVERROR</a>(<a class="macro" href="../../include/asm-generic/errno-base.h.html#8" title="5" data-ref="_M/EIO">EIO</a>);</td></tr>
+<tr><th id="63">63</th><td>    }</td></tr>
+<tr><th id="64">64</th><td></td></tr>
+<tr><th id="65">65</th><td>    <i>/* take real parameters */</i></td></tr>
+<tr><th id="66">66</th><td>    <a class="local col3 ref" href="#3st" title='st' data-ref="3st">st</a>-&gt;<a class="ref" href="../libavformat/avformat.h.html#AVStream::codecpar" title='AVStream::codecpar' data-ref="AVStream::codecpar">codecpar</a>-&gt;<a class="ref" href="../libavcodec/avcodec.h.html#AVCodecParameters::codec_type" title='AVCodecParameters::codec_type' data-ref="AVCodecParameters::codec_type">codec_type</a> = <a class="enum" href="../libavutil/avutil.h.html#AVMediaType::AVMEDIA_TYPE_AUDIO" title='AVMediaType::AVMEDIA_TYPE_AUDIO' data-ref="AVMediaType::AVMEDIA_TYPE_AUDIO">AVMEDIA_TYPE_AUDIO</a>;</td></tr>
+<tr><th id="67">67</th><td>    <a class="local col3 ref" href="#3st" title='st' data-ref="3st">st</a>-&gt;<a class="ref" href="../libavformat/avformat.h.html#AVStream::codecpar" title='AVStream::codecpar' data-ref="AVStream::codecpar">codecpar</a>-&gt;<a class="ref" href="../libavcodec/avcodec.h.html#AVCodecParameters::codec_id" title='AVCodecParameters::codec_id' data-ref="AVCodecParameters::codec_id">codec_id</a> = <a class="local col2 ref" href="#2s" title='s' data-ref="2s">s</a>-&gt;<a class="ref" href="oss.h.html#OSSAudioData::codec_id" title='OSSAudioData::codec_id' data-ref="OSSAudioData::codec_id">codec_id</a>;</td></tr>
+<tr><th id="68">68</th><td>    <a class="local col3 ref" href="#3st" title='st' data-ref="3st">st</a>-&gt;<a class="ref" href="../libavformat/avformat.h.html#AVStream::codecpar" title='AVStream::codecpar' data-ref="AVStream::codecpar">codecpar</a>-&gt;<a class="ref" href="../libavcodec/avcodec.h.html#AVCodecParameters::sample_rate" title='AVCodecParameters::sample_rate' data-ref="AVCodecParameters::sample_rate">sample_rate</a> = <a class="local col2 ref" href="#2s" title='s' data-ref="2s">s</a>-&gt;<a class="ref" href="oss.h.html#OSSAudioData::sample_rate" title='OSSAudioData::sample_rate' data-ref="OSSAudioData::sample_rate">sample_rate</a>;</td></tr>
+<tr><th id="69">69</th><td>    <a class="local col3 ref" href="#3st" title='st' data-ref="3st">st</a>-&gt;<a class="ref" href="../libavformat/avformat.h.html#AVStream::codecpar" title='AVStream::codecpar' data-ref="AVStream::codecpar">codecpar</a>-&gt;<a class="ref" href="../libavcodec/avcodec.h.html#AVCodecParameters::channels" title='AVCodecParameters::channels' data-ref="AVCodecParameters::channels">channels</a> = <a class="local col2 ref" href="#2s" title='s' data-ref="2s">s</a>-&gt;<a class="ref" href="oss.h.html#OSSAudioData::channels" title='OSSAudioData::channels' data-ref="OSSAudioData::channels">channels</a>;</td></tr>
+<tr><th id="70">70</th><td></td></tr>
+<tr><th id="71">71</th><td>    <a class="ref" href="../libavformat/internal.h.html#avpriv_set_pts_info" title='avpriv_set_pts_info' data-ref="avpriv_set_pts_info">avpriv_set_pts_info</a>(<a class="local col3 ref" href="#3st" title='st' data-ref="3st">st</a>, <var>64</var>, <var>1</var>, <var>1000000</var>);  <i>/* 64 bits pts in us */</i></td></tr>
+<tr><th id="72">72</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="73">73</th><td>}</td></tr>
+<tr><th id="74">74</th><td></td></tr>
+<tr><th id="75">75</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="audio_read_packet" title='audio_read_packet' data-type='int audio_read_packet(AVFormatContext * s1, AVPacket * pkt)' data-ref="audio_read_packet">audio_read_packet</dfn>(<a class="typedef" href="../libavformat/avformat.h.html#AVFormatContext" title='AVFormatContext' data-type='struct AVFormatContext' data-ref="AVFormatContext">AVFormatContext</a> *<dfn class="local col5 decl" id="5s1" title='s1' data-type='AVFormatContext *' data-ref="5s1">s1</dfn>, <a class="typedef" href="../libavcodec/avcodec.h.html#AVPacket" title='AVPacket' data-type='struct AVPacket' data-ref="AVPacket">AVPacket</a> *<dfn class="local col6 decl" id="6pkt" title='pkt' data-type='AVPacket *' data-ref="6pkt">pkt</dfn>)</td></tr>
+<tr><th id="76">76</th><td>{</td></tr>
+<tr><th id="77">77</th><td>    <a class="typedef" href="oss.h.html#OSSAudioData" title='OSSAudioData' data-type='struct OSSAudioData' data-ref="OSSAudioData">OSSAudioData</a> *<dfn class="local col7 decl" id="7s" title='s' data-type='OSSAudioData *' data-ref="7s">s</dfn> = <a class="local col5 ref" href="#5s1" title='s1' data-ref="5s1">s1</a>-&gt;<a class="ref" href="../libavformat/avformat.h.html#AVFormatContext::priv_data" title='AVFormatContext::priv_data' data-ref="AVFormatContext::priv_data">priv_data</a>;</td></tr>
+<tr><th id="78">78</th><td>    <em>int</em> <dfn class="local col8 decl" id="8ret" title='ret' data-type='int' data-ref="8ret">ret</dfn>, <dfn class="local col9 decl" id="9bdelay" title='bdelay' data-type='int' data-ref="9bdelay">bdelay</dfn>;</td></tr>
+<tr><th id="79">79</th><td>    <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="local col0 decl" id="10cur_time" title='cur_time' data-type='int64_t' data-ref="10cur_time">cur_time</dfn>;</td></tr>
+<tr><th id="80">80</th><td>    <b>struct</b> <a class="type" href="../../include/linux/soundcard.h.html#audio_buf_info" title='audio_buf_info' data-ref="audio_buf_info">audio_buf_info</a> <dfn class="local col1 decl" id="11abufi" title='abufi' data-type='struct audio_buf_info' data-ref="11abufi">abufi</dfn>;</td></tr>
+<tr><th id="81">81</th><td></td></tr>
+<tr><th id="82">82</th><td>    <b>if</b> ((<a class="local col8 ref" href="#8ret" title='ret' data-ref="8ret">ret</a>=<a class="ref" href="../libavcodec/avcodec.h.html#av_new_packet" title='av_new_packet' data-ref="av_new_packet">av_new_packet</a>(<a class="local col6 ref" href="#6pkt" title='pkt' data-ref="6pkt">pkt</a>, <a class="local col7 ref" href="#7s" title='s' data-ref="7s">s</a>-&gt;<a class="ref" href="oss.h.html#OSSAudioData::frame_size" title='OSSAudioData::frame_size' data-ref="OSSAudioData::frame_size">frame_size</a>)) &lt; <var>0</var>)</td></tr>
+<tr><th id="83">83</th><td>        <b>return</b> <a class="local col8 ref" href="#8ret" title='ret' data-ref="8ret">ret</a>;</td></tr>
+<tr><th id="84">84</th><td></td></tr>
+<tr><th id="85">85</th><td>    <a class="local col8 ref" href="#8ret" title='ret' data-ref="8ret">ret</a> = <a class="ref" href="../../include/unistd.h.html#read" title='read' data-ref="read">read</a>(<a class="local col7 ref" href="#7s" title='s' data-ref="7s">s</a>-&gt;<a class="ref" href="oss.h.html#OSSAudioData::fd" title='OSSAudioData::fd' data-ref="OSSAudioData::fd">fd</a>, <a class="local col6 ref" href="#6pkt" title='pkt' data-ref="6pkt">pkt</a>-&gt;<a class="ref" href="../libavcodec/avcodec.h.html#AVPacket::data" title='AVPacket::data' data-ref="AVPacket::data">data</a>, <a class="local col6 ref" href="#6pkt" title='pkt' data-ref="6pkt">pkt</a>-&gt;<a class="ref" href="../libavcodec/avcodec.h.html#AVPacket::size" title='AVPacket::size' data-ref="AVPacket::size">size</a>);</td></tr>
+<tr><th id="86">86</th><td>    <b>if</b> (<a class="local col8 ref" href="#8ret" title='ret' data-ref="8ret">ret</a> &lt;= <var>0</var>){</td></tr>
+<tr><th id="87">87</th><td>        <a class="ref" href="../libavcodec/avcodec.h.html#av_packet_unref" title='av_packet_unref' data-ref="av_packet_unref">av_packet_unref</a>(<a class="local col6 ref" href="#6pkt" title='pkt' data-ref="6pkt">pkt</a>);</td></tr>
+<tr><th id="88">88</th><td>        <a class="local col6 ref" href="#6pkt" title='pkt' data-ref="6pkt">pkt</a>-&gt;<a class="ref" href="../libavcodec/avcodec.h.html#AVPacket::size" title='AVPacket::size' data-ref="AVPacket::size">size</a> = <var>0</var>;</td></tr>
+<tr><th id="89">89</th><td>        <b>if</b> (<a class="local col8 ref" href="#8ret" title='ret' data-ref="8ret">ret</a>&lt;<var>0</var>)  <b>return</b> <a class="macro" href="../libavutil/error.h.html#39" title="(-((*__errno_location ())))" data-ref="_M/AVERROR">AVERROR</a>(<a class="macro" href="../../include/x86_64-linux-gnu/bits/errno.h.html#54" title="(*__errno_location ())" data-ref="_M/errno">errno</a>);</td></tr>
+<tr><th id="90">90</th><td>        <b>else</b>        <b>return</b> <a class="macro" href="../libavutil/error.h.html#55" title="(-(int)((&apos;E&apos;) | ((&apos;O&apos;) &lt;&lt; 8) | ((&apos;F&apos;) &lt;&lt; 16) | ((unsigned)(&apos; &apos;) &lt;&lt; 24)))" data-ref="_M/AVERROR_EOF">AVERROR_EOF</a>;</td></tr>
+<tr><th id="91">91</th><td>    }</td></tr>
+<tr><th id="92">92</th><td>    <a class="local col6 ref" href="#6pkt" title='pkt' data-ref="6pkt">pkt</a>-&gt;<a class="ref" href="../libavcodec/avcodec.h.html#AVPacket::size" title='AVPacket::size' data-ref="AVPacket::size">size</a> = <a class="local col8 ref" href="#8ret" title='ret' data-ref="8ret">ret</a>;</td></tr>
+<tr><th id="93">93</th><td></td></tr>
+<tr><th id="94">94</th><td>    <i>/* compute pts of the start of the packet */</i></td></tr>
+<tr><th id="95">95</th><td>    <a class="local col0 ref" href="#10cur_time" title='cur_time' data-ref="10cur_time">cur_time</a> = <a class="ref" href="../libavutil/time.h.html#av_gettime" title='av_gettime' data-ref="av_gettime">av_gettime</a>();</td></tr>
+<tr><th id="96">96</th><td>    <a class="local col9 ref" href="#9bdelay" title='bdelay' data-ref="9bdelay">bdelay</a> = <a class="local col8 ref" href="#8ret" title='ret' data-ref="8ret">ret</a>;</td></tr>
+<tr><th id="97">97</th><td>    <b>if</b> (<a class="ref" href="../../include/x86_64-linux-gnu/sys/ioctl.h.html#ioctl" title='ioctl' data-ref="ioctl">ioctl</a>(<a class="local col7 ref" href="#7s" title='s' data-ref="7s">s</a>-&gt;<a class="ref" href="oss.h.html#OSSAudioData::fd" title='OSSAudioData::fd' data-ref="OSSAudioData::fd">fd</a>, <a class="macro" href="../../include/linux/soundcard.h.html#578" title="(((2U) &lt;&lt; (((0+8)+8)+14)) | (((&apos;P&apos;)) &lt;&lt; (0+8)) | (((13)) &lt;&lt; 0) | ((((sizeof(audio_buf_info)))) &lt;&lt; ((0+8)+8)))" data-ref="_M/SNDCTL_DSP_GETISPACE">SNDCTL_DSP_GETISPACE</a>, &amp;<a class="local col1 ref" href="#11abufi" title='abufi' data-ref="11abufi">abufi</a>) == <var>0</var>) {</td></tr>
+<tr><th id="98">98</th><td>        <a class="local col9 ref" href="#9bdelay" title='bdelay' data-ref="9bdelay">bdelay</a> += <a class="local col1 ref" href="#11abufi" title='abufi' data-ref="11abufi">abufi</a>.<a class="ref" href="../../include/linux/soundcard.h.html#audio_buf_info::bytes" title='audio_buf_info::bytes' data-ref="audio_buf_info::bytes">bytes</a>;</td></tr>
+<tr><th id="99">99</th><td>    }</td></tr>
+<tr><th id="100">100</th><td>    <i>/* subtract time represented by the number of bytes in the audio fifo */</i></td></tr>
+<tr><th id="101">101</th><td>    <a class="local col0 ref" href="#10cur_time" title='cur_time' data-ref="10cur_time">cur_time</a> -= (<a class="local col9 ref" href="#9bdelay" title='bdelay' data-ref="9bdelay">bdelay</a> * <var>1000000LL</var>) / (<a class="local col7 ref" href="#7s" title='s' data-ref="7s">s</a>-&gt;<a class="ref" href="oss.h.html#OSSAudioData::sample_rate" title='OSSAudioData::sample_rate' data-ref="OSSAudioData::sample_rate">sample_rate</a> * <a class="local col7 ref" href="#7s" title='s' data-ref="7s">s</a>-&gt;<a class="ref" href="oss.h.html#OSSAudioData::channels" title='OSSAudioData::channels' data-ref="OSSAudioData::channels">channels</a>);</td></tr>
+<tr><th id="102">102</th><td></td></tr>
+<tr><th id="103">103</th><td>    <i>/* convert to wanted units */</i></td></tr>
+<tr><th id="104">104</th><td>    <a class="local col6 ref" href="#6pkt" title='pkt' data-ref="6pkt">pkt</a>-&gt;<a class="ref" href="../libavcodec/avcodec.h.html#AVPacket::pts" title='AVPacket::pts' data-ref="AVPacket::pts">pts</a> = <a class="local col0 ref" href="#10cur_time" title='cur_time' data-ref="10cur_time">cur_time</a>;</td></tr>
+<tr><th id="105">105</th><td></td></tr>
+<tr><th id="106">106</th><td>    <b>if</b> (<a class="local col7 ref" href="#7s" title='s' data-ref="7s">s</a>-&gt;<a class="ref" href="oss.h.html#OSSAudioData::flip_left" title='OSSAudioData::flip_left' data-ref="OSSAudioData::flip_left">flip_left</a> &amp;&amp; <a class="local col7 ref" href="#7s" title='s' data-ref="7s">s</a>-&gt;<a class="ref" href="oss.h.html#OSSAudioData::channels" title='OSSAudioData::channels' data-ref="OSSAudioData::channels">channels</a> == <var>2</var>) {</td></tr>
+<tr><th id="107">107</th><td>        <em>int</em> <dfn class="local col2 decl" id="12i" title='i' data-type='int' data-ref="12i">i</dfn>;</td></tr>
+<tr><th id="108">108</th><td>        <em>short</em> *<dfn class="local col3 decl" id="13p" title='p' data-type='short *' data-ref="13p">p</dfn> = (<em>short</em> *) <a class="local col6 ref" href="#6pkt" title='pkt' data-ref="6pkt">pkt</a>-&gt;<a class="ref" href="../libavcodec/avcodec.h.html#AVPacket::data" title='AVPacket::data' data-ref="AVPacket::data">data</a>;</td></tr>
+<tr><th id="109">109</th><td></td></tr>
+<tr><th id="110">110</th><td>        <b>for</b> (<a class="local col2 ref" href="#12i" title='i' data-ref="12i">i</a> = <var>0</var>; <a class="local col2 ref" href="#12i" title='i' data-ref="12i">i</a> &lt; <a class="local col8 ref" href="#8ret" title='ret' data-ref="8ret">ret</a>; <a class="local col2 ref" href="#12i" title='i' data-ref="12i">i</a> += <var>4</var>) {</td></tr>
+<tr><th id="111">111</th><td>            *<a class="local col3 ref" href="#13p" title='p' data-ref="13p">p</a> = ~*<a class="local col3 ref" href="#13p" title='p' data-ref="13p">p</a>;</td></tr>
+<tr><th id="112">112</th><td>            <a class="local col3 ref" href="#13p" title='p' data-ref="13p">p</a> += <var>2</var>;</td></tr>
+<tr><th id="113">113</th><td>        }</td></tr>
+<tr><th id="114">114</th><td>    }</td></tr>
+<tr><th id="115">115</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="116">116</th><td>}</td></tr>
+<tr><th id="117">117</th><td></td></tr>
+<tr><th id="118">118</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="audio_read_close" title='audio_read_close' data-type='int audio_read_close(AVFormatContext * s1)' data-ref="audio_read_close">audio_read_close</dfn>(<a class="typedef" href="../libavformat/avformat.h.html#AVFormatContext" title='AVFormatContext' data-type='struct AVFormatContext' data-ref="AVFormatContext">AVFormatContext</a> *<dfn class="local col4 decl" id="14s1" title='s1' data-type='AVFormatContext *' data-ref="14s1">s1</dfn>)</td></tr>
+<tr><th id="119">119</th><td>{</td></tr>
+<tr><th id="120">120</th><td>    <a class="typedef" href="oss.h.html#OSSAudioData" title='OSSAudioData' data-type='struct OSSAudioData' data-ref="OSSAudioData">OSSAudioData</a> *<dfn class="local col5 decl" id="15s" title='s' data-type='OSSAudioData *' data-ref="15s">s</dfn> = <a class="local col4 ref" href="#14s1" title='s1' data-ref="14s1">s1</a>-&gt;<a class="ref" href="../libavformat/avformat.h.html#AVFormatContext::priv_data" title='AVFormatContext::priv_data' data-ref="AVFormatContext::priv_data">priv_data</a>;</td></tr>
+<tr><th id="121">121</th><td></td></tr>
+<tr><th id="122">122</th><td>    <a class="ref" href="oss.h.html#ff_oss_audio_close" title='ff_oss_audio_close' data-ref="ff_oss_audio_close">ff_oss_audio_close</a>(<a class="local col5 ref" href="#15s" title='s' data-ref="15s">s</a>);</td></tr>
+<tr><th id="123">123</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="124">124</th><td>}</td></tr>
+<tr><th id="125">125</th><td></td></tr>
+<tr><th id="126">126</th><td><em>static</em> <em>const</em> <a class="typedef" href="../libavutil/opt.h.html#AVOption" title='AVOption' data-type='struct AVOption' data-ref="AVOption">AVOption</a> <dfn class="tu decl def" id="options" title='options' data-type='const AVOption [3]' data-ref="options">options</dfn>[] = {</td></tr>
+<tr><th id="127">127</th><td>    { <q>"sample_rate"</q>, <q>""</q>, <span class="macro" title="__builtin_offsetof(OSSAudioData, sample_rate)" data-ref="_M/offsetof">offsetof</span>(<a class="typedef" href="oss.h.html#OSSAudioData" title='OSSAudioData' data-type='struct OSSAudioData' data-ref="OSSAudioData">OSSAudioData</a>, sample_rate), <a class="enum" href="../libavutil/opt.h.html#AVOptionType::AV_OPT_TYPE_INT" title='AVOptionType::AV_OPT_TYPE_INT' data-ref="AVOptionType::AV_OPT_TYPE_INT">AV_OPT_TYPE_INT</a>, {.<a class="ref" href="../libavutil/opt.h.html#AVOption::{anonymous}::i64" title='AVOption::&lt;anonymous union&gt;::i64' data-ref="AVOption::{anonymous}::i64">i64</a> = <var>48000</var>}, <var>1</var>, <span class="macro" title="2147483647" data-ref="_M/INT_MAX">INT_MAX</span>, <a class="macro" href="../libavutil/opt.h.html#276" title="2" data-ref="_M/AV_OPT_FLAG_DECODING_PARAM">AV_OPT_FLAG_DECODING_PARAM</a> },</td></tr>
+<tr><th id="128">128</th><td>    { <q>"channels"</q>,    <q>""</q>, <span class="macro" title="__builtin_offsetof(OSSAudioData, channels)" data-ref="_M/offsetof">offsetof</span>(<a class="typedef" href="oss.h.html#OSSAudioData" title='OSSAudioData' data-type='struct OSSAudioData' data-ref="OSSAudioData">OSSAudioData</a>, channels),    <a class="enum" href="../libavutil/opt.h.html#AVOptionType::AV_OPT_TYPE_INT" title='AVOptionType::AV_OPT_TYPE_INT' data-ref="AVOptionType::AV_OPT_TYPE_INT">AV_OPT_TYPE_INT</a>, {.<a class="ref" href="../libavutil/opt.h.html#AVOption::{anonymous}::i64" title='AVOption::&lt;anonymous union&gt;::i64' data-ref="AVOption::{anonymous}::i64">i64</a> = <var>2</var>},     <var>1</var>, <span class="macro" title="2147483647" data-ref="_M/INT_MAX">INT_MAX</span>, <a class="macro" href="../libavutil/opt.h.html#276" title="2" data-ref="_M/AV_OPT_FLAG_DECODING_PARAM">AV_OPT_FLAG_DECODING_PARAM</a> },</td></tr>
+<tr><th id="129">129</th><td>    { <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span> },</td></tr>
+<tr><th id="130">130</th><td>};</td></tr>
+<tr><th id="131">131</th><td></td></tr>
+<tr><th id="132">132</th><td><em>static</em> <em>const</em> <a class="typedef" href="../libavutil/log.h.html#AVClass" title='AVClass' data-type='struct AVClass' data-ref="AVClass">AVClass</a> <dfn class="tu decl def" id="oss_demuxer_class" title='oss_demuxer_class' data-type='const AVClass' data-ref="oss_demuxer_class">oss_demuxer_class</dfn> = {</td></tr>
+<tr><th id="133">133</th><td>    .<a class="ref" href="../libavutil/log.h.html#AVClass::class_name" title='AVClass::class_name' data-ref="AVClass::class_name">class_name</a>     = <q>"OSS demuxer"</q>,</td></tr>
+<tr><th id="134">134</th><td>    .<a class="ref" href="../libavutil/log.h.html#AVClass::item_name" title='AVClass::item_name' data-ref="AVClass::item_name">item_name</a>      = <a class="ref" href="../libavutil/log.h.html#av_default_item_name" title='av_default_item_name' data-ref="av_default_item_name">av_default_item_name</a>,</td></tr>
+<tr><th id="135">135</th><td>    .<a class="ref" href="../libavutil/log.h.html#AVClass::option" title='AVClass::option' data-ref="AVClass::option">option</a>         = <a class="tu ref" href="#options" title='options' data-ref="options">options</a>,</td></tr>
+<tr><th id="136">136</th><td>    .<a class="ref" href="../libavutil/log.h.html#AVClass::version" title='AVClass::version' data-ref="AVClass::version">version</a>        = <a class="macro" href="../libavutil/version.h.html#85" title="((55)&lt;&lt;16 | (33)&lt;&lt;8 | (100))" data-ref="_M/LIBAVUTIL_VERSION_INT">LIBAVUTIL_VERSION_INT</a>,</td></tr>
+<tr><th id="137">137</th><td>    .<a class="ref" href="../libavutil/log.h.html#AVClass::category" title='AVClass::category' data-ref="AVClass::category">category</a>       = <a class="enum" href="../libavutil/log.h.html#::AV_CLASS_CATEGORY_DEVICE_AUDIO_INPUT" title='::AV_CLASS_CATEGORY_DEVICE_AUDIO_INPUT' data-ref="::AV_CLASS_CATEGORY_DEVICE_AUDIO_INPUT">AV_CLASS_CATEGORY_DEVICE_AUDIO_INPUT</a>,</td></tr>
+<tr><th id="138">138</th><td>};</td></tr>
+<tr><th id="139">139</th><td></td></tr>
+<tr><th id="140">140</th><td><a class="typedef" href="../libavformat/avformat.h.html#AVInputFormat" title='AVInputFormat' data-type='struct AVInputFormat' data-ref="AVInputFormat">AVInputFormat</a> <dfn class="decl def" id="ff_oss_demuxer" title='ff_oss_demuxer' data-ref="ff_oss_demuxer">ff_oss_demuxer</dfn> = {</td></tr>
+<tr><th id="141">141</th><td>    .<a class="ref" href="../libavformat/avformat.h.html#AVInputFormat::name" title='AVInputFormat::name' data-ref="AVInputFormat::name">name</a>           = <q>"oss"</q>,</td></tr>
+<tr><th id="142">142</th><td>    .<a class="ref" href="../libavformat/avformat.h.html#AVInputFormat::long_name" title='AVInputFormat::long_name' data-ref="AVInputFormat::long_name">long_name</a>      = <a class="macro" href="../libavutil/internal.h.html#176" title="&quot;OSS (Open Sound System) capture&quot;" data-ref="_M/NULL_IF_CONFIG_SMALL">NULL_IF_CONFIG_SMALL</a>(<q>"OSS (Open Sound System) capture"</q>),</td></tr>
+<tr><th id="143">143</th><td>    .<a class="ref" href="../libavformat/avformat.h.html#AVInputFormat::priv_data_size" title='AVInputFormat::priv_data_size' data-ref="AVInputFormat::priv_data_size">priv_data_size</a> = <b>sizeof</b>(<a class="typedef" href="oss.h.html#OSSAudioData" title='OSSAudioData' data-type='struct OSSAudioData' data-ref="OSSAudioData">OSSAudioData</a>),</td></tr>
+<tr><th id="144">144</th><td>    .<a class="ref" href="../libavformat/avformat.h.html#AVInputFormat::read_header" title='AVInputFormat::read_header' data-ref="AVInputFormat::read_header">read_header</a>    = <a class="tu ref" href="#audio_read_header" title='audio_read_header' data-ref="audio_read_header">audio_read_header</a>,</td></tr>
+<tr><th id="145">145</th><td>    .<a class="ref" href="../libavformat/avformat.h.html#AVInputFormat::read_packet" title='AVInputFormat::read_packet' data-ref="AVInputFormat::read_packet">read_packet</a>    = <a class="tu ref" href="#audio_read_packet" title='audio_read_packet' data-ref="audio_read_packet">audio_read_packet</a>,</td></tr>
+<tr><th id="146">146</th><td>    .<a class="ref" href="../libavformat/avformat.h.html#AVInputFormat::read_close" title='AVInputFormat::read_close' data-ref="AVInputFormat::read_close">read_close</a>     = <a class="tu ref" href="#audio_read_close" title='audio_read_close' data-ref="audio_read_close">audio_read_close</a>,</td></tr>
+<tr><th id="147">147</th><td>    .<a class="ref" href="../libavformat/avformat.h.html#AVInputFormat::flags" title='AVInputFormat::flags' data-ref="AVInputFormat::flags">flags</a>          = <a class="macro" href="../libavformat/avformat.h.html#478" title="0x0001" data-ref="_M/AVFMT_NOFILE">AVFMT_NOFILE</a>,</td></tr>
+<tr><th id="148">148</th><td>    .<a class="ref" href="../libavformat/avformat.h.html#AVInputFormat::priv_class" title='AVInputFormat::priv_class' data-ref="AVInputFormat::priv_class">priv_class</a>     = &amp;<a class="tu ref" href="#oss_demuxer_class" title='oss_demuxer_class' data-use='a' data-ref="oss_demuxer_class">oss_demuxer_class</a>,</td></tr>
+<tr><th id="149">149</th><td>};</td></tr>
+<tr><th id="150">150</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

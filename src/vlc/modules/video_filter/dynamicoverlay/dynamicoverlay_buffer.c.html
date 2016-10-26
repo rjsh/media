@@ -1,0 +1,164 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>dynamicoverlay_buffer.c source code [vlc/modules/video_filter/dynamicoverlay/dynamicoverlay_buffer.c] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'vlc/modules/video_filter/dynamicoverlay/dynamicoverlay_buffer.c'; var root_path = '../../../..'; var data_path = '../../../../../data';</script>
+<script src='../../../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='../../..'>vlc</a>/<a href='../..'>modules</a>/<a href='..'>video_filter</a>/<a href='./'>dynamicoverlay</a>/<a href='dynamicoverlay_buffer.c.html'>dynamicoverlay_buffer.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*****************************************************************************</i></td></tr>
+<tr><th id="2">2</th><td><i> * dynamicoverlay_buffer.c : dynamic overlay buffer</i></td></tr>
+<tr><th id="3">3</th><td><i> *****************************************************************************</i></td></tr>
+<tr><th id="4">4</th><td><i> * Copyright (C) 2008-2009 VLC authors and VideoLAN</i></td></tr>
+<tr><th id="5">5</th><td><i> * $Id: 9d0fc34cd5409e4c311e6eb2f3d1b727cd8b7b38 $</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * Author: Søren Bøg &lt;avacore@videolan.org&gt;</i></td></tr>
+<tr><th id="8">8</th><td><i> *         Jean-Paul Saman &lt;jpsaman@videolan.org&gt;</i></td></tr>
+<tr><th id="9">9</th><td><i> *</i></td></tr>
+<tr><th id="10">10</th><td><i> * This program is free software; you can redistribute it and/or modify it</i></td></tr>
+<tr><th id="11">11</th><td><i> * under the terms of the GNU Lesser General Public License as published by</i></td></tr>
+<tr><th id="12">12</th><td><i> * the Free Software Foundation; either version 2.1 of the License, or</i></td></tr>
+<tr><th id="13">13</th><td><i> * (at your option) any later version.</i></td></tr>
+<tr><th id="14">14</th><td><i> *</i></td></tr>
+<tr><th id="15">15</th><td><i> * This program is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="16">16</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="17">17</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</i></td></tr>
+<tr><th id="18">18</th><td><i> * GNU Lesser General Public License for more details.</i></td></tr>
+<tr><th id="19">19</th><td><i> *</i></td></tr>
+<tr><th id="20">20</th><td><i> * You should have received a copy of the GNU Lesser General Public License</i></td></tr>
+<tr><th id="21">21</th><td><i> * along with this program; if not, write to the Free Software Foundation,</i></td></tr>
+<tr><th id="22">22</th><td><i> * Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.</i></td></tr>
+<tr><th id="23">23</th><td><i> *****************************************************************************/</i></td></tr>
+<tr><th id="24">24</th><td></td></tr>
+<tr><th id="25">25</th><td><u>#<span data-ppcond="25">ifdef</span> <span class="macro" data-ref="_M/HAVE_CONFIG_H">HAVE_CONFIG_H</span></u></td></tr>
+<tr><th id="26">26</th><td><u># include <a href="../../../config.h.html">"config.h"</a></u></td></tr>
+<tr><th id="27">27</th><td><u>#<span data-ppcond="25">endif</span></u></td></tr>
+<tr><th id="28">28</th><td></td></tr>
+<tr><th id="29">29</th><td><u>#include <a href="../../../include/vlc_common.h.html">&lt;vlc_common.h&gt;</a></u></td></tr>
+<tr><th id="30">30</th><td><u>#include <a href="../../../include/vlc_filter.h.html">&lt;vlc_filter.h&gt;</a></u></td></tr>
+<tr><th id="31">31</th><td></td></tr>
+<tr><th id="32">32</th><td><u>#include <a href="../../../../include/ctype.h.html">&lt;ctype.h&gt;</a></u></td></tr>
+<tr><th id="33">33</th><td></td></tr>
+<tr><th id="34">34</th><td><u>#include <a href="dynamicoverlay.h.html">"dynamicoverlay.h"</a></u></td></tr>
+<tr><th id="35">35</th><td></td></tr>
+<tr><th id="36">36</th><td><i>/*****************************************************************************</i></td></tr>
+<tr><th id="37">37</th><td><i> * buffer_t: Command and response buffer</i></td></tr>
+<tr><th id="38">38</th><td><i> *****************************************************************************/</i></td></tr>
+<tr><th id="39">39</th><td></td></tr>
+<tr><th id="40">40</th><td><em>int</em> <dfn class="decl def" id="BufferInit" title='BufferInit' data-ref="BufferInit">BufferInit</dfn>( <a class="typedef" href="dynamicoverlay.h.html#buffer_t" title='buffer_t' data-type='struct buffer_t' data-ref="buffer_t">buffer_t</a> *<dfn class="local col1 decl" id="1p_buffer" title='p_buffer' data-type='buffer_t *' data-ref="1p_buffer">p_buffer</dfn> )</td></tr>
+<tr><th id="41">41</th><td>{</td></tr>
+<tr><th id="42">42</th><td>    <a class="ref" href="../../../../include/string.h.html#memset" title='memset' data-ref="memset">memset</a>( <a class="local col1 ref" href="#1p_buffer" title='p_buffer' data-ref="1p_buffer">p_buffer</a>, <var>0</var>, <b>sizeof</b>( <a class="typedef" href="dynamicoverlay.h.html#buffer_t" title='buffer_t' data-type='struct buffer_t' data-ref="buffer_t">buffer_t</a> ) );</td></tr>
+<tr><th id="43">43</th><td>    <a class="local col1 ref" href="#1p_buffer" title='p_buffer' data-ref="1p_buffer">p_buffer</a>-&gt;<a class="ref" href="dynamicoverlay.h.html#buffer_t::p_memory" title='buffer_t::p_memory' data-ref="buffer_t::p_memory">p_memory</a> = <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="44">44</th><td>    <a class="local col1 ref" href="#1p_buffer" title='p_buffer' data-ref="1p_buffer">p_buffer</a>-&gt;<a class="ref" href="dynamicoverlay.h.html#buffer_t::p_begin" title='buffer_t::p_begin' data-ref="buffer_t::p_begin">p_begin</a> = <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="45">45</th><td></td></tr>
+<tr><th id="46">46</th><td>    <b>return</b> <a class="macro" href="../../../include/vlc_common.h.html#374" title="(-0)" data-ref="_M/VLC_SUCCESS">VLC_SUCCESS</a>;</td></tr>
+<tr><th id="47">47</th><td>}</td></tr>
+<tr><th id="48">48</th><td></td></tr>
+<tr><th id="49">49</th><td><em>int</em> <dfn class="decl def" id="BufferDestroy" title='BufferDestroy' data-ref="BufferDestroy">BufferDestroy</dfn>( <a class="typedef" href="dynamicoverlay.h.html#buffer_t" title='buffer_t' data-type='struct buffer_t' data-ref="buffer_t">buffer_t</a> *<dfn class="local col2 decl" id="2p_buffer" title='p_buffer' data-type='buffer_t *' data-ref="2p_buffer">p_buffer</dfn> )</td></tr>
+<tr><th id="50">50</th><td>{</td></tr>
+<tr><th id="51">51</th><td>    <a class="ref" href="../../../../include/stdlib.h.html#free" title='free' data-ref="free">free</a>( <a class="local col2 ref" href="#2p_buffer" title='p_buffer' data-ref="2p_buffer">p_buffer</a>-&gt;<a class="ref" href="dynamicoverlay.h.html#buffer_t::p_memory" title='buffer_t::p_memory' data-ref="buffer_t::p_memory">p_memory</a> );</td></tr>
+<tr><th id="52">52</th><td>    <a class="local col2 ref" href="#2p_buffer" title='p_buffer' data-ref="2p_buffer">p_buffer</a>-&gt;<a class="ref" href="dynamicoverlay.h.html#buffer_t::p_memory" title='buffer_t::p_memory' data-ref="buffer_t::p_memory">p_memory</a> = <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="53">53</th><td>    <a class="local col2 ref" href="#2p_buffer" title='p_buffer' data-ref="2p_buffer">p_buffer</a>-&gt;<a class="ref" href="dynamicoverlay.h.html#buffer_t::p_begin" title='buffer_t::p_begin' data-ref="buffer_t::p_begin">p_begin</a> = <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="54">54</th><td></td></tr>
+<tr><th id="55">55</th><td>    <b>return</b> <a class="macro" href="../../../include/vlc_common.h.html#374" title="(-0)" data-ref="_M/VLC_SUCCESS">VLC_SUCCESS</a>;</td></tr>
+<tr><th id="56">56</th><td>}</td></tr>
+<tr><th id="57">57</th><td></td></tr>
+<tr><th id="58">58</th><td><em>char</em> *<dfn class="decl def" id="BufferGetToken" title='BufferGetToken' data-ref="BufferGetToken">BufferGetToken</dfn>( <a class="typedef" href="dynamicoverlay.h.html#buffer_t" title='buffer_t' data-type='struct buffer_t' data-ref="buffer_t">buffer_t</a> *<dfn class="local col3 decl" id="3p_buffer" title='p_buffer' data-type='buffer_t *' data-ref="3p_buffer">p_buffer</dfn> )</td></tr>
+<tr><th id="59">59</th><td>{</td></tr>
+<tr><th id="60">60</th><td>    <em>char</em> *<dfn class="local col4 decl" id="4p_char" title='p_char' data-type='char *' data-ref="4p_char">p_char</dfn> = <a class="local col3 ref" href="#3p_buffer" title='p_buffer' data-ref="3p_buffer">p_buffer</a>-&gt;<a class="ref" href="dynamicoverlay.h.html#buffer_t::p_begin" title='buffer_t::p_begin' data-ref="buffer_t::p_begin">p_begin</a>;</td></tr>
+<tr><th id="61">61</th><td></td></tr>
+<tr><th id="62">62</th><td>    <b>while</b>( <a class="macro" href="../../../../include/ctype.h.html#205" title="((*__ctype_b_loc ())[(int) (((unsigned char)p_char[0]))] &amp; (unsigned short int) _ISspace)" data-ref="_M/isspace">isspace</a>( (<em>unsigned</em> <em>char</em>)<a class="local col4 ref" href="#4p_char" title='p_char' data-ref="4p_char">p_char</a>[<var>0</var>] ) || <a class="local col4 ref" href="#4p_char" title='p_char' data-ref="4p_char">p_char</a>[<var>0</var>] == <kbd>'\0'</kbd> )</td></tr>
+<tr><th id="63">63</th><td>    {</td></tr>
+<tr><th id="64">64</th><td>        <b>if</b>( <a class="local col4 ref" href="#4p_char" title='p_char' data-ref="4p_char">p_char</a> &lt;= (<a class="local col3 ref" href="#3p_buffer" title='p_buffer' data-ref="3p_buffer">p_buffer</a>-&gt;<a class="ref" href="dynamicoverlay.h.html#buffer_t::p_begin" title='buffer_t::p_begin' data-ref="buffer_t::p_begin">p_begin</a> + <a class="local col3 ref" href="#3p_buffer" title='p_buffer' data-ref="3p_buffer">p_buffer</a>-&gt;<a class="ref" href="dynamicoverlay.h.html#buffer_t::i_length" title='buffer_t::i_length' data-ref="buffer_t::i_length">i_length</a>) )</td></tr>
+<tr><th id="65">65</th><td>            <a class="local col4 ref" href="#4p_char" title='p_char' data-ref="4p_char">p_char</a>++;</td></tr>
+<tr><th id="66">66</th><td>        <b>else</b></td></tr>
+<tr><th id="67">67</th><td>            <b>return</b> <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="68">68</th><td>    }</td></tr>
+<tr><th id="69">69</th><td>    <b>return</b> <a class="local col4 ref" href="#4p_char" title='p_char' data-ref="4p_char">p_char</a>;</td></tr>
+<tr><th id="70">70</th><td>}</td></tr>
+<tr><th id="71">71</th><td></td></tr>
+<tr><th id="72">72</th><td><em>int</em> <dfn class="decl def" id="BufferAdd" title='BufferAdd' data-ref="BufferAdd">BufferAdd</dfn>( <a class="typedef" href="dynamicoverlay.h.html#buffer_t" title='buffer_t' data-type='struct buffer_t' data-ref="buffer_t">buffer_t</a> *<dfn class="local col5 decl" id="5p_buffer" title='p_buffer' data-type='buffer_t *' data-ref="5p_buffer">p_buffer</dfn>, <em>const</em> <em>char</em> *<dfn class="local col6 decl" id="6p_data" title='p_data' data-type='const char *' data-ref="6p_data">p_data</dfn>, <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="local col7 decl" id="7i_len" title='i_len' data-type='size_t' data-ref="7i_len">i_len</dfn> )</td></tr>
+<tr><th id="73">73</th><td>{</td></tr>
+<tr><th id="74">74</th><td>    <b>if</b>( ( <a class="local col5 ref" href="#5p_buffer" title='p_buffer' data-ref="5p_buffer">p_buffer</a>-&gt;<a class="ref" href="dynamicoverlay.h.html#buffer_t::i_size" title='buffer_t::i_size' data-ref="buffer_t::i_size">i_size</a> - <a class="local col5 ref" href="#5p_buffer" title='p_buffer' data-ref="5p_buffer">p_buffer</a>-&gt;<a class="ref" href="dynamicoverlay.h.html#buffer_t::i_length" title='buffer_t::i_length' data-ref="buffer_t::i_length">i_length</a> -</td></tr>
+<tr><th id="75">75</th><td>          ( <a class="local col5 ref" href="#5p_buffer" title='p_buffer' data-ref="5p_buffer">p_buffer</a>-&gt;<a class="ref" href="dynamicoverlay.h.html#buffer_t::p_begin" title='buffer_t::p_begin' data-ref="buffer_t::p_begin">p_begin</a> - <a class="local col5 ref" href="#5p_buffer" title='p_buffer' data-ref="5p_buffer">p_buffer</a>-&gt;<a class="ref" href="dynamicoverlay.h.html#buffer_t::p_memory" title='buffer_t::p_memory' data-ref="buffer_t::p_memory">p_memory</a> ) ) &lt; <a class="local col7 ref" href="#7i_len" title='i_len' data-ref="7i_len">i_len</a> )</td></tr>
+<tr><th id="76">76</th><td>    {</td></tr>
+<tr><th id="77">77</th><td>        <i>/* We'll have to do some rearranging to fit the new data. */</i></td></tr>
+<tr><th id="78">78</th><td>        <b>if</b>( ( <a class="local col5 ref" href="#5p_buffer" title='p_buffer' data-ref="5p_buffer">p_buffer</a>-&gt;<a class="ref" href="dynamicoverlay.h.html#buffer_t::i_size" title='buffer_t::i_size' data-ref="buffer_t::i_size">i_size</a> - <a class="local col5 ref" href="#5p_buffer" title='p_buffer' data-ref="5p_buffer">p_buffer</a>-&gt;<a class="ref" href="dynamicoverlay.h.html#buffer_t::i_length" title='buffer_t::i_length' data-ref="buffer_t::i_length">i_length</a> ) &gt;= <a class="local col7 ref" href="#7i_len" title='i_len' data-ref="7i_len">i_len</a> )</td></tr>
+<tr><th id="79">79</th><td>        {</td></tr>
+<tr><th id="80">80</th><td>            <i>/* We have room in the current buffer, just need to move it */</i></td></tr>
+<tr><th id="81">81</th><td>            <a class="ref" href="../../../../include/string.h.html#memmove" title='memmove' data-ref="memmove">memmove</a>( <a class="local col5 ref" href="#5p_buffer" title='p_buffer' data-ref="5p_buffer">p_buffer</a>-&gt;<a class="ref" href="dynamicoverlay.h.html#buffer_t::p_memory" title='buffer_t::p_memory' data-ref="buffer_t::p_memory">p_memory</a>, <a class="local col5 ref" href="#5p_buffer" title='p_buffer' data-ref="5p_buffer">p_buffer</a>-&gt;<a class="ref" href="dynamicoverlay.h.html#buffer_t::p_begin" title='buffer_t::p_begin' data-ref="buffer_t::p_begin">p_begin</a>,</td></tr>
+<tr><th id="82">82</th><td>                     <a class="local col5 ref" href="#5p_buffer" title='p_buffer' data-ref="5p_buffer">p_buffer</a>-&gt;<a class="ref" href="dynamicoverlay.h.html#buffer_t::i_length" title='buffer_t::i_length' data-ref="buffer_t::i_length">i_length</a> );</td></tr>
+<tr><th id="83">83</th><td>            <a class="local col5 ref" href="#5p_buffer" title='p_buffer' data-ref="5p_buffer">p_buffer</a>-&gt;<a class="ref" href="dynamicoverlay.h.html#buffer_t::p_begin" title='buffer_t::p_begin' data-ref="buffer_t::p_begin">p_begin</a> = <a class="local col5 ref" href="#5p_buffer" title='p_buffer' data-ref="5p_buffer">p_buffer</a>-&gt;<a class="ref" href="dynamicoverlay.h.html#buffer_t::p_memory" title='buffer_t::p_memory' data-ref="buffer_t::p_memory">p_memory</a>;</td></tr>
+<tr><th id="84">84</th><td>        }</td></tr>
+<tr><th id="85">85</th><td>        <b>else</b></td></tr>
+<tr><th id="86">86</th><td>        {</td></tr>
+<tr><th id="87">87</th><td>            <i>// We need a bigger buffer</i></td></tr>
+<tr><th id="88">88</th><td>            <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="local col8 decl" id="8i_newsize" title='i_newsize' data-type='size_t' data-ref="8i_newsize">i_newsize</dfn> = <var>1024</var>;</td></tr>
+<tr><th id="89">89</th><td>            <b>while</b>( <a class="local col8 ref" href="#8i_newsize" title='i_newsize' data-ref="8i_newsize">i_newsize</a> &lt; <a class="local col5 ref" href="#5p_buffer" title='p_buffer' data-ref="5p_buffer">p_buffer</a>-&gt;<a class="ref" href="dynamicoverlay.h.html#buffer_t::i_length" title='buffer_t::i_length' data-ref="buffer_t::i_length">i_length</a> + <a class="local col7 ref" href="#7i_len" title='i_len' data-ref="7i_len">i_len</a> )</td></tr>
+<tr><th id="90">90</th><td>                <a class="local col8 ref" href="#8i_newsize" title='i_newsize' data-ref="8i_newsize">i_newsize</a> *= <var>2</var>;</td></tr>
+<tr><th id="91">91</th><td>            <i>/* TODO: Should I handle wrapping here? */</i></td></tr>
+<tr><th id="92">92</th><td></td></tr>
+<tr><th id="93">93</th><td>            <i>/* I'm not using realloc here, as I can avoid a memcpy/memmove in</i></td></tr>
+<tr><th id="94">94</th><td><i>               some (most?) cases, and reset the start of the buffer. */</i></td></tr>
+<tr><th id="95">95</th><td>            <em>char</em> *<dfn class="local col9 decl" id="9p_newdata" title='p_newdata' data-type='char *' data-ref="9p_newdata">p_newdata</dfn> = <a class="ref" href="../../../../include/stdlib.h.html#malloc" title='malloc' data-ref="malloc">malloc</a>( <a class="local col8 ref" href="#8i_newsize" title='i_newsize' data-ref="8i_newsize">i_newsize</a> );</td></tr>
+<tr><th id="96">96</th><td>            <b>if</b>( <a class="local col9 ref" href="#9p_newdata" title='p_newdata' data-ref="9p_newdata">p_newdata</a> == <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span> )</td></tr>
+<tr><th id="97">97</th><td>                <b>return</b> <a class="macro" href="../../../include/vlc_common.h.html#376" title="(-2)" data-ref="_M/VLC_ENOMEM">VLC_ENOMEM</a>;</td></tr>
+<tr><th id="98">98</th><td>            <b>if</b>( <a class="local col5 ref" href="#5p_buffer" title='p_buffer' data-ref="5p_buffer">p_buffer</a>-&gt;<a class="ref" href="dynamicoverlay.h.html#buffer_t::p_begin" title='buffer_t::p_begin' data-ref="buffer_t::p_begin">p_begin</a> != <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span> )</td></tr>
+<tr><th id="99">99</th><td>            {</td></tr>
+<tr><th id="100">100</th><td>                <a class="ref" href="../../../../include/string.h.html#memcpy" title='memcpy' data-ref="memcpy">memcpy</a>( <a class="local col9 ref" href="#9p_newdata" title='p_newdata' data-ref="9p_newdata">p_newdata</a>, <a class="local col5 ref" href="#5p_buffer" title='p_buffer' data-ref="5p_buffer">p_buffer</a>-&gt;<a class="ref" href="dynamicoverlay.h.html#buffer_t::p_begin" title='buffer_t::p_begin' data-ref="buffer_t::p_begin">p_begin</a>, <a class="local col5 ref" href="#5p_buffer" title='p_buffer' data-ref="5p_buffer">p_buffer</a>-&gt;<a class="ref" href="dynamicoverlay.h.html#buffer_t::i_length" title='buffer_t::i_length' data-ref="buffer_t::i_length">i_length</a> );</td></tr>
+<tr><th id="101">101</th><td>                <a class="ref" href="../../../../include/stdlib.h.html#free" title='free' data-ref="free">free</a>( <a class="local col5 ref" href="#5p_buffer" title='p_buffer' data-ref="5p_buffer">p_buffer</a>-&gt;<a class="ref" href="dynamicoverlay.h.html#buffer_t::p_memory" title='buffer_t::p_memory' data-ref="buffer_t::p_memory">p_memory</a> );</td></tr>
+<tr><th id="102">102</th><td>            }</td></tr>
+<tr><th id="103">103</th><td>            <a class="local col5 ref" href="#5p_buffer" title='p_buffer' data-ref="5p_buffer">p_buffer</a>-&gt;<a class="ref" href="dynamicoverlay.h.html#buffer_t::p_memory" title='buffer_t::p_memory' data-ref="buffer_t::p_memory">p_memory</a> = <a class="local col5 ref" href="#5p_buffer" title='p_buffer' data-ref="5p_buffer">p_buffer</a>-&gt;<a class="ref" href="dynamicoverlay.h.html#buffer_t::p_begin" title='buffer_t::p_begin' data-ref="buffer_t::p_begin">p_begin</a> = <a class="local col9 ref" href="#9p_newdata" title='p_newdata' data-ref="9p_newdata">p_newdata</a>;</td></tr>
+<tr><th id="104">104</th><td>            <a class="local col5 ref" href="#5p_buffer" title='p_buffer' data-ref="5p_buffer">p_buffer</a>-&gt;<a class="ref" href="dynamicoverlay.h.html#buffer_t::i_size" title='buffer_t::i_size' data-ref="buffer_t::i_size">i_size</a> = <a class="local col8 ref" href="#8i_newsize" title='i_newsize' data-ref="8i_newsize">i_newsize</a>;</td></tr>
+<tr><th id="105">105</th><td>        }</td></tr>
+<tr><th id="106">106</th><td>    }</td></tr>
+<tr><th id="107">107</th><td></td></tr>
+<tr><th id="108">108</th><td>    <i>/* Add the new data to the end of the current */</i></td></tr>
+<tr><th id="109">109</th><td>    <a class="ref" href="../../../../include/string.h.html#memcpy" title='memcpy' data-ref="memcpy">memcpy</a>( <a class="local col5 ref" href="#5p_buffer" title='p_buffer' data-ref="5p_buffer">p_buffer</a>-&gt;<a class="ref" href="dynamicoverlay.h.html#buffer_t::p_begin" title='buffer_t::p_begin' data-ref="buffer_t::p_begin">p_begin</a> + <a class="local col5 ref" href="#5p_buffer" title='p_buffer' data-ref="5p_buffer">p_buffer</a>-&gt;<a class="ref" href="dynamicoverlay.h.html#buffer_t::i_length" title='buffer_t::i_length' data-ref="buffer_t::i_length">i_length</a>, <a class="local col6 ref" href="#6p_data" title='p_data' data-ref="6p_data">p_data</a>, <a class="local col7 ref" href="#7i_len" title='i_len' data-ref="7i_len">i_len</a> );</td></tr>
+<tr><th id="110">110</th><td>    <a class="local col5 ref" href="#5p_buffer" title='p_buffer' data-ref="5p_buffer">p_buffer</a>-&gt;<a class="ref" href="dynamicoverlay.h.html#buffer_t::i_length" title='buffer_t::i_length' data-ref="buffer_t::i_length">i_length</a> += <a class="local col7 ref" href="#7i_len" title='i_len' data-ref="7i_len">i_len</a>;</td></tr>
+<tr><th id="111">111</th><td>    <b>return</b> <a class="macro" href="../../../include/vlc_common.h.html#374" title="(-0)" data-ref="_M/VLC_SUCCESS">VLC_SUCCESS</a>;</td></tr>
+<tr><th id="112">112</th><td>}</td></tr>
+<tr><th id="113">113</th><td></td></tr>
+<tr><th id="114">114</th><td><em>int</em> <dfn class="decl def" id="BufferPrintf" title='BufferPrintf' data-ref="BufferPrintf">BufferPrintf</dfn>( <a class="typedef" href="dynamicoverlay.h.html#buffer_t" title='buffer_t' data-type='struct buffer_t' data-ref="buffer_t">buffer_t</a> *<dfn class="local col0 decl" id="10p_buffer" title='p_buffer' data-type='buffer_t *' data-ref="10p_buffer">p_buffer</dfn>, <em>const</em> <em>char</em> *<dfn class="local col1 decl" id="11p_fmt" title='p_fmt' data-type='const char *' data-ref="11p_fmt">p_fmt</dfn>, ... )</td></tr>
+<tr><th id="115">115</th><td>{</td></tr>
+<tr><th id="116">116</th><td>    <em>int</em> <dfn class="local col2 decl" id="12i_len" title='i_len' data-type='int' data-ref="12i_len">i_len</dfn>;</td></tr>
+<tr><th id="117">117</th><td>    <em>int</em> <dfn class="local col3 decl" id="13status" title='status' data-type='int' data-ref="13status">status</dfn>;</td></tr>
+<tr><th id="118">118</th><td>    <em>char</em> *<dfn class="local col4 decl" id="14psz_data" title='psz_data' data-type='char *' data-ref="14psz_data">psz_data</dfn>;</td></tr>
+<tr><th id="119">119</th><td></td></tr>
+<tr><th id="120">120</th><td>    <span class='typedef' title='va_list' data-type='__gnuc_va_list' data-ref="va_list">va_list</span> <dfn class="local col5 decl" id="15va" title='va' data-type='va_list' data-ref="15va">va</dfn>;</td></tr>
+<tr><th id="121">121</th><td>    <span class="macro" title="__builtin_va_start(va, p_fmt)" data-ref="_M/va_start">va_start</span>( <a class="local col5 ref" href="#15va" title='va' data-ref="15va">va</a>, <a class="local col1 ref" href="#11p_fmt" title='p_fmt' data-ref="11p_fmt">p_fmt</a> );</td></tr>
+<tr><th id="122">122</th><td></td></tr>
+<tr><th id="123">123</th><td>    <a class="local col2 ref" href="#12i_len" title='i_len' data-ref="12i_len">i_len</a> = <a class="ref" href="../../../../include/stdio.h.html#vasprintf" title='vasprintf' data-ref="vasprintf">vasprintf</a>( &amp;<a class="local col4 ref" href="#14psz_data" title='psz_data' data-ref="14psz_data">psz_data</a>, <a class="local col1 ref" href="#11p_fmt" title='p_fmt' data-ref="11p_fmt">p_fmt</a>, <a class="local col5 ref" href="#15va" title='va' data-ref="15va">va</a> );</td></tr>
+<tr><th id="124">124</th><td>    <span class="macro" title="__builtin_va_end(va)" data-ref="_M/va_end">va_end</span>( <a class="local col5 ref" href="#15va" title='va' data-ref="15va">va</a> );</td></tr>
+<tr><th id="125">125</th><td>    <b>if</b>( <a class="local col2 ref" href="#12i_len" title='i_len' data-ref="12i_len">i_len</a> == -<var>1</var> )</td></tr>
+<tr><th id="126">126</th><td>        <b>return</b> <a class="macro" href="../../../include/vlc_common.h.html#376" title="(-2)" data-ref="_M/VLC_ENOMEM">VLC_ENOMEM</a>;</td></tr>
+<tr><th id="127">127</th><td></td></tr>
+<tr><th id="128">128</th><td>    <a class="local col3 ref" href="#13status" title='status' data-ref="13status">status</a> = <a class="ref" href="#BufferAdd" title='BufferAdd' data-ref="BufferAdd">BufferAdd</a>( <a class="local col0 ref" href="#10p_buffer" title='p_buffer' data-ref="10p_buffer">p_buffer</a>, <a class="local col4 ref" href="#14psz_data" title='psz_data' data-ref="14psz_data">psz_data</a>, <a class="local col2 ref" href="#12i_len" title='i_len' data-ref="12i_len">i_len</a> );</td></tr>
+<tr><th id="129">129</th><td>    <a class="ref" href="../../../../include/stdlib.h.html#free" title='free' data-ref="free">free</a>( <a class="local col4 ref" href="#14psz_data" title='psz_data' data-ref="14psz_data">psz_data</a> );</td></tr>
+<tr><th id="130">130</th><td>    <b>return</b> <a class="local col3 ref" href="#13status" title='status' data-ref="13status">status</a>;</td></tr>
+<tr><th id="131">131</th><td>}</td></tr>
+<tr><th id="132">132</th><td></td></tr>
+<tr><th id="133">133</th><td><em>int</em> <dfn class="decl def" id="BufferDel" title='BufferDel' data-ref="BufferDel">BufferDel</dfn>( <a class="typedef" href="dynamicoverlay.h.html#buffer_t" title='buffer_t' data-type='struct buffer_t' data-ref="buffer_t">buffer_t</a> *<dfn class="local col6 decl" id="16p_buffer" title='p_buffer' data-type='buffer_t *' data-ref="16p_buffer">p_buffer</dfn>, <em>int</em> <dfn class="local col7 decl" id="17i_len" title='i_len' data-type='int' data-ref="17i_len">i_len</dfn> )</td></tr>
+<tr><th id="134">134</th><td>{</td></tr>
+<tr><th id="135">135</th><td>    <a class="local col6 ref" href="#16p_buffer" title='p_buffer' data-ref="16p_buffer">p_buffer</a>-&gt;<a class="ref" href="dynamicoverlay.h.html#buffer_t::i_length" title='buffer_t::i_length' data-ref="buffer_t::i_length">i_length</a> -= <a class="local col7 ref" href="#17i_len" title='i_len' data-ref="17i_len">i_len</a>;</td></tr>
+<tr><th id="136">136</th><td>    <b>if</b>( <a class="local col6 ref" href="#16p_buffer" title='p_buffer' data-ref="16p_buffer">p_buffer</a>-&gt;<a class="ref" href="dynamicoverlay.h.html#buffer_t::i_length" title='buffer_t::i_length' data-ref="buffer_t::i_length">i_length</a> == <var>0</var> )</td></tr>
+<tr><th id="137">137</th><td>    {</td></tr>
+<tr><th id="138">138</th><td>        <i>/* No data, we can reset the buffer now. */</i></td></tr>
+<tr><th id="139">139</th><td>        <a class="local col6 ref" href="#16p_buffer" title='p_buffer' data-ref="16p_buffer">p_buffer</a>-&gt;<a class="ref" href="dynamicoverlay.h.html#buffer_t::p_begin" title='buffer_t::p_begin' data-ref="buffer_t::p_begin">p_begin</a> = <a class="local col6 ref" href="#16p_buffer" title='p_buffer' data-ref="16p_buffer">p_buffer</a>-&gt;<a class="ref" href="dynamicoverlay.h.html#buffer_t::p_memory" title='buffer_t::p_memory' data-ref="buffer_t::p_memory">p_memory</a>;</td></tr>
+<tr><th id="140">140</th><td>    }</td></tr>
+<tr><th id="141">141</th><td>    <b>else</b></td></tr>
+<tr><th id="142">142</th><td>    {</td></tr>
+<tr><th id="143">143</th><td>        <a class="local col6 ref" href="#16p_buffer" title='p_buffer' data-ref="16p_buffer">p_buffer</a>-&gt;<a class="ref" href="dynamicoverlay.h.html#buffer_t::p_begin" title='buffer_t::p_begin' data-ref="buffer_t::p_begin">p_begin</a> += <a class="local col7 ref" href="#17i_len" title='i_len' data-ref="17i_len">i_len</a>;</td></tr>
+<tr><th id="144">144</th><td>    }</td></tr>
+<tr><th id="145">145</th><td>    <b>return</b> <a class="macro" href="../../../include/vlc_common.h.html#374" title="(-0)" data-ref="_M/VLC_SUCCESS">VLC_SUCCESS</a>;</td></tr>
+<tr><th id="146">146</th><td>}</td></tr>
+<tr><th id="147">147</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project vlc revision <em>2.2.0-git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

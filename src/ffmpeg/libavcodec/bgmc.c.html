@@ -1,0 +1,578 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>bgmc.c source code [ffmpeg/libavcodec/bgmc.c] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavcodec/bgmc.c'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavcodec</a>/<a href='bgmc.c.html'>bgmc.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * Block Gilbert-Moore decoder</i></td></tr>
+<tr><th id="3">3</th><td><i> * Copyright (c) 2010 Thilo Borgmann &lt;thilo.borgmann _at_ mail.de&gt;</i></td></tr>
+<tr><th id="4">4</th><td><i> *</i></td></tr>
+<tr><th id="5">5</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="8">8</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="9">9</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="10">10</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="11">11</th><td><i> *</i></td></tr>
+<tr><th id="12">12</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="13">13</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="14">14</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="15">15</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="16">16</th><td><i> *</i></td></tr>
+<tr><th id="17">17</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="18">18</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="19">19</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="20">20</th><td><i> */</i></td></tr>
+<tr><th id="21">21</th><td></td></tr>
+<tr><th id="22">22</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="23">23</th><td><i class="doc"> *<span class="command"> @file</span></i></td></tr>
+<tr><th id="24">24</th><td><i class="doc"> * Block Gilbert-Moore decoder as used by MPEG-4 ALS</i></td></tr>
+<tr><th id="25">25</th><td><i class="doc"> * <span class="command">@author</span> Thilo Borgmann &lt;thilo.borgmann _at_ mail.de&gt;</i></td></tr>
+<tr><th id="26">26</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="27">27</th><td></td></tr>
+<tr><th id="28">28</th><td><u>#include <a href="../libavutil/attributes.h.html">"libavutil/attributes.h"</a></u></td></tr>
+<tr><th id="29">29</th><td><u>#include <a href="bgmc.h.html">"bgmc.h"</a></u></td></tr>
+<tr><th id="30">30</th><td></td></tr>
+<tr><th id="31">31</th><td><u>#define <dfn class="macro" id="_M/FREQ_BITS" data-ref="_M/FREQ_BITS">FREQ_BITS</dfn>  14                      // bits used by frequency counters</u></td></tr>
+<tr><th id="32">32</th><td><u>#define <dfn class="macro" id="_M/VALUE_BITS" data-ref="_M/VALUE_BITS">VALUE_BITS</dfn> 18                      // bits used to represent the values</u></td></tr>
+<tr><th id="33">33</th><td><u>#define <dfn class="macro" id="_M/TOP_VALUE" data-ref="_M/TOP_VALUE">TOP_VALUE</dfn>  ((1 &lt;&lt; VALUE_BITS) - 1) // maximum value</u></td></tr>
+<tr><th id="34">34</th><td><u>#define <dfn class="macro" id="_M/FIRST_QTR" data-ref="_M/FIRST_QTR">FIRST_QTR</dfn>  (TOP_VALUE / 4 + 1)     // first quarter of values maximum value</u></td></tr>
+<tr><th id="35">35</th><td><u>#define <dfn class="macro" id="_M/HALF" data-ref="_M/HALF">HALF</dfn>       (2 * FIRST_QTR)         // first half of values maximum value</u></td></tr>
+<tr><th id="36">36</th><td><u>#define <dfn class="macro" id="_M/THIRD_QTR" data-ref="_M/THIRD_QTR">THIRD_QTR</dfn>  (3 * FIRST_QTR)         // third quarter of values maximum value</u></td></tr>
+<tr><th id="37">37</th><td></td></tr>
+<tr><th id="38">38</th><td><u>#define <dfn class="macro" id="_M/LUT_BITS" data-ref="_M/LUT_BITS">LUT_BITS</dfn>   (FREQ_BITS - 8)         // number of bits used to index lookup tables</u></td></tr>
+<tr><th id="39">39</th><td><u>#define <dfn class="macro" id="_M/LUT_SIZE" data-ref="_M/LUT_SIZE">LUT_SIZE</dfn>   (1 &lt;&lt; LUT_BITS)         // size of the lookup tables</u></td></tr>
+<tr><th id="40">40</th><td><u>#define <dfn class="macro" id="_M/LUT_BUFF" data-ref="_M/LUT_BUFF">LUT_BUFF</dfn>   4                       // number of buffered lookup tables</u></td></tr>
+<tr><th id="41">41</th><td></td></tr>
+<tr><th id="42">42</th><td></td></tr>
+<tr><th id="43">43</th><td><i class="doc" data-doc="cf_tables_1">/** Cumulative frequency tables for block Gilbert-Moore coding. */</i></td></tr>
+<tr><th id="44">44</th><td><em>static</em> <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> <dfn class="tu decl def" id="cf_tables_1" title='cf_tables_1' data-type='const uint16_t [3][129]' data-ref="cf_tables_1">cf_tables_1</dfn>[<var>3</var>][<var>129</var>] = {</td></tr>
+<tr><th id="45">45</th><td>    {</td></tr>
+<tr><th id="46">46</th><td>        <var>16384</var>, <var>16066</var>, <var>15748</var>, <var>15431</var>, <var>15114</var>, <var>14799</var>, <var>14485</var>, <var>14173</var>, <var>13861</var>, <var>13552</var>,</td></tr>
+<tr><th id="47">47</th><td>        <var>13243</var>, <var>12939</var>, <var>12635</var>, <var>12336</var>, <var>12038</var>, <var>11745</var>, <var>11452</var>, <var>11161</var>, <var>10870</var>, <var>10586</var>,</td></tr>
+<tr><th id="48">48</th><td>        <var>10303</var>, <var>10027</var>,  <var>9751</var>,  <var>9483</var>,  <var>9215</var>,  <var>8953</var>,  <var>8692</var>,  <var>8440</var>,  <var>8189</var>,  <var>7946</var>,</td></tr>
+<tr><th id="49">49</th><td>         <var>7704</var>,  <var>7472</var>,  <var>7240</var>,  <var>7008</var>,  <var>6776</var>,  <var>6554</var>,  <var>6333</var>,  <var>6122</var>,  <var>5912</var>,  <var>5711</var>,</td></tr>
+<tr><th id="50">50</th><td>         <var>5512</var>,  <var>5320</var>,  <var>5128</var>,  <var>4947</var>,  <var>4766</var>,  <var>4595</var>,  <var>4425</var>,  <var>4264</var>,  <var>4104</var>,  <var>3946</var>,</td></tr>
+<tr><th id="51">51</th><td>         <var>3788</var>,  <var>3640</var>,  <var>3493</var>,  <var>3355</var>,  <var>3218</var>,  <var>3090</var>,  <var>2963</var>,  <var>2842</var>,  <var>2721</var>,  <var>2609</var>,</td></tr>
+<tr><th id="52">52</th><td>         <var>2498</var>,  <var>2395</var>,  <var>2292</var>,  <var>2196</var>,  <var>2100</var>,  <var>2004</var>,  <var>1908</var>,  <var>1820</var>,  <var>1732</var>,  <var>1651</var>,</td></tr>
+<tr><th id="53">53</th><td>         <var>1570</var>,  <var>1497</var>,  <var>1424</var>,  <var>1355</var>,  <var>1287</var>,  <var>1223</var>,  <var>1161</var>,  <var>1100</var>,  <var>1044</var>,   <var>988</var>,</td></tr>
+<tr><th id="54">54</th><td>          <var>938</var>,   <var>888</var>,   <var>839</var>,   <var>790</var>,   <var>746</var>,   <var>702</var>,   <var>662</var>,   <var>623</var>,   <var>588</var>,   <var>553</var>,</td></tr>
+<tr><th id="55">55</th><td>          <var>520</var>,   <var>488</var>,   <var>459</var>,   <var>431</var>,   <var>405</var>,   <var>380</var>,   <var>357</var>,   <var>334</var>,   <var>311</var>,   <var>288</var>,</td></tr>
+<tr><th id="56">56</th><td>          <var>268</var>,   <var>248</var>,   <var>230</var>,   <var>213</var>,   <var>197</var>,   <var>182</var>,   <var>168</var>,   <var>154</var>,   <var>142</var>,   <var>130</var>,</td></tr>
+<tr><th id="57">57</th><td>          <var>119</var>,   <var>108</var>,    <var>99</var>,    <var>90</var>,    <var>81</var>,    <var>72</var>,    <var>64</var>,    <var>56</var>,    <var>49</var>,    <var>42</var>,</td></tr>
+<tr><th id="58">58</th><td>           <var>36</var>,    <var>30</var>,    <var>25</var>,    <var>20</var>,    <var>15</var>,    <var>11</var>,     <var>7</var>,     <var>3</var>,     <var>0</var></td></tr>
+<tr><th id="59">59</th><td>    },</td></tr>
+<tr><th id="60">60</th><td>    {</td></tr>
+<tr><th id="61">61</th><td>        <var>16384</var>, <var>16080</var>, <var>15776</var>, <var>15473</var>, <var>15170</var>, <var>14868</var>, <var>14567</var>, <var>14268</var>, <var>13970</var>, <var>13674</var>,</td></tr>
+<tr><th id="62">62</th><td>        <var>13378</var>, <var>13086</var>, <var>12794</var>, <var>12505</var>, <var>12218</var>, <var>11936</var>, <var>11654</var>, <var>11373</var>, <var>11092</var>, <var>10818</var>,</td></tr>
+<tr><th id="63">63</th><td>        <var>10544</var>, <var>10276</var>, <var>10008</var>,  <var>9749</var>,  <var>9490</var>,  <var>9236</var>,  <var>8982</var>,  <var>8737</var>,  <var>8492</var>,  <var>8256</var>,</td></tr>
+<tr><th id="64">64</th><td>         <var>8020</var>,  <var>7792</var>,  <var>7564</var>,  <var>7336</var>,  <var>7108</var>,  <var>6888</var>,  <var>6669</var>,  <var>6459</var>,  <var>6249</var>,  <var>6050</var>,</td></tr>
+<tr><th id="65">65</th><td>         <var>5852</var>,  <var>5660</var>,  <var>5468</var>,  <var>5286</var>,  <var>5104</var>,  <var>4931</var>,  <var>4760</var>,  <var>4598</var>,  <var>4436</var>,  <var>4275</var>,</td></tr>
+<tr><th id="66">66</th><td>         <var>4115</var>,  <var>3965</var>,  <var>3816</var>,  <var>3674</var>,  <var>3534</var>,  <var>3403</var>,  <var>3272</var>,  <var>3147</var>,  <var>3023</var>,  <var>2907</var>,</td></tr>
+<tr><th id="67">67</th><td>         <var>2792</var>,  <var>2684</var>,  <var>2577</var>,  <var>2476</var>,  <var>2375</var>,  <var>2274</var>,  <var>2173</var>,  <var>2079</var>,  <var>1986</var>,  <var>1897</var>,</td></tr>
+<tr><th id="68">68</th><td>         <var>1810</var>,  <var>1724</var>,  <var>1645</var>,  <var>1567</var>,  <var>1493</var>,  <var>1419</var>,  <var>1351</var>,  <var>1284</var>,  <var>1222</var>,  <var>1161</var>,</td></tr>
+<tr><th id="69">69</th><td>         <var>1105</var>,  <var>1050</var>,   <var>995</var>,   <var>941</var>,   <var>891</var>,   <var>842</var>,   <var>797</var>,   <var>753</var>,   <var>713</var>,   <var>673</var>,</td></tr>
+<tr><th id="70">70</th><td>          <var>636</var>,   <var>599</var>,   <var>566</var>,   <var>533</var>,   <var>503</var>,   <var>473</var>,   <var>446</var>,   <var>419</var>,   <var>392</var>,   <var>365</var>,</td></tr>
+<tr><th id="71">71</th><td>          <var>340</var>,   <var>316</var>,   <var>294</var>,   <var>272</var>,   <var>253</var>,   <var>234</var>,   <var>216</var>,   <var>199</var>,   <var>184</var>,   <var>169</var>,</td></tr>
+<tr><th id="72">72</th><td>          <var>155</var>,   <var>142</var>,   <var>130</var>,   <var>118</var>,   <var>106</var>,    <var>95</var>,    <var>85</var>,    <var>75</var>,    <var>66</var>,    <var>57</var>,</td></tr>
+<tr><th id="73">73</th><td>           <var>49</var>,    <var>41</var>,    <var>34</var>,    <var>27</var>,    <var>21</var>,    <var>15</var>,    <var>10</var>,     <var>5</var>,     <var>0</var></td></tr>
+<tr><th id="74">74</th><td>    },</td></tr>
+<tr><th id="75">75</th><td>    {</td></tr>
+<tr><th id="76">76</th><td>        <var>16384</var>, <var>16092</var>, <var>15801</var>, <var>15510</var>, <var>15219</var>, <var>14930</var>, <var>14641</var>, <var>14355</var>, <var>14069</var>, <var>13785</var>,</td></tr>
+<tr><th id="77">77</th><td>        <var>13501</var>, <var>13219</var>, <var>12938</var>, <var>12661</var>, <var>12384</var>, <var>12112</var>, <var>11841</var>, <var>11571</var>, <var>11301</var>, <var>11037</var>,</td></tr>
+<tr><th id="78">78</th><td>        <var>10773</var>, <var>10514</var>, <var>10256</var>, <var>10005</var>,  <var>9754</var>,  <var>9508</var>,  <var>9263</var>,  <var>9025</var>,  <var>8787</var>,  <var>8557</var>,</td></tr>
+<tr><th id="79">79</th><td>         <var>8327</var>,  <var>8103</var>,  <var>7879</var>,  <var>7655</var>,  <var>7431</var>,  <var>7215</var>,  <var>7000</var>,  <var>6792</var>,  <var>6585</var>,  <var>6387</var>,</td></tr>
+<tr><th id="80">80</th><td>         <var>6190</var>,  <var>5998</var>,  <var>5807</var>,  <var>5625</var>,  <var>5445</var>,  <var>5272</var>,  <var>5100</var>,  <var>4937</var>,  <var>4774</var>,  <var>4613</var>,</td></tr>
+<tr><th id="81">81</th><td>         <var>4452</var>,  <var>4301</var>,  <var>4150</var>,  <var>4007</var>,  <var>3865</var>,  <var>3731</var>,  <var>3597</var>,  <var>3469</var>,  <var>3341</var>,  <var>3218</var>,</td></tr>
+<tr><th id="82">82</th><td>         <var>3099</var>,  <var>2981</var>,  <var>2869</var>,  <var>2758</var>,  <var>2652</var>,  <var>2546</var>,  <var>2440</var>,  <var>2334</var>,  <var>2234</var>,  <var>2134</var>,</td></tr>
+<tr><th id="83">83</th><td>         <var>2041</var>,  <var>1949</var>,  <var>1864</var>,  <var>1779</var>,  <var>1699</var>,  <var>1620</var>,  <var>1547</var>,  <var>1474</var>,  <var>1407</var>,  <var>1340</var>,</td></tr>
+<tr><th id="84">84</th><td>         <var>1278</var>,  <var>1217</var>,  <var>1157</var>,  <var>1097</var>,  <var>1043</var>,   <var>989</var>,   <var>940</var>,   <var>891</var>,   <var>846</var>,   <var>801</var>,</td></tr>
+<tr><th id="85">85</th><td>          <var>759</var>,   <var>718</var>,   <var>680</var>,   <var>643</var>,   <var>609</var>,   <var>575</var>,   <var>543</var>,   <var>511</var>,   <var>479</var>,   <var>447</var>,</td></tr>
+<tr><th id="86">86</th><td>          <var>418</var>,   <var>389</var>,   <var>363</var>,   <var>337</var>,   <var>314</var>,   <var>291</var>,   <var>270</var>,   <var>249</var>,   <var>230</var>,   <var>212</var>,</td></tr>
+<tr><th id="87">87</th><td>          <var>195</var>,   <var>179</var>,   <var>164</var>,   <var>149</var>,   <var>135</var>,   <var>121</var>,   <var>108</var>,    <var>96</var>,    <var>85</var>,    <var>74</var>,</td></tr>
+<tr><th id="88">88</th><td>          <var>64</var>,     <var>54</var>,    <var>45</var>,    <var>36</var>,    <var>28</var>,    <var>20</var>,    <var>13</var>,     <var>6</var>,     <var>0</var></td></tr>
+<tr><th id="89">89</th><td>    }</td></tr>
+<tr><th id="90">90</th><td>};</td></tr>
+<tr><th id="91">91</th><td></td></tr>
+<tr><th id="92">92</th><td></td></tr>
+<tr><th id="93">93</th><td><em>static</em> <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> <dfn class="tu decl def" id="cf_tables_2" title='cf_tables_2' data-type='const uint16_t [8][193]' data-ref="cf_tables_2">cf_tables_2</dfn>[<var>8</var>][<var>193</var>] = {</td></tr>
+<tr><th id="94">94</th><td>    {</td></tr>
+<tr><th id="95">95</th><td>        <var>16384</var>, <var>16104</var>, <var>15825</var>, <var>15546</var>, <var>15268</var>, <var>14991</var>, <var>14714</var>, <var>14439</var>, <var>14164</var>, <var>13891</var>,</td></tr>
+<tr><th id="96">96</th><td>        <var>13620</var>, <var>13350</var>, <var>13081</var>, <var>12815</var>, <var>12549</var>, <var>12287</var>, <var>12025</var>, <var>11765</var>, <var>11505</var>, <var>11250</var>,</td></tr>
+<tr><th id="97">97</th><td>        <var>10996</var>, <var>10746</var>, <var>10497</var>, <var>10254</var>, <var>10011</var>,  <var>9772</var>,  <var>9534</var>,  <var>9303</var>,  <var>9072</var>,  <var>8848</var>,</td></tr>
+<tr><th id="98">98</th><td>         <var>8624</var>,  <var>8406</var>,  <var>8188</var>,  <var>7970</var>,  <var>7752</var>,  <var>7539</var>,  <var>7327</var>,  <var>7123</var>,  <var>6919</var>,  <var>6724</var>,</td></tr>
+<tr><th id="99">99</th><td>         <var>6529</var>,  <var>6339</var>,  <var>6150</var>,  <var>5970</var>,  <var>5790</var>,  <var>5618</var>,  <var>5446</var>,  <var>5282</var>,  <var>5119</var>,  <var>4957</var>,</td></tr>
+<tr><th id="100">100</th><td>         <var>4795</var>,  <var>4642</var>,  <var>4490</var>,  <var>4345</var>,  <var>4201</var>,  <var>4065</var>,  <var>3929</var>,  <var>3798</var>,  <var>3669</var>,  <var>3547</var>,</td></tr>
+<tr><th id="101">101</th><td>         <var>3425</var>,  <var>3310</var>,  <var>3196</var>,  <var>3086</var>,  <var>2976</var>,  <var>2866</var>,  <var>2756</var>,  <var>2650</var>,  <var>2545</var>,  <var>2447</var>,</td></tr>
+<tr><th id="102">102</th><td>         <var>2350</var>,  <var>2260</var>,  <var>2170</var>,  <var>2085</var>,  <var>2000</var>,  <var>1921</var>,  <var>1843</var>,  <var>1770</var>,  <var>1698</var>,  <var>1632</var>,</td></tr>
+<tr><th id="103">103</th><td>         <var>1566</var>,  <var>1501</var>,  <var>1436</var>,  <var>1376</var>,  <var>1316</var>,  <var>1261</var>,  <var>1207</var>,  <var>1157</var>,  <var>1108</var>,  <var>1061</var>,</td></tr>
+<tr><th id="104">104</th><td>         <var>1015</var>,   <var>973</var>,   <var>931</var>,   <var>893</var>,   <var>855</var>,   <var>819</var>,   <var>783</var>,   <var>747</var>,   <var>711</var>,   <var>677</var>,</td></tr>
+<tr><th id="105">105</th><td>          <var>644</var>,   <var>614</var>,   <var>584</var>,   <var>557</var>,   <var>530</var>,   <var>505</var>,   <var>480</var>,   <var>458</var>,   <var>436</var>,   <var>416</var>,</td></tr>
+<tr><th id="106">106</th><td>          <var>396</var>,   <var>378</var>,   <var>360</var>,   <var>343</var>,   <var>326</var>,   <var>310</var>,   <var>295</var>,   <var>281</var>,   <var>267</var>,   <var>255</var>,</td></tr>
+<tr><th id="107">107</th><td>          <var>243</var>,   <var>232</var>,   <var>221</var>,   <var>211</var>,   <var>201</var>,   <var>192</var>,   <var>183</var>,   <var>174</var>,   <var>166</var>,   <var>158</var>,</td></tr>
+<tr><th id="108">108</th><td>          <var>150</var>,   <var>142</var>,   <var>134</var>,   <var>126</var>,   <var>119</var>,   <var>112</var>,   <var>106</var>,   <var>100</var>,    <var>95</var>,    <var>90</var>,</td></tr>
+<tr><th id="109">109</th><td>           <var>85</var>,    <var>80</var>,    <var>76</var>,    <var>72</var>,    <var>69</var>,    <var>66</var>,    <var>63</var>,    <var>60</var>,    <var>57</var>,    <var>54</var>,</td></tr>
+<tr><th id="110">110</th><td>           <var>51</var>,    <var>48</var>,    <var>46</var>,    <var>44</var>,    <var>42</var>,    <var>40</var>,    <var>38</var>,    <var>36</var>,    <var>34</var>,    <var>33</var>,</td></tr>
+<tr><th id="111">111</th><td>           <var>32</var>,    <var>31</var>,    <var>30</var>,    <var>29</var>,    <var>28</var>,    <var>27</var>,    <var>26</var>,    <var>25</var>,    <var>24</var>,    <var>23</var>,</td></tr>
+<tr><th id="112">112</th><td>           <var>22</var>,    <var>21</var>,    <var>20</var>,    <var>19</var>,    <var>18</var>,    <var>17</var>,    <var>16</var>,    <var>15</var>,    <var>14</var>,    <var>13</var>,</td></tr>
+<tr><th id="113">113</th><td>           <var>12</var>,    <var>11</var>,    <var>10</var>,     <var>9</var>,     <var>8</var>,     <var>7</var>,     <var>6</var>,     <var>5</var>,     <var>4</var>,     <var>3</var>,</td></tr>
+<tr><th id="114">114</th><td>            <var>2</var>,     <var>1</var>,     <var>0</var></td></tr>
+<tr><th id="115">115</th><td>    },</td></tr>
+<tr><th id="116">116</th><td>    {</td></tr>
+<tr><th id="117">117</th><td>        <var>16384</var>, <var>16116</var>, <var>15849</var>, <var>15582</var>, <var>15316</var>, <var>15050</var>, <var>14785</var>, <var>14521</var>, <var>14257</var>, <var>13995</var>,</td></tr>
+<tr><th id="118">118</th><td>        <var>13734</var>, <var>13476</var>, <var>13218</var>, <var>12963</var>, <var>12708</var>, <var>12457</var>, <var>12206</var>, <var>11956</var>, <var>11706</var>, <var>11460</var>,</td></tr>
+<tr><th id="119">119</th><td>        <var>11215</var>, <var>10975</var>, <var>10735</var>, <var>10500</var>, <var>10265</var>, <var>10034</var>,  <var>9803</var>,  <var>9579</var>,  <var>9355</var>,  <var>9136</var>,</td></tr>
+<tr><th id="120">120</th><td>         <var>8917</var>,  <var>8703</var>,  <var>8489</var>,  <var>8275</var>,  <var>8061</var>,  <var>7853</var>,  <var>7645</var>,  <var>7444</var>,  <var>7244</var>,  <var>7051</var>,</td></tr>
+<tr><th id="121">121</th><td>         <var>6858</var>,  <var>6671</var>,  <var>6484</var>,  <var>6305</var>,  <var>6127</var>,  <var>5956</var>,  <var>5785</var>,  <var>5622</var>,  <var>5459</var>,  <var>5298</var>,</td></tr>
+<tr><th id="122">122</th><td>         <var>5137</var>,  <var>4983</var>,  <var>4830</var>,  <var>4684</var>,  <var>4539</var>,  <var>4401</var>,  <var>4263</var>,  <var>4131</var>,  <var>3999</var>,  <var>3874</var>,</td></tr>
+<tr><th id="123">123</th><td>         <var>3750</var>,  <var>3632</var>,  <var>3515</var>,  <var>3401</var>,  <var>3287</var>,  <var>3173</var>,  <var>3059</var>,  <var>2949</var>,  <var>2840</var>,  <var>2737</var>,</td></tr>
+<tr><th id="124">124</th><td>         <var>2635</var>,  <var>2539</var>,  <var>2444</var>,  <var>2354</var>,  <var>2264</var>,  <var>2181</var>,  <var>2098</var>,  <var>2020</var>,  <var>1943</var>,  <var>1872</var>,</td></tr>
+<tr><th id="125">125</th><td>         <var>1801</var>,  <var>1731</var>,  <var>1661</var>,  <var>1596</var>,  <var>1532</var>,  <var>1472</var>,  <var>1412</var>,  <var>1357</var>,  <var>1303</var>,  <var>1251</var>,</td></tr>
+<tr><th id="126">126</th><td>         <var>1200</var>,  <var>1153</var>,  <var>1106</var>,  <var>1063</var>,  <var>1020</var>,   <var>979</var>,   <var>938</var>,   <var>897</var>,   <var>856</var>,   <var>818</var>,</td></tr>
+<tr><th id="127">127</th><td>          <var>780</var>,   <var>746</var>,   <var>712</var>,   <var>681</var>,   <var>650</var>,   <var>621</var>,   <var>592</var>,   <var>566</var>,   <var>540</var>,   <var>517</var>,</td></tr>
+<tr><th id="128">128</th><td>          <var>494</var>,   <var>473</var>,   <var>452</var>,   <var>431</var>,   <var>410</var>,   <var>391</var>,   <var>373</var>,   <var>356</var>,   <var>340</var>,   <var>325</var>,</td></tr>
+<tr><th id="129">129</th><td>          <var>310</var>,   <var>296</var>,   <var>282</var>,   <var>270</var>,   <var>258</var>,   <var>247</var>,   <var>236</var>,   <var>225</var>,   <var>214</var>,   <var>203</var>,</td></tr>
+<tr><th id="130">130</th><td>          <var>192</var>,   <var>182</var>,   <var>172</var>,   <var>162</var>,   <var>153</var>,   <var>144</var>,   <var>136</var>,   <var>128</var>,   <var>121</var>,   <var>114</var>,</td></tr>
+<tr><th id="131">131</th><td>          <var>108</var>,   <var>102</var>,    <var>97</var>,    <var>92</var>,    <var>87</var>,    <var>82</var>,    <var>77</var>,    <var>73</var>,    <var>69</var>,    <var>65</var>,</td></tr>
+<tr><th id="132">132</th><td>           <var>62</var>,    <var>59</var>,    <var>56</var>,    <var>53</var>,    <var>50</var>,    <var>47</var>,    <var>45</var>,    <var>43</var>,    <var>41</var>,    <var>39</var>,</td></tr>
+<tr><th id="133">133</th><td>           <var>37</var>,    <var>35</var>,    <var>33</var>,    <var>31</var>,    <var>29</var>,    <var>27</var>,    <var>26</var>,    <var>25</var>,    <var>24</var>,    <var>23</var>,</td></tr>
+<tr><th id="134">134</th><td>           <var>22</var>,    <var>21</var>,    <var>20</var>,    <var>19</var>,    <var>18</var>,    <var>17</var>,    <var>16</var>,    <var>15</var>,    <var>14</var>,    <var>13</var>,</td></tr>
+<tr><th id="135">135</th><td>           <var>12</var>,    <var>11</var>,    <var>10</var>,     <var>9</var>,     <var>8</var>,     <var>7</var>,     <var>6</var>,     <var>5</var>,     <var>4</var>,     <var>3</var>,</td></tr>
+<tr><th id="136">136</th><td>            <var>2</var>,     <var>1</var>,     <var>0</var></td></tr>
+<tr><th id="137">137</th><td>    },</td></tr>
+<tr><th id="138">138</th><td>    {</td></tr>
+<tr><th id="139">139</th><td>        <var>16384</var>, <var>16128</var>, <var>15872</var>, <var>15617</var>, <var>15362</var>, <var>15107</var>, <var>14853</var>, <var>14600</var>, <var>14347</var>, <var>14096</var>,</td></tr>
+<tr><th id="140">140</th><td>        <var>13846</var>, <var>13597</var>, <var>13350</var>, <var>13105</var>, <var>12860</var>, <var>12618</var>, <var>12376</var>, <var>12135</var>, <var>11894</var>, <var>11657</var>,</td></tr>
+<tr><th id="141">141</th><td>        <var>11421</var>, <var>11189</var>, <var>10957</var>, <var>10730</var>, <var>10503</var>, <var>10279</var>, <var>10056</var>,  <var>9838</var>,  <var>9620</var>,  <var>9407</var>,</td></tr>
+<tr><th id="142">142</th><td>         <var>9195</var>,  <var>8987</var>,  <var>8779</var>,  <var>8571</var>,  <var>8363</var>,  <var>8159</var>,  <var>7955</var>,  <var>7758</var>,  <var>7561</var>,  <var>7371</var>,</td></tr>
+<tr><th id="143">143</th><td>         <var>7182</var>,  <var>6997</var>,  <var>6812</var>,  <var>6635</var>,  <var>6459</var>,  <var>6289</var>,  <var>6120</var>,  <var>5957</var>,  <var>5795</var>,  <var>5634</var>,</td></tr>
+<tr><th id="144">144</th><td>         <var>5473</var>,  <var>5319</var>,  <var>5165</var>,  <var>5018</var>,  <var>4871</var>,  <var>4732</var>,  <var>4593</var>,  <var>4458</var>,  <var>4324</var>,  <var>4197</var>,</td></tr>
+<tr><th id="145">145</th><td>         <var>4071</var>,  <var>3951</var>,  <var>3831</var>,  <var>3714</var>,  <var>3597</var>,  <var>3480</var>,  <var>3363</var>,  <var>3250</var>,  <var>3138</var>,  <var>3032</var>,</td></tr>
+<tr><th id="146">146</th><td>         <var>2927</var>,  <var>2828</var>,  <var>2729</var>,  <var>2635</var>,  <var>2541</var>,  <var>2453</var>,  <var>2366</var>,  <var>2284</var>,  <var>2202</var>,  <var>2126</var>,</td></tr>
+<tr><th id="147">147</th><td>         <var>2050</var>,  <var>1975</var>,  <var>1900</var>,  <var>1830</var>,  <var>1761</var>,  <var>1697</var>,  <var>1633</var>,  <var>1574</var>,  <var>1515</var>,  <var>1459</var>,</td></tr>
+<tr><th id="148">148</th><td>         <var>1403</var>,  <var>1351</var>,  <var>1300</var>,  <var>1252</var>,  <var>1205</var>,  <var>1160</var>,  <var>1115</var>,  <var>1070</var>,  <var>1025</var>,   <var>982</var>,</td></tr>
+<tr><th id="149">149</th><td>          <var>939</var>,   <var>899</var>,   <var>860</var>,   <var>824</var>,   <var>789</var>,   <var>756</var>,   <var>723</var>,   <var>693</var>,   <var>663</var>,   <var>636</var>,</td></tr>
+<tr><th id="150">150</th><td>          <var>609</var>,   <var>584</var>,   <var>559</var>,   <var>535</var>,   <var>511</var>,   <var>489</var>,   <var>467</var>,   <var>447</var>,   <var>427</var>,   <var>409</var>,</td></tr>
+<tr><th id="151">151</th><td>          <var>391</var>,   <var>374</var>,   <var>358</var>,   <var>343</var>,   <var>328</var>,   <var>313</var>,   <var>300</var>,   <var>287</var>,   <var>274</var>,   <var>261</var>,</td></tr>
+<tr><th id="152">152</th><td>          <var>248</var>,   <var>235</var>,   <var>223</var>,   <var>211</var>,   <var>200</var>,   <var>189</var>,   <var>179</var>,   <var>169</var>,   <var>160</var>,   <var>151</var>,</td></tr>
+<tr><th id="153">153</th><td>          <var>143</var>,   <var>135</var>,   <var>128</var>,   <var>121</var>,   <var>115</var>,   <var>109</var>,   <var>103</var>,    <var>97</var>,    <var>92</var>,    <var>87</var>,</td></tr>
+<tr><th id="154">154</th><td>           <var>82</var>,    <var>77</var>,    <var>73</var>,    <var>69</var>,    <var>65</var>,    <var>61</var>,    <var>58</var>,    <var>55</var>,    <var>52</var>,    <var>49</var>,</td></tr>
+<tr><th id="155">155</th><td>           <var>46</var>,    <var>43</var>,    <var>40</var>,    <var>37</var>,    <var>35</var>,    <var>33</var>,    <var>31</var>,    <var>29</var>,    <var>27</var>,    <var>25</var>,</td></tr>
+<tr><th id="156">156</th><td>           <var>23</var>,    <var>21</var>,    <var>20</var>,    <var>19</var>,    <var>18</var>,    <var>17</var>,    <var>16</var>,    <var>15</var>,    <var>14</var>,    <var>13</var>,</td></tr>
+<tr><th id="157">157</th><td>           <var>12</var>,    <var>11</var>,    <var>10</var>,     <var>9</var>,     <var>8</var>,     <var>7</var>,     <var>6</var>,     <var>5</var>,     <var>4</var>,     <var>3</var>,</td></tr>
+<tr><th id="158">158</th><td>            <var>2</var>,     <var>1</var>,     <var>0</var></td></tr>
+<tr><th id="159">159</th><td>    },</td></tr>
+<tr><th id="160">160</th><td>    {</td></tr>
+<tr><th id="161">161</th><td>        <var>16384</var>, <var>16139</var>, <var>15894</var>, <var>15649</var>, <var>15405</var>, <var>15162</var>, <var>14919</var>, <var>14677</var>, <var>14435</var>, <var>14195</var>,</td></tr>
+<tr><th id="162">162</th><td>        <var>13955</var>, <var>13717</var>, <var>13479</var>, <var>13243</var>, <var>13008</var>, <var>12775</var>, <var>12542</var>, <var>12310</var>, <var>12079</var>, <var>11851</var>,</td></tr>
+<tr><th id="163">163</th><td>        <var>11623</var>, <var>11399</var>, <var>11176</var>, <var>10956</var>, <var>10737</var>, <var>10521</var>, <var>10305</var>, <var>10094</var>,  <var>9883</var>,  <var>9677</var>,</td></tr>
+<tr><th id="164">164</th><td>         <var>9471</var>,  <var>9268</var>,  <var>9065</var>,  <var>8862</var>,  <var>8659</var>,  <var>8459</var>,  <var>8260</var>,  <var>8067</var>,  <var>7874</var>,  <var>7688</var>,</td></tr>
+<tr><th id="165">165</th><td>         <var>7502</var>,  <var>7321</var>,  <var>7140</var>,  <var>6965</var>,  <var>6790</var>,  <var>6621</var>,  <var>6452</var>,  <var>6290</var>,  <var>6128</var>,  <var>5968</var>,</td></tr>
+<tr><th id="166">166</th><td>         <var>5808</var>,  <var>5655</var>,  <var>5503</var>,  <var>5356</var>,  <var>5209</var>,  <var>5069</var>,  <var>4929</var>,  <var>4794</var>,  <var>4660</var>,  <var>4532</var>,</td></tr>
+<tr><th id="167">167</th><td>         <var>4404</var>,  <var>4282</var>,  <var>4160</var>,  <var>4041</var>,  <var>3922</var>,  <var>3803</var>,  <var>3684</var>,  <var>3568</var>,  <var>3452</var>,  <var>3343</var>,</td></tr>
+<tr><th id="168">168</th><td>         <var>3234</var>,  <var>3131</var>,  <var>3029</var>,  <var>2931</var>,  <var>2833</var>,  <var>2741</var>,  <var>2649</var>,  <var>2563</var>,  <var>2477</var>,  <var>2396</var>,</td></tr>
+<tr><th id="169">169</th><td>         <var>2316</var>,  <var>2236</var>,  <var>2157</var>,  <var>2083</var>,  <var>2009</var>,  <var>1940</var>,  <var>1871</var>,  <var>1807</var>,  <var>1743</var>,  <var>1683</var>,</td></tr>
+<tr><th id="170">170</th><td>         <var>1623</var>,  <var>1567</var>,  <var>1511</var>,  <var>1459</var>,  <var>1407</var>,  <var>1357</var>,  <var>1307</var>,  <var>1257</var>,  <var>1207</var>,  <var>1159</var>,</td></tr>
+<tr><th id="171">171</th><td>         <var>1111</var>,  <var>1067</var>,  <var>1023</var>,   <var>983</var>,   <var>943</var>,   <var>905</var>,   <var>868</var>,   <var>834</var>,   <var>800</var>,   <var>769</var>,</td></tr>
+<tr><th id="172">172</th><td>          <var>738</var>,   <var>709</var>,   <var>681</var>,   <var>653</var>,   <var>625</var>,   <var>600</var>,   <var>575</var>,   <var>552</var>,   <var>529</var>,   <var>508</var>,</td></tr>
+<tr><th id="173">173</th><td>          <var>487</var>,   <var>466</var>,   <var>447</var>,   <var>428</var>,   <var>410</var>,   <var>392</var>,   <var>376</var>,   <var>360</var>,   <var>344</var>,   <var>328</var>,</td></tr>
+<tr><th id="174">174</th><td>          <var>313</var>,   <var>298</var>,   <var>283</var>,   <var>268</var>,   <var>255</var>,   <var>242</var>,   <var>230</var>,   <var>218</var>,   <var>207</var>,   <var>196</var>,</td></tr>
+<tr><th id="175">175</th><td>          <var>186</var>,   <var>176</var>,   <var>167</var>,   <var>158</var>,   <var>150</var>,   <var>142</var>,   <var>135</var>,   <var>128</var>,   <var>121</var>,   <var>114</var>,</td></tr>
+<tr><th id="176">176</th><td>          <var>108</var>,   <var>102</var>,    <var>97</var>,    <var>92</var>,    <var>87</var>,    <var>82</var>,    <var>78</var>,    <var>74</var>,    <var>70</var>,    <var>66</var>,</td></tr>
+<tr><th id="177">177</th><td>           <var>62</var>,    <var>58</var>,    <var>54</var>,    <var>50</var>,    <var>47</var>,    <var>44</var>,    <var>41</var>,    <var>38</var>,    <var>35</var>,    <var>32</var>,</td></tr>
+<tr><th id="178">178</th><td>           <var>30</var>,    <var>28</var>,    <var>26</var>,    <var>24</var>,    <var>22</var>,    <var>20</var>,    <var>18</var>,    <var>16</var>,    <var>14</var>,    <var>13</var>,</td></tr>
+<tr><th id="179">179</th><td>           <var>12</var>,    <var>11</var>,    <var>10</var>,     <var>9</var>,     <var>8</var>,     <var>7</var>,     <var>6</var>,     <var>5</var>,     <var>4</var>,     <var>3</var>,</td></tr>
+<tr><th id="180">180</th><td>            <var>2</var>,     <var>1</var>,     <var>0</var></td></tr>
+<tr><th id="181">181</th><td>    },</td></tr>
+<tr><th id="182">182</th><td>    {</td></tr>
+<tr><th id="183">183</th><td>        <var>16384</var>, <var>16149</var>, <var>15915</var>, <var>15681</var>, <var>15447</var>, <var>15214</var>, <var>14981</var>, <var>14749</var>, <var>14517</var>, <var>14286</var>,</td></tr>
+<tr><th id="184">184</th><td>        <var>14055</var>, <var>13827</var>, <var>13599</var>, <var>13373</var>, <var>13147</var>, <var>12923</var>, <var>12699</var>, <var>12476</var>, <var>12253</var>, <var>12034</var>,</td></tr>
+<tr><th id="185">185</th><td>        <var>11815</var>, <var>11599</var>, <var>11383</var>, <var>11171</var>, <var>10959</var>, <var>10750</var>, <var>10541</var>, <var>10337</var>, <var>10133</var>,  <var>9933</var>,</td></tr>
+<tr><th id="186">186</th><td>         <var>9733</var>,  <var>9536</var>,  <var>9339</var>,  <var>9142</var>,  <var>8945</var>,  <var>8751</var>,  <var>8557</var>,  <var>8369</var>,  <var>8181</var>,  <var>7998</var>,</td></tr>
+<tr><th id="187">187</th><td>         <var>7816</var>,  <var>7638</var>,  <var>7460</var>,  <var>7288</var>,  <var>7116</var>,  <var>6950</var>,  <var>6785</var>,  <var>6625</var>,  <var>6465</var>,  <var>6306</var>,</td></tr>
+<tr><th id="188">188</th><td>         <var>6147</var>,  <var>5995</var>,  <var>5843</var>,  <var>5697</var>,  <var>5551</var>,  <var>5411</var>,  <var>5271</var>,  <var>5135</var>,  <var>5000</var>,  <var>4871</var>,</td></tr>
+<tr><th id="189">189</th><td>         <var>4742</var>,  <var>4618</var>,  <var>4495</var>,  <var>4374</var>,  <var>4253</var>,  <var>4132</var>,  <var>4011</var>,  <var>3893</var>,  <var>3775</var>,  <var>3663</var>,</td></tr>
+<tr><th id="190">190</th><td>         <var>3552</var>,  <var>3446</var>,  <var>3340</var>,  <var>3239</var>,  <var>3138</var>,  <var>3043</var>,  <var>2948</var>,  <var>2858</var>,  <var>2768</var>,  <var>2684</var>,</td></tr>
+<tr><th id="191">191</th><td>         <var>2600</var>,  <var>2516</var>,  <var>2433</var>,  <var>2355</var>,  <var>2278</var>,  <var>2205</var>,  <var>2133</var>,  <var>2065</var>,  <var>1997</var>,  <var>1932</var>,</td></tr>
+<tr><th id="192">192</th><td>         <var>1867</var>,  <var>1807</var>,  <var>1747</var>,  <var>1690</var>,  <var>1634</var>,  <var>1580</var>,  <var>1526</var>,  <var>1472</var>,  <var>1418</var>,  <var>1366</var>,</td></tr>
+<tr><th id="193">193</th><td>         <var>1314</var>,  <var>1266</var>,  <var>1218</var>,  <var>1174</var>,  <var>1130</var>,  <var>1088</var>,  <var>1047</var>,  <var>1009</var>,   <var>971</var>,   <var>936</var>,</td></tr>
+<tr><th id="194">194</th><td>          <var>901</var>,   <var>868</var>,   <var>836</var>,   <var>804</var>,   <var>772</var>,   <var>743</var>,   <var>714</var>,   <var>685</var>,   <var>658</var>,   <var>631</var>,</td></tr>
+<tr><th id="195">195</th><td>          <var>606</var>,   <var>582</var>,   <var>559</var>,   <var>536</var>,   <var>515</var>,   <var>494</var>,   <var>475</var>,   <var>456</var>,   <var>437</var>,   <var>418</var>,</td></tr>
+<tr><th id="196">196</th><td>          <var>399</var>,   <var>380</var>,   <var>362</var>,   <var>344</var>,   <var>328</var>,   <var>312</var>,   <var>297</var>,   <var>283</var>,   <var>270</var>,   <var>257</var>,</td></tr>
+<tr><th id="197">197</th><td>          <var>245</var>,   <var>233</var>,   <var>222</var>,   <var>211</var>,   <var>201</var>,   <var>191</var>,   <var>181</var>,   <var>172</var>,   <var>163</var>,   <var>155</var>,</td></tr>
+<tr><th id="198">198</th><td>          <var>147</var>,   <var>139</var>,   <var>132</var>,   <var>125</var>,   <var>119</var>,   <var>113</var>,   <var>107</var>,   <var>101</var>,    <var>96</var>,    <var>91</var>,</td></tr>
+<tr><th id="199">199</th><td>           <var>86</var>,    <var>81</var>,    <var>76</var>,    <var>71</var>,    <var>66</var>,    <var>62</var>,    <var>58</var>,    <var>54</var>,    <var>50</var>,    <var>46</var>,</td></tr>
+<tr><th id="200">200</th><td>           <var>43</var>,    <var>40</var>,    <var>37</var>,    <var>34</var>,    <var>31</var>,    <var>28</var>,    <var>26</var>,    <var>24</var>,    <var>22</var>,    <var>20</var>,</td></tr>
+<tr><th id="201">201</th><td>           <var>18</var>,    <var>16</var>,    <var>14</var>,    <var>12</var>,    <var>10</var>,     <var>8</var>,     <var>6</var>,     <var>5</var>,     <var>4</var>,     <var>3</var>,</td></tr>
+<tr><th id="202">202</th><td>            <var>2</var>,     <var>1</var>,     <var>0</var></td></tr>
+<tr><th id="203">203</th><td>    },</td></tr>
+<tr><th id="204">204</th><td>    {</td></tr>
+<tr><th id="205">205</th><td>        <var>16384</var>, <var>16159</var>, <var>15934</var>, <var>15709</var>, <var>15485</var>, <var>15261</var>, <var>15038</var>, <var>14816</var>, <var>14594</var>, <var>14373</var>,</td></tr>
+<tr><th id="206">206</th><td>        <var>14152</var>, <var>13933</var>, <var>13714</var>, <var>13497</var>, <var>13280</var>, <var>13065</var>, <var>12850</var>, <var>12636</var>, <var>12422</var>, <var>12211</var>,</td></tr>
+<tr><th id="207">207</th><td>        <var>12000</var>, <var>11791</var>, <var>11583</var>, <var>11378</var>, <var>11173</var>, <var>10971</var>, <var>10769</var>, <var>10571</var>, <var>10373</var>, <var>10179</var>,</td></tr>
+<tr><th id="208">208</th><td>         <var>9985</var>,  <var>9793</var>,  <var>9601</var>,  <var>9409</var>,  <var>9217</var>,  <var>9029</var>,  <var>8842</var>,  <var>8658</var>,  <var>8475</var>,  <var>8297</var>,</td></tr>
+<tr><th id="209">209</th><td>         <var>8120</var>,  <var>7946</var>,  <var>7773</var>,  <var>7604</var>,  <var>7435</var>,  <var>7271</var>,  <var>7108</var>,  <var>6950</var>,  <var>6792</var>,  <var>6634</var>,</td></tr>
+<tr><th id="210">210</th><td>         <var>6477</var>,  <var>6326</var>,  <var>6175</var>,  <var>6029</var>,  <var>5883</var>,  <var>5742</var>,  <var>5602</var>,  <var>5466</var>,  <var>5330</var>,  <var>5199</var>,</td></tr>
+<tr><th id="211">211</th><td>         <var>5068</var>,  <var>4943</var>,  <var>4818</var>,  <var>4696</var>,  <var>4574</var>,  <var>4452</var>,  <var>4330</var>,  <var>4211</var>,  <var>4093</var>,  <var>3979</var>,</td></tr>
+<tr><th id="212">212</th><td>         <var>3866</var>,  <var>3759</var>,  <var>3652</var>,  <var>3549</var>,  <var>3446</var>,  <var>3348</var>,  <var>3250</var>,  <var>3157</var>,  <var>3065</var>,  <var>2977</var>,</td></tr>
+<tr><th id="213">213</th><td>         <var>2889</var>,  <var>2802</var>,  <var>2716</var>,  <var>2634</var>,  <var>2553</var>,  <var>2476</var>,  <var>2399</var>,  <var>2326</var>,  <var>2254</var>,  <var>2185</var>,</td></tr>
+<tr><th id="214">214</th><td>         <var>2117</var>,  <var>2052</var>,  <var>1987</var>,  <var>1926</var>,  <var>1866</var>,  <var>1808</var>,  <var>1750</var>,  <var>1692</var>,  <var>1634</var>,  <var>1578</var>,</td></tr>
+<tr><th id="215">215</th><td>         <var>1522</var>,  <var>1470</var>,  <var>1418</var>,  <var>1369</var>,  <var>1321</var>,  <var>1275</var>,  <var>1229</var>,  <var>1187</var>,  <var>1145</var>,  <var>1105</var>,</td></tr>
+<tr><th id="216">216</th><td>         <var>1066</var>,  <var>1027</var>,   <var>991</var>,   <var>955</var>,   <var>919</var>,   <var>883</var>,   <var>850</var>,   <var>817</var>,   <var>786</var>,   <var>756</var>,</td></tr>
+<tr><th id="217">217</th><td>          <var>728</var>,   <var>700</var>,   <var>674</var>,   <var>648</var>,   <var>624</var>,   <var>600</var>,   <var>578</var>,   <var>556</var>,   <var>534</var>,   <var>512</var>,</td></tr>
+<tr><th id="218">218</th><td>          <var>490</var>,   <var>468</var>,   <var>447</var>,   <var>426</var>,   <var>407</var>,   <var>388</var>,   <var>371</var>,   <var>354</var>,   <var>338</var>,   <var>322</var>,</td></tr>
+<tr><th id="219">219</th><td>          <var>307</var>,   <var>293</var>,   <var>280</var>,   <var>267</var>,   <var>255</var>,   <var>243</var>,   <var>231</var>,   <var>219</var>,   <var>209</var>,   <var>199</var>,</td></tr>
+<tr><th id="220">220</th><td>          <var>189</var>,   <var>179</var>,   <var>170</var>,   <var>161</var>,   <var>153</var>,   <var>145</var>,   <var>138</var>,   <var>131</var>,   <var>124</var>,   <var>117</var>,</td></tr>
+<tr><th id="221">221</th><td>          <var>111</var>,   <var>105</var>,    <var>99</var>,    <var>93</var>,    <var>87</var>,    <var>81</var>,    <var>76</var>,    <var>71</var>,    <var>66</var>,    <var>61</var>,</td></tr>
+<tr><th id="222">222</th><td>           <var>57</var>,    <var>53</var>,    <var>49</var>,    <var>45</var>,    <var>42</var>,    <var>39</var>,    <var>36</var>,    <var>33</var>,    <var>30</var>,    <var>27</var>,</td></tr>
+<tr><th id="223">223</th><td>           <var>24</var>,    <var>21</var>,    <var>19</var>,    <var>17</var>,    <var>15</var>,    <var>13</var>,    <var>11</var>,     <var>9</var>,     <var>7</var>,     <var>5</var>,</td></tr>
+<tr><th id="224">224</th><td>            <var>3</var>,     <var>1</var>,     <var>0</var></td></tr>
+<tr><th id="225">225</th><td>    },</td></tr>
+<tr><th id="226">226</th><td>    {</td></tr>
+<tr><th id="227">227</th><td>        <var>16384</var>, <var>16169</var>, <var>15954</var>, <var>15739</var>, <var>15524</var>, <var>15310</var>, <var>15096</var>, <var>14883</var>, <var>14670</var>, <var>14458</var>,</td></tr>
+<tr><th id="228">228</th><td>        <var>14246</var>, <var>14035</var>, <var>13824</var>, <var>13614</var>, <var>13405</var>, <var>13198</var>, <var>12991</var>, <var>12785</var>, <var>12579</var>, <var>12376</var>,</td></tr>
+<tr><th id="229">229</th><td>        <var>12173</var>, <var>11972</var>, <var>11772</var>, <var>11574</var>, <var>11377</var>, <var>11182</var>, <var>10987</var>, <var>10795</var>, <var>10603</var>, <var>10414</var>,</td></tr>
+<tr><th id="230">230</th><td>        <var>10226</var>, <var>10040</var>,  <var>9854</var>,  <var>9668</var>,  <var>9482</var>,  <var>9299</var>,  <var>9116</var>,  <var>8937</var>,  <var>8759</var>,  <var>8585</var>,</td></tr>
+<tr><th id="231">231</th><td>         <var>8411</var>,  <var>8241</var>,  <var>8071</var>,  <var>7906</var>,  <var>7741</var>,  <var>7580</var>,  <var>7419</var>,  <var>7263</var>,  <var>7107</var>,  <var>6952</var>,</td></tr>
+<tr><th id="232">232</th><td>         <var>6797</var>,  <var>6647</var>,  <var>6497</var>,  <var>6353</var>,  <var>6209</var>,  <var>6070</var>,  <var>5931</var>,  <var>5796</var>,  <var>5661</var>,  <var>5531</var>,</td></tr>
+<tr><th id="233">233</th><td>         <var>5401</var>,  <var>5275</var>,  <var>5150</var>,  <var>5027</var>,  <var>4904</var>,  <var>4781</var>,  <var>4658</var>,  <var>4538</var>,  <var>4419</var>,  <var>4304</var>,</td></tr>
+<tr><th id="234">234</th><td>         <var>4190</var>,  <var>4081</var>,  <var>3972</var>,  <var>3867</var>,  <var>3762</var>,  <var>3662</var>,  <var>3562</var>,  <var>3467</var>,  <var>3372</var>,  <var>3281</var>,</td></tr>
+<tr><th id="235">235</th><td>         <var>3191</var>,  <var>3101</var>,  <var>3012</var>,  <var>2928</var>,  <var>2844</var>,  <var>2764</var>,  <var>2684</var>,  <var>2608</var>,  <var>2533</var>,  <var>2460</var>,</td></tr>
+<tr><th id="236">236</th><td>         <var>2387</var>,  <var>2318</var>,  <var>2250</var>,  <var>2185</var>,  <var>2121</var>,  <var>2059</var>,  <var>1997</var>,  <var>1935</var>,  <var>1873</var>,  <var>1813</var>,</td></tr>
+<tr><th id="237">237</th><td>         <var>1754</var>,  <var>1698</var>,  <var>1642</var>,  <var>1588</var>,  <var>1535</var>,  <var>1483</var>,  <var>1433</var>,  <var>1384</var>,  <var>1338</var>,  <var>1292</var>,</td></tr>
+<tr><th id="238">238</th><td>         <var>1249</var>,  <var>1206</var>,  <var>1165</var>,  <var>1125</var>,  <var>1085</var>,  <var>1045</var>,  <var>1008</var>,   <var>971</var>,   <var>937</var>,   <var>903</var>,</td></tr>
+<tr><th id="239">239</th><td>          <var>871</var>,   <var>840</var>,   <var>810</var>,   <var>780</var>,   <var>752</var>,   <var>724</var>,   <var>698</var>,   <var>672</var>,   <var>647</var>,   <var>622</var>,</td></tr>
+<tr><th id="240">240</th><td>          <var>597</var>,   <var>572</var>,   <var>548</var>,   <var>524</var>,   <var>502</var>,   <var>480</var>,   <var>460</var>,   <var>440</var>,   <var>421</var>,   <var>403</var>,</td></tr>
+<tr><th id="241">241</th><td>          <var>386</var>,   <var>369</var>,   <var>353</var>,   <var>337</var>,   <var>323</var>,   <var>309</var>,   <var>295</var>,   <var>281</var>,   <var>268</var>,   <var>255</var>,</td></tr>
+<tr><th id="242">242</th><td>          <var>243</var>,   <var>231</var>,   <var>220</var>,   <var>209</var>,   <var>199</var>,   <var>189</var>,   <var>180</var>,   <var>171</var>,   <var>163</var>,   <var>155</var>,</td></tr>
+<tr><th id="243">243</th><td>          <var>147</var>,   <var>139</var>,   <var>131</var>,   <var>123</var>,   <var>116</var>,   <var>109</var>,   <var>102</var>,    <var>95</var>,    <var>89</var>,    <var>83</var>,</td></tr>
+<tr><th id="244">244</th><td>           <var>77</var>,    <var>72</var>,    <var>67</var>,    <var>62</var>,    <var>57</var>,    <var>52</var>,    <var>48</var>,    <var>44</var>,    <var>40</var>,    <var>36</var>,</td></tr>
+<tr><th id="245">245</th><td>           <var>32</var>,    <var>28</var>,    <var>25</var>,    <var>22</var>,    <var>19</var>,    <var>16</var>,    <var>13</var>,    <var>10</var>,     <var>8</var>,     <var>6</var>,</td></tr>
+<tr><th id="246">246</th><td>            <var>4</var>,     <var>2</var>,     <var>0</var></td></tr>
+<tr><th id="247">247</th><td>    },</td></tr>
+<tr><th id="248">248</th><td>    {</td></tr>
+<tr><th id="249">249</th><td>        <var>16384</var>, <var>16177</var>, <var>15970</var>, <var>15764</var>, <var>15558</var>, <var>15353</var>, <var>15148</var>, <var>14944</var>, <var>14740</var>, <var>14537</var>,</td></tr>
+<tr><th id="250">250</th><td>        <var>14334</var>, <var>14132</var>, <var>13930</var>, <var>13729</var>, <var>13529</var>, <var>13330</var>, <var>13131</var>, <var>12933</var>, <var>12735</var>, <var>12539</var>,</td></tr>
+<tr><th id="251">251</th><td>        <var>12343</var>, <var>12150</var>, <var>11957</var>, <var>11766</var>, <var>11576</var>, <var>11388</var>, <var>11200</var>, <var>11015</var>, <var>10830</var>, <var>10647</var>,</td></tr>
+<tr><th id="252">252</th><td>        <var>10465</var>, <var>10285</var>, <var>10105</var>,  <var>9925</var>,  <var>9745</var>,  <var>9568</var>,  <var>9391</var>,  <var>9218</var>,  <var>9045</var>,  <var>8876</var>,</td></tr>
+<tr><th id="253">253</th><td>         <var>8707</var>,  <var>8541</var>,  <var>8375</var>,  <var>8213</var>,  <var>8051</var>,  <var>7894</var>,  <var>7737</var>,  <var>7583</var>,  <var>7429</var>,  <var>7277</var>,</td></tr>
+<tr><th id="254">254</th><td>         <var>7125</var>,  <var>6977</var>,  <var>6830</var>,  <var>6687</var>,  <var>6544</var>,  <var>6406</var>,  <var>6268</var>,  <var>6133</var>,  <var>5998</var>,  <var>5868</var>,</td></tr>
+<tr><th id="255">255</th><td>         <var>5738</var>,  <var>5612</var>,  <var>5487</var>,  <var>5364</var>,  <var>5241</var>,  <var>5118</var>,  <var>4995</var>,  <var>4875</var>,  <var>4755</var>,  <var>4640</var>,</td></tr>
+<tr><th id="256">256</th><td>         <var>4525</var>,  <var>4414</var>,  <var>4304</var>,  <var>4198</var>,  <var>4092</var>,  <var>3990</var>,  <var>3888</var>,  <var>3790</var>,  <var>3693</var>,  <var>3600</var>,</td></tr>
+<tr><th id="257">257</th><td>         <var>3507</var>,  <var>3415</var>,  <var>3323</var>,  <var>3235</var>,  <var>3147</var>,  <var>3064</var>,  <var>2981</var>,  <var>2902</var>,  <var>2823</var>,  <var>2746</var>,</td></tr>
+<tr><th id="258">258</th><td>         <var>2670</var>,  <var>2594</var>,  <var>2522</var>,  <var>2450</var>,  <var>2382</var>,  <var>2314</var>,  <var>2248</var>,  <var>2182</var>,  <var>2116</var>,  <var>2050</var>,</td></tr>
+<tr><th id="259">259</th><td>         <var>1987</var>,  <var>1924</var>,  <var>1864</var>,  <var>1804</var>,  <var>1748</var>,  <var>1692</var>,  <var>1638</var>,  <var>1585</var>,  <var>1534</var>,  <var>1484</var>,</td></tr>
+<tr><th id="260">260</th><td>         <var>1437</var>,  <var>1390</var>,  <var>1346</var>,  <var>1302</var>,  <var>1258</var>,  <var>1215</var>,  <var>1174</var>,  <var>1133</var>,  <var>1095</var>,  <var>1057</var>,</td></tr>
+<tr><th id="261">261</th><td>         <var>1021</var>,   <var>986</var>,   <var>952</var>,   <var>918</var>,   <var>887</var>,   <var>856</var>,   <var>827</var>,   <var>798</var>,   <var>770</var>,   <var>742</var>,</td></tr>
+<tr><th id="262">262</th><td>          <var>714</var>,   <var>686</var>,   <var>659</var>,   <var>632</var>,   <var>607</var>,   <var>582</var>,   <var>559</var>,   <var>536</var>,   <var>514</var>,   <var>492</var>,</td></tr>
+<tr><th id="263">263</th><td>          <var>472</var>,   <var>452</var>,   <var>433</var>,   <var>415</var>,   <var>398</var>,   <var>381</var>,   <var>364</var>,   <var>348</var>,   <var>333</var>,   <var>318</var>,</td></tr>
+<tr><th id="264">264</th><td>          <var>304</var>,   <var>290</var>,   <var>277</var>,   <var>264</var>,   <var>252</var>,   <var>240</var>,   <var>229</var>,   <var>218</var>,   <var>208</var>,   <var>198</var>,</td></tr>
+<tr><th id="265">265</th><td>          <var>188</var>,   <var>178</var>,   <var>168</var>,   <var>158</var>,   <var>149</var>,   <var>140</var>,   <var>132</var>,   <var>124</var>,   <var>116</var>,   <var>108</var>,</td></tr>
+<tr><th id="266">266</th><td>          <var>101</var>,    <var>94</var>,    <var>87</var>,    <var>81</var>,    <var>75</var>,    <var>69</var>,    <var>64</var>,    <var>59</var>,    <var>54</var>,    <var>49</var>,</td></tr>
+<tr><th id="267">267</th><td>           <var>44</var>,    <var>39</var>,    <var>35</var>,    <var>31</var>,    <var>27</var>,    <var>23</var>,    <var>19</var>,    <var>15</var>,    <var>12</var>,     <var>9</var>,</td></tr>
+<tr><th id="268">268</th><td>            <var>6</var>,     <var>3</var>,     <var>0</var></td></tr>
+<tr><th id="269">269</th><td>    }</td></tr>
+<tr><th id="270">270</th><td>};</td></tr>
+<tr><th id="271">271</th><td></td></tr>
+<tr><th id="272">272</th><td></td></tr>
+<tr><th id="273">273</th><td><em>static</em> <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> <dfn class="tu decl def" id="cf_tables_3" title='cf_tables_3' data-type='const uint16_t [5][257]' data-ref="cf_tables_3">cf_tables_3</dfn>[<var>5</var>][<var>257</var>] = {</td></tr>
+<tr><th id="274">274</th><td>    {</td></tr>
+<tr><th id="275">275</th><td>        <var>16384</var>, <var>16187</var>, <var>15990</var>, <var>15793</var>, <var>15597</var>, <var>15401</var>, <var>15205</var>, <var>15009</var>, <var>14813</var>, <var>14618</var>,</td></tr>
+<tr><th id="276">276</th><td>        <var>14423</var>, <var>14230</var>, <var>14037</var>, <var>13845</var>, <var>13653</var>, <var>13463</var>, <var>13273</var>, <var>13083</var>, <var>12894</var>, <var>12706</var>,</td></tr>
+<tr><th id="277">277</th><td>        <var>12518</var>, <var>12332</var>, <var>12146</var>, <var>11962</var>, <var>11778</var>, <var>11597</var>, <var>11416</var>, <var>11237</var>, <var>11059</var>, <var>10882</var>,</td></tr>
+<tr><th id="278">278</th><td>        <var>10706</var>, <var>10532</var>, <var>10358</var>, <var>10184</var>, <var>10010</var>,  <var>9838</var>,  <var>9666</var>,  <var>9497</var>,  <var>9328</var>,  <var>9163</var>,</td></tr>
+<tr><th id="279">279</th><td>         <var>8999</var>,  <var>8837</var>,  <var>8675</var>,  <var>8517</var>,  <var>8359</var>,  <var>8205</var>,  <var>8051</var>,  <var>7901</var>,  <var>7751</var>,  <var>7602</var>,</td></tr>
+<tr><th id="280">280</th><td>         <var>7453</var>,  <var>7308</var>,  <var>7163</var>,  <var>7022</var>,  <var>6882</var>,  <var>6745</var>,  <var>6609</var>,  <var>6476</var>,  <var>6343</var>,  <var>6214</var>,</td></tr>
+<tr><th id="281">281</th><td>         <var>6085</var>,  <var>5960</var>,  <var>5835</var>,  <var>5712</var>,  <var>5589</var>,  <var>5466</var>,  <var>5343</var>,  <var>5223</var>,  <var>5103</var>,  <var>4987</var>,</td></tr>
+<tr><th id="282">282</th><td>         <var>4872</var>,  <var>4761</var>,  <var>4650</var>,  <var>4542</var>,  <var>4435</var>,  <var>4332</var>,  <var>4229</var>,  <var>4130</var>,  <var>4031</var>,  <var>3936</var>,</td></tr>
+<tr><th id="283">283</th><td>         <var>3841</var>,  <var>3747</var>,  <var>3653</var>,  <var>3563</var>,  <var>3473</var>,  <var>3387</var>,  <var>3302</var>,  <var>3220</var>,  <var>3138</var>,  <var>3059</var>,</td></tr>
+<tr><th id="284">284</th><td>         <var>2980</var>,  <var>2905</var>,  <var>2830</var>,  <var>2759</var>,  <var>2688</var>,  <var>2619</var>,  <var>2550</var>,  <var>2481</var>,  <var>2412</var>,  <var>2345</var>,</td></tr>
+<tr><th id="285">285</th><td>         <var>2278</var>,  <var>2215</var>,  <var>2152</var>,  <var>2092</var>,  <var>2032</var>,  <var>1974</var>,  <var>1917</var>,  <var>1863</var>,  <var>1809</var>,  <var>1758</var>,</td></tr>
+<tr><th id="286">286</th><td>         <var>1707</var>,  <var>1659</var>,  <var>1611</var>,  <var>1564</var>,  <var>1517</var>,  <var>1473</var>,  <var>1429</var>,  <var>1387</var>,  <var>1346</var>,  <var>1307</var>,</td></tr>
+<tr><th id="287">287</th><td>         <var>1268</var>,  <var>1230</var>,  <var>1193</var>,  <var>1158</var>,  <var>1123</var>,  <var>1090</var>,  <var>1058</var>,  <var>1026</var>,   <var>994</var>,   <var>962</var>,</td></tr>
+<tr><th id="288">288</th><td>          <var>930</var>,   <var>899</var>,   <var>869</var>,   <var>841</var>,   <var>813</var>,   <var>786</var>,   <var>760</var>,   <var>735</var>,   <var>710</var>,   <var>687</var>,</td></tr>
+<tr><th id="289">289</th><td>          <var>664</var>,   <var>643</var>,   <var>622</var>,   <var>602</var>,   <var>582</var>,   <var>562</var>,   <var>543</var>,   <var>525</var>,   <var>507</var>,   <var>490</var>,</td></tr>
+<tr><th id="290">290</th><td>          <var>473</var>,   <var>457</var>,   <var>442</var>,   <var>427</var>,   <var>412</var>,   <var>398</var>,   <var>385</var>,   <var>373</var>,   <var>361</var>,   <var>349</var>,</td></tr>
+<tr><th id="291">291</th><td>          <var>337</var>,   <var>325</var>,   <var>313</var>,   <var>301</var>,   <var>290</var>,   <var>279</var>,   <var>269</var>,   <var>259</var>,   <var>249</var>,   <var>240</var>,</td></tr>
+<tr><th id="292">292</th><td>          <var>231</var>,   <var>222</var>,   <var>214</var>,   <var>206</var>,   <var>199</var>,   <var>192</var>,   <var>185</var>,   <var>178</var>,   <var>171</var>,   <var>165</var>,</td></tr>
+<tr><th id="293">293</th><td>          <var>159</var>,   <var>153</var>,   <var>148</var>,   <var>143</var>,   <var>138</var>,   <var>133</var>,   <var>128</var>,   <var>123</var>,   <var>119</var>,   <var>115</var>,</td></tr>
+<tr><th id="294">294</th><td>          <var>111</var>,   <var>107</var>,   <var>103</var>,    <var>99</var>,    <var>95</var>,    <var>91</var>,    <var>87</var>,    <var>83</var>,    <var>80</var>,    <var>77</var>,</td></tr>
+<tr><th id="295">295</th><td>           <var>74</var>,    <var>71</var>,    <var>68</var>,    <var>65</var>,    <var>63</var>,    <var>61</var>,    <var>59</var>,    <var>57</var>,    <var>55</var>,    <var>53</var>,</td></tr>
+<tr><th id="296">296</th><td>           <var>51</var>,    <var>49</var>,    <var>47</var>,    <var>45</var>,    <var>43</var>,    <var>41</var>,    <var>40</var>,    <var>39</var>,    <var>38</var>,    <var>37</var>,</td></tr>
+<tr><th id="297">297</th><td>           <var>36</var>,    <var>35</var>,    <var>34</var>,    <var>33</var>,    <var>32</var>,    <var>31</var>,    <var>30</var>,    <var>29</var>,    <var>28</var>,    <var>27</var>,</td></tr>
+<tr><th id="298">298</th><td>           <var>26</var>,    <var>25</var>,    <var>24</var>,    <var>23</var>,    <var>22</var>,    <var>21</var>,    <var>20</var>,    <var>19</var>,    <var>18</var>,    <var>17</var>,</td></tr>
+<tr><th id="299">299</th><td>           <var>16</var>,    <var>15</var>,    <var>14</var>,    <var>13</var>,    <var>12</var>,    <var>11</var>,    <var>10</var>,     <var>9</var>,     <var>8</var>,     <var>7</var>,</td></tr>
+<tr><th id="300">300</th><td>            <var>6</var>,     <var>5</var>,     <var>4</var>,     <var>3</var>,     <var>2</var>,     <var>1</var>,     <var>0</var></td></tr>
+<tr><th id="301">301</th><td>    },</td></tr>
+<tr><th id="302">302</th><td>    {</td></tr>
+<tr><th id="303">303</th><td>        <var>16384</var>, <var>16195</var>, <var>16006</var>, <var>15817</var>, <var>15629</var>, <var>15441</var>, <var>15253</var>, <var>15065</var>, <var>14878</var>, <var>14692</var>,</td></tr>
+<tr><th id="304">304</th><td>        <var>14506</var>, <var>14321</var>, <var>14136</var>, <var>13952</var>, <var>13768</var>, <var>13585</var>, <var>13402</var>, <var>13219</var>, <var>13037</var>, <var>12857</var>,</td></tr>
+<tr><th id="305">305</th><td>        <var>12677</var>, <var>12499</var>, <var>12321</var>, <var>12144</var>, <var>11967</var>, <var>11792</var>, <var>11617</var>, <var>11444</var>, <var>11271</var>, <var>11100</var>,</td></tr>
+<tr><th id="306">306</th><td>        <var>10930</var>, <var>10762</var>, <var>10594</var>, <var>10426</var>, <var>10258</var>, <var>10091</var>,  <var>9925</var>,  <var>9761</var>,  <var>9598</var>,  <var>9438</var>,</td></tr>
+<tr><th id="307">307</th><td>         <var>9278</var>,  <var>9120</var>,  <var>8963</var>,  <var>8809</var>,  <var>8655</var>,  <var>8504</var>,  <var>8354</var>,  <var>8207</var>,  <var>8060</var>,  <var>7914</var>,</td></tr>
+<tr><th id="308">308</th><td>         <var>7769</var>,  <var>7627</var>,  <var>7485</var>,  <var>7347</var>,  <var>7209</var>,  <var>7074</var>,  <var>6939</var>,  <var>6807</var>,  <var>6676</var>,  <var>6548</var>,</td></tr>
+<tr><th id="309">309</th><td>         <var>6420</var>,  <var>6296</var>,  <var>6172</var>,  <var>6050</var>,  <var>5928</var>,  <var>5806</var>,  <var>5684</var>,  <var>5564</var>,  <var>5444</var>,  <var>5328</var>,</td></tr>
+<tr><th id="310">310</th><td>         <var>5212</var>,  <var>5100</var>,  <var>4988</var>,  <var>4879</var>,  <var>4771</var>,  <var>4667</var>,  <var>4563</var>,  <var>4462</var>,  <var>4362</var>,  <var>4265</var>,</td></tr>
+<tr><th id="311">311</th><td>         <var>4169</var>,  <var>4073</var>,  <var>3978</var>,  <var>3886</var>,  <var>3795</var>,  <var>3707</var>,  <var>3619</var>,  <var>3535</var>,  <var>3451</var>,  <var>3369</var>,</td></tr>
+<tr><th id="312">312</th><td>         <var>3288</var>,  <var>3210</var>,  <var>3133</var>,  <var>3059</var>,  <var>2985</var>,  <var>2913</var>,  <var>2841</var>,  <var>2769</var>,  <var>2697</var>,  <var>2627</var>,</td></tr>
+<tr><th id="313">313</th><td>         <var>2557</var>,  <var>2490</var>,  <var>2424</var>,  <var>2360</var>,  <var>2297</var>,  <var>2237</var>,  <var>2177</var>,  <var>2119</var>,  <var>2062</var>,  <var>2007</var>,</td></tr>
+<tr><th id="314">314</th><td>         <var>1953</var>,  <var>1901</var>,  <var>1849</var>,  <var>1798</var>,  <var>1748</var>,  <var>1700</var>,  <var>1652</var>,  <var>1607</var>,  <var>1562</var>,  <var>1519</var>,</td></tr>
+<tr><th id="315">315</th><td>         <var>1476</var>,  <var>1435</var>,  <var>1394</var>,  <var>1355</var>,  <var>1317</var>,  <var>1281</var>,  <var>1245</var>,  <var>1210</var>,  <var>1175</var>,  <var>1140</var>,</td></tr>
+<tr><th id="316">316</th><td>         <var>1105</var>,  <var>1071</var>,  <var>1037</var>,  <var>1005</var>,   <var>973</var>,   <var>943</var>,   <var>913</var>,   <var>885</var>,   <var>857</var>,   <var>830</var>,</td></tr>
+<tr><th id="317">317</th><td>          <var>804</var>,   <var>779</var>,   <var>754</var>,   <var>731</var>,   <var>708</var>,   <var>685</var>,   <var>663</var>,   <var>642</var>,   <var>621</var>,   <var>601</var>,</td></tr>
+<tr><th id="318">318</th><td>          <var>581</var>,   <var>563</var>,   <var>545</var>,   <var>528</var>,   <var>511</var>,   <var>495</var>,   <var>479</var>,   <var>463</var>,   <var>448</var>,   <var>433</var>,</td></tr>
+<tr><th id="319">319</th><td>          <var>419</var>,   <var>405</var>,   <var>391</var>,   <var>377</var>,   <var>364</var>,   <var>351</var>,   <var>338</var>,   <var>326</var>,   <var>314</var>,   <var>302</var>,</td></tr>
+<tr><th id="320">320</th><td>          <var>291</var>,   <var>280</var>,   <var>270</var>,   <var>260</var>,   <var>251</var>,   <var>242</var>,   <var>234</var>,   <var>226</var>,   <var>218</var>,   <var>210</var>,</td></tr>
+<tr><th id="321">321</th><td>          <var>202</var>,   <var>195</var>,   <var>188</var>,   <var>181</var>,   <var>174</var>,   <var>168</var>,   <var>162</var>,   <var>156</var>,   <var>150</var>,   <var>144</var>,</td></tr>
+<tr><th id="322">322</th><td>          <var>139</var>,   <var>134</var>,   <var>129</var>,   <var>124</var>,   <var>119</var>,   <var>114</var>,   <var>109</var>,   <var>104</var>,   <var>100</var>,    <var>96</var>,</td></tr>
+<tr><th id="323">323</th><td>           <var>92</var>,    <var>88</var>,    <var>84</var>,    <var>80</var>,    <var>77</var>,    <var>74</var>,    <var>71</var>,    <var>68</var>,    <var>65</var>,    <var>62</var>,</td></tr>
+<tr><th id="324">324</th><td>           <var>59</var>,    <var>56</var>,    <var>54</var>,    <var>52</var>,    <var>50</var>,    <var>48</var>,    <var>46</var>,    <var>44</var>,    <var>42</var>,    <var>40</var>,</td></tr>
+<tr><th id="325">325</th><td>           <var>38</var>,    <var>36</var>,    <var>34</var>,    <var>33</var>,    <var>32</var>,    <var>31</var>,    <var>30</var>,    <var>29</var>,    <var>28</var>,    <var>27</var>,</td></tr>
+<tr><th id="326">326</th><td>           <var>26</var>,    <var>25</var>,    <var>24</var>,    <var>23</var>,    <var>22</var>,    <var>21</var>,    <var>20</var>,    <var>19</var>,    <var>18</var>,    <var>17</var>,</td></tr>
+<tr><th id="327">327</th><td>           <var>16</var>,    <var>15</var>,    <var>14</var>,    <var>13</var>,    <var>12</var>,    <var>11</var>,    <var>10</var>,     <var>9</var>,     <var>8</var>,     <var>7</var>,</td></tr>
+<tr><th id="328">328</th><td>            <var>6</var>,     <var>5</var>,     <var>4</var>,     <var>3</var>,     <var>2</var>,     <var>1</var>,     <var>0</var></td></tr>
+<tr><th id="329">329</th><td>    },</td></tr>
+<tr><th id="330">330</th><td>    {</td></tr>
+<tr><th id="331">331</th><td>        <var>16384</var>, <var>16203</var>, <var>16022</var>, <var>15842</var>, <var>15662</var>, <var>15482</var>, <var>15302</var>, <var>15122</var>, <var>14942</var>, <var>14763</var>,</td></tr>
+<tr><th id="332">332</th><td>        <var>14584</var>, <var>14406</var>, <var>14228</var>, <var>14051</var>, <var>13874</var>, <var>13698</var>, <var>13522</var>, <var>13347</var>, <var>13172</var>, <var>12998</var>,</td></tr>
+<tr><th id="333">333</th><td>        <var>12824</var>, <var>12652</var>, <var>12480</var>, <var>12310</var>, <var>12140</var>, <var>11971</var>, <var>11803</var>, <var>11637</var>, <var>11471</var>, <var>11307</var>,</td></tr>
+<tr><th id="334">334</th><td>        <var>11143</var>, <var>10980</var>, <var>10817</var>, <var>10654</var>, <var>10491</var>, <var>10330</var>, <var>10169</var>, <var>10011</var>,  <var>9853</var>,  <var>9697</var>,</td></tr>
+<tr><th id="335">335</th><td>         <var>9542</var>,  <var>9389</var>,  <var>9236</var>,  <var>9086</var>,  <var>8936</var>,  <var>8789</var>,  <var>8642</var>,  <var>8498</var>,  <var>8355</var>,  <var>8212</var>,</td></tr>
+<tr><th id="336">336</th><td>         <var>8070</var>,  <var>7931</var>,  <var>7792</var>,  <var>7656</var>,  <var>7520</var>,  <var>7388</var>,  <var>7256</var>,  <var>7126</var>,  <var>6996</var>,  <var>6870</var>,</td></tr>
+<tr><th id="337">337</th><td>         <var>6744</var>,  <var>6621</var>,  <var>6498</var>,  <var>6377</var>,  <var>6256</var>,  <var>6135</var>,  <var>6014</var>,  <var>5895</var>,  <var>5776</var>,  <var>5660</var>,</td></tr>
+<tr><th id="338">338</th><td>         <var>5545</var>,  <var>5433</var>,  <var>5321</var>,  <var>5212</var>,  <var>5104</var>,  <var>4999</var>,  <var>4895</var>,  <var>4793</var>,  <var>4692</var>,  <var>4594</var>,</td></tr>
+<tr><th id="339">339</th><td>         <var>4496</var>,  <var>4400</var>,  <var>4304</var>,  <var>4211</var>,  <var>4118</var>,  <var>4028</var>,  <var>3939</var>,  <var>3853</var>,  <var>3767</var>,  <var>3684</var>,</td></tr>
+<tr><th id="340">340</th><td>         <var>3601</var>,  <var>3521</var>,  <var>3441</var>,  <var>3364</var>,  <var>3287</var>,  <var>3212</var>,  <var>3137</var>,  <var>3062</var>,  <var>2987</var>,  <var>2915</var>,</td></tr>
+<tr><th id="341">341</th><td>         <var>2843</var>,  <var>2773</var>,  <var>2704</var>,  <var>2638</var>,  <var>2572</var>,  <var>2508</var>,  <var>2445</var>,  <var>2384</var>,  <var>2324</var>,  <var>2266</var>,</td></tr>
+<tr><th id="342">342</th><td>         <var>2208</var>,  <var>2153</var>,  <var>2098</var>,  <var>2044</var>,  <var>1990</var>,  <var>1939</var>,  <var>1888</var>,  <var>1839</var>,  <var>1791</var>,  <var>1745</var>,</td></tr>
+<tr><th id="343">343</th><td>         <var>1699</var>,  <var>1655</var>,  <var>1611</var>,  <var>1569</var>,  <var>1527</var>,  <var>1487</var>,  <var>1448</var>,  <var>1409</var>,  <var>1370</var>,  <var>1331</var>,</td></tr>
+<tr><th id="344">344</th><td>         <var>1292</var>,  <var>1255</var>,  <var>1218</var>,  <var>1183</var>,  <var>1148</var>,  <var>1115</var>,  <var>1082</var>,  <var>1051</var>,  <var>1020</var>,   <var>990</var>,</td></tr>
+<tr><th id="345">345</th><td>          <var>960</var>,   <var>932</var>,   <var>904</var>,   <var>878</var>,   <var>852</var>,   <var>826</var>,   <var>801</var>,   <var>777</var>,   <var>753</var>,   <var>731</var>,</td></tr>
+<tr><th id="346">346</th><td>          <var>709</var>,   <var>687</var>,   <var>666</var>,   <var>645</var>,   <var>625</var>,   <var>605</var>,   <var>586</var>,   <var>567</var>,   <var>550</var>,   <var>533</var>,</td></tr>
+<tr><th id="347">347</th><td>          <var>516</var>,   <var>499</var>,   <var>482</var>,   <var>465</var>,   <var>449</var>,   <var>433</var>,   <var>418</var>,   <var>403</var>,   <var>389</var>,   <var>375</var>,</td></tr>
+<tr><th id="348">348</th><td>          <var>362</var>,   <var>349</var>,   <var>337</var>,   <var>325</var>,   <var>314</var>,   <var>303</var>,   <var>293</var>,   <var>283</var>,   <var>273</var>,   <var>263</var>,</td></tr>
+<tr><th id="349">349</th><td>          <var>254</var>,   <var>245</var>,   <var>236</var>,   <var>227</var>,   <var>219</var>,   <var>211</var>,   <var>204</var>,   <var>197</var>,   <var>190</var>,   <var>183</var>,</td></tr>
+<tr><th id="350">350</th><td>          <var>177</var>,   <var>171</var>,   <var>165</var>,   <var>159</var>,   <var>153</var>,   <var>147</var>,   <var>141</var>,   <var>135</var>,   <var>130</var>,   <var>125</var>,</td></tr>
+<tr><th id="351">351</th><td>          <var>120</var>,   <var>115</var>,   <var>110</var>,   <var>105</var>,   <var>101</var>,    <var>97</var>,    <var>93</var>,    <var>89</var>,    <var>85</var>,    <var>81</var>,</td></tr>
+<tr><th id="352">352</th><td>           <var>77</var>,    <var>74</var>,    <var>71</var>,    <var>68</var>,    <var>65</var>,    <var>62</var>,    <var>59</var>,    <var>56</var>,    <var>53</var>,    <var>51</var>,</td></tr>
+<tr><th id="353">353</th><td>           <var>49</var>,    <var>47</var>,    <var>45</var>,    <var>43</var>,    <var>41</var>,    <var>39</var>,    <var>37</var>,    <var>35</var>,    <var>33</var>,    <var>31</var>,</td></tr>
+<tr><th id="354">354</th><td>           <var>29</var>,    <var>27</var>,    <var>25</var>,    <var>23</var>,    <var>22</var>,    <var>21</var>,    <var>20</var>,    <var>19</var>,    <var>18</var>,    <var>17</var>,</td></tr>
+<tr><th id="355">355</th><td>           <var>16</var>,    <var>15</var>,    <var>14</var>,    <var>13</var>,    <var>12</var>,    <var>11</var>,    <var>10</var>,     <var>9</var>,     <var>8</var>,     <var>7</var>,</td></tr>
+<tr><th id="356">356</th><td>            <var>6</var>,     <var>5</var>,     <var>4</var>,     <var>3</var>,     <var>2</var>,     <var>1</var>,     <var>0</var></td></tr>
+<tr><th id="357">357</th><td>    },</td></tr>
+<tr><th id="358">358</th><td>    {</td></tr>
+<tr><th id="359">359</th><td>        <var>16384</var>, <var>16210</var>, <var>16036</var>, <var>15863</var>, <var>15690</var>, <var>15517</var>, <var>15344</var>, <var>15172</var>, <var>15000</var>, <var>14828</var>,</td></tr>
+<tr><th id="360">360</th><td>        <var>14656</var>, <var>14485</var>, <var>14314</var>, <var>14145</var>, <var>13976</var>, <var>13808</var>, <var>13640</var>, <var>13472</var>, <var>13304</var>, <var>13137</var>,</td></tr>
+<tr><th id="361">361</th><td>        <var>12970</var>, <var>12804</var>, <var>12639</var>, <var>12475</var>, <var>12312</var>, <var>12149</var>, <var>11987</var>, <var>11827</var>, <var>11667</var>, <var>11508</var>,</td></tr>
+<tr><th id="362">362</th><td>        <var>11349</var>, <var>11192</var>, <var>11035</var>, <var>10878</var>, <var>10721</var>, <var>10565</var>, <var>10410</var>, <var>10257</var>, <var>10104</var>,  <var>9953</var>,</td></tr>
+<tr><th id="363">363</th><td>         <var>9802</var>,  <var>9654</var>,  <var>9506</var>,  <var>9359</var>,  <var>9213</var>,  <var>9070</var>,  <var>8927</var>,  <var>8787</var>,  <var>8647</var>,  <var>8508</var>,</td></tr>
+<tr><th id="364">364</th><td>         <var>8369</var>,  <var>8233</var>,  <var>8097</var>,  <var>7964</var>,  <var>7831</var>,  <var>7700</var>,  <var>7570</var>,  <var>7442</var>,  <var>7315</var>,  <var>7190</var>,</td></tr>
+<tr><th id="365">365</th><td>         <var>7065</var>,  <var>6943</var>,  <var>6821</var>,  <var>6701</var>,  <var>6581</var>,  <var>6461</var>,  <var>6341</var>,  <var>6223</var>,  <var>6105</var>,  <var>5990</var>,</td></tr>
+<tr><th id="366">366</th><td>         <var>5876</var>,  <var>5764</var>,  <var>5653</var>,  <var>5545</var>,  <var>5437</var>,  <var>5331</var>,  <var>5226</var>,  <var>5124</var>,  <var>5022</var>,  <var>4924</var>,</td></tr>
+<tr><th id="367">367</th><td>         <var>4826</var>,  <var>4729</var>,  <var>4632</var>,  <var>4538</var>,  <var>4444</var>,  <var>4353</var>,  <var>4262</var>,  <var>4174</var>,  <var>4087</var>,  <var>4002</var>,</td></tr>
+<tr><th id="368">368</th><td>         <var>3917</var>,  <var>3835</var>,  <var>3753</var>,  <var>3674</var>,  <var>3595</var>,  <var>3518</var>,  <var>3441</var>,  <var>3364</var>,  <var>3287</var>,  <var>3212</var>,</td></tr>
+<tr><th id="369">369</th><td>         <var>3138</var>,  <var>3066</var>,  <var>2995</var>,  <var>2926</var>,  <var>2858</var>,  <var>2792</var>,  <var>2726</var>,  <var>2662</var>,  <var>2599</var>,  <var>2538</var>,</td></tr>
+<tr><th id="370">370</th><td>         <var>2478</var>,  <var>2420</var>,  <var>2362</var>,  <var>2305</var>,  <var>2249</var>,  <var>2195</var>,  <var>2141</var>,  <var>2089</var>,  <var>2037</var>,  <var>1988</var>,</td></tr>
+<tr><th id="371">371</th><td>         <var>1939</var>,  <var>1891</var>,  <var>1844</var>,  <var>1799</var>,  <var>1754</var>,  <var>1711</var>,  <var>1668</var>,  <var>1626</var>,  <var>1584</var>,  <var>1542</var>,</td></tr>
+<tr><th id="372">372</th><td>         <var>1500</var>,  <var>1459</var>,  <var>1418</var>,  <var>1380</var>,  <var>1342</var>,  <var>1305</var>,  <var>1269</var>,  <var>1234</var>,  <var>1199</var>,  <var>1166</var>,</td></tr>
+<tr><th id="373">373</th><td>         <var>1133</var>,  <var>1102</var>,  <var>1071</var>,  <var>1041</var>,  <var>1012</var>,   <var>983</var>,   <var>954</var>,   <var>926</var>,   <var>899</var>,   <var>872</var>,</td></tr>
+<tr><th id="374">374</th><td>          <var>847</var>,   <var>822</var>,   <var>798</var>,   <var>774</var>,   <var>751</var>,   <var>728</var>,   <var>707</var>,   <var>686</var>,   <var>666</var>,   <var>646</var>,</td></tr>
+<tr><th id="375">375</th><td>          <var>627</var>,   <var>608</var>,   <var>589</var>,   <var>570</var>,   <var>552</var>,   <var>534</var>,   <var>517</var>,   <var>500</var>,   <var>484</var>,   <var>468</var>,</td></tr>
+<tr><th id="376">376</th><td>          <var>453</var>,   <var>438</var>,   <var>424</var>,   <var>410</var>,   <var>397</var>,   <var>384</var>,   <var>372</var>,   <var>360</var>,   <var>348</var>,   <var>336</var>,</td></tr>
+<tr><th id="377">377</th><td>          <var>325</var>,   <var>314</var>,   <var>303</var>,   <var>293</var>,   <var>283</var>,   <var>273</var>,   <var>264</var>,   <var>255</var>,   <var>246</var>,   <var>237</var>,</td></tr>
+<tr><th id="378">378</th><td>          <var>229</var>,   <var>221</var>,   <var>213</var>,   <var>205</var>,   <var>197</var>,   <var>189</var>,   <var>181</var>,   <var>174</var>,   <var>167</var>,   <var>160</var>,</td></tr>
+<tr><th id="379">379</th><td>          <var>154</var>,   <var>148</var>,   <var>142</var>,   <var>136</var>,   <var>131</var>,   <var>126</var>,   <var>121</var>,   <var>116</var>,   <var>111</var>,   <var>106</var>,</td></tr>
+<tr><th id="380">380</th><td>          <var>101</var>,    <var>97</var>,    <var>93</var>,    <var>89</var>,    <var>85</var>,    <var>81</var>,    <var>77</var>,    <var>73</var>,    <var>70</var>,    <var>67</var>,</td></tr>
+<tr><th id="381">381</th><td>           <var>64</var>,    <var>61</var>,    <var>58</var>,    <var>55</var>,    <var>52</var>,    <var>49</var>,    <var>46</var>,    <var>43</var>,    <var>40</var>,    <var>37</var>,</td></tr>
+<tr><th id="382">382</th><td>           <var>35</var>,    <var>33</var>,    <var>31</var>,    <var>29</var>,    <var>27</var>,    <var>25</var>,    <var>23</var>,    <var>21</var>,    <var>19</var>,    <var>17</var>,</td></tr>
+<tr><th id="383">383</th><td>           <var>16</var>,    <var>15</var>,    <var>14</var>,    <var>13</var>,    <var>12</var>,    <var>11</var>,    <var>10</var>,     <var>9</var>,     <var>8</var>,     <var>7</var>,</td></tr>
+<tr><th id="384">384</th><td>            <var>6</var>,     <var>5</var>,     <var>4</var>,     <var>3</var>,     <var>2</var>,     <var>1</var>,     <var>0</var></td></tr>
+<tr><th id="385">385</th><td>    },</td></tr>
+<tr><th id="386">386</th><td>    {</td></tr>
+<tr><th id="387">387</th><td>        <var>16384</var>, <var>16218</var>, <var>16052</var>, <var>15886</var>, <var>15720</var>, <var>15554</var>, <var>15389</var>, <var>15224</var>, <var>15059</var>, <var>14895</var>,</td></tr>
+<tr><th id="388">388</th><td>        <var>14731</var>, <var>14567</var>, <var>14403</var>, <var>14240</var>, <var>14077</var>, <var>13915</var>, <var>13753</var>, <var>13591</var>, <var>13429</var>, <var>13269</var>,</td></tr>
+<tr><th id="389">389</th><td>        <var>13109</var>, <var>12950</var>, <var>12791</var>, <var>12633</var>, <var>12476</var>, <var>12320</var>, <var>12164</var>, <var>12009</var>, <var>11854</var>, <var>11701</var>,</td></tr>
+<tr><th id="390">390</th><td>        <var>11548</var>, <var>11396</var>, <var>11244</var>, <var>11092</var>, <var>10940</var>, <var>10790</var>, <var>10640</var>, <var>10492</var>, <var>10344</var>, <var>10198</var>,</td></tr>
+<tr><th id="391">391</th><td>        <var>10052</var>,  <var>9908</var>,  <var>9764</var>,  <var>9622</var>,  <var>9481</var>,  <var>9342</var>,  <var>9203</var>,  <var>9066</var>,  <var>8929</var>,  <var>8793</var>,</td></tr>
+<tr><th id="392">392</th><td>         <var>8657</var>,  <var>8524</var>,  <var>8391</var>,  <var>8261</var>,  <var>8131</var>,  <var>8003</var>,  <var>7875</var>,  <var>7749</var>,  <var>7624</var>,  <var>7502</var>,</td></tr>
+<tr><th id="393">393</th><td>         <var>7380</var>,  <var>7260</var>,  <var>7140</var>,  <var>7022</var>,  <var>6904</var>,  <var>6786</var>,  <var>6668</var>,  <var>6551</var>,  <var>6435</var>,  <var>6322</var>,</td></tr>
+<tr><th id="394">394</th><td>         <var>6209</var>,  <var>6099</var>,  <var>5989</var>,  <var>5881</var>,  <var>5773</var>,  <var>5668</var>,  <var>5563</var>,  <var>5461</var>,  <var>5359</var>,  <var>5260</var>,</td></tr>
+<tr><th id="395">395</th><td>         <var>5161</var>,  <var>5063</var>,  <var>4965</var>,  <var>4871</var>,  <var>4777</var>,  <var>4686</var>,  <var>4595</var>,  <var>4506</var>,  <var>4417</var>,  <var>4331</var>,</td></tr>
+<tr><th id="396">396</th><td>         <var>4245</var>,  <var>4162</var>,  <var>4079</var>,  <var>3999</var>,  <var>3919</var>,  <var>3841</var>,  <var>3763</var>,  <var>3685</var>,  <var>3607</var>,  <var>3530</var>,</td></tr>
+<tr><th id="397">397</th><td>         <var>3454</var>,  <var>3380</var>,  <var>3307</var>,  <var>3236</var>,  <var>3166</var>,  <var>3097</var>,  <var>3029</var>,  <var>2963</var>,  <var>2897</var>,  <var>2834</var>,</td></tr>
+<tr><th id="398">398</th><td>         <var>2771</var>,  <var>2710</var>,  <var>2650</var>,  <var>2591</var>,  <var>2532</var>,  <var>2475</var>,  <var>2418</var>,  <var>2363</var>,  <var>2309</var>,  <var>2257</var>,</td></tr>
+<tr><th id="399">399</th><td>         <var>2205</var>,  <var>2155</var>,  <var>2105</var>,  <var>2057</var>,  <var>2009</var>,  <var>1963</var>,  <var>1918</var>,  <var>1873</var>,  <var>1828</var>,  <var>1783</var>,</td></tr>
+<tr><th id="400">400</th><td>         <var>1738</var>,  <var>1694</var>,  <var>1650</var>,  <var>1607</var>,  <var>1565</var>,  <var>1524</var>,  <var>1484</var>,  <var>1445</var>,  <var>1407</var>,  <var>1369</var>,</td></tr>
+<tr><th id="401">401</th><td>         <var>1333</var>,  <var>1297</var>,  <var>1263</var>,  <var>1229</var>,  <var>1197</var>,  <var>1165</var>,  <var>1134</var>,  <var>1103</var>,  <var>1073</var>,  <var>1043</var>,</td></tr>
+<tr><th id="402">402</th><td>         <var>1015</var>,   <var>987</var>,   <var>960</var>,   <var>933</var>,   <var>907</var>,   <var>882</var>,   <var>858</var>,   <var>834</var>,   <var>811</var>,   <var>788</var>,</td></tr>
+<tr><th id="403">403</th><td>          <var>766</var>,   <var>744</var>,   <var>722</var>,   <var>700</var>,   <var>679</var>,   <var>658</var>,   <var>638</var>,   <var>618</var>,   <var>599</var>,   <var>581</var>,</td></tr>
+<tr><th id="404">404</th><td>          <var>563</var>,   <var>545</var>,   <var>528</var>,   <var>511</var>,   <var>495</var>,   <var>480</var>,   <var>465</var>,   <var>451</var>,   <var>437</var>,   <var>423</var>,</td></tr>
+<tr><th id="405">405</th><td>          <var>410</var>,   <var>397</var>,   <var>384</var>,   <var>372</var>,   <var>360</var>,   <var>348</var>,   <var>337</var>,   <var>326</var>,   <var>315</var>,   <var>305</var>,</td></tr>
+<tr><th id="406">406</th><td>          <var>295</var>,   <var>285</var>,   <var>275</var>,   <var>265</var>,   <var>255</var>,   <var>245</var>,   <var>236</var>,   <var>227</var>,   <var>219</var>,   <var>211</var>,</td></tr>
+<tr><th id="407">407</th><td>          <var>203</var>,   <var>195</var>,   <var>188</var>,   <var>181</var>,   <var>174</var>,   <var>167</var>,   <var>161</var>,   <var>155</var>,   <var>149</var>,   <var>143</var>,</td></tr>
+<tr><th id="408">408</th><td>          <var>137</var>,   <var>131</var>,   <var>126</var>,   <var>121</var>,   <var>116</var>,   <var>111</var>,   <var>106</var>,   <var>101</var>,    <var>97</var>,    <var>93</var>,</td></tr>
+<tr><th id="409">409</th><td>           <var>89</var>,    <var>85</var>,    <var>81</var>,    <var>77</var>,    <var>73</var>,    <var>69</var>,    <var>65</var>,    <var>61</var>,    <var>58</var>,    <var>55</var>,</td></tr>
+<tr><th id="410">410</th><td>           <var>52</var>,    <var>49</var>,    <var>46</var>,    <var>43</var>,    <var>40</var>,    <var>37</var>,    <var>34</var>,    <var>32</var>,    <var>30</var>,    <var>28</var>,</td></tr>
+<tr><th id="411">411</th><td>           <var>26</var>,    <var>24</var>,    <var>22</var>,    <var>20</var>,    <var>18</var>,    <var>16</var>,    <var>14</var>,    <var>12</var>,    <var>10</var>,     <var>8</var>,</td></tr>
+<tr><th id="412">412</th><td>            <var>6</var>,     <var>5</var>,     <var>4</var>,     <var>3</var>,     <var>2</var>,     <var>1</var>,     <var>0</var></td></tr>
+<tr><th id="413">413</th><td>    }</td></tr>
+<tr><th id="414">414</th><td>};</td></tr>
+<tr><th id="415">415</th><td></td></tr>
+<tr><th id="416">416</th><td></td></tr>
+<tr><th id="417">417</th><td><em>static</em> <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> *<em>const</em> <dfn class="tu decl def" id="cf_table" title='cf_table' data-type='const uint16_t *const [16]' data-ref="cf_table">cf_table</dfn>[<var>16</var>] = {</td></tr>
+<tr><th id="418">418</th><td>    <a class="tu ref" href="#cf_tables_1" title='cf_tables_1' data-ref="cf_tables_1">cf_tables_1</a>[<var>0</var>], <a class="tu ref" href="#cf_tables_1" title='cf_tables_1' data-ref="cf_tables_1">cf_tables_1</a>[<var>1</var>], <a class="tu ref" href="#cf_tables_1" title='cf_tables_1' data-ref="cf_tables_1">cf_tables_1</a>[<var>2</var>], <a class="tu ref" href="#cf_tables_2" title='cf_tables_2' data-ref="cf_tables_2">cf_tables_2</a>[<var>0</var>],</td></tr>
+<tr><th id="419">419</th><td>    <a class="tu ref" href="#cf_tables_2" title='cf_tables_2' data-ref="cf_tables_2">cf_tables_2</a>[<var>1</var>], <a class="tu ref" href="#cf_tables_2" title='cf_tables_2' data-ref="cf_tables_2">cf_tables_2</a>[<var>2</var>], <a class="tu ref" href="#cf_tables_2" title='cf_tables_2' data-ref="cf_tables_2">cf_tables_2</a>[<var>3</var>], <a class="tu ref" href="#cf_tables_2" title='cf_tables_2' data-ref="cf_tables_2">cf_tables_2</a>[<var>4</var>],</td></tr>
+<tr><th id="420">420</th><td>    <a class="tu ref" href="#cf_tables_2" title='cf_tables_2' data-ref="cf_tables_2">cf_tables_2</a>[<var>5</var>], <a class="tu ref" href="#cf_tables_2" title='cf_tables_2' data-ref="cf_tables_2">cf_tables_2</a>[<var>6</var>], <a class="tu ref" href="#cf_tables_2" title='cf_tables_2' data-ref="cf_tables_2">cf_tables_2</a>[<var>7</var>], <a class="tu ref" href="#cf_tables_3" title='cf_tables_3' data-ref="cf_tables_3">cf_tables_3</a>[<var>0</var>],</td></tr>
+<tr><th id="421">421</th><td>    <a class="tu ref" href="#cf_tables_3" title='cf_tables_3' data-ref="cf_tables_3">cf_tables_3</a>[<var>1</var>], <a class="tu ref" href="#cf_tables_3" title='cf_tables_3' data-ref="cf_tables_3">cf_tables_3</a>[<var>2</var>], <a class="tu ref" href="#cf_tables_3" title='cf_tables_3' data-ref="cf_tables_3">cf_tables_3</a>[<var>3</var>], <a class="tu ref" href="#cf_tables_3" title='cf_tables_3' data-ref="cf_tables_3">cf_tables_3</a>[<var>4</var>]</td></tr>
+<tr><th id="422">422</th><td>};</td></tr>
+<tr><th id="423">423</th><td></td></tr>
+<tr><th id="424">424</th><td></td></tr>
+<tr><th id="425">425</th><td><i class="doc" data-doc="bgmc_lut_fillp">/** Initialize a given lookup table using a given delta */</i></td></tr>
+<tr><th id="426">426</th><td><em>static</em> <em>void</em> <dfn class="tu decl def" id="bgmc_lut_fillp" title='bgmc_lut_fillp' data-type='void bgmc_lut_fillp(uint8_t * lut, int * lut_status, int delta)' data-ref="bgmc_lut_fillp">bgmc_lut_fillp</dfn>(<a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col1 decl" id="1lut" title='lut' data-type='uint8_t *' data-ref="1lut">lut</dfn>, <em>int</em> *<dfn class="local col2 decl" id="2lut_status" title='lut_status' data-type='int *' data-ref="2lut_status">lut_status</dfn>, <em>int</em> <dfn class="local col3 decl" id="3delta" title='delta' data-type='int' data-ref="3delta">delta</dfn>)</td></tr>
+<tr><th id="427">427</th><td>{</td></tr>
+<tr><th id="428">428</th><td>    <em>unsigned</em> <em>int</em> <dfn class="local col4 decl" id="4sx" title='sx' data-type='unsigned int' data-ref="4sx">sx</dfn>, <dfn class="local col5 decl" id="5i" title='i' data-type='unsigned int' data-ref="5i">i</dfn>;</td></tr>
+<tr><th id="429">429</th><td></td></tr>
+<tr><th id="430">430</th><td>    <b>for</b> (<a class="local col4 ref" href="#4sx" title='sx' data-ref="4sx">sx</a> = <var>0</var>; <a class="local col4 ref" href="#4sx" title='sx' data-ref="4sx">sx</a> &lt; <var>16</var>; <a class="local col4 ref" href="#4sx" title='sx' data-ref="4sx">sx</a>++)</td></tr>
+<tr><th id="431">431</th><td>        <b>for</b> (<a class="local col5 ref" href="#5i" title='i' data-ref="5i">i</a> = <var>0</var>; <a class="local col5 ref" href="#5i" title='i' data-ref="5i">i</a> &lt; <a class="macro" href="#39" title="(1 &lt;&lt; (14 - 8))" data-ref="_M/LUT_SIZE">LUT_SIZE</a>; <a class="local col5 ref" href="#5i" title='i' data-ref="5i">i</a>++) {</td></tr>
+<tr><th id="432">432</th><td>            <em>unsigned</em> <em>int</em> <dfn class="local col6 decl" id="6target" title='target' data-type='unsigned int' data-ref="6target">target</dfn> = (<a class="local col5 ref" href="#5i" title='i' data-ref="5i">i</a> + <var>1</var>) &lt;&lt; (<a class="macro" href="#31" title="14" data-ref="_M/FREQ_BITS">FREQ_BITS</a> - <a class="macro" href="#38" title="(14 - 8)" data-ref="_M/LUT_BITS">LUT_BITS</a>);</td></tr>
+<tr><th id="433">433</th><td>            <em>unsigned</em> <em>int</em> <dfn class="local col7 decl" id="7symbol" title='symbol' data-type='unsigned int' data-ref="7symbol">symbol</dfn> = <var>1</var> &lt;&lt; <a class="local col3 ref" href="#3delta" title='delta' data-ref="3delta">delta</a>;</td></tr>
+<tr><th id="434">434</th><td></td></tr>
+<tr><th id="435">435</th><td>            <b>while</b> (<a class="tu ref" href="#cf_table" title='cf_table' data-use='r' data-ref="cf_table">cf_table</a>[<a class="local col4 ref" href="#4sx" title='sx' data-ref="4sx">sx</a>][<a class="local col7 ref" href="#7symbol" title='symbol' data-ref="7symbol">symbol</a>] &gt; <a class="local col6 ref" href="#6target" title='target' data-ref="6target">target</a>)</td></tr>
+<tr><th id="436">436</th><td>                <a class="local col7 ref" href="#7symbol" title='symbol' data-ref="7symbol">symbol</a> += <var>1</var> &lt;&lt; <a class="local col3 ref" href="#3delta" title='delta' data-ref="3delta">delta</a>;</td></tr>
+<tr><th id="437">437</th><td></td></tr>
+<tr><th id="438">438</th><td>            *<a class="local col1 ref" href="#1lut" title='lut' data-ref="1lut">lut</a>++ = <a class="local col7 ref" href="#7symbol" title='symbol' data-ref="7symbol">symbol</a> &gt;&gt; <a class="local col3 ref" href="#3delta" title='delta' data-ref="3delta">delta</a>;</td></tr>
+<tr><th id="439">439</th><td>        }</td></tr>
+<tr><th id="440">440</th><td></td></tr>
+<tr><th id="441">441</th><td>    *<a class="local col2 ref" href="#2lut_status" title='lut_status' data-ref="2lut_status">lut_status</a> = <a class="local col3 ref" href="#3delta" title='delta' data-ref="3delta">delta</a>;</td></tr>
+<tr><th id="442">442</th><td>}</td></tr>
+<tr><th id="443">443</th><td></td></tr>
+<tr><th id="444">444</th><td></td></tr>
+<tr><th id="445">445</th><td><i class="doc" data-doc="bgmc_lut_getp">/** Retune the index of a suitable lookup table for a given delta */</i></td></tr>
+<tr><th id="446">446</th><td><em>static</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="tu decl def" id="bgmc_lut_getp" title='bgmc_lut_getp' data-type='uint8_t * bgmc_lut_getp(uint8_t * lut, int * lut_status, int delta)' data-ref="bgmc_lut_getp">bgmc_lut_getp</dfn>(<a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col8 decl" id="8lut" title='lut' data-type='uint8_t *' data-ref="8lut">lut</dfn>, <em>int</em> *<dfn class="local col9 decl" id="9lut_status" title='lut_status' data-type='int *' data-ref="9lut_status">lut_status</dfn>, <em>int</em> <dfn class="local col0 decl" id="10delta" title='delta' data-type='int' data-ref="10delta">delta</dfn>)</td></tr>
+<tr><th id="447">447</th><td>{</td></tr>
+<tr><th id="448">448</th><td>    <em>unsigned</em> <em>int</em> <dfn class="local col1 decl" id="11i" title='i' data-type='unsigned int' data-ref="11i">i</dfn> = <a class="macro" href="../libavutil/common.h.html#481" title="av_clip_c" data-ref="_M/av_clip">av_clip</a>(<a class="local col0 ref" href="#10delta" title='delta' data-ref="10delta">delta</a>, <var>0</var>, <a class="macro" href="#40" title="4" data-ref="_M/LUT_BUFF">LUT_BUFF</a> - <var>1</var>);</td></tr>
+<tr><th id="449">449</th><td></td></tr>
+<tr><th id="450">450</th><td>    <a class="local col8 ref" href="#8lut" title='lut' data-ref="8lut">lut</a> += (<a class="local col1 ref" href="#11i" title='i' data-ref="11i">i</a> * <a class="macro" href="#39" title="(1 &lt;&lt; (14 - 8))" data-ref="_M/LUT_SIZE">LUT_SIZE</a>) &lt;&lt; <var>4</var>;</td></tr>
+<tr><th id="451">451</th><td></td></tr>
+<tr><th id="452">452</th><td>    <b>if</b> (<a class="local col9 ref" href="#9lut_status" title='lut_status' data-ref="9lut_status">lut_status</a>[<a class="local col1 ref" href="#11i" title='i' data-ref="11i">i</a>] != <a class="local col0 ref" href="#10delta" title='delta' data-ref="10delta">delta</a>)</td></tr>
+<tr><th id="453">453</th><td>        <a class="tu ref" href="#bgmc_lut_fillp" title='bgmc_lut_fillp' data-use='c' data-ref="bgmc_lut_fillp">bgmc_lut_fillp</a>(<a class="local col8 ref" href="#8lut" title='lut' data-ref="8lut">lut</a>, &amp;<a class="local col9 ref" href="#9lut_status" title='lut_status' data-ref="9lut_status">lut_status</a>[<a class="local col1 ref" href="#11i" title='i' data-ref="11i">i</a>], <a class="local col0 ref" href="#10delta" title='delta' data-ref="10delta">delta</a>);</td></tr>
+<tr><th id="454">454</th><td></td></tr>
+<tr><th id="455">455</th><td>    <b>return</b> <a class="local col8 ref" href="#8lut" title='lut' data-ref="8lut">lut</a>;</td></tr>
+<tr><th id="456">456</th><td>}</td></tr>
+<tr><th id="457">457</th><td></td></tr>
+<tr><th id="458">458</th><td></td></tr>
+<tr><th id="459">459</th><td><i class="doc">/** Initialize the lookup table arrays */</i></td></tr>
+<tr><th id="460">460</th><td><a class="macro" href="../libavutil/attributes.h.html#84" title="" data-ref="_M/av_cold">av_cold</a> <em>int</em> <dfn class="decl def" id="ff_bgmc_init" title='ff_bgmc_init' data-ref="ff_bgmc_init">ff_bgmc_init</dfn>(<a class="typedef" href="avcodec.h.html#AVCodecContext" title='AVCodecContext' data-type='struct AVCodecContext' data-ref="AVCodecContext">AVCodecContext</a> *<dfn class="local col2 decl" id="12avctx" title='avctx' data-type='AVCodecContext *' data-ref="12avctx">avctx</dfn>,</td></tr>
+<tr><th id="461">461</th><td>                         <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> **<dfn class="local col3 decl" id="13cf_lut" title='cf_lut' data-type='uint8_t **' data-ref="13cf_lut">cf_lut</dfn>, <em>int</em> **<dfn class="local col4 decl" id="14cf_lut_status" title='cf_lut_status' data-type='int **' data-ref="14cf_lut_status">cf_lut_status</dfn>)</td></tr>
+<tr><th id="462">462</th><td>{</td></tr>
+<tr><th id="463">463</th><td>    *<a class="local col3 ref" href="#13cf_lut" title='cf_lut' data-ref="13cf_lut">cf_lut</a>        = <a class="ref" href="../libavutil/mem.h.html#av_malloc" title='av_malloc' data-ref="av_malloc">av_malloc</a>(<b>sizeof</b>(**<a class="local col3 ref" href="#13cf_lut" title='cf_lut' data-ref="13cf_lut">cf_lut</a>)        * <a class="macro" href="#40" title="4" data-ref="_M/LUT_BUFF">LUT_BUFF</a> * <var>16</var> * <a class="macro" href="#39" title="(1 &lt;&lt; (14 - 8))" data-ref="_M/LUT_SIZE">LUT_SIZE</a>);</td></tr>
+<tr><th id="464">464</th><td>    *<a class="local col4 ref" href="#14cf_lut_status" title='cf_lut_status' data-ref="14cf_lut_status">cf_lut_status</a> = <a class="ref" href="../libavutil/mem.h.html#av_malloc" title='av_malloc' data-ref="av_malloc">av_malloc</a>(<b>sizeof</b>(**<a class="local col4 ref" href="#14cf_lut_status" title='cf_lut_status' data-ref="14cf_lut_status">cf_lut_status</a>) * <a class="macro" href="#40" title="4" data-ref="_M/LUT_BUFF">LUT_BUFF</a>);</td></tr>
+<tr><th id="465">465</th><td></td></tr>
+<tr><th id="466">466</th><td>    <b>if</b> (!*<a class="local col3 ref" href="#13cf_lut" title='cf_lut' data-ref="13cf_lut">cf_lut</a> || !*<a class="local col4 ref" href="#14cf_lut_status" title='cf_lut_status' data-ref="14cf_lut_status">cf_lut_status</a>) {</td></tr>
+<tr><th id="467">467</th><td>        <a class="ref" href="#ff_bgmc_end" title='ff_bgmc_end' data-ref="ff_bgmc_end">ff_bgmc_end</a>(<a class="local col3 ref" href="#13cf_lut" title='cf_lut' data-ref="13cf_lut">cf_lut</a>, <a class="local col4 ref" href="#14cf_lut_status" title='cf_lut_status' data-ref="14cf_lut_status">cf_lut_status</a>);</td></tr>
+<tr><th id="468">468</th><td>        <a class="ref" href="../libavutil/log.h.html#av_log" title='av_log' data-ref="av_log">av_log</a>(<a class="local col2 ref" href="#12avctx" title='avctx' data-ref="12avctx">avctx</a>, <a class="macro" href="../libavutil/log.h.html#176" title="16" data-ref="_M/AV_LOG_ERROR">AV_LOG_ERROR</a>, <q>"Allocating buffer memory failed.\n"</q>);</td></tr>
+<tr><th id="469">469</th><td>        <b>return</b> <a class="macro" href="../libavutil/error.h.html#39" title="(-(12))" data-ref="_M/AVERROR">AVERROR</a>(<a class="macro" href="../../include/asm-generic/errno-base.h.html#15" title="12" data-ref="_M/ENOMEM">ENOMEM</a>);</td></tr>
+<tr><th id="470">470</th><td>    } <b>else</b> {</td></tr>
+<tr><th id="471">471</th><td>        <i>// initialize lut_status buffer to a value never used to compare against</i></td></tr>
+<tr><th id="472">472</th><td>        <a class="ref" href="../../include/string.h.html#memset" title='memset' data-ref="memset">memset</a>(*<a class="local col4 ref" href="#14cf_lut_status" title='cf_lut_status' data-ref="14cf_lut_status">cf_lut_status</a>, -<var>1</var>, <b>sizeof</b>(**<a class="local col4 ref" href="#14cf_lut_status" title='cf_lut_status' data-ref="14cf_lut_status">cf_lut_status</a>) * <a class="macro" href="#40" title="4" data-ref="_M/LUT_BUFF">LUT_BUFF</a>);</td></tr>
+<tr><th id="473">473</th><td>    }</td></tr>
+<tr><th id="474">474</th><td></td></tr>
+<tr><th id="475">475</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="476">476</th><td>}</td></tr>
+<tr><th id="477">477</th><td></td></tr>
+<tr><th id="478">478</th><td></td></tr>
+<tr><th id="479">479</th><td><i class="doc">/** Release the lookup table arrays */</i></td></tr>
+<tr><th id="480">480</th><td><a class="macro" href="../libavutil/attributes.h.html#84" title="" data-ref="_M/av_cold">av_cold</a> <em>void</em> <dfn class="decl def" id="ff_bgmc_end" title='ff_bgmc_end' data-ref="ff_bgmc_end">ff_bgmc_end</dfn>(<a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> **<dfn class="local col5 decl" id="15cf_lut" title='cf_lut' data-type='uint8_t **' data-ref="15cf_lut">cf_lut</dfn>, <em>int</em> **<dfn class="local col6 decl" id="16cf_lut_status" title='cf_lut_status' data-type='int **' data-ref="16cf_lut_status">cf_lut_status</dfn>)</td></tr>
+<tr><th id="481">481</th><td>{</td></tr>
+<tr><th id="482">482</th><td>    <a class="ref" href="../libavutil/mem.h.html#av_freep" title='av_freep' data-ref="av_freep">av_freep</a>(<a class="local col5 ref" href="#15cf_lut" title='cf_lut' data-ref="15cf_lut">cf_lut</a>);</td></tr>
+<tr><th id="483">483</th><td>    <a class="ref" href="../libavutil/mem.h.html#av_freep" title='av_freep' data-ref="av_freep">av_freep</a>(<a class="local col6 ref" href="#16cf_lut_status" title='cf_lut_status' data-ref="16cf_lut_status">cf_lut_status</a>);</td></tr>
+<tr><th id="484">484</th><td>}</td></tr>
+<tr><th id="485">485</th><td></td></tr>
+<tr><th id="486">486</th><td></td></tr>
+<tr><th id="487">487</th><td><i class="doc">/** Initialize decoding and reads the first value */</i></td></tr>
+<tr><th id="488">488</th><td><em>void</em> <dfn class="decl def" id="ff_bgmc_decode_init" title='ff_bgmc_decode_init' data-ref="ff_bgmc_decode_init">ff_bgmc_decode_init</dfn>(<a class="typedef" href="get_bits.h.html#GetBitContext" title='GetBitContext' data-type='struct GetBitContext' data-ref="GetBitContext">GetBitContext</a> *<dfn class="local col7 decl" id="17gb" title='gb' data-type='GetBitContext *' data-ref="17gb">gb</dfn>, <em>unsigned</em> <em>int</em> *<dfn class="local col8 decl" id="18h" title='h' data-type='unsigned int *' data-ref="18h">h</dfn>,</td></tr>
+<tr><th id="489">489</th><td>                         <em>unsigned</em> <em>int</em> *<dfn class="local col9 decl" id="19l" title='l' data-type='unsigned int *' data-ref="19l">l</dfn>, <em>unsigned</em> <em>int</em> *<dfn class="local col0 decl" id="20v" title='v' data-type='unsigned int *' data-ref="20v">v</dfn>)</td></tr>
+<tr><th id="490">490</th><td>{</td></tr>
+<tr><th id="491">491</th><td>    *<a class="local col8 ref" href="#18h" title='h' data-ref="18h">h</a> = <a class="macro" href="#33" title="((1 &lt;&lt; 18) - 1)" data-ref="_M/TOP_VALUE">TOP_VALUE</a>;</td></tr>
+<tr><th id="492">492</th><td>    *<a class="local col9 ref" href="#19l" title='l' data-ref="19l">l</a> = <var>0</var>;</td></tr>
+<tr><th id="493">493</th><td>    *<a class="local col0 ref" href="#20v" title='v' data-ref="20v">v</a> = <a class="ref" href="get_bits.h.html#get_bits_long" title='get_bits_long' data-ref="get_bits_long">get_bits_long</a>(<a class="local col7 ref" href="#17gb" title='gb' data-ref="17gb">gb</a>, <a class="macro" href="#32" title="18" data-ref="_M/VALUE_BITS">VALUE_BITS</a>);</td></tr>
+<tr><th id="494">494</th><td>}</td></tr>
+<tr><th id="495">495</th><td></td></tr>
+<tr><th id="496">496</th><td></td></tr>
+<tr><th id="497">497</th><td><i class="doc">/** Finish decoding */</i></td></tr>
+<tr><th id="498">498</th><td><em>void</em> <dfn class="decl def" id="ff_bgmc_decode_end" title='ff_bgmc_decode_end' data-ref="ff_bgmc_decode_end">ff_bgmc_decode_end</dfn>(<a class="typedef" href="get_bits.h.html#GetBitContext" title='GetBitContext' data-type='struct GetBitContext' data-ref="GetBitContext">GetBitContext</a> *<dfn class="local col1 decl" id="21gb" title='gb' data-type='GetBitContext *' data-ref="21gb">gb</dfn>)</td></tr>
+<tr><th id="499">499</th><td>{</td></tr>
+<tr><th id="500">500</th><td>    <a class="ref" href="get_bits.h.html#skip_bits_long" title='skip_bits_long' data-ref="skip_bits_long">skip_bits_long</a>(<a class="local col1 ref" href="#21gb" title='gb' data-ref="21gb">gb</a>, -(<a class="macro" href="#32" title="18" data-ref="_M/VALUE_BITS">VALUE_BITS</a> - <var>2</var>));</td></tr>
+<tr><th id="501">501</th><td>}</td></tr>
+<tr><th id="502">502</th><td></td></tr>
+<tr><th id="503">503</th><td></td></tr>
+<tr><th id="504">504</th><td><i class="doc">/** Read and decode a block Gilbert-Moore coded symbol */</i></td></tr>
+<tr><th id="505">505</th><td><em>void</em> <dfn class="decl def" id="ff_bgmc_decode" title='ff_bgmc_decode' data-ref="ff_bgmc_decode">ff_bgmc_decode</dfn>(<a class="typedef" href="get_bits.h.html#GetBitContext" title='GetBitContext' data-type='struct GetBitContext' data-ref="GetBitContext">GetBitContext</a> *<dfn class="local col2 decl" id="22gb" title='gb' data-type='GetBitContext *' data-ref="22gb">gb</dfn>, <em>unsigned</em> <em>int</em> <dfn class="local col3 decl" id="23num" title='num' data-type='unsigned int' data-ref="23num">num</dfn>, <a class="typedef" href="../../include/stdint.h.html#int32_t" title='int32_t' data-type='int' data-ref="int32_t">int32_t</a> *<dfn class="local col4 decl" id="24dst" title='dst' data-type='int32_t *' data-ref="24dst">dst</dfn>,</td></tr>
+<tr><th id="506">506</th><td>                    <em>int</em> <dfn class="local col5 decl" id="25delta" title='delta' data-type='int' data-ref="25delta">delta</dfn>, <em>unsigned</em> <em>int</em> <dfn class="local col6 decl" id="26sx" title='sx' data-type='unsigned int' data-ref="26sx">sx</dfn>,</td></tr>
+<tr><th id="507">507</th><td>                    <em>unsigned</em> <em>int</em> *<dfn class="local col7 decl" id="27h" title='h' data-type='unsigned int *' data-ref="27h">h</dfn>, <em>unsigned</em> <em>int</em> *<dfn class="local col8 decl" id="28l" title='l' data-type='unsigned int *' data-ref="28l">l</dfn>, <em>unsigned</em> <em>int</em> *<dfn class="local col9 decl" id="29v" title='v' data-type='unsigned int *' data-ref="29v">v</dfn>,</td></tr>
+<tr><th id="508">508</th><td>                    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col0 decl" id="30cf_lut" title='cf_lut' data-type='uint8_t *' data-ref="30cf_lut">cf_lut</dfn>, <em>int</em> *<dfn class="local col1 decl" id="31cf_lut_status" title='cf_lut_status' data-type='int *' data-ref="31cf_lut_status">cf_lut_status</dfn>)</td></tr>
+<tr><th id="509">509</th><td>{</td></tr>
+<tr><th id="510">510</th><td>    <em>unsigned</em> <em>int</em> <dfn class="local col2 decl" id="32i" title='i' data-type='unsigned int' data-ref="32i">i</dfn>;</td></tr>
+<tr><th id="511">511</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col3 decl" id="33lut" title='lut' data-type='uint8_t *' data-ref="33lut">lut</dfn> = <a class="tu ref" href="#bgmc_lut_getp" title='bgmc_lut_getp' data-use='c' data-ref="bgmc_lut_getp">bgmc_lut_getp</a>(<a class="local col0 ref" href="#30cf_lut" title='cf_lut' data-ref="30cf_lut">cf_lut</a>, <a class="local col1 ref" href="#31cf_lut_status" title='cf_lut_status' data-ref="31cf_lut_status">cf_lut_status</a>, <a class="local col5 ref" href="#25delta" title='delta' data-ref="25delta">delta</a>);</td></tr>
+<tr><th id="512">512</th><td></td></tr>
+<tr><th id="513">513</th><td>    <i>// read current state</i></td></tr>
+<tr><th id="514">514</th><td>    <em>unsigned</em> <em>int</em> <dfn class="local col4 decl" id="34high" title='high' data-type='unsigned int' data-ref="34high">high</dfn>  = *<a class="local col7 ref" href="#27h" title='h' data-ref="27h">h</a>;</td></tr>
+<tr><th id="515">515</th><td>    <em>unsigned</em> <em>int</em> <dfn class="local col5 decl" id="35low" title='low' data-type='unsigned int' data-ref="35low">low</dfn>   = *<a class="local col8 ref" href="#28l" title='l' data-ref="28l">l</a>;</td></tr>
+<tr><th id="516">516</th><td>    <em>unsigned</em> <em>int</em> <dfn class="local col6 decl" id="36value" title='value' data-type='unsigned int' data-ref="36value">value</dfn> = *<a class="local col9 ref" href="#29v" title='v' data-ref="29v">v</a>;</td></tr>
+<tr><th id="517">517</th><td></td></tr>
+<tr><th id="518">518</th><td>    <a class="local col3 ref" href="#33lut" title='lut' data-ref="33lut">lut</a> += <a class="local col6 ref" href="#26sx" title='sx' data-ref="26sx">sx</a> * <a class="macro" href="#39" title="(1 &lt;&lt; (14 - 8))" data-ref="_M/LUT_SIZE">LUT_SIZE</a>;</td></tr>
+<tr><th id="519">519</th><td></td></tr>
+<tr><th id="520">520</th><td>    <i>// decode num samples</i></td></tr>
+<tr><th id="521">521</th><td>    <b>for</b> (<a class="local col2 ref" href="#32i" title='i' data-ref="32i">i</a> = <var>0</var>; <a class="local col2 ref" href="#32i" title='i' data-ref="32i">i</a> &lt; <a class="local col3 ref" href="#23num" title='num' data-ref="23num">num</a>; <a class="local col2 ref" href="#32i" title='i' data-ref="32i">i</a>++) {</td></tr>
+<tr><th id="522">522</th><td>        <em>unsigned</em> <em>int</em> <dfn class="local col7 decl" id="37range" title='range' data-type='unsigned int' data-ref="37range">range</dfn>  = <a class="local col4 ref" href="#34high" title='high' data-ref="34high">high</a> - <a class="local col5 ref" href="#35low" title='low' data-ref="35low">low</a> + <var>1</var>;</td></tr>
+<tr><th id="523">523</th><td>        <em>unsigned</em> <em>int</em> <dfn class="local col8 decl" id="38target" title='target' data-type='unsigned int' data-ref="38target">target</dfn> = (((<a class="local col6 ref" href="#36value" title='value' data-ref="36value">value</a> - <a class="local col5 ref" href="#35low" title='low' data-ref="35low">low</a> + <var>1</var>) &lt;&lt; <a class="macro" href="#31" title="14" data-ref="_M/FREQ_BITS">FREQ_BITS</a>) - <var>1</var>) / <a class="local col7 ref" href="#37range" title='range' data-ref="37range">range</a>;</td></tr>
+<tr><th id="524">524</th><td>        <em>unsigned</em> <em>int</em> <dfn class="local col9 decl" id="39symbol" title='symbol' data-type='unsigned int' data-ref="39symbol">symbol</dfn> = <a class="local col3 ref" href="#33lut" title='lut' data-ref="33lut">lut</a>[<a class="local col8 ref" href="#38target" title='target' data-ref="38target">target</a> &gt;&gt; (<a class="macro" href="#31" title="14" data-ref="_M/FREQ_BITS">FREQ_BITS</a> - <a class="macro" href="#38" title="(14 - 8)" data-ref="_M/LUT_BITS">LUT_BITS</a>)] &lt;&lt; <a class="local col5 ref" href="#25delta" title='delta' data-ref="25delta">delta</a>;</td></tr>
+<tr><th id="525">525</th><td></td></tr>
+<tr><th id="526">526</th><td>        <b>while</b> (<a class="tu ref" href="#cf_table" title='cf_table' data-use='r' data-ref="cf_table">cf_table</a>[<a class="local col6 ref" href="#26sx" title='sx' data-ref="26sx">sx</a>][<a class="local col9 ref" href="#39symbol" title='symbol' data-ref="39symbol">symbol</a>] &gt; <a class="local col8 ref" href="#38target" title='target' data-ref="38target">target</a>)</td></tr>
+<tr><th id="527">527</th><td>            <a class="local col9 ref" href="#39symbol" title='symbol' data-ref="39symbol">symbol</a> += <var>1</var> &lt;&lt; <a class="local col5 ref" href="#25delta" title='delta' data-ref="25delta">delta</a>;</td></tr>
+<tr><th id="528">528</th><td></td></tr>
+<tr><th id="529">529</th><td>        <a class="local col9 ref" href="#39symbol" title='symbol' data-ref="39symbol">symbol</a> = (<a class="local col9 ref" href="#39symbol" title='symbol' data-ref="39symbol">symbol</a> &gt;&gt; <a class="local col5 ref" href="#25delta" title='delta' data-ref="25delta">delta</a>) - <var>1</var>;</td></tr>
+<tr><th id="530">530</th><td></td></tr>
+<tr><th id="531">531</th><td>        <a class="local col4 ref" href="#34high" title='high' data-ref="34high">high</a> = <a class="local col5 ref" href="#35low" title='low' data-ref="35low">low</a> + ((<a class="local col7 ref" href="#37range" title='range' data-ref="37range">range</a> * <a class="tu ref" href="#cf_table" title='cf_table' data-use='r' data-ref="cf_table">cf_table</a>[<a class="local col6 ref" href="#26sx" title='sx' data-ref="26sx">sx</a>][(<a class="local col9 ref" href="#39symbol" title='symbol' data-ref="39symbol">symbol</a>)     &lt;&lt; <a class="local col5 ref" href="#25delta" title='delta' data-ref="25delta">delta</a>] - (<var>1</var> &lt;&lt; <a class="macro" href="#31" title="14" data-ref="_M/FREQ_BITS">FREQ_BITS</a>)) &gt;&gt; <a class="macro" href="#31" title="14" data-ref="_M/FREQ_BITS">FREQ_BITS</a>);</td></tr>
+<tr><th id="532">532</th><td>        <a class="local col5 ref" href="#35low" title='low' data-ref="35low">low</a>  = <a class="local col5 ref" href="#35low" title='low' data-ref="35low">low</a> + ((<a class="local col7 ref" href="#37range" title='range' data-ref="37range">range</a> * <a class="tu ref" href="#cf_table" title='cf_table' data-use='r' data-ref="cf_table">cf_table</a>[<a class="local col6 ref" href="#26sx" title='sx' data-ref="26sx">sx</a>][(<a class="local col9 ref" href="#39symbol" title='symbol' data-ref="39symbol">symbol</a> + <var>1</var>) &lt;&lt; <a class="local col5 ref" href="#25delta" title='delta' data-ref="25delta">delta</a>])                    &gt;&gt; <a class="macro" href="#31" title="14" data-ref="_M/FREQ_BITS">FREQ_BITS</a>);</td></tr>
+<tr><th id="533">533</th><td></td></tr>
+<tr><th id="534">534</th><td>        <b>while</b> (<var>1</var>) {</td></tr>
+<tr><th id="535">535</th><td>            <b>if</b> (<a class="local col4 ref" href="#34high" title='high' data-ref="34high">high</a> &gt;= <a class="macro" href="#35" title="(2 * (((1 &lt;&lt; 18) - 1) / 4 + 1))" data-ref="_M/HALF">HALF</a>) {</td></tr>
+<tr><th id="536">536</th><td>                <b>if</b> (<a class="local col5 ref" href="#35low" title='low' data-ref="35low">low</a> &gt;= <a class="macro" href="#35" title="(2 * (((1 &lt;&lt; 18) - 1) / 4 + 1))" data-ref="_M/HALF">HALF</a>) {</td></tr>
+<tr><th id="537">537</th><td>                    <a class="local col6 ref" href="#36value" title='value' data-ref="36value">value</a> -= <a class="macro" href="#35" title="(2 * (((1 &lt;&lt; 18) - 1) / 4 + 1))" data-ref="_M/HALF">HALF</a>;</td></tr>
+<tr><th id="538">538</th><td>                    <a class="local col5 ref" href="#35low" title='low' data-ref="35low">low</a>   -= <a class="macro" href="#35" title="(2 * (((1 &lt;&lt; 18) - 1) / 4 + 1))" data-ref="_M/HALF">HALF</a>;</td></tr>
+<tr><th id="539">539</th><td>                    <a class="local col4 ref" href="#34high" title='high' data-ref="34high">high</a>  -= <a class="macro" href="#35" title="(2 * (((1 &lt;&lt; 18) - 1) / 4 + 1))" data-ref="_M/HALF">HALF</a>;</td></tr>
+<tr><th id="540">540</th><td>                } <b>else</b> <b>if</b> (<a class="local col5 ref" href="#35low" title='low' data-ref="35low">low</a> &gt;= <a class="macro" href="#34" title="(((1 &lt;&lt; 18) - 1) / 4 + 1)" data-ref="_M/FIRST_QTR">FIRST_QTR</a> &amp;&amp; <a class="local col4 ref" href="#34high" title='high' data-ref="34high">high</a> &lt; <a class="macro" href="#36" title="(3 * (((1 &lt;&lt; 18) - 1) / 4 + 1))" data-ref="_M/THIRD_QTR">THIRD_QTR</a>) {</td></tr>
+<tr><th id="541">541</th><td>                    <a class="local col6 ref" href="#36value" title='value' data-ref="36value">value</a> -= <a class="macro" href="#34" title="(((1 &lt;&lt; 18) - 1) / 4 + 1)" data-ref="_M/FIRST_QTR">FIRST_QTR</a>;</td></tr>
+<tr><th id="542">542</th><td>                    <a class="local col5 ref" href="#35low" title='low' data-ref="35low">low</a>   -= <a class="macro" href="#34" title="(((1 &lt;&lt; 18) - 1) / 4 + 1)" data-ref="_M/FIRST_QTR">FIRST_QTR</a>;</td></tr>
+<tr><th id="543">543</th><td>                    <a class="local col4 ref" href="#34high" title='high' data-ref="34high">high</a>  -= <a class="macro" href="#34" title="(((1 &lt;&lt; 18) - 1) / 4 + 1)" data-ref="_M/FIRST_QTR">FIRST_QTR</a>;</td></tr>
+<tr><th id="544">544</th><td>                } <b>else</b></td></tr>
+<tr><th id="545">545</th><td>                    <b>break</b>;</td></tr>
+<tr><th id="546">546</th><td>            }</td></tr>
+<tr><th id="547">547</th><td></td></tr>
+<tr><th id="548">548</th><td>            <a class="local col5 ref" href="#35low" title='low' data-ref="35low">low</a>  *= <var>2</var>;</td></tr>
+<tr><th id="549">549</th><td>            <a class="local col4 ref" href="#34high" title='high' data-ref="34high">high</a>  = <var>2</var> * <a class="local col4 ref" href="#34high" title='high' data-ref="34high">high</a> + <var>1</var>;</td></tr>
+<tr><th id="550">550</th><td>            <a class="local col6 ref" href="#36value" title='value' data-ref="36value">value</a> = <var>2</var> * <a class="local col6 ref" href="#36value" title='value' data-ref="36value">value</a> + <a class="ref" href="get_bits.h.html#get_bits1" title='get_bits1' data-ref="get_bits1">get_bits1</a>(<a class="local col2 ref" href="#22gb" title='gb' data-ref="22gb">gb</a>);</td></tr>
+<tr><th id="551">551</th><td>        }</td></tr>
+<tr><th id="552">552</th><td></td></tr>
+<tr><th id="553">553</th><td>        *<a class="local col4 ref" href="#24dst" title='dst' data-ref="24dst">dst</a>++ = <a class="local col9 ref" href="#39symbol" title='symbol' data-ref="39symbol">symbol</a>;</td></tr>
+<tr><th id="554">554</th><td>    }</td></tr>
+<tr><th id="555">555</th><td></td></tr>
+<tr><th id="556">556</th><td>    <i>// save current state</i></td></tr>
+<tr><th id="557">557</th><td>    *<a class="local col7 ref" href="#27h" title='h' data-ref="27h">h</a> = <a class="local col4 ref" href="#34high" title='high' data-ref="34high">high</a>;</td></tr>
+<tr><th id="558">558</th><td>    *<a class="local col8 ref" href="#28l" title='l' data-ref="28l">l</a> = <a class="local col5 ref" href="#35low" title='low' data-ref="35low">low</a>;</td></tr>
+<tr><th id="559">559</th><td>    *<a class="local col9 ref" href="#29v" title='v' data-ref="29v">v</a> = <a class="local col6 ref" href="#36value" title='value' data-ref="36value">value</a>;</td></tr>
+<tr><th id="560">560</th><td>}</td></tr>
+<tr><th id="561">561</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

@@ -1,0 +1,136 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>mqc.c source code [ffmpeg/libavcodec/mqc.c] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="MqcCxState "/>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavcodec/mqc.c'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavcodec</a>/<a href='mqc.c.html'>mqc.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * MQ-coder encoder and decoder common functions</i></td></tr>
+<tr><th id="3">3</th><td><i> * Copyright (c) 2007 Kamil Nowosad</i></td></tr>
+<tr><th id="4">4</th><td><i> *</i></td></tr>
+<tr><th id="5">5</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="8">8</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="9">9</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="10">10</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="11">11</th><td><i> *</i></td></tr>
+<tr><th id="12">12</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="13">13</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="14">14</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="15">15</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="16">16</th><td><i> *</i></td></tr>
+<tr><th id="17">17</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="18">18</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="19">19</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="20">20</th><td><i> */</i></td></tr>
+<tr><th id="21">21</th><td></td></tr>
+<tr><th id="22">22</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="23">23</th><td><i class="doc"> * MQ-coder common (decoder/encoder) functions</i></td></tr>
+<tr><th id="24">24</th><td><i class="doc"> *<span class="command"> @file</span></i></td></tr>
+<tr><th id="25">25</th><td><i class="doc"> * <span class="command">@author</span> Kamil Nowosad</i></td></tr>
+<tr><th id="26">26</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="27">27</th><td></td></tr>
+<tr><th id="28">28</th><td><u>#include <a href="../../include/string.h.html">&lt;string.h&gt;</a></u></td></tr>
+<tr><th id="29">29</th><td><u>#include &lt;stdint.h&gt;</u></td></tr>
+<tr><th id="30">30</th><td></td></tr>
+<tr><th id="31">31</th><td><u>#include <a href="../libavutil/attributes.h.html">"libavutil/attributes.h"</a></u></td></tr>
+<tr><th id="32">32</th><td></td></tr>
+<tr><th id="33">33</th><td><u>#include <a href="mqc.h.html">"mqc.h"</a></u></td></tr>
+<tr><th id="34">34</th><td></td></tr>
+<tr><th id="35">35</th><td><i>/* MQ coder context state structure */</i></td></tr>
+<tr><th id="36">36</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="MqcCxState" title='MqcCxState' data-ref="MqcCxState"><a class="type" href="#MqcCxState" title='MqcCxState' data-ref="MqcCxState">MqcCxState</a></dfn> {</td></tr>
+<tr><th id="37">37</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> <dfn class="tu decl" id="MqcCxState::qe" title='MqcCxState::qe' data-type='uint16_t' data-ref="MqcCxState::qe">qe</dfn>;</td></tr>
+<tr><th id="38">38</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a>  <dfn class="tu decl" id="MqcCxState::nmps" title='MqcCxState::nmps' data-type='uint8_t' data-ref="MqcCxState::nmps">nmps</dfn>;</td></tr>
+<tr><th id="39">39</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a>  <dfn class="tu decl" id="MqcCxState::nlps" title='MqcCxState::nlps' data-type='uint8_t' data-ref="MqcCxState::nlps">nlps</dfn>;</td></tr>
+<tr><th id="40">40</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a>  <dfn class="tu decl" id="MqcCxState::sw" title='MqcCxState::sw' data-type='uint8_t' data-ref="MqcCxState::sw">sw</dfn>;</td></tr>
+<tr><th id="41">41</th><td>} <dfn class="typedef" id="MqcCxState" title='MqcCxState' data-type='struct MqcCxState' data-ref="MqcCxState">MqcCxState</dfn>;</td></tr>
+<tr><th id="42">42</th><td></td></tr>
+<tr><th id="43">43</th><td><em>static</em> <em>const</em> <a class="typedef" href="#MqcCxState" title='MqcCxState' data-type='struct MqcCxState' data-ref="MqcCxState">MqcCxState</a> <dfn class="tu decl def" id="cx_states" title='cx_states' data-type='const MqcCxState [47]' data-ref="cx_states">cx_states</dfn>[<var>47</var>] = {</td></tr>
+<tr><th id="44">44</th><td>    { <var>0x5601</var>,  <var>1</var>,  <var>1</var>, <var>1</var> },</td></tr>
+<tr><th id="45">45</th><td>    { <var>0x3401</var>,  <var>2</var>,  <var>6</var>, <var>0</var> },</td></tr>
+<tr><th id="46">46</th><td>    { <var>0x1801</var>,  <var>3</var>,  <var>9</var>, <var>0</var> },</td></tr>
+<tr><th id="47">47</th><td>    { <var>0x0AC1</var>,  <var>4</var>, <var>12</var>, <var>0</var> },</td></tr>
+<tr><th id="48">48</th><td>    { <var>0x0521</var>,  <var>5</var>, <var>29</var>, <var>0</var> },</td></tr>
+<tr><th id="49">49</th><td>    { <var>0x0221</var>, <var>38</var>, <var>33</var>, <var>0</var> },</td></tr>
+<tr><th id="50">50</th><td>    { <var>0x5601</var>,  <var>7</var>,  <var>6</var>, <var>1</var> },</td></tr>
+<tr><th id="51">51</th><td>    { <var>0x5401</var>,  <var>8</var>, <var>14</var>, <var>0</var> },</td></tr>
+<tr><th id="52">52</th><td>    { <var>0x4801</var>,  <var>9</var>, <var>14</var>, <var>0</var> },</td></tr>
+<tr><th id="53">53</th><td>    { <var>0x3801</var>, <var>10</var>, <var>14</var>, <var>0</var> },</td></tr>
+<tr><th id="54">54</th><td>    { <var>0x3001</var>, <var>11</var>, <var>17</var>, <var>0</var> },</td></tr>
+<tr><th id="55">55</th><td>    { <var>0x2401</var>, <var>12</var>, <var>18</var>, <var>0</var> },</td></tr>
+<tr><th id="56">56</th><td>    { <var>0x1C01</var>, <var>13</var>, <var>20</var>, <var>0</var> },</td></tr>
+<tr><th id="57">57</th><td>    { <var>0x1601</var>, <var>29</var>, <var>21</var>, <var>0</var> },</td></tr>
+<tr><th id="58">58</th><td>    { <var>0x5601</var>, <var>15</var>, <var>14</var>, <var>1</var> },</td></tr>
+<tr><th id="59">59</th><td>    { <var>0x5401</var>, <var>16</var>, <var>14</var>, <var>0</var> },</td></tr>
+<tr><th id="60">60</th><td>    { <var>0x5101</var>, <var>17</var>, <var>15</var>, <var>0</var> },</td></tr>
+<tr><th id="61">61</th><td>    { <var>0x4801</var>, <var>18</var>, <var>16</var>, <var>0</var> },</td></tr>
+<tr><th id="62">62</th><td>    { <var>0x3801</var>, <var>19</var>, <var>17</var>, <var>0</var> },</td></tr>
+<tr><th id="63">63</th><td>    { <var>0x3401</var>, <var>20</var>, <var>18</var>, <var>0</var> },</td></tr>
+<tr><th id="64">64</th><td>    { <var>0x3001</var>, <var>21</var>, <var>19</var>, <var>0</var> },</td></tr>
+<tr><th id="65">65</th><td>    { <var>0x2801</var>, <var>22</var>, <var>19</var>, <var>0</var> },</td></tr>
+<tr><th id="66">66</th><td>    { <var>0x2401</var>, <var>23</var>, <var>20</var>, <var>0</var> },</td></tr>
+<tr><th id="67">67</th><td>    { <var>0x2201</var>, <var>24</var>, <var>21</var>, <var>0</var> },</td></tr>
+<tr><th id="68">68</th><td>    { <var>0x1C01</var>, <var>25</var>, <var>22</var>, <var>0</var> },</td></tr>
+<tr><th id="69">69</th><td>    { <var>0x1801</var>, <var>26</var>, <var>23</var>, <var>0</var> },</td></tr>
+<tr><th id="70">70</th><td>    { <var>0x1601</var>, <var>27</var>, <var>24</var>, <var>0</var> },</td></tr>
+<tr><th id="71">71</th><td>    { <var>0x1401</var>, <var>28</var>, <var>25</var>, <var>0</var> },</td></tr>
+<tr><th id="72">72</th><td>    { <var>0x1201</var>, <var>29</var>, <var>26</var>, <var>0</var> },</td></tr>
+<tr><th id="73">73</th><td>    { <var>0x1101</var>, <var>30</var>, <var>27</var>, <var>0</var> },</td></tr>
+<tr><th id="74">74</th><td>    { <var>0x0AC1</var>, <var>31</var>, <var>28</var>, <var>0</var> },</td></tr>
+<tr><th id="75">75</th><td>    { <var>0x09C1</var>, <var>32</var>, <var>29</var>, <var>0</var> },</td></tr>
+<tr><th id="76">76</th><td>    { <var>0x08A1</var>, <var>33</var>, <var>30</var>, <var>0</var> },</td></tr>
+<tr><th id="77">77</th><td>    { <var>0x0521</var>, <var>34</var>, <var>31</var>, <var>0</var> },</td></tr>
+<tr><th id="78">78</th><td>    { <var>0x0441</var>, <var>35</var>, <var>32</var>, <var>0</var> },</td></tr>
+<tr><th id="79">79</th><td>    { <var>0x02A1</var>, <var>36</var>, <var>33</var>, <var>0</var> },</td></tr>
+<tr><th id="80">80</th><td>    { <var>0x0221</var>, <var>37</var>, <var>34</var>, <var>0</var> },</td></tr>
+<tr><th id="81">81</th><td>    { <var>0x0141</var>, <var>38</var>, <var>35</var>, <var>0</var> },</td></tr>
+<tr><th id="82">82</th><td>    { <var>0x0111</var>, <var>39</var>, <var>36</var>, <var>0</var> },</td></tr>
+<tr><th id="83">83</th><td>    { <var>0x0085</var>, <var>40</var>, <var>37</var>, <var>0</var> },</td></tr>
+<tr><th id="84">84</th><td>    { <var>0x0049</var>, <var>41</var>, <var>38</var>, <var>0</var> },</td></tr>
+<tr><th id="85">85</th><td>    { <var>0x0025</var>, <var>42</var>, <var>39</var>, <var>0</var> },</td></tr>
+<tr><th id="86">86</th><td>    { <var>0x0015</var>, <var>43</var>, <var>40</var>, <var>0</var> },</td></tr>
+<tr><th id="87">87</th><td>    { <var>0x0009</var>, <var>44</var>, <var>41</var>, <var>0</var> },</td></tr>
+<tr><th id="88">88</th><td>    { <var>0x0005</var>, <var>45</var>, <var>42</var>, <var>0</var> },</td></tr>
+<tr><th id="89">89</th><td>    { <var>0x0001</var>, <var>45</var>, <var>43</var>, <var>0</var> },</td></tr>
+<tr><th id="90">90</th><td>    { <var>0x5601</var>, <var>46</var>, <var>46</var>, <var>0</var> }</td></tr>
+<tr><th id="91">91</th><td>};</td></tr>
+<tr><th id="92">92</th><td></td></tr>
+<tr><th id="93">93</th><td><a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> <dfn class="decl def" id="ff_mqc_qe" title='ff_mqc_qe' data-ref="ff_mqc_qe">ff_mqc_qe</dfn> [<var>2</var> * <var>47</var>];</td></tr>
+<tr><th id="94">94</th><td><a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl def" id="ff_mqc_nlps" title='ff_mqc_nlps' data-ref="ff_mqc_nlps">ff_mqc_nlps</dfn>[<var>2</var> * <var>47</var>];</td></tr>
+<tr><th id="95">95</th><td><a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl def" id="ff_mqc_nmps" title='ff_mqc_nmps' data-ref="ff_mqc_nmps">ff_mqc_nmps</dfn>[<var>2</var> * <var>47</var>];</td></tr>
+<tr><th id="96">96</th><td></td></tr>
+<tr><th id="97">97</th><td><em>void</em> <a class="macro" href="../libavutil/attributes.h.html#84" title="" data-ref="_M/av_cold">av_cold</a> <dfn class="decl def" id="ff_mqc_init_context_tables" title='ff_mqc_init_context_tables' data-ref="ff_mqc_init_context_tables">ff_mqc_init_context_tables</dfn>(<em>void</em>)</td></tr>
+<tr><th id="98">98</th><td>{</td></tr>
+<tr><th id="99">99</th><td>    <em>int</em> <dfn class="local col1 decl" id="1i" title='i' data-type='int' data-ref="1i">i</dfn>;</td></tr>
+<tr><th id="100">100</th><td>    <b>for</b> (<a class="local col1 ref" href="#1i" title='i' data-ref="1i">i</a> = <var>0</var>; <a class="local col1 ref" href="#1i" title='i' data-ref="1i">i</a> &lt; <var>47</var>; <a class="local col1 ref" href="#1i" title='i' data-ref="1i">i</a>++) {</td></tr>
+<tr><th id="101">101</th><td>        <a class="ref" href="mqc.h.html#ff_mqc_qe" title='ff_mqc_qe' data-ref="ff_mqc_qe">ff_mqc_qe</a>[<var>2</var> * <a class="local col1 ref" href="#1i" title='i' data-ref="1i">i</a>]     =</td></tr>
+<tr><th id="102">102</th><td>        <a class="ref" href="mqc.h.html#ff_mqc_qe" title='ff_mqc_qe' data-ref="ff_mqc_qe">ff_mqc_qe</a>[<var>2</var> * <a class="local col1 ref" href="#1i" title='i' data-ref="1i">i</a> + <var>1</var>] = <a class="tu ref" href="#cx_states" title='cx_states' data-use='m' data-ref="cx_states">cx_states</a>[<a class="local col1 ref" href="#1i" title='i' data-ref="1i">i</a>].<a class="tu ref" href="#MqcCxState::qe" title='MqcCxState::qe' data-use='r' data-ref="MqcCxState::qe">qe</a>;</td></tr>
+<tr><th id="103">103</th><td></td></tr>
+<tr><th id="104">104</th><td>        <a class="ref" href="mqc.h.html#ff_mqc_nlps" title='ff_mqc_nlps' data-ref="ff_mqc_nlps">ff_mqc_nlps</a>[<var>2</var> * <a class="local col1 ref" href="#1i" title='i' data-ref="1i">i</a>]     = <var>2</var> * <a class="tu ref" href="#cx_states" title='cx_states' data-use='m' data-ref="cx_states">cx_states</a>[<a class="local col1 ref" href="#1i" title='i' data-ref="1i">i</a>].<a class="tu ref" href="#MqcCxState::nlps" title='MqcCxState::nlps' data-use='r' data-ref="MqcCxState::nlps">nlps</a> + <a class="tu ref" href="#cx_states" title='cx_states' data-use='m' data-ref="cx_states">cx_states</a>[<a class="local col1 ref" href="#1i" title='i' data-ref="1i">i</a>].<a class="tu ref" href="#MqcCxState::sw" title='MqcCxState::sw' data-use='r' data-ref="MqcCxState::sw">sw</a>;</td></tr>
+<tr><th id="105">105</th><td>        <a class="ref" href="mqc.h.html#ff_mqc_nlps" title='ff_mqc_nlps' data-ref="ff_mqc_nlps">ff_mqc_nlps</a>[<var>2</var> * <a class="local col1 ref" href="#1i" title='i' data-ref="1i">i</a> + <var>1</var>] = <var>2</var> * <a class="tu ref" href="#cx_states" title='cx_states' data-use='m' data-ref="cx_states">cx_states</a>[<a class="local col1 ref" href="#1i" title='i' data-ref="1i">i</a>].<a class="tu ref" href="#MqcCxState::nlps" title='MqcCxState::nlps' data-use='r' data-ref="MqcCxState::nlps">nlps</a> + <var>1</var> - <a class="tu ref" href="#cx_states" title='cx_states' data-use='m' data-ref="cx_states">cx_states</a>[<a class="local col1 ref" href="#1i" title='i' data-ref="1i">i</a>].<a class="tu ref" href="#MqcCxState::sw" title='MqcCxState::sw' data-use='r' data-ref="MqcCxState::sw">sw</a>;</td></tr>
+<tr><th id="106">106</th><td>        <a class="ref" href="mqc.h.html#ff_mqc_nmps" title='ff_mqc_nmps' data-ref="ff_mqc_nmps">ff_mqc_nmps</a>[<var>2</var> * <a class="local col1 ref" href="#1i" title='i' data-ref="1i">i</a>]     = <var>2</var> * <a class="tu ref" href="#cx_states" title='cx_states' data-use='m' data-ref="cx_states">cx_states</a>[<a class="local col1 ref" href="#1i" title='i' data-ref="1i">i</a>].<a class="tu ref" href="#MqcCxState::nmps" title='MqcCxState::nmps' data-use='r' data-ref="MqcCxState::nmps">nmps</a>;</td></tr>
+<tr><th id="107">107</th><td>        <a class="ref" href="mqc.h.html#ff_mqc_nmps" title='ff_mqc_nmps' data-ref="ff_mqc_nmps">ff_mqc_nmps</a>[<var>2</var> * <a class="local col1 ref" href="#1i" title='i' data-ref="1i">i</a> + <var>1</var>] = <var>2</var> * <a class="tu ref" href="#cx_states" title='cx_states' data-use='m' data-ref="cx_states">cx_states</a>[<a class="local col1 ref" href="#1i" title='i' data-ref="1i">i</a>].<a class="tu ref" href="#MqcCxState::nmps" title='MqcCxState::nmps' data-use='r' data-ref="MqcCxState::nmps">nmps</a> + <var>1</var>;</td></tr>
+<tr><th id="108">108</th><td>    }</td></tr>
+<tr><th id="109">109</th><td>}</td></tr>
+<tr><th id="110">110</th><td></td></tr>
+<tr><th id="111">111</th><td><em>void</em> <dfn class="decl def" id="ff_mqc_init_contexts" title='ff_mqc_init_contexts' data-ref="ff_mqc_init_contexts">ff_mqc_init_contexts</dfn>(<a class="typedef" href="mqc.h.html#MqcState" title='MqcState' data-type='struct MqcState' data-ref="MqcState">MqcState</a> *<dfn class="local col2 decl" id="2mqc" title='mqc' data-type='MqcState *' data-ref="2mqc">mqc</dfn>)</td></tr>
+<tr><th id="112">112</th><td>{</td></tr>
+<tr><th id="113">113</th><td>    <a class="ref" href="../../include/string.h.html#memset" title='memset' data-ref="memset">memset</a>(<a class="local col2 ref" href="#2mqc" title='mqc' data-ref="2mqc">mqc</a>-&gt;<a class="ref" href="mqc.h.html#MqcState::cx_states" title='MqcState::cx_states' data-ref="MqcState::cx_states">cx_states</a>, <var>0</var>, <b>sizeof</b>(<a class="local col2 ref" href="#2mqc" title='mqc' data-ref="2mqc">mqc</a>-&gt;<a class="ref" href="mqc.h.html#MqcState::cx_states" title='MqcState::cx_states' data-ref="MqcState::cx_states">cx_states</a>));</td></tr>
+<tr><th id="114">114</th><td>    <a class="local col2 ref" href="#2mqc" title='mqc' data-ref="2mqc">mqc</a>-&gt;<a class="ref" href="mqc.h.html#MqcState::cx_states" title='MqcState::cx_states' data-ref="MqcState::cx_states">cx_states</a>[<a class="macro" href="mqc.h.html#33" title="17" data-ref="_M/MQC_CX_UNI">MQC_CX_UNI</a>] = <var>2</var> * <var>46</var>;</td></tr>
+<tr><th id="115">115</th><td>    <a class="local col2 ref" href="#2mqc" title='mqc' data-ref="2mqc">mqc</a>-&gt;<a class="ref" href="mqc.h.html#MqcState::cx_states" title='MqcState::cx_states' data-ref="MqcState::cx_states">cx_states</a>[<a class="macro" href="mqc.h.html#34" title="18" data-ref="_M/MQC_CX_RL">MQC_CX_RL</a>]  = <var>2</var> * <var>3</var>;</td></tr>
+<tr><th id="116">116</th><td>    <a class="local col2 ref" href="#2mqc" title='mqc' data-ref="2mqc">mqc</a>-&gt;<a class="ref" href="mqc.h.html#MqcState::cx_states" title='MqcState::cx_states' data-ref="MqcState::cx_states">cx_states</a>[<var>0</var>]          = <var>2</var> * <var>4</var>;</td></tr>
+<tr><th id="117">117</th><td>}</td></tr>
+<tr><th id="118">118</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

@@ -1,0 +1,252 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>rtcp.c source code [vlc/modules/stream_out/rtcp.c] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="rtcp_sender_t "/>
+<link rel="stylesheet" href="../../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'vlc/modules/stream_out/rtcp.c'; var root_path = '../../..'; var data_path = '../../../../data';</script>
+<script src='../../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='../..'>vlc</a>/<a href='..'>modules</a>/<a href='./'>stream_out</a>/<a href='rtcp.c.html'>rtcp.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*****************************************************************************</i></td></tr>
+<tr><th id="2">2</th><td><i> * rtcp.c: RTCP stream output support</i></td></tr>
+<tr><th id="3">3</th><td><i> *****************************************************************************</i></td></tr>
+<tr><th id="4">4</th><td><i> * Copyright © 2007 Rémi Denis-Courmont</i></td></tr>
+<tr><th id="5">5</th><td><i> * $Id: 6a85bfaf2cb2b1269732f73113e20237a5eb0753 $</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * This library is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="8">8</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="9">9</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="10">10</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="11">11</th><td><i> *</i></td></tr>
+<tr><th id="12">12</th><td><i> * This library is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="13">13</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="14">14</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU</i></td></tr>
+<tr><th id="15">15</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="16">16</th><td><i> *</i></td></tr>
+<tr><th id="17">17</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="18">18</th><td><i> * License along with this library; if not, write to the Free Software</i></td></tr>
+<tr><th id="19">19</th><td><i> * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA</i></td></tr>
+<tr><th id="20">20</th><td><i> *****************************************************************************/</i></td></tr>
+<tr><th id="21">21</th><td></td></tr>
+<tr><th id="22">22</th><td><i>/*****************************************************************************</i></td></tr>
+<tr><th id="23">23</th><td><i> * Preamble</i></td></tr>
+<tr><th id="24">24</th><td><i> *****************************************************************************/</i></td></tr>
+<tr><th id="25">25</th><td></td></tr>
+<tr><th id="26">26</th><td><u>#<span data-ppcond="26">ifdef</span> <span class="macro" data-ref="_M/HAVE_CONFIG_H">HAVE_CONFIG_H</span></u></td></tr>
+<tr><th id="27">27</th><td><u># include <a href="../../config.h.html">"config.h"</a></u></td></tr>
+<tr><th id="28">28</th><td><u>#<span data-ppcond="26">endif</span></u></td></tr>
+<tr><th id="29">29</th><td></td></tr>
+<tr><th id="30">30</th><td><u>#include <a href="../../include/vlc_common.h.html">&lt;vlc_common.h&gt;</a></u></td></tr>
+<tr><th id="31">31</th><td><u>#include <a href="../../include/vlc_block.h.html">&lt;vlc_block.h&gt;</a></u></td></tr>
+<tr><th id="32">32</th><td></td></tr>
+<tr><th id="33">33</th><td><u>#include <a href="../../include/vlc_network.h.html">&lt;vlc_network.h&gt;</a></u></td></tr>
+<tr><th id="34">34</th><td><u>#include <a href="../../include/vlc_sout.h.html">&lt;vlc_sout.h&gt;</a></u></td></tr>
+<tr><th id="35">35</th><td><u>#include <a href="../../include/vlc_fs.h.html">&lt;vlc_fs.h&gt;</a></u></td></tr>
+<tr><th id="36">36</th><td><u>#include <a href="rtp.h.html">"rtp.h"</a></u></td></tr>
+<tr><th id="37">37</th><td></td></tr>
+<tr><th id="38">38</th><td><u>#include <a href="../../../include/assert.h.html">&lt;assert.h&gt;</a></u></td></tr>
+<tr><th id="39">39</th><td></td></tr>
+<tr><th id="40">40</th><td><u>#<span data-ppcond="40">ifndef</span> <a class="macro" href="../../../include/x86_64-linux-gnu/bits/in.h.html#102" data-ref="_M/SOL_IP">SOL_IP</a></u></td></tr>
+<tr><th id="41">41</th><td><u># define SOL_IP IPPROTO_IP</u></td></tr>
+<tr><th id="42">42</th><td><u>#<span data-ppcond="40">endif</span></u></td></tr>
+<tr><th id="43">43</th><td></td></tr>
+<tr><th id="44">44</th><td><i>/*</i></td></tr>
+<tr><th id="45">45</th><td><i> * NOTE on RTCP implementation:</i></td></tr>
+<tr><th id="46">46</th><td><i> * - there is a single sender (us), no conferencing here! =&gt; n = sender = 1,</i></td></tr>
+<tr><th id="47">47</th><td><i> * - as such we need not bother to include Receiver Reports,</i></td></tr>
+<tr><th id="48">48</th><td><i> * - in unicast case, there is a single receiver =&gt; members = 1 + 1 = 2,</i></td></tr>
+<tr><th id="49">49</th><td><i> *   and obviously n &gt; 25% of members,</i></td></tr>
+<tr><th id="50">50</th><td><i> * - in multicast case, we do not want to maintain the number of receivers</i></td></tr>
+<tr><th id="51">51</th><td><i> *   and we assume it is big (i.e. than 3) because that's what broadcasting is</i></td></tr>
+<tr><th id="52">52</th><td><i> *   all about,</i></td></tr>
+<tr><th id="53">53</th><td><i> * - it is assumed we_sent = true (could be wrong), since we are THE sender,</i></td></tr>
+<tr><th id="54">54</th><td><i> * - we always send SR + SDES, while running,</i></td></tr>
+<tr><th id="55">55</th><td><i> * - FIXME: we do not implement separate rate limiting for SDES,</i></td></tr>
+<tr><th id="56">56</th><td><i> * - we do not implement any profile-specific extensions for the time being.</i></td></tr>
+<tr><th id="57">57</th><td><i> */</i></td></tr>
+<tr><th id="58">58</th><td><b>struct</b> <dfn class="type def" id="rtcp_sender_t" title='rtcp_sender_t' data-ref="rtcp_sender_t">rtcp_sender_t</dfn></td></tr>
+<tr><th id="59">59</th><td>{</td></tr>
+<tr><th id="60">60</th><td>    <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span>   <dfn class="decl" id="rtcp_sender_t::length" title='rtcp_sender_t::length' data-ref="rtcp_sender_t::length">length</dfn>;  <i>/* RTCP packet length */</i></td></tr>
+<tr><th id="61">61</th><td>    <a class="typedef" href="../../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a>  <dfn class="decl" id="rtcp_sender_t::payload" title='rtcp_sender_t::payload' data-ref="rtcp_sender_t::payload">payload</dfn>[<var>28</var> + <var>8</var> + (<var>2</var> * <var>257</var>) + <var>8</var>];</td></tr>
+<tr><th id="62">62</th><td>    <em>int</em>      <dfn class="decl" id="rtcp_sender_t::handle" title='rtcp_sender_t::handle' data-ref="rtcp_sender_t::handle">handle</dfn>;  <i>/* RTCP socket handler */</i></td></tr>
+<tr><th id="63">63</th><td></td></tr>
+<tr><th id="64">64</th><td>    <a class="typedef" href="../../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a> <dfn class="decl" id="rtcp_sender_t::packets" title='rtcp_sender_t::packets' data-ref="rtcp_sender_t::packets">packets</dfn>; <i>/* RTP packets sent */</i></td></tr>
+<tr><th id="65">65</th><td>    <a class="typedef" href="../../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a> <dfn class="decl" id="rtcp_sender_t::bytes" title='rtcp_sender_t::bytes' data-ref="rtcp_sender_t::bytes">bytes</dfn>;   <i>/* RTP bytes sent */</i></td></tr>
+<tr><th id="66">66</th><td>    <em>unsigned</em> <dfn class="decl" id="rtcp_sender_t::counter" title='rtcp_sender_t::counter' data-ref="rtcp_sender_t::counter">counter</dfn>; <i>/* RTP packets sent since last RTCP packet */</i></td></tr>
+<tr><th id="67">67</th><td>};</td></tr>
+<tr><th id="68">68</th><td></td></tr>
+<tr><th id="69">69</th><td></td></tr>
+<tr><th id="70">70</th><td><a class="typedef" href="rtp.h.html#rtcp_sender_t" title='rtcp_sender_t' data-type='struct rtcp_sender_t' data-ref="rtcp_sender_t">rtcp_sender_t</a> *<dfn class="decl def" id="OpenRTCP" title='OpenRTCP' data-ref="OpenRTCP">OpenRTCP</dfn> (<a class="typedef" href="../../include/vlc_common.h.html#vlc_object_t" title='vlc_object_t' data-type='struct vlc_object_t' data-ref="vlc_object_t">vlc_object_t</a> *<dfn class="local col5 decl" id="85obj" title='obj' data-type='vlc_object_t *' data-ref="85obj">obj</dfn>, <em>int</em> <dfn class="local col6 decl" id="86rtp_fd" title='rtp_fd' data-type='int' data-ref="86rtp_fd">rtp_fd</dfn>, <em>int</em> <dfn class="local col7 decl" id="87proto" title='proto' data-type='int' data-ref="87proto">proto</dfn>,</td></tr>
+<tr><th id="71">71</th><td>                         <span class="macro" title="_Bool" data-ref="_M/bool">bool</span> <dfn class="local col8 decl" id="88mux" title='mux' data-type='_Bool' data-ref="88mux">mux</dfn>)</td></tr>
+<tr><th id="72">72</th><td>{</td></tr>
+<tr><th id="73">73</th><td>    <a class="typedef" href="rtp.h.html#rtcp_sender_t" title='rtcp_sender_t' data-type='struct rtcp_sender_t' data-ref="rtcp_sender_t">rtcp_sender_t</a> *<dfn class="local col9 decl" id="89rtcp" title='rtcp' data-type='rtcp_sender_t *' data-ref="89rtcp">rtcp</dfn>;</td></tr>
+<tr><th id="74">74</th><td>    <a class="typedef" href="../../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col0 decl" id="90ptr" title='ptr' data-type='uint8_t *' data-ref="90ptr">ptr</dfn>;</td></tr>
+<tr><th id="75">75</th><td>    <em>int</em> <dfn class="local col1 decl" id="91fd" title='fd' data-type='int' data-ref="91fd">fd</dfn>;</td></tr>
+<tr><th id="76">76</th><td>    <em>char</em> <dfn class="local col2 decl" id="92src" title='src' data-type='char [64]' data-ref="92src">src</dfn>[<a class="macro" href="../../include/vlc_network.h.html#219" title="64" data-ref="_M/NI_MAXNUMERICHOST">NI_MAXNUMERICHOST</a>];</td></tr>
+<tr><th id="77">77</th><td>    <em>int</em> <dfn class="local col3 decl" id="93sport" title='sport' data-type='int' data-ref="93sport">sport</dfn>;</td></tr>
+<tr><th id="78">78</th><td></td></tr>
+<tr><th id="79">79</th><td>    <b>if</b> (<a class="ref" href="../../include/vlc_network.h.html#net_GetSockAddress" title='net_GetSockAddress' data-ref="net_GetSockAddress">net_GetSockAddress</a> (<a class="local col6 ref" href="#86rtp_fd" title='rtp_fd' data-ref="86rtp_fd">rtp_fd</a>, <a class="local col2 ref" href="#92src" title='src' data-ref="92src">src</a>, &amp;<a class="local col3 ref" href="#93sport" title='sport' data-ref="93sport">sport</a>))</td></tr>
+<tr><th id="80">80</th><td>        <b>return</b> <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="81">81</th><td></td></tr>
+<tr><th id="82">82</th><td>    <b>if</b> (<a class="local col8 ref" href="#88mux" title='mux' data-ref="88mux">mux</a>)</td></tr>
+<tr><th id="83">83</th><td>    {</td></tr>
+<tr><th id="84">84</th><td>        <i>/* RTP/RTCP mux: duplicate the socket */</i></td></tr>
+<tr><th id="85">85</th><td><u>#<span data-ppcond="85">ifndef</span> <span class="macro" data-ref="_M/_WIN32">_WIN32</span></u></td></tr>
+<tr><th id="86">86</th><td>        <a class="local col1 ref" href="#91fd" title='fd' data-ref="91fd">fd</a> = <a class="ref" href="../../include/vlc_fs.h.html#vlc_dup" title='vlc_dup' data-ref="vlc_dup">vlc_dup</a> (<a class="local col6 ref" href="#86rtp_fd" title='rtp_fd' data-ref="86rtp_fd">rtp_fd</a>);</td></tr>
+<tr><th id="87">87</th><td><u>#<span data-ppcond="85">else</span></u></td></tr>
+<tr><th id="88">88</th><td>        WSAPROTOCOL_INFO info;</td></tr>
+<tr><th id="89">89</th><td>        WSADuplicateSocket (rtp_fd, GetCurrentProcessId (), &amp;info);</td></tr>
+<tr><th id="90">90</th><td>        fd = WSASocket (info.iAddressFamily, info.iSocketType, info.iProtocol,</td></tr>
+<tr><th id="91">91</th><td>                        &amp;info, <var>0</var>, <var>0</var>);</td></tr>
+<tr><th id="92">92</th><td><u>#<span data-ppcond="85">endif</span></u></td></tr>
+<tr><th id="93">93</th><td>    }</td></tr>
+<tr><th id="94">94</th><td>    <b>else</b></td></tr>
+<tr><th id="95">95</th><td>    {</td></tr>
+<tr><th id="96">96</th><td>        <i>/* RTCP on a separate port */</i></td></tr>
+<tr><th id="97">97</th><td>        <em>char</em> <dfn class="local col4 decl" id="94dst" title='dst' data-type='char [64]' data-ref="94dst">dst</dfn>[<a class="macro" href="../../include/vlc_network.h.html#219" title="64" data-ref="_M/NI_MAXNUMERICHOST">NI_MAXNUMERICHOST</a>];</td></tr>
+<tr><th id="98">98</th><td>        <em>int</em> <dfn class="local col5 decl" id="95dport" title='dport' data-type='int' data-ref="95dport">dport</dfn>;</td></tr>
+<tr><th id="99">99</th><td></td></tr>
+<tr><th id="100">100</th><td>        <b>if</b> (<a class="ref" href="../../include/vlc_network.h.html#net_GetPeerAddress" title='net_GetPeerAddress' data-ref="net_GetPeerAddress">net_GetPeerAddress</a> (<a class="local col6 ref" href="#86rtp_fd" title='rtp_fd' data-ref="86rtp_fd">rtp_fd</a>, <a class="local col4 ref" href="#94dst" title='dst' data-ref="94dst">dst</a>, &amp;<a class="local col5 ref" href="#95dport" title='dport' data-ref="95dport">dport</a>))</td></tr>
+<tr><th id="101">101</th><td>            <b>return</b> <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="102">102</th><td></td></tr>
+<tr><th id="103">103</th><td>        <a class="local col3 ref" href="#93sport" title='sport' data-ref="93sport">sport</a>++;</td></tr>
+<tr><th id="104">104</th><td>        <a class="local col5 ref" href="#95dport" title='dport' data-ref="95dport">dport</a>++;</td></tr>
+<tr><th id="105">105</th><td></td></tr>
+<tr><th id="106">106</th><td>        <a class="local col1 ref" href="#91fd" title='fd' data-ref="91fd">fd</a> = <a class="macro" href="../../include/vlc_network.h.html#123" title="net_OpenDgram(__builtin_choose_expr( __builtin_offsetof(__typeof__(*(obj)), psz_object_type), (void)0 , (vlc_object_t *)(obj)), src, sport, dst, dport, proto)" data-ref="_M/net_OpenDgram">net_OpenDgram</a> (<a class="local col5 ref" href="#85obj" title='obj' data-ref="85obj">obj</a>, <a class="local col2 ref" href="#92src" title='src' data-ref="92src">src</a>, <a class="local col3 ref" href="#93sport" title='sport' data-ref="93sport">sport</a>, <a class="local col4 ref" href="#94dst" title='dst' data-ref="94dst">dst</a>, <a class="local col5 ref" href="#95dport" title='dport' data-ref="95dport">dport</a>, <a class="local col7 ref" href="#87proto" title='proto' data-ref="87proto">proto</a>);</td></tr>
+<tr><th id="107">107</th><td>        <b>if</b> (<a class="local col1 ref" href="#91fd" title='fd' data-ref="91fd">fd</a> != -<var>1</var>)</td></tr>
+<tr><th id="108">108</th><td>        {</td></tr>
+<tr><th id="109">109</th><td>            <i>/* Copy the multicast IPv4 TTL value (useless for IPv6) */</i></td></tr>
+<tr><th id="110">110</th><td>            <em>int</em> <dfn class="local col6 decl" id="96ttl" title='ttl' data-type='int' data-ref="96ttl">ttl</dfn>;</td></tr>
+<tr><th id="111">111</th><td>            <a class="typedef" href="../../../include/unistd.h.html#socklen_t" title='socklen_t' data-type='__socklen_t' data-ref="socklen_t">socklen_t</a> <dfn class="local col7 decl" id="97len" title='len' data-type='socklen_t' data-ref="97len">len</dfn> = <b>sizeof</b> (<a class="local col6 ref" href="#96ttl" title='ttl' data-ref="96ttl">ttl</a>);</td></tr>
+<tr><th id="112">112</th><td></td></tr>
+<tr><th id="113">113</th><td>            <b>if</b> (!<a class="ref" href="../../../include/x86_64-linux-gnu/sys/socket.h.html#getsockopt" title='getsockopt' data-ref="getsockopt">getsockopt</a> (<a class="local col6 ref" href="#86rtp_fd" title='rtp_fd' data-ref="86rtp_fd">rtp_fd</a>, <a class="macro" href="../../../include/x86_64-linux-gnu/bits/in.h.html#102" title="0" data-ref="_M/SOL_IP">SOL_IP</a>, <a class="macro" href="../../../include/x86_64-linux-gnu/bits/in.h.html#48" title="33" data-ref="_M/IP_MULTICAST_TTL">IP_MULTICAST_TTL</a>, &amp;<a class="local col6 ref" href="#96ttl" title='ttl' data-ref="96ttl">ttl</a>, &amp;<a class="local col7 ref" href="#97len" title='len' data-ref="97len">len</a>))</td></tr>
+<tr><th id="114">114</th><td>                <a class="ref" href="../../../include/x86_64-linux-gnu/sys/socket.h.html#setsockopt" title='setsockopt' data-ref="setsockopt">setsockopt</a> (<a class="local col1 ref" href="#91fd" title='fd' data-ref="91fd">fd</a>, <a class="macro" href="../../../include/x86_64-linux-gnu/bits/in.h.html#102" title="0" data-ref="_M/SOL_IP">SOL_IP</a>, <a class="macro" href="../../../include/x86_64-linux-gnu/bits/in.h.html#48" title="33" data-ref="_M/IP_MULTICAST_TTL">IP_MULTICAST_TTL</a>, &amp;<a class="local col6 ref" href="#96ttl" title='ttl' data-ref="96ttl">ttl</a>, <a class="local col7 ref" href="#97len" title='len' data-ref="97len">len</a>);</td></tr>
+<tr><th id="115">115</th><td></td></tr>
+<tr><th id="116">116</th><td>            <i>/* Ignore all incoming RTCP-RR packets */</i></td></tr>
+<tr><th id="117">117</th><td>            <a class="ref" href="../../../include/x86_64-linux-gnu/sys/socket.h.html#setsockopt" title='setsockopt' data-ref="setsockopt">setsockopt</a> (<a class="local col1 ref" href="#91fd" title='fd' data-ref="91fd">fd</a>, <a class="macro" href="../../../include/asm-generic/socket.h.html#7" title="1" data-ref="_M/SOL_SOCKET">SOL_SOCKET</a>, <a class="macro" href="../../../include/asm-generic/socket.h.html#16" title="8" data-ref="_M/SO_RCVBUF">SO_RCVBUF</a>, &amp;(<em>int</em>){ <var>0</var> }, <b>sizeof</b> (<em>int</em>));</td></tr>
+<tr><th id="118">118</th><td>        }</td></tr>
+<tr><th id="119">119</th><td>    }</td></tr>
+<tr><th id="120">120</th><td></td></tr>
+<tr><th id="121">121</th><td>    <b>if</b> (<a class="local col1 ref" href="#91fd" title='fd' data-ref="91fd">fd</a> == -<var>1</var>)</td></tr>
+<tr><th id="122">122</th><td>        <b>return</b> <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="123">123</th><td></td></tr>
+<tr><th id="124">124</th><td>    <a class="local col9 ref" href="#89rtcp" title='rtcp' data-ref="89rtcp">rtcp</a> = <a class="ref" href="../../../include/stdlib.h.html#malloc" title='malloc' data-ref="malloc">malloc</a> (<b>sizeof</b> (*<a class="local col9 ref" href="#89rtcp" title='rtcp' data-ref="89rtcp">rtcp</a>));</td></tr>
+<tr><th id="125">125</th><td>    <b>if</b> (<a class="local col9 ref" href="#89rtcp" title='rtcp' data-ref="89rtcp">rtcp</a> == <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>)</td></tr>
+<tr><th id="126">126</th><td>    {</td></tr>
+<tr><th id="127">127</th><td>        <a class="macro" href="../../include/vlc_network.h.html#171" title="(void)close (fd)" data-ref="_M/net_Close">net_Close</a> (<a class="local col1 ref" href="#91fd" title='fd' data-ref="91fd">fd</a>);</td></tr>
+<tr><th id="128">128</th><td>        <b>return</b> <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="129">129</th><td>    }</td></tr>
+<tr><th id="130">130</th><td></td></tr>
+<tr><th id="131">131</th><td>    <a class="local col9 ref" href="#89rtcp" title='rtcp' data-ref="89rtcp">rtcp</a>-&gt;<a class="ref" href="#rtcp_sender_t::handle" title='rtcp_sender_t::handle' data-ref="rtcp_sender_t::handle">handle</a> = <a class="local col1 ref" href="#91fd" title='fd' data-ref="91fd">fd</a>;</td></tr>
+<tr><th id="132">132</th><td>    <a class="local col9 ref" href="#89rtcp" title='rtcp' data-ref="89rtcp">rtcp</a>-&gt;<a class="ref" href="#rtcp_sender_t::bytes" title='rtcp_sender_t::bytes' data-ref="rtcp_sender_t::bytes">bytes</a> = <a class="local col9 ref" href="#89rtcp" title='rtcp' data-ref="89rtcp">rtcp</a>-&gt;<a class="ref" href="#rtcp_sender_t::packets" title='rtcp_sender_t::packets' data-ref="rtcp_sender_t::packets">packets</a> = <a class="local col9 ref" href="#89rtcp" title='rtcp' data-ref="89rtcp">rtcp</a>-&gt;<a class="ref" href="#rtcp_sender_t::counter" title='rtcp_sender_t::counter' data-ref="rtcp_sender_t::counter">counter</a> = <var>0</var>;</td></tr>
+<tr><th id="133">133</th><td></td></tr>
+<tr><th id="134">134</th><td>    <a class="local col0 ref" href="#90ptr" title='ptr' data-ref="90ptr">ptr</a> = (<a class="typedef" href="../../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *)<a class="macro" href="../../../include/x86_64-linux-gnu/bits/string2.h.html#395" title="(__extension__ (__builtin_constant_p (&apos;%&apos;) &amp;&amp; !__builtin_constant_p (src) &amp;&amp; (&apos;%&apos;) == &apos;\0&apos; ? (char *) __rawmemchr (src, &apos;%&apos;) : __builtin_strchr (src, &apos;%&apos;)))" data-ref="_M/strchr">strchr</a> (<a class="local col2 ref" href="#92src" title='src' data-ref="92src">src</a>, <kbd>'%'</kbd>);</td></tr>
+<tr><th id="135">135</th><td>    <b>if</b> (<a class="local col0 ref" href="#90ptr" title='ptr' data-ref="90ptr">ptr</a> != <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>)</td></tr>
+<tr><th id="136">136</th><td>        *<a class="local col0 ref" href="#90ptr" title='ptr' data-ref="90ptr">ptr</a> = <kbd>'\0'</kbd>; <i>/* remove scope ID frop IPv6 addresses */</i></td></tr>
+<tr><th id="137">137</th><td></td></tr>
+<tr><th id="138">138</th><td>    <a class="local col0 ref" href="#90ptr" title='ptr' data-ref="90ptr">ptr</a> = <a class="local col9 ref" href="#89rtcp" title='rtcp' data-ref="89rtcp">rtcp</a>-&gt;<a class="ref" href="#rtcp_sender_t::payload" title='rtcp_sender_t::payload' data-ref="rtcp_sender_t::payload">payload</a>;</td></tr>
+<tr><th id="139">139</th><td></td></tr>
+<tr><th id="140">140</th><td>    <i>/* Sender report */</i></td></tr>
+<tr><th id="141">141</th><td>    <a class="local col0 ref" href="#90ptr" title='ptr' data-ref="90ptr">ptr</a>[<var>0</var>] = <var>2</var> &lt;&lt; <var>6</var>; <i>/* V = 2, P = RC = 0 */</i></td></tr>
+<tr><th id="142">142</th><td>    <a class="local col0 ref" href="#90ptr" title='ptr' data-ref="90ptr">ptr</a>[<var>1</var>] = <var>200</var>; <i>/* payload type: Sender Report */</i></td></tr>
+<tr><th id="143">143</th><td>    <a class="ref" href="../../include/vlc_common.h.html#SetWBE" title='SetWBE' data-ref="SetWBE">SetWBE</a> (<a class="local col0 ref" href="#90ptr" title='ptr' data-ref="90ptr">ptr</a> + <var>2</var>, <var>6</var>); <i>/* length = 6 (7 double words) */</i></td></tr>
+<tr><th id="144">144</th><td>    <a class="ref" href="../../../include/string.h.html#memset" title='memset' data-ref="memset">memset</a> (<a class="local col0 ref" href="#90ptr" title='ptr' data-ref="90ptr">ptr</a> + <var>4</var>, <var>0</var>, <var>4</var>); <i>/* SSRC unknown yet */</i></td></tr>
+<tr><th id="145">145</th><td>    <a class="ref" href="../../include/vlc_common.h.html#SetQWBE" title='SetQWBE' data-ref="SetQWBE">SetQWBE</a> (<a class="local col0 ref" href="#90ptr" title='ptr' data-ref="90ptr">ptr</a> + <var>8</var>, <a class="ref" href="../../include/vlc_mtime.h.html#NTPtime64" title='NTPtime64' data-ref="NTPtime64">NTPtime64</a> ());</td></tr>
+<tr><th id="146">146</th><td>    <a class="ref" href="../../../include/string.h.html#memset" title='memset' data-ref="memset">memset</a> (<a class="local col0 ref" href="#90ptr" title='ptr' data-ref="90ptr">ptr</a> + <var>16</var>, <var>0</var>, <var>12</var>); <i>/* timestamp and counters */</i></td></tr>
+<tr><th id="147">147</th><td>    <a class="local col0 ref" href="#90ptr" title='ptr' data-ref="90ptr">ptr</a> += <var>28</var>;</td></tr>
+<tr><th id="148">148</th><td></td></tr>
+<tr><th id="149">149</th><td>    <i>/* Source description */</i></td></tr>
+<tr><th id="150">150</th><td>    <a class="typedef" href="../../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col8 decl" id="98sdes" title='sdes' data-type='uint8_t *' data-ref="98sdes">sdes</dfn> = <a class="local col0 ref" href="#90ptr" title='ptr' data-ref="90ptr">ptr</a>;</td></tr>
+<tr><th id="151">151</th><td>    <a class="local col0 ref" href="#90ptr" title='ptr' data-ref="90ptr">ptr</a>[<var>0</var>] = (<var>2</var> &lt;&lt; <var>6</var>) | <var>1</var>; <i>/* V = 2, P = 0, SC = 1 */</i></td></tr>
+<tr><th id="152">152</th><td>    <a class="local col0 ref" href="#90ptr" title='ptr' data-ref="90ptr">ptr</a>[<var>1</var>] = <var>202</var>; <i>/* payload type: Source Description */</i></td></tr>
+<tr><th id="153">153</th><td>    <a class="typedef" href="../../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col9 decl" id="99lenptr" title='lenptr' data-type='uint8_t *' data-ref="99lenptr">lenptr</dfn> = <a class="local col0 ref" href="#90ptr" title='ptr' data-ref="90ptr">ptr</a> + <var>2</var>;</td></tr>
+<tr><th id="154">154</th><td>    <a class="ref" href="../../../include/string.h.html#memset" title='memset' data-ref="memset">memset</a> (<a class="local col0 ref" href="#90ptr" title='ptr' data-ref="90ptr">ptr</a> + <var>4</var>, <var>0</var>, <var>4</var>); <i>/* SSRC unknown yet */</i></td></tr>
+<tr><th id="155">155</th><td>    <a class="local col0 ref" href="#90ptr" title='ptr' data-ref="90ptr">ptr</a> += <var>8</var>;</td></tr>
+<tr><th id="156">156</th><td></td></tr>
+<tr><th id="157">157</th><td>    <a class="local col0 ref" href="#90ptr" title='ptr' data-ref="90ptr">ptr</a>[<var>0</var>] = <var>1</var>; <i>/* CNAME - mandatory */</i></td></tr>
+<tr><th id="158">158</th><td>    <a class="macro" href="../../../include/assert.h.html#88" title="((64 &lt;= 256) ? (void) (0) : __assert_fail (&quot;64 &lt;= 256&quot;, &quot;/usr/local/google/home/robertshih/git/vlc/modules/stream_out/rtcp.c&quot;, 158, __PRETTY_FUNCTION__))" data-ref="_M/assert">assert</a> (<a class="macro" href="../../include/vlc_network.h.html#219" title="64" data-ref="_M/NI_MAXNUMERICHOST">NI_MAXNUMERICHOST</a> &lt;= <var>256</var>);</td></tr>
+<tr><th id="159">159</th><td>    <a class="local col0 ref" href="#90ptr" title='ptr' data-ref="90ptr">ptr</a>[<var>1</var>] = <a class="ref" href="../../../include/string.h.html#strlen" title='strlen' data-ref="strlen">strlen</a> (<a class="local col2 ref" href="#92src" title='src' data-ref="92src">src</a>);</td></tr>
+<tr><th id="160">160</th><td>    <a class="ref" href="../../../include/string.h.html#memcpy" title='memcpy' data-ref="memcpy">memcpy</a> (<a class="local col0 ref" href="#90ptr" title='ptr' data-ref="90ptr">ptr</a> + <var>2</var>, <a class="local col2 ref" href="#92src" title='src' data-ref="92src">src</a>, <a class="local col0 ref" href="#90ptr" title='ptr' data-ref="90ptr">ptr</a>[<var>1</var>]);</td></tr>
+<tr><th id="161">161</th><td>    <a class="local col0 ref" href="#90ptr" title='ptr' data-ref="90ptr">ptr</a> += <a class="local col0 ref" href="#90ptr" title='ptr' data-ref="90ptr">ptr</a>[<var>1</var>] + <var>2</var>;</td></tr>
+<tr><th id="162">162</th><td></td></tr>
+<tr><th id="163">163</th><td>    <em>static</em> <em>const</em> <em>char</em> <dfn class="local col0 decl" id="100tool" title='tool' data-type='const char [14]' data-ref="100tool">tool</dfn>[] = <a class="macro" href="../../config.h.html#623" title="&quot;vlc 2.2.0-git&quot;" data-ref="_M/PACKAGE_STRING">PACKAGE_STRING</a>;</td></tr>
+<tr><th id="164">164</th><td>    <a class="local col0 ref" href="#90ptr" title='ptr' data-ref="90ptr">ptr</a>[<var>0</var>] = <var>6</var>; <i>/* TOOL */</i></td></tr>
+<tr><th id="165">165</th><td>    <a class="local col0 ref" href="#90ptr" title='ptr' data-ref="90ptr">ptr</a>[<var>1</var>] = (<b>sizeof</b> (<a class="local col0 ref" href="#100tool" title='tool' data-ref="100tool">tool</a>) &gt; <var>256</var>) ? <var>255</var> : (<b>sizeof</b> (<a class="local col0 ref" href="#100tool" title='tool' data-ref="100tool">tool</a>) - <var>1</var>);</td></tr>
+<tr><th id="166">166</th><td>    <a class="ref" href="../../../include/string.h.html#memcpy" title='memcpy' data-ref="memcpy">memcpy</a> (<a class="local col0 ref" href="#90ptr" title='ptr' data-ref="90ptr">ptr</a> + <var>2</var>, <a class="local col0 ref" href="#100tool" title='tool' data-ref="100tool">tool</a>, <a class="local col0 ref" href="#90ptr" title='ptr' data-ref="90ptr">ptr</a>[<var>1</var>]);</td></tr>
+<tr><th id="167">167</th><td>    <a class="local col0 ref" href="#90ptr" title='ptr' data-ref="90ptr">ptr</a> += <a class="local col0 ref" href="#90ptr" title='ptr' data-ref="90ptr">ptr</a>[<var>1</var>] + <var>2</var>;</td></tr>
+<tr><th id="168">168</th><td></td></tr>
+<tr><th id="169">169</th><td>    <b>while</b> ((<a class="local col0 ref" href="#90ptr" title='ptr' data-ref="90ptr">ptr</a> - <a class="local col8 ref" href="#98sdes" title='sdes' data-ref="98sdes">sdes</a>) &amp; <var>3</var>) <i>/* 32-bits padding */</i></td></tr>
+<tr><th id="170">170</th><td>        *<a class="local col0 ref" href="#90ptr" title='ptr' data-ref="90ptr">ptr</a>++ = <var>0</var>;</td></tr>
+<tr><th id="171">171</th><td>    <a class="ref" href="../../include/vlc_common.h.html#SetWBE" title='SetWBE' data-ref="SetWBE">SetWBE</a> (<a class="local col9 ref" href="#99lenptr" title='lenptr' data-ref="99lenptr">lenptr</a>, (<a class="local col0 ref" href="#90ptr" title='ptr' data-ref="90ptr">ptr</a> - <a class="local col8 ref" href="#98sdes" title='sdes' data-ref="98sdes">sdes</a> - <var>1</var>) &gt;&gt; <var>2</var>);</td></tr>
+<tr><th id="172">172</th><td></td></tr>
+<tr><th id="173">173</th><td>    <a class="local col9 ref" href="#89rtcp" title='rtcp' data-ref="89rtcp">rtcp</a>-&gt;<a class="ref" href="#rtcp_sender_t::length" title='rtcp_sender_t::length' data-ref="rtcp_sender_t::length">length</a> = <a class="local col0 ref" href="#90ptr" title='ptr' data-ref="90ptr">ptr</a> - <a class="local col9 ref" href="#89rtcp" title='rtcp' data-ref="89rtcp">rtcp</a>-&gt;<a class="ref" href="#rtcp_sender_t::payload" title='rtcp_sender_t::payload' data-ref="rtcp_sender_t::payload">payload</a>;</td></tr>
+<tr><th id="174">174</th><td>    <b>return</b> <a class="local col9 ref" href="#89rtcp" title='rtcp' data-ref="89rtcp">rtcp</a>;</td></tr>
+<tr><th id="175">175</th><td>}</td></tr>
+<tr><th id="176">176</th><td></td></tr>
+<tr><th id="177">177</th><td></td></tr>
+<tr><th id="178">178</th><td><em>void</em> <dfn class="decl def" id="CloseRTCP" title='CloseRTCP' data-ref="CloseRTCP">CloseRTCP</dfn> (<a class="typedef" href="rtp.h.html#rtcp_sender_t" title='rtcp_sender_t' data-type='struct rtcp_sender_t' data-ref="rtcp_sender_t">rtcp_sender_t</a> *<dfn class="local col1 decl" id="101rtcp" title='rtcp' data-type='rtcp_sender_t *' data-ref="101rtcp">rtcp</dfn>)</td></tr>
+<tr><th id="179">179</th><td>{</td></tr>
+<tr><th id="180">180</th><td>    <b>if</b> (<a class="local col1 ref" href="#101rtcp" title='rtcp' data-ref="101rtcp">rtcp</a> == <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>)</td></tr>
+<tr><th id="181">181</th><td>        <b>return</b>;</td></tr>
+<tr><th id="182">182</th><td></td></tr>
+<tr><th id="183">183</th><td>    <a class="typedef" href="../../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col2 decl" id="102ptr" title='ptr' data-type='uint8_t *' data-ref="102ptr">ptr</dfn> = <a class="local col1 ref" href="#101rtcp" title='rtcp' data-ref="101rtcp">rtcp</a>-&gt;<a class="ref" href="#rtcp_sender_t::payload" title='rtcp_sender_t::payload' data-ref="rtcp_sender_t::payload">payload</a>;</td></tr>
+<tr><th id="184">184</th><td>    <a class="typedef" href="../../../include/stdint.h.html#uint64_t" title='uint64_t' data-type='unsigned long' data-ref="uint64_t">uint64_t</a> <dfn class="local col3 decl" id="103now64" title='now64' data-type='uint64_t' data-ref="103now64">now64</dfn> = <a class="ref" href="../../include/vlc_mtime.h.html#NTPtime64" title='NTPtime64' data-ref="NTPtime64">NTPtime64</a> ();</td></tr>
+<tr><th id="185">185</th><td>    <a class="ref" href="../../include/vlc_common.h.html#SetQWBE" title='SetQWBE' data-ref="SetQWBE">SetQWBE</a> (<a class="local col2 ref" href="#102ptr" title='ptr' data-ref="102ptr">ptr</a> + <var>8</var>, <a class="local col3 ref" href="#103now64" title='now64' data-ref="103now64">now64</a>); <i>/* Update the Sender Report timestamp */</i></td></tr>
+<tr><th id="186">186</th><td></td></tr>
+<tr><th id="187">187</th><td>    <i>/* Bye */</i></td></tr>
+<tr><th id="188">188</th><td>    <a class="local col2 ref" href="#102ptr" title='ptr' data-ref="102ptr">ptr</a> += <a class="local col1 ref" href="#101rtcp" title='rtcp' data-ref="101rtcp">rtcp</a>-&gt;<a class="ref" href="#rtcp_sender_t::length" title='rtcp_sender_t::length' data-ref="rtcp_sender_t::length">length</a>;</td></tr>
+<tr><th id="189">189</th><td>    <a class="local col2 ref" href="#102ptr" title='ptr' data-ref="102ptr">ptr</a>[<var>0</var>] = (<var>2</var> &lt;&lt; <var>6</var>) | <var>1</var>; <i>/* V = 2, P = 0, SC = 1 */</i></td></tr>
+<tr><th id="190">190</th><td>    <a class="local col2 ref" href="#102ptr" title='ptr' data-ref="102ptr">ptr</a>[<var>1</var>] = <var>203</var>; <i>/* payload type: Bye */</i></td></tr>
+<tr><th id="191">191</th><td>    <a class="ref" href="../../include/vlc_common.h.html#SetWBE" title='SetWBE' data-ref="SetWBE">SetWBE</a> (<a class="local col2 ref" href="#102ptr" title='ptr' data-ref="102ptr">ptr</a> + <var>2</var>, <var>1</var>);</td></tr>
+<tr><th id="192">192</th><td>    <a class="ref" href="../../../include/string.h.html#memcpy" title='memcpy' data-ref="memcpy">memcpy</a> (<a class="local col2 ref" href="#102ptr" title='ptr' data-ref="102ptr">ptr</a> + <var>4</var>, <a class="local col1 ref" href="#101rtcp" title='rtcp' data-ref="101rtcp">rtcp</a>-&gt;<a class="ref" href="#rtcp_sender_t::payload" title='rtcp_sender_t::payload' data-ref="rtcp_sender_t::payload">payload</a> + <var>4</var>, <var>4</var>); <i>/* Copy SSRC from Sender Report */</i></td></tr>
+<tr><th id="193">193</th><td>    <a class="local col1 ref" href="#101rtcp" title='rtcp' data-ref="101rtcp">rtcp</a>-&gt;<a class="ref" href="#rtcp_sender_t::length" title='rtcp_sender_t::length' data-ref="rtcp_sender_t::length">length</a> += <var>8</var>;</td></tr>
+<tr><th id="194">194</th><td></td></tr>
+<tr><th id="195">195</th><td>    <i>/* We are THE sender, so we are more important than anybody else, so</i></td></tr>
+<tr><th id="196">196</th><td><i>     * we can afford not to check bandwidth constraints here. */</i></td></tr>
+<tr><th id="197">197</th><td>    <a class="ref" href="../../../include/x86_64-linux-gnu/sys/socket.h.html#send" title='send' data-ref="send">send</a> (<a class="local col1 ref" href="#101rtcp" title='rtcp' data-ref="101rtcp">rtcp</a>-&gt;<a class="ref" href="#rtcp_sender_t::handle" title='rtcp_sender_t::handle' data-ref="rtcp_sender_t::handle">handle</a>, <a class="local col1 ref" href="#101rtcp" title='rtcp' data-ref="101rtcp">rtcp</a>-&gt;<a class="ref" href="#rtcp_sender_t::payload" title='rtcp_sender_t::payload' data-ref="rtcp_sender_t::payload">payload</a>, <a class="local col1 ref" href="#101rtcp" title='rtcp' data-ref="101rtcp">rtcp</a>-&gt;<a class="ref" href="#rtcp_sender_t::length" title='rtcp_sender_t::length' data-ref="rtcp_sender_t::length">length</a>, <var>0</var>);</td></tr>
+<tr><th id="198">198</th><td>    <a class="macro" href="../../include/vlc_network.h.html#171" title="(void)close (rtcp-&gt;handle)" data-ref="_M/net_Close">net_Close</a> (<a class="local col1 ref" href="#101rtcp" title='rtcp' data-ref="101rtcp">rtcp</a>-&gt;<a class="ref" href="#rtcp_sender_t::handle" title='rtcp_sender_t::handle' data-ref="rtcp_sender_t::handle">handle</a>);</td></tr>
+<tr><th id="199">199</th><td>    <a class="ref" href="../../../include/stdlib.h.html#free" title='free' data-ref="free">free</a> (<a class="local col1 ref" href="#101rtcp" title='rtcp' data-ref="101rtcp">rtcp</a>);</td></tr>
+<tr><th id="200">200</th><td>}</td></tr>
+<tr><th id="201">201</th><td></td></tr>
+<tr><th id="202">202</th><td></td></tr>
+<tr><th id="203">203</th><td><em>void</em> <dfn class="decl def" id="SendRTCP" title='SendRTCP' data-ref="SendRTCP">SendRTCP</dfn> (<a class="typedef" href="rtp.h.html#rtcp_sender_t" title='rtcp_sender_t' data-type='struct rtcp_sender_t' data-ref="rtcp_sender_t">rtcp_sender_t</a> *<a class="macro" href="../../config.h.html#765" title="__restrict" data-ref="_M/restrict"><b>restrict</b></a> <dfn class="local col4 decl" id="104rtcp" title='rtcp' data-type='rtcp_sender_t *restrict' data-ref="104rtcp">rtcp</dfn>, <em>const</em> <a class="typedef" href="../../include/vlc_common.h.html#block_t" title='block_t' data-type='struct block_t' data-ref="block_t">block_t</a> *<dfn class="local col5 decl" id="105rtp" title='rtp' data-type='const block_t *' data-ref="105rtp">rtp</dfn>)</td></tr>
+<tr><th id="204">204</th><td>{</td></tr>
+<tr><th id="205">205</th><td>    <b>if</b> ((<a class="local col4 ref" href="#104rtcp" title='rtcp' data-ref="104rtcp">rtcp</a> == <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>) <i>/* RTCP sender off */</i></td></tr>
+<tr><th id="206">206</th><td>     || (<a class="local col5 ref" href="#105rtp" title='rtp' data-ref="105rtp">rtp</a>-&gt;<a class="ref" href="../../include/vlc_block.h.html#block_t::i_buffer" title='block_t::i_buffer' data-ref="block_t::i_buffer">i_buffer</a> &lt; <var>12</var>)) <i>/* too short RTP packet */</i></td></tr>
+<tr><th id="207">207</th><td>        <b>return</b>;</td></tr>
+<tr><th id="208">208</th><td></td></tr>
+<tr><th id="209">209</th><td>    <i>/* Updates statistics */</i></td></tr>
+<tr><th id="210">210</th><td>    <a class="local col4 ref" href="#104rtcp" title='rtcp' data-ref="104rtcp">rtcp</a>-&gt;<a class="ref" href="#rtcp_sender_t::packets" title='rtcp_sender_t::packets' data-ref="rtcp_sender_t::packets">packets</a>++;</td></tr>
+<tr><th id="211">211</th><td>    <a class="local col4 ref" href="#104rtcp" title='rtcp' data-ref="104rtcp">rtcp</a>-&gt;<a class="ref" href="#rtcp_sender_t::bytes" title='rtcp_sender_t::bytes' data-ref="rtcp_sender_t::bytes">bytes</a> += <a class="local col5 ref" href="#105rtp" title='rtp' data-ref="105rtp">rtp</a>-&gt;<a class="ref" href="../../include/vlc_block.h.html#block_t::i_buffer" title='block_t::i_buffer' data-ref="block_t::i_buffer">i_buffer</a>;</td></tr>
+<tr><th id="212">212</th><td>    <a class="local col4 ref" href="#104rtcp" title='rtcp' data-ref="104rtcp">rtcp</a>-&gt;<a class="ref" href="#rtcp_sender_t::counter" title='rtcp_sender_t::counter' data-ref="rtcp_sender_t::counter">counter</a> += <a class="local col5 ref" href="#105rtp" title='rtp' data-ref="105rtp">rtp</a>-&gt;<a class="ref" href="../../include/vlc_block.h.html#block_t::i_buffer" title='block_t::i_buffer' data-ref="block_t::i_buffer">i_buffer</a>;</td></tr>
+<tr><th id="213">213</th><td></td></tr>
+<tr><th id="214">214</th><td>    <i>/* 1.25% rate limit */</i></td></tr>
+<tr><th id="215">215</th><td>    <b>if</b> ((<a class="local col4 ref" href="#104rtcp" title='rtcp' data-ref="104rtcp">rtcp</a>-&gt;<a class="ref" href="#rtcp_sender_t::counter" title='rtcp_sender_t::counter' data-ref="rtcp_sender_t::counter">counter</a> / <var>80</var>) &lt; <a class="local col4 ref" href="#104rtcp" title='rtcp' data-ref="104rtcp">rtcp</a>-&gt;<a class="ref" href="#rtcp_sender_t::length" title='rtcp_sender_t::length' data-ref="rtcp_sender_t::length">length</a>)</td></tr>
+<tr><th id="216">216</th><td>        <b>return</b>;</td></tr>
+<tr><th id="217">217</th><td></td></tr>
+<tr><th id="218">218</th><td>    <a class="typedef" href="../../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col6 decl" id="106ptr" title='ptr' data-type='uint8_t *' data-ref="106ptr">ptr</dfn> = <a class="local col4 ref" href="#104rtcp" title='rtcp' data-ref="104rtcp">rtcp</a>-&gt;<a class="ref" href="#rtcp_sender_t::payload" title='rtcp_sender_t::payload' data-ref="rtcp_sender_t::payload">payload</a>;</td></tr>
+<tr><th id="219">219</th><td>    <a class="typedef" href="../../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a> <dfn class="local col7 decl" id="107last" title='last' data-type='uint32_t' data-ref="107last">last</dfn> = <a class="macro" href="../../include/vlc_common.h.html#684" title="U32_AT(ptr + 8)" data-ref="_M/GetDWBE">GetDWBE</a> (<a class="local col6 ref" href="#106ptr" title='ptr' data-ref="106ptr">ptr</a> + <var>8</var>); <i>// last RTCP SR send time</i></td></tr>
+<tr><th id="220">220</th><td>    <a class="typedef" href="../../../include/stdint.h.html#uint64_t" title='uint64_t' data-type='unsigned long' data-ref="uint64_t">uint64_t</a> <dfn class="local col8 decl" id="108now64" title='now64' data-type='uint64_t' data-ref="108now64">now64</dfn> = <a class="ref" href="../../include/vlc_mtime.h.html#NTPtime64" title='NTPtime64' data-ref="NTPtime64">NTPtime64</a> ();</td></tr>
+<tr><th id="221">221</th><td>    <b>if</b> ((<a class="local col8 ref" href="#108now64" title='now64' data-ref="108now64">now64</a> &gt;&gt; <var>32</var>) &lt; (<a class="local col7 ref" href="#107last" title='last' data-ref="107last">last</a> + <var>5</var>))</td></tr>
+<tr><th id="222">222</th><td>        <b>return</b>; <i>// no more than one SR every 5 seconds</i></td></tr>
+<tr><th id="223">223</th><td></td></tr>
+<tr><th id="224">224</th><td>    <a class="ref" href="../../../include/string.h.html#memcpy" title='memcpy' data-ref="memcpy">memcpy</a> (<a class="local col6 ref" href="#106ptr" title='ptr' data-ref="106ptr">ptr</a> + <var>4</var>, <a class="local col5 ref" href="#105rtp" title='rtp' data-ref="105rtp">rtp</a>-&gt;<a class="ref" href="../../include/vlc_block.h.html#block_t::p_buffer" title='block_t::p_buffer' data-ref="block_t::p_buffer">p_buffer</a> + <var>8</var>, <var>4</var>); <i>/* SR SSRC */</i></td></tr>
+<tr><th id="225">225</th><td>    <a class="ref" href="../../include/vlc_common.h.html#SetQWBE" title='SetQWBE' data-ref="SetQWBE">SetQWBE</a> (<a class="local col6 ref" href="#106ptr" title='ptr' data-ref="106ptr">ptr</a> + <var>8</var>, <a class="local col8 ref" href="#108now64" title='now64' data-ref="108now64">now64</a>);</td></tr>
+<tr><th id="226">226</th><td>    <a class="ref" href="../../../include/string.h.html#memcpy" title='memcpy' data-ref="memcpy">memcpy</a> (<a class="local col6 ref" href="#106ptr" title='ptr' data-ref="106ptr">ptr</a> + <var>16</var>, <a class="local col5 ref" href="#105rtp" title='rtp' data-ref="105rtp">rtp</a>-&gt;<a class="ref" href="../../include/vlc_block.h.html#block_t::p_buffer" title='block_t::p_buffer' data-ref="block_t::p_buffer">p_buffer</a> + <var>4</var>, <var>4</var>); <i>/* RTP timestamp */</i></td></tr>
+<tr><th id="227">227</th><td>    <a class="ref" href="../../include/vlc_common.h.html#SetDWBE" title='SetDWBE' data-ref="SetDWBE">SetDWBE</a> (<a class="local col6 ref" href="#106ptr" title='ptr' data-ref="106ptr">ptr</a> + <var>20</var>, <a class="local col4 ref" href="#104rtcp" title='rtcp' data-ref="104rtcp">rtcp</a>-&gt;<a class="ref" href="#rtcp_sender_t::packets" title='rtcp_sender_t::packets' data-ref="rtcp_sender_t::packets">packets</a>);</td></tr>
+<tr><th id="228">228</th><td>    <a class="ref" href="../../include/vlc_common.h.html#SetDWBE" title='SetDWBE' data-ref="SetDWBE">SetDWBE</a> (<a class="local col6 ref" href="#106ptr" title='ptr' data-ref="106ptr">ptr</a> + <var>24</var>, <a class="local col4 ref" href="#104rtcp" title='rtcp' data-ref="104rtcp">rtcp</a>-&gt;<a class="ref" href="#rtcp_sender_t::bytes" title='rtcp_sender_t::bytes' data-ref="rtcp_sender_t::bytes">bytes</a>);</td></tr>
+<tr><th id="229">229</th><td>    <a class="ref" href="../../../include/string.h.html#memcpy" title='memcpy' data-ref="memcpy">memcpy</a> (<a class="local col6 ref" href="#106ptr" title='ptr' data-ref="106ptr">ptr</a> + <var>28</var> + <var>4</var>, <a class="local col5 ref" href="#105rtp" title='rtp' data-ref="105rtp">rtp</a>-&gt;<a class="ref" href="../../include/vlc_block.h.html#block_t::p_buffer" title='block_t::p_buffer' data-ref="block_t::p_buffer">p_buffer</a> + <var>8</var>, <var>4</var>); <i>/* SDES SSRC */</i></td></tr>
+<tr><th id="230">230</th><td></td></tr>
+<tr><th id="231">231</th><td>    <b>if</b> (<a class="ref" href="../../../include/x86_64-linux-gnu/sys/socket.h.html#send" title='send' data-ref="send">send</a> (<a class="local col4 ref" href="#104rtcp" title='rtcp' data-ref="104rtcp">rtcp</a>-&gt;<a class="ref" href="#rtcp_sender_t::handle" title='rtcp_sender_t::handle' data-ref="rtcp_sender_t::handle">handle</a>, <a class="local col6 ref" href="#106ptr" title='ptr' data-ref="106ptr">ptr</a>, <a class="local col4 ref" href="#104rtcp" title='rtcp' data-ref="104rtcp">rtcp</a>-&gt;<a class="ref" href="#rtcp_sender_t::length" title='rtcp_sender_t::length' data-ref="rtcp_sender_t::length">length</a>, <var>0</var>) == (<a class="typedef" href="../../../include/x86_64-linux-gnu/sys/types.h.html#ssize_t" title='ssize_t' data-type='__ssize_t' data-ref="ssize_t">ssize_t</a>)<a class="local col4 ref" href="#104rtcp" title='rtcp' data-ref="104rtcp">rtcp</a>-&gt;<a class="ref" href="#rtcp_sender_t::length" title='rtcp_sender_t::length' data-ref="rtcp_sender_t::length">length</a>)</td></tr>
+<tr><th id="232">232</th><td>        <a class="local col4 ref" href="#104rtcp" title='rtcp' data-ref="104rtcp">rtcp</a>-&gt;<a class="ref" href="#rtcp_sender_t::counter" title='rtcp_sender_t::counter' data-ref="rtcp_sender_t::counter">counter</a> = <var>0</var>;</td></tr>
+<tr><th id="233">233</th><td>}</td></tr>
+<tr><th id="234">234</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project vlc revision <em>2.2.0-git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

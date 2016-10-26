@@ -1,0 +1,102 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>mpjpeg.c source code [ffmpeg/libavformat/mpjpeg.c] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="MPJPEGContext "/>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavformat/mpjpeg.c'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavformat</a>/<a href='mpjpeg.c.html'>mpjpeg.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * Multipart JPEG format</i></td></tr>
+<tr><th id="3">3</th><td><i> * Copyright (c) 2000, 2001, 2002, 2003 Fabrice Bellard</i></td></tr>
+<tr><th id="4">4</th><td><i> *</i></td></tr>
+<tr><th id="5">5</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="8">8</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="9">9</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="10">10</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="11">11</th><td><i> *</i></td></tr>
+<tr><th id="12">12</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="13">13</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="14">14</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="15">15</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="16">16</th><td><i> *</i></td></tr>
+<tr><th id="17">17</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="18">18</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="19">19</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="20">20</th><td><i> */</i></td></tr>
+<tr><th id="21">21</th><td><u>#include <a href="../libavutil/opt.h.html">"libavutil/opt.h"</a></u></td></tr>
+<tr><th id="22">22</th><td><u>#include <a href="avformat.h.html">"avformat.h"</a></u></td></tr>
+<tr><th id="23">23</th><td></td></tr>
+<tr><th id="24">24</th><td><i>/* Multipart JPEG */</i></td></tr>
+<tr><th id="25">25</th><td></td></tr>
+<tr><th id="26">26</th><td><u>#define <dfn class="macro" id="_M/BOUNDARY_TAG" data-ref="_M/BOUNDARY_TAG">BOUNDARY_TAG</dfn> "ffserver"</u></td></tr>
+<tr><th id="27">27</th><td></td></tr>
+<tr><th id="28">28</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="MPJPEGContext" title='MPJPEGContext' data-ref="MPJPEGContext"><a class="type" href="#MPJPEGContext" title='MPJPEGContext' data-ref="MPJPEGContext">MPJPEGContext</a></dfn> {</td></tr>
+<tr><th id="29">29</th><td>    <a class="typedef" href="../libavutil/log.h.html#AVClass" title='AVClass' data-type='struct AVClass' data-ref="AVClass">AVClass</a> *<dfn class="tu decl" id="MPJPEGContext::class" title='MPJPEGContext::class' data-type='AVClass *' data-ref="MPJPEGContext::class">class</dfn>;</td></tr>
+<tr><th id="30">30</th><td>    <em>char</em> *<dfn class="tu decl" id="MPJPEGContext::boundary_tag" title='MPJPEGContext::boundary_tag' data-type='char *' data-ref="MPJPEGContext::boundary_tag">boundary_tag</dfn>;</td></tr>
+<tr><th id="31">31</th><td>} <dfn class="typedef" id="MPJPEGContext" title='MPJPEGContext' data-type='struct MPJPEGContext' data-ref="MPJPEGContext">MPJPEGContext</dfn>;</td></tr>
+<tr><th id="32">32</th><td></td></tr>
+<tr><th id="33">33</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="mpjpeg_write_header" title='mpjpeg_write_header' data-type='int mpjpeg_write_header(AVFormatContext * s)' data-ref="mpjpeg_write_header">mpjpeg_write_header</dfn>(<a class="typedef" href="avformat.h.html#AVFormatContext" title='AVFormatContext' data-type='struct AVFormatContext' data-ref="AVFormatContext">AVFormatContext</a> *<dfn class="local col1 decl" id="1s" title='s' data-type='AVFormatContext *' data-ref="1s">s</dfn>)</td></tr>
+<tr><th id="34">34</th><td>{</td></tr>
+<tr><th id="35">35</th><td>    <a class="typedef" href="#MPJPEGContext" title='MPJPEGContext' data-type='struct MPJPEGContext' data-ref="MPJPEGContext">MPJPEGContext</a> *<dfn class="local col2 decl" id="2mpj" title='mpj' data-type='MPJPEGContext *' data-ref="2mpj">mpj</dfn> = <a class="local col1 ref" href="#1s" title='s' data-ref="1s">s</a>-&gt;<a class="ref" href="avformat.h.html#AVFormatContext::priv_data" title='AVFormatContext::priv_data' data-ref="AVFormatContext::priv_data">priv_data</a>;</td></tr>
+<tr><th id="36">36</th><td>    <a class="ref" href="avio.h.html#avio_printf" title='avio_printf' data-ref="avio_printf">avio_printf</a>(<a class="local col1 ref" href="#1s" title='s' data-ref="1s">s</a>-&gt;<a class="ref" href="avformat.h.html#AVFormatContext::pb" title='AVFormatContext::pb' data-ref="AVFormatContext::pb">pb</a>, <q>"--%s\r\n"</q>, <a class="local col2 ref" href="#2mpj" title='mpj' data-ref="2mpj">mpj</a>-&gt;<a class="tu ref" href="#MPJPEGContext::boundary_tag" title='MPJPEGContext::boundary_tag' data-use='r' data-ref="MPJPEGContext::boundary_tag">boundary_tag</a>);</td></tr>
+<tr><th id="37">37</th><td>    <a class="ref" href="avio.h.html#avio_flush" title='avio_flush' data-ref="avio_flush">avio_flush</a>(<a class="local col1 ref" href="#1s" title='s' data-ref="1s">s</a>-&gt;<a class="ref" href="avformat.h.html#AVFormatContext::pb" title='AVFormatContext::pb' data-ref="AVFormatContext::pb">pb</a>);</td></tr>
+<tr><th id="38">38</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="39">39</th><td>}</td></tr>
+<tr><th id="40">40</th><td></td></tr>
+<tr><th id="41">41</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="mpjpeg_write_packet" title='mpjpeg_write_packet' data-type='int mpjpeg_write_packet(AVFormatContext * s, AVPacket * pkt)' data-ref="mpjpeg_write_packet">mpjpeg_write_packet</dfn>(<a class="typedef" href="avformat.h.html#AVFormatContext" title='AVFormatContext' data-type='struct AVFormatContext' data-ref="AVFormatContext">AVFormatContext</a> *<dfn class="local col3 decl" id="3s" title='s' data-type='AVFormatContext *' data-ref="3s">s</dfn>, <a class="typedef" href="../libavcodec/avcodec.h.html#AVPacket" title='AVPacket' data-type='struct AVPacket' data-ref="AVPacket">AVPacket</a> *<dfn class="local col4 decl" id="4pkt" title='pkt' data-type='AVPacket *' data-ref="4pkt">pkt</dfn>)</td></tr>
+<tr><th id="42">42</th><td>{</td></tr>
+<tr><th id="43">43</th><td>    <a class="typedef" href="#MPJPEGContext" title='MPJPEGContext' data-type='struct MPJPEGContext' data-ref="MPJPEGContext">MPJPEGContext</a> *<dfn class="local col5 decl" id="5mpj" title='mpj' data-type='MPJPEGContext *' data-ref="5mpj">mpj</dfn> = <a class="local col3 ref" href="#3s" title='s' data-ref="3s">s</a>-&gt;<a class="ref" href="avformat.h.html#AVFormatContext::priv_data" title='AVFormatContext::priv_data' data-ref="AVFormatContext::priv_data">priv_data</a>;</td></tr>
+<tr><th id="44">44</th><td>    <a class="ref" href="avio.h.html#avio_printf" title='avio_printf' data-ref="avio_printf">avio_printf</a>(<a class="local col3 ref" href="#3s" title='s' data-ref="3s">s</a>-&gt;<a class="ref" href="avformat.h.html#AVFormatContext::pb" title='AVFormatContext::pb' data-ref="AVFormatContext::pb">pb</a>, <q>"Content-type: image/jpeg\r\n"</q>);</td></tr>
+<tr><th id="45">45</th><td>    <a class="ref" href="avio.h.html#avio_printf" title='avio_printf' data-ref="avio_printf">avio_printf</a>(<a class="local col3 ref" href="#3s" title='s' data-ref="3s">s</a>-&gt;<a class="ref" href="avformat.h.html#AVFormatContext::pb" title='AVFormatContext::pb' data-ref="AVFormatContext::pb">pb</a>, <q>"Content-length: %d\r\n\r\n"</q>,</td></tr>
+<tr><th id="46">46</th><td>                <a class="local col4 ref" href="#4pkt" title='pkt' data-ref="4pkt">pkt</a>-&gt;<a class="ref" href="../libavcodec/avcodec.h.html#AVPacket::size" title='AVPacket::size' data-ref="AVPacket::size">size</a>);</td></tr>
+<tr><th id="47">47</th><td>    <a class="ref" href="avio.h.html#avio_write" title='avio_write' data-ref="avio_write">avio_write</a>(<a class="local col3 ref" href="#3s" title='s' data-ref="3s">s</a>-&gt;<a class="ref" href="avformat.h.html#AVFormatContext::pb" title='AVFormatContext::pb' data-ref="AVFormatContext::pb">pb</a>, <a class="local col4 ref" href="#4pkt" title='pkt' data-ref="4pkt">pkt</a>-&gt;<a class="ref" href="../libavcodec/avcodec.h.html#AVPacket::data" title='AVPacket::data' data-ref="AVPacket::data">data</a>, <a class="local col4 ref" href="#4pkt" title='pkt' data-ref="4pkt">pkt</a>-&gt;<a class="ref" href="../libavcodec/avcodec.h.html#AVPacket::size" title='AVPacket::size' data-ref="AVPacket::size">size</a>);</td></tr>
+<tr><th id="48">48</th><td></td></tr>
+<tr><th id="49">49</th><td>    <a class="ref" href="avio.h.html#avio_printf" title='avio_printf' data-ref="avio_printf">avio_printf</a>(<a class="local col3 ref" href="#3s" title='s' data-ref="3s">s</a>-&gt;<a class="ref" href="avformat.h.html#AVFormatContext::pb" title='AVFormatContext::pb' data-ref="AVFormatContext::pb">pb</a>, <q>"\r\n--%s\r\n"</q>, <a class="local col5 ref" href="#5mpj" title='mpj' data-ref="5mpj">mpj</a>-&gt;<a class="tu ref" href="#MPJPEGContext::boundary_tag" title='MPJPEGContext::boundary_tag' data-use='r' data-ref="MPJPEGContext::boundary_tag">boundary_tag</a>);</td></tr>
+<tr><th id="50">50</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="51">51</th><td>}</td></tr>
+<tr><th id="52">52</th><td></td></tr>
+<tr><th id="53">53</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="mpjpeg_write_trailer" title='mpjpeg_write_trailer' data-type='int mpjpeg_write_trailer(AVFormatContext * s)' data-ref="mpjpeg_write_trailer">mpjpeg_write_trailer</dfn>(<a class="typedef" href="avformat.h.html#AVFormatContext" title='AVFormatContext' data-type='struct AVFormatContext' data-ref="AVFormatContext">AVFormatContext</a> *<dfn class="local col6 decl" id="6s" title='s' data-type='AVFormatContext *' data-ref="6s">s</dfn>)</td></tr>
+<tr><th id="54">54</th><td>{</td></tr>
+<tr><th id="55">55</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="56">56</th><td>}</td></tr>
+<tr><th id="57">57</th><td></td></tr>
+<tr><th id="58">58</th><td><em>static</em> <em>const</em> <a class="typedef" href="../libavutil/opt.h.html#AVOption" title='AVOption' data-type='struct AVOption' data-ref="AVOption">AVOption</a> <dfn class="tu decl def" id="options" title='options' data-type='const AVOption [2]' data-ref="options">options</dfn>[] = {</td></tr>
+<tr><th id="59">59</th><td>    { <q>"boundary_tag"</q>,    <q>"Boundary tag"</q>, <span class="macro" title="__builtin_offsetof(MPJPEGContext, boundary_tag)" data-ref="_M/offsetof">offsetof</span>(<a class="typedef" href="#MPJPEGContext" title='MPJPEGContext' data-type='struct MPJPEGContext' data-ref="MPJPEGContext">MPJPEGContext</a>, boundary_tag),   <a class="enum" href="../libavutil/opt.h.html#AVOptionType::AV_OPT_TYPE_STRING" title='AVOptionType::AV_OPT_TYPE_STRING' data-ref="AVOptionType::AV_OPT_TYPE_STRING">AV_OPT_TYPE_STRING</a>, {.<a class="ref" href="../libavutil/opt.h.html#AVOption::{anonymous}::str" title='AVOption::&lt;anonymous union&gt;::str' data-ref="AVOption::{anonymous}::str">str</a> = <a class="macro" href="#26" title="&quot;ffserver&quot;" data-ref="_M/BOUNDARY_TAG">BOUNDARY_TAG</a>}, .<a class="ref" href="../libavutil/opt.h.html#AVOption::flags" title='AVOption::flags' data-ref="AVOption::flags">flags</a> = <a class="macro" href="../libavutil/opt.h.html#275" title="1" data-ref="_M/AV_OPT_FLAG_ENCODING_PARAM">AV_OPT_FLAG_ENCODING_PARAM</a> },</td></tr>
+<tr><th id="60">60</th><td>    { <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span> },</td></tr>
+<tr><th id="61">61</th><td>};</td></tr>
+<tr><th id="62">62</th><td></td></tr>
+<tr><th id="63">63</th><td><em>static</em> <em>const</em> <a class="typedef" href="../libavutil/log.h.html#AVClass" title='AVClass' data-type='struct AVClass' data-ref="AVClass">AVClass</a> <dfn class="tu decl def" id="mpjpeg_muxer_class" title='mpjpeg_muxer_class' data-type='const AVClass' data-ref="mpjpeg_muxer_class">mpjpeg_muxer_class</dfn> = {</td></tr>
+<tr><th id="64">64</th><td>    .<a class="ref" href="../libavutil/log.h.html#AVClass::class_name" title='AVClass::class_name' data-ref="AVClass::class_name">class_name</a> = <q>"mpjpeg_muxer"</q>,</td></tr>
+<tr><th id="65">65</th><td>    .<a class="ref" href="../libavutil/log.h.html#AVClass::item_name" title='AVClass::item_name' data-ref="AVClass::item_name">item_name</a>  = <a class="ref" href="../libavutil/log.h.html#av_default_item_name" title='av_default_item_name' data-ref="av_default_item_name">av_default_item_name</a>,</td></tr>
+<tr><th id="66">66</th><td>    .<a class="ref" href="../libavutil/log.h.html#AVClass::option" title='AVClass::option' data-ref="AVClass::option">option</a>     = <a class="tu ref" href="#options" title='options' data-ref="options">options</a>,</td></tr>
+<tr><th id="67">67</th><td>    .<a class="ref" href="../libavutil/log.h.html#AVClass::version" title='AVClass::version' data-ref="AVClass::version">version</a>    = <a class="macro" href="../libavutil/version.h.html#85" title="((55)&lt;&lt;16 | (33)&lt;&lt;8 | (100))" data-ref="_M/LIBAVUTIL_VERSION_INT">LIBAVUTIL_VERSION_INT</a>,</td></tr>
+<tr><th id="68">68</th><td>};</td></tr>
+<tr><th id="69">69</th><td></td></tr>
+<tr><th id="70">70</th><td><a class="typedef" href="avformat.h.html#AVOutputFormat" title='AVOutputFormat' data-type='struct AVOutputFormat' data-ref="AVOutputFormat">AVOutputFormat</a> <dfn class="decl def" id="ff_mpjpeg_muxer" title='ff_mpjpeg_muxer' data-ref="ff_mpjpeg_muxer">ff_mpjpeg_muxer</dfn> = {</td></tr>
+<tr><th id="71">71</th><td>    .<a class="ref" href="avformat.h.html#AVOutputFormat::name" title='AVOutputFormat::name' data-ref="AVOutputFormat::name">name</a>              = <q>"mpjpeg"</q>,</td></tr>
+<tr><th id="72">72</th><td>    .<a class="ref" href="avformat.h.html#AVOutputFormat::long_name" title='AVOutputFormat::long_name' data-ref="AVOutputFormat::long_name">long_name</a>         = <a class="macro" href="../libavutil/internal.h.html#176" title="&quot;MIME multipart JPEG&quot;" data-ref="_M/NULL_IF_CONFIG_SMALL">NULL_IF_CONFIG_SMALL</a>(<q>"MIME multipart JPEG"</q>),</td></tr>
+<tr><th id="73">73</th><td>    .<a class="ref" href="avformat.h.html#AVOutputFormat::mime_type" title='AVOutputFormat::mime_type' data-ref="AVOutputFormat::mime_type">mime_type</a>         = <q>"multipart/x-mixed-replace;boundary="</q> <a class="macro" href="#26" title="&quot;ffserver&quot;" data-ref="_M/BOUNDARY_TAG">BOUNDARY_TAG</a>,</td></tr>
+<tr><th id="74">74</th><td>    .<a class="ref" href="avformat.h.html#AVOutputFormat::extensions" title='AVOutputFormat::extensions' data-ref="AVOutputFormat::extensions">extensions</a>        = <q>"mjpg"</q>,</td></tr>
+<tr><th id="75">75</th><td>    .<a class="ref" href="avformat.h.html#AVOutputFormat::priv_data_size" title='AVOutputFormat::priv_data_size' data-ref="AVOutputFormat::priv_data_size">priv_data_size</a>    = <b>sizeof</b>(<a class="typedef" href="#MPJPEGContext" title='MPJPEGContext' data-type='struct MPJPEGContext' data-ref="MPJPEGContext">MPJPEGContext</a>),</td></tr>
+<tr><th id="76">76</th><td>    .<a class="ref" href="avformat.h.html#AVOutputFormat::audio_codec" title='AVOutputFormat::audio_codec' data-ref="AVOutputFormat::audio_codec">audio_codec</a>       = <a class="enum" href="../libavcodec/avcodec.h.html#AVCodecID::AV_CODEC_ID_NONE" title='AVCodecID::AV_CODEC_ID_NONE' data-ref="AVCodecID::AV_CODEC_ID_NONE">AV_CODEC_ID_NONE</a>,</td></tr>
+<tr><th id="77">77</th><td>    .<a class="ref" href="avformat.h.html#AVOutputFormat::video_codec" title='AVOutputFormat::video_codec' data-ref="AVOutputFormat::video_codec">video_codec</a>       = <a class="enum" href="../libavcodec/avcodec.h.html#AVCodecID::AV_CODEC_ID_MJPEG" title='AVCodecID::AV_CODEC_ID_MJPEG' data-ref="AVCodecID::AV_CODEC_ID_MJPEG">AV_CODEC_ID_MJPEG</a>,</td></tr>
+<tr><th id="78">78</th><td>    .<a class="ref" href="avformat.h.html#AVOutputFormat::write_header" title='AVOutputFormat::write_header' data-ref="AVOutputFormat::write_header">write_header</a>      = <a class="tu ref" href="#mpjpeg_write_header" title='mpjpeg_write_header' data-ref="mpjpeg_write_header">mpjpeg_write_header</a>,</td></tr>
+<tr><th id="79">79</th><td>    .<a class="ref" href="avformat.h.html#AVOutputFormat::write_packet" title='AVOutputFormat::write_packet' data-ref="AVOutputFormat::write_packet">write_packet</a>      = <a class="tu ref" href="#mpjpeg_write_packet" title='mpjpeg_write_packet' data-ref="mpjpeg_write_packet">mpjpeg_write_packet</a>,</td></tr>
+<tr><th id="80">80</th><td>    .<a class="ref" href="avformat.h.html#AVOutputFormat::write_trailer" title='AVOutputFormat::write_trailer' data-ref="AVOutputFormat::write_trailer">write_trailer</a>     = <a class="tu ref" href="#mpjpeg_write_trailer" title='mpjpeg_write_trailer' data-ref="mpjpeg_write_trailer">mpjpeg_write_trailer</a>,</td></tr>
+<tr><th id="81">81</th><td>    .<a class="ref" href="avformat.h.html#AVOutputFormat::flags" title='AVOutputFormat::flags' data-ref="AVOutputFormat::flags">flags</a>             = <a class="macro" href="avformat.h.html#486" title="0x0080" data-ref="_M/AVFMT_NOTIMESTAMPS">AVFMT_NOTIMESTAMPS</a>,</td></tr>
+<tr><th id="82">82</th><td>    .<a class="ref" href="avformat.h.html#AVOutputFormat::priv_class" title='AVOutputFormat::priv_class' data-ref="AVOutputFormat::priv_class">priv_class</a>        = &amp;<a class="tu ref" href="#mpjpeg_muxer_class" title='mpjpeg_muxer_class' data-use='a' data-ref="mpjpeg_muxer_class">mpjpeg_muxer_class</a>,</td></tr>
+<tr><th id="83">83</th><td>};</td></tr>
+<tr><th id="84">84</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

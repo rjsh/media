@@ -1,0 +1,235 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>keys.c source code [vlc/modules/video_output/xcb/keys.c] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="key_handler_t "/>
+<link rel="stylesheet" href="../../../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'vlc/modules/video_output/xcb/keys.c'; var root_path = '../../../..'; var data_path = '../../../../../data';</script>
+<script src='../../../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='../../..'>vlc</a>/<a href='../..'>modules</a>/<a href='..'>video_output</a>/<a href='./'>xcb</a>/<a href='keys.c.html'>keys.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="2">2</th><td><i class="doc"> *<span class="command"> @file</span> keys.c</i></td></tr>
+<tr><th id="3">3</th><td><i class="doc"> * <span class="command">@brief</span> X C Bindings VLC keyboard event handling</i></td></tr>
+<tr><th id="4">4</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="5">5</th><td><i>/*****************************************************************************</i></td></tr>
+<tr><th id="6">6</th><td><i> * Copyright © 2009 Rémi Denis-Courmont</i></td></tr>
+<tr><th id="7">7</th><td><i> *</i></td></tr>
+<tr><th id="8">8</th><td><i> * This program is free software; you can redistribute it and/or modify it</i></td></tr>
+<tr><th id="9">9</th><td><i> * under the terms of the GNU Lesser General Public License as published by</i></td></tr>
+<tr><th id="10">10</th><td><i> * the Free Software Foundation; either version 2.1 of the License, or</i></td></tr>
+<tr><th id="11">11</th><td><i> * (at your option) any later version.</i></td></tr>
+<tr><th id="12">12</th><td><i> *</i></td></tr>
+<tr><th id="13">13</th><td><i> * This program is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="14">14</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="15">15</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</i></td></tr>
+<tr><th id="16">16</th><td><i> * GNU Lesser General Public License for more details.</i></td></tr>
+<tr><th id="17">17</th><td><i> *</i></td></tr>
+<tr><th id="18">18</th><td><i> * You should have received a copy of the GNU Lesser General Public License</i></td></tr>
+<tr><th id="19">19</th><td><i> * along with this program; if not, write to the Free Software Foundation,</i></td></tr>
+<tr><th id="20">20</th><td><i> * Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.</i></td></tr>
+<tr><th id="21">21</th><td><i> *****************************************************************************/</i></td></tr>
+<tr><th id="22">22</th><td></td></tr>
+<tr><th id="23">23</th><td><u>#<span data-ppcond="23">ifdef</span> <span class="macro" data-ref="_M/HAVE_CONFIG_H">HAVE_CONFIG_H</span></u></td></tr>
+<tr><th id="24">24</th><td><u># include <a href="../../../config.h.html">&lt;config.h&gt;</a></u></td></tr>
+<tr><th id="25">25</th><td><u>#<span data-ppcond="23">endif</span></u></td></tr>
+<tr><th id="26">26</th><td></td></tr>
+<tr><th id="27">27</th><td><u>#include <a href="../../../../include/stdlib.h.html">&lt;stdlib.h&gt;</a></u></td></tr>
+<tr><th id="28">28</th><td><u>#include <a href="../../../../include/inttypes.h.html">&lt;inttypes.h&gt;</a></u></td></tr>
+<tr><th id="29">29</th><td><u>#include <a href="../../../../include/assert.h.html">&lt;assert.h&gt;</a></u></td></tr>
+<tr><th id="30">30</th><td></td></tr>
+<tr><th id="31">31</th><td><u>#include <a href="../../../../include/xcb/xcb.h.html">&lt;xcb/xcb.h&gt;</a></u></td></tr>
+<tr><th id="32">32</th><td><u>#include <a href="../../../include/vlc_common.h.html">&lt;vlc_common.h&gt;</a></u></td></tr>
+<tr><th id="33">33</th><td><u>#include <a href="events.h.html">"events.h"</a></u></td></tr>
+<tr><th id="34">34</th><td></td></tr>
+<tr><th id="35">35</th><td><u>#<span data-ppcond="35">ifdef</span> <span class="macro" data-ref="_M/HAVE_XCB_KEYSYMS">HAVE_XCB_KEYSYMS</span></u></td></tr>
+<tr><th id="36">36</th><td><u>#include <a href="../../../../include/xcb/xcb_keysyms.h.html">&lt;xcb/xcb_keysyms.h&gt;</a></u></td></tr>
+<tr><th id="37">37</th><td><u>#include <a href="../../../../include/X11/keysym.h.html">&lt;X11/keysym.h&gt;</a></u></td></tr>
+<tr><th id="38">38</th><td><u>#include <a href="../../../../include/X11/XF86keysym.h.html">&lt;X11/XF86keysym.h&gt;</a></u></td></tr>
+<tr><th id="39">39</th><td><u>#include <a href="../../../include/vlc_keys.h.html">&lt;vlc_keys.h&gt;</a></u></td></tr>
+<tr><th id="40">40</th><td></td></tr>
+<tr><th id="41">41</th><td><b>struct</b> <dfn class="type def" id="key_handler_t" title='key_handler_t' data-ref="key_handler_t">key_handler_t</dfn></td></tr>
+<tr><th id="42">42</th><td>{</td></tr>
+<tr><th id="43">43</th><td>    <a class="typedef" href="../../../include/vlc_common.h.html#vlc_object_t" title='vlc_object_t' data-type='struct vlc_object_t' data-ref="vlc_object_t">vlc_object_t</a>      *<dfn class="decl" id="key_handler_t::obj" title='key_handler_t::obj' data-ref="key_handler_t::obj">obj</dfn>;</td></tr>
+<tr><th id="44">44</th><td>    <a class="typedef" href="../../../../include/xcb/xcb_keysyms.h.html#xcb_key_symbols_t" title='xcb_key_symbols_t' data-type='struct _XCBKeySymbols' data-ref="xcb_key_symbols_t">xcb_key_symbols_t</a> *<dfn class="decl" id="key_handler_t::syms" title='key_handler_t::syms' data-ref="key_handler_t::syms">syms</dfn>;</td></tr>
+<tr><th id="45">45</th><td>};</td></tr>
+<tr><th id="46">46</th><td></td></tr>
+<tr><th id="47">47</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="48">48</th><td><i class="doc"> * Create an X11 key event handler for a VLC window.</i></td></tr>
+<tr><th id="49">49</th><td><i class="doc"> * The caller shall arrange receiving applicable X11 events, and pass them to</i></td></tr>
+<tr><th id="50">50</th><td><i class="doc"> * ProcessKeyEvent() later.</i></td></tr>
+<tr><th id="51">51</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="52">52</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">obj</span> VLC object owning an X window</i></td></tr>
+<tr><th id="53">53</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">conn</span> XCB connection to the X server (to fetch key mappings)</i></td></tr>
+<tr><th id="54">54</th><td><i class="doc"> * <span class="command">@return</span> NULL on error, or a key handling context.</i></td></tr>
+<tr><th id="55">55</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="56">56</th><td><a class="typedef" href="events.h.html#key_handler_t" title='key_handler_t' data-type='struct key_handler_t' data-ref="key_handler_t">key_handler_t</a> *<dfn class="decl def" id="XCB_keyHandler_Create" title='XCB_keyHandler_Create' data-ref="XCB_keyHandler_Create">XCB_keyHandler_Create</dfn> (<a class="typedef" href="../../../include/vlc_common.h.html#vlc_object_t" title='vlc_object_t' data-type='struct vlc_object_t' data-ref="vlc_object_t">vlc_object_t</a> *<dfn class="local col1 decl" id="1obj" title='obj' data-type='vlc_object_t *' data-ref="1obj">obj</dfn>,</td></tr>
+<tr><th id="57">57</th><td>                                      <a class="typedef" href="../../../../include/xcb/xcb.h.html#xcb_connection_t" title='xcb_connection_t' data-type='struct xcb_connection_t' data-ref="xcb_connection_t">xcb_connection_t</a> *<dfn class="local col2 decl" id="2conn" title='conn' data-type='xcb_connection_t *' data-ref="2conn">conn</dfn>)</td></tr>
+<tr><th id="58">58</th><td>{</td></tr>
+<tr><th id="59">59</th><td>    <a class="typedef" href="events.h.html#key_handler_t" title='key_handler_t' data-type='struct key_handler_t' data-ref="key_handler_t">key_handler_t</a> *<dfn class="local col3 decl" id="3ctx" title='ctx' data-type='key_handler_t *' data-ref="3ctx">ctx</dfn> = <a class="ref" href="../../../../include/stdlib.h.html#malloc" title='malloc' data-ref="malloc">malloc</a> (<b>sizeof</b> (*<a class="local col3 ref" href="#3ctx" title='ctx' data-ref="3ctx">ctx</a>));</td></tr>
+<tr><th id="60">60</th><td>    <b>if</b> (!<a class="local col3 ref" href="#3ctx" title='ctx' data-ref="3ctx">ctx</a>)</td></tr>
+<tr><th id="61">61</th><td>        <b>return</b> <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="62">62</th><td></td></tr>
+<tr><th id="63">63</th><td>    <a class="local col3 ref" href="#3ctx" title='ctx' data-ref="3ctx">ctx</a>-&gt;<a class="ref" href="#key_handler_t::obj" title='key_handler_t::obj' data-ref="key_handler_t::obj">obj</a> = <a class="local col1 ref" href="#1obj" title='obj' data-ref="1obj">obj</a>;</td></tr>
+<tr><th id="64">64</th><td>    <a class="local col3 ref" href="#3ctx" title='ctx' data-ref="3ctx">ctx</a>-&gt;<a class="ref" href="#key_handler_t::syms" title='key_handler_t::syms' data-ref="key_handler_t::syms">syms</a> = <a class="ref" href="../../../../include/xcb/xcb_keysyms.h.html#xcb_key_symbols_alloc" title='xcb_key_symbols_alloc' data-ref="xcb_key_symbols_alloc">xcb_key_symbols_alloc</a> (<a class="local col2 ref" href="#2conn" title='conn' data-ref="2conn">conn</a>);</td></tr>
+<tr><th id="65">65</th><td>    <b>return</b> <a class="local col3 ref" href="#3ctx" title='ctx' data-ref="3ctx">ctx</a>;</td></tr>
+<tr><th id="66">66</th><td>}</td></tr>
+<tr><th id="67">67</th><td></td></tr>
+<tr><th id="68">68</th><td><em>void</em> <dfn class="decl def" id="XCB_keyHandler_Destroy" title='XCB_keyHandler_Destroy' data-ref="XCB_keyHandler_Destroy">XCB_keyHandler_Destroy</dfn> (<a class="typedef" href="events.h.html#key_handler_t" title='key_handler_t' data-type='struct key_handler_t' data-ref="key_handler_t">key_handler_t</a> *<dfn class="local col4 decl" id="4ctx" title='ctx' data-type='key_handler_t *' data-ref="4ctx">ctx</dfn>)</td></tr>
+<tr><th id="69">69</th><td>{</td></tr>
+<tr><th id="70">70</th><td>    <a class="ref" href="../../../../include/xcb/xcb_keysyms.h.html#xcb_key_symbols_free" title='xcb_key_symbols_free' data-ref="xcb_key_symbols_free">xcb_key_symbols_free</a> (<a class="local col4 ref" href="#4ctx" title='ctx' data-ref="4ctx">ctx</a>-&gt;<a class="ref" href="#key_handler_t::syms" title='key_handler_t::syms' data-ref="key_handler_t::syms">syms</a>);</td></tr>
+<tr><th id="71">71</th><td>    <a class="ref" href="../../../../include/stdlib.h.html#free" title='free' data-ref="free">free</a> (<a class="local col4 ref" href="#4ctx" title='ctx' data-ref="4ctx">ctx</a>);</td></tr>
+<tr><th id="72">72</th><td>}</td></tr>
+<tr><th id="73">73</th><td></td></tr>
+<tr><th id="74">74</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="keysymcmp" title='keysymcmp' data-type='int keysymcmp(const void * pa, const void * pb)' data-ref="keysymcmp">keysymcmp</dfn> (<em>const</em> <em>void</em> *<dfn class="local col5 decl" id="5pa" title='pa' data-type='const void *' data-ref="5pa">pa</dfn>, <em>const</em> <em>void</em> *<dfn class="local col6 decl" id="6pb" title='pb' data-type='const void *' data-ref="6pb">pb</dfn>)</td></tr>
+<tr><th id="75">75</th><td>{</td></tr>
+<tr><th id="76">76</th><td>    <em>int</em> <dfn class="local col7 decl" id="7a" title='a' data-type='int' data-ref="7a">a</dfn> = *(<em>const</em> <a class="typedef" href="../../../../include/xcb/xproto.h.html#xcb_keysym_t" title='xcb_keysym_t' data-type='uint32_t' data-ref="xcb_keysym_t">xcb_keysym_t</a> *)<a class="local col5 ref" href="#5pa" title='pa' data-ref="5pa">pa</a>;</td></tr>
+<tr><th id="77">77</th><td>    <em>int</em> <dfn class="local col8 decl" id="8b" title='b' data-type='int' data-ref="8b">b</dfn> = *(<em>const</em> <a class="typedef" href="../../../../include/xcb/xproto.h.html#xcb_keysym_t" title='xcb_keysym_t' data-type='uint32_t' data-ref="xcb_keysym_t">xcb_keysym_t</a> *)<a class="local col6 ref" href="#6pb" title='pb' data-ref="6pb">pb</a>;</td></tr>
+<tr><th id="78">78</th><td></td></tr>
+<tr><th id="79">79</th><td>    <b>return</b> <a class="local col7 ref" href="#7a" title='a' data-ref="7a">a</a> - <a class="local col8 ref" href="#8b" title='b' data-ref="8b">b</a>;</td></tr>
+<tr><th id="80">80</th><td>}</td></tr>
+<tr><th id="81">81</th><td></td></tr>
+<tr><th id="82">82</th><td><em>static</em> <a class="typedef" href="../../../../include/stdint.h.html#uint_fast32_t" title='uint_fast32_t' data-type='unsigned long' data-ref="uint_fast32_t">uint_fast32_t</a> <dfn class="tu decl def" id="ConvertKeySym" title='ConvertKeySym' data-type='uint_fast32_t ConvertKeySym(xcb_keysym_t sym)' data-ref="ConvertKeySym">ConvertKeySym</dfn> (<a class="typedef" href="../../../../include/xcb/xproto.h.html#xcb_keysym_t" title='xcb_keysym_t' data-type='uint32_t' data-ref="xcb_keysym_t">xcb_keysym_t</a> <dfn class="local col9 decl" id="9sym" title='sym' data-type='xcb_keysym_t' data-ref="9sym">sym</dfn>)</td></tr>
+<tr><th id="83">83</th><td>{</td></tr>
+<tr><th id="84">84</th><td>    <em>static</em> <em>const</em> <b>struct</b></td></tr>
+<tr><th id="85">85</th><td>    {</td></tr>
+<tr><th id="86">86</th><td>        <a class="typedef" href="../../../../include/xcb/xproto.h.html#xcb_keysym_t" title='xcb_keysym_t' data-type='uint32_t' data-ref="xcb_keysym_t">xcb_keysym_t</a> <dfn class="local col0 decl" id="10x11" title='x11' data-type='xcb_keysym_t' data-ref="10x11">x11</dfn>;</td></tr>
+<tr><th id="87">87</th><td>        <a class="typedef" href="../../../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a> <dfn class="local col1 decl" id="11vlc" title='vlc' data-type='uint32_t' data-ref="11vlc">vlc</dfn>;</td></tr>
+<tr><th id="88">88</th><td>    } *<dfn class="local col2 decl" id="12res" title='res' data-type='const struct &lt;anonymous struct at /usr/local/google/home/robertshih/git/vlc/modules/video_output/xcb/keys.c:84:18&gt; *' data-ref="12res">res</dfn>, <dfn class="local col3 decl" id="13tab" title='tab' data-type='const struct &lt;anonymous struct at /usr/local/google/home/robertshih/git/vlc/modules/video_output/xcb/keys.c:84:18&gt; [100]' data-ref="13tab">tab</dfn>[] = {</td></tr>
+<tr><th id="89">89</th><td><u>#include <a href="xcb_keysym.h.html">"xcb_keysym.h"</a></u></td></tr>
+<tr><th id="90">90</th><td>    }, <dfn class="local col4 decl" id="14old" title='old' data-type='const struct &lt;anonymous struct at /usr/local/google/home/robertshih/git/vlc/modules/video_output/xcb/keys.c:84:18&gt; [672]' data-ref="14old">old</dfn>[] = {</td></tr>
+<tr><th id="91">91</th><td><u>#include <a href="keysym.h.html">"keysym.h"</a></u></td></tr>
+<tr><th id="92">92</th><td>    };</td></tr>
+<tr><th id="93">93</th><td></td></tr>
+<tr><th id="94">94</th><td>    <i>/* X11 Latin-1 range */</i></td></tr>
+<tr><th id="95">95</th><td>    <b>if</b> (<a class="local col9 ref" href="#9sym" title='sym' data-ref="9sym">sym</a> &lt;= <var>0xff</var>)</td></tr>
+<tr><th id="96">96</th><td>        <b>return</b> <a class="local col9 ref" href="#9sym" title='sym' data-ref="9sym">sym</a>;</td></tr>
+<tr><th id="97">97</th><td>    <i>/* X11 Unicode range */</i></td></tr>
+<tr><th id="98">98</th><td>    <b>if</b> (<a class="local col9 ref" href="#9sym" title='sym' data-ref="9sym">sym</a> &gt;= <var>0x1000100</var> &amp;&amp; <a class="local col9 ref" href="#9sym" title='sym' data-ref="9sym">sym</a> &lt;= <var>0x110ffff</var>)</td></tr>
+<tr><th id="99">99</th><td>        <b>return</b> <a class="local col9 ref" href="#9sym" title='sym' data-ref="9sym">sym</a> - <var>0x1000000</var>;</td></tr>
+<tr><th id="100">100</th><td></td></tr>
+<tr><th id="101">101</th><td><u>#<span data-ppcond="101">if</span> 0</u></td></tr>
+<tr><th id="102">102</th><td>    <b>for</b> (size_t i = <var>0</var>; i &lt; <b>sizeof</b> (tab) / <b>sizeof</b> (tab[<var>0</var>]); i++)</td></tr>
+<tr><th id="103">103</th><td>        <b>if</b> (i &gt; <var>0</var> &amp;&amp; tab[i-<var>1</var>].x11 &gt;= tab[i].x11)</td></tr>
+<tr><th id="104">104</th><td>        {</td></tr>
+<tr><th id="105">105</th><td>            fprintf (stderr, <q>"key %x and %x are not ordered properly\n"</q>,</td></tr>
+<tr><th id="106">106</th><td>                     tab[i-<var>1</var>].x11, tab[i].x11);</td></tr>
+<tr><th id="107">107</th><td>            abort ();</td></tr>
+<tr><th id="108">108</th><td>        }</td></tr>
+<tr><th id="109">109</th><td>    <b>for</b> (size_t i = <var>0</var>; i &lt; <b>sizeof</b> (old) / <b>sizeof</b> (old[<var>0</var>]); i++)</td></tr>
+<tr><th id="110">110</th><td>        <b>if</b> (i &gt; <var>0</var> &amp;&amp; old[i-<var>1</var>].x11 &gt;= old[i].x11)</td></tr>
+<tr><th id="111">111</th><td>        {</td></tr>
+<tr><th id="112">112</th><td>            fprintf (stderr, <q>"key %x and %x are not ordered properly\n"</q>,</td></tr>
+<tr><th id="113">113</th><td>                     old[i-<var>1</var>].x11, old[i].x11);</td></tr>
+<tr><th id="114">114</th><td>            abort ();</td></tr>
+<tr><th id="115">115</th><td>        }</td></tr>
+<tr><th id="116">116</th><td><u>#<span data-ppcond="101">endif</span></u></td></tr>
+<tr><th id="117">117</th><td></td></tr>
+<tr><th id="118">118</th><td>    <i>/* Special keys */</i></td></tr>
+<tr><th id="119">119</th><td>    <a class="local col2 ref" href="#12res" title='res' data-ref="12res">res</a> = <a class="ref" href="../../../../include/stdlib.h.html#bsearch" title='bsearch' data-ref="bsearch">bsearch</a> (&amp;<a class="local col9 ref" href="#9sym" title='sym' data-ref="9sym">sym</a>, <a class="local col3 ref" href="#13tab" title='tab' data-ref="13tab">tab</a>, <b>sizeof</b> (<a class="local col3 ref" href="#13tab" title='tab' data-ref="13tab">tab</a>) / <b>sizeof</b> (<a class="local col3 ref" href="#13tab" title='tab' data-ref="13tab">tab</a>[<var>0</var>]), <b>sizeof</b> (<a class="local col3 ref" href="#13tab" title='tab' data-ref="13tab">tab</a>[<var>0</var>]),</td></tr>
+<tr><th id="120">120</th><td>                   <a class="tu ref" href="#keysymcmp" title='keysymcmp' data-use='r' data-ref="keysymcmp">keysymcmp</a>);</td></tr>
+<tr><th id="121">121</th><td>    <b>if</b> (<a class="local col2 ref" href="#12res" title='res' data-ref="12res">res</a> != <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>)</td></tr>
+<tr><th id="122">122</th><td>        <b>return</b> <a class="local col2 ref" href="#12res" title='res' data-ref="12res">res</a>-&gt;<a class="local col1 ref" href="#11vlc" title='vlc' data-ref="11vlc">vlc</a>;</td></tr>
+<tr><th id="123">123</th><td>    <i>/* Legacy X11 symbols outside the Unicode range */</i></td></tr>
+<tr><th id="124">124</th><td>    <a class="local col2 ref" href="#12res" title='res' data-ref="12res">res</a> = <a class="ref" href="../../../../include/stdlib.h.html#bsearch" title='bsearch' data-ref="bsearch">bsearch</a> (&amp;<a class="local col9 ref" href="#9sym" title='sym' data-ref="9sym">sym</a>, <a class="local col4 ref" href="#14old" title='old' data-ref="14old">old</a>, <b>sizeof</b> (<a class="local col4 ref" href="#14old" title='old' data-ref="14old">old</a>) / <b>sizeof</b> (<a class="local col4 ref" href="#14old" title='old' data-ref="14old">old</a>[<var>0</var>]), <b>sizeof</b> (<a class="local col4 ref" href="#14old" title='old' data-ref="14old">old</a>[<var>0</var>]),</td></tr>
+<tr><th id="125">125</th><td>                   <a class="tu ref" href="#keysymcmp" title='keysymcmp' data-use='r' data-ref="keysymcmp">keysymcmp</a>);</td></tr>
+<tr><th id="126">126</th><td>    <b>if</b> (<a class="local col2 ref" href="#12res" title='res' data-ref="12res">res</a> != <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>)</td></tr>
+<tr><th id="127">127</th><td>        <b>return</b> <a class="local col2 ref" href="#12res" title='res' data-ref="12res">res</a>-&gt;<a class="local col1 ref" href="#11vlc" title='vlc' data-ref="11vlc">vlc</a>;</td></tr>
+<tr><th id="128">128</th><td></td></tr>
+<tr><th id="129">129</th><td>    <b>return</b> <a class="macro" href="../../../include/vlc_keys.h.html#39" title="0x00000000" data-ref="_M/KEY_UNSET">KEY_UNSET</a>;</td></tr>
+<tr><th id="130">130</th><td>}</td></tr>
+<tr><th id="131">131</th><td></td></tr>
+<tr><th id="132">132</th><td></td></tr>
+<tr><th id="133">133</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="134">134</th><td><i class="doc"> * Process an X11 event, convert into VLC hotkey event if applicable.</i></td></tr>
+<tr><th id="135">135</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="136">136</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">ctx</span> key handler created with CreateKeyHandler()</i></td></tr>
+<tr><th id="137">137</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">ev</span> XCB event to process</i></td></tr>
+<tr><th id="138">138</th><td><i class="doc"> * <span class="command">@return</span> 0 if the event was handled and free()'d, non-zero otherwise</i></td></tr>
+<tr><th id="139">139</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="140">140</th><td><em>int</em> <dfn class="decl def" id="XCB_keyHandler_Process" title='XCB_keyHandler_Process' data-ref="XCB_keyHandler_Process">XCB_keyHandler_Process</dfn> (<a class="typedef" href="events.h.html#key_handler_t" title='key_handler_t' data-type='struct key_handler_t' data-ref="key_handler_t">key_handler_t</a> *<dfn class="local col5 decl" id="15ctx" title='ctx' data-type='key_handler_t *' data-ref="15ctx">ctx</dfn>, <a class="typedef" href="../../../../include/xcb/xcb.h.html#xcb_generic_event_t" title='xcb_generic_event_t' data-type='struct xcb_generic_event_t' data-ref="xcb_generic_event_t">xcb_generic_event_t</a> *<dfn class="local col6 decl" id="16ev" title='ev' data-type='xcb_generic_event_t *' data-ref="16ev">ev</dfn>)</td></tr>
+<tr><th id="141">141</th><td>{</td></tr>
+<tr><th id="142">142</th><td>    <a class="macro" href="../../../../include/assert.h.html#88" title="((ctx) ? (void) (0) : __assert_fail (&quot;ctx&quot;, &quot;/usr/local/google/home/robertshih/git/vlc/modules/video_output/xcb/keys.c&quot;, 142, __PRETTY_FUNCTION__))" data-ref="_M/assert">assert</a> (<a class="local col5 ref" href="#15ctx" title='ctx' data-ref="15ctx">ctx</a>);</td></tr>
+<tr><th id="143">143</th><td></td></tr>
+<tr><th id="144">144</th><td>    <b>switch</b> (<a class="local col6 ref" href="#16ev" title='ev' data-ref="16ev">ev</a>-&gt;<a class="ref" href="../../../../include/xcb/xcb.h.html#{anonymous}::response_type" title='&lt;anonymous struct&gt;::response_type' data-ref="{anonymous}::response_type">response_type</a> &amp; <var>0x7f</var>)</td></tr>
+<tr><th id="145">145</th><td>    {</td></tr>
+<tr><th id="146">146</th><td>        <b>case</b> <a class="macro" href="../../../../include/xcb/xproto.h.html#518" title="2" data-ref="_M/XCB_KEY_PRESS">XCB_KEY_PRESS</a>:</td></tr>
+<tr><th id="147">147</th><td>        {</td></tr>
+<tr><th id="148">148</th><td>            <a class="typedef" href="../../../../include/xcb/xproto.h.html#xcb_key_press_event_t" title='xcb_key_press_event_t' data-type='struct xcb_key_press_event_t' data-ref="xcb_key_press_event_t">xcb_key_press_event_t</a> *<dfn class="local col7 decl" id="17e" title='e' data-type='xcb_key_press_event_t *' data-ref="17e">e</dfn> = (<a class="typedef" href="../../../../include/xcb/xproto.h.html#xcb_key_press_event_t" title='xcb_key_press_event_t' data-type='struct xcb_key_press_event_t' data-ref="xcb_key_press_event_t">xcb_key_press_event_t</a> *)<a class="local col6 ref" href="#16ev" title='ev' data-ref="16ev">ev</a>;</td></tr>
+<tr><th id="149">149</th><td>            <a class="typedef" href="../../../../include/xcb/xproto.h.html#xcb_keysym_t" title='xcb_keysym_t' data-type='uint32_t' data-ref="xcb_keysym_t">xcb_keysym_t</a> <dfn class="local col8 decl" id="18sym" title='sym' data-type='xcb_keysym_t' data-ref="18sym">sym</dfn> = <a class="ref" href="../../../../include/xcb/xcb_keysyms.h.html#xcb_key_press_lookup_keysym" title='xcb_key_press_lookup_keysym' data-ref="xcb_key_press_lookup_keysym">xcb_key_press_lookup_keysym</a> (<a class="local col5 ref" href="#15ctx" title='ctx' data-ref="15ctx">ctx</a>-&gt;<a class="ref" href="#key_handler_t::syms" title='key_handler_t::syms' data-ref="key_handler_t::syms">syms</a>, <a class="local col7 ref" href="#17e" title='e' data-ref="17e">e</a>, <var>0</var>);</td></tr>
+<tr><th id="150">150</th><td>            <a class="typedef" href="../../../../include/stdint.h.html#uint_fast32_t" title='uint_fast32_t' data-type='unsigned long' data-ref="uint_fast32_t">uint_fast32_t</a> <dfn class="local col9 decl" id="19vk" title='vk' data-type='uint_fast32_t' data-ref="19vk">vk</dfn> = <a class="tu ref" href="#ConvertKeySym" title='ConvertKeySym' data-use='c' data-ref="ConvertKeySym">ConvertKeySym</a> (<a class="local col8 ref" href="#18sym" title='sym' data-ref="18sym">sym</a>);</td></tr>
+<tr><th id="151">151</th><td></td></tr>
+<tr><th id="152">152</th><td>            <a class="macro" href="../../../include/vlc_messages.h.html#77" title="vlc_Log( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(ctx-&gt;obj)), psz_object_type), (void)0 , (vlc_object_t *)(ctx-&gt;obj)), VLC_MSG_DBG, xcb_window, &quot;key: 0x%08&quot;&quot;l&quot; &quot;x&quot;&quot; (X11: 0x%04&quot;&quot;x&quot;&quot;)&quot;, vk, sym )" data-ref="_M/msg_Dbg">msg_Dbg</a> (ctx-&gt;obj, <q>"key: 0x%08"</q><a class="macro" href="../../../../include/inttypes.h.html#130" title="&quot;l&quot; &quot;x&quot;" data-ref="_M/PRIxFAST32">PRIxFAST32</a><q>" (X11: 0x%04"</q><a class="macro" href="../../../../include/inttypes.h.html#120" title="&quot;x&quot;" data-ref="_M/PRIx32">PRIx32</a><q>")"</q>,</td></tr>
+<tr><th id="153">153</th><td>                     vk, sym);</td></tr>
+<tr><th id="154">154</th><td>            <b>if</b> (<a class="local col9 ref" href="#19vk" title='vk' data-ref="19vk">vk</a> == <a class="macro" href="../../../include/vlc_keys.h.html#39" title="0x00000000" data-ref="_M/KEY_UNSET">KEY_UNSET</a>)</td></tr>
+<tr><th id="155">155</th><td>                <b>break</b>;</td></tr>
+<tr><th id="156">156</th><td>            <b>if</b> (<a class="local col7 ref" href="#17e" title='e' data-ref="17e">e</a>-&gt;<a class="ref" href="../../../../include/xcb/xproto.h.html#xcb_key_press_event_t::state" title='xcb_key_press_event_t::state' data-ref="xcb_key_press_event_t::state">state</a> &amp; <a class="enum" href="../../../../include/xcb/xproto.h.html#xcb_mod_mask_t::XCB_MOD_MASK_SHIFT" title='xcb_mod_mask_t::XCB_MOD_MASK_SHIFT' data-ref="xcb_mod_mask_t::XCB_MOD_MASK_SHIFT">XCB_MOD_MASK_SHIFT</a>) <i>/* Shift */</i></td></tr>
+<tr><th id="157">157</th><td>                <a class="local col9 ref" href="#19vk" title='vk' data-ref="19vk">vk</a> |= <a class="macro" href="../../../include/vlc_keys.h.html#34" title="0x02000000" data-ref="_M/KEY_MODIFIER_SHIFT">KEY_MODIFIER_SHIFT</a>;</td></tr>
+<tr><th id="158">158</th><td>            <i>/* XCB_MOD_MASK_LOCK */</i> <i>/* Caps Lock */</i></td></tr>
+<tr><th id="159">159</th><td>            <b>if</b> (<a class="local col7 ref" href="#17e" title='e' data-ref="17e">e</a>-&gt;<a class="ref" href="../../../../include/xcb/xproto.h.html#xcb_key_press_event_t::state" title='xcb_key_press_event_t::state' data-ref="xcb_key_press_event_t::state">state</a> &amp; <a class="enum" href="../../../../include/xcb/xproto.h.html#xcb_mod_mask_t::XCB_MOD_MASK_CONTROL" title='xcb_mod_mask_t::XCB_MOD_MASK_CONTROL' data-ref="xcb_mod_mask_t::XCB_MOD_MASK_CONTROL">XCB_MOD_MASK_CONTROL</a>) <i>/* Control */</i></td></tr>
+<tr><th id="160">160</th><td>                <a class="local col9 ref" href="#19vk" title='vk' data-ref="19vk">vk</a> |= <a class="macro" href="../../../include/vlc_keys.h.html#35" title="0x04000000" data-ref="_M/KEY_MODIFIER_CTRL">KEY_MODIFIER_CTRL</a>;</td></tr>
+<tr><th id="161">161</th><td>            <b>if</b> (<a class="local col7 ref" href="#17e" title='e' data-ref="17e">e</a>-&gt;<a class="ref" href="../../../../include/xcb/xproto.h.html#xcb_key_press_event_t::state" title='xcb_key_press_event_t::state' data-ref="xcb_key_press_event_t::state">state</a> &amp; <a class="enum" href="../../../../include/xcb/xproto.h.html#xcb_mod_mask_t::XCB_MOD_MASK_1" title='xcb_mod_mask_t::XCB_MOD_MASK_1' data-ref="xcb_mod_mask_t::XCB_MOD_MASK_1">XCB_MOD_MASK_1</a>) <i>/* Alternate */</i></td></tr>
+<tr><th id="162">162</th><td>                <a class="local col9 ref" href="#19vk" title='vk' data-ref="19vk">vk</a> |= <a class="macro" href="../../../include/vlc_keys.h.html#33" title="0x01000000" data-ref="_M/KEY_MODIFIER_ALT">KEY_MODIFIER_ALT</a>;</td></tr>
+<tr><th id="163">163</th><td>            <i>/* XCB_MOD_MASK_2 */</i> <i>/* Numeric Pad Lock */</i></td></tr>
+<tr><th id="164">164</th><td>            <b>if</b> (<a class="local col7 ref" href="#17e" title='e' data-ref="17e">e</a>-&gt;<a class="ref" href="../../../../include/xcb/xproto.h.html#xcb_key_press_event_t::state" title='xcb_key_press_event_t::state' data-ref="xcb_key_press_event_t::state">state</a> &amp; <a class="enum" href="../../../../include/xcb/xproto.h.html#xcb_mod_mask_t::XCB_MOD_MASK_3" title='xcb_mod_mask_t::XCB_MOD_MASK_3' data-ref="xcb_mod_mask_t::XCB_MOD_MASK_3">XCB_MOD_MASK_3</a>) <i>/* Super */</i></td></tr>
+<tr><th id="165">165</th><td>                <a class="local col9 ref" href="#19vk" title='vk' data-ref="19vk">vk</a> |= <a class="macro" href="../../../include/vlc_keys.h.html#36" title="0x08000000" data-ref="_M/KEY_MODIFIER_META">KEY_MODIFIER_META</a>;</td></tr>
+<tr><th id="166">166</th><td>            <b>if</b> (<a class="local col7 ref" href="#17e" title='e' data-ref="17e">e</a>-&gt;<a class="ref" href="../../../../include/xcb/xproto.h.html#xcb_key_press_event_t::state" title='xcb_key_press_event_t::state' data-ref="xcb_key_press_event_t::state">state</a> &amp; <a class="enum" href="../../../../include/xcb/xproto.h.html#xcb_mod_mask_t::XCB_MOD_MASK_4" title='xcb_mod_mask_t::XCB_MOD_MASK_4' data-ref="xcb_mod_mask_t::XCB_MOD_MASK_4">XCB_MOD_MASK_4</a>) <i>/* Meta */</i></td></tr>
+<tr><th id="167">167</th><td>                <a class="local col9 ref" href="#19vk" title='vk' data-ref="19vk">vk</a> |= <a class="macro" href="../../../include/vlc_keys.h.html#36" title="0x08000000" data-ref="_M/KEY_MODIFIER_META">KEY_MODIFIER_META</a>;</td></tr>
+<tr><th id="168">168</th><td>            <b>if</b> (<a class="local col7 ref" href="#17e" title='e' data-ref="17e">e</a>-&gt;<a class="ref" href="../../../../include/xcb/xproto.h.html#xcb_key_press_event_t::state" title='xcb_key_press_event_t::state' data-ref="xcb_key_press_event_t::state">state</a> &amp; <a class="enum" href="../../../../include/xcb/xproto.h.html#xcb_mod_mask_t::XCB_MOD_MASK_5" title='xcb_mod_mask_t::XCB_MOD_MASK_5' data-ref="xcb_mod_mask_t::XCB_MOD_MASK_5">XCB_MOD_MASK_5</a>) <i>/* Alternate Graphic */</i></td></tr>
+<tr><th id="169">169</th><td>                <a class="local col9 ref" href="#19vk" title='vk' data-ref="19vk">vk</a> |= <a class="macro" href="../../../include/vlc_keys.h.html#33" title="0x01000000" data-ref="_M/KEY_MODIFIER_ALT">KEY_MODIFIER_ALT</a>;</td></tr>
+<tr><th id="170">170</th><td>            <a class="macro" href="../../../include/vlc_variables.h.html#290" title="var_SetInteger( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(ctx-&gt;obj-&gt;p_libvlc)), psz_object_type), (void)0 , (vlc_object_t *)(ctx-&gt;obj-&gt;p_libvlc)),&quot;key-pressed&quot;,vk)" data-ref="_M/var_SetInteger">var_SetInteger</a> (<a class="local col5 ref" href="#15ctx" title='ctx' data-ref="15ctx">ctx</a>-&gt;<a class="ref" href="#key_handler_t::obj" title='key_handler_t::obj' data-ref="key_handler_t::obj">obj</a>-&gt;<a class="ref" href="../../../include/vlc_objects.h.html#44" title='vlc_object_t::p_libvlc' data-ref="vlc_object_t::p_libvlc">p_libvlc</a>, <q>"key-pressed"</q>, <a class="local col9 ref" href="#19vk" title='vk' data-ref="19vk">vk</a>);</td></tr>
+<tr><th id="171">171</th><td>            <b>break</b>;</td></tr>
+<tr><th id="172">172</th><td>        }</td></tr>
+<tr><th id="173">173</th><td></td></tr>
+<tr><th id="174">174</th><td>        <b>case</b> <a class="macro" href="../../../../include/xcb/xproto.h.html#541" title="3" data-ref="_M/XCB_KEY_RELEASE">XCB_KEY_RELEASE</a>:</td></tr>
+<tr><th id="175">175</th><td>            <b>break</b>;</td></tr>
+<tr><th id="176">176</th><td></td></tr>
+<tr><th id="177">177</th><td>        <b>case</b> <a class="macro" href="../../../../include/xcb/xproto.h.html#1188" title="34" data-ref="_M/XCB_MAPPING_NOTIFY">XCB_MAPPING_NOTIFY</a>:</td></tr>
+<tr><th id="178">178</th><td>        {</td></tr>
+<tr><th id="179">179</th><td>            <a class="typedef" href="../../../../include/xcb/xproto.h.html#xcb_mapping_notify_event_t" title='xcb_mapping_notify_event_t' data-type='struct xcb_mapping_notify_event_t' data-ref="xcb_mapping_notify_event_t">xcb_mapping_notify_event_t</a> *<dfn class="local col0 decl" id="20e" title='e' data-type='xcb_mapping_notify_event_t *' data-ref="20e">e</dfn> = (<a class="typedef" href="../../../../include/xcb/xproto.h.html#xcb_mapping_notify_event_t" title='xcb_mapping_notify_event_t' data-type='struct xcb_mapping_notify_event_t' data-ref="xcb_mapping_notify_event_t">xcb_mapping_notify_event_t</a> *)<a class="local col6 ref" href="#16ev" title='ev' data-ref="16ev">ev</a>;</td></tr>
+<tr><th id="180">180</th><td>            <a class="macro" href="../../../include/vlc_messages.h.html#77" title="vlc_Log( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(ctx-&gt;obj)), psz_object_type), (void)0 , (vlc_object_t *)(ctx-&gt;obj)), VLC_MSG_DBG, xcb_window, &quot;refreshing keyboard mapping&quot; )" data-ref="_M/msg_Dbg">msg_Dbg</a> (ctx-&gt;obj, <q>"refreshing keyboard mapping"</q>);</td></tr>
+<tr><th id="181">181</th><td>            <a class="ref" href="../../../../include/xcb/xcb_keysyms.h.html#xcb_refresh_keyboard_mapping" title='xcb_refresh_keyboard_mapping' data-ref="xcb_refresh_keyboard_mapping">xcb_refresh_keyboard_mapping</a> (<a class="local col5 ref" href="#15ctx" title='ctx' data-ref="15ctx">ctx</a>-&gt;<a class="ref" href="#key_handler_t::syms" title='key_handler_t::syms' data-ref="key_handler_t::syms">syms</a>, <a class="local col0 ref" href="#20e" title='e' data-ref="20e">e</a>);</td></tr>
+<tr><th id="182">182</th><td>            <b>break</b>;</td></tr>
+<tr><th id="183">183</th><td>        }</td></tr>
+<tr><th id="184">184</th><td></td></tr>
+<tr><th id="185">185</th><td>        <b>default</b>:</td></tr>
+<tr><th id="186">186</th><td>            <b>return</b> -<var>1</var>;</td></tr>
+<tr><th id="187">187</th><td>    }</td></tr>
+<tr><th id="188">188</th><td></td></tr>
+<tr><th id="189">189</th><td>    <a class="ref" href="../../../../include/stdlib.h.html#free" title='free' data-ref="free">free</a> (<a class="local col6 ref" href="#16ev" title='ev' data-ref="16ev">ev</a>);</td></tr>
+<tr><th id="190">190</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="191">191</th><td>}</td></tr>
+<tr><th id="192">192</th><td></td></tr>
+<tr><th id="193">193</th><td><u>#<span data-ppcond="35">else</span> /* HAVE_XCB_KEYSYMS */</u></td></tr>
+<tr><th id="194">194</th><td></td></tr>
+<tr><th id="195">195</th><td>key_handler_t *XCB_keyHandler_Create (vlc_object_t *obj,</td></tr>
+<tr><th id="196">196</th><td>                                      xcb_connection_t *conn)</td></tr>
+<tr><th id="197">197</th><td>{</td></tr>
+<tr><th id="198">198</th><td>    msg_Err (obj, <q>"X11 key press support not compiled-in"</q>);</td></tr>
+<tr><th id="199">199</th><td>    (<em>void</em>) conn;</td></tr>
+<tr><th id="200">200</th><td>    <b>return</b> NULL;</td></tr>
+<tr><th id="201">201</th><td>}</td></tr>
+<tr><th id="202">202</th><td></td></tr>
+<tr><th id="203">203</th><td><em>void</em> XCB_keyHandler_Destroy (key_handler_t *ctx)</td></tr>
+<tr><th id="204">204</th><td>{</td></tr>
+<tr><th id="205">205</th><td>    (<em>void</em>) ctx;</td></tr>
+<tr><th id="206">206</th><td>    abort ();</td></tr>
+<tr><th id="207">207</th><td>}</td></tr>
+<tr><th id="208">208</th><td></td></tr>
+<tr><th id="209">209</th><td><em>int</em> XCB_keyHandler_Process (key_handler_t *ctx, xcb_generic_event_t *ev)</td></tr>
+<tr><th id="210">210</th><td>{</td></tr>
+<tr><th id="211">211</th><td>    (<em>void</em>) ctx;</td></tr>
+<tr><th id="212">212</th><td>    (<em>void</em>) ev;</td></tr>
+<tr><th id="213">213</th><td>    abort ();</td></tr>
+<tr><th id="214">214</th><td>}</td></tr>
+<tr><th id="215">215</th><td></td></tr>
+<tr><th id="216">216</th><td><u>#<span data-ppcond="35">endif</span> /* HAVE_XCB_KEYSYMS */</u></td></tr>
+<tr><th id="217">217</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project vlc revision <em>2.2.0-git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

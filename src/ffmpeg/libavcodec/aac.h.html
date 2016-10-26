@@ -1,0 +1,391 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>aac.h source code [ffmpeg/libavcodec/aac.h] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="AACContext,BandType,ChannelCoupling,ChannelElement,ChannelPosition,CouplingPoint,DynamicRangeControl,ExtensionPayloadID,IndividualChannelStream,LongTermPrediction,OCStatus,OutputConfiguration,PredictorState,Pulse,RawDataBlockType,SingleChannelElement,TemporalNoiseShaping,WindowSequence "/>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavcodec/aac.h'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavcodec</a>/<a href='aac.h.html'>aac.h</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * AAC definitions and structures</i></td></tr>
+<tr><th id="3">3</th><td><i> * Copyright (c) 2005-2006 Oded Shimon ( ods15 ods15 dyndns org )</i></td></tr>
+<tr><th id="4">4</th><td><i> * Copyright (c) 2006-2007 Maxim Gavrilov ( maxim.gavrilov gmail com )</i></td></tr>
+<tr><th id="5">5</th><td><i> *</i></td></tr>
+<tr><th id="6">6</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="7">7</th><td><i> *</i></td></tr>
+<tr><th id="8">8</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="9">9</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="10">10</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="11">11</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="12">12</th><td><i> *</i></td></tr>
+<tr><th id="13">13</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="14">14</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="15">15</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="16">16</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="17">17</th><td><i> *</i></td></tr>
+<tr><th id="18">18</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="19">19</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="20">20</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="21">21</th><td><i> */</i></td></tr>
+<tr><th id="22">22</th><td></td></tr>
+<tr><th id="23">23</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="24">24</th><td><i class="doc"> *<span class="command"> @file</span></i></td></tr>
+<tr><th id="25">25</th><td><i class="doc"> * AAC definitions and structures</i></td></tr>
+<tr><th id="26">26</th><td><i class="doc"> * <span class="command">@author</span> Oded Shimon  ( ods15 ods15 dyndns org )</i></td></tr>
+<tr><th id="27">27</th><td><i class="doc"> * <span class="command">@author</span> Maxim Gavrilov ( maxim.gavrilov gmail com )</i></td></tr>
+<tr><th id="28">28</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="29">29</th><td></td></tr>
+<tr><th id="30">30</th><td><u>#<span data-ppcond="30">ifndef</span> <span class="macro" data-ref="_M/AVCODEC_AAC_H">AVCODEC_AAC_H</span></u></td></tr>
+<tr><th id="31">31</th><td><u>#define <dfn class="macro" id="_M/AVCODEC_AAC_H" data-ref="_M/AVCODEC_AAC_H">AVCODEC_AAC_H</dfn></u></td></tr>
+<tr><th id="32">32</th><td></td></tr>
+<tr><th id="33">33</th><td></td></tr>
+<tr><th id="34">34</th><td><u>#include <a href="aac_defines.h.html">"aac_defines.h"</a></u></td></tr>
+<tr><th id="35">35</th><td><u>#include <a href="../libavutil/float_dsp.h.html">"libavutil/float_dsp.h"</a></u></td></tr>
+<tr><th id="36">36</th><td><u>#include <a href="../libavutil/fixed_dsp.h.html">"libavutil/fixed_dsp.h"</a></u></td></tr>
+<tr><th id="37">37</th><td><u>#include <a href="avcodec.h.html">"avcodec.h"</a></u></td></tr>
+<tr><th id="38">38</th><td><u>#<span data-ppcond="38">if</span> !<a class="macro" href="aac_defines.h.html#25" title="0" data-ref="_M/USE_FIXED">USE_FIXED</a></u></td></tr>
+<tr><th id="39">39</th><td><u>#include <a href="imdct15.h.html">"imdct15.h"</a></u></td></tr>
+<tr><th id="40">40</th><td><u>#<span data-ppcond="38">endif</span></u></td></tr>
+<tr><th id="41">41</th><td><u>#include <a href="fft.h.html">"fft.h"</a></u></td></tr>
+<tr><th id="42">42</th><td><u>#include <a href="mpeg4audio.h.html">"mpeg4audio.h"</a></u></td></tr>
+<tr><th id="43">43</th><td><u>#include <a href="sbr.h.html">"sbr.h"</a></u></td></tr>
+<tr><th id="44">44</th><td></td></tr>
+<tr><th id="45">45</th><td><u>#include &lt;stdint.h&gt;</u></td></tr>
+<tr><th id="46">46</th><td></td></tr>
+<tr><th id="47">47</th><td><u>#define <dfn class="macro" id="_M/MAX_CHANNELS" data-ref="_M/MAX_CHANNELS">MAX_CHANNELS</dfn> 64</u></td></tr>
+<tr><th id="48">48</th><td><u>#define <dfn class="macro" id="_M/MAX_ELEM_ID" data-ref="_M/MAX_ELEM_ID">MAX_ELEM_ID</dfn> 16</u></td></tr>
+<tr><th id="49">49</th><td></td></tr>
+<tr><th id="50">50</th><td><u>#define <dfn class="macro" id="_M/TNS_MAX_ORDER" data-ref="_M/TNS_MAX_ORDER">TNS_MAX_ORDER</dfn> 20</u></td></tr>
+<tr><th id="51">51</th><td><u>#define <dfn class="macro" id="_M/MAX_LTP_LONG_SFB" data-ref="_M/MAX_LTP_LONG_SFB">MAX_LTP_LONG_SFB</dfn> 40</u></td></tr>
+<tr><th id="52">52</th><td></td></tr>
+<tr><th id="53">53</th><td><u>#define <dfn class="macro" id="_M/CLIP_AVOIDANCE_FACTOR" data-ref="_M/CLIP_AVOIDANCE_FACTOR">CLIP_AVOIDANCE_FACTOR</dfn> 0.95f</u></td></tr>
+<tr><th id="54">54</th><td></td></tr>
+<tr><th id="55">55</th><td><b>enum</b> <dfn class="type def" id="RawDataBlockType" title='RawDataBlockType' data-ref="RawDataBlockType">RawDataBlockType</dfn> {</td></tr>
+<tr><th id="56">56</th><td>    <dfn class="enum" id="RawDataBlockType::TYPE_SCE" title='RawDataBlockType::TYPE_SCE' data-ref="RawDataBlockType::TYPE_SCE">TYPE_SCE</dfn>,</td></tr>
+<tr><th id="57">57</th><td>    <dfn class="enum" id="RawDataBlockType::TYPE_CPE" title='RawDataBlockType::TYPE_CPE' data-ref="RawDataBlockType::TYPE_CPE">TYPE_CPE</dfn>,</td></tr>
+<tr><th id="58">58</th><td>    <dfn class="enum" id="RawDataBlockType::TYPE_CCE" title='RawDataBlockType::TYPE_CCE' data-ref="RawDataBlockType::TYPE_CCE">TYPE_CCE</dfn>,</td></tr>
+<tr><th id="59">59</th><td>    <dfn class="enum" id="RawDataBlockType::TYPE_LFE" title='RawDataBlockType::TYPE_LFE' data-ref="RawDataBlockType::TYPE_LFE">TYPE_LFE</dfn>,</td></tr>
+<tr><th id="60">60</th><td>    <dfn class="enum" id="RawDataBlockType::TYPE_DSE" title='RawDataBlockType::TYPE_DSE' data-ref="RawDataBlockType::TYPE_DSE">TYPE_DSE</dfn>,</td></tr>
+<tr><th id="61">61</th><td>    <dfn class="enum" id="RawDataBlockType::TYPE_PCE" title='RawDataBlockType::TYPE_PCE' data-ref="RawDataBlockType::TYPE_PCE">TYPE_PCE</dfn>,</td></tr>
+<tr><th id="62">62</th><td>    <dfn class="enum" id="RawDataBlockType::TYPE_FIL" title='RawDataBlockType::TYPE_FIL' data-ref="RawDataBlockType::TYPE_FIL">TYPE_FIL</dfn>,</td></tr>
+<tr><th id="63">63</th><td>    <dfn class="enum" id="RawDataBlockType::TYPE_END" title='RawDataBlockType::TYPE_END' data-ref="RawDataBlockType::TYPE_END">TYPE_END</dfn>,</td></tr>
+<tr><th id="64">64</th><td>};</td></tr>
+<tr><th id="65">65</th><td></td></tr>
+<tr><th id="66">66</th><td><b>enum</b> <dfn class="type def" id="ExtensionPayloadID" title='ExtensionPayloadID' data-ref="ExtensionPayloadID">ExtensionPayloadID</dfn> {</td></tr>
+<tr><th id="67">67</th><td>    <dfn class="enum" id="ExtensionPayloadID::EXT_FILL" title='ExtensionPayloadID::EXT_FILL' data-ref="ExtensionPayloadID::EXT_FILL">EXT_FILL</dfn>,</td></tr>
+<tr><th id="68">68</th><td>    <dfn class="enum" id="ExtensionPayloadID::EXT_FILL_DATA" title='ExtensionPayloadID::EXT_FILL_DATA' data-ref="ExtensionPayloadID::EXT_FILL_DATA">EXT_FILL_DATA</dfn>,</td></tr>
+<tr><th id="69">69</th><td>    <dfn class="enum" id="ExtensionPayloadID::EXT_DATA_ELEMENT" title='ExtensionPayloadID::EXT_DATA_ELEMENT' data-ref="ExtensionPayloadID::EXT_DATA_ELEMENT">EXT_DATA_ELEMENT</dfn>,</td></tr>
+<tr><th id="70">70</th><td>    <dfn class="enum" id="ExtensionPayloadID::EXT_DYNAMIC_RANGE" title='ExtensionPayloadID::EXT_DYNAMIC_RANGE' data-ref="ExtensionPayloadID::EXT_DYNAMIC_RANGE">EXT_DYNAMIC_RANGE</dfn> = <var>0xb</var>,</td></tr>
+<tr><th id="71">71</th><td>    <dfn class="enum" id="ExtensionPayloadID::EXT_SBR_DATA" title='ExtensionPayloadID::EXT_SBR_DATA' data-ref="ExtensionPayloadID::EXT_SBR_DATA">EXT_SBR_DATA</dfn>      = <var>0xd</var>,</td></tr>
+<tr><th id="72">72</th><td>    <dfn class="enum" id="ExtensionPayloadID::EXT_SBR_DATA_CRC" title='ExtensionPayloadID::EXT_SBR_DATA_CRC' data-ref="ExtensionPayloadID::EXT_SBR_DATA_CRC">EXT_SBR_DATA_CRC</dfn>  = <var>0xe</var>,</td></tr>
+<tr><th id="73">73</th><td>};</td></tr>
+<tr><th id="74">74</th><td></td></tr>
+<tr><th id="75">75</th><td><b>enum</b> <dfn class="type def" id="WindowSequence" title='WindowSequence' data-ref="WindowSequence">WindowSequence</dfn> {</td></tr>
+<tr><th id="76">76</th><td>    <dfn class="enum" id="WindowSequence::ONLY_LONG_SEQUENCE" title='WindowSequence::ONLY_LONG_SEQUENCE' data-ref="WindowSequence::ONLY_LONG_SEQUENCE">ONLY_LONG_SEQUENCE</dfn>,</td></tr>
+<tr><th id="77">77</th><td>    <dfn class="enum" id="WindowSequence::LONG_START_SEQUENCE" title='WindowSequence::LONG_START_SEQUENCE' data-ref="WindowSequence::LONG_START_SEQUENCE">LONG_START_SEQUENCE</dfn>,</td></tr>
+<tr><th id="78">78</th><td>    <dfn class="enum" id="WindowSequence::EIGHT_SHORT_SEQUENCE" title='WindowSequence::EIGHT_SHORT_SEQUENCE' data-ref="WindowSequence::EIGHT_SHORT_SEQUENCE">EIGHT_SHORT_SEQUENCE</dfn>,</td></tr>
+<tr><th id="79">79</th><td>    <dfn class="enum" id="WindowSequence::LONG_STOP_SEQUENCE" title='WindowSequence::LONG_STOP_SEQUENCE' data-ref="WindowSequence::LONG_STOP_SEQUENCE">LONG_STOP_SEQUENCE</dfn>,</td></tr>
+<tr><th id="80">80</th><td>};</td></tr>
+<tr><th id="81">81</th><td></td></tr>
+<tr><th id="82">82</th><td><b>enum</b> <dfn class="type def" id="BandType" title='BandType' data-ref="BandType">BandType</dfn> {</td></tr>
+<tr><th id="83">83</th><td>    <dfn class="enum" id="BandType::ZERO_BT" title='BandType::ZERO_BT' data-ref="BandType::ZERO_BT">ZERO_BT</dfn>        = <var>0</var>,     <i class="doc">///&lt; Scalefactors and spectral data are all zero.</i></td></tr>
+<tr><th id="84">84</th><td>    <dfn class="enum" id="BandType::FIRST_PAIR_BT" title='BandType::FIRST_PAIR_BT' data-ref="BandType::FIRST_PAIR_BT">FIRST_PAIR_BT</dfn>  = <var>5</var>,     <i class="doc">///&lt; This and later band types encode two values (rather than four) with one code word.</i></td></tr>
+<tr><th id="85">85</th><td>    <dfn class="enum" id="BandType::ESC_BT" title='BandType::ESC_BT' data-ref="BandType::ESC_BT">ESC_BT</dfn>         = <var>11</var>,    <i class="doc">///&lt; Spectral data are coded with an escape sequence.</i></td></tr>
+<tr><th id="86">86</th><td>    <dfn class="enum" id="BandType::RESERVED_BT" title='BandType::RESERVED_BT' data-ref="BandType::RESERVED_BT">RESERVED_BT</dfn>    = <var>12</var>,    <i class="doc">///&lt; Band types following are encoded differently from others.</i></td></tr>
+<tr><th id="87">87</th><td>    <dfn class="enum" id="BandType::NOISE_BT" title='BandType::NOISE_BT' data-ref="BandType::NOISE_BT">NOISE_BT</dfn>       = <var>13</var>,    <i class="doc">///&lt; Spectral data are scaled white noise not coded in the bitstream.</i></td></tr>
+<tr><th id="88">88</th><td>    <dfn class="enum" id="BandType::INTENSITY_BT2" title='BandType::INTENSITY_BT2' data-ref="BandType::INTENSITY_BT2">INTENSITY_BT2</dfn>  = <var>14</var>,    <i class="doc">///&lt; Scalefactor data are intensity stereo positions (out of phase).</i></td></tr>
+<tr><th id="89">89</th><td>    <dfn class="enum" id="BandType::INTENSITY_BT" title='BandType::INTENSITY_BT' data-ref="BandType::INTENSITY_BT">INTENSITY_BT</dfn>   = <var>15</var>,    <i class="doc">///&lt; Scalefactor data are intensity stereo positions (in phase).</i></td></tr>
+<tr><th id="90">90</th><td>};</td></tr>
+<tr><th id="91">91</th><td></td></tr>
+<tr><th id="92">92</th><td><u>#define <dfn class="macro" id="_M/IS_CODEBOOK_UNSIGNED" data-ref="_M/IS_CODEBOOK_UNSIGNED">IS_CODEBOOK_UNSIGNED</dfn>(x) (((x) - 1) &amp; 10)</u></td></tr>
+<tr><th id="93">93</th><td></td></tr>
+<tr><th id="94">94</th><td><b>enum</b> <dfn class="type def" id="ChannelPosition" title='ChannelPosition' data-ref="ChannelPosition">ChannelPosition</dfn> {</td></tr>
+<tr><th id="95">95</th><td>    <dfn class="enum" id="ChannelPosition::AAC_CHANNEL_OFF" title='ChannelPosition::AAC_CHANNEL_OFF' data-ref="ChannelPosition::AAC_CHANNEL_OFF">AAC_CHANNEL_OFF</dfn>   = <var>0</var>,</td></tr>
+<tr><th id="96">96</th><td>    <dfn class="enum" id="ChannelPosition::AAC_CHANNEL_FRONT" title='ChannelPosition::AAC_CHANNEL_FRONT' data-ref="ChannelPosition::AAC_CHANNEL_FRONT">AAC_CHANNEL_FRONT</dfn> = <var>1</var>,</td></tr>
+<tr><th id="97">97</th><td>    <dfn class="enum" id="ChannelPosition::AAC_CHANNEL_SIDE" title='ChannelPosition::AAC_CHANNEL_SIDE' data-ref="ChannelPosition::AAC_CHANNEL_SIDE">AAC_CHANNEL_SIDE</dfn>  = <var>2</var>,</td></tr>
+<tr><th id="98">98</th><td>    <dfn class="enum" id="ChannelPosition::AAC_CHANNEL_BACK" title='ChannelPosition::AAC_CHANNEL_BACK' data-ref="ChannelPosition::AAC_CHANNEL_BACK">AAC_CHANNEL_BACK</dfn>  = <var>3</var>,</td></tr>
+<tr><th id="99">99</th><td>    <dfn class="enum" id="ChannelPosition::AAC_CHANNEL_LFE" title='ChannelPosition::AAC_CHANNEL_LFE' data-ref="ChannelPosition::AAC_CHANNEL_LFE">AAC_CHANNEL_LFE</dfn>   = <var>4</var>,</td></tr>
+<tr><th id="100">100</th><td>    <dfn class="enum" id="ChannelPosition::AAC_CHANNEL_CC" title='ChannelPosition::AAC_CHANNEL_CC' data-ref="ChannelPosition::AAC_CHANNEL_CC">AAC_CHANNEL_CC</dfn>    = <var>5</var>,</td></tr>
+<tr><th id="101">101</th><td>};</td></tr>
+<tr><th id="102">102</th><td></td></tr>
+<tr><th id="103">103</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="104">104</th><td><i class="doc"> * The point during decoding at which channel coupling is applied.</i></td></tr>
+<tr><th id="105">105</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="106">106</th><td><b>enum</b> <dfn class="type def" id="CouplingPoint" title='CouplingPoint' data-ref="CouplingPoint">CouplingPoint</dfn> {</td></tr>
+<tr><th id="107">107</th><td>    <dfn class="enum" id="CouplingPoint::BEFORE_TNS" title='CouplingPoint::BEFORE_TNS' data-ref="CouplingPoint::BEFORE_TNS">BEFORE_TNS</dfn>,</td></tr>
+<tr><th id="108">108</th><td>    <dfn class="enum" id="CouplingPoint::BETWEEN_TNS_AND_IMDCT" title='CouplingPoint::BETWEEN_TNS_AND_IMDCT' data-ref="CouplingPoint::BETWEEN_TNS_AND_IMDCT">BETWEEN_TNS_AND_IMDCT</dfn>,</td></tr>
+<tr><th id="109">109</th><td>    <dfn class="enum" id="CouplingPoint::AFTER_IMDCT" title='CouplingPoint::AFTER_IMDCT' data-ref="CouplingPoint::AFTER_IMDCT">AFTER_IMDCT</dfn> = <var>3</var>,</td></tr>
+<tr><th id="110">110</th><td>};</td></tr>
+<tr><th id="111">111</th><td></td></tr>
+<tr><th id="112">112</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="113">113</th><td><i class="doc"> * Output configuration status</i></td></tr>
+<tr><th id="114">114</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="115">115</th><td><b>enum</b> <dfn class="type def" id="OCStatus" title='OCStatus' data-ref="OCStatus">OCStatus</dfn> {</td></tr>
+<tr><th id="116">116</th><td>    <dfn class="enum" id="OCStatus::OC_NONE" title='OCStatus::OC_NONE' data-ref="OCStatus::OC_NONE">OC_NONE</dfn>,        <i class="doc">///&lt; Output unconfigured</i></td></tr>
+<tr><th id="117">117</th><td>    <dfn class="enum" id="OCStatus::OC_TRIAL_PCE" title='OCStatus::OC_TRIAL_PCE' data-ref="OCStatus::OC_TRIAL_PCE">OC_TRIAL_PCE</dfn>,   <i class="doc">///&lt; Output configuration under trial specified by an inband PCE</i></td></tr>
+<tr><th id="118">118</th><td>    <dfn class="enum" id="OCStatus::OC_TRIAL_FRAME" title='OCStatus::OC_TRIAL_FRAME' data-ref="OCStatus::OC_TRIAL_FRAME">OC_TRIAL_FRAME</dfn>, <i class="doc">///&lt; Output configuration under trial specified by a frame header</i></td></tr>
+<tr><th id="119">119</th><td>    <dfn class="enum" id="OCStatus::OC_GLOBAL_HDR" title='OCStatus::OC_GLOBAL_HDR' data-ref="OCStatus::OC_GLOBAL_HDR">OC_GLOBAL_HDR</dfn>,  <i class="doc">///&lt; Output configuration set in a global header but not yet locked</i></td></tr>
+<tr><th id="120">120</th><td>    <dfn class="enum" id="OCStatus::OC_LOCKED" title='OCStatus::OC_LOCKED' data-ref="OCStatus::OC_LOCKED">OC_LOCKED</dfn>,      <i class="doc">///&lt; Output configuration locked in place</i></td></tr>
+<tr><th id="121">121</th><td>};</td></tr>
+<tr><th id="122">122</th><td></td></tr>
+<tr><th id="123">123</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="OutputConfiguration" title='OutputConfiguration' data-ref="OutputConfiguration"><a class="type" href="#OutputConfiguration" title='OutputConfiguration' data-ref="OutputConfiguration">OutputConfiguration</a></dfn> {</td></tr>
+<tr><th id="124">124</th><td>    <a class="typedef" href="mpeg4audio.h.html#MPEG4AudioConfig" title='MPEG4AudioConfig' data-type='struct MPEG4AudioConfig' data-ref="MPEG4AudioConfig">MPEG4AudioConfig</a> <dfn class="decl" id="OutputConfiguration::m4ac" title='OutputConfiguration::m4ac' data-ref="OutputConfiguration::m4ac">m4ac</dfn>;</td></tr>
+<tr><th id="125">125</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="OutputConfiguration::layout_map" title='OutputConfiguration::layout_map' data-ref="OutputConfiguration::layout_map">layout_map</dfn>[<a class="macro" href="#48" title="16" data-ref="_M/MAX_ELEM_ID">MAX_ELEM_ID</a>*<var>4</var>][<var>3</var>];</td></tr>
+<tr><th id="126">126</th><td>    <em>int</em> <dfn class="decl" id="OutputConfiguration::layout_map_tags" title='OutputConfiguration::layout_map_tags' data-ref="OutputConfiguration::layout_map_tags">layout_map_tags</dfn>;</td></tr>
+<tr><th id="127">127</th><td>    <em>int</em> <dfn class="decl" id="OutputConfiguration::channels" title='OutputConfiguration::channels' data-ref="OutputConfiguration::channels">channels</dfn>;</td></tr>
+<tr><th id="128">128</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint64_t" title='uint64_t' data-type='unsigned long' data-ref="uint64_t">uint64_t</a> <dfn class="decl" id="OutputConfiguration::channel_layout" title='OutputConfiguration::channel_layout' data-ref="OutputConfiguration::channel_layout">channel_layout</dfn>;</td></tr>
+<tr><th id="129">129</th><td>    <b>enum</b> <a class="type" href="#OCStatus" title='OCStatus' data-ref="OCStatus">OCStatus</a> <dfn class="decl" id="OutputConfiguration::status" title='OutputConfiguration::status' data-ref="OutputConfiguration::status">status</dfn>;</td></tr>
+<tr><th id="130">130</th><td>} <dfn class="typedef" id="OutputConfiguration" title='OutputConfiguration' data-type='struct OutputConfiguration' data-ref="OutputConfiguration">OutputConfiguration</dfn>;</td></tr>
+<tr><th id="131">131</th><td></td></tr>
+<tr><th id="132">132</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="133">133</th><td><i class="doc"> * Predictor State</i></td></tr>
+<tr><th id="134">134</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="135">135</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="PredictorState" title='PredictorState' data-ref="PredictorState"><a class="type" href="#PredictorState" title='PredictorState' data-ref="PredictorState">PredictorState</a></dfn> {</td></tr>
+<tr><th id="136">136</th><td>    <a class="typedef" href="aac_defines.h.html#AAC_FLOAT" title='AAC_FLOAT' data-type='float' data-ref="AAC_FLOAT">AAC_FLOAT</a> <dfn class="decl" id="PredictorState::cor0" title='PredictorState::cor0' data-ref="PredictorState::cor0">cor0</dfn>;</td></tr>
+<tr><th id="137">137</th><td>    <a class="typedef" href="aac_defines.h.html#AAC_FLOAT" title='AAC_FLOAT' data-type='float' data-ref="AAC_FLOAT">AAC_FLOAT</a> <dfn class="decl" id="PredictorState::cor1" title='PredictorState::cor1' data-ref="PredictorState::cor1">cor1</dfn>;</td></tr>
+<tr><th id="138">138</th><td>    <a class="typedef" href="aac_defines.h.html#AAC_FLOAT" title='AAC_FLOAT' data-type='float' data-ref="AAC_FLOAT">AAC_FLOAT</a> <dfn class="decl" id="PredictorState::var0" title='PredictorState::var0' data-ref="PredictorState::var0">var0</dfn>;</td></tr>
+<tr><th id="139">139</th><td>    <a class="typedef" href="aac_defines.h.html#AAC_FLOAT" title='AAC_FLOAT' data-type='float' data-ref="AAC_FLOAT">AAC_FLOAT</a> <dfn class="decl" id="PredictorState::var1" title='PredictorState::var1' data-ref="PredictorState::var1">var1</dfn>;</td></tr>
+<tr><th id="140">140</th><td>    <a class="typedef" href="aac_defines.h.html#AAC_FLOAT" title='AAC_FLOAT' data-type='float' data-ref="AAC_FLOAT">AAC_FLOAT</a> <dfn class="decl" id="PredictorState::r0" title='PredictorState::r0' data-ref="PredictorState::r0">r0</dfn>;</td></tr>
+<tr><th id="141">141</th><td>    <a class="typedef" href="aac_defines.h.html#AAC_FLOAT" title='AAC_FLOAT' data-type='float' data-ref="AAC_FLOAT">AAC_FLOAT</a> <dfn class="decl" id="PredictorState::r1" title='PredictorState::r1' data-ref="PredictorState::r1">r1</dfn>;</td></tr>
+<tr><th id="142">142</th><td>    <a class="typedef" href="aac_defines.h.html#AAC_FLOAT" title='AAC_FLOAT' data-type='float' data-ref="AAC_FLOAT">AAC_FLOAT</a> <dfn class="decl" id="PredictorState::k1" title='PredictorState::k1' data-ref="PredictorState::k1">k1</dfn>;</td></tr>
+<tr><th id="143">143</th><td>    <a class="typedef" href="aac_defines.h.html#AAC_FLOAT" title='AAC_FLOAT' data-type='float' data-ref="AAC_FLOAT">AAC_FLOAT</a> <dfn class="decl" id="PredictorState::x_est" title='PredictorState::x_est' data-ref="PredictorState::x_est">x_est</dfn>;</td></tr>
+<tr><th id="144">144</th><td>} <dfn class="typedef" id="PredictorState" title='PredictorState' data-type='struct PredictorState' data-ref="PredictorState">PredictorState</dfn>;</td></tr>
+<tr><th id="145">145</th><td></td></tr>
+<tr><th id="146">146</th><td><u>#define <dfn class="macro" id="_M/MAX_PREDICTORS" data-ref="_M/MAX_PREDICTORS">MAX_PREDICTORS</dfn> 672</u></td></tr>
+<tr><th id="147">147</th><td></td></tr>
+<tr><th id="148">148</th><td><u>#define <dfn class="macro" id="_M/SCALE_DIV_512" data-ref="_M/SCALE_DIV_512">SCALE_DIV_512</dfn>    36    ///&lt; scalefactor difference that corresponds to scale difference in 512 times</u></td></tr>
+<tr><th id="149">149</th><td><u>#define <dfn class="macro" id="_M/SCALE_ONE_POS" data-ref="_M/SCALE_ONE_POS">SCALE_ONE_POS</dfn>   140    ///&lt; scalefactor index that corresponds to scale=1.0</u></td></tr>
+<tr><th id="150">150</th><td><u>#define <dfn class="macro" id="_M/SCALE_MAX_POS" data-ref="_M/SCALE_MAX_POS">SCALE_MAX_POS</dfn>   255    ///&lt; scalefactor index maximum value</u></td></tr>
+<tr><th id="151">151</th><td><u>#define <dfn class="macro" id="_M/SCALE_MAX_DIFF" data-ref="_M/SCALE_MAX_DIFF">SCALE_MAX_DIFF</dfn>   60    ///&lt; maximum scalefactor difference allowed by standard</u></td></tr>
+<tr><th id="152">152</th><td><u>#define <dfn class="macro" id="_M/SCALE_DIFF_ZERO" data-ref="_M/SCALE_DIFF_ZERO">SCALE_DIFF_ZERO</dfn>  60    ///&lt; codebook index corresponding to zero scalefactor indices difference</u></td></tr>
+<tr><th id="153">153</th><td></td></tr>
+<tr><th id="154">154</th><td><u>#define <dfn class="macro" id="_M/POW_SF2_ZERO" data-ref="_M/POW_SF2_ZERO">POW_SF2_ZERO</dfn>    200    ///&lt; ff_aac_pow2sf_tab index corresponding to pow(2, 0);</u></td></tr>
+<tr><th id="155">155</th><td></td></tr>
+<tr><th id="156">156</th><td><u>#define <dfn class="macro" id="_M/NOISE_PRE" data-ref="_M/NOISE_PRE">NOISE_PRE</dfn>       256    ///&lt; preamble for NOISE_BT, put in bitstream with the first noise band</u></td></tr>
+<tr><th id="157">157</th><td><u>#define <dfn class="macro" id="_M/NOISE_PRE_BITS" data-ref="_M/NOISE_PRE_BITS">NOISE_PRE_BITS</dfn>    9    ///&lt; length of preamble</u></td></tr>
+<tr><th id="158">158</th><td><u>#define <dfn class="macro" id="_M/NOISE_OFFSET" data-ref="_M/NOISE_OFFSET">NOISE_OFFSET</dfn>     90    ///&lt; subtracted from global gain, used as offset for the preamble</u></td></tr>
+<tr><th id="159">159</th><td></td></tr>
+<tr><th id="160">160</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="161">161</th><td><i class="doc"> * Long Term Prediction</i></td></tr>
+<tr><th id="162">162</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="163">163</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="LongTermPrediction" title='LongTermPrediction' data-ref="LongTermPrediction"><a class="type" href="#LongTermPrediction" title='LongTermPrediction' data-ref="LongTermPrediction">LongTermPrediction</a></dfn> {</td></tr>
+<tr><th id="164">164</th><td>    <a class="typedef" href="../../include/stdint.h.html#int8_t" title='int8_t' data-type='signed char' data-ref="int8_t">int8_t</a> <dfn class="decl" id="LongTermPrediction::present" title='LongTermPrediction::present' data-ref="LongTermPrediction::present">present</dfn>;</td></tr>
+<tr><th id="165">165</th><td>    <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> <dfn class="decl" id="LongTermPrediction::lag" title='LongTermPrediction::lag' data-ref="LongTermPrediction::lag">lag</dfn>;</td></tr>
+<tr><th id="166">166</th><td>    <em>int</em> <dfn class="decl" id="LongTermPrediction::coef_idx" title='LongTermPrediction::coef_idx' data-ref="LongTermPrediction::coef_idx">coef_idx</dfn>;</td></tr>
+<tr><th id="167">167</th><td>    <a class="typedef" href="aac_defines.h.html#INTFLOAT" title='INTFLOAT' data-type='float' data-ref="INTFLOAT">INTFLOAT</a> <dfn class="decl" id="LongTermPrediction::coef" title='LongTermPrediction::coef' data-ref="LongTermPrediction::coef">coef</dfn>;</td></tr>
+<tr><th id="168">168</th><td>    <a class="typedef" href="../../include/stdint.h.html#int8_t" title='int8_t' data-type='signed char' data-ref="int8_t">int8_t</a> <dfn class="decl" id="LongTermPrediction::used" title='LongTermPrediction::used' data-ref="LongTermPrediction::used">used</dfn>[<a class="macro" href="#51" title="40" data-ref="_M/MAX_LTP_LONG_SFB">MAX_LTP_LONG_SFB</a>];</td></tr>
+<tr><th id="169">169</th><td>} <dfn class="typedef" id="LongTermPrediction" title='LongTermPrediction' data-type='struct LongTermPrediction' data-ref="LongTermPrediction">LongTermPrediction</dfn>;</td></tr>
+<tr><th id="170">170</th><td></td></tr>
+<tr><th id="171">171</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="172">172</th><td><i class="doc"> * Individual Channel Stream</i></td></tr>
+<tr><th id="173">173</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="174">174</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="IndividualChannelStream" title='IndividualChannelStream' data-ref="IndividualChannelStream"><a class="type" href="#IndividualChannelStream" title='IndividualChannelStream' data-ref="IndividualChannelStream">IndividualChannelStream</a></dfn> {</td></tr>
+<tr><th id="175">175</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="IndividualChannelStream::max_sfb" title='IndividualChannelStream::max_sfb' data-ref="IndividualChannelStream::max_sfb">max_sfb</dfn>;            <i class="doc">///&lt; number of scalefactor bands per group</i></td></tr>
+<tr><th id="176">176</th><td>    <b>enum</b> <a class="type" href="#WindowSequence" title='WindowSequence' data-ref="WindowSequence">WindowSequence</a> <dfn class="decl" id="IndividualChannelStream::window_sequence" title='IndividualChannelStream::window_sequence' data-ref="IndividualChannelStream::window_sequence">window_sequence</dfn>[<var>2</var>];</td></tr>
+<tr><th id="177">177</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="IndividualChannelStream::use_kb_window" title='IndividualChannelStream::use_kb_window' data-ref="IndividualChannelStream::use_kb_window">use_kb_window</dfn>[<var>2</var>];   <i class="doc">///&lt; If set, use Kaiser-Bessel window, otherwise use a sine window.</i></td></tr>
+<tr><th id="178">178</th><td>    <em>int</em> <dfn class="decl" id="IndividualChannelStream::num_window_groups" title='IndividualChannelStream::num_window_groups' data-ref="IndividualChannelStream::num_window_groups">num_window_groups</dfn>;</td></tr>
+<tr><th id="179">179</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="IndividualChannelStream::group_len" title='IndividualChannelStream::group_len' data-ref="IndividualChannelStream::group_len">group_len</dfn>[<var>8</var>];</td></tr>
+<tr><th id="180">180</th><td>    <a class="typedef" href="#LongTermPrediction" title='LongTermPrediction' data-type='struct LongTermPrediction' data-ref="LongTermPrediction">LongTermPrediction</a> <dfn class="decl" id="IndividualChannelStream::ltp" title='IndividualChannelStream::ltp' data-ref="IndividualChannelStream::ltp">ltp</dfn>;</td></tr>
+<tr><th id="181">181</th><td>    <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> *<dfn class="decl" id="IndividualChannelStream::swb_offset" title='IndividualChannelStream::swb_offset' data-ref="IndividualChannelStream::swb_offset">swb_offset</dfn>; <i class="doc">///&lt; table of offsets to the lowest spectral coefficient of a scalefactor band, sfb, for a particular window</i></td></tr>
+<tr><th id="182">182</th><td>    <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="decl" id="IndividualChannelStream::swb_sizes" title='IndividualChannelStream::swb_sizes' data-ref="IndividualChannelStream::swb_sizes">swb_sizes</dfn>;   <i class="doc">///&lt; table of scalefactor band sizes for a particular window</i></td></tr>
+<tr><th id="183">183</th><td>    <em>int</em> <dfn class="decl" id="IndividualChannelStream::num_swb" title='IndividualChannelStream::num_swb' data-ref="IndividualChannelStream::num_swb">num_swb</dfn>;                <i class="doc">///&lt; number of scalefactor window bands</i></td></tr>
+<tr><th id="184">184</th><td>    <em>int</em> <dfn class="decl" id="IndividualChannelStream::num_windows" title='IndividualChannelStream::num_windows' data-ref="IndividualChannelStream::num_windows">num_windows</dfn>;</td></tr>
+<tr><th id="185">185</th><td>    <em>int</em> <dfn class="decl" id="IndividualChannelStream::tns_max_bands" title='IndividualChannelStream::tns_max_bands' data-ref="IndividualChannelStream::tns_max_bands">tns_max_bands</dfn>;</td></tr>
+<tr><th id="186">186</th><td>    <em>int</em> <dfn class="decl" id="IndividualChannelStream::predictor_present" title='IndividualChannelStream::predictor_present' data-ref="IndividualChannelStream::predictor_present">predictor_present</dfn>;</td></tr>
+<tr><th id="187">187</th><td>    <em>int</em> <dfn class="decl" id="IndividualChannelStream::predictor_initialized" title='IndividualChannelStream::predictor_initialized' data-ref="IndividualChannelStream::predictor_initialized">predictor_initialized</dfn>;</td></tr>
+<tr><th id="188">188</th><td>    <em>int</em> <dfn class="decl" id="IndividualChannelStream::predictor_reset_group" title='IndividualChannelStream::predictor_reset_group' data-ref="IndividualChannelStream::predictor_reset_group">predictor_reset_group</dfn>;</td></tr>
+<tr><th id="189">189</th><td>    <em>int</em> <dfn class="decl" id="IndividualChannelStream::predictor_reset_count" title='IndividualChannelStream::predictor_reset_count' data-ref="IndividualChannelStream::predictor_reset_count">predictor_reset_count</dfn>[<var>31</var>];  <i class="doc">///&lt; used by encoder to count prediction resets</i></td></tr>
+<tr><th id="190">190</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="IndividualChannelStream::prediction_used" title='IndividualChannelStream::prediction_used' data-ref="IndividualChannelStream::prediction_used">prediction_used</dfn>[<var>41</var>];</td></tr>
+<tr><th id="191">191</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="IndividualChannelStream::window_clipping" title='IndividualChannelStream::window_clipping' data-ref="IndividualChannelStream::window_clipping">window_clipping</dfn>[<var>8</var>]; <i class="doc">///&lt; set if a certain window is near clipping</i></td></tr>
+<tr><th id="192">192</th><td>    <em>float</em> <dfn class="decl" id="IndividualChannelStream::clip_avoidance_factor" title='IndividualChannelStream::clip_avoidance_factor' data-ref="IndividualChannelStream::clip_avoidance_factor">clip_avoidance_factor</dfn>; <i class="doc">///&lt; set if any window is near clipping to the necessary atennuation factor to avoid it</i></td></tr>
+<tr><th id="193">193</th><td>} <dfn class="typedef" id="IndividualChannelStream" title='IndividualChannelStream' data-type='struct IndividualChannelStream' data-ref="IndividualChannelStream">IndividualChannelStream</dfn>;</td></tr>
+<tr><th id="194">194</th><td></td></tr>
+<tr><th id="195">195</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="196">196</th><td><i class="doc"> * Temporal Noise Shaping</i></td></tr>
+<tr><th id="197">197</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="198">198</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="TemporalNoiseShaping" title='TemporalNoiseShaping' data-ref="TemporalNoiseShaping"><a class="type" href="#TemporalNoiseShaping" title='TemporalNoiseShaping' data-ref="TemporalNoiseShaping">TemporalNoiseShaping</a></dfn> {</td></tr>
+<tr><th id="199">199</th><td>    <em>int</em> <dfn class="decl" id="TemporalNoiseShaping::present" title='TemporalNoiseShaping::present' data-ref="TemporalNoiseShaping::present">present</dfn>;</td></tr>
+<tr><th id="200">200</th><td>    <em>int</em> <dfn class="decl" id="TemporalNoiseShaping::n_filt" title='TemporalNoiseShaping::n_filt' data-ref="TemporalNoiseShaping::n_filt">n_filt</dfn>[<var>8</var>];</td></tr>
+<tr><th id="201">201</th><td>    <em>int</em> <dfn class="decl" id="TemporalNoiseShaping::length" title='TemporalNoiseShaping::length' data-ref="TemporalNoiseShaping::length">length</dfn>[<var>8</var>][<var>4</var>];</td></tr>
+<tr><th id="202">202</th><td>    <em>int</em> <dfn class="decl" id="TemporalNoiseShaping::direction" title='TemporalNoiseShaping::direction' data-ref="TemporalNoiseShaping::direction">direction</dfn>[<var>8</var>][<var>4</var>];</td></tr>
+<tr><th id="203">203</th><td>    <em>int</em> <dfn class="decl" id="TemporalNoiseShaping::order" title='TemporalNoiseShaping::order' data-ref="TemporalNoiseShaping::order">order</dfn>[<var>8</var>][<var>4</var>];</td></tr>
+<tr><th id="204">204</th><td>    <em>int</em> <dfn class="decl" id="TemporalNoiseShaping::coef_idx" title='TemporalNoiseShaping::coef_idx' data-ref="TemporalNoiseShaping::coef_idx">coef_idx</dfn>[<var>8</var>][<var>4</var>][<a class="macro" href="#50" title="20" data-ref="_M/TNS_MAX_ORDER">TNS_MAX_ORDER</a>];</td></tr>
+<tr><th id="205">205</th><td>    <a class="typedef" href="aac_defines.h.html#INTFLOAT" title='INTFLOAT' data-type='float' data-ref="INTFLOAT">INTFLOAT</a> <dfn class="decl" id="TemporalNoiseShaping::coef" title='TemporalNoiseShaping::coef' data-ref="TemporalNoiseShaping::coef">coef</dfn>[<var>8</var>][<var>4</var>][<a class="macro" href="#50" title="20" data-ref="_M/TNS_MAX_ORDER">TNS_MAX_ORDER</a>];</td></tr>
+<tr><th id="206">206</th><td>} <dfn class="typedef" id="TemporalNoiseShaping" title='TemporalNoiseShaping' data-type='struct TemporalNoiseShaping' data-ref="TemporalNoiseShaping">TemporalNoiseShaping</dfn>;</td></tr>
+<tr><th id="207">207</th><td></td></tr>
+<tr><th id="208">208</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="209">209</th><td><i class="doc"> * Dynamic Range Control - decoded from the bitstream but not processed further.</i></td></tr>
+<tr><th id="210">210</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="211">211</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="DynamicRangeControl" title='DynamicRangeControl' data-ref="DynamicRangeControl"><a class="type" href="#DynamicRangeControl" title='DynamicRangeControl' data-ref="DynamicRangeControl">DynamicRangeControl</a></dfn> {</td></tr>
+<tr><th id="212">212</th><td>    <em>int</em> <dfn class="decl" id="DynamicRangeControl::pce_instance_tag" title='DynamicRangeControl::pce_instance_tag' data-ref="DynamicRangeControl::pce_instance_tag">pce_instance_tag</dfn>;                           <i class="doc">///&lt; Indicates with which program the DRC info is associated.</i></td></tr>
+<tr><th id="213">213</th><td>    <em>int</em> <dfn class="decl" id="DynamicRangeControl::dyn_rng_sgn" title='DynamicRangeControl::dyn_rng_sgn' data-ref="DynamicRangeControl::dyn_rng_sgn">dyn_rng_sgn</dfn>[<var>17</var>];                            <i class="doc">///&lt; DRC sign information; 0 - positive, 1 - negative</i></td></tr>
+<tr><th id="214">214</th><td>    <em>int</em> <dfn class="decl" id="DynamicRangeControl::dyn_rng_ctl" title='DynamicRangeControl::dyn_rng_ctl' data-ref="DynamicRangeControl::dyn_rng_ctl">dyn_rng_ctl</dfn>[<var>17</var>];                            <i class="doc">///&lt; DRC magnitude information</i></td></tr>
+<tr><th id="215">215</th><td>    <em>int</em> <dfn class="decl" id="DynamicRangeControl::exclude_mask" title='DynamicRangeControl::exclude_mask' data-ref="DynamicRangeControl::exclude_mask">exclude_mask</dfn>[<a class="macro" href="#47" title="64" data-ref="_M/MAX_CHANNELS">MAX_CHANNELS</a>];                 <i class="doc">///&lt; Channels to be excluded from DRC processing.</i></td></tr>
+<tr><th id="216">216</th><td>    <em>int</em> <dfn class="decl" id="DynamicRangeControl::band_incr" title='DynamicRangeControl::band_incr' data-ref="DynamicRangeControl::band_incr">band_incr</dfn>;                                  <i class="doc">///&lt; Number of DRC bands greater than 1 having DRC info.</i></td></tr>
+<tr><th id="217">217</th><td>    <em>int</em> <dfn class="decl" id="DynamicRangeControl::interpolation_scheme" title='DynamicRangeControl::interpolation_scheme' data-ref="DynamicRangeControl::interpolation_scheme">interpolation_scheme</dfn>;                       <i class="doc">///&lt; Indicates the interpolation scheme used in the SBR QMF domain.</i></td></tr>
+<tr><th id="218">218</th><td>    <em>int</em> <dfn class="decl" id="DynamicRangeControl::band_top" title='DynamicRangeControl::band_top' data-ref="DynamicRangeControl::band_top">band_top</dfn>[<var>17</var>];                               <i class="doc">///&lt; Indicates the top of the i-th DRC band in units of 4 spectral lines.</i></td></tr>
+<tr><th id="219">219</th><td>    <em>int</em> <dfn class="decl" id="DynamicRangeControl::prog_ref_level" title='DynamicRangeControl::prog_ref_level' data-ref="DynamicRangeControl::prog_ref_level">prog_ref_level</dfn>;                             <i class="doc">/**&lt; A reference level for the long-term program audio level for all</i></td></tr>
+<tr><th id="220">220</th><td><i class="doc">                                                     *   channels combined.</i></td></tr>
+<tr><th id="221">221</th><td><i class="doc">                                                     */</i></td></tr>
+<tr><th id="222">222</th><td>} <dfn class="typedef" id="DynamicRangeControl" title='DynamicRangeControl' data-type='struct DynamicRangeControl' data-ref="DynamicRangeControl">DynamicRangeControl</dfn>;</td></tr>
+<tr><th id="223">223</th><td></td></tr>
+<tr><th id="224">224</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="Pulse" title='Pulse' data-ref="Pulse"><a class="type" href="#Pulse" title='Pulse' data-ref="Pulse">Pulse</a></dfn> {</td></tr>
+<tr><th id="225">225</th><td>    <em>int</em> <dfn class="decl" id="Pulse::num_pulse" title='Pulse::num_pulse' data-ref="Pulse::num_pulse">num_pulse</dfn>;</td></tr>
+<tr><th id="226">226</th><td>    <em>int</em> <dfn class="decl" id="Pulse::start" title='Pulse::start' data-ref="Pulse::start">start</dfn>;</td></tr>
+<tr><th id="227">227</th><td>    <em>int</em> <dfn class="decl" id="Pulse::pos" title='Pulse::pos' data-ref="Pulse::pos">pos</dfn>[<var>4</var>];</td></tr>
+<tr><th id="228">228</th><td>    <em>int</em> <dfn class="decl" id="Pulse::amp" title='Pulse::amp' data-ref="Pulse::amp">amp</dfn>[<var>4</var>];</td></tr>
+<tr><th id="229">229</th><td>} <dfn class="typedef" id="Pulse" title='Pulse' data-type='struct Pulse' data-ref="Pulse">Pulse</dfn>;</td></tr>
+<tr><th id="230">230</th><td></td></tr>
+<tr><th id="231">231</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="232">232</th><td><i class="doc"> * coupling parameters</i></td></tr>
+<tr><th id="233">233</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="234">234</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="ChannelCoupling" title='ChannelCoupling' data-ref="ChannelCoupling"><a class="type" href="#ChannelCoupling" title='ChannelCoupling' data-ref="ChannelCoupling">ChannelCoupling</a></dfn> {</td></tr>
+<tr><th id="235">235</th><td>    <b>enum</b> <a class="type" href="#CouplingPoint" title='CouplingPoint' data-ref="CouplingPoint">CouplingPoint</a> <dfn class="decl" id="ChannelCoupling::coupling_point" title='ChannelCoupling::coupling_point' data-ref="ChannelCoupling::coupling_point">coupling_point</dfn>;  <i class="doc">///&lt; The point during decoding at which coupling is applied.</i></td></tr>
+<tr><th id="236">236</th><td>    <em>int</em> <dfn class="decl" id="ChannelCoupling::num_coupled" title='ChannelCoupling::num_coupled' data-ref="ChannelCoupling::num_coupled">num_coupled</dfn>;       <i class="doc">///&lt; number of target elements</i></td></tr>
+<tr><th id="237">237</th><td>    <b>enum</b> <a class="type" href="#RawDataBlockType" title='RawDataBlockType' data-ref="RawDataBlockType">RawDataBlockType</a> <dfn class="decl" id="ChannelCoupling::type" title='ChannelCoupling::type' data-ref="ChannelCoupling::type">type</dfn>[<var>8</var>];   <i class="doc">///&lt; Type of channel element to be coupled - SCE or CPE.</i></td></tr>
+<tr><th id="238">238</th><td>    <em>int</em> <dfn class="decl" id="ChannelCoupling::id_select" title='ChannelCoupling::id_select' data-ref="ChannelCoupling::id_select">id_select</dfn>[<var>8</var>];      <i class="doc">///&lt; element id</i></td></tr>
+<tr><th id="239">239</th><td>    <em>int</em> <dfn class="decl" id="ChannelCoupling::ch_select" title='ChannelCoupling::ch_select' data-ref="ChannelCoupling::ch_select">ch_select</dfn>[<var>8</var>];      <i class="doc">/**&lt; [0] shared list of gains; [1] list of gains for right channel;</i></td></tr>
+<tr><th id="240">240</th><td><i class="doc">                            *   [2] list of gains for left channel; [3] lists of gains for both channels</i></td></tr>
+<tr><th id="241">241</th><td><i class="doc">                            */</i></td></tr>
+<tr><th id="242">242</th><td>    <a class="typedef" href="aac_defines.h.html#INTFLOAT" title='INTFLOAT' data-type='float' data-ref="INTFLOAT">INTFLOAT</a> <dfn class="decl" id="ChannelCoupling::gain" title='ChannelCoupling::gain' data-ref="ChannelCoupling::gain">gain</dfn>[<var>16</var>][<var>120</var>];</td></tr>
+<tr><th id="243">243</th><td>} <dfn class="typedef" id="ChannelCoupling" title='ChannelCoupling' data-type='struct ChannelCoupling' data-ref="ChannelCoupling">ChannelCoupling</dfn>;</td></tr>
+<tr><th id="244">244</th><td></td></tr>
+<tr><th id="245">245</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="246">246</th><td><i class="doc"> * Single Channel Element - used for both SCE and LFE elements.</i></td></tr>
+<tr><th id="247">247</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="248">248</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="SingleChannelElement" title='SingleChannelElement' data-ref="SingleChannelElement"><a class="type" href="#SingleChannelElement" title='SingleChannelElement' data-ref="SingleChannelElement">SingleChannelElement</a></dfn> {</td></tr>
+<tr><th id="249">249</th><td>    <a class="typedef" href="#IndividualChannelStream" title='IndividualChannelStream' data-type='struct IndividualChannelStream' data-ref="IndividualChannelStream">IndividualChannelStream</a> <dfn class="decl" id="SingleChannelElement::ics" title='SingleChannelElement::ics' data-ref="SingleChannelElement::ics">ics</dfn>;</td></tr>
+<tr><th id="250">250</th><td>    <a class="typedef" href="#TemporalNoiseShaping" title='TemporalNoiseShaping' data-type='struct TemporalNoiseShaping' data-ref="TemporalNoiseShaping">TemporalNoiseShaping</a> <dfn class="decl" id="SingleChannelElement::tns" title='SingleChannelElement::tns' data-ref="SingleChannelElement::tns">tns</dfn>;</td></tr>
+<tr><th id="251">251</th><td>    <a class="typedef" href="#Pulse" title='Pulse' data-type='struct Pulse' data-ref="Pulse">Pulse</a> <dfn class="decl" id="SingleChannelElement::pulse" title='SingleChannelElement::pulse' data-ref="SingleChannelElement::pulse">pulse</dfn>;</td></tr>
+<tr><th id="252">252</th><td>    <b>enum</b> <a class="type" href="#BandType" title='BandType' data-ref="BandType">BandType</a> <dfn class="decl" id="SingleChannelElement::band_type" title='SingleChannelElement::band_type' data-ref="SingleChannelElement::band_type">band_type</dfn>[<var>128</var>];                   <i class="doc">///&lt; band types</i></td></tr>
+<tr><th id="253">253</th><td>    <b>enum</b> <a class="type" href="#BandType" title='BandType' data-ref="BandType">BandType</a> <dfn class="decl" id="SingleChannelElement::band_alt" title='SingleChannelElement::band_alt' data-ref="SingleChannelElement::band_alt">band_alt</dfn>[<var>128</var>];                    <i class="doc">///&lt; alternative band type (used by encoder)</i></td></tr>
+<tr><th id="254">254</th><td>    <em>int</em> <dfn class="decl" id="SingleChannelElement::band_type_run_end" title='SingleChannelElement::band_type_run_end' data-ref="SingleChannelElement::band_type_run_end">band_type_run_end</dfn>[<var>120</var>];                     <i class="doc">///&lt; band type run end points</i></td></tr>
+<tr><th id="255">255</th><td>    <a class="typedef" href="aac_defines.h.html#INTFLOAT" title='INTFLOAT' data-type='float' data-ref="INTFLOAT">INTFLOAT</a> <dfn class="decl" id="SingleChannelElement::sf" title='SingleChannelElement::sf' data-ref="SingleChannelElement::sf">sf</dfn>[<var>120</var>];                               <i class="doc">///&lt; scalefactors</i></td></tr>
+<tr><th id="256">256</th><td>    <em>int</em> <dfn class="decl" id="SingleChannelElement::sf_idx" title='SingleChannelElement::sf_idx' data-ref="SingleChannelElement::sf_idx">sf_idx</dfn>[<var>128</var>];                                <i class="doc">///&lt; scalefactor indices (used by encoder)</i></td></tr>
+<tr><th id="257">257</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="SingleChannelElement::zeroes" title='SingleChannelElement::zeroes' data-ref="SingleChannelElement::zeroes">zeroes</dfn>[<var>128</var>];                            <i class="doc">///&lt; band is not coded (used by encoder)</i></td></tr>
+<tr><th id="258">258</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="SingleChannelElement::can_pns" title='SingleChannelElement::can_pns' data-ref="SingleChannelElement::can_pns">can_pns</dfn>[<var>128</var>];                           <i class="doc">///&lt; band is allowed to PNS (informative)</i></td></tr>
+<tr><th id="259">259</th><td>    <em>float</em>  <dfn class="decl" id="SingleChannelElement::is_ener" title='SingleChannelElement::is_ener' data-ref="SingleChannelElement::is_ener">is_ener</dfn>[<var>128</var>];                            <i class="doc">///&lt; Intensity stereo pos (used by encoder)</i></td></tr>
+<tr><th id="260">260</th><td>    <em>float</em> <dfn class="decl" id="SingleChannelElement::pns_ener" title='SingleChannelElement::pns_ener' data-ref="SingleChannelElement::pns_ener">pns_ener</dfn>[<var>128</var>];                            <i class="doc">///&lt; Noise energy values (used by encoder)</i></td></tr>
+<tr><th id="261">261</th><td>    <a class="macro" href="../libavutil/mem.h.html#101" title="INTFLOAT __attribute__ ((aligned (32))) pcoeffs" data-ref="_M/DECLARE_ALIGNED">DECLARE_ALIGNED</a>(<var>32</var>, <a class="typedef" href="aac_defines.h.html#INTFLOAT" title='INTFLOAT' data-type='float' data-ref="INTFLOAT">INTFLOAT</a>, <dfn class="decl" id="SingleChannelElement::pcoeffs" title='SingleChannelElement::pcoeffs' data-ref="SingleChannelElement::pcoeffs">pcoeffs</dfn>)[<var>1024</var>];   <i class="doc">///&lt; coefficients for IMDCT, pristine</i></td></tr>
+<tr><th id="262">262</th><td>    <a class="macro" href="../libavutil/mem.h.html#101" title="INTFLOAT __attribute__ ((aligned (32))) coeffs" data-ref="_M/DECLARE_ALIGNED">DECLARE_ALIGNED</a>(<var>32</var>, <a class="typedef" href="aac_defines.h.html#INTFLOAT" title='INTFLOAT' data-type='float' data-ref="INTFLOAT">INTFLOAT</a>, <dfn class="decl" id="SingleChannelElement::coeffs" title='SingleChannelElement::coeffs' data-ref="SingleChannelElement::coeffs">coeffs</dfn>)[<var>1024</var>];    <i class="doc">///&lt; coefficients for IMDCT, maybe processed</i></td></tr>
+<tr><th id="263">263</th><td>    <a class="macro" href="../libavutil/mem.h.html#101" title="INTFLOAT __attribute__ ((aligned (32))) saved" data-ref="_M/DECLARE_ALIGNED">DECLARE_ALIGNED</a>(<var>32</var>, <a class="typedef" href="aac_defines.h.html#INTFLOAT" title='INTFLOAT' data-type='float' data-ref="INTFLOAT">INTFLOAT</a>, <dfn class="decl" id="SingleChannelElement::saved" title='SingleChannelElement::saved' data-ref="SingleChannelElement::saved">saved</dfn>)[<var>1536</var>];     <i class="doc">///&lt; overlap</i></td></tr>
+<tr><th id="264">264</th><td>    <a class="macro" href="../libavutil/mem.h.html#101" title="INTFLOAT __attribute__ ((aligned (32))) ret_buf" data-ref="_M/DECLARE_ALIGNED">DECLARE_ALIGNED</a>(<var>32</var>, <a class="typedef" href="aac_defines.h.html#INTFLOAT" title='INTFLOAT' data-type='float' data-ref="INTFLOAT">INTFLOAT</a>, <dfn class="decl" id="SingleChannelElement::ret_buf" title='SingleChannelElement::ret_buf' data-ref="SingleChannelElement::ret_buf">ret_buf</dfn>)[<var>2048</var>];   <i class="doc">///&lt; PCM output buffer</i></td></tr>
+<tr><th id="265">265</th><td>    <a class="macro" href="../libavutil/mem.h.html#101" title="INTFLOAT __attribute__ ((aligned (16))) ltp_state" data-ref="_M/DECLARE_ALIGNED">DECLARE_ALIGNED</a>(<var>16</var>, <a class="typedef" href="aac_defines.h.html#INTFLOAT" title='INTFLOAT' data-type='float' data-ref="INTFLOAT">INTFLOAT</a>, <dfn class="decl" id="SingleChannelElement::ltp_state" title='SingleChannelElement::ltp_state' data-ref="SingleChannelElement::ltp_state">ltp_state</dfn>)[<var>3072</var>]; <i class="doc">///&lt; time signal for LTP</i></td></tr>
+<tr><th id="266">266</th><td>    <a class="macro" href="../libavutil/mem.h.html#101" title="AAC_FLOAT __attribute__ ((aligned (32))) lcoeffs" data-ref="_M/DECLARE_ALIGNED">DECLARE_ALIGNED</a>(<var>32</var>, <a class="typedef" href="aac_defines.h.html#AAC_FLOAT" title='AAC_FLOAT' data-type='float' data-ref="AAC_FLOAT">AAC_FLOAT</a>, <dfn class="decl" id="SingleChannelElement::lcoeffs" title='SingleChannelElement::lcoeffs' data-ref="SingleChannelElement::lcoeffs">lcoeffs</dfn>)[<var>1024</var>];  <i class="doc">///&lt; MDCT of LTP coefficients (used by encoder)</i></td></tr>
+<tr><th id="267">267</th><td>    <a class="macro" href="../libavutil/mem.h.html#101" title="AAC_FLOAT __attribute__ ((aligned (32))) prcoeffs" data-ref="_M/DECLARE_ALIGNED">DECLARE_ALIGNED</a>(<var>32</var>, <a class="typedef" href="aac_defines.h.html#AAC_FLOAT" title='AAC_FLOAT' data-type='float' data-ref="AAC_FLOAT">AAC_FLOAT</a>, <dfn class="decl" id="SingleChannelElement::prcoeffs" title='SingleChannelElement::prcoeffs' data-ref="SingleChannelElement::prcoeffs">prcoeffs</dfn>)[<var>1024</var>]; <i class="doc">///&lt; Main prediction coefs (used by encoder)</i></td></tr>
+<tr><th id="268">268</th><td>    <a class="typedef" href="#PredictorState" title='PredictorState' data-type='struct PredictorState' data-ref="PredictorState">PredictorState</a> <dfn class="decl" id="SingleChannelElement::predictor_state" title='SingleChannelElement::predictor_state' data-ref="SingleChannelElement::predictor_state">predictor_state</dfn>[<a class="macro" href="#146" title="672" data-ref="_M/MAX_PREDICTORS">MAX_PREDICTORS</a>];</td></tr>
+<tr><th id="269">269</th><td>    <a class="typedef" href="aac_defines.h.html#INTFLOAT" title='INTFLOAT' data-type='float' data-ref="INTFLOAT">INTFLOAT</a> *<dfn class="decl" id="SingleChannelElement::ret" title='SingleChannelElement::ret' data-ref="SingleChannelElement::ret">ret</dfn>;                                  <i class="doc">///&lt; PCM output</i></td></tr>
+<tr><th id="270">270</th><td>} <dfn class="typedef" id="SingleChannelElement" title='SingleChannelElement' data-type='struct SingleChannelElement' data-ref="SingleChannelElement">SingleChannelElement</dfn>;</td></tr>
+<tr><th id="271">271</th><td></td></tr>
+<tr><th id="272">272</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="273">273</th><td><i class="doc"> * channel element - generic struct for SCE/CPE/CCE/LFE</i></td></tr>
+<tr><th id="274">274</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="275">275</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="ChannelElement" title='ChannelElement' data-ref="ChannelElement"><a class="type" href="#ChannelElement" title='ChannelElement' data-ref="ChannelElement">ChannelElement</a></dfn> {</td></tr>
+<tr><th id="276">276</th><td>    <em>int</em> <dfn class="decl" id="ChannelElement::present" title='ChannelElement::present' data-ref="ChannelElement::present">present</dfn>;</td></tr>
+<tr><th id="277">277</th><td>    <i>// CPE specific</i></td></tr>
+<tr><th id="278">278</th><td>    <em>int</em> <dfn class="decl" id="ChannelElement::common_window" title='ChannelElement::common_window' data-ref="ChannelElement::common_window">common_window</dfn>;        <i class="doc">///&lt; Set if channels share a common 'IndividualChannelStream' in bitstream.</i></td></tr>
+<tr><th id="279">279</th><td>    <em>int</em>     <dfn class="decl" id="ChannelElement::ms_mode" title='ChannelElement::ms_mode' data-ref="ChannelElement::ms_mode">ms_mode</dfn>;          <i class="doc">///&lt; Signals mid/side stereo flags coding mode (used by encoder)</i></td></tr>
+<tr><th id="280">280</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="ChannelElement::is_mode" title='ChannelElement::is_mode' data-ref="ChannelElement::is_mode">is_mode</dfn>;          <i class="doc">///&lt; Set if any bands have been encoded using intensity stereo (used by encoder)</i></td></tr>
+<tr><th id="281">281</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="ChannelElement::ms_mask" title='ChannelElement::ms_mask' data-ref="ChannelElement::ms_mask">ms_mask</dfn>[<var>128</var>];     <i class="doc">///&lt; Set if mid/side stereo is used for each scalefactor window band</i></td></tr>
+<tr><th id="282">282</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="ChannelElement::is_mask" title='ChannelElement::is_mask' data-ref="ChannelElement::is_mask">is_mask</dfn>[<var>128</var>];     <i class="doc">///&lt; Set if intensity stereo is used (used by encoder)</i></td></tr>
+<tr><th id="283">283</th><td>    <i>// shared</i></td></tr>
+<tr><th id="284">284</th><td>    <a class="typedef" href="#SingleChannelElement" title='SingleChannelElement' data-type='struct SingleChannelElement' data-ref="SingleChannelElement">SingleChannelElement</a> <dfn class="decl" id="ChannelElement::ch" title='ChannelElement::ch' data-ref="ChannelElement::ch">ch</dfn>[<var>2</var>];</td></tr>
+<tr><th id="285">285</th><td>    <i>// CCE specific</i></td></tr>
+<tr><th id="286">286</th><td>    <a class="typedef" href="#ChannelCoupling" title='ChannelCoupling' data-type='struct ChannelCoupling' data-ref="ChannelCoupling">ChannelCoupling</a> <dfn class="decl" id="ChannelElement::coup" title='ChannelElement::coup' data-ref="ChannelElement::coup">coup</dfn>;</td></tr>
+<tr><th id="287">287</th><td>    <a class="typedef" href="sbr.h.html#SpectralBandReplication" title='SpectralBandReplication' data-type='struct SpectralBandReplication' data-ref="SpectralBandReplication">SpectralBandReplication</a> <dfn class="decl" id="ChannelElement::sbr" title='ChannelElement::sbr' data-ref="ChannelElement::sbr">sbr</dfn>;</td></tr>
+<tr><th id="288">288</th><td>} <dfn class="typedef" id="ChannelElement" title='ChannelElement' data-type='struct ChannelElement' data-ref="ChannelElement">ChannelElement</dfn>;</td></tr>
+<tr><th id="289">289</th><td></td></tr>
+<tr><th id="290">290</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="291">291</th><td><i class="doc"> * main AAC context</i></td></tr>
+<tr><th id="292">292</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="293">293</th><td><b>struct</b> <dfn class="type def" id="AACContext" title='AACContext' data-ref="AACContext">AACContext</dfn> {</td></tr>
+<tr><th id="294">294</th><td>    <a class="typedef" href="../libavutil/log.h.html#AVClass" title='AVClass' data-type='struct AVClass' data-ref="AVClass">AVClass</a>        *<dfn class="decl" id="AACContext::class" title='AACContext::class' data-ref="AACContext::class">class</dfn>;</td></tr>
+<tr><th id="295">295</th><td>    <a class="typedef" href="avcodec.h.html#AVCodecContext" title='AVCodecContext' data-type='struct AVCodecContext' data-ref="AVCodecContext">AVCodecContext</a> *<dfn class="decl" id="AACContext::avctx" title='AACContext::avctx' data-ref="AACContext::avctx">avctx</dfn>;</td></tr>
+<tr><th id="296">296</th><td>    <a class="typedef" href="../libavutil/frame.h.html#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="decl" id="AACContext::frame" title='AACContext::frame' data-ref="AACContext::frame">frame</dfn>;</td></tr>
+<tr><th id="297">297</th><td></td></tr>
+<tr><th id="298">298</th><td>    <em>int</em> <dfn class="decl" id="AACContext::is_saved" title='AACContext::is_saved' data-ref="AACContext::is_saved">is_saved</dfn>;                 <i class="doc">///&lt; Set if elements have stored overlap from previous frame.</i></td></tr>
+<tr><th id="299">299</th><td>    <a class="typedef" href="#DynamicRangeControl" title='DynamicRangeControl' data-type='struct DynamicRangeControl' data-ref="DynamicRangeControl">DynamicRangeControl</a> <dfn class="decl" id="AACContext::che_drc" title='AACContext::che_drc' data-ref="AACContext::che_drc">che_drc</dfn>;</td></tr>
+<tr><th id="300">300</th><td></td></tr>
+<tr><th id="301">301</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="302">302</th><td><i class="doc">     * <span class="command">@name</span> <span class="verb">Channel element related data</span></i></td></tr>
+<tr><th id="303">303</th><td><i class="doc">     * @{</i></td></tr>
+<tr><th id="304">304</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="305">305</th><td>    <a class="typedef" href="#ChannelElement" title='ChannelElement' data-type='struct ChannelElement' data-ref="ChannelElement">ChannelElement</a>          *<dfn class="decl" id="AACContext::che" title='AACContext::che' data-ref="AACContext::che">che</dfn>[<var>4</var>][<a class="macro" href="#48" title="16" data-ref="_M/MAX_ELEM_ID">MAX_ELEM_ID</a>];</td></tr>
+<tr><th id="306">306</th><td>    <a class="typedef" href="#ChannelElement" title='ChannelElement' data-type='struct ChannelElement' data-ref="ChannelElement">ChannelElement</a>  *<dfn class="decl" id="AACContext::tag_che_map" title='AACContext::tag_che_map' data-ref="AACContext::tag_che_map">tag_che_map</dfn>[<var>4</var>][<a class="macro" href="#48" title="16" data-ref="_M/MAX_ELEM_ID">MAX_ELEM_ID</a>];</td></tr>
+<tr><th id="307">307</th><td>    <em>int</em> <dfn class="decl" id="AACContext::tags_mapped" title='AACContext::tags_mapped' data-ref="AACContext::tags_mapped">tags_mapped</dfn>;</td></tr>
+<tr><th id="308">308</th><td>    <em>int</em> <dfn class="decl" id="AACContext::warned_remapping_once" title='AACContext::warned_remapping_once' data-ref="AACContext::warned_remapping_once">warned_remapping_once</dfn>;</td></tr>
+<tr><th id="309">309</th><td>    <i class="doc">/** @} */</i></td></tr>
+<tr><th id="310">310</th><td></td></tr>
+<tr><th id="311">311</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="312">312</th><td><i class="doc">     * <span class="command">@name</span> <span class="verb">temporary aligned temporary buffers</span></i></td></tr>
+<tr><th id="313">313</th><td><i class="doc">     * (We do not want to have these on the stack.)</i></td></tr>
+<tr><th id="314">314</th><td><i class="doc">     * @{</i></td></tr>
+<tr><th id="315">315</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="316">316</th><td>    <a class="macro" href="../libavutil/mem.h.html#101" title="INTFLOAT __attribute__ ((aligned (32))) buf_mdct" data-ref="_M/DECLARE_ALIGNED">DECLARE_ALIGNED</a>(<var>32</var>, <a class="typedef" href="aac_defines.h.html#INTFLOAT" title='INTFLOAT' data-type='float' data-ref="INTFLOAT">INTFLOAT</a>, <dfn class="decl" id="AACContext::buf_mdct" title='AACContext::buf_mdct' data-ref="AACContext::buf_mdct">buf_mdct</dfn>)[<var>1024</var>];</td></tr>
+<tr><th id="317">317</th><td>    <i class="doc">/** @} */</i></td></tr>
+<tr><th id="318">318</th><td></td></tr>
+<tr><th id="319">319</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="320">320</th><td><i class="doc">     * <span class="command">@name</span> <span class="verb">Computed / set up during initialization</span></i></td></tr>
+<tr><th id="321">321</th><td><i class="doc">     * @{</i></td></tr>
+<tr><th id="322">322</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="323">323</th><td>    <a class="typedef" href="avfft.h.html#FFTContext" title='FFTContext' data-type='struct FFTContext' data-ref="FFTContext">FFTContext</a> <dfn class="decl" id="AACContext::mdct" title='AACContext::mdct' data-ref="AACContext::mdct">mdct</dfn>;</td></tr>
+<tr><th id="324">324</th><td>    <a class="typedef" href="avfft.h.html#FFTContext" title='FFTContext' data-type='struct FFTContext' data-ref="FFTContext">FFTContext</a> <dfn class="decl" id="AACContext::mdct_small" title='AACContext::mdct_small' data-ref="AACContext::mdct_small">mdct_small</dfn>;</td></tr>
+<tr><th id="325">325</th><td>    <a class="typedef" href="avfft.h.html#FFTContext" title='FFTContext' data-type='struct FFTContext' data-ref="FFTContext">FFTContext</a> <dfn class="decl" id="AACContext::mdct_ld" title='AACContext::mdct_ld' data-ref="AACContext::mdct_ld">mdct_ld</dfn>;</td></tr>
+<tr><th id="326">326</th><td>    <a class="typedef" href="avfft.h.html#FFTContext" title='FFTContext' data-type='struct FFTContext' data-ref="FFTContext">FFTContext</a> <dfn class="decl" id="AACContext::mdct_ltp" title='AACContext::mdct_ltp' data-ref="AACContext::mdct_ltp">mdct_ltp</dfn>;</td></tr>
+<tr><th id="327">327</th><td><u>#<span data-ppcond="327">if</span> <a class="macro" href="aac_defines.h.html#25" title="0" data-ref="_M/USE_FIXED">USE_FIXED</a></u></td></tr>
+<tr><th id="328">328</th><td>    AVFixedDSPContext *fdsp;</td></tr>
+<tr><th id="329">329</th><td><u>#<span data-ppcond="327">else</span></u></td></tr>
+<tr><th id="330">330</th><td>    <a class="typedef" href="imdct15.h.html#IMDCT15Context" title='IMDCT15Context' data-type='struct IMDCT15Context' data-ref="IMDCT15Context">IMDCT15Context</a> *<dfn class="decl" id="AACContext::mdct480" title='AACContext::mdct480' data-ref="AACContext::mdct480">mdct480</dfn>;</td></tr>
+<tr><th id="331">331</th><td>    <a class="typedef" href="../libavutil/float_dsp.h.html#AVFloatDSPContext" title='AVFloatDSPContext' data-type='struct AVFloatDSPContext' data-ref="AVFloatDSPContext">AVFloatDSPContext</a> *<dfn class="decl" id="AACContext::fdsp" title='AACContext::fdsp' data-ref="AACContext::fdsp">fdsp</dfn>;</td></tr>
+<tr><th id="332">332</th><td><u>#<span data-ppcond="327">endif</span> /* USE_FIXED */</u></td></tr>
+<tr><th id="333">333</th><td>    <em>int</em> <dfn class="decl" id="AACContext::random_state" title='AACContext::random_state' data-ref="AACContext::random_state">random_state</dfn>;</td></tr>
+<tr><th id="334">334</th><td>    <i class="doc">/** @} */</i></td></tr>
+<tr><th id="335">335</th><td></td></tr>
+<tr><th id="336">336</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="337">337</th><td><i class="doc">     * <span class="command">@name</span> <span class="verb">Members used for output</span></i></td></tr>
+<tr><th id="338">338</th><td><i class="doc">     * @{</i></td></tr>
+<tr><th id="339">339</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="340">340</th><td>    <a class="typedef" href="#SingleChannelElement" title='SingleChannelElement' data-type='struct SingleChannelElement' data-ref="SingleChannelElement">SingleChannelElement</a> *<dfn class="decl" id="AACContext::output_element" title='AACContext::output_element' data-ref="AACContext::output_element">output_element</dfn>[<a class="macro" href="#47" title="64" data-ref="_M/MAX_CHANNELS">MAX_CHANNELS</a>]; <i class="doc">///&lt; Points to each SingleChannelElement</i></td></tr>
+<tr><th id="341">341</th><td>    <i class="doc">/** @} */</i></td></tr>
+<tr><th id="342">342</th><td></td></tr>
+<tr><th id="343">343</th><td></td></tr>
+<tr><th id="344">344</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="345">345</th><td><i class="doc">     * <span class="command">@name</span> <span class="verb">Japanese DTV specific extension</span></i></td></tr>
+<tr><th id="346">346</th><td><i class="doc">     * @{</i></td></tr>
+<tr><th id="347">347</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="348">348</th><td>    <em>int</em> <dfn class="decl" id="AACContext::force_dmono_mode" title='AACContext::force_dmono_mode' data-ref="AACContext::force_dmono_mode">force_dmono_mode</dfn>;<i class="doc">///&lt; 0-&gt;not dmono, 1-&gt;use first channel, 2-&gt;use second channel</i></td></tr>
+<tr><th id="349">349</th><td>    <em>int</em> <dfn class="decl" id="AACContext::dmono_mode" title='AACContext::dmono_mode' data-ref="AACContext::dmono_mode">dmono_mode</dfn>;      <i class="doc">///&lt; 0-&gt;not dmono, 1-&gt;use first channel, 2-&gt;use second channel</i></td></tr>
+<tr><th id="350">350</th><td>    <i class="doc">/** @} */</i></td></tr>
+<tr><th id="351">351</th><td></td></tr>
+<tr><th id="352">352</th><td>    <a class="macro" href="../libavutil/mem.h.html#101" title="INTFLOAT __attribute__ ((aligned (32))) temp" data-ref="_M/DECLARE_ALIGNED">DECLARE_ALIGNED</a>(<var>32</var>, <a class="typedef" href="aac_defines.h.html#INTFLOAT" title='INTFLOAT' data-type='float' data-ref="INTFLOAT">INTFLOAT</a>, <dfn class="decl" id="AACContext::temp" title='AACContext::temp' data-ref="AACContext::temp">temp</dfn>)[<var>128</var>];</td></tr>
+<tr><th id="353">353</th><td></td></tr>
+<tr><th id="354">354</th><td>    <a class="typedef" href="#OutputConfiguration" title='OutputConfiguration' data-type='struct OutputConfiguration' data-ref="OutputConfiguration">OutputConfiguration</a> <dfn class="decl" id="AACContext::oc" title='AACContext::oc' data-ref="AACContext::oc">oc</dfn>[<var>2</var>];</td></tr>
+<tr><th id="355">355</th><td>    <em>int</em> <dfn class="decl" id="AACContext::warned_num_aac_frames" title='AACContext::warned_num_aac_frames' data-ref="AACContext::warned_num_aac_frames">warned_num_aac_frames</dfn>;</td></tr>
+<tr><th id="356">356</th><td></td></tr>
+<tr><th id="357">357</th><td>    <i>/* aacdec functions pointers */</i></td></tr>
+<tr><th id="358">358</th><td>    <em>void</em> (*<dfn class="decl" id="AACContext::imdct_and_windowing" title='AACContext::imdct_and_windowing' data-ref="AACContext::imdct_and_windowing">imdct_and_windowing</dfn>)(<a class="typedef" href="sbr.h.html#AACContext" title='AACContext' data-type='struct AACContext' data-ref="AACContext">AACContext</a> *<dfn class="local col3 decl" id="223ac" title='ac' data-type='AACContext *' data-ref="223ac">ac</dfn>, <a class="typedef" href="#SingleChannelElement" title='SingleChannelElement' data-type='struct SingleChannelElement' data-ref="SingleChannelElement">SingleChannelElement</a> *<dfn class="local col4 decl" id="224sce" title='sce' data-type='SingleChannelElement *' data-ref="224sce">sce</dfn>);</td></tr>
+<tr><th id="359">359</th><td>    <em>void</em> (*<dfn class="decl" id="AACContext::apply_ltp" title='AACContext::apply_ltp' data-ref="AACContext::apply_ltp">apply_ltp</dfn>)(<a class="typedef" href="sbr.h.html#AACContext" title='AACContext' data-type='struct AACContext' data-ref="AACContext">AACContext</a> *<dfn class="local col5 decl" id="225ac" title='ac' data-type='AACContext *' data-ref="225ac">ac</dfn>, <a class="typedef" href="#SingleChannelElement" title='SingleChannelElement' data-type='struct SingleChannelElement' data-ref="SingleChannelElement">SingleChannelElement</a> *<dfn class="local col6 decl" id="226sce" title='sce' data-type='SingleChannelElement *' data-ref="226sce">sce</dfn>);</td></tr>
+<tr><th id="360">360</th><td>    <em>void</em> (*<dfn class="decl" id="AACContext::apply_tns" title='AACContext::apply_tns' data-ref="AACContext::apply_tns">apply_tns</dfn>)(<a class="typedef" href="aac_defines.h.html#INTFLOAT" title='INTFLOAT' data-type='float' data-ref="INTFLOAT">INTFLOAT</a> <dfn class="local col7 decl" id="227coef" title='coef' data-type='INTFLOAT *' data-ref="227coef">coef</dfn>[<var>1024</var>], <a class="typedef" href="#TemporalNoiseShaping" title='TemporalNoiseShaping' data-type='struct TemporalNoiseShaping' data-ref="TemporalNoiseShaping">TemporalNoiseShaping</a> *<dfn class="local col8 decl" id="228tns" title='tns' data-type='TemporalNoiseShaping *' data-ref="228tns">tns</dfn>,</td></tr>
+<tr><th id="361">361</th><td>                      <a class="typedef" href="#IndividualChannelStream" title='IndividualChannelStream' data-type='struct IndividualChannelStream' data-ref="IndividualChannelStream">IndividualChannelStream</a> *<dfn class="local col9 decl" id="229ics" title='ics' data-type='IndividualChannelStream *' data-ref="229ics">ics</dfn>, <em>int</em> <dfn class="local col0 decl" id="230decode" title='decode' data-type='int' data-ref="230decode">decode</dfn>);</td></tr>
+<tr><th id="362">362</th><td>    <em>void</em> (*<dfn class="decl" id="AACContext::windowing_and_mdct_ltp" title='AACContext::windowing_and_mdct_ltp' data-ref="AACContext::windowing_and_mdct_ltp">windowing_and_mdct_ltp</dfn>)(<a class="typedef" href="sbr.h.html#AACContext" title='AACContext' data-type='struct AACContext' data-ref="AACContext">AACContext</a> *<dfn class="local col1 decl" id="231ac" title='ac' data-type='AACContext *' data-ref="231ac">ac</dfn>, <a class="typedef" href="aac_defines.h.html#INTFLOAT" title='INTFLOAT' data-type='float' data-ref="INTFLOAT">INTFLOAT</a> *<dfn class="local col2 decl" id="232out" title='out' data-type='INTFLOAT *' data-ref="232out">out</dfn>,</td></tr>
+<tr><th id="363">363</th><td>                                   <a class="typedef" href="aac_defines.h.html#INTFLOAT" title='INTFLOAT' data-type='float' data-ref="INTFLOAT">INTFLOAT</a> *<dfn class="local col3 decl" id="233in" title='in' data-type='INTFLOAT *' data-ref="233in">in</dfn>, <a class="typedef" href="#IndividualChannelStream" title='IndividualChannelStream' data-type='struct IndividualChannelStream' data-ref="IndividualChannelStream">IndividualChannelStream</a> *<dfn class="local col4 decl" id="234ics" title='ics' data-type='IndividualChannelStream *' data-ref="234ics">ics</dfn>);</td></tr>
+<tr><th id="364">364</th><td>    <em>void</em> (*<dfn class="decl" id="AACContext::update_ltp" title='AACContext::update_ltp' data-ref="AACContext::update_ltp">update_ltp</dfn>)(<a class="typedef" href="sbr.h.html#AACContext" title='AACContext' data-type='struct AACContext' data-ref="AACContext">AACContext</a> *<dfn class="local col5 decl" id="235ac" title='ac' data-type='AACContext *' data-ref="235ac">ac</dfn>, <a class="typedef" href="#SingleChannelElement" title='SingleChannelElement' data-type='struct SingleChannelElement' data-ref="SingleChannelElement">SingleChannelElement</a> *<dfn class="local col6 decl" id="236sce" title='sce' data-type='SingleChannelElement *' data-ref="236sce">sce</dfn>);</td></tr>
+<tr><th id="365">365</th><td>    <em>void</em> (*<dfn class="decl" id="AACContext::vector_pow43" title='AACContext::vector_pow43' data-ref="AACContext::vector_pow43">vector_pow43</dfn>)(<em>int</em> *<dfn class="local col7 decl" id="237coefs" title='coefs' data-type='int *' data-ref="237coefs">coefs</dfn>, <em>int</em> <dfn class="local col8 decl" id="238len" title='len' data-type='int' data-ref="238len">len</dfn>);</td></tr>
+<tr><th id="366">366</th><td>    <em>void</em> (*<dfn class="decl" id="AACContext::subband_scale" title='AACContext::subband_scale' data-ref="AACContext::subband_scale">subband_scale</dfn>)(<em>int</em> *<dfn class="local col9 decl" id="239dst" title='dst' data-type='int *' data-ref="239dst">dst</dfn>, <em>int</em> *<dfn class="local col0 decl" id="240src" title='src' data-type='int *' data-ref="240src">src</dfn>, <em>int</em> <dfn class="local col1 decl" id="241scale" title='scale' data-type='int' data-ref="241scale">scale</dfn>, <em>int</em> <dfn class="local col2 decl" id="242offset" title='offset' data-type='int' data-ref="242offset">offset</dfn>, <em>int</em> <dfn class="local col3 decl" id="243len" title='len' data-type='int' data-ref="243len">len</dfn>);</td></tr>
+<tr><th id="367">367</th><td></td></tr>
+<tr><th id="368">368</th><td>};</td></tr>
+<tr><th id="369">369</th><td></td></tr>
+<tr><th id="370">370</th><td><em>void</em> <dfn class="decl" id="ff_aacdec_init_mips" title='ff_aacdec_init_mips' data-ref="ff_aacdec_init_mips">ff_aacdec_init_mips</dfn>(<a class="typedef" href="sbr.h.html#AACContext" title='AACContext' data-type='struct AACContext' data-ref="AACContext">AACContext</a> *<dfn class="local col4 decl" id="244c" title='c' data-type='AACContext *' data-ref="244c">c</dfn>);</td></tr>
+<tr><th id="371">371</th><td></td></tr>
+<tr><th id="372">372</th><td><u>#<span data-ppcond="30">endif</span> /* AVCODEC_AAC_H */</u></td></tr>
+<tr><th id="373">373</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated while processing <a href='aaccoder.c.html'>ffmpeg/libavcodec/aaccoder.c</a><br/>Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

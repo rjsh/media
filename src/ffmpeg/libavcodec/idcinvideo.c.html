@@ -1,0 +1,271 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>idcinvideo.c source code [ffmpeg/libavcodec/idcinvideo.c] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="IdcinContext,hnode "/>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavcodec/idcinvideo.c'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavcodec</a>/<a href='idcinvideo.c.html'>idcinvideo.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * id Quake II CIN Video Decoder</i></td></tr>
+<tr><th id="3">3</th><td><i> * Copyright (C) 2003 The FFmpeg project</i></td></tr>
+<tr><th id="4">4</th><td><i> *</i></td></tr>
+<tr><th id="5">5</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="8">8</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="9">9</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="10">10</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="11">11</th><td><i> *</i></td></tr>
+<tr><th id="12">12</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="13">13</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="14">14</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="15">15</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="16">16</th><td><i> *</i></td></tr>
+<tr><th id="17">17</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="18">18</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="19">19</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="20">20</th><td><i> */</i></td></tr>
+<tr><th id="21">21</th><td></td></tr>
+<tr><th id="22">22</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="23">23</th><td><i class="doc"> *<span class="command"> @file</span></i></td></tr>
+<tr><th id="24">24</th><td><i class="doc"> * id Quake II Cin Video Decoder by Dr. Tim Ferguson</i></td></tr>
+<tr><th id="25">25</th><td><i class="doc"> * For more information about the id CIN format, visit:</i></td></tr>
+<tr><th id="26">26</th><td><i class="doc"> *   <a href="http://www.csse.monash.edu.au/~timf/">http://www.csse.monash.edu.au/~timf/</a></i></td></tr>
+<tr><th id="27">27</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="28">28</th><td><i class="doc"> * This video decoder outputs PAL8 colorspace data. Interacting with this</i></td></tr>
+<tr><th id="29">29</th><td><i class="doc"> * decoder is a little involved. During initialization, the demuxer must</i></td></tr>
+<tr><th id="30">30</th><td><i class="doc"> * transmit the 65536-byte Huffman table(s) to the decoder via extradata.</i></td></tr>
+<tr><th id="31">31</th><td><i class="doc"> * Then, whenever a palette change is encountered while demuxing the file,</i></td></tr>
+<tr><th id="32">32</th><td><i class="doc"> * the demuxer must use the same extradata space to transmit an</i></td></tr>
+<tr><th id="33">33</th><td><i class="doc"> * AVPaletteControl structure.</i></td></tr>
+<tr><th id="34">34</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="35">35</th><td><i class="doc"> * id CIN video is purely Huffman-coded, intraframe-only codec. It achieves</i></td></tr>
+<tr><th id="36">36</th><td><i class="doc"> * a little more compression by exploiting the fact that adjacent pixels</i></td></tr>
+<tr><th id="37">37</th><td><i class="doc"> * tend to be similar.</i></td></tr>
+<tr><th id="38">38</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="39">39</th><td><i class="doc"> * Note that this decoder could use libavcodec's optimized VLC facilities</i></td></tr>
+<tr><th id="40">40</th><td><i class="doc"> * rather than naive, tree-based Huffman decoding. However, there are 256</i></td></tr>
+<tr><th id="41">41</th><td><i class="doc"> * Huffman tables. Plus, the VLC bit coding order is right -&gt; left instead</i></td></tr>
+<tr><th id="42">42</th><td><i class="doc"> * or left -&gt; right, so all of the bits would have to be reversed. Further,</i></td></tr>
+<tr><th id="43">43</th><td><i class="doc"> * the original Quake II implementation likely used a similar naive</i></td></tr>
+<tr><th id="44">44</th><td><i class="doc"> * decoding algorithm and it worked fine on much lower spec machines.</i></td></tr>
+<tr><th id="45">45</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="46">46</th><td></td></tr>
+<tr><th id="47">47</th><td><u>#include <a href="../../include/stdio.h.html">&lt;stdio.h&gt;</a></u></td></tr>
+<tr><th id="48">48</th><td><u>#include <a href="../../include/stdlib.h.html">&lt;stdlib.h&gt;</a></u></td></tr>
+<tr><th id="49">49</th><td><u>#include <a href="../../include/string.h.html">&lt;string.h&gt;</a></u></td></tr>
+<tr><th id="50">50</th><td></td></tr>
+<tr><th id="51">51</th><td><u>#include <a href="avcodec.h.html">"avcodec.h"</a></u></td></tr>
+<tr><th id="52">52</th><td><u>#include <a href="internal.h.html">"internal.h"</a></u></td></tr>
+<tr><th id="53">53</th><td><u>#include <a href="../libavutil/internal.h.html">"libavutil/internal.h"</a></u></td></tr>
+<tr><th id="54">54</th><td></td></tr>
+<tr><th id="55">55</th><td><u>#define <dfn class="macro" id="_M/HUFFMAN_TABLE_SIZE" data-ref="_M/HUFFMAN_TABLE_SIZE">HUFFMAN_TABLE_SIZE</dfn> 64 * 1024</u></td></tr>
+<tr><th id="56">56</th><td><u>#define <dfn class="macro" id="_M/HUF_TOKENS" data-ref="_M/HUF_TOKENS">HUF_TOKENS</dfn> 256</u></td></tr>
+<tr><th id="57">57</th><td><u>#define <dfn class="macro" id="_M/PALETTE_COUNT" data-ref="_M/PALETTE_COUNT">PALETTE_COUNT</dfn> 256</u></td></tr>
+<tr><th id="58">58</th><td></td></tr>
+<tr><th id="59">59</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="hnode" title='hnode' data-ref="hnode"><a class="type" href="#hnode" title='hnode' data-ref="hnode">hnode</a></dfn> {</td></tr>
+<tr><th id="60">60</th><td>  <em>int</em> <dfn class="tu decl" id="hnode::count" title='hnode::count' data-type='int' data-ref="hnode::count">count</dfn>;</td></tr>
+<tr><th id="61">61</th><td>  <em>unsigned</em> <em>char</em> <dfn class="tu decl" id="hnode::used" title='hnode::used' data-type='unsigned char' data-ref="hnode::used">used</dfn>;</td></tr>
+<tr><th id="62">62</th><td>  <em>int</em> <dfn class="tu decl" id="hnode::children" title='hnode::children' data-type='int [2]' data-ref="hnode::children">children</dfn>[<var>2</var>];</td></tr>
+<tr><th id="63">63</th><td>} <dfn class="typedef" id="hnode" title='hnode' data-type='struct hnode' data-ref="hnode">hnode</dfn>;</td></tr>
+<tr><th id="64">64</th><td></td></tr>
+<tr><th id="65">65</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="IdcinContext" title='IdcinContext' data-ref="IdcinContext"><a class="type" href="#IdcinContext" title='IdcinContext' data-ref="IdcinContext">IdcinContext</a></dfn> {</td></tr>
+<tr><th id="66">66</th><td></td></tr>
+<tr><th id="67">67</th><td>    <a class="typedef" href="avcodec.h.html#AVCodecContext" title='AVCodecContext' data-type='struct AVCodecContext' data-ref="AVCodecContext">AVCodecContext</a> *<dfn class="tu decl" id="IdcinContext::avctx" title='IdcinContext::avctx' data-type='AVCodecContext *' data-ref="IdcinContext::avctx">avctx</dfn>;</td></tr>
+<tr><th id="68">68</th><td></td></tr>
+<tr><th id="69">69</th><td>    <em>const</em> <em>unsigned</em> <em>char</em> *<dfn class="tu decl" id="IdcinContext::buf" title='IdcinContext::buf' data-type='const unsigned char *' data-ref="IdcinContext::buf">buf</dfn>;</td></tr>
+<tr><th id="70">70</th><td>    <em>int</em> <dfn class="tu decl" id="IdcinContext::size" title='IdcinContext::size' data-type='int' data-ref="IdcinContext::size">size</dfn>;</td></tr>
+<tr><th id="71">71</th><td></td></tr>
+<tr><th id="72">72</th><td>    <a class="typedef" href="#hnode" title='hnode' data-type='struct hnode' data-ref="hnode">hnode</a> <dfn class="tu decl" id="IdcinContext::huff_nodes" title='IdcinContext::huff_nodes' data-type='hnode [256][512]' data-ref="IdcinContext::huff_nodes">huff_nodes</dfn>[<var>256</var>][<a class="macro" href="#56" title="256" data-ref="_M/HUF_TOKENS">HUF_TOKENS</a>*<var>2</var>];</td></tr>
+<tr><th id="73">73</th><td>    <em>int</em> <dfn class="tu decl" id="IdcinContext::num_huff_nodes" title='IdcinContext::num_huff_nodes' data-type='int [256]' data-ref="IdcinContext::num_huff_nodes">num_huff_nodes</dfn>[<var>256</var>];</td></tr>
+<tr><th id="74">74</th><td></td></tr>
+<tr><th id="75">75</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a> <dfn class="tu decl" id="IdcinContext::pal" title='IdcinContext::pal' data-type='uint32_t [256]' data-ref="IdcinContext::pal">pal</dfn>[<var>256</var>];</td></tr>
+<tr><th id="76">76</th><td>} <dfn class="typedef" id="IdcinContext" title='IdcinContext' data-type='struct IdcinContext' data-ref="IdcinContext">IdcinContext</dfn>;</td></tr>
+<tr><th id="77">77</th><td></td></tr>
+<tr><th id="78">78</th><td><i class="doc" data-doc="huff_smallest_node">/**</i></td></tr>
+<tr><th id="79">79</th><td><i class="doc" data-doc="huff_smallest_node"> * Find the lowest probability node in a Huffman table, and mark it as</i></td></tr>
+<tr><th id="80">80</th><td><i class="doc" data-doc="huff_smallest_node"> * being assigned to a higher probability.</i></td></tr>
+<tr><th id="81">81</th><td><i class="doc" data-doc="huff_smallest_node"> * <span class="command">@return</span> the node index of the lowest unused node, or -1 if all nodes</i></td></tr>
+<tr><th id="82">82</th><td><i class="doc" data-doc="huff_smallest_node"> * are used.</i></td></tr>
+<tr><th id="83">83</th><td><i class="doc" data-doc="huff_smallest_node"> */</i></td></tr>
+<tr><th id="84">84</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="huff_smallest_node" title='huff_smallest_node' data-type='int huff_smallest_node(hnode * hnodes, int num_hnodes)' data-ref="huff_smallest_node">huff_smallest_node</dfn>(<a class="typedef" href="#hnode" title='hnode' data-type='struct hnode' data-ref="hnode">hnode</a> *<dfn class="local col1 decl" id="1hnodes" title='hnodes' data-type='hnode *' data-ref="1hnodes">hnodes</dfn>, <em>int</em> <dfn class="local col2 decl" id="2num_hnodes" title='num_hnodes' data-type='int' data-ref="2num_hnodes">num_hnodes</dfn>) {</td></tr>
+<tr><th id="85">85</th><td>    <em>int</em> <dfn class="local col3 decl" id="3i" title='i' data-type='int' data-ref="3i">i</dfn>;</td></tr>
+<tr><th id="86">86</th><td>    <em>int</em> <dfn class="local col4 decl" id="4best" title='best' data-type='int' data-ref="4best">best</dfn>, <dfn class="local col5 decl" id="5best_node" title='best_node' data-type='int' data-ref="5best_node">best_node</dfn>;</td></tr>
+<tr><th id="87">87</th><td></td></tr>
+<tr><th id="88">88</th><td>    <a class="local col4 ref" href="#4best" title='best' data-ref="4best">best</a> = <var>99999999</var>;</td></tr>
+<tr><th id="89">89</th><td>    <a class="local col5 ref" href="#5best_node" title='best_node' data-ref="5best_node">best_node</a> = -<var>1</var>;</td></tr>
+<tr><th id="90">90</th><td>    <b>for</b>(<a class="local col3 ref" href="#3i" title='i' data-ref="3i">i</a> = <var>0</var>; <a class="local col3 ref" href="#3i" title='i' data-ref="3i">i</a> &lt; <a class="local col2 ref" href="#2num_hnodes" title='num_hnodes' data-ref="2num_hnodes">num_hnodes</a>; <a class="local col3 ref" href="#3i" title='i' data-ref="3i">i</a>++) {</td></tr>
+<tr><th id="91">91</th><td>        <b>if</b>(<a class="local col1 ref" href="#1hnodes" title='hnodes' data-ref="1hnodes">hnodes</a>[<a class="local col3 ref" href="#3i" title='i' data-ref="3i">i</a>].<a class="tu ref" href="#hnode::used" title='hnode::used' data-use='r' data-ref="hnode::used">used</a>)</td></tr>
+<tr><th id="92">92</th><td>            <b>continue</b>;</td></tr>
+<tr><th id="93">93</th><td>        <b>if</b>(!<a class="local col1 ref" href="#1hnodes" title='hnodes' data-ref="1hnodes">hnodes</a>[<a class="local col3 ref" href="#3i" title='i' data-ref="3i">i</a>].<a class="tu ref" href="#hnode::count" title='hnode::count' data-use='r' data-ref="hnode::count">count</a>)</td></tr>
+<tr><th id="94">94</th><td>            <b>continue</b>;</td></tr>
+<tr><th id="95">95</th><td>        <b>if</b>(<a class="local col1 ref" href="#1hnodes" title='hnodes' data-ref="1hnodes">hnodes</a>[<a class="local col3 ref" href="#3i" title='i' data-ref="3i">i</a>].<a class="tu ref" href="#hnode::count" title='hnode::count' data-use='r' data-ref="hnode::count">count</a> &lt; <a class="local col4 ref" href="#4best" title='best' data-ref="4best">best</a>) {</td></tr>
+<tr><th id="96">96</th><td>            <a class="local col4 ref" href="#4best" title='best' data-ref="4best">best</a> = <a class="local col1 ref" href="#1hnodes" title='hnodes' data-ref="1hnodes">hnodes</a>[<a class="local col3 ref" href="#3i" title='i' data-ref="3i">i</a>].<a class="tu ref" href="#hnode::count" title='hnode::count' data-use='r' data-ref="hnode::count">count</a>;</td></tr>
+<tr><th id="97">97</th><td>            <a class="local col5 ref" href="#5best_node" title='best_node' data-ref="5best_node">best_node</a> = <a class="local col3 ref" href="#3i" title='i' data-ref="3i">i</a>;</td></tr>
+<tr><th id="98">98</th><td>        }</td></tr>
+<tr><th id="99">99</th><td>    }</td></tr>
+<tr><th id="100">100</th><td></td></tr>
+<tr><th id="101">101</th><td>    <b>if</b>(<a class="local col5 ref" href="#5best_node" title='best_node' data-ref="5best_node">best_node</a> == -<var>1</var>)</td></tr>
+<tr><th id="102">102</th><td>        <b>return</b> -<var>1</var>;</td></tr>
+<tr><th id="103">103</th><td>    <a class="local col1 ref" href="#1hnodes" title='hnodes' data-ref="1hnodes">hnodes</a>[<a class="local col5 ref" href="#5best_node" title='best_node' data-ref="5best_node">best_node</a>].<a class="tu ref" href="#hnode::used" title='hnode::used' data-use='w' data-ref="hnode::used">used</a> = <var>1</var>;</td></tr>
+<tr><th id="104">104</th><td>    <b>return</b> <a class="local col5 ref" href="#5best_node" title='best_node' data-ref="5best_node">best_node</a>;</td></tr>
+<tr><th id="105">105</th><td>}</td></tr>
+<tr><th id="106">106</th><td></td></tr>
+<tr><th id="107">107</th><td><i  data-doc="huff_build_tree">/*</i></td></tr>
+<tr><th id="108">108</th><td><i  data-doc="huff_build_tree"> * Build the Huffman tree using the generated/loaded probabilities histogram.</i></td></tr>
+<tr><th id="109">109</th><td><i  data-doc="huff_build_tree"> *</i></td></tr>
+<tr><th id="110">110</th><td><i  data-doc="huff_build_tree"> * On completion:</i></td></tr>
+<tr><th id="111">111</th><td><i  data-doc="huff_build_tree"> *  huff_nodes[prev][i &lt; HUF_TOKENS] - are the nodes at the base of the tree.</i></td></tr>
+<tr><th id="112">112</th><td><i  data-doc="huff_build_tree"> *  huff_nodes[prev][i &gt;= HUF_TOKENS] - are used to construct the tree.</i></td></tr>
+<tr><th id="113">113</th><td><i  data-doc="huff_build_tree"> *  num_huff_nodes[prev] - contains the index to the root node of the tree.</i></td></tr>
+<tr><th id="114">114</th><td><i  data-doc="huff_build_tree"> *    That is: huff_nodes[prev][num_huff_nodes[prev]] is the root node.</i></td></tr>
+<tr><th id="115">115</th><td><i  data-doc="huff_build_tree"> */</i></td></tr>
+<tr><th id="116">116</th><td><em>static</em> <a class="macro" href="../libavutil/attributes.h.html#84" title="" data-ref="_M/av_cold">av_cold</a> <em>void</em> <dfn class="tu decl def" id="huff_build_tree" title='huff_build_tree' data-type='void huff_build_tree(IdcinContext * s, int prev)' data-ref="huff_build_tree">huff_build_tree</dfn>(<a class="typedef" href="#IdcinContext" title='IdcinContext' data-type='struct IdcinContext' data-ref="IdcinContext">IdcinContext</a> *<dfn class="local col6 decl" id="6s" title='s' data-type='IdcinContext *' data-ref="6s">s</dfn>, <em>int</em> <dfn class="local col7 decl" id="7prev" title='prev' data-type='int' data-ref="7prev">prev</dfn>) {</td></tr>
+<tr><th id="117">117</th><td>    <a class="typedef" href="#hnode" title='hnode' data-type='struct hnode' data-ref="hnode">hnode</a> *<dfn class="local col8 decl" id="8node" title='node' data-type='hnode *' data-ref="8node">node</dfn>, *<dfn class="local col9 decl" id="9hnodes" title='hnodes' data-type='hnode *' data-ref="9hnodes">hnodes</dfn>;</td></tr>
+<tr><th id="118">118</th><td>     <em>int</em> <dfn class="local col0 decl" id="10num_hnodes" title='num_hnodes' data-type='int' data-ref="10num_hnodes">num_hnodes</dfn>, <dfn class="local col1 decl" id="11i" title='i' data-type='int' data-ref="11i">i</dfn>;</td></tr>
+<tr><th id="119">119</th><td></td></tr>
+<tr><th id="120">120</th><td>    <a class="local col0 ref" href="#10num_hnodes" title='num_hnodes' data-ref="10num_hnodes">num_hnodes</a> = <a class="macro" href="#56" title="256" data-ref="_M/HUF_TOKENS">HUF_TOKENS</a>;</td></tr>
+<tr><th id="121">121</th><td>    <a class="local col9 ref" href="#9hnodes" title='hnodes' data-ref="9hnodes">hnodes</a> = <a class="local col6 ref" href="#6s" title='s' data-ref="6s">s</a>-&gt;<a class="tu ref" href="#IdcinContext::huff_nodes" title='IdcinContext::huff_nodes' data-use='r' data-ref="IdcinContext::huff_nodes">huff_nodes</a>[<a class="local col7 ref" href="#7prev" title='prev' data-ref="7prev">prev</a>];</td></tr>
+<tr><th id="122">122</th><td>    <b>for</b>(<a class="local col1 ref" href="#11i" title='i' data-ref="11i">i</a> = <var>0</var>; <a class="local col1 ref" href="#11i" title='i' data-ref="11i">i</a> &lt; <a class="macro" href="#56" title="256" data-ref="_M/HUF_TOKENS">HUF_TOKENS</a> * <var>2</var>; <a class="local col1 ref" href="#11i" title='i' data-ref="11i">i</a>++)</td></tr>
+<tr><th id="123">123</th><td>        <a class="local col9 ref" href="#9hnodes" title='hnodes' data-ref="9hnodes">hnodes</a>[<a class="local col1 ref" href="#11i" title='i' data-ref="11i">i</a>].<a class="tu ref" href="#hnode::used" title='hnode::used' data-use='w' data-ref="hnode::used">used</a> = <var>0</var>;</td></tr>
+<tr><th id="124">124</th><td></td></tr>
+<tr><th id="125">125</th><td>    <b>while</b> (<var>1</var>) {</td></tr>
+<tr><th id="126">126</th><td>        <a class="local col8 ref" href="#8node" title='node' data-ref="8node">node</a> = &amp;<a class="local col9 ref" href="#9hnodes" title='hnodes' data-ref="9hnodes">hnodes</a>[<a class="local col0 ref" href="#10num_hnodes" title='num_hnodes' data-ref="10num_hnodes">num_hnodes</a>];             <i>/* next free node */</i></td></tr>
+<tr><th id="127">127</th><td></td></tr>
+<tr><th id="128">128</th><td>        <i>/* pick two lowest counts */</i></td></tr>
+<tr><th id="129">129</th><td>        <a class="local col8 ref" href="#8node" title='node' data-ref="8node">node</a>-&gt;<a class="tu ref" href="#hnode::children" title='hnode::children' data-use='w' data-ref="hnode::children">children</a>[<var>0</var>] = <a class="tu ref" href="#huff_smallest_node" title='huff_smallest_node' data-use='c' data-ref="huff_smallest_node">huff_smallest_node</a>(<a class="local col9 ref" href="#9hnodes" title='hnodes' data-ref="9hnodes">hnodes</a>, <a class="local col0 ref" href="#10num_hnodes" title='num_hnodes' data-ref="10num_hnodes">num_hnodes</a>);</td></tr>
+<tr><th id="130">130</th><td>        <b>if</b>(<a class="local col8 ref" href="#8node" title='node' data-ref="8node">node</a>-&gt;<a class="tu ref" href="#hnode::children" title='hnode::children' data-use='r' data-ref="hnode::children">children</a>[<var>0</var>] == -<var>1</var>)</td></tr>
+<tr><th id="131">131</th><td>            <b>break</b>;      <i>/* reached the root node */</i></td></tr>
+<tr><th id="132">132</th><td></td></tr>
+<tr><th id="133">133</th><td>        <a class="local col8 ref" href="#8node" title='node' data-ref="8node">node</a>-&gt;<a class="tu ref" href="#hnode::children" title='hnode::children' data-use='w' data-ref="hnode::children">children</a>[<var>1</var>] = <a class="tu ref" href="#huff_smallest_node" title='huff_smallest_node' data-use='c' data-ref="huff_smallest_node">huff_smallest_node</a>(<a class="local col9 ref" href="#9hnodes" title='hnodes' data-ref="9hnodes">hnodes</a>, <a class="local col0 ref" href="#10num_hnodes" title='num_hnodes' data-ref="10num_hnodes">num_hnodes</a>);</td></tr>
+<tr><th id="134">134</th><td>        <b>if</b>(<a class="local col8 ref" href="#8node" title='node' data-ref="8node">node</a>-&gt;<a class="tu ref" href="#hnode::children" title='hnode::children' data-use='r' data-ref="hnode::children">children</a>[<var>1</var>] == -<var>1</var>)</td></tr>
+<tr><th id="135">135</th><td>            <b>break</b>;      <i>/* reached the root node */</i></td></tr>
+<tr><th id="136">136</th><td></td></tr>
+<tr><th id="137">137</th><td>        <i>/* combine nodes probability for new node */</i></td></tr>
+<tr><th id="138">138</th><td>        <a class="local col8 ref" href="#8node" title='node' data-ref="8node">node</a>-&gt;<a class="tu ref" href="#hnode::count" title='hnode::count' data-use='w' data-ref="hnode::count">count</a> = <a class="local col9 ref" href="#9hnodes" title='hnodes' data-ref="9hnodes">hnodes</a>[<a class="local col8 ref" href="#8node" title='node' data-ref="8node">node</a>-&gt;<a class="tu ref" href="#hnode::children" title='hnode::children' data-use='r' data-ref="hnode::children">children</a>[<var>0</var>]].<a class="tu ref" href="#hnode::count" title='hnode::count' data-use='r' data-ref="hnode::count">count</a> +</td></tr>
+<tr><th id="139">139</th><td>        <a class="local col9 ref" href="#9hnodes" title='hnodes' data-ref="9hnodes">hnodes</a>[<a class="local col8 ref" href="#8node" title='node' data-ref="8node">node</a>-&gt;<a class="tu ref" href="#hnode::children" title='hnode::children' data-use='r' data-ref="hnode::children">children</a>[<var>1</var>]].<a class="tu ref" href="#hnode::count" title='hnode::count' data-use='r' data-ref="hnode::count">count</a>;</td></tr>
+<tr><th id="140">140</th><td>        <a class="local col0 ref" href="#10num_hnodes" title='num_hnodes' data-ref="10num_hnodes">num_hnodes</a>++;</td></tr>
+<tr><th id="141">141</th><td>    }</td></tr>
+<tr><th id="142">142</th><td></td></tr>
+<tr><th id="143">143</th><td>    <a class="local col6 ref" href="#6s" title='s' data-ref="6s">s</a>-&gt;<a class="tu ref" href="#IdcinContext::num_huff_nodes" title='IdcinContext::num_huff_nodes' data-use='w' data-ref="IdcinContext::num_huff_nodes">num_huff_nodes</a>[<a class="local col7 ref" href="#7prev" title='prev' data-ref="7prev">prev</a>] = <a class="local col0 ref" href="#10num_hnodes" title='num_hnodes' data-ref="10num_hnodes">num_hnodes</a> - <var>1</var>;</td></tr>
+<tr><th id="144">144</th><td>}</td></tr>
+<tr><th id="145">145</th><td></td></tr>
+<tr><th id="146">146</th><td><em>static</em> <a class="macro" href="../libavutil/attributes.h.html#84" title="" data-ref="_M/av_cold">av_cold</a> <em>int</em> <dfn class="tu decl def" id="idcin_decode_init" title='idcin_decode_init' data-type='int idcin_decode_init(AVCodecContext * avctx)' data-ref="idcin_decode_init">idcin_decode_init</dfn>(<a class="typedef" href="avcodec.h.html#AVCodecContext" title='AVCodecContext' data-type='struct AVCodecContext' data-ref="AVCodecContext">AVCodecContext</a> *<dfn class="local col2 decl" id="12avctx" title='avctx' data-type='AVCodecContext *' data-ref="12avctx">avctx</dfn>)</td></tr>
+<tr><th id="147">147</th><td>{</td></tr>
+<tr><th id="148">148</th><td>    <a class="typedef" href="#IdcinContext" title='IdcinContext' data-type='struct IdcinContext' data-ref="IdcinContext">IdcinContext</a> *<dfn class="local col3 decl" id="13s" title='s' data-type='IdcinContext *' data-ref="13s">s</dfn> = <a class="local col2 ref" href="#12avctx" title='avctx' data-ref="12avctx">avctx</a>-&gt;<a class="ref" href="avcodec.h.html#AVCodecContext::priv_data" title='AVCodecContext::priv_data' data-ref="AVCodecContext::priv_data">priv_data</a>;</td></tr>
+<tr><th id="149">149</th><td>    <em>int</em> <dfn class="local col4 decl" id="14i" title='i' data-type='int' data-ref="14i">i</dfn>, <dfn class="local col5 decl" id="15j" title='j' data-type='int' data-ref="15j">j</dfn>, <dfn class="local col6 decl" id="16histogram_index" title='histogram_index' data-type='int' data-ref="16histogram_index">histogram_index</dfn> = <var>0</var>;</td></tr>
+<tr><th id="150">150</th><td>    <em>unsigned</em> <em>char</em> *<dfn class="local col7 decl" id="17histograms" title='histograms' data-type='unsigned char *' data-ref="17histograms">histograms</dfn>;</td></tr>
+<tr><th id="151">151</th><td></td></tr>
+<tr><th id="152">152</th><td>    <a class="local col3 ref" href="#13s" title='s' data-ref="13s">s</a>-&gt;<a class="tu ref" href="#IdcinContext::avctx" title='IdcinContext::avctx' data-use='w' data-ref="IdcinContext::avctx">avctx</a> = <a class="local col2 ref" href="#12avctx" title='avctx' data-ref="12avctx">avctx</a>;</td></tr>
+<tr><th id="153">153</th><td>    <a class="local col2 ref" href="#12avctx" title='avctx' data-ref="12avctx">avctx</a>-&gt;<a class="ref" href="avcodec.h.html#AVCodecContext::pix_fmt" title='AVCodecContext::pix_fmt' data-ref="AVCodecContext::pix_fmt">pix_fmt</a> = <a class="enum" href="../libavutil/pixfmt.h.html#AVPixelFormat::AV_PIX_FMT_PAL8" title='AVPixelFormat::AV_PIX_FMT_PAL8' data-ref="AVPixelFormat::AV_PIX_FMT_PAL8">AV_PIX_FMT_PAL8</a>;</td></tr>
+<tr><th id="154">154</th><td></td></tr>
+<tr><th id="155">155</th><td>    <i>/* make sure the Huffman tables make it */</i></td></tr>
+<tr><th id="156">156</th><td>    <b>if</b> (<a class="local col3 ref" href="#13s" title='s' data-ref="13s">s</a>-&gt;<a class="tu ref" href="#IdcinContext::avctx" title='IdcinContext::avctx' data-use='r' data-ref="IdcinContext::avctx">avctx</a>-&gt;<a class="ref" href="avcodec.h.html#AVCodecContext::extradata_size" title='AVCodecContext::extradata_size' data-ref="AVCodecContext::extradata_size">extradata_size</a> != <a class="macro" href="#55" title="64 * 1024" data-ref="_M/HUFFMAN_TABLE_SIZE">HUFFMAN_TABLE_SIZE</a>) {</td></tr>
+<tr><th id="157">157</th><td>        <a class="ref" href="../libavutil/log.h.html#av_log" title='av_log' data-ref="av_log">av_log</a>(<a class="local col3 ref" href="#13s" title='s' data-ref="13s">s</a>-&gt;<a class="tu ref" href="#IdcinContext::avctx" title='IdcinContext::avctx' data-use='r' data-ref="IdcinContext::avctx">avctx</a>, <a class="macro" href="../libavutil/log.h.html#176" title="16" data-ref="_M/AV_LOG_ERROR">AV_LOG_ERROR</a>, <q>"  id CIN video: expected extradata size of %d\n"</q>, <a class="macro" href="#55" title="64 * 1024" data-ref="_M/HUFFMAN_TABLE_SIZE">HUFFMAN_TABLE_SIZE</a>);</td></tr>
+<tr><th id="158">158</th><td>        <b>return</b> -<var>1</var>;</td></tr>
+<tr><th id="159">159</th><td>    }</td></tr>
+<tr><th id="160">160</th><td></td></tr>
+<tr><th id="161">161</th><td>    <i>/* build the 256 Huffman decode trees */</i></td></tr>
+<tr><th id="162">162</th><td>    <a class="local col7 ref" href="#17histograms" title='histograms' data-ref="17histograms">histograms</a> = (<em>unsigned</em> <em>char</em> *)<a class="local col3 ref" href="#13s" title='s' data-ref="13s">s</a>-&gt;<a class="tu ref" href="#IdcinContext::avctx" title='IdcinContext::avctx' data-use='r' data-ref="IdcinContext::avctx">avctx</a>-&gt;<a class="ref" href="avcodec.h.html#AVCodecContext::extradata" title='AVCodecContext::extradata' data-ref="AVCodecContext::extradata">extradata</a>;</td></tr>
+<tr><th id="163">163</th><td>    <b>for</b> (<a class="local col4 ref" href="#14i" title='i' data-ref="14i">i</a> = <var>0</var>; <a class="local col4 ref" href="#14i" title='i' data-ref="14i">i</a> &lt; <var>256</var>; <a class="local col4 ref" href="#14i" title='i' data-ref="14i">i</a>++) {</td></tr>
+<tr><th id="164">164</th><td>        <b>for</b>(<a class="local col5 ref" href="#15j" title='j' data-ref="15j">j</a> = <var>0</var>; <a class="local col5 ref" href="#15j" title='j' data-ref="15j">j</a> &lt; <a class="macro" href="#56" title="256" data-ref="_M/HUF_TOKENS">HUF_TOKENS</a>; <a class="local col5 ref" href="#15j" title='j' data-ref="15j">j</a>++)</td></tr>
+<tr><th id="165">165</th><td>            <a class="local col3 ref" href="#13s" title='s' data-ref="13s">s</a>-&gt;<a class="tu ref" href="#IdcinContext::huff_nodes" title='IdcinContext::huff_nodes' data-use='m' data-ref="IdcinContext::huff_nodes">huff_nodes</a>[<a class="local col4 ref" href="#14i" title='i' data-ref="14i">i</a>][<a class="local col5 ref" href="#15j" title='j' data-ref="15j">j</a>].<a class="tu ref" href="#hnode::count" title='hnode::count' data-use='w' data-ref="hnode::count">count</a> = <a class="local col7 ref" href="#17histograms" title='histograms' data-ref="17histograms">histograms</a>[<a class="local col6 ref" href="#16histogram_index" title='histogram_index' data-ref="16histogram_index">histogram_index</a>++];</td></tr>
+<tr><th id="166">166</th><td>        <a class="tu ref" href="#huff_build_tree" title='huff_build_tree' data-use='c' data-ref="huff_build_tree">huff_build_tree</a>(<a class="local col3 ref" href="#13s" title='s' data-ref="13s">s</a>, <a class="local col4 ref" href="#14i" title='i' data-ref="14i">i</a>);</td></tr>
+<tr><th id="167">167</th><td>    }</td></tr>
+<tr><th id="168">168</th><td></td></tr>
+<tr><th id="169">169</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="170">170</th><td>}</td></tr>
+<tr><th id="171">171</th><td></td></tr>
+<tr><th id="172">172</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="idcin_decode_vlcs" title='idcin_decode_vlcs' data-type='int idcin_decode_vlcs(IdcinContext * s, AVFrame * frame)' data-ref="idcin_decode_vlcs">idcin_decode_vlcs</dfn>(<a class="typedef" href="#IdcinContext" title='IdcinContext' data-type='struct IdcinContext' data-ref="IdcinContext">IdcinContext</a> *<dfn class="local col8 decl" id="18s" title='s' data-type='IdcinContext *' data-ref="18s">s</dfn>, <a class="typedef" href="../libavutil/frame.h.html#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col9 decl" id="19frame" title='frame' data-type='AVFrame *' data-ref="19frame">frame</dfn>)</td></tr>
+<tr><th id="173">173</th><td>{</td></tr>
+<tr><th id="174">174</th><td>    <a class="typedef" href="#hnode" title='hnode' data-type='struct hnode' data-ref="hnode">hnode</a> *<dfn class="local col0 decl" id="20hnodes" title='hnodes' data-type='hnode *' data-ref="20hnodes">hnodes</dfn>;</td></tr>
+<tr><th id="175">175</th><td>    <em>long</em> <dfn class="local col1 decl" id="21x" title='x' data-type='long' data-ref="21x">x</dfn>, <dfn class="local col2 decl" id="22y" title='y' data-type='long' data-ref="22y">y</dfn>;</td></tr>
+<tr><th id="176">176</th><td>    <em>int</em> <dfn class="local col3 decl" id="23prev" title='prev' data-type='int' data-ref="23prev">prev</dfn>;</td></tr>
+<tr><th id="177">177</th><td>    <em>unsigned</em> <em>char</em> <dfn class="local col4 decl" id="24v" title='v' data-type='unsigned char' data-ref="24v">v</dfn> = <var>0</var>;</td></tr>
+<tr><th id="178">178</th><td>    <em>int</em> <dfn class="local col5 decl" id="25bit_pos" title='bit_pos' data-type='int' data-ref="25bit_pos">bit_pos</dfn>, <dfn class="local col6 decl" id="26node_num" title='node_num' data-type='int' data-ref="26node_num">node_num</dfn>, <dfn class="local col7 decl" id="27dat_pos" title='dat_pos' data-type='int' data-ref="27dat_pos">dat_pos</dfn>;</td></tr>
+<tr><th id="179">179</th><td></td></tr>
+<tr><th id="180">180</th><td>    <a class="local col3 ref" href="#23prev" title='prev' data-ref="23prev">prev</a> = <a class="local col5 ref" href="#25bit_pos" title='bit_pos' data-ref="25bit_pos">bit_pos</a> = <a class="local col7 ref" href="#27dat_pos" title='dat_pos' data-ref="27dat_pos">dat_pos</a> = <var>0</var>;</td></tr>
+<tr><th id="181">181</th><td>    <b>for</b> (<a class="local col2 ref" href="#22y" title='y' data-ref="22y">y</a> = <var>0</var>; <a class="local col2 ref" href="#22y" title='y' data-ref="22y">y</a> &lt; (<a class="local col9 ref" href="#19frame" title='frame' data-ref="19frame">frame</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::linesize" title='AVFrame::linesize' data-ref="AVFrame::linesize">linesize</a>[<var>0</var>] * <a class="local col8 ref" href="#18s" title='s' data-ref="18s">s</a>-&gt;<a class="tu ref" href="#IdcinContext::avctx" title='IdcinContext::avctx' data-use='r' data-ref="IdcinContext::avctx">avctx</a>-&gt;<a class="ref" href="avcodec.h.html#AVCodecContext::height" title='AVCodecContext::height' data-ref="AVCodecContext::height">height</a>);</td></tr>
+<tr><th id="182">182</th><td>        <a class="local col2 ref" href="#22y" title='y' data-ref="22y">y</a> += <a class="local col9 ref" href="#19frame" title='frame' data-ref="19frame">frame</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::linesize" title='AVFrame::linesize' data-ref="AVFrame::linesize">linesize</a>[<var>0</var>]) {</td></tr>
+<tr><th id="183">183</th><td>        <b>for</b> (<a class="local col1 ref" href="#21x" title='x' data-ref="21x">x</a> = <a class="local col2 ref" href="#22y" title='y' data-ref="22y">y</a>; <a class="local col1 ref" href="#21x" title='x' data-ref="21x">x</a> &lt; <a class="local col2 ref" href="#22y" title='y' data-ref="22y">y</a> + <a class="local col8 ref" href="#18s" title='s' data-ref="18s">s</a>-&gt;<a class="tu ref" href="#IdcinContext::avctx" title='IdcinContext::avctx' data-use='r' data-ref="IdcinContext::avctx">avctx</a>-&gt;<a class="ref" href="avcodec.h.html#AVCodecContext::width" title='AVCodecContext::width' data-ref="AVCodecContext::width">width</a>; <a class="local col1 ref" href="#21x" title='x' data-ref="21x">x</a>++) {</td></tr>
+<tr><th id="184">184</th><td>            <a class="local col6 ref" href="#26node_num" title='node_num' data-ref="26node_num">node_num</a> = <a class="local col8 ref" href="#18s" title='s' data-ref="18s">s</a>-&gt;<a class="tu ref" href="#IdcinContext::num_huff_nodes" title='IdcinContext::num_huff_nodes' data-use='r' data-ref="IdcinContext::num_huff_nodes">num_huff_nodes</a>[<a class="local col3 ref" href="#23prev" title='prev' data-ref="23prev">prev</a>];</td></tr>
+<tr><th id="185">185</th><td>            <a class="local col0 ref" href="#20hnodes" title='hnodes' data-ref="20hnodes">hnodes</a> = <a class="local col8 ref" href="#18s" title='s' data-ref="18s">s</a>-&gt;<a class="tu ref" href="#IdcinContext::huff_nodes" title='IdcinContext::huff_nodes' data-use='r' data-ref="IdcinContext::huff_nodes">huff_nodes</a>[<a class="local col3 ref" href="#23prev" title='prev' data-ref="23prev">prev</a>];</td></tr>
+<tr><th id="186">186</th><td></td></tr>
+<tr><th id="187">187</th><td>            <b>while</b>(<a class="local col6 ref" href="#26node_num" title='node_num' data-ref="26node_num">node_num</a> &gt;= <a class="macro" href="#56" title="256" data-ref="_M/HUF_TOKENS">HUF_TOKENS</a>) {</td></tr>
+<tr><th id="188">188</th><td>                <b>if</b>(!<a class="local col5 ref" href="#25bit_pos" title='bit_pos' data-ref="25bit_pos">bit_pos</a>) {</td></tr>
+<tr><th id="189">189</th><td>                    <b>if</b>(<a class="local col7 ref" href="#27dat_pos" title='dat_pos' data-ref="27dat_pos">dat_pos</a> &gt;= <a class="local col8 ref" href="#18s" title='s' data-ref="18s">s</a>-&gt;<a class="tu ref" href="#IdcinContext::size" title='IdcinContext::size' data-use='r' data-ref="IdcinContext::size">size</a>) {</td></tr>
+<tr><th id="190">190</th><td>                        <a class="ref" href="../libavutil/log.h.html#av_log" title='av_log' data-ref="av_log">av_log</a>(<a class="local col8 ref" href="#18s" title='s' data-ref="18s">s</a>-&gt;<a class="tu ref" href="#IdcinContext::avctx" title='IdcinContext::avctx' data-use='r' data-ref="IdcinContext::avctx">avctx</a>, <a class="macro" href="../libavutil/log.h.html#176" title="16" data-ref="_M/AV_LOG_ERROR">AV_LOG_ERROR</a>, <q>"Huffman decode error.\n"</q>);</td></tr>
+<tr><th id="191">191</th><td>                        <b>return</b> -<var>1</var>;</td></tr>
+<tr><th id="192">192</th><td>                    }</td></tr>
+<tr><th id="193">193</th><td>                    <a class="local col5 ref" href="#25bit_pos" title='bit_pos' data-ref="25bit_pos">bit_pos</a> = <var>8</var>;</td></tr>
+<tr><th id="194">194</th><td>                    <a class="local col4 ref" href="#24v" title='v' data-ref="24v">v</a> = <a class="local col8 ref" href="#18s" title='s' data-ref="18s">s</a>-&gt;<a class="tu ref" href="#IdcinContext::buf" title='IdcinContext::buf' data-use='r' data-ref="IdcinContext::buf">buf</a>[<a class="local col7 ref" href="#27dat_pos" title='dat_pos' data-ref="27dat_pos">dat_pos</a>++];</td></tr>
+<tr><th id="195">195</th><td>                }</td></tr>
+<tr><th id="196">196</th><td></td></tr>
+<tr><th id="197">197</th><td>                <a class="local col6 ref" href="#26node_num" title='node_num' data-ref="26node_num">node_num</a> = <a class="local col0 ref" href="#20hnodes" title='hnodes' data-ref="20hnodes">hnodes</a>[<a class="local col6 ref" href="#26node_num" title='node_num' data-ref="26node_num">node_num</a>].<a class="tu ref" href="#hnode::children" title='hnode::children' data-use='r' data-ref="hnode::children">children</a>[<a class="local col4 ref" href="#24v" title='v' data-ref="24v">v</a> &amp; <var>0x01</var>];</td></tr>
+<tr><th id="198">198</th><td>                <a class="local col4 ref" href="#24v" title='v' data-ref="24v">v</a> = <a class="local col4 ref" href="#24v" title='v' data-ref="24v">v</a> &gt;&gt; <var>1</var>;</td></tr>
+<tr><th id="199">199</th><td>                <a class="local col5 ref" href="#25bit_pos" title='bit_pos' data-ref="25bit_pos">bit_pos</a>--;</td></tr>
+<tr><th id="200">200</th><td>            }</td></tr>
+<tr><th id="201">201</th><td></td></tr>
+<tr><th id="202">202</th><td>            <a class="local col9 ref" href="#19frame" title='frame' data-ref="19frame">frame</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::data" title='AVFrame::data' data-ref="AVFrame::data">data</a>[<var>0</var>][<a class="local col1 ref" href="#21x" title='x' data-ref="21x">x</a>] = <a class="local col6 ref" href="#26node_num" title='node_num' data-ref="26node_num">node_num</a>;</td></tr>
+<tr><th id="203">203</th><td>            <a class="local col3 ref" href="#23prev" title='prev' data-ref="23prev">prev</a> = <a class="local col6 ref" href="#26node_num" title='node_num' data-ref="26node_num">node_num</a>;</td></tr>
+<tr><th id="204">204</th><td>        }</td></tr>
+<tr><th id="205">205</th><td>    }</td></tr>
+<tr><th id="206">206</th><td></td></tr>
+<tr><th id="207">207</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="208">208</th><td>}</td></tr>
+<tr><th id="209">209</th><td></td></tr>
+<tr><th id="210">210</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="idcin_decode_frame" title='idcin_decode_frame' data-type='int idcin_decode_frame(AVCodecContext * avctx, void * data, int * got_frame, AVPacket * avpkt)' data-ref="idcin_decode_frame">idcin_decode_frame</dfn>(<a class="typedef" href="avcodec.h.html#AVCodecContext" title='AVCodecContext' data-type='struct AVCodecContext' data-ref="AVCodecContext">AVCodecContext</a> *<dfn class="local col8 decl" id="28avctx" title='avctx' data-type='AVCodecContext *' data-ref="28avctx">avctx</dfn>,</td></tr>
+<tr><th id="211">211</th><td>                              <em>void</em> *<dfn class="local col9 decl" id="29data" title='data' data-type='void *' data-ref="29data">data</dfn>, <em>int</em> *<dfn class="local col0 decl" id="30got_frame" title='got_frame' data-type='int *' data-ref="30got_frame">got_frame</dfn>,</td></tr>
+<tr><th id="212">212</th><td>                              <a class="typedef" href="avcodec.h.html#AVPacket" title='AVPacket' data-type='struct AVPacket' data-ref="AVPacket">AVPacket</a> *<dfn class="local col1 decl" id="31avpkt" title='avpkt' data-type='AVPacket *' data-ref="31avpkt">avpkt</dfn>)</td></tr>
+<tr><th id="213">213</th><td>{</td></tr>
+<tr><th id="214">214</th><td>    <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col2 decl" id="32buf" title='buf' data-type='const uint8_t *' data-ref="32buf">buf</dfn> = <a class="local col1 ref" href="#31avpkt" title='avpkt' data-ref="31avpkt">avpkt</a>-&gt;<a class="ref" href="avcodec.h.html#AVPacket::data" title='AVPacket::data' data-ref="AVPacket::data">data</a>;</td></tr>
+<tr><th id="215">215</th><td>    <em>int</em> <dfn class="local col3 decl" id="33buf_size" title='buf_size' data-type='int' data-ref="33buf_size">buf_size</dfn> = <a class="local col1 ref" href="#31avpkt" title='avpkt' data-ref="31avpkt">avpkt</a>-&gt;<a class="ref" href="avcodec.h.html#AVPacket::size" title='AVPacket::size' data-ref="AVPacket::size">size</a>;</td></tr>
+<tr><th id="216">216</th><td>    <a class="typedef" href="#IdcinContext" title='IdcinContext' data-type='struct IdcinContext' data-ref="IdcinContext">IdcinContext</a> *<dfn class="local col4 decl" id="34s" title='s' data-type='IdcinContext *' data-ref="34s">s</dfn> = <a class="local col8 ref" href="#28avctx" title='avctx' data-ref="28avctx">avctx</a>-&gt;<a class="ref" href="avcodec.h.html#AVCodecContext::priv_data" title='AVCodecContext::priv_data' data-ref="AVCodecContext::priv_data">priv_data</a>;</td></tr>
+<tr><th id="217">217</th><td>    <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col5 decl" id="35pal" title='pal' data-type='const uint8_t *' data-ref="35pal">pal</dfn> = <a class="ref" href="avcodec.h.html#av_packet_get_side_data" title='av_packet_get_side_data' data-ref="av_packet_get_side_data">av_packet_get_side_data</a>(<a class="local col1 ref" href="#31avpkt" title='avpkt' data-ref="31avpkt">avpkt</a>, <a class="enum" href="avcodec.h.html#AVPacketSideDataType::AV_PKT_DATA_PALETTE" title='AVPacketSideDataType::AV_PKT_DATA_PALETTE' data-ref="AVPacketSideDataType::AV_PKT_DATA_PALETTE">AV_PKT_DATA_PALETTE</a>, <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>);</td></tr>
+<tr><th id="218">218</th><td>    <a class="typedef" href="../libavutil/frame.h.html#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col6 decl" id="36frame" title='frame' data-type='AVFrame *' data-ref="36frame">frame</dfn> = <a class="local col9 ref" href="#29data" title='data' data-ref="29data">data</a>;</td></tr>
+<tr><th id="219">219</th><td>    <em>int</em> <dfn class="local col7 decl" id="37ret" title='ret' data-type='int' data-ref="37ret">ret</dfn>;</td></tr>
+<tr><th id="220">220</th><td></td></tr>
+<tr><th id="221">221</th><td>    <a class="local col4 ref" href="#34s" title='s' data-ref="34s">s</a>-&gt;<a class="tu ref" href="#IdcinContext::buf" title='IdcinContext::buf' data-use='w' data-ref="IdcinContext::buf">buf</a> = <a class="local col2 ref" href="#32buf" title='buf' data-ref="32buf">buf</a>;</td></tr>
+<tr><th id="222">222</th><td>    <a class="local col4 ref" href="#34s" title='s' data-ref="34s">s</a>-&gt;<a class="tu ref" href="#IdcinContext::size" title='IdcinContext::size' data-use='w' data-ref="IdcinContext::size">size</a> = <a class="local col3 ref" href="#33buf_size" title='buf_size' data-ref="33buf_size">buf_size</a>;</td></tr>
+<tr><th id="223">223</th><td></td></tr>
+<tr><th id="224">224</th><td>    <b>if</b> ((<a class="local col7 ref" href="#37ret" title='ret' data-ref="37ret">ret</a> = <a class="ref" href="internal.h.html#ff_get_buffer" title='ff_get_buffer' data-ref="ff_get_buffer">ff_get_buffer</a>(<a class="local col8 ref" href="#28avctx" title='avctx' data-ref="28avctx">avctx</a>, <a class="local col6 ref" href="#36frame" title='frame' data-ref="36frame">frame</a>, <var>0</var>)) &lt; <var>0</var>)</td></tr>
+<tr><th id="225">225</th><td>        <b>return</b> <a class="local col7 ref" href="#37ret" title='ret' data-ref="37ret">ret</a>;</td></tr>
+<tr><th id="226">226</th><td></td></tr>
+<tr><th id="227">227</th><td>    <b>if</b> (<a class="tu ref" href="#idcin_decode_vlcs" title='idcin_decode_vlcs' data-use='c' data-ref="idcin_decode_vlcs">idcin_decode_vlcs</a>(<a class="local col4 ref" href="#34s" title='s' data-ref="34s">s</a>, <a class="local col6 ref" href="#36frame" title='frame' data-ref="36frame">frame</a>))</td></tr>
+<tr><th id="228">228</th><td>        <b>return</b> <a class="macro" href="../libavutil/error.h.html#59" title="(-(int)((&apos;I&apos;) | ((&apos;N&apos;) &lt;&lt; 8) | ((&apos;D&apos;) &lt;&lt; 16) | ((unsigned)(&apos;A&apos;) &lt;&lt; 24)))" data-ref="_M/AVERROR_INVALIDDATA">AVERROR_INVALIDDATA</a>;</td></tr>
+<tr><th id="229">229</th><td></td></tr>
+<tr><th id="230">230</th><td>    <b>if</b> (<a class="local col5 ref" href="#35pal" title='pal' data-ref="35pal">pal</a>) {</td></tr>
+<tr><th id="231">231</th><td>        <a class="local col6 ref" href="#36frame" title='frame' data-ref="36frame">frame</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::palette_has_changed" title='AVFrame::palette_has_changed' data-ref="AVFrame::palette_has_changed">palette_has_changed</a> = <var>1</var>;</td></tr>
+<tr><th id="232">232</th><td>        <a class="ref" href="../../include/string.h.html#memcpy" title='memcpy' data-ref="memcpy">memcpy</a>(<a class="local col4 ref" href="#34s" title='s' data-ref="34s">s</a>-&gt;<a class="tu ref" href="#IdcinContext::pal" title='IdcinContext::pal' data-use='r' data-ref="IdcinContext::pal">pal</a>, <a class="local col5 ref" href="#35pal" title='pal' data-ref="35pal">pal</a>, <a class="macro" href="../libavutil/pixfmt.h.html#32" title="1024" data-ref="_M/AVPALETTE_SIZE">AVPALETTE_SIZE</a>);</td></tr>
+<tr><th id="233">233</th><td>    }</td></tr>
+<tr><th id="234">234</th><td>    <i>/* make the palette available on the way out */</i></td></tr>
+<tr><th id="235">235</th><td>    <a class="ref" href="../../include/string.h.html#memcpy" title='memcpy' data-ref="memcpy">memcpy</a>(<a class="local col6 ref" href="#36frame" title='frame' data-ref="36frame">frame</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::data" title='AVFrame::data' data-ref="AVFrame::data">data</a>[<var>1</var>], <a class="local col4 ref" href="#34s" title='s' data-ref="34s">s</a>-&gt;<a class="tu ref" href="#IdcinContext::pal" title='IdcinContext::pal' data-use='r' data-ref="IdcinContext::pal">pal</a>, <a class="macro" href="../libavutil/pixfmt.h.html#32" title="1024" data-ref="_M/AVPALETTE_SIZE">AVPALETTE_SIZE</a>);</td></tr>
+<tr><th id="236">236</th><td></td></tr>
+<tr><th id="237">237</th><td>    *<a class="local col0 ref" href="#30got_frame" title='got_frame' data-ref="30got_frame">got_frame</a> = <var>1</var>;</td></tr>
+<tr><th id="238">238</th><td></td></tr>
+<tr><th id="239">239</th><td>    <i>/* report that the buffer was completely consumed */</i></td></tr>
+<tr><th id="240">240</th><td>    <b>return</b> <a class="local col3 ref" href="#33buf_size" title='buf_size' data-ref="33buf_size">buf_size</a>;</td></tr>
+<tr><th id="241">241</th><td>}</td></tr>
+<tr><th id="242">242</th><td></td></tr>
+<tr><th id="243">243</th><td><a class="typedef" href="avcodec.h.html#AVCodec" title='AVCodec' data-type='struct AVCodec' data-ref="AVCodec">AVCodec</a> <dfn class="decl def" id="ff_idcin_decoder" title='ff_idcin_decoder' data-ref="ff_idcin_decoder">ff_idcin_decoder</dfn> = {</td></tr>
+<tr><th id="244">244</th><td>    .<a class="ref" href="avcodec.h.html#AVCodec::name" title='AVCodec::name' data-ref="AVCodec::name">name</a>           = <q>"idcinvideo"</q>,</td></tr>
+<tr><th id="245">245</th><td>    .<a class="ref" href="avcodec.h.html#AVCodec::long_name" title='AVCodec::long_name' data-ref="AVCodec::long_name">long_name</a>      = <a class="macro" href="../libavutil/internal.h.html#176" title="&quot;id Quake II CIN video&quot;" data-ref="_M/NULL_IF_CONFIG_SMALL">NULL_IF_CONFIG_SMALL</a>(<q>"id Quake II CIN video"</q>),</td></tr>
+<tr><th id="246">246</th><td>    .<a class="ref" href="avcodec.h.html#AVCodec::type" title='AVCodec::type' data-ref="AVCodec::type">type</a>           = <a class="enum" href="../libavutil/avutil.h.html#AVMediaType::AVMEDIA_TYPE_VIDEO" title='AVMediaType::AVMEDIA_TYPE_VIDEO' data-ref="AVMediaType::AVMEDIA_TYPE_VIDEO">AVMEDIA_TYPE_VIDEO</a>,</td></tr>
+<tr><th id="247">247</th><td>    .<a class="ref" href="avcodec.h.html#AVCodec::id" title='AVCodec::id' data-ref="AVCodec::id">id</a>             = <a class="enum" href="avcodec.h.html#AVCodecID::AV_CODEC_ID_IDCIN" title='AVCodecID::AV_CODEC_ID_IDCIN' data-ref="AVCodecID::AV_CODEC_ID_IDCIN">AV_CODEC_ID_IDCIN</a>,</td></tr>
+<tr><th id="248">248</th><td>    .<a class="ref" href="avcodec.h.html#AVCodec::priv_data_size" title='AVCodec::priv_data_size' data-ref="AVCodec::priv_data_size">priv_data_size</a> = <b>sizeof</b>(<a class="typedef" href="#IdcinContext" title='IdcinContext' data-type='struct IdcinContext' data-ref="IdcinContext">IdcinContext</a>),</td></tr>
+<tr><th id="249">249</th><td>    .<a class="ref" href="avcodec.h.html#AVCodec::init" title='AVCodec::init' data-ref="AVCodec::init">init</a>           = <a class="tu ref" href="#idcin_decode_init" title='idcin_decode_init' data-use='r' data-ref="idcin_decode_init">idcin_decode_init</a>,</td></tr>
+<tr><th id="250">250</th><td>    .<a class="ref" href="avcodec.h.html#AVCodec::decode" title='AVCodec::decode' data-ref="AVCodec::decode">decode</a>         = <a class="tu ref" href="#idcin_decode_frame" title='idcin_decode_frame' data-use='r' data-ref="idcin_decode_frame">idcin_decode_frame</a>,</td></tr>
+<tr><th id="251">251</th><td>    .<a class="ref" href="avcodec.h.html#AVCodec::capabilities" title='AVCodec::capabilities' data-ref="AVCodec::capabilities">capabilities</a>   = <a class="macro" href="avcodec.h.html#959" title="(1 &lt;&lt; 1)" data-ref="_M/AV_CODEC_CAP_DR1">AV_CODEC_CAP_DR1</a>,</td></tr>
+<tr><th id="252">252</th><td>};</td></tr>
+<tr><th id="253">253</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

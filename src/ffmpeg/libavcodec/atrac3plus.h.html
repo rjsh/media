@@ -1,0 +1,259 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>atrac3plus.h source code [ffmpeg/libavcodec/atrac3plus.h] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="Atrac3pChanParams,Atrac3pChanUnitCtx,Atrac3pChannelUnitTypes,Atrac3pIPQFChannelCtx,Atrac3pWaveEnvelope,Atrac3pWaveParam,Atrac3pWaveSynthParams,Atrac3pWavesData "/>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavcodec/atrac3plus.h'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavcodec</a>/<a href='atrac3plus.h.html'>atrac3plus.h</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * ATRAC3+ compatible decoder</i></td></tr>
+<tr><th id="3">3</th><td><i> *</i></td></tr>
+<tr><th id="4">4</th><td><i> * Copyright (c) 2010-2013 Maxim Poliakovski</i></td></tr>
+<tr><th id="5">5</th><td><i> *</i></td></tr>
+<tr><th id="6">6</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="7">7</th><td><i> *</i></td></tr>
+<tr><th id="8">8</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="9">9</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="10">10</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="11">11</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="12">12</th><td><i> *</i></td></tr>
+<tr><th id="13">13</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="14">14</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="15">15</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="16">16</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="17">17</th><td><i> *</i></td></tr>
+<tr><th id="18">18</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="19">19</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="20">20</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="21">21</th><td><i> */</i></td></tr>
+<tr><th id="22">22</th><td></td></tr>
+<tr><th id="23">23</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="24">24</th><td><i class="doc"> *<span class="command"> @file</span></i></td></tr>
+<tr><th id="25">25</th><td><i class="doc"> * Global structures, constants and data for ATRAC3+ decoder.</i></td></tr>
+<tr><th id="26">26</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="27">27</th><td></td></tr>
+<tr><th id="28">28</th><td><u>#<span data-ppcond="28">ifndef</span> <span class="macro" data-ref="_M/AVCODEC_ATRAC3PLUS_H">AVCODEC_ATRAC3PLUS_H</span></u></td></tr>
+<tr><th id="29">29</th><td><u>#define <dfn class="macro" id="_M/AVCODEC_ATRAC3PLUS_H" data-ref="_M/AVCODEC_ATRAC3PLUS_H">AVCODEC_ATRAC3PLUS_H</dfn></u></td></tr>
+<tr><th id="30">30</th><td></td></tr>
+<tr><th id="31">31</th><td><u>#include &lt;stdint.h&gt;</u></td></tr>
+<tr><th id="32">32</th><td></td></tr>
+<tr><th id="33">33</th><td><u>#include <a href="../libavutil/float_dsp.h.html">"libavutil/float_dsp.h"</a></u></td></tr>
+<tr><th id="34">34</th><td><u>#include <a href="atrac.h.html">"atrac.h"</a></u></td></tr>
+<tr><th id="35">35</th><td><u>#include <a href="avcodec.h.html">"avcodec.h"</a></u></td></tr>
+<tr><th id="36">36</th><td><u>#include <a href="fft.h.html">"fft.h"</a></u></td></tr>
+<tr><th id="37">37</th><td><u>#include <a href="get_bits.h.html">"get_bits.h"</a></u></td></tr>
+<tr><th id="38">38</th><td></td></tr>
+<tr><th id="39">39</th><td><i class="doc">/** Global unit sizes */</i></td></tr>
+<tr><th id="40">40</th><td><u>#define <dfn class="macro" id="_M/ATRAC3P_SUBBANDS" data-ref="_M/ATRAC3P_SUBBANDS">ATRAC3P_SUBBANDS</dfn>        16  ///&lt; number of PQF subbands</u></td></tr>
+<tr><th id="41">41</th><td><u>#define <dfn class="macro" id="_M/ATRAC3P_SUBBAND_SAMPLES" data-ref="_M/ATRAC3P_SUBBAND_SAMPLES">ATRAC3P_SUBBAND_SAMPLES</dfn> 128 ///&lt; number of samples per subband</u></td></tr>
+<tr><th id="42">42</th><td><u>#define <dfn class="macro" id="_M/ATRAC3P_FRAME_SAMPLES" data-ref="_M/ATRAC3P_FRAME_SAMPLES">ATRAC3P_FRAME_SAMPLES</dfn>   (ATRAC3P_SUBBAND_SAMPLES * ATRAC3P_SUBBANDS)</u></td></tr>
+<tr><th id="43">43</th><td></td></tr>
+<tr><th id="44">44</th><td><u>#define <dfn class="macro" id="_M/ATRAC3P_PQF_FIR_LEN" data-ref="_M/ATRAC3P_PQF_FIR_LEN">ATRAC3P_PQF_FIR_LEN</dfn>     12  ///&lt; length of the prototype FIR of the PQF</u></td></tr>
+<tr><th id="45">45</th><td></td></tr>
+<tr><th id="46">46</th><td><i class="doc">/** Global constants */</i></td></tr>
+<tr><th id="47">47</th><td><u>#define <dfn class="macro" id="_M/ATRAC3P_POWER_COMP_OFF" data-ref="_M/ATRAC3P_POWER_COMP_OFF">ATRAC3P_POWER_COMP_OFF</dfn>  15  ///&lt; disable power compensation</u></td></tr>
+<tr><th id="48">48</th><td></td></tr>
+<tr><th id="49">49</th><td><i class="doc">/** ATRAC3+ channel unit types */</i></td></tr>
+<tr><th id="50">50</th><td><b>enum</b> <dfn class="type def" id="Atrac3pChannelUnitTypes" title='Atrac3pChannelUnitTypes' data-ref="Atrac3pChannelUnitTypes">Atrac3pChannelUnitTypes</dfn> {</td></tr>
+<tr><th id="51">51</th><td>    <dfn class="enum" id="Atrac3pChannelUnitTypes::CH_UNIT_MONO" title='Atrac3pChannelUnitTypes::CH_UNIT_MONO' data-ref="Atrac3pChannelUnitTypes::CH_UNIT_MONO">CH_UNIT_MONO</dfn>       = <var>0</var>, <i class="doc">///&lt; unit containing one coded channel</i></td></tr>
+<tr><th id="52">52</th><td>    <dfn class="enum" id="Atrac3pChannelUnitTypes::CH_UNIT_STEREO" title='Atrac3pChannelUnitTypes::CH_UNIT_STEREO' data-ref="Atrac3pChannelUnitTypes::CH_UNIT_STEREO">CH_UNIT_STEREO</dfn>     = <var>1</var>, <i class="doc">///&lt; unit containing two jointly-coded channels</i></td></tr>
+<tr><th id="53">53</th><td>    <dfn class="enum" id="Atrac3pChannelUnitTypes::CH_UNIT_EXTENSION" title='Atrac3pChannelUnitTypes::CH_UNIT_EXTENSION' data-ref="Atrac3pChannelUnitTypes::CH_UNIT_EXTENSION">CH_UNIT_EXTENSION</dfn>  = <var>2</var>, <i class="doc">///&lt; unit containing extension information</i></td></tr>
+<tr><th id="54">54</th><td>    <dfn class="enum" id="Atrac3pChannelUnitTypes::CH_UNIT_TERMINATOR" title='Atrac3pChannelUnitTypes::CH_UNIT_TERMINATOR' data-ref="Atrac3pChannelUnitTypes::CH_UNIT_TERMINATOR">CH_UNIT_TERMINATOR</dfn> = <var>3</var>  <i class="doc">///&lt; unit sequence terminator</i></td></tr>
+<tr><th id="55">55</th><td>};</td></tr>
+<tr><th id="56">56</th><td></td></tr>
+<tr><th id="57">57</th><td><i class="doc">/** Per-channel IPQF history */</i></td></tr>
+<tr><th id="58">58</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="Atrac3pIPQFChannelCtx" title='Atrac3pIPQFChannelCtx' data-ref="Atrac3pIPQFChannelCtx"><a class="type" href="#Atrac3pIPQFChannelCtx" title='Atrac3pIPQFChannelCtx' data-ref="Atrac3pIPQFChannelCtx">Atrac3pIPQFChannelCtx</a></dfn> {</td></tr>
+<tr><th id="59">59</th><td>    <a class="macro" href="../libavutil/mem.h.html#101" title="float __attribute__ ((aligned (32))) buf1" data-ref="_M/DECLARE_ALIGNED">DECLARE_ALIGNED</a>(<var>32</var>, <em>float</em>, <dfn class="decl" id="Atrac3pIPQFChannelCtx::buf1" title='Atrac3pIPQFChannelCtx::buf1' data-ref="Atrac3pIPQFChannelCtx::buf1">buf1</dfn>)[<a class="macro" href="#44" title="12" data-ref="_M/ATRAC3P_PQF_FIR_LEN">ATRAC3P_PQF_FIR_LEN</a> * <var>2</var>][<var>8</var>];</td></tr>
+<tr><th id="60">60</th><td>    <a class="macro" href="../libavutil/mem.h.html#101" title="float __attribute__ ((aligned (32))) buf2" data-ref="_M/DECLARE_ALIGNED">DECLARE_ALIGNED</a>(<var>32</var>, <em>float</em>, <dfn class="decl" id="Atrac3pIPQFChannelCtx::buf2" title='Atrac3pIPQFChannelCtx::buf2' data-ref="Atrac3pIPQFChannelCtx::buf2">buf2</dfn>)[<a class="macro" href="#44" title="12" data-ref="_M/ATRAC3P_PQF_FIR_LEN">ATRAC3P_PQF_FIR_LEN</a> * <var>2</var>][<var>8</var>];</td></tr>
+<tr><th id="61">61</th><td>    <em>int</em> <dfn class="decl" id="Atrac3pIPQFChannelCtx::pos" title='Atrac3pIPQFChannelCtx::pos' data-ref="Atrac3pIPQFChannelCtx::pos">pos</dfn>;</td></tr>
+<tr><th id="62">62</th><td>} <dfn class="typedef" id="Atrac3pIPQFChannelCtx" title='Atrac3pIPQFChannelCtx' data-type='struct Atrac3pIPQFChannelCtx' data-ref="Atrac3pIPQFChannelCtx">Atrac3pIPQFChannelCtx</dfn>;</td></tr>
+<tr><th id="63">63</th><td></td></tr>
+<tr><th id="64">64</th><td><i class="doc">/** Amplitude envelope of a group of sine waves */</i></td></tr>
+<tr><th id="65">65</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="Atrac3pWaveEnvelope" title='Atrac3pWaveEnvelope' data-ref="Atrac3pWaveEnvelope"><a class="type" href="#Atrac3pWaveEnvelope" title='Atrac3pWaveEnvelope' data-ref="Atrac3pWaveEnvelope">Atrac3pWaveEnvelope</a></dfn> {</td></tr>
+<tr><th id="66">66</th><td>    <em>int</em> <dfn class="decl" id="Atrac3pWaveEnvelope::has_start_point" title='Atrac3pWaveEnvelope::has_start_point' data-ref="Atrac3pWaveEnvelope::has_start_point">has_start_point</dfn>;    <i class="doc">///&lt; indicates start point within the GHA window</i></td></tr>
+<tr><th id="67">67</th><td>    <em>int</em> <dfn class="decl" id="Atrac3pWaveEnvelope::has_stop_point" title='Atrac3pWaveEnvelope::has_stop_point' data-ref="Atrac3pWaveEnvelope::has_stop_point">has_stop_point</dfn>;     <i class="doc">///&lt; indicates stop point within the GHA window</i></td></tr>
+<tr><th id="68">68</th><td>    <em>int</em> <dfn class="decl" id="Atrac3pWaveEnvelope::start_pos" title='Atrac3pWaveEnvelope::start_pos' data-ref="Atrac3pWaveEnvelope::start_pos">start_pos</dfn>;          <i class="doc">///&lt; start position expressed in n*4 samples</i></td></tr>
+<tr><th id="69">69</th><td>    <em>int</em> <dfn class="decl" id="Atrac3pWaveEnvelope::stop_pos" title='Atrac3pWaveEnvelope::stop_pos' data-ref="Atrac3pWaveEnvelope::stop_pos">stop_pos</dfn>;           <i class="doc">///&lt; stop  position expressed in n*4 samples</i></td></tr>
+<tr><th id="70">70</th><td>} <dfn class="typedef" id="Atrac3pWaveEnvelope" title='Atrac3pWaveEnvelope' data-type='struct Atrac3pWaveEnvelope' data-ref="Atrac3pWaveEnvelope">Atrac3pWaveEnvelope</dfn>;</td></tr>
+<tr><th id="71">71</th><td></td></tr>
+<tr><th id="72">72</th><td><i class="doc">/** Parameters of a group of sine waves */</i></td></tr>
+<tr><th id="73">73</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="Atrac3pWavesData" title='Atrac3pWavesData' data-ref="Atrac3pWavesData"><a class="type" href="#Atrac3pWavesData" title='Atrac3pWavesData' data-ref="Atrac3pWavesData">Atrac3pWavesData</a></dfn> {</td></tr>
+<tr><th id="74">74</th><td>    <a class="typedef" href="#Atrac3pWaveEnvelope" title='Atrac3pWaveEnvelope' data-type='struct Atrac3pWaveEnvelope' data-ref="Atrac3pWaveEnvelope">Atrac3pWaveEnvelope</a> <dfn class="decl" id="Atrac3pWavesData::pend_env" title='Atrac3pWavesData::pend_env' data-ref="Atrac3pWavesData::pend_env">pend_env</dfn>;   <i class="doc">///&lt; pending envelope from the previous frame</i></td></tr>
+<tr><th id="75">75</th><td>    <a class="typedef" href="#Atrac3pWaveEnvelope" title='Atrac3pWaveEnvelope' data-type='struct Atrac3pWaveEnvelope' data-ref="Atrac3pWaveEnvelope">Atrac3pWaveEnvelope</a> <dfn class="decl" id="Atrac3pWavesData::curr_env" title='Atrac3pWavesData::curr_env' data-ref="Atrac3pWavesData::curr_env">curr_env</dfn>;   <i class="doc">///&lt; group envelope from the current frame</i></td></tr>
+<tr><th id="76">76</th><td>    <em>int</em> <dfn class="decl" id="Atrac3pWavesData::num_wavs" title='Atrac3pWavesData::num_wavs' data-ref="Atrac3pWavesData::num_wavs">num_wavs</dfn>;           <i class="doc">///&lt; number of sine waves in the group</i></td></tr>
+<tr><th id="77">77</th><td>    <em>int</em> <dfn class="decl" id="Atrac3pWavesData::start_index" title='Atrac3pWavesData::start_index' data-ref="Atrac3pWavesData::start_index">start_index</dfn>;        <i class="doc">///&lt; start index into global tones table for that subband</i></td></tr>
+<tr><th id="78">78</th><td>} <dfn class="typedef" id="Atrac3pWavesData" title='Atrac3pWavesData' data-type='struct Atrac3pWavesData' data-ref="Atrac3pWavesData">Atrac3pWavesData</dfn>;</td></tr>
+<tr><th id="79">79</th><td></td></tr>
+<tr><th id="80">80</th><td><i class="doc">/** Parameters of a single sine wave */</i></td></tr>
+<tr><th id="81">81</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="Atrac3pWaveParam" title='Atrac3pWaveParam' data-ref="Atrac3pWaveParam"><a class="type" href="#Atrac3pWaveParam" title='Atrac3pWaveParam' data-ref="Atrac3pWaveParam">Atrac3pWaveParam</a></dfn> {</td></tr>
+<tr><th id="82">82</th><td>    <em>int</em>   <dfn class="decl" id="Atrac3pWaveParam::freq_index" title='Atrac3pWaveParam::freq_index' data-ref="Atrac3pWaveParam::freq_index">freq_index</dfn>;   <i class="doc">///&lt; wave frequency index</i></td></tr>
+<tr><th id="83">83</th><td>    <em>int</em>   <dfn class="decl" id="Atrac3pWaveParam::amp_sf" title='Atrac3pWaveParam::amp_sf' data-ref="Atrac3pWaveParam::amp_sf">amp_sf</dfn>;       <i class="doc">///&lt; quantized amplitude scale factor</i></td></tr>
+<tr><th id="84">84</th><td>    <em>int</em>   <dfn class="decl" id="Atrac3pWaveParam::amp_index" title='Atrac3pWaveParam::amp_index' data-ref="Atrac3pWaveParam::amp_index">amp_index</dfn>;    <i class="doc">///&lt; quantized amplitude index</i></td></tr>
+<tr><th id="85">85</th><td>    <em>int</em>   <dfn class="decl" id="Atrac3pWaveParam::phase_index" title='Atrac3pWaveParam::phase_index' data-ref="Atrac3pWaveParam::phase_index">phase_index</dfn>;  <i class="doc">///&lt; quantized phase index</i></td></tr>
+<tr><th id="86">86</th><td>} <dfn class="typedef" id="Atrac3pWaveParam" title='Atrac3pWaveParam' data-type='struct Atrac3pWaveParam' data-ref="Atrac3pWaveParam">Atrac3pWaveParam</dfn>;</td></tr>
+<tr><th id="87">87</th><td></td></tr>
+<tr><th id="88">88</th><td><i class="doc">/** Sound channel parameters */</i></td></tr>
+<tr><th id="89">89</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="Atrac3pChanParams" title='Atrac3pChanParams' data-ref="Atrac3pChanParams"><a class="type" href="#Atrac3pChanParams" title='Atrac3pChanParams' data-ref="Atrac3pChanParams">Atrac3pChanParams</a></dfn> {</td></tr>
+<tr><th id="90">90</th><td>    <em>int</em> <dfn class="decl" id="Atrac3pChanParams::ch_num" title='Atrac3pChanParams::ch_num' data-ref="Atrac3pChanParams::ch_num">ch_num</dfn>;</td></tr>
+<tr><th id="91">91</th><td>    <em>int</em> <dfn class="decl" id="Atrac3pChanParams::num_coded_vals" title='Atrac3pChanParams::num_coded_vals' data-ref="Atrac3pChanParams::num_coded_vals">num_coded_vals</dfn>;         <i class="doc">///&lt; number of transmitted quant unit values</i></td></tr>
+<tr><th id="92">92</th><td>    <em>int</em> <dfn class="decl" id="Atrac3pChanParams::fill_mode" title='Atrac3pChanParams::fill_mode' data-ref="Atrac3pChanParams::fill_mode">fill_mode</dfn>;</td></tr>
+<tr><th id="93">93</th><td>    <em>int</em> <dfn class="decl" id="Atrac3pChanParams::split_point" title='Atrac3pChanParams::split_point' data-ref="Atrac3pChanParams::split_point">split_point</dfn>;</td></tr>
+<tr><th id="94">94</th><td>    <em>int</em> <dfn class="decl" id="Atrac3pChanParams::table_type" title='Atrac3pChanParams::table_type' data-ref="Atrac3pChanParams::table_type">table_type</dfn>;             <i class="doc">///&lt; table type: 0 - tone?, 1- noise?</i></td></tr>
+<tr><th id="95">95</th><td>    <em>int</em> <dfn class="decl" id="Atrac3pChanParams::qu_wordlen" title='Atrac3pChanParams::qu_wordlen' data-ref="Atrac3pChanParams::qu_wordlen">qu_wordlen</dfn>[<var>32</var>];         <i class="doc">///&lt; array of word lengths for each quant unit</i></td></tr>
+<tr><th id="96">96</th><td>    <em>int</em> <dfn class="decl" id="Atrac3pChanParams::qu_sf_idx" title='Atrac3pChanParams::qu_sf_idx' data-ref="Atrac3pChanParams::qu_sf_idx">qu_sf_idx</dfn>[<var>32</var>];          <i class="doc">///&lt; array of scale factor indexes for each quant unit</i></td></tr>
+<tr><th id="97">97</th><td>    <em>int</em> <dfn class="decl" id="Atrac3pChanParams::qu_tab_idx" title='Atrac3pChanParams::qu_tab_idx' data-ref="Atrac3pChanParams::qu_tab_idx">qu_tab_idx</dfn>[<var>32</var>];         <i class="doc">///&lt; array of code table indexes for each quant unit</i></td></tr>
+<tr><th id="98">98</th><td>    <a class="typedef" href="../../include/x86_64-linux-gnu/sys/types.h.html#195" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> <dfn class="decl" id="Atrac3pChanParams::spectrum" title='Atrac3pChanParams::spectrum' data-ref="Atrac3pChanParams::spectrum">spectrum</dfn>[<var>2048</var>];     <i class="doc">///&lt; decoded IMDCT spectrum</i></td></tr>
+<tr><th id="99">99</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="Atrac3pChanParams::power_levs" title='Atrac3pChanParams::power_levs' data-ref="Atrac3pChanParams::power_levs">power_levs</dfn>[<var>5</var>];      <i class="doc">///&lt; power compensation levels</i></td></tr>
+<tr><th id="100">100</th><td></td></tr>
+<tr><th id="101">101</th><td>    <i>/* imdct window shape history (2 frames) for overlapping. */</i></td></tr>
+<tr><th id="102">102</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="Atrac3pChanParams::wnd_shape_hist" title='Atrac3pChanParams::wnd_shape_hist' data-ref="Atrac3pChanParams::wnd_shape_hist">wnd_shape_hist</dfn>[<var>2</var>][<a class="macro" href="#40" title="16" data-ref="_M/ATRAC3P_SUBBANDS">ATRAC3P_SUBBANDS</a>];    <i class="doc">///&lt; IMDCT window shape, 0=sine/1=steep</i></td></tr>
+<tr><th id="103">103</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="decl" id="Atrac3pChanParams::wnd_shape" title='Atrac3pChanParams::wnd_shape' data-ref="Atrac3pChanParams::wnd_shape">wnd_shape</dfn>;         <i class="doc">///&lt; IMDCT window shape for current frame</i></td></tr>
+<tr><th id="104">104</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="decl" id="Atrac3pChanParams::wnd_shape_prev" title='Atrac3pChanParams::wnd_shape_prev' data-ref="Atrac3pChanParams::wnd_shape_prev">wnd_shape_prev</dfn>;    <i class="doc">///&lt; IMDCT window shape for previous frame</i></td></tr>
+<tr><th id="105">105</th><td></td></tr>
+<tr><th id="106">106</th><td>    <i>/* gain control data history (2 frames) for overlapping. */</i></td></tr>
+<tr><th id="107">107</th><td>    <a class="typedef" href="atrac.h.html#AtracGainInfo" title='AtracGainInfo' data-type='struct AtracGainInfo' data-ref="AtracGainInfo">AtracGainInfo</a> <dfn class="decl" id="Atrac3pChanParams::gain_data_hist" title='Atrac3pChanParams::gain_data_hist' data-ref="Atrac3pChanParams::gain_data_hist">gain_data_hist</dfn>[<var>2</var>][<a class="macro" href="#40" title="16" data-ref="_M/ATRAC3P_SUBBANDS">ATRAC3P_SUBBANDS</a>];  <i class="doc">///&lt; gain control data for all subbands</i></td></tr>
+<tr><th id="108">108</th><td>    <a class="typedef" href="atrac.h.html#AtracGainInfo" title='AtracGainInfo' data-type='struct AtracGainInfo' data-ref="AtracGainInfo">AtracGainInfo</a> *<dfn class="decl" id="Atrac3pChanParams::gain_data" title='Atrac3pChanParams::gain_data' data-ref="Atrac3pChanParams::gain_data">gain_data</dfn>;       <i class="doc">///&lt; gain control data for next frame</i></td></tr>
+<tr><th id="109">109</th><td>    <a class="typedef" href="atrac.h.html#AtracGainInfo" title='AtracGainInfo' data-type='struct AtracGainInfo' data-ref="AtracGainInfo">AtracGainInfo</a> *<dfn class="decl" id="Atrac3pChanParams::gain_data_prev" title='Atrac3pChanParams::gain_data_prev' data-ref="Atrac3pChanParams::gain_data_prev">gain_data_prev</dfn>;  <i class="doc">///&lt; gain control data for previous frame</i></td></tr>
+<tr><th id="110">110</th><td>    <em>int</em> <dfn class="decl" id="Atrac3pChanParams::num_gain_subbands" title='Atrac3pChanParams::num_gain_subbands' data-ref="Atrac3pChanParams::num_gain_subbands">num_gain_subbands</dfn>;      <i class="doc">///&lt; number of subbands with gain control data</i></td></tr>
+<tr><th id="111">111</th><td></td></tr>
+<tr><th id="112">112</th><td>    <i>/* tones data history (2 frames) for overlapping. */</i></td></tr>
+<tr><th id="113">113</th><td>    <a class="typedef" href="#Atrac3pWavesData" title='Atrac3pWavesData' data-type='struct Atrac3pWavesData' data-ref="Atrac3pWavesData">Atrac3pWavesData</a> <dfn class="decl" id="Atrac3pChanParams::tones_info_hist" title='Atrac3pChanParams::tones_info_hist' data-ref="Atrac3pChanParams::tones_info_hist">tones_info_hist</dfn>[<var>2</var>][<a class="macro" href="#40" title="16" data-ref="_M/ATRAC3P_SUBBANDS">ATRAC3P_SUBBANDS</a>];</td></tr>
+<tr><th id="114">114</th><td>    <a class="typedef" href="#Atrac3pWavesData" title='Atrac3pWavesData' data-type='struct Atrac3pWavesData' data-ref="Atrac3pWavesData">Atrac3pWavesData</a> *<dfn class="decl" id="Atrac3pChanParams::tones_info" title='Atrac3pChanParams::tones_info' data-ref="Atrac3pChanParams::tones_info">tones_info</dfn>;</td></tr>
+<tr><th id="115">115</th><td>    <a class="typedef" href="#Atrac3pWavesData" title='Atrac3pWavesData' data-type='struct Atrac3pWavesData' data-ref="Atrac3pWavesData">Atrac3pWavesData</a> *<dfn class="decl" id="Atrac3pChanParams::tones_info_prev" title='Atrac3pChanParams::tones_info_prev' data-ref="Atrac3pChanParams::tones_info_prev">tones_info_prev</dfn>;</td></tr>
+<tr><th id="116">116</th><td>} <dfn class="typedef" id="Atrac3pChanParams" title='Atrac3pChanParams' data-type='struct Atrac3pChanParams' data-ref="Atrac3pChanParams">Atrac3pChanParams</dfn>;</td></tr>
+<tr><th id="117">117</th><td></td></tr>
+<tr><th id="118">118</th><td><i>/* Per-unit sine wave parameters */</i></td></tr>
+<tr><th id="119">119</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="Atrac3pWaveSynthParams" title='Atrac3pWaveSynthParams' data-ref="Atrac3pWaveSynthParams"><a class="type" href="#Atrac3pWaveSynthParams" title='Atrac3pWaveSynthParams' data-ref="Atrac3pWaveSynthParams">Atrac3pWaveSynthParams</a></dfn> {</td></tr>
+<tr><th id="120">120</th><td>    <em>int</em> <dfn class="decl" id="Atrac3pWaveSynthParams::tones_present" title='Atrac3pWaveSynthParams::tones_present' data-ref="Atrac3pWaveSynthParams::tones_present">tones_present</dfn>;                      <i class="doc">///&lt; 1 - tones info present</i></td></tr>
+<tr><th id="121">121</th><td>    <em>int</em> <dfn class="decl" id="Atrac3pWaveSynthParams::amplitude_mode" title='Atrac3pWaveSynthParams::amplitude_mode' data-ref="Atrac3pWaveSynthParams::amplitude_mode">amplitude_mode</dfn>;                     <i class="doc">///&lt; 1 - low range, 0 - high range</i></td></tr>
+<tr><th id="122">122</th><td>    <em>int</em> <dfn class="decl" id="Atrac3pWaveSynthParams::num_tone_bands" title='Atrac3pWaveSynthParams::num_tone_bands' data-ref="Atrac3pWaveSynthParams::num_tone_bands">num_tone_bands</dfn>;                     <i class="doc">///&lt; number of PQF bands with tones</i></td></tr>
+<tr><th id="123">123</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="Atrac3pWaveSynthParams::tone_sharing" title='Atrac3pWaveSynthParams::tone_sharing' data-ref="Atrac3pWaveSynthParams::tone_sharing">tone_sharing</dfn>[<a class="macro" href="#40" title="16" data-ref="_M/ATRAC3P_SUBBANDS">ATRAC3P_SUBBANDS</a>]; <i class="doc">///&lt; 1 - subband-wise tone sharing flags</i></td></tr>
+<tr><th id="124">124</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="Atrac3pWaveSynthParams::tone_master" title='Atrac3pWaveSynthParams::tone_master' data-ref="Atrac3pWaveSynthParams::tone_master">tone_master</dfn>[<a class="macro" href="#40" title="16" data-ref="_M/ATRAC3P_SUBBANDS">ATRAC3P_SUBBANDS</a>];  <i class="doc">///&lt; 1 - subband-wise tone channel swapping</i></td></tr>
+<tr><th id="125">125</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="Atrac3pWaveSynthParams::invert_phase" title='Atrac3pWaveSynthParams::invert_phase' data-ref="Atrac3pWaveSynthParams::invert_phase">invert_phase</dfn>[<a class="macro" href="#40" title="16" data-ref="_M/ATRAC3P_SUBBANDS">ATRAC3P_SUBBANDS</a>]; <i class="doc">///&lt; 1 - subband-wise phase inversion</i></td></tr>
+<tr><th id="126">126</th><td>    <em>int</em> <dfn class="decl" id="Atrac3pWaveSynthParams::tones_index" title='Atrac3pWaveSynthParams::tones_index' data-ref="Atrac3pWaveSynthParams::tones_index">tones_index</dfn>;                        <i class="doc">///&lt; total sum of tones in this unit</i></td></tr>
+<tr><th id="127">127</th><td>    <a class="typedef" href="#Atrac3pWaveParam" title='Atrac3pWaveParam' data-type='struct Atrac3pWaveParam' data-ref="Atrac3pWaveParam">Atrac3pWaveParam</a> <dfn class="decl" id="Atrac3pWaveSynthParams::waves" title='Atrac3pWaveSynthParams::waves' data-ref="Atrac3pWaveSynthParams::waves">waves</dfn>[<var>48</var>];</td></tr>
+<tr><th id="128">128</th><td>} <dfn class="typedef" id="Atrac3pWaveSynthParams" title='Atrac3pWaveSynthParams' data-type='struct Atrac3pWaveSynthParams' data-ref="Atrac3pWaveSynthParams">Atrac3pWaveSynthParams</dfn>;</td></tr>
+<tr><th id="129">129</th><td></td></tr>
+<tr><th id="130">130</th><td><i class="doc">/** Channel unit parameters */</i></td></tr>
+<tr><th id="131">131</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="Atrac3pChanUnitCtx" title='Atrac3pChanUnitCtx' data-ref="Atrac3pChanUnitCtx"><a class="type" href="#Atrac3pChanUnitCtx" title='Atrac3pChanUnitCtx' data-ref="Atrac3pChanUnitCtx">Atrac3pChanUnitCtx</a></dfn> {</td></tr>
+<tr><th id="132">132</th><td>    <i>/* channel unit variables */</i></td></tr>
+<tr><th id="133">133</th><td>    <em>int</em> <dfn class="decl" id="Atrac3pChanUnitCtx::unit_type" title='Atrac3pChanUnitCtx::unit_type' data-ref="Atrac3pChanUnitCtx::unit_type">unit_type</dfn>;                          <i class="doc">///&lt; unit type (mono/stereo)</i></td></tr>
+<tr><th id="134">134</th><td>    <em>int</em> <dfn class="decl" id="Atrac3pChanUnitCtx::num_quant_units" title='Atrac3pChanUnitCtx::num_quant_units' data-ref="Atrac3pChanUnitCtx::num_quant_units">num_quant_units</dfn>;</td></tr>
+<tr><th id="135">135</th><td>    <em>int</em> <dfn class="decl" id="Atrac3pChanUnitCtx::num_subbands" title='Atrac3pChanUnitCtx::num_subbands' data-ref="Atrac3pChanUnitCtx::num_subbands">num_subbands</dfn>;</td></tr>
+<tr><th id="136">136</th><td>    <em>int</em> <dfn class="decl" id="Atrac3pChanUnitCtx::used_quant_units" title='Atrac3pChanUnitCtx::used_quant_units' data-ref="Atrac3pChanUnitCtx::used_quant_units">used_quant_units</dfn>;                   <i class="doc">///&lt; number of quant units with coded spectrum</i></td></tr>
+<tr><th id="137">137</th><td>    <em>int</em> <dfn class="decl" id="Atrac3pChanUnitCtx::num_coded_subbands" title='Atrac3pChanUnitCtx::num_coded_subbands' data-ref="Atrac3pChanUnitCtx::num_coded_subbands">num_coded_subbands</dfn>;                 <i class="doc">///&lt; number of subbands with coded spectrum</i></td></tr>
+<tr><th id="138">138</th><td>    <em>int</em> <dfn class="decl" id="Atrac3pChanUnitCtx::mute_flag" title='Atrac3pChanUnitCtx::mute_flag' data-ref="Atrac3pChanUnitCtx::mute_flag">mute_flag</dfn>;                          <i class="doc">///&lt; mute flag</i></td></tr>
+<tr><th id="139">139</th><td>    <em>int</em> <dfn class="decl" id="Atrac3pChanUnitCtx::use_full_table" title='Atrac3pChanUnitCtx::use_full_table' data-ref="Atrac3pChanUnitCtx::use_full_table">use_full_table</dfn>;                     <i class="doc">///&lt; 1 - full table list, 0 - restricted one</i></td></tr>
+<tr><th id="140">140</th><td>    <em>int</em> <dfn class="decl" id="Atrac3pChanUnitCtx::noise_present" title='Atrac3pChanUnitCtx::noise_present' data-ref="Atrac3pChanUnitCtx::noise_present">noise_present</dfn>;                      <i class="doc">///&lt; 1 - global noise info present</i></td></tr>
+<tr><th id="141">141</th><td>    <em>int</em> <dfn class="decl" id="Atrac3pChanUnitCtx::noise_level_index" title='Atrac3pChanUnitCtx::noise_level_index' data-ref="Atrac3pChanUnitCtx::noise_level_index">noise_level_index</dfn>;                  <i class="doc">///&lt; global noise level index</i></td></tr>
+<tr><th id="142">142</th><td>    <em>int</em> <dfn class="decl" id="Atrac3pChanUnitCtx::noise_table_index" title='Atrac3pChanUnitCtx::noise_table_index' data-ref="Atrac3pChanUnitCtx::noise_table_index">noise_table_index</dfn>;                  <i class="doc">///&lt; global noise RNG table index</i></td></tr>
+<tr><th id="143">143</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="Atrac3pChanUnitCtx::swap_channels" title='Atrac3pChanUnitCtx::swap_channels' data-ref="Atrac3pChanUnitCtx::swap_channels">swap_channels</dfn>[<a class="macro" href="#40" title="16" data-ref="_M/ATRAC3P_SUBBANDS">ATRAC3P_SUBBANDS</a>];    <i class="doc">///&lt; 1 - perform subband-wise channel swapping</i></td></tr>
+<tr><th id="144">144</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="Atrac3pChanUnitCtx::negate_coeffs" title='Atrac3pChanUnitCtx::negate_coeffs' data-ref="Atrac3pChanUnitCtx::negate_coeffs">negate_coeffs</dfn>[<a class="macro" href="#40" title="16" data-ref="_M/ATRAC3P_SUBBANDS">ATRAC3P_SUBBANDS</a>];    <i class="doc">///&lt; 1 - subband-wise IMDCT coefficients negation</i></td></tr>
+<tr><th id="145">145</th><td>    <a class="typedef" href="#Atrac3pChanParams" title='Atrac3pChanParams' data-type='struct Atrac3pChanParams' data-ref="Atrac3pChanParams">Atrac3pChanParams</a> <dfn class="decl" id="Atrac3pChanUnitCtx::channels" title='Atrac3pChanUnitCtx::channels' data-ref="Atrac3pChanUnitCtx::channels">channels</dfn>[<var>2</var>];</td></tr>
+<tr><th id="146">146</th><td></td></tr>
+<tr><th id="147">147</th><td>    <i>/* Variables related to GHA tones */</i></td></tr>
+<tr><th id="148">148</th><td>    <a class="typedef" href="#Atrac3pWaveSynthParams" title='Atrac3pWaveSynthParams' data-type='struct Atrac3pWaveSynthParams' data-ref="Atrac3pWaveSynthParams">Atrac3pWaveSynthParams</a> <dfn class="decl" id="Atrac3pChanUnitCtx::wave_synth_hist" title='Atrac3pChanUnitCtx::wave_synth_hist' data-ref="Atrac3pChanUnitCtx::wave_synth_hist">wave_synth_hist</dfn>[<var>2</var>];     <i class="doc">///&lt; waves synth history for two frames</i></td></tr>
+<tr><th id="149">149</th><td>    <a class="typedef" href="#Atrac3pWaveSynthParams" title='Atrac3pWaveSynthParams' data-type='struct Atrac3pWaveSynthParams' data-ref="Atrac3pWaveSynthParams">Atrac3pWaveSynthParams</a> *<dfn class="decl" id="Atrac3pChanUnitCtx::waves_info" title='Atrac3pChanUnitCtx::waves_info' data-ref="Atrac3pChanUnitCtx::waves_info">waves_info</dfn>;</td></tr>
+<tr><th id="150">150</th><td>    <a class="typedef" href="#Atrac3pWaveSynthParams" title='Atrac3pWaveSynthParams' data-type='struct Atrac3pWaveSynthParams' data-ref="Atrac3pWaveSynthParams">Atrac3pWaveSynthParams</a> *<dfn class="decl" id="Atrac3pChanUnitCtx::waves_info_prev" title='Atrac3pChanUnitCtx::waves_info_prev' data-ref="Atrac3pChanUnitCtx::waves_info_prev">waves_info_prev</dfn>;</td></tr>
+<tr><th id="151">151</th><td></td></tr>
+<tr><th id="152">152</th><td>    <a class="typedef" href="#Atrac3pIPQFChannelCtx" title='Atrac3pIPQFChannelCtx' data-type='struct Atrac3pIPQFChannelCtx' data-ref="Atrac3pIPQFChannelCtx">Atrac3pIPQFChannelCtx</a> <dfn class="decl" id="Atrac3pChanUnitCtx::ipqf_ctx" title='Atrac3pChanUnitCtx::ipqf_ctx' data-ref="Atrac3pChanUnitCtx::ipqf_ctx">ipqf_ctx</dfn>[<var>2</var>];</td></tr>
+<tr><th id="153">153</th><td>    <a class="macro" href="../libavutil/mem.h.html#101" title="float __attribute__ ((aligned (32))) prev_buf" data-ref="_M/DECLARE_ALIGNED">DECLARE_ALIGNED</a>(<var>32</var>, <em>float</em>, <dfn class="decl" id="Atrac3pChanUnitCtx::prev_buf" title='Atrac3pChanUnitCtx::prev_buf' data-ref="Atrac3pChanUnitCtx::prev_buf">prev_buf</dfn>)[<var>2</var>][<a class="macro" href="#42" title="(128 * 16)" data-ref="_M/ATRAC3P_FRAME_SAMPLES">ATRAC3P_FRAME_SAMPLES</a>]; <i class="doc">///&lt; overlapping buffer</i></td></tr>
+<tr><th id="154">154</th><td>} <dfn class="typedef" id="Atrac3pChanUnitCtx" title='Atrac3pChanUnitCtx' data-type='struct Atrac3pChanUnitCtx' data-ref="Atrac3pChanUnitCtx">Atrac3pChanUnitCtx</dfn>;</td></tr>
+<tr><th id="155">155</th><td></td></tr>
+<tr><th id="156">156</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="157">157</th><td><i class="doc"> * Initialize VLC tables for bitstream parsing.</i></td></tr>
+<tr><th id="158">158</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="159">159</th><td><em>void</em> <a class="decl" href="atrac3plus.c.html#ff_atrac3p_init_vlcs" title='ff_atrac3p_init_vlcs' data-ref="ff_atrac3p_init_vlcs" id="ff_atrac3p_init_vlcs">ff_atrac3p_init_vlcs</a>(<em>void</em>);</td></tr>
+<tr><th id="160">160</th><td></td></tr>
+<tr><th id="161">161</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="162">162</th><td><i class="doc"> * Decode bitstream data of a channel unit.</i></td></tr>
+<tr><th id="163">163</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="164">164</th><td><i class="doc"> * <span class="command">@param</span>[in]     <span class="arg">gb</span>            the GetBit context</i></td></tr>
+<tr><th id="165">165</th><td><i class="doc"> * <span class="command">@param</span>[in,out] <span class="arg">ctx</span>           ptr to the channel unit context</i></td></tr>
+<tr><th id="166">166</th><td><i class="doc"> * <span class="command">@param</span>[in]     <span class="arg">num_channels</span>  number of channels to process</i></td></tr>
+<tr><th id="167">167</th><td><i class="doc"> * <span class="command">@param</span>[in]     <span class="arg">avctx</span>         ptr to the AVCodecContext</i></td></tr>
+<tr><th id="168">168</th><td><i class="doc"> * <span class="command">@return</span> result code: 0 = OK, otherwise - error code</i></td></tr>
+<tr><th id="169">169</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="170">170</th><td><em>int</em> <a class="decl" href="atrac3plus.c.html#ff_atrac3p_decode_channel_unit" title='ff_atrac3p_decode_channel_unit' data-ref="ff_atrac3p_decode_channel_unit" id="ff_atrac3p_decode_channel_unit">ff_atrac3p_decode_channel_unit</a>(<a class="typedef" href="get_bits.h.html#GetBitContext" title='GetBitContext' data-type='struct GetBitContext' data-ref="GetBitContext">GetBitContext</a> *<dfn class="local col1 decl" id="1gb" title='gb' data-type='GetBitContext *' data-ref="1gb">gb</dfn>, <a class="typedef" href="#Atrac3pChanUnitCtx" title='Atrac3pChanUnitCtx' data-type='struct Atrac3pChanUnitCtx' data-ref="Atrac3pChanUnitCtx">Atrac3pChanUnitCtx</a> *<dfn class="local col2 decl" id="2ctx" title='ctx' data-type='Atrac3pChanUnitCtx *' data-ref="2ctx">ctx</dfn>,</td></tr>
+<tr><th id="171">171</th><td>                                   <em>int</em> <dfn class="local col3 decl" id="3num_channels" title='num_channels' data-type='int' data-ref="3num_channels">num_channels</dfn>, <a class="typedef" href="avcodec.h.html#AVCodecContext" title='AVCodecContext' data-type='struct AVCodecContext' data-ref="AVCodecContext">AVCodecContext</a> *<dfn class="local col4 decl" id="4avctx" title='avctx' data-type='AVCodecContext *' data-ref="4avctx">avctx</dfn>);</td></tr>
+<tr><th id="172">172</th><td></td></tr>
+<tr><th id="173">173</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="174">174</th><td><i class="doc"> * Initialize IMDCT transform.</i></td></tr>
+<tr><th id="175">175</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="176">176</th><td><i class="doc"> * <span class="command">@param</span>[in]   <span class="arg">avctx</span>      ptr to the AVCodecContext</i></td></tr>
+<tr><th id="177">177</th><td><i class="doc"> * <span class="command">@param</span>[in]   <span class="arg">mdct_ctx</span>   pointer to MDCT transform context</i></td></tr>
+<tr><th id="178">178</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="179">179</th><td><em>void</em> <dfn class="decl" id="ff_atrac3p_init_imdct" title='ff_atrac3p_init_imdct' data-ref="ff_atrac3p_init_imdct">ff_atrac3p_init_imdct</dfn>(<a class="typedef" href="avcodec.h.html#AVCodecContext" title='AVCodecContext' data-type='struct AVCodecContext' data-ref="AVCodecContext">AVCodecContext</a> *<dfn class="local col5 decl" id="5avctx" title='avctx' data-type='AVCodecContext *' data-ref="5avctx">avctx</dfn>, <a class="typedef" href="avfft.h.html#FFTContext" title='FFTContext' data-type='struct FFTContext' data-ref="FFTContext">FFTContext</a> *<dfn class="local col6 decl" id="6mdct_ctx" title='mdct_ctx' data-type='FFTContext *' data-ref="6mdct_ctx">mdct_ctx</dfn>);</td></tr>
+<tr><th id="180">180</th><td></td></tr>
+<tr><th id="181">181</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="182">182</th><td><i class="doc"> * Initialize sine waves synthesizer.</i></td></tr>
+<tr><th id="183">183</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="184">184</th><td><em>void</em> <dfn class="decl" id="ff_atrac3p_init_wave_synth" title='ff_atrac3p_init_wave_synth' data-ref="ff_atrac3p_init_wave_synth">ff_atrac3p_init_wave_synth</dfn>(<em>void</em>);</td></tr>
+<tr><th id="185">185</th><td></td></tr>
+<tr><th id="186">186</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="187">187</th><td><i class="doc"> * Synthesize sine waves for a particular subband.</i></td></tr>
+<tr><th id="188">188</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="189">189</th><td><i class="doc"> * <span class="command">@param</span>[in]   <span class="arg">ch_unit</span>   pointer to the channel unit context</i></td></tr>
+<tr><th id="190">190</th><td><i class="doc"> * <span class="command">@param</span>[in]   <span class="arg">fdsp</span>      pointer to float DSP context</i></td></tr>
+<tr><th id="191">191</th><td><i class="doc"> * <span class="command">@param</span>[in]   <span class="arg">ch_num</span>    which channel to process</i></td></tr>
+<tr><th id="192">192</th><td><i class="doc"> * <span class="command">@param</span>[in]   <span class="arg">sb</span>        which subband to process</i></td></tr>
+<tr><th id="193">193</th><td><i class="doc"> * <span class="command">@param</span>[out]  <span class="arg">out</span>       receives processed data</i></td></tr>
+<tr><th id="194">194</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="195">195</th><td><em>void</em> <dfn class="decl" id="ff_atrac3p_generate_tones" title='ff_atrac3p_generate_tones' data-ref="ff_atrac3p_generate_tones">ff_atrac3p_generate_tones</dfn>(<a class="typedef" href="#Atrac3pChanUnitCtx" title='Atrac3pChanUnitCtx' data-type='struct Atrac3pChanUnitCtx' data-ref="Atrac3pChanUnitCtx">Atrac3pChanUnitCtx</a> *<dfn class="local col7 decl" id="7ch_unit" title='ch_unit' data-type='Atrac3pChanUnitCtx *' data-ref="7ch_unit">ch_unit</dfn>, <a class="typedef" href="../libavutil/float_dsp.h.html#AVFloatDSPContext" title='AVFloatDSPContext' data-type='struct AVFloatDSPContext' data-ref="AVFloatDSPContext">AVFloatDSPContext</a> *<dfn class="local col8 decl" id="8fdsp" title='fdsp' data-type='AVFloatDSPContext *' data-ref="8fdsp">fdsp</dfn>,</td></tr>
+<tr><th id="196">196</th><td>                               <em>int</em> <dfn class="local col9 decl" id="9ch_num" title='ch_num' data-type='int' data-ref="9ch_num">ch_num</dfn>, <em>int</em> <dfn class="local col0 decl" id="10sb" title='sb' data-type='int' data-ref="10sb">sb</dfn>, <em>float</em> *<dfn class="local col1 decl" id="11out" title='out' data-type='float *' data-ref="11out">out</dfn>);</td></tr>
+<tr><th id="197">197</th><td></td></tr>
+<tr><th id="198">198</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="199">199</th><td><i class="doc"> * Perform power compensation aka noise dithering.</i></td></tr>
+<tr><th id="200">200</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="201">201</th><td><i class="doc"> * <span class="command">@param</span>[in]      <span class="arg">ctx</span>         ptr to the channel context</i></td></tr>
+<tr><th id="202">202</th><td><i class="doc"> * <span class="command">@param</span>[in]      <span class="arg">ch_index</span>    which channel to process</i></td></tr>
+<tr><th id="203">203</th><td><i class="doc"> * <span class="command">@param</span>[in,out]  <span class="arg">sp</span>          ptr to channel spectrum to process</i></td></tr>
+<tr><th id="204">204</th><td><i class="doc"> * <span class="command">@param</span>[in]      <span class="arg">rng_index</span>   indicates which RNG table to use</i></td></tr>
+<tr><th id="205">205</th><td><i class="doc"> * <span class="command">@param</span>[in]      <span class="arg">sb_num</span>      which subband to process</i></td></tr>
+<tr><th id="206">206</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="207">207</th><td><em>void</em> <dfn class="decl" id="ff_atrac3p_power_compensation" title='ff_atrac3p_power_compensation' data-ref="ff_atrac3p_power_compensation">ff_atrac3p_power_compensation</dfn>(<a class="typedef" href="#Atrac3pChanUnitCtx" title='Atrac3pChanUnitCtx' data-type='struct Atrac3pChanUnitCtx' data-ref="Atrac3pChanUnitCtx">Atrac3pChanUnitCtx</a> *<dfn class="local col2 decl" id="12ctx" title='ctx' data-type='Atrac3pChanUnitCtx *' data-ref="12ctx">ctx</dfn>, <em>int</em> <dfn class="local col3 decl" id="13ch_index" title='ch_index' data-type='int' data-ref="13ch_index">ch_index</dfn>,</td></tr>
+<tr><th id="208">208</th><td>                                   <em>float</em> *<dfn class="local col4 decl" id="14sp" title='sp' data-type='float *' data-ref="14sp">sp</dfn>, <em>int</em> <dfn class="local col5 decl" id="15rng_index" title='rng_index' data-type='int' data-ref="15rng_index">rng_index</dfn>, <em>int</em> <dfn class="local col6 decl" id="16sb_num" title='sb_num' data-type='int' data-ref="16sb_num">sb_num</dfn>);</td></tr>
+<tr><th id="209">209</th><td></td></tr>
+<tr><th id="210">210</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="211">211</th><td><i class="doc"> * Regular IMDCT and windowing without overlapping,</i></td></tr>
+<tr><th id="212">212</th><td><i class="doc"> * with spectrum reversal in the odd subbands.</i></td></tr>
+<tr><th id="213">213</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="214">214</th><td><i class="doc"> * <span class="command">@param</span>[in]   <span class="arg">fdsp</span>       pointer to float DSP context</i></td></tr>
+<tr><th id="215">215</th><td><i class="doc"> * <span class="command">@param</span>[in]   <span class="arg">mdct_ctx</span>   pointer to MDCT transform context</i></td></tr>
+<tr><th id="216">216</th><td><i class="doc"> * <span class="command">@param</span>[in]   <span class="arg">pIn</span>        float input</i></td></tr>
+<tr><th id="217">217</th><td><i class="doc"> * <span class="command">@param</span>[out]  <span class="arg">pOut</span>       float output</i></td></tr>
+<tr><th id="218">218</th><td><i class="doc"> * <span class="command">@param</span>[in]   <span class="arg">wind_id</span>    which MDCT window to apply</i></td></tr>
+<tr><th id="219">219</th><td><i class="doc"> * <span class="command">@param</span>[in]   <span class="arg">sb</span>         subband number</i></td></tr>
+<tr><th id="220">220</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="221">221</th><td><em>void</em> <dfn class="decl" id="ff_atrac3p_imdct" title='ff_atrac3p_imdct' data-ref="ff_atrac3p_imdct">ff_atrac3p_imdct</dfn>(<a class="typedef" href="../libavutil/float_dsp.h.html#AVFloatDSPContext" title='AVFloatDSPContext' data-type='struct AVFloatDSPContext' data-ref="AVFloatDSPContext">AVFloatDSPContext</a> *<dfn class="local col7 decl" id="17fdsp" title='fdsp' data-type='AVFloatDSPContext *' data-ref="17fdsp">fdsp</dfn>, <a class="typedef" href="avfft.h.html#FFTContext" title='FFTContext' data-type='struct FFTContext' data-ref="FFTContext">FFTContext</a> *<dfn class="local col8 decl" id="18mdct_ctx" title='mdct_ctx' data-type='FFTContext *' data-ref="18mdct_ctx">mdct_ctx</dfn>, <em>float</em> *<dfn class="local col9 decl" id="19pIn" title='pIn' data-type='float *' data-ref="19pIn">pIn</dfn>,</td></tr>
+<tr><th id="222">222</th><td>                      <em>float</em> *<dfn class="local col0 decl" id="20pOut" title='pOut' data-type='float *' data-ref="20pOut">pOut</dfn>, <em>int</em> <dfn class="local col1 decl" id="21wind_id" title='wind_id' data-type='int' data-ref="21wind_id">wind_id</dfn>, <em>int</em> <dfn class="local col2 decl" id="22sb" title='sb' data-type='int' data-ref="22sb">sb</dfn>);</td></tr>
+<tr><th id="223">223</th><td></td></tr>
+<tr><th id="224">224</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="225">225</th><td><i class="doc"> * Subband synthesis filter based on the polyphase quadrature (pseudo-QMF)</i></td></tr>
+<tr><th id="226">226</th><td><i class="doc"> * filter bank.</i></td></tr>
+<tr><th id="227">227</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="228">228</th><td><i class="doc"> * <span class="command">@param</span>[in]      <span class="arg">dct_ctx</span>   ptr to the pre-initialized IDCT context</i></td></tr>
+<tr><th id="229">229</th><td><i class="doc"> * <span class="command">@param</span>[in,out]  <span class="arg">hist</span>      ptr to the filter history</i></td></tr>
+<tr><th id="230">230</th><td><i class="doc"> * <span class="command">@param</span>[in]      <span class="arg">in</span>        input data to process</i></td></tr>
+<tr><th id="231">231</th><td><i class="doc"> * <span class="command">@param</span>[out]     <span class="arg">out</span>       receives processed data</i></td></tr>
+<tr><th id="232">232</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="233">233</th><td><em>void</em> <dfn class="decl" id="ff_atrac3p_ipqf" title='ff_atrac3p_ipqf' data-ref="ff_atrac3p_ipqf">ff_atrac3p_ipqf</dfn>(<a class="typedef" href="avfft.h.html#FFTContext" title='FFTContext' data-type='struct FFTContext' data-ref="FFTContext">FFTContext</a> *<dfn class="local col3 decl" id="23dct_ctx" title='dct_ctx' data-type='FFTContext *' data-ref="23dct_ctx">dct_ctx</dfn>, <a class="typedef" href="#Atrac3pIPQFChannelCtx" title='Atrac3pIPQFChannelCtx' data-type='struct Atrac3pIPQFChannelCtx' data-ref="Atrac3pIPQFChannelCtx">Atrac3pIPQFChannelCtx</a> *<dfn class="local col4 decl" id="24hist" title='hist' data-type='Atrac3pIPQFChannelCtx *' data-ref="24hist">hist</dfn>,</td></tr>
+<tr><th id="234">234</th><td>                     <em>const</em> <em>float</em> *<dfn class="local col5 decl" id="25in" title='in' data-type='const float *' data-ref="25in">in</dfn>, <em>float</em> *<dfn class="local col6 decl" id="26out" title='out' data-type='float *' data-ref="26out">out</dfn>);</td></tr>
+<tr><th id="235">235</th><td></td></tr>
+<tr><th id="236">236</th><td><b>extern</b> <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> <dfn class="decl" id="ff_atrac3p_qu_to_spec_pos" title='ff_atrac3p_qu_to_spec_pos' data-ref="ff_atrac3p_qu_to_spec_pos">ff_atrac3p_qu_to_spec_pos</dfn>[<var>33</var>];</td></tr>
+<tr><th id="237">237</th><td><b>extern</b> <em>const</em> <em>float</em> <dfn class="decl" id="ff_atrac3p_sf_tab" title='ff_atrac3p_sf_tab' data-ref="ff_atrac3p_sf_tab">ff_atrac3p_sf_tab</dfn>[<var>64</var>];</td></tr>
+<tr><th id="238">238</th><td><b>extern</b> <em>const</em> <em>float</em> <dfn class="decl" id="ff_atrac3p_mant_tab" title='ff_atrac3p_mant_tab' data-ref="ff_atrac3p_mant_tab">ff_atrac3p_mant_tab</dfn>[<var>8</var>];</td></tr>
+<tr><th id="239">239</th><td></td></tr>
+<tr><th id="240">240</th><td><u>#<span data-ppcond="28">endif</span> /* AVCODEC_ATRAC3PLUS_H */</u></td></tr>
+<tr><th id="241">241</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated while processing <a href='atrac3plus.c.html'>ffmpeg/libavcodec/atrac3plus.c</a><br/>Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

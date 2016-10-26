@@ -1,0 +1,634 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>af_replaygain.c source code [ffmpeg/libavfilter/af_replaygain.c] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="ReplayGainContext,ReplayGainFreqInfo "/>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavfilter/af_replaygain.c'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavfilter</a>/<a href='af_replaygain.c.html'>af_replaygain.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * Copyright (c) 1998 - 2009 Conifer Software</i></td></tr>
+<tr><th id="3">3</th><td><i> *</i></td></tr>
+<tr><th id="4">4</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="5">5</th><td><i> *</i></td></tr>
+<tr><th id="6">6</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="7">7</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="8">8</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="9">9</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="10">10</th><td><i> *</i></td></tr>
+<tr><th id="11">11</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="12">12</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="13">13</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="14">14</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="15">15</th><td><i> *</i></td></tr>
+<tr><th id="16">16</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="17">17</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="18">18</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="19">19</th><td><i> */</i></td></tr>
+<tr><th id="20">20</th><td></td></tr>
+<tr><th id="21">21</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="22">22</th><td><i class="doc"> *<span class="command"> @file</span></i></td></tr>
+<tr><th id="23">23</th><td><i class="doc"> * ReplayGain scanner</i></td></tr>
+<tr><th id="24">24</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="25">25</th><td></td></tr>
+<tr><th id="26">26</th><td><u>#include <a href="../libavutil/avassert.h.html">"libavutil/avassert.h"</a></u></td></tr>
+<tr><th id="27">27</th><td><u>#include <a href="../libavutil/channel_layout.h.html">"libavutil/channel_layout.h"</a></u></td></tr>
+<tr><th id="28">28</th><td><u>#include <a href="audio.h.html">"audio.h"</a></u></td></tr>
+<tr><th id="29">29</th><td><u>#include <a href="avfilter.h.html">"avfilter.h"</a></u></td></tr>
+<tr><th id="30">30</th><td><u>#include <a href="internal.h.html">"internal.h"</a></u></td></tr>
+<tr><th id="31">31</th><td></td></tr>
+<tr><th id="32">32</th><td><u>#define <dfn class="macro" id="_M/HISTOGRAM_SLOTS" data-ref="_M/HISTOGRAM_SLOTS">HISTOGRAM_SLOTS</dfn> 12000</u></td></tr>
+<tr><th id="33">33</th><td><u>#define <dfn class="macro" id="_M/BUTTER_ORDER" data-ref="_M/BUTTER_ORDER">BUTTER_ORDER</dfn>        2</u></td></tr>
+<tr><th id="34">34</th><td><u>#define <dfn class="macro" id="_M/YULE_ORDER" data-ref="_M/YULE_ORDER">YULE_ORDER</dfn>         10</u></td></tr>
+<tr><th id="35">35</th><td></td></tr>
+<tr><th id="36">36</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="ReplayGainFreqInfo" title='ReplayGainFreqInfo' data-ref="ReplayGainFreqInfo"><a class="type" href="#ReplayGainFreqInfo" title='ReplayGainFreqInfo' data-ref="ReplayGainFreqInfo">ReplayGainFreqInfo</a></dfn> {</td></tr>
+<tr><th id="37">37</th><td>    <em>int</em>    <dfn class="tu decl" id="ReplayGainFreqInfo::sample_rate" title='ReplayGainFreqInfo::sample_rate' data-type='int' data-ref="ReplayGainFreqInfo::sample_rate">sample_rate</dfn>;</td></tr>
+<tr><th id="38">38</th><td>    <em>double</em> <dfn class="tu decl" id="ReplayGainFreqInfo::BYule" title='ReplayGainFreqInfo::BYule' data-type='double [11]' data-ref="ReplayGainFreqInfo::BYule">BYule</dfn>[<a class="macro" href="#34" title="10" data-ref="_M/YULE_ORDER">YULE_ORDER</a> + <var>1</var>];</td></tr>
+<tr><th id="39">39</th><td>    <em>double</em> <dfn class="tu decl" id="ReplayGainFreqInfo::AYule" title='ReplayGainFreqInfo::AYule' data-type='double [11]' data-ref="ReplayGainFreqInfo::AYule">AYule</dfn>[<a class="macro" href="#34" title="10" data-ref="_M/YULE_ORDER">YULE_ORDER</a> + <var>1</var>];</td></tr>
+<tr><th id="40">40</th><td>    <em>double</em> <dfn class="tu decl" id="ReplayGainFreqInfo::BButter" title='ReplayGainFreqInfo::BButter' data-type='double [3]' data-ref="ReplayGainFreqInfo::BButter">BButter</dfn>[<a class="macro" href="#33" title="2" data-ref="_M/BUTTER_ORDER">BUTTER_ORDER</a> + <var>1</var>];</td></tr>
+<tr><th id="41">41</th><td>    <em>double</em> <dfn class="tu decl" id="ReplayGainFreqInfo::AButter" title='ReplayGainFreqInfo::AButter' data-type='double [3]' data-ref="ReplayGainFreqInfo::AButter">AButter</dfn>[<a class="macro" href="#33" title="2" data-ref="_M/BUTTER_ORDER">BUTTER_ORDER</a> + <var>1</var>];</td></tr>
+<tr><th id="42">42</th><td>} <dfn class="typedef" id="ReplayGainFreqInfo" title='ReplayGainFreqInfo' data-type='struct ReplayGainFreqInfo' data-ref="ReplayGainFreqInfo">ReplayGainFreqInfo</dfn>;</td></tr>
+<tr><th id="43">43</th><td></td></tr>
+<tr><th id="44">44</th><td><em>static</em> <em>const</em> <a class="typedef" href="#ReplayGainFreqInfo" title='ReplayGainFreqInfo' data-type='struct ReplayGainFreqInfo' data-ref="ReplayGainFreqInfo">ReplayGainFreqInfo</a> <dfn class="tu decl def" id="freqinfos" title='freqinfos' data-type='const ReplayGainFreqInfo [20]' data-ref="freqinfos">freqinfos</dfn>[] =</td></tr>
+<tr><th id="45">45</th><td>{</td></tr>
+<tr><th id="46">46</th><td>    {</td></tr>
+<tr><th id="47">47</th><td>        <var>192000</var>,</td></tr>
+<tr><th id="48">48</th><td>        {  <var>0.01184742123123</var>, -<var>0.04631092400086</var>,  <var>0.06584226961238</var>,</td></tr>
+<tr><th id="49">49</th><td>          -<var>0.02165588522478</var>, -<var>0.05656260778952</var>,  <var>0.08607493592760</var>,</td></tr>
+<tr><th id="50">50</th><td>          -<var>0.03375544339786</var>, -<var>0.04216579932754</var>,  <var>0.06416711490648</var>,</td></tr>
+<tr><th id="51">51</th><td>          -<var>0.03444708260844</var>,  <var>0.00697275872241</var> },</td></tr>
+<tr><th id="52">52</th><td>        {  <var>1.00000000000000</var>, -<var>5.24727318348167</var>, <var>10.60821585192244</var>,</td></tr>
+<tr><th id="53">53</th><td>          -<var>8.74127665810413</var>, -<var>1.33906071371683</var>,  <var>8.07972882096606</var>,</td></tr>
+<tr><th id="54">54</th><td>          -<var>5.46179918950847</var>,  <var>0.54318070652536</var>,  <var>0.87450969224280</var>,</td></tr>
+<tr><th id="55">55</th><td>          -<var>0.34656083539754</var>,  <var>0.03034796843589</var> },</td></tr>
+<tr><th id="56">56</th><td>        {  <var>0.99653501465135</var>, -<var>1.99307002930271</var>,  <var>0.99653501465135</var> },</td></tr>
+<tr><th id="57">57</th><td>        {  <var>1.00000000000000</var>, -<var>1.99305802314321</var>,  <var>0.99308203546221</var> },</td></tr>
+<tr><th id="58">58</th><td>    },</td></tr>
+<tr><th id="59">59</th><td>    {</td></tr>
+<tr><th id="60">60</th><td>        <var>176400</var>,</td></tr>
+<tr><th id="61">61</th><td>        {  <var>0.00268568524529</var>, -<var>0.00852379426080</var>,  <var>0.00852704191347</var>,</td></tr>
+<tr><th id="62">62</th><td>           <var>0.00146116310295</var>, -<var>0.00950855828762</var>,  <var>0.00625449515499</var>,</td></tr>
+<tr><th id="63">63</th><td>           <var>0.00116183868722</var>, -<var>0.00362461417136</var>,  <var>0.00203961000134</var>,</td></tr>
+<tr><th id="64">64</th><td>          -<var>0.00050664587933</var>,  <var>0.00004327455427</var> },</td></tr>
+<tr><th id="65">65</th><td>        {  <var>1.00000000000000</var>, -<var>5.57512782763045</var>, <var>12.44291056065794</var>,</td></tr>
+<tr><th id="66">66</th><td>         -<var>12.87462799681221</var>,  <var>3.08554846961576</var>,  <var>6.62493459880692</var>,</td></tr>
+<tr><th id="67">67</th><td>          -<var>7.07662766313248</var>,  <var>2.51175542736441</var>,  <var>0.06731510802735</var>,</td></tr>
+<tr><th id="68">68</th><td>          -<var>0.24567753819213</var>,  <var>0.03961404162376</var> },</td></tr>
+<tr><th id="69">69</th><td>        {  <var>0.99622916581118</var>, -<var>1.99245833162236</var>,  <var>0.99622916581118</var> },</td></tr>
+<tr><th id="70">70</th><td>        {  <var>1.00000000000000</var>, -<var>1.99244411238133</var>,  <var>0.99247255086339</var> },</td></tr>
+<tr><th id="71">71</th><td>    },</td></tr>
+<tr><th id="72">72</th><td>    {</td></tr>
+<tr><th id="73">73</th><td>        <var>144000</var>,</td></tr>
+<tr><th id="74">74</th><td>        {  <var>0.00639682359450</var>, -<var>0.02556437970955</var>,  <var>0.04230854400938</var>,</td></tr>
+<tr><th id="75">75</th><td>          -<var>0.03722462201267</var>,  <var>0.01718514827295</var>,  <var>0.00610592243009</var>,</td></tr>
+<tr><th id="76">76</th><td>          -<var>0.03065965747365</var>,  <var>0.04345745003539</var>, -<var>0.03298592681309</var>,</td></tr>
+<tr><th id="77">77</th><td>           <var>0.01320937236809</var>, -<var>0.00220304127757</var> },</td></tr>
+<tr><th id="78">78</th><td>        {  <var>1.00000000000000</var>, -<var>6.14814623523425</var>, <var>15.80002457141566</var>,</td></tr>
+<tr><th id="79">79</th><td>         -<var>20.78487587686937</var>, <var>11.98848552310315</var>,  <var>3.36462015062606</var>,</td></tr>
+<tr><th id="80">80</th><td>         -<var>10.22419868359470</var>,  <var>6.65599702146473</var>, -<var>1.67141861110485</var>,</td></tr>
+<tr><th id="81">81</th><td>          -<var>0.05417956536718</var>,  <var>0.07374767867406</var> },</td></tr>
+<tr><th id="82">82</th><td>        {  <var>0.99538268958706</var>, -<var>1.99076537917413</var>,  <var>0.99538268958706</var> },</td></tr>
+<tr><th id="83">83</th><td>        {  <var>1.00000000000000</var>, -<var>1.99074405950505</var>,  <var>0.99078669884321</var> },</td></tr>
+<tr><th id="84">84</th><td>    },</td></tr>
+<tr><th id="85">85</th><td>    {</td></tr>
+<tr><th id="86">86</th><td>        <var>128000</var>,</td></tr>
+<tr><th id="87">87</th><td>        {  <var>0.00553120584305</var>, -<var>0.02112620545016</var>,  <var>0.03549076243117</var>,</td></tr>
+<tr><th id="88">88</th><td>          -<var>0.03362498312306</var>,  <var>0.01425867248183</var>,  <var>0.01344686928787</var>,</td></tr>
+<tr><th id="89">89</th><td>          -<var>0.03392770787836</var>,  <var>0.03464136459530</var>, -<var>0.02039116051549</var>,</td></tr>
+<tr><th id="90">90</th><td>           <var>0.00667420794705</var>, -<var>0.00093763762995</var> },</td></tr>
+<tr><th id="91">91</th><td>        {  <var>1.00000000000000</var>, -<var>6.14581710839925</var>, <var>16.04785903675838</var>,</td></tr>
+<tr><th id="92">92</th><td>         -<var>22.19089131407749</var>, <var>15.24756471580286</var>, -<var>0.52001440400238</var>,</td></tr>
+<tr><th id="93">93</th><td>          -<var>8.00488641699940</var>,  <var>6.60916094768855</var>, -<var>2.37856022810923</var>,</td></tr>
+<tr><th id="94">94</th><td>           <var>0.33106947986101</var>,  <var>0.00459820832036</var> },</td></tr>
+<tr><th id="95">95</th><td>        {  <var>0.99480702681278</var>, -<var>1.98961405362557</var>,  <var>0.99480702681278</var> },</td></tr>
+<tr><th id="96">96</th><td>        {  <var>1.00000000000000</var>, -<var>1.98958708647324</var>,  <var>0.98964102077790</var> },</td></tr>
+<tr><th id="97">97</th><td>    },</td></tr>
+<tr><th id="98">98</th><td>    {</td></tr>
+<tr><th id="99">99</th><td>        <var>112000</var>,</td></tr>
+<tr><th id="100">100</th><td>        {  <var>0.00528778718259</var>, -<var>0.01893240907245</var>,  <var>0.03185982561867</var>,</td></tr>
+<tr><th id="101">101</th><td>          -<var>0.02926260297838</var>,  <var>0.00715743034072</var>,  <var>0.01985743355827</var>,</td></tr>
+<tr><th id="102">102</th><td>          -<var>0.03222614850941</var>,  <var>0.02565681978192</var>, -<var>0.01210662313473</var>,</td></tr>
+<tr><th id="103">103</th><td>           <var>0.00325436284541</var>, -<var>0.00044173593001</var> },</td></tr>
+<tr><th id="104">104</th><td>        {  <var>1.00000000000000</var>, -<var>6.24932108456288</var>, <var>17.42344320538476</var>,</td></tr>
+<tr><th id="105">105</th><td>         -<var>27.86819709054896</var>, <var>26.79087344681326</var>,-<var>13.43711081485123</var>,</td></tr>
+<tr><th id="106">106</th><td>          -<var>0.66023612948173</var>,  <var>6.03658091814935</var>, -<var>4.24926577030310</var>,</td></tr>
+<tr><th id="107">107</th><td>           <var>1.40829268709186</var>, -<var>0.19480852628112</var> },</td></tr>
+<tr><th id="108">108</th><td>        {  <var>0.99406737810867</var>, -<var>1.98813475621734</var>,  <var>0.99406737810867</var> },</td></tr>
+<tr><th id="109">109</th><td>        {  <var>1.00000000000000</var>, -<var>1.98809955990514</var>,  <var>0.98816995252954</var> },</td></tr>
+<tr><th id="110">110</th><td>    },</td></tr>
+<tr><th id="111">111</th><td>    {</td></tr>
+<tr><th id="112">112</th><td>        <var>96000</var>,</td></tr>
+<tr><th id="113">113</th><td>        {  <var>0.00588138296683</var>, -<var>0.01613559730421</var>,  <var>0.02184798954216</var>,</td></tr>
+<tr><th id="114">114</th><td>          -<var>0.01742490405317</var>,  <var>0.00464635643780</var>,  <var>0.01117772513205</var>,</td></tr>
+<tr><th id="115">115</th><td>          -<var>0.02123865824368</var>,  <var>0.01959354413350</var>, -<var>0.01079720643523</var>,</td></tr>
+<tr><th id="116">116</th><td>           <var>0.00352183686289</var>, -<var>0.00063124341421</var> },</td></tr>
+<tr><th id="117">117</th><td>        {  <var>1.00000000000000</var>, -<var>5.97808823642008</var>, <var>16.21362507964068</var>,</td></tr>
+<tr><th id="118">118</th><td>         -<var>25.72923730652599</var>, <var>25.40470663139513</var>,-<var>14.66166287771134</var>,</td></tr>
+<tr><th id="119">119</th><td>           <var>2.81597484359752</var>,  <var>2.51447125969733</var>, -<var>2.23575306985286</var>,</td></tr>
+<tr><th id="120">120</th><td>           <var>0.75788151036791</var>, -<var>0.10078025199029</var> },</td></tr>
+<tr><th id="121">121</th><td>        {  <var>0.99308203517541</var>, -<var>1.98616407035082</var>,  <var>0.99308203517541</var> },</td></tr>
+<tr><th id="122">122</th><td>        {  <var>1.00000000000000</var>, -<var>1.98611621154089</var>,  <var>0.98621192916075</var> },</td></tr>
+<tr><th id="123">123</th><td>    },</td></tr>
+<tr><th id="124">124</th><td>    {</td></tr>
+<tr><th id="125">125</th><td>        <var>88200</var>,</td></tr>
+<tr><th id="126">126</th><td>        {  <var>0.02667482047416</var>, -<var>0.11377479336097</var>,  <var>0.23063167910965</var>,</td></tr>
+<tr><th id="127">127</th><td>          -<var>0.30726477945593</var>,  <var>0.33188520686529</var>, -<var>0.33862680249063</var>,</td></tr>
+<tr><th id="128">128</th><td>           <var>0.31807161531340</var>, -<var>0.23730796929880</var>,  <var>0.12273894790371</var>,</td></tr>
+<tr><th id="129">129</th><td>          -<var>0.03840017967282</var>,  <var>0.00549673387936</var> },</td></tr>
+<tr><th id="130">130</th><td>        {  <var>1.00000000000000</var>, -<var>6.31836451657302</var>, <var>18.31351310801799</var>,</td></tr>
+<tr><th id="131">131</th><td>         -<var>31.88210014815921</var>, <var>36.53792146976740</var>,-<var>28.23393036467559</var>,</td></tr>
+<tr><th id="132">132</th><td>          <var>14.24725258227189</var>, -<var>4.04670980012854</var>,  <var>0.18865757280515</var>,</td></tr>
+<tr><th id="133">133</th><td>           <var>0.25420333563908</var>, -<var>0.06012333531065</var> },</td></tr>
+<tr><th id="134">134</th><td>        {  <var>0.99247255046129</var>, -<var>1.98494510092259</var>,  <var>0.99247255046129</var> },</td></tr>
+<tr><th id="135">135</th><td>        {  <var>1.00000000000000</var>, -<var>1.98488843762335</var>,  <var>0.98500176422183</var> },</td></tr>
+<tr><th id="136">136</th><td>    },</td></tr>
+<tr><th id="137">137</th><td>    {</td></tr>
+<tr><th id="138">138</th><td>        <var>64000</var>,</td></tr>
+<tr><th id="139">139</th><td>        {  <var>0.02613056568174</var>, -<var>0.08128786488109</var>,  <var>0.14937282347325</var>,</td></tr>
+<tr><th id="140">140</th><td>          -<var>0.21695711675126</var>,  <var>0.25010286673402</var>, -<var>0.23162283619278</var>,</td></tr>
+<tr><th id="141">141</th><td>           <var>0.17424041833052</var>, -<var>0.10299599216680</var>,  <var>0.04258696481981</var>,</td></tr>
+<tr><th id="142">142</th><td>          -<var>0.00977952936493</var>,  <var>0.00105325558889</var> },</td></tr>
+<tr><th id="143">143</th><td>        {  <var>1.00000000000000</var>, -<var>5.73625477092119</var>, <var>16.15249794355035</var>,</td></tr>
+<tr><th id="144">144</th><td>         -<var>29.68654912464508</var>, <var>39.55706155674083</var>,-<var>39.82524556246253</var>,</td></tr>
+<tr><th id="145">145</th><td>          <var>30.50605345013009</var>,-<var>17.43051772821245</var>,  <var>7.05154573908017</var>,</td></tr>
+<tr><th id="146">146</th><td>          -<var>1.80783839720514</var>,  <var>0.22127840210813</var> },</td></tr>
+<tr><th id="147">147</th><td>        {  <var>0.98964101933472</var>, -<var>1.97928203866944</var>,  <var>0.98964101933472</var> },</td></tr>
+<tr><th id="148">148</th><td>        {  <var>1.00000000000000</var>, -<var>1.97917472731009</var>,  <var>0.97938935002880</var> },</td></tr>
+<tr><th id="149">149</th><td>    },</td></tr>
+<tr><th id="150">150</th><td>    {</td></tr>
+<tr><th id="151">151</th><td>        <var>56000</var>,</td></tr>
+<tr><th id="152">152</th><td>        {  <var>0.03144914734085</var>, -<var>0.06151729206963</var>,  <var>0.08066788708145</var>,</td></tr>
+<tr><th id="153">153</th><td>          -<var>0.09737939921516</var>,  <var>0.08943210803999</var>, -<var>0.06989984672010</var>,</td></tr>
+<tr><th id="154">154</th><td>           <var>0.04926972841044</var>, -<var>0.03161257848451</var>,  <var>0.01456837493506</var>,</td></tr>
+<tr><th id="155">155</th><td>          -<var>0.00316015108496</var>,  <var>0.00132807215875</var> },</td></tr>
+<tr><th id="156">156</th><td>        {  <var>1.00000000000000</var>, -<var>4.87377313090032</var>, <var>12.03922160140209</var>,</td></tr>
+<tr><th id="157">157</th><td>         -<var>20.10151118381395</var>, <var>25.10388534415171</var>,-<var>24.29065560815903</var>,</td></tr>
+<tr><th id="158">158</th><td>          <var>18.27158469090663</var>,-<var>10.45249552560593</var>,  <var>4.30319491872003</var>,</td></tr>
+<tr><th id="159">159</th><td>          -<var>1.13716992070185</var>,  <var>0.14510733527035</var> },</td></tr>
+<tr><th id="160">160</th><td>        {  <var>0.98816995007392</var>, -<var>1.97633990014784</var>,  <var>0.98816995007392</var> },</td></tr>
+<tr><th id="161">161</th><td>        {  <var>1.00000000000000</var>, -<var>1.97619994516973</var>,  <var>0.97647985512594</var> },</td></tr>
+<tr><th id="162">162</th><td>    },</td></tr>
+<tr><th id="163">163</th><td>    {</td></tr>
+<tr><th id="164">164</th><td>        <var>48000</var>,</td></tr>
+<tr><th id="165">165</th><td>        {  <var>0.03857599435200</var>, -<var>0.02160367184185</var>, -<var>0.00123395316851</var>,</td></tr>
+<tr><th id="166">166</th><td>          -<var>0.00009291677959</var>, -<var>0.01655260341619</var>,  <var>0.02161526843274</var>,</td></tr>
+<tr><th id="167">167</th><td>          -<var>0.02074045215285</var>,  <var>0.00594298065125</var>,  <var>0.00306428023191</var>,</td></tr>
+<tr><th id="168">168</th><td>           <var>0.00012025322027</var>,  <var>0.00288463683916</var> },</td></tr>
+<tr><th id="169">169</th><td>        {  <var>1.00000000000000</var>, -<var>3.84664617118067</var>,  <var>7.81501653005538</var>,</td></tr>
+<tr><th id="170">170</th><td>         -<var>11.34170355132042</var>, <var>13.05504219327545</var>,-<var>12.28759895145294</var>,</td></tr>
+<tr><th id="171">171</th><td>           <var>9.48293806319790</var>, -<var>5.87257861775999</var>,  <var>2.75465861874613</var>,</td></tr>
+<tr><th id="172">172</th><td>          -<var>0.86984376593551</var>,  <var>0.13919314567432</var> },</td></tr>
+<tr><th id="173">173</th><td>        {  <var>0.98621192462708</var>, -<var>1.97242384925416</var>,  <var>0.98621192462708</var> },</td></tr>
+<tr><th id="174">174</th><td>        {  <var>1.00000000000000</var>, -<var>1.97223372919527</var>,  <var>0.97261396931306</var> },</td></tr>
+<tr><th id="175">175</th><td>    },</td></tr>
+<tr><th id="176">176</th><td>    {</td></tr>
+<tr><th id="177">177</th><td>        <var>44100</var>,</td></tr>
+<tr><th id="178">178</th><td>        {  <var>0.05418656406430</var>, -<var>0.02911007808948</var>, -<var>0.00848709379851</var>,</td></tr>
+<tr><th id="179">179</th><td>          -<var>0.00851165645469</var>, -<var>0.00834990904936</var>,  <var>0.02245293253339</var>,</td></tr>
+<tr><th id="180">180</th><td>          -<var>0.02596338512915</var>,  <var>0.01624864962975</var>, -<var>0.00240879051584</var>,</td></tr>
+<tr><th id="181">181</th><td>           <var>0.00674613682247</var>, -<var>0.00187763777362</var> },</td></tr>
+<tr><th id="182">182</th><td>        {  <var>1.00000000000000</var>, -<var>3.47845948550071</var>,  <var>6.36317777566148</var>,</td></tr>
+<tr><th id="183">183</th><td>          -<var>8.54751527471874</var>,  <var>9.47693607801280</var>, -<var>8.81498681370155</var>,</td></tr>
+<tr><th id="184">184</th><td>           <var>6.85401540936998</var>, -<var>4.39470996079559</var>,  <var>2.19611684890774</var>,</td></tr>
+<tr><th id="185">185</th><td>          -<var>0.75104302451432</var>,  <var>0.13149317958808</var> },</td></tr>
+<tr><th id="186">186</th><td>        {  <var>0.98500175787242</var>, -<var>1.97000351574484</var>,  <var>0.98500175787242</var> },</td></tr>
+<tr><th id="187">187</th><td>        {  <var>1.00000000000000</var>, -<var>1.96977855582618</var>,  <var>0.97022847566350</var> },</td></tr>
+<tr><th id="188">188</th><td>    },</td></tr>
+<tr><th id="189">189</th><td>    {</td></tr>
+<tr><th id="190">190</th><td>        <var>37800</var>,</td></tr>
+<tr><th id="191">191</th><td>        {  <var>0.08717879977844</var>, -<var>0.01000374016172</var>, -<var>0.06265852122368</var>,</td></tr>
+<tr><th id="192">192</th><td>          -<var>0.01119328800950</var>, -<var>0.00114279372960</var>,  <var>0.02081333954769</var>,</td></tr>
+<tr><th id="193">193</th><td>          -<var>0.01603261863207</var>,  <var>0.01936763028546</var>,  <var>0.00760044736442</var>,</td></tr>
+<tr><th id="194">194</th><td>          -<var>0.00303979112271</var>, -<var>0.00075088605788</var> },</td></tr>
+<tr><th id="195">195</th><td>        {  <var>1.00000000000000</var>, -<var>2.62816311472146</var>,  <var>3.53734535817992</var>,</td></tr>
+<tr><th id="196">196</th><td>          -<var>3.81003448678921</var>,  <var>3.91291636730132</var>, -<var>3.53518605896288</var>,</td></tr>
+<tr><th id="197">197</th><td>           <var>2.71356866157873</var>, -<var>1.86723311846592</var>,  <var>1.12075382367659</var>,</td></tr>
+<tr><th id="198">198</th><td>          -<var>0.48574086886890</var>,  <var>0.11330544663849</var> },</td></tr>
+<tr><th id="199">199</th><td>        {  <var>0.98252400815195</var>, -<var>1.96504801630391</var>,  <var>0.98252400815195</var> },</td></tr>
+<tr><th id="200">200</th><td>        {  <var>1.00000000000000</var>, -<var>1.96474258269041</var>,  <var>0.96535344991740</var> },</td></tr>
+<tr><th id="201">201</th><td>    },</td></tr>
+<tr><th id="202">202</th><td>    {</td></tr>
+<tr><th id="203">203</th><td>        <var>32000</var>,</td></tr>
+<tr><th id="204">204</th><td>        {  <var>0.15457299681924</var>, -<var>0.09331049056315</var>, -<var>0.06247880153653</var>,</td></tr>
+<tr><th id="205">205</th><td>           <var>0.02163541888798</var>, -<var>0.05588393329856</var>,  <var>0.04781476674921</var>,</td></tr>
+<tr><th id="206">206</th><td>           <var>0.00222312597743</var>,  <var>0.03174092540049</var>, -<var>0.01390589421898</var>,</td></tr>
+<tr><th id="207">207</th><td>           <var>0.00651420667831</var>, -<var>0.00881362733839</var> },</td></tr>
+<tr><th id="208">208</th><td>        {  <var>1.00000000000000</var>, -<var>2.37898834973084</var>,  <var>2.84868151156327</var>,</td></tr>
+<tr><th id="209">209</th><td>          -<var>2.64577170229825</var>,  <var>2.23697657451713</var>, -<var>1.67148153367602</var>,</td></tr>
+<tr><th id="210">210</th><td>           <var>1.00595954808547</var>, -<var>0.45953458054983</var>,  <var>0.16378164858596</var>,</td></tr>
+<tr><th id="211">211</th><td>          -<var>0.05032077717131</var>,  <var>0.02347897407020</var> },</td></tr>
+<tr><th id="212">212</th><td>        {  <var>0.97938932735214</var>, -<var>1.95877865470428</var>,  <var>0.97938932735214</var> },</td></tr>
+<tr><th id="213">213</th><td>        {  <var>1.00000000000000</var>, -<var>1.95835380975398</var>,  <var>0.95920349965459</var> },</td></tr>
+<tr><th id="214">214</th><td>    },</td></tr>
+<tr><th id="215">215</th><td>    {</td></tr>
+<tr><th id="216">216</th><td>        <var>24000</var>,</td></tr>
+<tr><th id="217">217</th><td>        {  <var>0.30296907319327</var>, -<var>0.22613988682123</var>, -<var>0.08587323730772</var>,</td></tr>
+<tr><th id="218">218</th><td>           <var>0.03282930172664</var>, -<var>0.00915702933434</var>, -<var>0.02364141202522</var>,</td></tr>
+<tr><th id="219">219</th><td>          -<var>0.00584456039913</var>,  <var>0.06276101321749</var>, -<var>0.00000828086748</var>,</td></tr>
+<tr><th id="220">220</th><td>           <var>0.00205861885564</var>, -<var>0.02950134983287</var> },</td></tr>
+<tr><th id="221">221</th><td>        {  <var>1.00000000000000</var>, -<var>1.61273165137247</var>,  <var>1.07977492259970</var>,</td></tr>
+<tr><th id="222">222</th><td>          -<var>0.25656257754070</var>, -<var>0.16276719120440</var>, -<var>0.22638893773906</var>,</td></tr>
+<tr><th id="223">223</th><td>           <var>0.39120800788284</var>, -<var>0.22138138954925</var>,  <var>0.04500235387352</var>,</td></tr>
+<tr><th id="224">224</th><td>           <var>0.02005851806501</var>,  <var>0.00302439095741</var> },</td></tr>
+<tr><th id="225">225</th><td>        {  <var>0.97531843204928</var>, -<var>1.95063686409857</var>,  <var>0.97531843204928</var> },</td></tr>
+<tr><th id="226">226</th><td>        {  <var>1.00000000000000</var>, -<var>1.95002759149878</var>,  <var>0.95124613669835</var> },</td></tr>
+<tr><th id="227">227</th><td>    },</td></tr>
+<tr><th id="228">228</th><td>    {</td></tr>
+<tr><th id="229">229</th><td>        <var>22050</var>,</td></tr>
+<tr><th id="230">230</th><td>        {  <var>0.33642304856132</var>, -<var>0.25572241425570</var>, -<var>0.11828570177555</var>,</td></tr>
+<tr><th id="231">231</th><td>           <var>0.11921148675203</var>, -<var>0.07834489609479</var>, -<var>0.00469977914380</var>,</td></tr>
+<tr><th id="232">232</th><td>          -<var>0.00589500224440</var>,  <var>0.05724228140351</var>,  <var>0.00832043980773</var>,</td></tr>
+<tr><th id="233">233</th><td>          -<var>0.01635381384540</var>, -<var>0.01760176568150</var> },</td></tr>
+<tr><th id="234">234</th><td>        {  <var>1.00000000000000</var>, -<var>1.49858979367799</var>,  <var>0.87350271418188</var>,</td></tr>
+<tr><th id="235">235</th><td>           <var>0.12205022308084</var>, -<var>0.80774944671438</var>,  <var>0.47854794562326</var>,</td></tr>
+<tr><th id="236">236</th><td>          -<var>0.12453458140019</var>, -<var>0.04067510197014</var>,  <var>0.08333755284107</var>,</td></tr>
+<tr><th id="237">237</th><td>          -<var>0.04237348025746</var>,  <var>0.02977207319925</var> },</td></tr>
+<tr><th id="238">238</th><td>        {  <var>0.97316523498161</var>, -<var>1.94633046996323</var>,  <var>0.97316523498161</var> },</td></tr>
+<tr><th id="239">239</th><td>        {  <var>1.00000000000000</var>, -<var>1.94561023566527</var>,  <var>0.94705070426118</var> },</td></tr>
+<tr><th id="240">240</th><td>    },</td></tr>
+<tr><th id="241">241</th><td>    {</td></tr>
+<tr><th id="242">242</th><td>        <var>18900</var>,</td></tr>
+<tr><th id="243">243</th><td>        {  <var>0.38524531015142</var>, -<var>0.27682212062067</var>, -<var>0.09980181488805</var>,</td></tr>
+<tr><th id="244">244</th><td>           <var>0.09951486755646</var>, -<var>0.08934020156622</var>, -<var>0.00322369330199</var>,</td></tr>
+<tr><th id="245">245</th><td>          -<var>0.00110329090689</var>,  <var>0.03784509844682</var>,  <var>0.01683906213303</var>,</td></tr>
+<tr><th id="246">246</th><td>          -<var>0.01147039862572</var>, -<var>0.01941767987192</var> },</td></tr>
+<tr><th id="247">247</th><td>        {  <var>1.00000000000000</var>, -<var>1.29708918404534</var>,  <var>0.90399339674203</var>,</td></tr>
+<tr><th id="248">248</th><td>          -<var>0.29613799017877</var>, -<var>0.42326645916207</var>,  <var>0.37934887402200</var>,</td></tr>
+<tr><th id="249">249</th><td>          -<var>0.37919795944938</var>,  <var>0.23410283284785</var>, -<var>0.03892971758879</var>,</td></tr>
+<tr><th id="250">250</th><td>           <var>0.00403009552351</var>,  <var>0.03640166626278</var> },</td></tr>
+<tr><th id="251">251</th><td>        {  <var>0.96535326815829</var>, -<var>1.93070653631658</var>,  <var>0.96535326815829</var> },</td></tr>
+<tr><th id="252">252</th><td>        {  <var>1.00000000000000</var>, -<var>1.92950577983524</var>,  <var>0.93190729279793</var> },</td></tr>
+<tr><th id="253">253</th><td>    },</td></tr>
+<tr><th id="254">254</th><td>    {</td></tr>
+<tr><th id="255">255</th><td>        <var>16000</var>,</td></tr>
+<tr><th id="256">256</th><td>        {  <var>0.44915256608450</var>, -<var>0.14351757464547</var>, -<var>0.22784394429749</var>,</td></tr>
+<tr><th id="257">257</th><td>          -<var>0.01419140100551</var>,  <var>0.04078262797139</var>, -<var>0.12398163381748</var>,</td></tr>
+<tr><th id="258">258</th><td>           <var>0.04097565135648</var>,  <var>0.10478503600251</var>, -<var>0.01863887810927</var>,</td></tr>
+<tr><th id="259">259</th><td>          -<var>0.03193428438915</var>,  <var>0.00541907748707</var> },</td></tr>
+<tr><th id="260">260</th><td>        {  <var>1.00000000000000</var>, -<var>0.62820619233671</var>,  <var>0.29661783706366</var>,</td></tr>
+<tr><th id="261">261</th><td>          -<var>0.37256372942400</var>,  <var>0.00213767857124</var>, -<var>0.42029820170918</var>,</td></tr>
+<tr><th id="262">262</th><td>           <var>0.22199650564824</var>,  <var>0.00613424350682</var>,  <var>0.06747620744683</var>,</td></tr>
+<tr><th id="263">263</th><td>           <var>0.05784820375801</var>,  <var>0.03222754072173</var> },</td></tr>
+<tr><th id="264">264</th><td>        {  <var>0.96454515552826</var>, -<var>1.92909031105652</var>,  <var>0.96454515552826</var> },</td></tr>
+<tr><th id="265">265</th><td>        {  <var>1.00000000000000</var>, -<var>1.92783286977036</var>,  <var>0.93034775234268</var> },</td></tr>
+<tr><th id="266">266</th><td>    },</td></tr>
+<tr><th id="267">267</th><td>    {</td></tr>
+<tr><th id="268">268</th><td>        <var>12000</var>,</td></tr>
+<tr><th id="269">269</th><td>        {  <var>0.56619470757641</var>, -<var>0.75464456939302</var>,  <var>0.16242137742230</var>,</td></tr>
+<tr><th id="270">270</th><td>           <var>0.16744243493672</var>, -<var>0.18901604199609</var>,  <var>0.30931782841830</var>,</td></tr>
+<tr><th id="271">271</th><td>          -<var>0.27562961986224</var>,  <var>0.00647310677246</var>,  <var>0.08647503780351</var>,</td></tr>
+<tr><th id="272">272</th><td>          -<var>0.03788984554840</var>, -<var>0.00588215443421</var> },</td></tr>
+<tr><th id="273">273</th><td>        {  <var>1.00000000000000</var>, -<var>1.04800335126349</var>,  <var>0.29156311971249</var>,</td></tr>
+<tr><th id="274">274</th><td>          -<var>0.26806001042947</var>,  <var>0.00819999645858</var>,  <var>0.45054734505008</var>,</td></tr>
+<tr><th id="275">275</th><td>          -<var>0.33032403314006</var>,  <var>0.06739368333110</var>, -<var>0.04784254229033</var>,</td></tr>
+<tr><th id="276">276</th><td>           <var>0.01639907836189</var>,  <var>0.01807364323573</var> },</td></tr>
+<tr><th id="277">277</th><td>        {  <var>0.96009142950541</var>, -<var>1.92018285901082</var>,  <var>0.96009142950541</var> },</td></tr>
+<tr><th id="278">278</th><td>        {  <var>1.00000000000000</var>, -<var>1.91858953033784</var>,  <var>0.92177618768381</var> },</td></tr>
+<tr><th id="279">279</th><td>    },</td></tr>
+<tr><th id="280">280</th><td>    {</td></tr>
+<tr><th id="281">281</th><td>        <var>11025</var>,</td></tr>
+<tr><th id="282">282</th><td>        {  <var>0.58100494960553</var>, -<var>0.53174909058578</var>, -<var>0.14289799034253</var>,</td></tr>
+<tr><th id="283">283</th><td>           <var>0.17520704835522</var>,  <var>0.02377945217615</var>,  <var>0.15558449135573</var>,</td></tr>
+<tr><th id="284">284</th><td>          -<var>0.25344790059353</var>,  <var>0.01628462406333</var>,  <var>0.06920467763959</var>,</td></tr>
+<tr><th id="285">285</th><td>          -<var>0.03721611395801</var>, -<var>0.00749618797172</var> },</td></tr>
+<tr><th id="286">286</th><td>        {  <var>1.00000000000000</var>, -<var>0.51035327095184</var>, -<var>0.31863563325245</var>,</td></tr>
+<tr><th id="287">287</th><td>          -<var>0.20256413484477</var>,  <var>0.14728154134330</var>,  <var>0.38952639978999</var>,</td></tr>
+<tr><th id="288">288</th><td>          -<var>0.23313271880868</var>, -<var>0.05246019024463</var>, -<var>0.02505961724053</var>,</td></tr>
+<tr><th id="289">289</th><td>           <var>0.02442357316099</var>,  <var>0.01818801111503</var> },</td></tr>
+<tr><th id="290">290</th><td>        {  <var>0.95856916599601</var>, -<var>1.91713833199203</var>,  <var>0.95856916599601</var> },</td></tr>
+<tr><th id="291">291</th><td>        {  <var>1.00000000000000</var>, -<var>1.91542108074780</var>,  <var>0.91885558323625</var> },</td></tr>
+<tr><th id="292">292</th><td>    },</td></tr>
+<tr><th id="293">293</th><td>    {</td></tr>
+<tr><th id="294">294</th><td>        <var>8000</var>,</td></tr>
+<tr><th id="295">295</th><td>        {  <var>0.53648789255105</var>, -<var>0.42163034350696</var>, -<var>0.00275953611929</var>,</td></tr>
+<tr><th id="296">296</th><td>           <var>0.04267842219415</var>, -<var>0.10214864179676</var>,  <var>0.14590772289388</var>,</td></tr>
+<tr><th id="297">297</th><td>          -<var>0.02459864859345</var>, -<var>0.11202315195388</var>, -<var>0.04060034127000</var>,</td></tr>
+<tr><th id="298">298</th><td>           <var>0.04788665548180</var>, -<var>0.02217936801134</var> },</td></tr>
+<tr><th id="299">299</th><td>        {  <var>1.00000000000000</var>, -<var>0.25049871956020</var>, -<var>0.43193942311114</var>,</td></tr>
+<tr><th id="300">300</th><td>          -<var>0.03424681017675</var>, -<var>0.04678328784242</var>,  <var>0.26408300200955</var>,</td></tr>
+<tr><th id="301">301</th><td>           <var>0.15113130533216</var>, -<var>0.17556493366449</var>, -<var>0.18823009262115</var>,</td></tr>
+<tr><th id="302">302</th><td>           <var>0.05477720428674</var>,  <var>0.04704409688120</var> },</td></tr>
+<tr><th id="303">303</th><td>        {  <var>0.94597685600279</var>, -<var>1.89195371200558</var>,  <var>0.94597685600279</var> },</td></tr>
+<tr><th id="304">304</th><td>        {  <var>1.00000000000000</var>, -<var>1.88903307939452</var>,  <var>0.89487434461664</var> },</td></tr>
+<tr><th id="305">305</th><td>    },</td></tr>
+<tr><th id="306">306</th><td>};</td></tr>
+<tr><th id="307">307</th><td></td></tr>
+<tr><th id="308">308</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="ReplayGainContext" title='ReplayGainContext' data-ref="ReplayGainContext"><a class="type" href="#ReplayGainContext" title='ReplayGainContext' data-ref="ReplayGainContext">ReplayGainContext</a></dfn> {</td></tr>
+<tr><th id="309">309</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a> <dfn class="tu decl" id="ReplayGainContext::histogram" title='ReplayGainContext::histogram' data-type='uint32_t [12000]' data-ref="ReplayGainContext::histogram">histogram</dfn>[<a class="macro" href="#32" title="12000" data-ref="_M/HISTOGRAM_SLOTS">HISTOGRAM_SLOTS</a>];</td></tr>
+<tr><th id="310">310</th><td>    <em>float</em> <dfn class="tu decl" id="ReplayGainContext::peak" title='ReplayGainContext::peak' data-type='float' data-ref="ReplayGainContext::peak">peak</dfn>;</td></tr>
+<tr><th id="311">311</th><td>    <em>int</em> <dfn class="tu decl" id="ReplayGainContext::yule_hist_i" title='ReplayGainContext::yule_hist_i' data-type='int' data-ref="ReplayGainContext::yule_hist_i">yule_hist_i</dfn>, <dfn class="tu decl" id="ReplayGainContext::butter_hist_i" title='ReplayGainContext::butter_hist_i' data-type='int' data-ref="ReplayGainContext::butter_hist_i">butter_hist_i</dfn>;</td></tr>
+<tr><th id="312">312</th><td>    <em>const</em> <em>double</em> *<dfn class="tu decl" id="ReplayGainContext::yule_coeff_a" title='ReplayGainContext::yule_coeff_a' data-type='const double *' data-ref="ReplayGainContext::yule_coeff_a">yule_coeff_a</dfn>;</td></tr>
+<tr><th id="313">313</th><td>    <em>const</em> <em>double</em> *<dfn class="tu decl" id="ReplayGainContext::yule_coeff_b" title='ReplayGainContext::yule_coeff_b' data-type='const double *' data-ref="ReplayGainContext::yule_coeff_b">yule_coeff_b</dfn>;</td></tr>
+<tr><th id="314">314</th><td>    <em>const</em> <em>double</em> *<dfn class="tu decl" id="ReplayGainContext::butter_coeff_a" title='ReplayGainContext::butter_coeff_a' data-type='const double *' data-ref="ReplayGainContext::butter_coeff_a">butter_coeff_a</dfn>;</td></tr>
+<tr><th id="315">315</th><td>    <em>const</em> <em>double</em> *<dfn class="tu decl" id="ReplayGainContext::butter_coeff_b" title='ReplayGainContext::butter_coeff_b' data-type='const double *' data-ref="ReplayGainContext::butter_coeff_b">butter_coeff_b</dfn>;</td></tr>
+<tr><th id="316">316</th><td>    <em>float</em> <dfn class="tu decl" id="ReplayGainContext::yule_hist_a" title='ReplayGainContext::yule_hist_a' data-type='float [256]' data-ref="ReplayGainContext::yule_hist_a">yule_hist_a</dfn>[<var>256</var>];</td></tr>
+<tr><th id="317">317</th><td>    <em>float</em> <dfn class="tu decl" id="ReplayGainContext::yule_hist_b" title='ReplayGainContext::yule_hist_b' data-type='float [256]' data-ref="ReplayGainContext::yule_hist_b">yule_hist_b</dfn>[<var>256</var>];</td></tr>
+<tr><th id="318">318</th><td>    <em>float</em> <dfn class="tu decl" id="ReplayGainContext::butter_hist_a" title='ReplayGainContext::butter_hist_a' data-type='float [256]' data-ref="ReplayGainContext::butter_hist_a">butter_hist_a</dfn>[<var>256</var>];</td></tr>
+<tr><th id="319">319</th><td>    <em>float</em> <dfn class="tu decl" id="ReplayGainContext::butter_hist_b" title='ReplayGainContext::butter_hist_b' data-type='float [256]' data-ref="ReplayGainContext::butter_hist_b">butter_hist_b</dfn>[<var>256</var>];</td></tr>
+<tr><th id="320">320</th><td>} <dfn class="typedef" id="ReplayGainContext" title='ReplayGainContext' data-type='struct ReplayGainContext' data-ref="ReplayGainContext">ReplayGainContext</dfn>;</td></tr>
+<tr><th id="321">321</th><td></td></tr>
+<tr><th id="322">322</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="query_formats" title='query_formats' data-type='int query_formats(AVFilterContext * ctx)' data-ref="query_formats">query_formats</dfn>(<a class="typedef" href="avfilter.h.html#AVFilterContext" title='AVFilterContext' data-type='struct AVFilterContext' data-ref="AVFilterContext">AVFilterContext</a> *<dfn class="local col1 decl" id="1ctx" title='ctx' data-type='AVFilterContext *' data-ref="1ctx">ctx</dfn>)</td></tr>
+<tr><th id="323">323</th><td>{</td></tr>
+<tr><th id="324">324</th><td>    <a class="typedef" href="avfilter.h.html#AVFilterFormats" title='AVFilterFormats' data-type='struct AVFilterFormats' data-ref="AVFilterFormats">AVFilterFormats</a> *<dfn class="local col2 decl" id="2formats" title='formats' data-type='AVFilterFormats *' data-ref="2formats">formats</dfn> = <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="325">325</th><td>    <a class="typedef" href="formats.h.html#AVFilterChannelLayouts" title='AVFilterChannelLayouts' data-type='struct AVFilterChannelLayouts' data-ref="AVFilterChannelLayouts">AVFilterChannelLayouts</a> *<dfn class="local col3 decl" id="3layout" title='layout' data-type='AVFilterChannelLayouts *' data-ref="3layout">layout</dfn> = <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="326">326</th><td>    <em>int</em> <dfn class="local col4 decl" id="4i" title='i' data-type='int' data-ref="4i">i</dfn>, <dfn class="local col5 decl" id="5ret" title='ret' data-type='int' data-ref="5ret">ret</dfn>;</td></tr>
+<tr><th id="327">327</th><td></td></tr>
+<tr><th id="328">328</th><td>    <b>if</b> ((<a class="local col5 ref" href="#5ret" title='ret' data-ref="5ret">ret</a> = <a class="ref" href="formats.h.html#ff_add_format" title='ff_add_format' data-ref="ff_add_format">ff_add_format</a>                 (&amp;<a class="local col2 ref" href="#2formats" title='formats' data-ref="2formats">formats</a>, <a class="enum" href="../libavutil/samplefmt.h.html#AVSampleFormat::AV_SAMPLE_FMT_FLT" title='AVSampleFormat::AV_SAMPLE_FMT_FLT' data-ref="AVSampleFormat::AV_SAMPLE_FMT_FLT">AV_SAMPLE_FMT_FLT</a>  )) &lt; <var>0</var> ||</td></tr>
+<tr><th id="329">329</th><td>        (<a class="local col5 ref" href="#5ret" title='ret' data-ref="5ret">ret</a> = <a class="ref" href="formats.h.html#ff_set_common_formats" title='ff_set_common_formats' data-ref="ff_set_common_formats">ff_set_common_formats</a>         (<a class="local col1 ref" href="#1ctx" title='ctx' data-ref="1ctx">ctx</a>     , <a class="local col2 ref" href="#2formats" title='formats' data-ref="2formats">formats</a>            )) &lt; <var>0</var> ||</td></tr>
+<tr><th id="330">330</th><td>        (<a class="local col5 ref" href="#5ret" title='ret' data-ref="5ret">ret</a> = <a class="ref" href="formats.h.html#ff_add_channel_layout" title='ff_add_channel_layout' data-ref="ff_add_channel_layout">ff_add_channel_layout</a>         (&amp;<a class="local col3 ref" href="#3layout" title='layout' data-ref="3layout">layout</a> , <a class="macro" href="../libavutil/channel_layout.h.html#86" title="(0x00000001|0x00000002)" data-ref="_M/AV_CH_LAYOUT_STEREO">AV_CH_LAYOUT_STEREO</a>)) &lt; <var>0</var> ||</td></tr>
+<tr><th id="331">331</th><td>        (<a class="local col5 ref" href="#5ret" title='ret' data-ref="5ret">ret</a> = <a class="ref" href="formats.h.html#ff_set_common_channel_layouts" title='ff_set_common_channel_layouts' data-ref="ff_set_common_channel_layouts">ff_set_common_channel_layouts</a> (<a class="local col1 ref" href="#1ctx" title='ctx' data-ref="1ctx">ctx</a>     , <a class="local col3 ref" href="#3layout" title='layout' data-ref="3layout">layout</a>             )) &lt; <var>0</var>)</td></tr>
+<tr><th id="332">332</th><td>        <b>return</b> <a class="local col5 ref" href="#5ret" title='ret' data-ref="5ret">ret</a>;</td></tr>
+<tr><th id="333">333</th><td></td></tr>
+<tr><th id="334">334</th><td>    <a class="local col2 ref" href="#2formats" title='formats' data-ref="2formats">formats</a> = <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="335">335</th><td>    <b>for</b> (<a class="local col4 ref" href="#4i" title='i' data-ref="4i">i</a> = <var>0</var>; <a class="local col4 ref" href="#4i" title='i' data-ref="4i">i</a> &lt; <a class="macro" href="../libavutil/common.h.html#100" title="(sizeof(freqinfos) / sizeof((freqinfos)[0]))" data-ref="_M/FF_ARRAY_ELEMS">FF_ARRAY_ELEMS</a>(<a class="tu ref" href="#freqinfos" title='freqinfos' data-use='r' data-ref="freqinfos">freqinfos</a>); <a class="local col4 ref" href="#4i" title='i' data-ref="4i">i</a>++) {</td></tr>
+<tr><th id="336">336</th><td>        <b>if</b> ((<a class="local col5 ref" href="#5ret" title='ret' data-ref="5ret">ret</a> = <a class="ref" href="formats.h.html#ff_add_format" title='ff_add_format' data-ref="ff_add_format">ff_add_format</a>(&amp;<a class="local col2 ref" href="#2formats" title='formats' data-ref="2formats">formats</a>, <a class="tu ref" href="#freqinfos" title='freqinfos' data-use='m' data-ref="freqinfos">freqinfos</a>[<a class="local col4 ref" href="#4i" title='i' data-ref="4i">i</a>].<a class="tu ref" href="#ReplayGainFreqInfo::sample_rate" title='ReplayGainFreqInfo::sample_rate' data-use='r' data-ref="ReplayGainFreqInfo::sample_rate">sample_rate</a>)) &lt; <var>0</var>)</td></tr>
+<tr><th id="337">337</th><td>            <b>return</b> <a class="local col5 ref" href="#5ret" title='ret' data-ref="5ret">ret</a>;</td></tr>
+<tr><th id="338">338</th><td>    }</td></tr>
+<tr><th id="339">339</th><td></td></tr>
+<tr><th id="340">340</th><td>    <b>return</b> <a class="ref" href="formats.h.html#ff_set_common_samplerates" title='ff_set_common_samplerates' data-ref="ff_set_common_samplerates">ff_set_common_samplerates</a>(<a class="local col1 ref" href="#1ctx" title='ctx' data-ref="1ctx">ctx</a>, <a class="local col2 ref" href="#2formats" title='formats' data-ref="2formats">formats</a>);</td></tr>
+<tr><th id="341">341</th><td>}</td></tr>
+<tr><th id="342">342</th><td></td></tr>
+<tr><th id="343">343</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="config_input" title='config_input' data-type='int config_input(AVFilterLink * inlink)' data-ref="config_input">config_input</dfn>(<a class="typedef" href="avfilter.h.html#AVFilterLink" title='AVFilterLink' data-type='struct AVFilterLink' data-ref="AVFilterLink">AVFilterLink</a> *<dfn class="local col6 decl" id="6inlink" title='inlink' data-type='AVFilterLink *' data-ref="6inlink">inlink</dfn>)</td></tr>
+<tr><th id="344">344</th><td>{</td></tr>
+<tr><th id="345">345</th><td>    <a class="typedef" href="avfilter.h.html#AVFilterContext" title='AVFilterContext' data-type='struct AVFilterContext' data-ref="AVFilterContext">AVFilterContext</a> *<dfn class="local col7 decl" id="7ctx" title='ctx' data-type='AVFilterContext *' data-ref="7ctx">ctx</dfn> = <a class="local col6 ref" href="#6inlink" title='inlink' data-ref="6inlink">inlink</a>-&gt;<a class="ref" href="avfilter.h.html#AVFilterLink::dst" title='AVFilterLink::dst' data-ref="AVFilterLink::dst">dst</a>;</td></tr>
+<tr><th id="346">346</th><td>    <a class="typedef" href="#ReplayGainContext" title='ReplayGainContext' data-type='struct ReplayGainContext' data-ref="ReplayGainContext">ReplayGainContext</a> *<dfn class="local col8 decl" id="8s" title='s' data-type='ReplayGainContext *' data-ref="8s">s</dfn> = <a class="local col7 ref" href="#7ctx" title='ctx' data-ref="7ctx">ctx</a>-&gt;<a class="ref" href="avfilter.h.html#AVFilterContext::priv" title='AVFilterContext::priv' data-ref="AVFilterContext::priv">priv</a>;</td></tr>
+<tr><th id="347">347</th><td>    <em>int</em> <dfn class="local col9 decl" id="9i" title='i' data-type='int' data-ref="9i">i</dfn>;</td></tr>
+<tr><th id="348">348</th><td></td></tr>
+<tr><th id="349">349</th><td>    <b>for</b> (<a class="local col9 ref" href="#9i" title='i' data-ref="9i">i</a> = <var>0</var>; <a class="local col9 ref" href="#9i" title='i' data-ref="9i">i</a> &lt; <a class="macro" href="../libavutil/common.h.html#100" title="(sizeof(freqinfos) / sizeof((freqinfos)[0]))" data-ref="_M/FF_ARRAY_ELEMS">FF_ARRAY_ELEMS</a>(<a class="tu ref" href="#freqinfos" title='freqinfos' data-use='r' data-ref="freqinfos">freqinfos</a>); <a class="local col9 ref" href="#9i" title='i' data-ref="9i">i</a>++) {</td></tr>
+<tr><th id="350">350</th><td>        <b>if</b> (<a class="tu ref" href="#freqinfos" title='freqinfos' data-use='m' data-ref="freqinfos">freqinfos</a>[<a class="local col9 ref" href="#9i" title='i' data-ref="9i">i</a>].<a class="tu ref" href="#ReplayGainFreqInfo::sample_rate" title='ReplayGainFreqInfo::sample_rate' data-use='r' data-ref="ReplayGainFreqInfo::sample_rate">sample_rate</a> == <a class="local col6 ref" href="#6inlink" title='inlink' data-ref="6inlink">inlink</a>-&gt;<a class="ref" href="avfilter.h.html#AVFilterLink::sample_rate" title='AVFilterLink::sample_rate' data-ref="AVFilterLink::sample_rate">sample_rate</a>)</td></tr>
+<tr><th id="351">351</th><td>            <b>break</b>;</td></tr>
+<tr><th id="352">352</th><td>    }</td></tr>
+<tr><th id="353">353</th><td>    <a class="macro" href="../libavutil/avassert.h.html#37" title="do { if (!(i &lt; (sizeof(freqinfos) / sizeof((freqinfos)[0])))) { av_log(((void*)0), 0, &quot;Assertion %s failed at %s:%d\n&quot;, &quot;i &lt; (sizeof(freqinfos) / sizeof((freqinfos)[0]))&quot;, &quot;/usr/local/google/home/robertshih/ffmpeg/src/ffmpeg/libavfilter/af_replaygain.c&quot;, 353); abort(); } } while (0)" data-ref="_M/av_assert0">av_assert0</a>(<a class="local col9 ref" href="#9i" title='i' data-ref="9i">i</a> &lt; <a class="macro" href="../libavutil/common.h.html#100" title="(sizeof(freqinfos) / sizeof((freqinfos)[0]))" data-ref="_M/FF_ARRAY_ELEMS">FF_ARRAY_ELEMS</a>(<a class="tu ref" href="#freqinfos" title='freqinfos' data-use='r' data-ref="freqinfos">freqinfos</a>));</td></tr>
+<tr><th id="354">354</th><td></td></tr>
+<tr><th id="355">355</th><td>    <a class="local col8 ref" href="#8s" title='s' data-ref="8s">s</a>-&gt;<a class="tu ref" href="#ReplayGainContext::yule_coeff_a" title='ReplayGainContext::yule_coeff_a' data-use='w' data-ref="ReplayGainContext::yule_coeff_a">yule_coeff_a</a>   = <a class="tu ref" href="#freqinfos" title='freqinfos' data-use='m' data-ref="freqinfos">freqinfos</a>[<a class="local col9 ref" href="#9i" title='i' data-ref="9i">i</a>].<a class="tu ref" href="#ReplayGainFreqInfo::AYule" title='ReplayGainFreqInfo::AYule' data-use='r' data-ref="ReplayGainFreqInfo::AYule">AYule</a>;</td></tr>
+<tr><th id="356">356</th><td>    <a class="local col8 ref" href="#8s" title='s' data-ref="8s">s</a>-&gt;<a class="tu ref" href="#ReplayGainContext::yule_coeff_b" title='ReplayGainContext::yule_coeff_b' data-use='w' data-ref="ReplayGainContext::yule_coeff_b">yule_coeff_b</a>   = <a class="tu ref" href="#freqinfos" title='freqinfos' data-use='m' data-ref="freqinfos">freqinfos</a>[<a class="local col9 ref" href="#9i" title='i' data-ref="9i">i</a>].<a class="tu ref" href="#ReplayGainFreqInfo::BYule" title='ReplayGainFreqInfo::BYule' data-use='r' data-ref="ReplayGainFreqInfo::BYule">BYule</a>;</td></tr>
+<tr><th id="357">357</th><td>    <a class="local col8 ref" href="#8s" title='s' data-ref="8s">s</a>-&gt;<a class="tu ref" href="#ReplayGainContext::butter_coeff_a" title='ReplayGainContext::butter_coeff_a' data-use='w' data-ref="ReplayGainContext::butter_coeff_a">butter_coeff_a</a> = <a class="tu ref" href="#freqinfos" title='freqinfos' data-use='m' data-ref="freqinfos">freqinfos</a>[<a class="local col9 ref" href="#9i" title='i' data-ref="9i">i</a>].<a class="tu ref" href="#ReplayGainFreqInfo::AButter" title='ReplayGainFreqInfo::AButter' data-use='r' data-ref="ReplayGainFreqInfo::AButter">AButter</a>;</td></tr>
+<tr><th id="358">358</th><td>    <a class="local col8 ref" href="#8s" title='s' data-ref="8s">s</a>-&gt;<a class="tu ref" href="#ReplayGainContext::butter_coeff_b" title='ReplayGainContext::butter_coeff_b' data-use='w' data-ref="ReplayGainContext::butter_coeff_b">butter_coeff_b</a> = <a class="tu ref" href="#freqinfos" title='freqinfos' data-use='m' data-ref="freqinfos">freqinfos</a>[<a class="local col9 ref" href="#9i" title='i' data-ref="9i">i</a>].<a class="tu ref" href="#ReplayGainFreqInfo::BButter" title='ReplayGainFreqInfo::BButter' data-use='r' data-ref="ReplayGainFreqInfo::BButter">BButter</a>;</td></tr>
+<tr><th id="359">359</th><td></td></tr>
+<tr><th id="360">360</th><td>    <a class="local col8 ref" href="#8s" title='s' data-ref="8s">s</a>-&gt;<a class="tu ref" href="#ReplayGainContext::yule_hist_i" title='ReplayGainContext::yule_hist_i' data-use='w' data-ref="ReplayGainContext::yule_hist_i">yule_hist_i</a>   = <var>20</var>;</td></tr>
+<tr><th id="361">361</th><td>    <a class="local col8 ref" href="#8s" title='s' data-ref="8s">s</a>-&gt;<a class="tu ref" href="#ReplayGainContext::butter_hist_i" title='ReplayGainContext::butter_hist_i' data-use='w' data-ref="ReplayGainContext::butter_hist_i">butter_hist_i</a> = <var>4</var>;</td></tr>
+<tr><th id="362">362</th><td>    <a class="local col6 ref" href="#6inlink" title='inlink' data-ref="6inlink">inlink</a>-&gt;<a class="ref" href="avfilter.h.html#AVFilterLink::partial_buf_size" title='AVFilterLink::partial_buf_size' data-ref="AVFilterLink::partial_buf_size">partial_buf_size</a> =</td></tr>
+<tr><th id="363">363</th><td>    <a class="local col6 ref" href="#6inlink" title='inlink' data-ref="6inlink">inlink</a>-&gt;<a class="ref" href="avfilter.h.html#AVFilterLink::min_samples" title='AVFilterLink::min_samples' data-ref="AVFilterLink::min_samples">min_samples</a> =</td></tr>
+<tr><th id="364">364</th><td>    <a class="local col6 ref" href="#6inlink" title='inlink' data-ref="6inlink">inlink</a>-&gt;<a class="ref" href="avfilter.h.html#AVFilterLink::max_samples" title='AVFilterLink::max_samples' data-ref="AVFilterLink::max_samples">max_samples</a> = <a class="local col6 ref" href="#6inlink" title='inlink' data-ref="6inlink">inlink</a>-&gt;<a class="ref" href="avfilter.h.html#AVFilterLink::sample_rate" title='AVFilterLink::sample_rate' data-ref="AVFilterLink::sample_rate">sample_rate</a> / <var>20</var>;</td></tr>
+<tr><th id="365">365</th><td></td></tr>
+<tr><th id="366">366</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="367">367</th><td>}</td></tr>
+<tr><th id="368">368</th><td></td></tr>
+<tr><th id="369">369</th><td><i  data-doc="calc_stereo_peak">/*</i></td></tr>
+<tr><th id="370">370</th><td><i  data-doc="calc_stereo_peak"> * Update largest absolute sample value.</i></td></tr>
+<tr><th id="371">371</th><td><i  data-doc="calc_stereo_peak"> */</i></td></tr>
+<tr><th id="372">372</th><td><em>static</em> <em>void</em> <dfn class="tu decl def" id="calc_stereo_peak" title='calc_stereo_peak' data-type='void calc_stereo_peak(const float * samples, int nb_samples, float * peak_p)' data-ref="calc_stereo_peak">calc_stereo_peak</dfn>(<em>const</em> <em>float</em> *<dfn class="local col0 decl" id="10samples" title='samples' data-type='const float *' data-ref="10samples">samples</dfn>, <em>int</em> <dfn class="local col1 decl" id="11nb_samples" title='nb_samples' data-type='int' data-ref="11nb_samples">nb_samples</dfn>,</td></tr>
+<tr><th id="373">373</th><td>                             <em>float</em> *<dfn class="local col2 decl" id="12peak_p" title='peak_p' data-type='float *' data-ref="12peak_p">peak_p</dfn>)</td></tr>
+<tr><th id="374">374</th><td>{</td></tr>
+<tr><th id="375">375</th><td>    <em>float</em> <dfn class="local col3 decl" id="13peak" title='peak' data-type='float' data-ref="13peak">peak</dfn> = <var>0.0</var>;</td></tr>
+<tr><th id="376">376</th><td></td></tr>
+<tr><th id="377">377</th><td>    <b>while</b> (<a class="local col1 ref" href="#11nb_samples" title='nb_samples' data-ref="11nb_samples">nb_samples</a>--) {</td></tr>
+<tr><th id="378">378</th><td>        <b>if</b> (<a class="local col0 ref" href="#10samples" title='samples' data-ref="10samples">samples</a>[<var>0</var>] &gt; <a class="local col3 ref" href="#13peak" title='peak' data-ref="13peak">peak</a>)</td></tr>
+<tr><th id="379">379</th><td>            <a class="local col3 ref" href="#13peak" title='peak' data-ref="13peak">peak</a> = <a class="local col0 ref" href="#10samples" title='samples' data-ref="10samples">samples</a>[<var>0</var>];</td></tr>
+<tr><th id="380">380</th><td>        <b>else</b> <b>if</b> (-<a class="local col0 ref" href="#10samples" title='samples' data-ref="10samples">samples</a>[<var>0</var>] &gt; <a class="local col3 ref" href="#13peak" title='peak' data-ref="13peak">peak</a>)</td></tr>
+<tr><th id="381">381</th><td>            <a class="local col3 ref" href="#13peak" title='peak' data-ref="13peak">peak</a> = -<a class="local col0 ref" href="#10samples" title='samples' data-ref="10samples">samples</a>[<var>0</var>];</td></tr>
+<tr><th id="382">382</th><td></td></tr>
+<tr><th id="383">383</th><td>        <b>if</b> (<a class="local col0 ref" href="#10samples" title='samples' data-ref="10samples">samples</a>[<var>1</var>] &gt; <a class="local col3 ref" href="#13peak" title='peak' data-ref="13peak">peak</a>)</td></tr>
+<tr><th id="384">384</th><td>            <a class="local col3 ref" href="#13peak" title='peak' data-ref="13peak">peak</a> = <a class="local col0 ref" href="#10samples" title='samples' data-ref="10samples">samples</a>[<var>1</var>];</td></tr>
+<tr><th id="385">385</th><td>        <b>else</b> <b>if</b> (-<a class="local col0 ref" href="#10samples" title='samples' data-ref="10samples">samples</a>[<var>1</var>] &gt; <a class="local col3 ref" href="#13peak" title='peak' data-ref="13peak">peak</a>)</td></tr>
+<tr><th id="386">386</th><td>            <a class="local col3 ref" href="#13peak" title='peak' data-ref="13peak">peak</a> = -<a class="local col0 ref" href="#10samples" title='samples' data-ref="10samples">samples</a>[<var>1</var>];</td></tr>
+<tr><th id="387">387</th><td></td></tr>
+<tr><th id="388">388</th><td>        <a class="local col0 ref" href="#10samples" title='samples' data-ref="10samples">samples</a> += <var>2</var>;</td></tr>
+<tr><th id="389">389</th><td>    }</td></tr>
+<tr><th id="390">390</th><td></td></tr>
+<tr><th id="391">391</th><td>    *<a class="local col2 ref" href="#12peak_p" title='peak_p' data-ref="12peak_p">peak_p</a> = <a class="macro" href="../libavutil/common.h.html#94" title="((peak) &gt; (*peak_p) ? (peak) : (*peak_p))" data-ref="_M/FFMAX">FFMAX</a>(<a class="local col3 ref" href="#13peak" title='peak' data-ref="13peak">peak</a>, *<a class="local col2 ref" href="#12peak_p" title='peak_p' data-ref="12peak_p">peak_p</a>);</td></tr>
+<tr><th id="392">392</th><td>}</td></tr>
+<tr><th id="393">393</th><td></td></tr>
+<tr><th id="394">394</th><td><i  data-doc="calc_stereo_rms">/*</i></td></tr>
+<tr><th id="395">395</th><td><i  data-doc="calc_stereo_rms"> * Calculate stereo RMS level. Minimum value is about -100 dB for</i></td></tr>
+<tr><th id="396">396</th><td><i  data-doc="calc_stereo_rms"> * digital silence. The 90 dB offset is to compensate for the</i></td></tr>
+<tr><th id="397">397</th><td><i  data-doc="calc_stereo_rms"> * normalized float range and 3 dB is for stereo samples.</i></td></tr>
+<tr><th id="398">398</th><td><i  data-doc="calc_stereo_rms"> */</i></td></tr>
+<tr><th id="399">399</th><td><em>static</em> <em>double</em> <dfn class="tu decl def" id="calc_stereo_rms" title='calc_stereo_rms' data-type='double calc_stereo_rms(const float * samples, int nb_samples)' data-ref="calc_stereo_rms">calc_stereo_rms</dfn>(<em>const</em> <em>float</em> *<dfn class="local col4 decl" id="14samples" title='samples' data-type='const float *' data-ref="14samples">samples</dfn>, <em>int</em> <dfn class="local col5 decl" id="15nb_samples" title='nb_samples' data-type='int' data-ref="15nb_samples">nb_samples</dfn>)</td></tr>
+<tr><th id="400">400</th><td>{</td></tr>
+<tr><th id="401">401</th><td>    <em>int</em> <dfn class="local col6 decl" id="16count" title='count' data-type='int' data-ref="16count">count</dfn> = <a class="local col5 ref" href="#15nb_samples" title='nb_samples' data-ref="15nb_samples">nb_samples</a>;</td></tr>
+<tr><th id="402">402</th><td>    <em>double</em> <dfn class="local col7 decl" id="17sum" title='sum' data-type='double' data-ref="17sum">sum</dfn> = <var>1e-16</var>;</td></tr>
+<tr><th id="403">403</th><td></td></tr>
+<tr><th id="404">404</th><td>    <b>while</b> (<a class="local col6 ref" href="#16count" title='count' data-ref="16count">count</a>--) {</td></tr>
+<tr><th id="405">405</th><td>        <a class="local col7 ref" href="#17sum" title='sum' data-ref="17sum">sum</a> += <a class="local col4 ref" href="#14samples" title='samples' data-ref="14samples">samples</a>[<var>0</var>] * <a class="local col4 ref" href="#14samples" title='samples' data-ref="14samples">samples</a>[<var>0</var>] + <a class="local col4 ref" href="#14samples" title='samples' data-ref="14samples">samples</a>[<var>1</var>] * <a class="local col4 ref" href="#14samples" title='samples' data-ref="14samples">samples</a>[<var>1</var>];</td></tr>
+<tr><th id="406">406</th><td>        <a class="local col4 ref" href="#14samples" title='samples' data-ref="14samples">samples</a> += <var>2</var>;</td></tr>
+<tr><th id="407">407</th><td>    }</td></tr>
+<tr><th id="408">408</th><td></td></tr>
+<tr><th id="409">409</th><td>    <b>return</b> <var>10</var> * <a class="ref" href="../../include/x86_64-linux-gnu/bits/mathcalls.h.html#112" title='log10' data-ref="log10">log10</a> (<a class="local col7 ref" href="#17sum" title='sum' data-ref="17sum">sum</a> / <a class="local col5 ref" href="#15nb_samples" title='nb_samples' data-ref="15nb_samples">nb_samples</a>) + <var>90.0</var> - <var>3.0</var>;</td></tr>
+<tr><th id="410">410</th><td>}</td></tr>
+<tr><th id="411">411</th><td></td></tr>
+<tr><th id="412">412</th><td><i  data-doc="butter_filter_stereo_samples">/*</i></td></tr>
+<tr><th id="413">413</th><td><i  data-doc="butter_filter_stereo_samples"> * Optimized implementation of 2nd-order IIR stereo filter.</i></td></tr>
+<tr><th id="414">414</th><td><i  data-doc="butter_filter_stereo_samples"> */</i></td></tr>
+<tr><th id="415">415</th><td><em>static</em> <em>void</em> <dfn class="tu decl def" id="butter_filter_stereo_samples" title='butter_filter_stereo_samples' data-type='void butter_filter_stereo_samples(ReplayGainContext * s, float * samples, int nb_samples)' data-ref="butter_filter_stereo_samples">butter_filter_stereo_samples</dfn>(<a class="typedef" href="#ReplayGainContext" title='ReplayGainContext' data-type='struct ReplayGainContext' data-ref="ReplayGainContext">ReplayGainContext</a> *<dfn class="local col8 decl" id="18s" title='s' data-type='ReplayGainContext *' data-ref="18s">s</dfn>,</td></tr>
+<tr><th id="416">416</th><td>                                         <em>float</em> *<dfn class="local col9 decl" id="19samples" title='samples' data-type='float *' data-ref="19samples">samples</dfn>, <em>int</em> <dfn class="local col0 decl" id="20nb_samples" title='nb_samples' data-type='int' data-ref="20nb_samples">nb_samples</dfn>)</td></tr>
+<tr><th id="417">417</th><td>{</td></tr>
+<tr><th id="418">418</th><td>    <em>const</em> <em>double</em> *<dfn class="local col1 decl" id="21coeff_a" title='coeff_a' data-type='const double *' data-ref="21coeff_a">coeff_a</dfn> = <a class="local col8 ref" href="#18s" title='s' data-ref="18s">s</a>-&gt;<a class="tu ref" href="#ReplayGainContext::butter_coeff_a" title='ReplayGainContext::butter_coeff_a' data-use='r' data-ref="ReplayGainContext::butter_coeff_a">butter_coeff_a</a>;</td></tr>
+<tr><th id="419">419</th><td>    <em>const</em> <em>double</em> *<dfn class="local col2 decl" id="22coeff_b" title='coeff_b' data-type='const double *' data-ref="22coeff_b">coeff_b</dfn> = <a class="local col8 ref" href="#18s" title='s' data-ref="18s">s</a>-&gt;<a class="tu ref" href="#ReplayGainContext::butter_coeff_b" title='ReplayGainContext::butter_coeff_b' data-use='r' data-ref="ReplayGainContext::butter_coeff_b">butter_coeff_b</a>;</td></tr>
+<tr><th id="420">420</th><td>    <em>float</em> *<dfn class="local col3 decl" id="23hist_a" title='hist_a' data-type='float *' data-ref="23hist_a">hist_a</dfn>   = <a class="local col8 ref" href="#18s" title='s' data-ref="18s">s</a>-&gt;<a class="tu ref" href="#ReplayGainContext::butter_hist_a" title='ReplayGainContext::butter_hist_a' data-use='r' data-ref="ReplayGainContext::butter_hist_a">butter_hist_a</a>;</td></tr>
+<tr><th id="421">421</th><td>    <em>float</em> *<dfn class="local col4 decl" id="24hist_b" title='hist_b' data-type='float *' data-ref="24hist_b">hist_b</dfn>   = <a class="local col8 ref" href="#18s" title='s' data-ref="18s">s</a>-&gt;<a class="tu ref" href="#ReplayGainContext::butter_hist_b" title='ReplayGainContext::butter_hist_b' data-use='r' data-ref="ReplayGainContext::butter_hist_b">butter_hist_b</a>;</td></tr>
+<tr><th id="422">422</th><td>    <em>double</em> <dfn class="local col5 decl" id="25left" title='left' data-type='double' data-ref="25left">left</dfn>, <dfn class="local col6 decl" id="26right" title='right' data-type='double' data-ref="26right">right</dfn>;</td></tr>
+<tr><th id="423">423</th><td>    <em>int</em> <dfn class="local col7 decl" id="27i" title='i' data-type='int' data-ref="27i">i</dfn>, <dfn class="local col8 decl" id="28j" title='j' data-type='int' data-ref="28j">j</dfn>;</td></tr>
+<tr><th id="424">424</th><td></td></tr>
+<tr><th id="425">425</th><td>    <a class="local col7 ref" href="#27i" title='i' data-ref="27i">i</a> = <a class="local col8 ref" href="#18s" title='s' data-ref="18s">s</a>-&gt;<a class="tu ref" href="#ReplayGainContext::butter_hist_i" title='ReplayGainContext::butter_hist_i' data-use='r' data-ref="ReplayGainContext::butter_hist_i">butter_hist_i</a>;</td></tr>
+<tr><th id="426">426</th><td></td></tr>
+<tr><th id="427">427</th><td>    <i>// If filter history is very small magnitude, clear it completely</i></td></tr>
+<tr><th id="428">428</th><td><i>    // to prevent denormals from rattling around in there forever</i></td></tr>
+<tr><th id="429">429</th><td><i>    // (slowing us down).</i></td></tr>
+<tr><th id="430">430</th><td></td></tr>
+<tr><th id="431">431</th><td>    <b>for</b> (<a class="local col8 ref" href="#28j" title='j' data-ref="28j">j</a> = -<var>4</var>; <a class="local col8 ref" href="#28j" title='j' data-ref="28j">j</a> &lt; <var>0</var>; ++<a class="local col8 ref" href="#28j" title='j' data-ref="28j">j</a>)</td></tr>
+<tr><th id="432">432</th><td>        <b>if</b> (<a class="ref" href="../../include/x86_64-linux-gnu/bits/mathcalls.h.html#181" title='fabs' data-ref="fabs">fabs</a>(<a class="local col3 ref" href="#23hist_a" title='hist_a' data-ref="23hist_a">hist_a</a>[<a class="local col7 ref" href="#27i" title='i' data-ref="27i">i</a> + <a class="local col8 ref" href="#28j" title='j' data-ref="28j">j</a>]) &gt; <var>1e-10</var> || <a class="ref" href="../../include/x86_64-linux-gnu/bits/mathcalls.h.html#181" title='fabs' data-ref="fabs">fabs</a>(<a class="local col4 ref" href="#24hist_b" title='hist_b' data-ref="24hist_b">hist_b</a>[<a class="local col7 ref" href="#27i" title='i' data-ref="27i">i</a> + <a class="local col8 ref" href="#28j" title='j' data-ref="28j">j</a>]) &gt; <var>1e-10</var>)</td></tr>
+<tr><th id="433">433</th><td>            <b>break</b>;</td></tr>
+<tr><th id="434">434</th><td></td></tr>
+<tr><th id="435">435</th><td>    <b>if</b> (!<a class="local col8 ref" href="#28j" title='j' data-ref="28j">j</a>) {</td></tr>
+<tr><th id="436">436</th><td>        <a class="ref" href="../../include/string.h.html#memset" title='memset' data-ref="memset">memset</a>(<a class="local col8 ref" href="#18s" title='s' data-ref="18s">s</a>-&gt;<a class="tu ref" href="#ReplayGainContext::butter_hist_a" title='ReplayGainContext::butter_hist_a' data-use='r' data-ref="ReplayGainContext::butter_hist_a">butter_hist_a</a>, <var>0</var>, <b>sizeof</b>(<a class="local col8 ref" href="#18s" title='s' data-ref="18s">s</a>-&gt;<a class="tu ref" href="#ReplayGainContext::butter_hist_a" title='ReplayGainContext::butter_hist_a' data-use='r' data-ref="ReplayGainContext::butter_hist_a">butter_hist_a</a>));</td></tr>
+<tr><th id="437">437</th><td>        <a class="ref" href="../../include/string.h.html#memset" title='memset' data-ref="memset">memset</a>(<a class="local col8 ref" href="#18s" title='s' data-ref="18s">s</a>-&gt;<a class="tu ref" href="#ReplayGainContext::butter_hist_b" title='ReplayGainContext::butter_hist_b' data-use='r' data-ref="ReplayGainContext::butter_hist_b">butter_hist_b</a>, <var>0</var>, <b>sizeof</b>(<a class="local col8 ref" href="#18s" title='s' data-ref="18s">s</a>-&gt;<a class="tu ref" href="#ReplayGainContext::butter_hist_b" title='ReplayGainContext::butter_hist_b' data-use='r' data-ref="ReplayGainContext::butter_hist_b">butter_hist_b</a>));</td></tr>
+<tr><th id="438">438</th><td>    }</td></tr>
+<tr><th id="439">439</th><td></td></tr>
+<tr><th id="440">440</th><td>    <b>while</b> (<a class="local col0 ref" href="#20nb_samples" title='nb_samples' data-ref="20nb_samples">nb_samples</a>--) {</td></tr>
+<tr><th id="441">441</th><td>        <a class="local col5 ref" href="#25left" title='left' data-ref="25left">left</a>   = (<a class="local col4 ref" href="#24hist_b" title='hist_b' data-ref="24hist_b">hist_b</a>[<a class="local col7 ref" href="#27i" title='i' data-ref="27i">i</a>    ] = <a class="local col9 ref" href="#19samples" title='samples' data-ref="19samples">samples</a>[<var>0</var>]) * <a class="local col2 ref" href="#22coeff_b" title='coeff_b' data-ref="22coeff_b">coeff_b</a>[<var>0</var>];</td></tr>
+<tr><th id="442">442</th><td>        <a class="local col6 ref" href="#26right" title='right' data-ref="26right">right</a>  = (<a class="local col4 ref" href="#24hist_b" title='hist_b' data-ref="24hist_b">hist_b</a>[<a class="local col7 ref" href="#27i" title='i' data-ref="27i">i</a> + <var>1</var>] = <a class="local col9 ref" href="#19samples" title='samples' data-ref="19samples">samples</a>[<var>1</var>]) * <a class="local col2 ref" href="#22coeff_b" title='coeff_b' data-ref="22coeff_b">coeff_b</a>[<var>0</var>];</td></tr>
+<tr><th id="443">443</th><td>        <a class="local col5 ref" href="#25left" title='left' data-ref="25left">left</a>  += <a class="local col4 ref" href="#24hist_b" title='hist_b' data-ref="24hist_b">hist_b</a>[<a class="local col7 ref" href="#27i" title='i' data-ref="27i">i</a> - <var>2</var>] * <a class="local col2 ref" href="#22coeff_b" title='coeff_b' data-ref="22coeff_b">coeff_b</a>[<var>1</var>] - <a class="local col3 ref" href="#23hist_a" title='hist_a' data-ref="23hist_a">hist_a</a>[<a class="local col7 ref" href="#27i" title='i' data-ref="27i">i</a> - <var>2</var>] * <a class="local col1 ref" href="#21coeff_a" title='coeff_a' data-ref="21coeff_a">coeff_a</a>[<var>1</var>];</td></tr>
+<tr><th id="444">444</th><td>        <a class="local col6 ref" href="#26right" title='right' data-ref="26right">right</a> += <a class="local col4 ref" href="#24hist_b" title='hist_b' data-ref="24hist_b">hist_b</a>[<a class="local col7 ref" href="#27i" title='i' data-ref="27i">i</a> - <var>1</var>] * <a class="local col2 ref" href="#22coeff_b" title='coeff_b' data-ref="22coeff_b">coeff_b</a>[<var>1</var>] - <a class="local col3 ref" href="#23hist_a" title='hist_a' data-ref="23hist_a">hist_a</a>[<a class="local col7 ref" href="#27i" title='i' data-ref="27i">i</a> - <var>1</var>] * <a class="local col1 ref" href="#21coeff_a" title='coeff_a' data-ref="21coeff_a">coeff_a</a>[<var>1</var>];</td></tr>
+<tr><th id="445">445</th><td>        <a class="local col5 ref" href="#25left" title='left' data-ref="25left">left</a>  += <a class="local col4 ref" href="#24hist_b" title='hist_b' data-ref="24hist_b">hist_b</a>[<a class="local col7 ref" href="#27i" title='i' data-ref="27i">i</a> - <var>4</var>] * <a class="local col2 ref" href="#22coeff_b" title='coeff_b' data-ref="22coeff_b">coeff_b</a>[<var>2</var>] - <a class="local col3 ref" href="#23hist_a" title='hist_a' data-ref="23hist_a">hist_a</a>[<a class="local col7 ref" href="#27i" title='i' data-ref="27i">i</a> - <var>4</var>] * <a class="local col1 ref" href="#21coeff_a" title='coeff_a' data-ref="21coeff_a">coeff_a</a>[<var>2</var>];</td></tr>
+<tr><th id="446">446</th><td>        <a class="local col6 ref" href="#26right" title='right' data-ref="26right">right</a> += <a class="local col4 ref" href="#24hist_b" title='hist_b' data-ref="24hist_b">hist_b</a>[<a class="local col7 ref" href="#27i" title='i' data-ref="27i">i</a> - <var>3</var>] * <a class="local col2 ref" href="#22coeff_b" title='coeff_b' data-ref="22coeff_b">coeff_b</a>[<var>2</var>] - <a class="local col3 ref" href="#23hist_a" title='hist_a' data-ref="23hist_a">hist_a</a>[<a class="local col7 ref" href="#27i" title='i' data-ref="27i">i</a> - <var>3</var>] * <a class="local col1 ref" href="#21coeff_a" title='coeff_a' data-ref="21coeff_a">coeff_a</a>[<var>2</var>];</td></tr>
+<tr><th id="447">447</th><td>        <a class="local col9 ref" href="#19samples" title='samples' data-ref="19samples">samples</a>[<var>0</var>] = <a class="local col3 ref" href="#23hist_a" title='hist_a' data-ref="23hist_a">hist_a</a>[<a class="local col7 ref" href="#27i" title='i' data-ref="27i">i</a>    ] = (<em>float</em>) <a class="local col5 ref" href="#25left" title='left' data-ref="25left">left</a>;</td></tr>
+<tr><th id="448">448</th><td>        <a class="local col9 ref" href="#19samples" title='samples' data-ref="19samples">samples</a>[<var>1</var>] = <a class="local col3 ref" href="#23hist_a" title='hist_a' data-ref="23hist_a">hist_a</a>[<a class="local col7 ref" href="#27i" title='i' data-ref="27i">i</a> + <var>1</var>] = (<em>float</em>) <a class="local col6 ref" href="#26right" title='right' data-ref="26right">right</a>;</td></tr>
+<tr><th id="449">449</th><td>        <a class="local col9 ref" href="#19samples" title='samples' data-ref="19samples">samples</a> += <var>2</var>;</td></tr>
+<tr><th id="450">450</th><td></td></tr>
+<tr><th id="451">451</th><td>        <b>if</b> ((<a class="local col7 ref" href="#27i" title='i' data-ref="27i">i</a> += <var>2</var>) == <var>256</var>) {</td></tr>
+<tr><th id="452">452</th><td>            <a class="ref" href="../../include/string.h.html#memcpy" title='memcpy' data-ref="memcpy">memcpy</a>(<a class="local col3 ref" href="#23hist_a" title='hist_a' data-ref="23hist_a">hist_a</a>, <a class="local col3 ref" href="#23hist_a" title='hist_a' data-ref="23hist_a">hist_a</a> + <var>252</var>, <b>sizeof</b>(*<a class="local col3 ref" href="#23hist_a" title='hist_a' data-ref="23hist_a">hist_a</a>) * <var>4</var>);</td></tr>
+<tr><th id="453">453</th><td>            <a class="ref" href="../../include/string.h.html#memcpy" title='memcpy' data-ref="memcpy">memcpy</a>(<a class="local col4 ref" href="#24hist_b" title='hist_b' data-ref="24hist_b">hist_b</a>, <a class="local col4 ref" href="#24hist_b" title='hist_b' data-ref="24hist_b">hist_b</a> + <var>252</var>, <b>sizeof</b>(*<a class="local col4 ref" href="#24hist_b" title='hist_b' data-ref="24hist_b">hist_b</a>) * <var>4</var>);</td></tr>
+<tr><th id="454">454</th><td>            <a class="local col7 ref" href="#27i" title='i' data-ref="27i">i</a> = <var>4</var>;</td></tr>
+<tr><th id="455">455</th><td>        }</td></tr>
+<tr><th id="456">456</th><td>    }</td></tr>
+<tr><th id="457">457</th><td></td></tr>
+<tr><th id="458">458</th><td>    <a class="local col8 ref" href="#18s" title='s' data-ref="18s">s</a>-&gt;<a class="tu ref" href="#ReplayGainContext::butter_hist_i" title='ReplayGainContext::butter_hist_i' data-use='w' data-ref="ReplayGainContext::butter_hist_i">butter_hist_i</a> = <a class="local col7 ref" href="#27i" title='i' data-ref="27i">i</a>;</td></tr>
+<tr><th id="459">459</th><td>}</td></tr>
+<tr><th id="460">460</th><td></td></tr>
+<tr><th id="461">461</th><td><i  data-doc="yule_filter_stereo_samples">/*</i></td></tr>
+<tr><th id="462">462</th><td><i  data-doc="yule_filter_stereo_samples"> * Optimized implementation of 10th-order IIR stereo filter.</i></td></tr>
+<tr><th id="463">463</th><td><i  data-doc="yule_filter_stereo_samples"> */</i></td></tr>
+<tr><th id="464">464</th><td><em>static</em> <em>void</em> <dfn class="tu decl def" id="yule_filter_stereo_samples" title='yule_filter_stereo_samples' data-type='void yule_filter_stereo_samples(ReplayGainContext * s, const float * src, float * dst, int nb_samples)' data-ref="yule_filter_stereo_samples">yule_filter_stereo_samples</dfn>(<a class="typedef" href="#ReplayGainContext" title='ReplayGainContext' data-type='struct ReplayGainContext' data-ref="ReplayGainContext">ReplayGainContext</a> *<dfn class="local col9 decl" id="29s" title='s' data-type='ReplayGainContext *' data-ref="29s">s</dfn>, <em>const</em> <em>float</em> *<dfn class="local col0 decl" id="30src" title='src' data-type='const float *' data-ref="30src">src</dfn>,</td></tr>
+<tr><th id="465">465</th><td>                                       <em>float</em> *<dfn class="local col1 decl" id="31dst" title='dst' data-type='float *' data-ref="31dst">dst</dfn>, <em>int</em> <dfn class="local col2 decl" id="32nb_samples" title='nb_samples' data-type='int' data-ref="32nb_samples">nb_samples</dfn>)</td></tr>
+<tr><th id="466">466</th><td>{</td></tr>
+<tr><th id="467">467</th><td>    <em>const</em> <em>double</em> *<dfn class="local col3 decl" id="33coeff_a" title='coeff_a' data-type='const double *' data-ref="33coeff_a">coeff_a</dfn> = <a class="local col9 ref" href="#29s" title='s' data-ref="29s">s</a>-&gt;<a class="tu ref" href="#ReplayGainContext::yule_coeff_a" title='ReplayGainContext::yule_coeff_a' data-use='r' data-ref="ReplayGainContext::yule_coeff_a">yule_coeff_a</a>;</td></tr>
+<tr><th id="468">468</th><td>    <em>const</em> <em>double</em> *<dfn class="local col4 decl" id="34coeff_b" title='coeff_b' data-type='const double *' data-ref="34coeff_b">coeff_b</dfn> = <a class="local col9 ref" href="#29s" title='s' data-ref="29s">s</a>-&gt;<a class="tu ref" href="#ReplayGainContext::yule_coeff_b" title='ReplayGainContext::yule_coeff_b' data-use='r' data-ref="ReplayGainContext::yule_coeff_b">yule_coeff_b</a>;</td></tr>
+<tr><th id="469">469</th><td>    <em>float</em> *<dfn class="local col5 decl" id="35hist_a" title='hist_a' data-type='float *' data-ref="35hist_a">hist_a</dfn>   = <a class="local col9 ref" href="#29s" title='s' data-ref="29s">s</a>-&gt;<a class="tu ref" href="#ReplayGainContext::yule_hist_a" title='ReplayGainContext::yule_hist_a' data-use='r' data-ref="ReplayGainContext::yule_hist_a">yule_hist_a</a>;</td></tr>
+<tr><th id="470">470</th><td>    <em>float</em> *<dfn class="local col6 decl" id="36hist_b" title='hist_b' data-type='float *' data-ref="36hist_b">hist_b</dfn>   = <a class="local col9 ref" href="#29s" title='s' data-ref="29s">s</a>-&gt;<a class="tu ref" href="#ReplayGainContext::yule_hist_b" title='ReplayGainContext::yule_hist_b' data-use='r' data-ref="ReplayGainContext::yule_hist_b">yule_hist_b</a>;</td></tr>
+<tr><th id="471">471</th><td>    <em>double</em> <dfn class="local col7 decl" id="37left" title='left' data-type='double' data-ref="37left">left</dfn>, <dfn class="local col8 decl" id="38right" title='right' data-type='double' data-ref="38right">right</dfn>;</td></tr>
+<tr><th id="472">472</th><td>    <em>int</em> <dfn class="local col9 decl" id="39i" title='i' data-type='int' data-ref="39i">i</dfn>, <dfn class="local col0 decl" id="40j" title='j' data-type='int' data-ref="40j">j</dfn>;</td></tr>
+<tr><th id="473">473</th><td></td></tr>
+<tr><th id="474">474</th><td>    <a class="local col9 ref" href="#39i" title='i' data-ref="39i">i</a> = <a class="local col9 ref" href="#29s" title='s' data-ref="29s">s</a>-&gt;<a class="tu ref" href="#ReplayGainContext::yule_hist_i" title='ReplayGainContext::yule_hist_i' data-use='r' data-ref="ReplayGainContext::yule_hist_i">yule_hist_i</a>;</td></tr>
+<tr><th id="475">475</th><td></td></tr>
+<tr><th id="476">476</th><td>    <i>// If filter history is very small magnitude, clear it completely to</i></td></tr>
+<tr><th id="477">477</th><td><i>    // prevent denormals from rattling around in there forever</i></td></tr>
+<tr><th id="478">478</th><td><i>    // (slowing us down).</i></td></tr>
+<tr><th id="479">479</th><td></td></tr>
+<tr><th id="480">480</th><td>    <b>for</b> (<a class="local col0 ref" href="#40j" title='j' data-ref="40j">j</a> = -<var>20</var>; <a class="local col0 ref" href="#40j" title='j' data-ref="40j">j</a> &lt; <var>0</var>; ++<a class="local col0 ref" href="#40j" title='j' data-ref="40j">j</a>)</td></tr>
+<tr><th id="481">481</th><td>        <b>if</b> (<a class="ref" href="../../include/x86_64-linux-gnu/bits/mathcalls.h.html#181" title='fabs' data-ref="fabs">fabs</a>(<a class="local col5 ref" href="#35hist_a" title='hist_a' data-ref="35hist_a">hist_a</a>[<a class="local col9 ref" href="#39i" title='i' data-ref="39i">i</a> + <a class="local col0 ref" href="#40j" title='j' data-ref="40j">j</a>]) &gt; <var>1e-10</var> || <a class="ref" href="../../include/x86_64-linux-gnu/bits/mathcalls.h.html#181" title='fabs' data-ref="fabs">fabs</a>(<a class="local col6 ref" href="#36hist_b" title='hist_b' data-ref="36hist_b">hist_b</a>[<a class="local col9 ref" href="#39i" title='i' data-ref="39i">i</a> + <a class="local col0 ref" href="#40j" title='j' data-ref="40j">j</a>]) &gt; <var>1e-10</var>)</td></tr>
+<tr><th id="482">482</th><td>            <b>break</b>;</td></tr>
+<tr><th id="483">483</th><td></td></tr>
+<tr><th id="484">484</th><td>    <b>if</b> (!<a class="local col0 ref" href="#40j" title='j' data-ref="40j">j</a>) {</td></tr>
+<tr><th id="485">485</th><td>        <a class="ref" href="../../include/string.h.html#memset" title='memset' data-ref="memset">memset</a>(<a class="local col9 ref" href="#29s" title='s' data-ref="29s">s</a>-&gt;<a class="tu ref" href="#ReplayGainContext::yule_hist_a" title='ReplayGainContext::yule_hist_a' data-use='r' data-ref="ReplayGainContext::yule_hist_a">yule_hist_a</a>, <var>0</var>, <b>sizeof</b>(<a class="local col9 ref" href="#29s" title='s' data-ref="29s">s</a>-&gt;<a class="tu ref" href="#ReplayGainContext::yule_hist_a" title='ReplayGainContext::yule_hist_a' data-use='r' data-ref="ReplayGainContext::yule_hist_a">yule_hist_a</a>));</td></tr>
+<tr><th id="486">486</th><td>        <a class="ref" href="../../include/string.h.html#memset" title='memset' data-ref="memset">memset</a>(<a class="local col9 ref" href="#29s" title='s' data-ref="29s">s</a>-&gt;<a class="tu ref" href="#ReplayGainContext::yule_hist_b" title='ReplayGainContext::yule_hist_b' data-use='r' data-ref="ReplayGainContext::yule_hist_b">yule_hist_b</a>, <var>0</var>, <b>sizeof</b>(<a class="local col9 ref" href="#29s" title='s' data-ref="29s">s</a>-&gt;<a class="tu ref" href="#ReplayGainContext::yule_hist_b" title='ReplayGainContext::yule_hist_b' data-use='r' data-ref="ReplayGainContext::yule_hist_b">yule_hist_b</a>));</td></tr>
+<tr><th id="487">487</th><td>    }</td></tr>
+<tr><th id="488">488</th><td></td></tr>
+<tr><th id="489">489</th><td>    <b>while</b> (<a class="local col2 ref" href="#32nb_samples" title='nb_samples' data-ref="32nb_samples">nb_samples</a>--) {</td></tr>
+<tr><th id="490">490</th><td>        <a class="local col7 ref" href="#37left" title='left' data-ref="37left">left</a>   = (<a class="local col6 ref" href="#36hist_b" title='hist_b' data-ref="36hist_b">hist_b</a>[<a class="local col9 ref" href="#39i" title='i' data-ref="39i">i</a>] = <a class="local col0 ref" href="#30src" title='src' data-ref="30src">src</a>[<var>0</var>]) * <a class="local col4 ref" href="#34coeff_b" title='coeff_b' data-ref="34coeff_b">coeff_b</a>[<var>0</var>];</td></tr>
+<tr><th id="491">491</th><td>        <a class="local col8 ref" href="#38right" title='right' data-ref="38right">right</a>  = (<a class="local col6 ref" href="#36hist_b" title='hist_b' data-ref="36hist_b">hist_b</a>[<a class="local col9 ref" href="#39i" title='i' data-ref="39i">i</a> + <var>1</var>] = <a class="local col0 ref" href="#30src" title='src' data-ref="30src">src</a>[<var>1</var>]) * <a class="local col4 ref" href="#34coeff_b" title='coeff_b' data-ref="34coeff_b">coeff_b</a>[<var>0</var>];</td></tr>
+<tr><th id="492">492</th><td>        <a class="local col7 ref" href="#37left" title='left' data-ref="37left">left</a>  += <a class="local col6 ref" href="#36hist_b" title='hist_b' data-ref="36hist_b">hist_b</a>[<a class="local col9 ref" href="#39i" title='i' data-ref="39i">i</a> -  <var>2</var>] * <a class="local col4 ref" href="#34coeff_b" title='coeff_b' data-ref="34coeff_b">coeff_b</a>[ <var>1</var>] - <a class="local col5 ref" href="#35hist_a" title='hist_a' data-ref="35hist_a">hist_a</a>[<a class="local col9 ref" href="#39i" title='i' data-ref="39i">i</a> -  <var>2</var>] * <a class="local col3 ref" href="#33coeff_a" title='coeff_a' data-ref="33coeff_a">coeff_a</a>[<var>1</var> ];</td></tr>
+<tr><th id="493">493</th><td>        <a class="local col8 ref" href="#38right" title='right' data-ref="38right">right</a> += <a class="local col6 ref" href="#36hist_b" title='hist_b' data-ref="36hist_b">hist_b</a>[<a class="local col9 ref" href="#39i" title='i' data-ref="39i">i</a> -  <var>1</var>] * <a class="local col4 ref" href="#34coeff_b" title='coeff_b' data-ref="34coeff_b">coeff_b</a>[ <var>1</var>] - <a class="local col5 ref" href="#35hist_a" title='hist_a' data-ref="35hist_a">hist_a</a>[<a class="local col9 ref" href="#39i" title='i' data-ref="39i">i</a> -  <var>1</var>] * <a class="local col3 ref" href="#33coeff_a" title='coeff_a' data-ref="33coeff_a">coeff_a</a>[<var>1</var> ];</td></tr>
+<tr><th id="494">494</th><td>        <a class="local col7 ref" href="#37left" title='left' data-ref="37left">left</a>  += <a class="local col6 ref" href="#36hist_b" title='hist_b' data-ref="36hist_b">hist_b</a>[<a class="local col9 ref" href="#39i" title='i' data-ref="39i">i</a> -  <var>4</var>] * <a class="local col4 ref" href="#34coeff_b" title='coeff_b' data-ref="34coeff_b">coeff_b</a>[ <var>2</var>] - <a class="local col5 ref" href="#35hist_a" title='hist_a' data-ref="35hist_a">hist_a</a>[<a class="local col9 ref" href="#39i" title='i' data-ref="39i">i</a> -  <var>4</var>] * <a class="local col3 ref" href="#33coeff_a" title='coeff_a' data-ref="33coeff_a">coeff_a</a>[<var>2</var> ];</td></tr>
+<tr><th id="495">495</th><td>        <a class="local col8 ref" href="#38right" title='right' data-ref="38right">right</a> += <a class="local col6 ref" href="#36hist_b" title='hist_b' data-ref="36hist_b">hist_b</a>[<a class="local col9 ref" href="#39i" title='i' data-ref="39i">i</a> -  <var>3</var>] * <a class="local col4 ref" href="#34coeff_b" title='coeff_b' data-ref="34coeff_b">coeff_b</a>[ <var>2</var>] - <a class="local col5 ref" href="#35hist_a" title='hist_a' data-ref="35hist_a">hist_a</a>[<a class="local col9 ref" href="#39i" title='i' data-ref="39i">i</a> -  <var>3</var>] * <a class="local col3 ref" href="#33coeff_a" title='coeff_a' data-ref="33coeff_a">coeff_a</a>[<var>2</var> ];</td></tr>
+<tr><th id="496">496</th><td>        <a class="local col7 ref" href="#37left" title='left' data-ref="37left">left</a>  += <a class="local col6 ref" href="#36hist_b" title='hist_b' data-ref="36hist_b">hist_b</a>[<a class="local col9 ref" href="#39i" title='i' data-ref="39i">i</a> -  <var>6</var>] * <a class="local col4 ref" href="#34coeff_b" title='coeff_b' data-ref="34coeff_b">coeff_b</a>[ <var>3</var>] - <a class="local col5 ref" href="#35hist_a" title='hist_a' data-ref="35hist_a">hist_a</a>[<a class="local col9 ref" href="#39i" title='i' data-ref="39i">i</a> -  <var>6</var>] * <a class="local col3 ref" href="#33coeff_a" title='coeff_a' data-ref="33coeff_a">coeff_a</a>[<var>3</var> ];</td></tr>
+<tr><th id="497">497</th><td>        <a class="local col8 ref" href="#38right" title='right' data-ref="38right">right</a> += <a class="local col6 ref" href="#36hist_b" title='hist_b' data-ref="36hist_b">hist_b</a>[<a class="local col9 ref" href="#39i" title='i' data-ref="39i">i</a> -  <var>5</var>] * <a class="local col4 ref" href="#34coeff_b" title='coeff_b' data-ref="34coeff_b">coeff_b</a>[ <var>3</var>] - <a class="local col5 ref" href="#35hist_a" title='hist_a' data-ref="35hist_a">hist_a</a>[<a class="local col9 ref" href="#39i" title='i' data-ref="39i">i</a> -  <var>5</var>] * <a class="local col3 ref" href="#33coeff_a" title='coeff_a' data-ref="33coeff_a">coeff_a</a>[<var>3</var> ];</td></tr>
+<tr><th id="498">498</th><td>        <a class="local col7 ref" href="#37left" title='left' data-ref="37left">left</a>  += <a class="local col6 ref" href="#36hist_b" title='hist_b' data-ref="36hist_b">hist_b</a>[<a class="local col9 ref" href="#39i" title='i' data-ref="39i">i</a> -  <var>8</var>] * <a class="local col4 ref" href="#34coeff_b" title='coeff_b' data-ref="34coeff_b">coeff_b</a>[ <var>4</var>] - <a class="local col5 ref" href="#35hist_a" title='hist_a' data-ref="35hist_a">hist_a</a>[<a class="local col9 ref" href="#39i" title='i' data-ref="39i">i</a> -  <var>8</var>] * <a class="local col3 ref" href="#33coeff_a" title='coeff_a' data-ref="33coeff_a">coeff_a</a>[<var>4</var> ];</td></tr>
+<tr><th id="499">499</th><td>        <a class="local col8 ref" href="#38right" title='right' data-ref="38right">right</a> += <a class="local col6 ref" href="#36hist_b" title='hist_b' data-ref="36hist_b">hist_b</a>[<a class="local col9 ref" href="#39i" title='i' data-ref="39i">i</a> -  <var>7</var>] * <a class="local col4 ref" href="#34coeff_b" title='coeff_b' data-ref="34coeff_b">coeff_b</a>[ <var>4</var>] - <a class="local col5 ref" href="#35hist_a" title='hist_a' data-ref="35hist_a">hist_a</a>[<a class="local col9 ref" href="#39i" title='i' data-ref="39i">i</a> -  <var>7</var>] * <a class="local col3 ref" href="#33coeff_a" title='coeff_a' data-ref="33coeff_a">coeff_a</a>[<var>4</var> ];</td></tr>
+<tr><th id="500">500</th><td>        <a class="local col7 ref" href="#37left" title='left' data-ref="37left">left</a>  += <a class="local col6 ref" href="#36hist_b" title='hist_b' data-ref="36hist_b">hist_b</a>[<a class="local col9 ref" href="#39i" title='i' data-ref="39i">i</a> - <var>10</var>] * <a class="local col4 ref" href="#34coeff_b" title='coeff_b' data-ref="34coeff_b">coeff_b</a>[ <var>5</var>] - <a class="local col5 ref" href="#35hist_a" title='hist_a' data-ref="35hist_a">hist_a</a>[<a class="local col9 ref" href="#39i" title='i' data-ref="39i">i</a> - <var>10</var>] * <a class="local col3 ref" href="#33coeff_a" title='coeff_a' data-ref="33coeff_a">coeff_a</a>[<var>5</var> ];</td></tr>
+<tr><th id="501">501</th><td>        <a class="local col8 ref" href="#38right" title='right' data-ref="38right">right</a> += <a class="local col6 ref" href="#36hist_b" title='hist_b' data-ref="36hist_b">hist_b</a>[<a class="local col9 ref" href="#39i" title='i' data-ref="39i">i</a> -  <var>9</var>] * <a class="local col4 ref" href="#34coeff_b" title='coeff_b' data-ref="34coeff_b">coeff_b</a>[ <var>5</var>] - <a class="local col5 ref" href="#35hist_a" title='hist_a' data-ref="35hist_a">hist_a</a>[<a class="local col9 ref" href="#39i" title='i' data-ref="39i">i</a> -  <var>9</var>] * <a class="local col3 ref" href="#33coeff_a" title='coeff_a' data-ref="33coeff_a">coeff_a</a>[<var>5</var> ];</td></tr>
+<tr><th id="502">502</th><td>        <a class="local col7 ref" href="#37left" title='left' data-ref="37left">left</a>  += <a class="local col6 ref" href="#36hist_b" title='hist_b' data-ref="36hist_b">hist_b</a>[<a class="local col9 ref" href="#39i" title='i' data-ref="39i">i</a> - <var>12</var>] * <a class="local col4 ref" href="#34coeff_b" title='coeff_b' data-ref="34coeff_b">coeff_b</a>[ <var>6</var>] - <a class="local col5 ref" href="#35hist_a" title='hist_a' data-ref="35hist_a">hist_a</a>[<a class="local col9 ref" href="#39i" title='i' data-ref="39i">i</a> - <var>12</var>] * <a class="local col3 ref" href="#33coeff_a" title='coeff_a' data-ref="33coeff_a">coeff_a</a>[<var>6</var> ];</td></tr>
+<tr><th id="503">503</th><td>        <a class="local col8 ref" href="#38right" title='right' data-ref="38right">right</a> += <a class="local col6 ref" href="#36hist_b" title='hist_b' data-ref="36hist_b">hist_b</a>[<a class="local col9 ref" href="#39i" title='i' data-ref="39i">i</a> - <var>11</var>] * <a class="local col4 ref" href="#34coeff_b" title='coeff_b' data-ref="34coeff_b">coeff_b</a>[ <var>6</var>] - <a class="local col5 ref" href="#35hist_a" title='hist_a' data-ref="35hist_a">hist_a</a>[<a class="local col9 ref" href="#39i" title='i' data-ref="39i">i</a> - <var>11</var>] * <a class="local col3 ref" href="#33coeff_a" title='coeff_a' data-ref="33coeff_a">coeff_a</a>[<var>6</var> ];</td></tr>
+<tr><th id="504">504</th><td>        <a class="local col7 ref" href="#37left" title='left' data-ref="37left">left</a>  += <a class="local col6 ref" href="#36hist_b" title='hist_b' data-ref="36hist_b">hist_b</a>[<a class="local col9 ref" href="#39i" title='i' data-ref="39i">i</a> - <var>14</var>] * <a class="local col4 ref" href="#34coeff_b" title='coeff_b' data-ref="34coeff_b">coeff_b</a>[ <var>7</var>] - <a class="local col5 ref" href="#35hist_a" title='hist_a' data-ref="35hist_a">hist_a</a>[<a class="local col9 ref" href="#39i" title='i' data-ref="39i">i</a> - <var>14</var>] * <a class="local col3 ref" href="#33coeff_a" title='coeff_a' data-ref="33coeff_a">coeff_a</a>[<var>7</var> ];</td></tr>
+<tr><th id="505">505</th><td>        <a class="local col8 ref" href="#38right" title='right' data-ref="38right">right</a> += <a class="local col6 ref" href="#36hist_b" title='hist_b' data-ref="36hist_b">hist_b</a>[<a class="local col9 ref" href="#39i" title='i' data-ref="39i">i</a> - <var>13</var>] * <a class="local col4 ref" href="#34coeff_b" title='coeff_b' data-ref="34coeff_b">coeff_b</a>[ <var>7</var>] - <a class="local col5 ref" href="#35hist_a" title='hist_a' data-ref="35hist_a">hist_a</a>[<a class="local col9 ref" href="#39i" title='i' data-ref="39i">i</a> - <var>13</var>] * <a class="local col3 ref" href="#33coeff_a" title='coeff_a' data-ref="33coeff_a">coeff_a</a>[<var>7</var> ];</td></tr>
+<tr><th id="506">506</th><td>        <a class="local col7 ref" href="#37left" title='left' data-ref="37left">left</a>  += <a class="local col6 ref" href="#36hist_b" title='hist_b' data-ref="36hist_b">hist_b</a>[<a class="local col9 ref" href="#39i" title='i' data-ref="39i">i</a> - <var>16</var>] * <a class="local col4 ref" href="#34coeff_b" title='coeff_b' data-ref="34coeff_b">coeff_b</a>[ <var>8</var>] - <a class="local col5 ref" href="#35hist_a" title='hist_a' data-ref="35hist_a">hist_a</a>[<a class="local col9 ref" href="#39i" title='i' data-ref="39i">i</a> - <var>16</var>] * <a class="local col3 ref" href="#33coeff_a" title='coeff_a' data-ref="33coeff_a">coeff_a</a>[<var>8</var> ];</td></tr>
+<tr><th id="507">507</th><td>        <a class="local col8 ref" href="#38right" title='right' data-ref="38right">right</a> += <a class="local col6 ref" href="#36hist_b" title='hist_b' data-ref="36hist_b">hist_b</a>[<a class="local col9 ref" href="#39i" title='i' data-ref="39i">i</a> - <var>15</var>] * <a class="local col4 ref" href="#34coeff_b" title='coeff_b' data-ref="34coeff_b">coeff_b</a>[ <var>8</var>] - <a class="local col5 ref" href="#35hist_a" title='hist_a' data-ref="35hist_a">hist_a</a>[<a class="local col9 ref" href="#39i" title='i' data-ref="39i">i</a> - <var>15</var>] * <a class="local col3 ref" href="#33coeff_a" title='coeff_a' data-ref="33coeff_a">coeff_a</a>[<var>8</var> ];</td></tr>
+<tr><th id="508">508</th><td>        <a class="local col7 ref" href="#37left" title='left' data-ref="37left">left</a>  += <a class="local col6 ref" href="#36hist_b" title='hist_b' data-ref="36hist_b">hist_b</a>[<a class="local col9 ref" href="#39i" title='i' data-ref="39i">i</a> - <var>18</var>] * <a class="local col4 ref" href="#34coeff_b" title='coeff_b' data-ref="34coeff_b">coeff_b</a>[ <var>9</var>] - <a class="local col5 ref" href="#35hist_a" title='hist_a' data-ref="35hist_a">hist_a</a>[<a class="local col9 ref" href="#39i" title='i' data-ref="39i">i</a> - <var>18</var>] * <a class="local col3 ref" href="#33coeff_a" title='coeff_a' data-ref="33coeff_a">coeff_a</a>[<var>9</var> ];</td></tr>
+<tr><th id="509">509</th><td>        <a class="local col8 ref" href="#38right" title='right' data-ref="38right">right</a> += <a class="local col6 ref" href="#36hist_b" title='hist_b' data-ref="36hist_b">hist_b</a>[<a class="local col9 ref" href="#39i" title='i' data-ref="39i">i</a> - <var>17</var>] * <a class="local col4 ref" href="#34coeff_b" title='coeff_b' data-ref="34coeff_b">coeff_b</a>[ <var>9</var>] - <a class="local col5 ref" href="#35hist_a" title='hist_a' data-ref="35hist_a">hist_a</a>[<a class="local col9 ref" href="#39i" title='i' data-ref="39i">i</a> - <var>17</var>] * <a class="local col3 ref" href="#33coeff_a" title='coeff_a' data-ref="33coeff_a">coeff_a</a>[<var>9</var> ];</td></tr>
+<tr><th id="510">510</th><td>        <a class="local col7 ref" href="#37left" title='left' data-ref="37left">left</a>  += <a class="local col6 ref" href="#36hist_b" title='hist_b' data-ref="36hist_b">hist_b</a>[<a class="local col9 ref" href="#39i" title='i' data-ref="39i">i</a> - <var>20</var>] * <a class="local col4 ref" href="#34coeff_b" title='coeff_b' data-ref="34coeff_b">coeff_b</a>[<var>10</var>] - <a class="local col5 ref" href="#35hist_a" title='hist_a' data-ref="35hist_a">hist_a</a>[<a class="local col9 ref" href="#39i" title='i' data-ref="39i">i</a> - <var>20</var>] * <a class="local col3 ref" href="#33coeff_a" title='coeff_a' data-ref="33coeff_a">coeff_a</a>[<var>10</var>];</td></tr>
+<tr><th id="511">511</th><td>        <a class="local col8 ref" href="#38right" title='right' data-ref="38right">right</a> += <a class="local col6 ref" href="#36hist_b" title='hist_b' data-ref="36hist_b">hist_b</a>[<a class="local col9 ref" href="#39i" title='i' data-ref="39i">i</a> - <var>19</var>] * <a class="local col4 ref" href="#34coeff_b" title='coeff_b' data-ref="34coeff_b">coeff_b</a>[<var>10</var>] - <a class="local col5 ref" href="#35hist_a" title='hist_a' data-ref="35hist_a">hist_a</a>[<a class="local col9 ref" href="#39i" title='i' data-ref="39i">i</a> - <var>19</var>] * <a class="local col3 ref" href="#33coeff_a" title='coeff_a' data-ref="33coeff_a">coeff_a</a>[<var>10</var>];</td></tr>
+<tr><th id="512">512</th><td>        <a class="local col1 ref" href="#31dst" title='dst' data-ref="31dst">dst</a>[<var>0</var>] = <a class="local col5 ref" href="#35hist_a" title='hist_a' data-ref="35hist_a">hist_a</a>[<a class="local col9 ref" href="#39i" title='i' data-ref="39i">i</a>    ] = (<em>float</em>)<a class="local col7 ref" href="#37left" title='left' data-ref="37left">left</a>;</td></tr>
+<tr><th id="513">513</th><td>        <a class="local col1 ref" href="#31dst" title='dst' data-ref="31dst">dst</a>[<var>1</var>] = <a class="local col5 ref" href="#35hist_a" title='hist_a' data-ref="35hist_a">hist_a</a>[<a class="local col9 ref" href="#39i" title='i' data-ref="39i">i</a> + <var>1</var>] = (<em>float</em>)<a class="local col8 ref" href="#38right" title='right' data-ref="38right">right</a>;</td></tr>
+<tr><th id="514">514</th><td>        <a class="local col0 ref" href="#30src" title='src' data-ref="30src">src</a> += <var>2</var>;</td></tr>
+<tr><th id="515">515</th><td>        <a class="local col1 ref" href="#31dst" title='dst' data-ref="31dst">dst</a> += <var>2</var>;</td></tr>
+<tr><th id="516">516</th><td></td></tr>
+<tr><th id="517">517</th><td>        <b>if</b> ((<a class="local col9 ref" href="#39i" title='i' data-ref="39i">i</a> += <var>2</var>) == <var>256</var>) {</td></tr>
+<tr><th id="518">518</th><td>            <a class="ref" href="../../include/string.h.html#memcpy" title='memcpy' data-ref="memcpy">memcpy</a>(<a class="local col5 ref" href="#35hist_a" title='hist_a' data-ref="35hist_a">hist_a</a>, <a class="local col5 ref" href="#35hist_a" title='hist_a' data-ref="35hist_a">hist_a</a> + <var>236</var>, <b>sizeof</b>(*<a class="local col5 ref" href="#35hist_a" title='hist_a' data-ref="35hist_a">hist_a</a>) * <var>20</var>);</td></tr>
+<tr><th id="519">519</th><td>            <a class="ref" href="../../include/string.h.html#memcpy" title='memcpy' data-ref="memcpy">memcpy</a>(<a class="local col6 ref" href="#36hist_b" title='hist_b' data-ref="36hist_b">hist_b</a>, <a class="local col6 ref" href="#36hist_b" title='hist_b' data-ref="36hist_b">hist_b</a> + <var>236</var>, <b>sizeof</b>(*<a class="local col6 ref" href="#36hist_b" title='hist_b' data-ref="36hist_b">hist_b</a>) * <var>20</var>);</td></tr>
+<tr><th id="520">520</th><td>            <a class="local col9 ref" href="#39i" title='i' data-ref="39i">i</a> = <var>20</var>;</td></tr>
+<tr><th id="521">521</th><td>        }</td></tr>
+<tr><th id="522">522</th><td>    }</td></tr>
+<tr><th id="523">523</th><td></td></tr>
+<tr><th id="524">524</th><td>    <a class="local col9 ref" href="#29s" title='s' data-ref="29s">s</a>-&gt;<a class="tu ref" href="#ReplayGainContext::yule_hist_i" title='ReplayGainContext::yule_hist_i' data-use='w' data-ref="ReplayGainContext::yule_hist_i">yule_hist_i</a> = <a class="local col9 ref" href="#39i" title='i' data-ref="39i">i</a>;</td></tr>
+<tr><th id="525">525</th><td>}</td></tr>
+<tr><th id="526">526</th><td></td></tr>
+<tr><th id="527">527</th><td><i  data-doc="calc_replaygain">/*</i></td></tr>
+<tr><th id="528">528</th><td><i  data-doc="calc_replaygain"> * Calculate the ReplayGain value from the specified loudness histogram;</i></td></tr>
+<tr><th id="529">529</th><td><i  data-doc="calc_replaygain"> * clip to -24 / +64 dB.</i></td></tr>
+<tr><th id="530">530</th><td><i  data-doc="calc_replaygain"> */</i></td></tr>
+<tr><th id="531">531</th><td><em>static</em> <em>float</em> <dfn class="tu decl def" id="calc_replaygain" title='calc_replaygain' data-type='float calc_replaygain(uint32_t * histogram)' data-ref="calc_replaygain">calc_replaygain</dfn>(<a class="typedef" href="../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a> *<dfn class="local col1 decl" id="41histogram" title='histogram' data-type='uint32_t *' data-ref="41histogram">histogram</dfn>)</td></tr>
+<tr><th id="532">532</th><td>{</td></tr>
+<tr><th id="533">533</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a> <dfn class="local col2 decl" id="42loud_count" title='loud_count' data-type='uint32_t' data-ref="42loud_count">loud_count</dfn> = <var>0</var>, <dfn class="local col3 decl" id="43total_windows" title='total_windows' data-type='uint32_t' data-ref="43total_windows">total_windows</dfn> = <var>0</var>;</td></tr>
+<tr><th id="534">534</th><td>    <em>float</em> <dfn class="local col4 decl" id="44gain" title='gain' data-type='float' data-ref="44gain">gain</dfn>;</td></tr>
+<tr><th id="535">535</th><td>    <em>int</em> <dfn class="local col5 decl" id="45i" title='i' data-type='int' data-ref="45i">i</dfn>;</td></tr>
+<tr><th id="536">536</th><td></td></tr>
+<tr><th id="537">537</th><td>    <b>for</b> (<a class="local col5 ref" href="#45i" title='i' data-ref="45i">i</a> = <var>0</var>; <a class="local col5 ref" href="#45i" title='i' data-ref="45i">i</a> &lt; <a class="macro" href="#32" title="12000" data-ref="_M/HISTOGRAM_SLOTS">HISTOGRAM_SLOTS</a>; <a class="local col5 ref" href="#45i" title='i' data-ref="45i">i</a>++)</td></tr>
+<tr><th id="538">538</th><td>        <a class="local col3 ref" href="#43total_windows" title='total_windows' data-ref="43total_windows">total_windows</a> += <a class="local col1 ref" href="#41histogram" title='histogram' data-ref="41histogram">histogram</a> [<a class="local col5 ref" href="#45i" title='i' data-ref="45i">i</a>];</td></tr>
+<tr><th id="539">539</th><td></td></tr>
+<tr><th id="540">540</th><td>    <b>while</b> (<a class="local col5 ref" href="#45i" title='i' data-ref="45i">i</a>--)</td></tr>
+<tr><th id="541">541</th><td>        <b>if</b> ((<a class="local col2 ref" href="#42loud_count" title='loud_count' data-ref="42loud_count">loud_count</a> += <a class="local col1 ref" href="#41histogram" title='histogram' data-ref="41histogram">histogram</a> [<a class="local col5 ref" href="#45i" title='i' data-ref="45i">i</a>]) * <var>20</var> &gt;= <a class="local col3 ref" href="#43total_windows" title='total_windows' data-ref="43total_windows">total_windows</a>)</td></tr>
+<tr><th id="542">542</th><td>            <b>break</b>;</td></tr>
+<tr><th id="543">543</th><td></td></tr>
+<tr><th id="544">544</th><td>    <a class="local col4 ref" href="#44gain" title='gain' data-ref="44gain">gain</a> = (<em>float</em>)(<var>64.54</var> - <a class="local col5 ref" href="#45i" title='i' data-ref="45i">i</a> / <var>100.0</var>);</td></tr>
+<tr><th id="545">545</th><td></td></tr>
+<tr><th id="546">546</th><td>    <b>return</b> <a class="macro" href="../libavutil/x86/intmath.h.html#122" title="av_clipf_sse" data-ref="_M/av_clipf">av_clipf</a>(<a class="local col4 ref" href="#44gain" title='gain' data-ref="44gain">gain</a>, -<var>24.0</var>, <var>64.0</var>);</td></tr>
+<tr><th id="547">547</th><td>}</td></tr>
+<tr><th id="548">548</th><td></td></tr>
+<tr><th id="549">549</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="filter_frame" title='filter_frame' data-type='int filter_frame(AVFilterLink * inlink, AVFrame * in)' data-ref="filter_frame">filter_frame</dfn>(<a class="typedef" href="avfilter.h.html#AVFilterLink" title='AVFilterLink' data-type='struct AVFilterLink' data-ref="AVFilterLink">AVFilterLink</a> *<dfn class="local col6 decl" id="46inlink" title='inlink' data-type='AVFilterLink *' data-ref="46inlink">inlink</dfn>, <a class="typedef" href="../libavutil/frame.h.html#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col7 decl" id="47in" title='in' data-type='AVFrame *' data-ref="47in">in</dfn>)</td></tr>
+<tr><th id="550">550</th><td>{</td></tr>
+<tr><th id="551">551</th><td>    <a class="typedef" href="avfilter.h.html#AVFilterContext" title='AVFilterContext' data-type='struct AVFilterContext' data-ref="AVFilterContext">AVFilterContext</a> *<dfn class="local col8 decl" id="48ctx" title='ctx' data-type='AVFilterContext *' data-ref="48ctx">ctx</dfn> = <a class="local col6 ref" href="#46inlink" title='inlink' data-ref="46inlink">inlink</a>-&gt;<a class="ref" href="avfilter.h.html#AVFilterLink::dst" title='AVFilterLink::dst' data-ref="AVFilterLink::dst">dst</a>;</td></tr>
+<tr><th id="552">552</th><td>    <a class="typedef" href="avfilter.h.html#AVFilterLink" title='AVFilterLink' data-type='struct AVFilterLink' data-ref="AVFilterLink">AVFilterLink</a> *<dfn class="local col9 decl" id="49outlink" title='outlink' data-type='AVFilterLink *' data-ref="49outlink">outlink</dfn> = <a class="local col8 ref" href="#48ctx" title='ctx' data-ref="48ctx">ctx</a>-&gt;<a class="ref" href="avfilter.h.html#AVFilterContext::outputs" title='AVFilterContext::outputs' data-ref="AVFilterContext::outputs">outputs</a>[<var>0</var>];</td></tr>
+<tr><th id="553">553</th><td>    <a class="typedef" href="#ReplayGainContext" title='ReplayGainContext' data-type='struct ReplayGainContext' data-ref="ReplayGainContext">ReplayGainContext</a> *<dfn class="local col0 decl" id="50s" title='s' data-type='ReplayGainContext *' data-ref="50s">s</dfn> = <a class="local col8 ref" href="#48ctx" title='ctx' data-ref="48ctx">ctx</a>-&gt;<a class="ref" href="avfilter.h.html#AVFilterContext::priv" title='AVFilterContext::priv' data-ref="AVFilterContext::priv">priv</a>;</td></tr>
+<tr><th id="554">554</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a> <dfn class="local col1 decl" id="51level" title='level' data-type='uint32_t' data-ref="51level">level</dfn>;</td></tr>
+<tr><th id="555">555</th><td>    <a class="typedef" href="../libavutil/frame.h.html#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col2 decl" id="52out" title='out' data-type='AVFrame *' data-ref="52out">out</dfn>;</td></tr>
+<tr><th id="556">556</th><td></td></tr>
+<tr><th id="557">557</th><td>    <a class="local col2 ref" href="#52out" title='out' data-ref="52out">out</a> = <a class="ref" href="audio.h.html#ff_get_audio_buffer" title='ff_get_audio_buffer' data-ref="ff_get_audio_buffer">ff_get_audio_buffer</a>(<a class="local col6 ref" href="#46inlink" title='inlink' data-ref="46inlink">inlink</a>, <a class="local col7 ref" href="#47in" title='in' data-ref="47in">in</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::nb_samples" title='AVFrame::nb_samples' data-ref="AVFrame::nb_samples">nb_samples</a>);</td></tr>
+<tr><th id="558">558</th><td>    <b>if</b> (!<a class="local col2 ref" href="#52out" title='out' data-ref="52out">out</a>) {</td></tr>
+<tr><th id="559">559</th><td>        <a class="ref" href="../libavutil/frame.h.html#av_frame_free" title='av_frame_free' data-ref="av_frame_free">av_frame_free</a>(&amp;<a class="local col7 ref" href="#47in" title='in' data-ref="47in">in</a>);</td></tr>
+<tr><th id="560">560</th><td>        <b>return</b> <a class="macro" href="../libavutil/error.h.html#39" title="(-(12))" data-ref="_M/AVERROR">AVERROR</a>(<a class="macro" href="../../include/asm-generic/errno-base.h.html#15" title="12" data-ref="_M/ENOMEM">ENOMEM</a>);</td></tr>
+<tr><th id="561">561</th><td>    }</td></tr>
+<tr><th id="562">562</th><td></td></tr>
+<tr><th id="563">563</th><td>    <a class="tu ref" href="#calc_stereo_peak" title='calc_stereo_peak' data-use='c' data-ref="calc_stereo_peak">calc_stereo_peak</a>((<em>float</em> *)<a class="local col7 ref" href="#47in" title='in' data-ref="47in">in</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::data" title='AVFrame::data' data-ref="AVFrame::data">data</a>[<var>0</var>],</td></tr>
+<tr><th id="564">564</th><td>                              <a class="local col7 ref" href="#47in" title='in' data-ref="47in">in</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::nb_samples" title='AVFrame::nb_samples' data-ref="AVFrame::nb_samples">nb_samples</a>, &amp;<a class="local col0 ref" href="#50s" title='s' data-ref="50s">s</a>-&gt;<a class="tu ref" href="#ReplayGainContext::peak" title='ReplayGainContext::peak' data-use='a' data-ref="ReplayGainContext::peak">peak</a>);</td></tr>
+<tr><th id="565">565</th><td>    <a class="tu ref" href="#yule_filter_stereo_samples" title='yule_filter_stereo_samples' data-use='c' data-ref="yule_filter_stereo_samples">yule_filter_stereo_samples</a>(<a class="local col0 ref" href="#50s" title='s' data-ref="50s">s</a>, (<em>const</em> <em>float</em> *)<a class="local col7 ref" href="#47in" title='in' data-ref="47in">in</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::data" title='AVFrame::data' data-ref="AVFrame::data">data</a>[<var>0</var>],</td></tr>
+<tr><th id="566">566</th><td>                                        (<em>float</em> *)<a class="local col2 ref" href="#52out" title='out' data-ref="52out">out</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::data" title='AVFrame::data' data-ref="AVFrame::data">data</a>[<var>0</var>],</td></tr>
+<tr><th id="567">567</th><td>                                                 <a class="local col2 ref" href="#52out" title='out' data-ref="52out">out</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::nb_samples" title='AVFrame::nb_samples' data-ref="AVFrame::nb_samples">nb_samples</a>);</td></tr>
+<tr><th id="568">568</th><td>    <a class="tu ref" href="#butter_filter_stereo_samples" title='butter_filter_stereo_samples' data-use='c' data-ref="butter_filter_stereo_samples">butter_filter_stereo_samples</a>(<a class="local col0 ref" href="#50s" title='s' data-ref="50s">s</a>, (<em>float</em> *)<a class="local col2 ref" href="#52out" title='out' data-ref="52out">out</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::data" title='AVFrame::data' data-ref="AVFrame::data">data</a>[<var>0</var>],</td></tr>
+<tr><th id="569">569</th><td>                                             <a class="local col2 ref" href="#52out" title='out' data-ref="52out">out</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::nb_samples" title='AVFrame::nb_samples' data-ref="AVFrame::nb_samples">nb_samples</a>);</td></tr>
+<tr><th id="570">570</th><td>    <a class="local col1 ref" href="#51level" title='level' data-ref="51level">level</a> = (<a class="typedef" href="../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a>)<a class="ref" href="../../include/x86_64-linux-gnu/bits/mathcalls.h.html#184" title='floor' data-ref="floor">floor</a>(<var>100</var> * <a class="tu ref" href="#calc_stereo_rms" title='calc_stereo_rms' data-use='c' data-ref="calc_stereo_rms">calc_stereo_rms</a>((<em>float</em> *)<a class="local col2 ref" href="#52out" title='out' data-ref="52out">out</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::data" title='AVFrame::data' data-ref="AVFrame::data">data</a>[<var>0</var>],</td></tr>
+<tr><th id="571">571</th><td>                                                           <a class="local col2 ref" href="#52out" title='out' data-ref="52out">out</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::nb_samples" title='AVFrame::nb_samples' data-ref="AVFrame::nb_samples">nb_samples</a>));</td></tr>
+<tr><th id="572">572</th><td>    <a class="local col1 ref" href="#51level" title='level' data-ref="51level">level</a> = <a class="macro" href="../libavutil/common.h.html#481" title="av_clip_c" data-ref="_M/av_clip">av_clip</a>(<a class="local col1 ref" href="#51level" title='level' data-ref="51level">level</a>, <var>0</var>, <a class="macro" href="#32" title="12000" data-ref="_M/HISTOGRAM_SLOTS">HISTOGRAM_SLOTS</a> - <var>1</var>);</td></tr>
+<tr><th id="573">573</th><td></td></tr>
+<tr><th id="574">574</th><td>    <a class="local col0 ref" href="#50s" title='s' data-ref="50s">s</a>-&gt;<a class="tu ref" href="#ReplayGainContext::histogram" title='ReplayGainContext::histogram' data-use='w' data-ref="ReplayGainContext::histogram">histogram</a>[<a class="local col1 ref" href="#51level" title='level' data-ref="51level">level</a>]++;</td></tr>
+<tr><th id="575">575</th><td></td></tr>
+<tr><th id="576">576</th><td>    <a class="ref" href="../libavutil/frame.h.html#av_frame_free" title='av_frame_free' data-ref="av_frame_free">av_frame_free</a>(&amp;<a class="local col2 ref" href="#52out" title='out' data-ref="52out">out</a>);</td></tr>
+<tr><th id="577">577</th><td>    <b>return</b> <a class="ref" href="internal.h.html#ff_filter_frame" title='ff_filter_frame' data-ref="ff_filter_frame">ff_filter_frame</a>(<a class="local col9 ref" href="#49outlink" title='outlink' data-ref="49outlink">outlink</a>, <a class="local col7 ref" href="#47in" title='in' data-ref="47in">in</a>);</td></tr>
+<tr><th id="578">578</th><td>}</td></tr>
+<tr><th id="579">579</th><td></td></tr>
+<tr><th id="580">580</th><td><em>static</em> <a class="macro" href="../libavutil/attributes.h.html#84" title="" data-ref="_M/av_cold">av_cold</a> <em>void</em> <dfn class="tu decl def" id="uninit" title='uninit' data-type='void uninit(AVFilterContext * ctx)' data-ref="uninit">uninit</dfn>(<a class="typedef" href="avfilter.h.html#AVFilterContext" title='AVFilterContext' data-type='struct AVFilterContext' data-ref="AVFilterContext">AVFilterContext</a> *<dfn class="local col3 decl" id="53ctx" title='ctx' data-type='AVFilterContext *' data-ref="53ctx">ctx</dfn>)</td></tr>
+<tr><th id="581">581</th><td>{</td></tr>
+<tr><th id="582">582</th><td>    <a class="typedef" href="#ReplayGainContext" title='ReplayGainContext' data-type='struct ReplayGainContext' data-ref="ReplayGainContext">ReplayGainContext</a> *<dfn class="local col4 decl" id="54s" title='s' data-type='ReplayGainContext *' data-ref="54s">s</dfn> = <a class="local col3 ref" href="#53ctx" title='ctx' data-ref="53ctx">ctx</a>-&gt;<a class="ref" href="avfilter.h.html#AVFilterContext::priv" title='AVFilterContext::priv' data-ref="AVFilterContext::priv">priv</a>;</td></tr>
+<tr><th id="583">583</th><td>    <em>float</em> <dfn class="local col5 decl" id="55gain" title='gain' data-type='float' data-ref="55gain">gain</dfn> = <a class="tu ref" href="#calc_replaygain" title='calc_replaygain' data-use='c' data-ref="calc_replaygain">calc_replaygain</a>(<a class="local col4 ref" href="#54s" title='s' data-ref="54s">s</a>-&gt;<a class="tu ref" href="#ReplayGainContext::histogram" title='ReplayGainContext::histogram' data-use='r' data-ref="ReplayGainContext::histogram">histogram</a>);</td></tr>
+<tr><th id="584">584</th><td></td></tr>
+<tr><th id="585">585</th><td>    <a class="ref" href="../libavutil/log.h.html#av_log" title='av_log' data-ref="av_log">av_log</a>(<a class="local col3 ref" href="#53ctx" title='ctx' data-ref="53ctx">ctx</a>, <a class="macro" href="../libavutil/log.h.html#187" title="32" data-ref="_M/AV_LOG_INFO">AV_LOG_INFO</a>, <q>"track_gain = %+.2f dB\n"</q>, <a class="local col5 ref" href="#55gain" title='gain' data-ref="55gain">gain</a>);</td></tr>
+<tr><th id="586">586</th><td>    <a class="ref" href="../libavutil/log.h.html#av_log" title='av_log' data-ref="av_log">av_log</a>(<a class="local col3 ref" href="#53ctx" title='ctx' data-ref="53ctx">ctx</a>, <a class="macro" href="../libavutil/log.h.html#187" title="32" data-ref="_M/AV_LOG_INFO">AV_LOG_INFO</a>, <q>"track_peak = %.6f\n"</q>, <a class="local col4 ref" href="#54s" title='s' data-ref="54s">s</a>-&gt;<a class="tu ref" href="#ReplayGainContext::peak" title='ReplayGainContext::peak' data-use='r' data-ref="ReplayGainContext::peak">peak</a>);</td></tr>
+<tr><th id="587">587</th><td>}</td></tr>
+<tr><th id="588">588</th><td></td></tr>
+<tr><th id="589">589</th><td><em>static</em> <em>const</em> <a class="typedef" href="avfilter.h.html#AVFilterPad" title='AVFilterPad' data-type='struct AVFilterPad' data-ref="AVFilterPad">AVFilterPad</a> <dfn class="tu decl def" id="replaygain_inputs" title='replaygain_inputs' data-type='const AVFilterPad [2]' data-ref="replaygain_inputs">replaygain_inputs</dfn>[] = {</td></tr>
+<tr><th id="590">590</th><td>    {</td></tr>
+<tr><th id="591">591</th><td>        .<a class="ref" href="internal.h.html#AVFilterPad::name" title='AVFilterPad::name' data-ref="AVFilterPad::name">name</a>         = <q>"default"</q>,</td></tr>
+<tr><th id="592">592</th><td>        .<a class="ref" href="internal.h.html#AVFilterPad::type" title='AVFilterPad::type' data-ref="AVFilterPad::type">type</a>         = <a class="enum" href="../libavutil/avutil.h.html#AVMediaType::AVMEDIA_TYPE_AUDIO" title='AVMediaType::AVMEDIA_TYPE_AUDIO' data-ref="AVMediaType::AVMEDIA_TYPE_AUDIO">AVMEDIA_TYPE_AUDIO</a>,</td></tr>
+<tr><th id="593">593</th><td>        .<a class="ref" href="internal.h.html#AVFilterPad::filter_frame" title='AVFilterPad::filter_frame' data-ref="AVFilterPad::filter_frame">filter_frame</a> = <a class="tu ref" href="#filter_frame" title='filter_frame' data-ref="filter_frame">filter_frame</a>,</td></tr>
+<tr><th id="594">594</th><td>        .<a class="ref" href="internal.h.html#AVFilterPad::config_props" title='AVFilterPad::config_props' data-ref="AVFilterPad::config_props">config_props</a> = <a class="tu ref" href="#config_input" title='config_input' data-ref="config_input">config_input</a>,</td></tr>
+<tr><th id="595">595</th><td>    },</td></tr>
+<tr><th id="596">596</th><td>    { <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span> }</td></tr>
+<tr><th id="597">597</th><td>};</td></tr>
+<tr><th id="598">598</th><td></td></tr>
+<tr><th id="599">599</th><td><em>static</em> <em>const</em> <a class="typedef" href="avfilter.h.html#AVFilterPad" title='AVFilterPad' data-type='struct AVFilterPad' data-ref="AVFilterPad">AVFilterPad</a> <dfn class="tu decl def" id="replaygain_outputs" title='replaygain_outputs' data-type='const AVFilterPad [2]' data-ref="replaygain_outputs">replaygain_outputs</dfn>[] = {</td></tr>
+<tr><th id="600">600</th><td>    {</td></tr>
+<tr><th id="601">601</th><td>        .<a class="ref" href="internal.h.html#AVFilterPad::name" title='AVFilterPad::name' data-ref="AVFilterPad::name">name</a> = <q>"default"</q>,</td></tr>
+<tr><th id="602">602</th><td>        .<a class="ref" href="internal.h.html#AVFilterPad::type" title='AVFilterPad::type' data-ref="AVFilterPad::type">type</a> = <a class="enum" href="../libavutil/avutil.h.html#AVMediaType::AVMEDIA_TYPE_AUDIO" title='AVMediaType::AVMEDIA_TYPE_AUDIO' data-ref="AVMediaType::AVMEDIA_TYPE_AUDIO">AVMEDIA_TYPE_AUDIO</a>,</td></tr>
+<tr><th id="603">603</th><td>    },</td></tr>
+<tr><th id="604">604</th><td>    { <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span> }</td></tr>
+<tr><th id="605">605</th><td>};</td></tr>
+<tr><th id="606">606</th><td></td></tr>
+<tr><th id="607">607</th><td><a class="typedef" href="avfilter.h.html#AVFilter" title='AVFilter' data-type='struct AVFilter' data-ref="AVFilter">AVFilter</a> <dfn class="decl def" id="ff_af_replaygain" title='ff_af_replaygain' data-ref="ff_af_replaygain">ff_af_replaygain</dfn> = {</td></tr>
+<tr><th id="608">608</th><td>    .<a class="ref" href="avfilter.h.html#AVFilter::name" title='AVFilter::name' data-ref="AVFilter::name">name</a>          = <q>"replaygain"</q>,</td></tr>
+<tr><th id="609">609</th><td>    .<a class="ref" href="avfilter.h.html#AVFilter::description" title='AVFilter::description' data-ref="AVFilter::description">description</a>   = <a class="macro" href="../libavutil/internal.h.html#176" title="&quot;ReplayGain scanner.&quot;" data-ref="_M/NULL_IF_CONFIG_SMALL">NULL_IF_CONFIG_SMALL</a>(<q>"ReplayGain scanner."</q>),</td></tr>
+<tr><th id="610">610</th><td>    .<a class="ref" href="avfilter.h.html#AVFilter::query_formats" title='AVFilter::query_formats' data-ref="AVFilter::query_formats">query_formats</a> = <a class="tu ref" href="#query_formats" title='query_formats' data-ref="query_formats">query_formats</a>,</td></tr>
+<tr><th id="611">611</th><td>    .<a class="ref" href="avfilter.h.html#AVFilter::uninit" title='AVFilter::uninit' data-ref="AVFilter::uninit">uninit</a>        = <a class="tu ref" href="#uninit" title='uninit' data-ref="uninit">uninit</a>,</td></tr>
+<tr><th id="612">612</th><td>    .<a class="ref" href="avfilter.h.html#AVFilter::priv_size" title='AVFilter::priv_size' data-ref="AVFilter::priv_size">priv_size</a>     = <b>sizeof</b>(<a class="typedef" href="#ReplayGainContext" title='ReplayGainContext' data-type='struct ReplayGainContext' data-ref="ReplayGainContext">ReplayGainContext</a>),</td></tr>
+<tr><th id="613">613</th><td>    .<a class="ref" href="avfilter.h.html#AVFilter::inputs" title='AVFilter::inputs' data-ref="AVFilter::inputs">inputs</a>        = <a class="tu ref" href="#replaygain_inputs" title='replaygain_inputs' data-ref="replaygain_inputs">replaygain_inputs</a>,</td></tr>
+<tr><th id="614">614</th><td>    .<a class="ref" href="avfilter.h.html#AVFilter::outputs" title='AVFilter::outputs' data-ref="AVFilter::outputs">outputs</a>       = <a class="tu ref" href="#replaygain_outputs" title='replaygain_outputs' data-ref="replaygain_outputs">replaygain_outputs</a>,</td></tr>
+<tr><th id="615">615</th><td>};</td></tr>
+<tr><th id="616">616</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

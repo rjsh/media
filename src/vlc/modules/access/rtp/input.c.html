@@ -1,0 +1,214 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>input.c source code [vlc/modules/access/rtp/input.c] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'vlc/modules/access/rtp/input.c'; var root_path = '../../../..'; var data_path = '../../../../../data';</script>
+<script src='../../../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='../../..'>vlc</a>/<a href='../..'>modules</a>/<a href='..'>access</a>/<a href='./'>rtp</a>/<a href='input.c.html'>input.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="2">2</th><td><i class="doc"> *<span class="command"> @file</span> input.c</i></td></tr>
+<tr><th id="3">3</th><td><i class="doc"> * <span class="command">@brief</span> RTP packet input</i></td></tr>
+<tr><th id="4">4</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="5">5</th><td><i>/*****************************************************************************</i></td></tr>
+<tr><th id="6">6</th><td><i> * Copyright © 2008 Rémi Denis-Courmont</i></td></tr>
+<tr><th id="7">7</th><td><i> *</i></td></tr>
+<tr><th id="8">8</th><td><i> * This library is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="9">9</th><td><i> * modify it under the terms of the GNU Lesser General Public License</i></td></tr>
+<tr><th id="10">10</th><td><i> * as published by the Free Software Foundation; either version 2.1</i></td></tr>
+<tr><th id="11">11</th><td><i> * of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="12">12</th><td><i> *</i></td></tr>
+<tr><th id="13">13</th><td><i> * This library is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="14">14</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="15">15</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</i></td></tr>
+<tr><th id="16">16</th><td><i> * GNU Lesser General Public License for more details.</i></td></tr>
+<tr><th id="17">17</th><td><i> *</i></td></tr>
+<tr><th id="18">18</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="19">19</th><td><i> * License along with this library; if not, write to the Free Software</i></td></tr>
+<tr><th id="20">20</th><td><i> * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA</i></td></tr>
+<tr><th id="21">21</th><td><i> ****************************************************************************/</i></td></tr>
+<tr><th id="22">22</th><td></td></tr>
+<tr><th id="23">23</th><td><u>#<span data-ppcond="23">ifdef</span> <span class="macro" data-ref="_M/HAVE_CONFIG_H">HAVE_CONFIG_H</span></u></td></tr>
+<tr><th id="24">24</th><td><u># include <a href="../../../config.h.html">&lt;config.h&gt;</a></u></td></tr>
+<tr><th id="25">25</th><td><u>#<span data-ppcond="23">endif</span></u></td></tr>
+<tr><th id="26">26</th><td></td></tr>
+<tr><th id="27">27</th><td><u>#include <a href="../../../include/vlc_common.h.html">&lt;vlc_common.h&gt;</a></u></td></tr>
+<tr><th id="28">28</th><td><u>#include <a href="../../../include/vlc_demux.h.html">&lt;vlc_demux.h&gt;</a></u></td></tr>
+<tr><th id="29">29</th><td><u>#include <a href="../../../include/vlc_block.h.html">&lt;vlc_block.h&gt;</a></u></td></tr>
+<tr><th id="30">30</th><td><u>#include <a href="../../../include/vlc_network.h.html">&lt;vlc_network.h&gt;</a></u></td></tr>
+<tr><th id="31">31</th><td></td></tr>
+<tr><th id="32">32</th><td><u>#include &lt;limits.h&gt;</u></td></tr>
+<tr><th id="33">33</th><td><u>#include <a href="../../../../include/errno.h.html">&lt;errno.h&gt;</a></u></td></tr>
+<tr><th id="34">34</th><td><u>#include <a href="../../../../include/unistd.h.html">&lt;unistd.h&gt;</a></u></td></tr>
+<tr><th id="35">35</th><td><u>#<span data-ppcond="35">ifdef</span> <a class="macro" href="../../../config.h.html#398" data-ref="_M/HAVE_POLL">HAVE_POLL</a></u></td></tr>
+<tr><th id="36">36</th><td><u># include <a href="../../../../include/poll.h.html">&lt;poll.h&gt;</a></u></td></tr>
+<tr><th id="37">37</th><td><u>#<span data-ppcond="35">endif</span></u></td></tr>
+<tr><th id="38">38</th><td></td></tr>
+<tr><th id="39">39</th><td><u>#include <a href="rtp.h.html">"rtp.h"</a></u></td></tr>
+<tr><th id="40">40</th><td><u>#<span data-ppcond="40">ifdef</span> <span class="macro" data-ref="_M/HAVE_SRTP">HAVE_SRTP</span></u></td></tr>
+<tr><th id="41">41</th><td><u># include <a href="srtp.h.html">&lt;srtp.h&gt;</a></u></td></tr>
+<tr><th id="42">42</th><td><u>#<span data-ppcond="40">endif</span></u></td></tr>
+<tr><th id="43">43</th><td></td></tr>
+<tr><th id="44">44</th><td><i class="doc" data-doc="rtp_process">/**</i></td></tr>
+<tr><th id="45">45</th><td><i class="doc" data-doc="rtp_process"> * Processes a packet received from the RTP socket.</i></td></tr>
+<tr><th id="46">46</th><td><i class="doc" data-doc="rtp_process"> */</i></td></tr>
+<tr><th id="47">47</th><td><em>static</em> <em>void</em> <dfn class="tu decl def" id="rtp_process" title='rtp_process' data-type='void rtp_process(demux_t * demux, block_t * block)' data-ref="rtp_process">rtp_process</dfn> (<a class="typedef" href="../../../include/vlc_common.h.html#demux_t" title='demux_t' data-type='struct demux_t' data-ref="demux_t">demux_t</a> *<dfn class="local col0 decl" id="50demux" title='demux' data-type='demux_t *' data-ref="50demux">demux</dfn>, <a class="typedef" href="../../../include/vlc_common.h.html#block_t" title='block_t' data-type='struct block_t' data-ref="block_t">block_t</a> *<dfn class="local col1 decl" id="51block" title='block' data-type='block_t *' data-ref="51block">block</dfn>)</td></tr>
+<tr><th id="48">48</th><td>{</td></tr>
+<tr><th id="49">49</th><td>    <a class="typedef" href="../../../include/vlc_common.h.html#demux_sys_t" title='demux_sys_t' data-type='struct demux_sys_t' data-ref="demux_sys_t">demux_sys_t</a> *<dfn class="local col2 decl" id="52sys" title='sys' data-type='demux_sys_t *' data-ref="52sys">sys</dfn> = <a class="local col0 ref" href="#50demux" title='demux' data-ref="50demux">demux</a>-&gt;<a class="ref" href="../../../include/vlc_demux.h.html#demux_t::p_sys" title='demux_t::p_sys' data-ref="demux_t::p_sys">p_sys</a>;</td></tr>
+<tr><th id="50">50</th><td></td></tr>
+<tr><th id="51">51</th><td>    <b>if</b> (<a class="local col1 ref" href="#51block" title='block' data-ref="51block">block</a>-&gt;<a class="ref" href="../../../include/vlc_block.h.html#block_t::i_buffer" title='block_t::i_buffer' data-ref="block_t::i_buffer">i_buffer</a> &lt; <var>2</var>)</td></tr>
+<tr><th id="52">52</th><td>        <b>goto</b> <a class="lbl" href="#53drop" data-ref="53drop">drop</a>;</td></tr>
+<tr><th id="53">53</th><td>    <em>const</em> <a class="typedef" href="../../../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="local col4 decl" id="54ptype" title='ptype' data-type='const uint8_t' data-ref="54ptype">ptype</dfn> = <a class="ref" href="rtp.h.html#rtp_ptype" title='rtp_ptype' data-ref="rtp_ptype">rtp_ptype</a> (<a class="local col1 ref" href="#51block" title='block' data-ref="51block">block</a>);</td></tr>
+<tr><th id="54">54</th><td>    <b>if</b> (<a class="local col4 ref" href="#54ptype" title='ptype' data-ref="54ptype">ptype</a> &gt;= <var>72</var> &amp;&amp; <a class="local col4 ref" href="#54ptype" title='ptype' data-ref="54ptype">ptype</a> &lt;= <var>76</var>)</td></tr>
+<tr><th id="55">55</th><td>        <b>goto</b> <a class="lbl" href="#53drop" data-ref="53drop">drop</a>; <i>/* Muxed RTCP, ignore for now FIXME */</i></td></tr>
+<tr><th id="56">56</th><td></td></tr>
+<tr><th id="57">57</th><td><u>#<span data-ppcond="57">ifdef</span> <span class="macro" data-ref="_M/HAVE_SRTP">HAVE_SRTP</span></u></td></tr>
+<tr><th id="58">58</th><td>    <b>if</b> (<a class="local col2 ref" href="#52sys" title='sys' data-ref="52sys">sys</a>-&gt;<a class="ref" href="rtp.h.html#demux_sys_t::srtp" title='demux_sys_t::srtp' data-ref="demux_sys_t::srtp">srtp</a> != <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>)</td></tr>
+<tr><th id="59">59</th><td>    {</td></tr>
+<tr><th id="60">60</th><td>        <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="local col5 decl" id="55len" title='len' data-type='size_t' data-ref="55len">len</dfn> = <a class="local col1 ref" href="#51block" title='block' data-ref="51block">block</a>-&gt;<a class="ref" href="../../../include/vlc_block.h.html#block_t::i_buffer" title='block_t::i_buffer' data-ref="block_t::i_buffer">i_buffer</a>;</td></tr>
+<tr><th id="61">61</th><td>        <b>if</b> (<a class="ref" href="srtp.h.html#srtp_recv" title='srtp_recv' data-ref="srtp_recv">srtp_recv</a> (<a class="local col2 ref" href="#52sys" title='sys' data-ref="52sys">sys</a>-&gt;<a class="ref" href="rtp.h.html#demux_sys_t::srtp" title='demux_sys_t::srtp' data-ref="demux_sys_t::srtp">srtp</a>, <a class="local col1 ref" href="#51block" title='block' data-ref="51block">block</a>-&gt;<a class="ref" href="../../../include/vlc_block.h.html#block_t::p_buffer" title='block_t::p_buffer' data-ref="block_t::p_buffer">p_buffer</a>, &amp;<a class="local col5 ref" href="#55len" title='len' data-ref="55len">len</a>))</td></tr>
+<tr><th id="62">62</th><td>        {</td></tr>
+<tr><th id="63">63</th><td>            <a class="macro" href="../../../include/vlc_messages.h.html#77" title="vlc_Log( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(demux)), psz_object_type), (void)0 , (vlc_object_t *)(demux)), VLC_MSG_DBG, rtp, &quot;SRTP authentication/decryption failed&quot; )" data-ref="_M/msg_Dbg">msg_Dbg</a> (demux, <q>"SRTP authentication/decryption failed"</q>);</td></tr>
+<tr><th id="64">64</th><td>            <b>goto</b> <a class="lbl" href="#53drop" data-ref="53drop">drop</a>;</td></tr>
+<tr><th id="65">65</th><td>        }</td></tr>
+<tr><th id="66">66</th><td>        <a class="local col1 ref" href="#51block" title='block' data-ref="51block">block</a>-&gt;<a class="ref" href="../../../include/vlc_block.h.html#block_t::i_buffer" title='block_t::i_buffer' data-ref="block_t::i_buffer">i_buffer</a> = <a class="local col5 ref" href="#55len" title='len' data-ref="55len">len</a>;</td></tr>
+<tr><th id="67">67</th><td>    }</td></tr>
+<tr><th id="68">68</th><td><u>#<span data-ppcond="57">endif</span></u></td></tr>
+<tr><th id="69">69</th><td></td></tr>
+<tr><th id="70">70</th><td>    <i>/* TODO: use SDP and get rid of this hack */</i></td></tr>
+<tr><th id="71">71</th><td>    <b>if</b> (<a class="macro" href="../../../include/vlc_common.h.html#116" title="__builtin_expect(!!(sys-&gt;autodetect), 0)" data-ref="_M/unlikely">unlikely</a>(<a class="local col2 ref" href="#52sys" title='sys' data-ref="52sys">sys</a>-&gt;<a class="ref" href="rtp.h.html#demux_sys_t::autodetect" title='demux_sys_t::autodetect' data-ref="demux_sys_t::autodetect">autodetect</a>))</td></tr>
+<tr><th id="72">72</th><td>    {   <i>/* Autodetect payload type, _before_ rtp_queue() */</i></td></tr>
+<tr><th id="73">73</th><td>        <a class="ref" href="rtp.h.html#rtp_autodetect" title='rtp_autodetect' data-ref="rtp_autodetect">rtp_autodetect</a> (<a class="local col0 ref" href="#50demux" title='demux' data-ref="50demux">demux</a>, <a class="local col2 ref" href="#52sys" title='sys' data-ref="52sys">sys</a>-&gt;<a class="ref" href="rtp.h.html#demux_sys_t::session" title='demux_sys_t::session' data-ref="demux_sys_t::session">session</a>, <a class="local col1 ref" href="#51block" title='block' data-ref="51block">block</a>);</td></tr>
+<tr><th id="74">74</th><td>        <a class="local col2 ref" href="#52sys" title='sys' data-ref="52sys">sys</a>-&gt;<a class="ref" href="rtp.h.html#demux_sys_t::autodetect" title='demux_sys_t::autodetect' data-ref="demux_sys_t::autodetect">autodetect</a> = <span class="macro" title="0" data-ref="_M/false">false</span>;</td></tr>
+<tr><th id="75">75</th><td>    }</td></tr>
+<tr><th id="76">76</th><td></td></tr>
+<tr><th id="77">77</th><td>    <a class="ref" href="rtp.h.html#rtp_queue" title='rtp_queue' data-ref="rtp_queue">rtp_queue</a> (<a class="local col0 ref" href="#50demux" title='demux' data-ref="50demux">demux</a>, <a class="local col2 ref" href="#52sys" title='sys' data-ref="52sys">sys</a>-&gt;<a class="ref" href="rtp.h.html#demux_sys_t::session" title='demux_sys_t::session' data-ref="demux_sys_t::session">session</a>, <a class="local col1 ref" href="#51block" title='block' data-ref="51block">block</a>);</td></tr>
+<tr><th id="78">78</th><td>    <b>return</b>;</td></tr>
+<tr><th id="79">79</th><td><dfn class="lbl" id="53drop" data-ref="53drop">drop</dfn>:</td></tr>
+<tr><th id="80">80</th><td>    <a class="ref" href="../../../include/vlc_block.h.html#block_Release" title='block_Release' data-ref="block_Release">block_Release</a> (<a class="local col1 ref" href="#51block" title='block' data-ref="51block">block</a>);</td></tr>
+<tr><th id="81">81</th><td>}</td></tr>
+<tr><th id="82">82</th><td></td></tr>
+<tr><th id="83">83</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="rtp_timeout" title='rtp_timeout' data-type='int rtp_timeout(mtime_t deadline)' data-ref="rtp_timeout">rtp_timeout</dfn> (<a class="typedef" href="../../../include/vlc_common.h.html#mtime_t" title='mtime_t' data-type='int64_t' data-ref="mtime_t">mtime_t</a> <dfn class="local col6 decl" id="56deadline" title='deadline' data-type='mtime_t' data-ref="56deadline">deadline</dfn>)</td></tr>
+<tr><th id="84">84</th><td>{</td></tr>
+<tr><th id="85">85</th><td>    <b>if</b> (<a class="local col6 ref" href="#56deadline" title='deadline' data-ref="56deadline">deadline</a> == <a class="macro" href="../../../include/vlc_config.h.html#43" title="0L" data-ref="_M/VLC_TS_INVALID">VLC_TS_INVALID</a>)</td></tr>
+<tr><th id="86">86</th><td>        <b>return</b> -<var>1</var>; <i>/* infinite */</i></td></tr>
+<tr><th id="87">87</th><td></td></tr>
+<tr><th id="88">88</th><td>    <a class="typedef" href="../../../include/vlc_common.h.html#mtime_t" title='mtime_t' data-type='int64_t' data-ref="mtime_t">mtime_t</a> <dfn class="local col7 decl" id="57t" title='t' data-type='mtime_t' data-ref="57t">t</dfn> = <a class="ref" href="../../../include/vlc_threads.h.html#mdate" title='mdate' data-ref="mdate">mdate</a> ();</td></tr>
+<tr><th id="89">89</th><td>    <b>if</b> (<a class="local col7 ref" href="#57t" title='t' data-ref="57t">t</a> &gt;= <a class="local col6 ref" href="#56deadline" title='deadline' data-ref="56deadline">deadline</a>)</td></tr>
+<tr><th id="90">90</th><td>        <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="91">91</th><td></td></tr>
+<tr><th id="92">92</th><td>    <a class="local col7 ref" href="#57t" title='t' data-ref="57t">t</a> = (<a class="local col6 ref" href="#56deadline" title='deadline' data-ref="56deadline">deadline</a> - <a class="local col7 ref" href="#57t" title='t' data-ref="57t">t</a>) / (<a class="macro" href="../../../include/vlc_config.h.html#46" title="1000000L" data-ref="_M/CLOCK_FREQ">CLOCK_FREQ</a> / <a class="macro" href="../../../../include/stdint.h.html#282" title="1000L" data-ref="_M/INT64_C">INT64_C</a>(<var>1000</var>));</td></tr>
+<tr><th id="93">93</th><td>    <b>if</b> (<a class="macro" href="../../../include/vlc_common.h.html#116" title="__builtin_expect(!!(t &gt; 2147483647), 0)" data-ref="_M/unlikely">unlikely</a>(<a class="local col7 ref" href="#57t" title='t' data-ref="57t">t</a> &gt; <span class="macro" title="2147483647" data-ref="_M/INT_MAX">INT_MAX</span>))</td></tr>
+<tr><th id="94">94</th><td>        <b>return</b> <span class="macro" title="2147483647" data-ref="_M/INT_MAX">INT_MAX</span>;</td></tr>
+<tr><th id="95">95</th><td>    <b>return</b> <a class="local col7 ref" href="#57t" title='t' data-ref="57t">t</a>;</td></tr>
+<tr><th id="96">96</th><td>}</td></tr>
+<tr><th id="97">97</th><td></td></tr>
+<tr><th id="98">98</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="99">99</th><td><i class="doc"> * RTP/RTCP session thread for datagram sockets</i></td></tr>
+<tr><th id="100">100</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="101">101</th><td><em>void</em> *<dfn class="decl def" id="rtp_dgram_thread" title='rtp_dgram_thread' data-ref="rtp_dgram_thread">rtp_dgram_thread</dfn> (<em>void</em> *<dfn class="local col8 decl" id="58opaque" title='opaque' data-type='void *' data-ref="58opaque">opaque</dfn>)</td></tr>
+<tr><th id="102">102</th><td>{</td></tr>
+<tr><th id="103">103</th><td>    <a class="typedef" href="../../../include/vlc_common.h.html#demux_t" title='demux_t' data-type='struct demux_t' data-ref="demux_t">demux_t</a> *<dfn class="local col9 decl" id="59demux" title='demux' data-type='demux_t *' data-ref="59demux">demux</dfn> = <a class="local col8 ref" href="#58opaque" title='opaque' data-ref="58opaque">opaque</a>;</td></tr>
+<tr><th id="104">104</th><td>    <a class="typedef" href="../../../include/vlc_common.h.html#demux_sys_t" title='demux_sys_t' data-type='struct demux_sys_t' data-ref="demux_sys_t">demux_sys_t</a> *<dfn class="local col0 decl" id="60sys" title='sys' data-type='demux_sys_t *' data-ref="60sys">sys</dfn> = <a class="local col9 ref" href="#59demux" title='demux' data-ref="59demux">demux</a>-&gt;<a class="ref" href="../../../include/vlc_demux.h.html#demux_t::p_sys" title='demux_t::p_sys' data-ref="demux_t::p_sys">p_sys</a>;</td></tr>
+<tr><th id="105">105</th><td>    <a class="typedef" href="../../../include/vlc_common.h.html#mtime_t" title='mtime_t' data-type='int64_t' data-ref="mtime_t">mtime_t</a> <dfn class="local col1 decl" id="61deadline" title='deadline' data-type='mtime_t' data-ref="61deadline">deadline</dfn> = <a class="macro" href="../../../include/vlc_config.h.html#43" title="0L" data-ref="_M/VLC_TS_INVALID">VLC_TS_INVALID</a>;</td></tr>
+<tr><th id="106">106</th><td>    <em>int</em> <dfn class="local col2 decl" id="62rtp_fd" title='rtp_fd' data-type='int' data-ref="62rtp_fd">rtp_fd</dfn> = <a class="local col0 ref" href="#60sys" title='sys' data-ref="60sys">sys</a>-&gt;<a class="ref" href="rtp.h.html#demux_sys_t::fd" title='demux_sys_t::fd' data-ref="demux_sys_t::fd">fd</a>;</td></tr>
+<tr><th id="107">107</th><td></td></tr>
+<tr><th id="108">108</th><td>    <b>struct</b> <a class="type" href="../../../../include/x86_64-linux-gnu/sys/poll.h.html#pollfd" title='pollfd' data-ref="pollfd">pollfd</a> <dfn class="local col3 decl" id="63ufd" title='ufd' data-type='struct pollfd [1]' data-ref="63ufd">ufd</dfn>[<var>1</var>];</td></tr>
+<tr><th id="109">109</th><td>    <a class="local col3 ref" href="#63ufd" title='ufd' data-ref="63ufd">ufd</a>[<var>0</var>].<a class="ref" href="../../../../include/x86_64-linux-gnu/sys/poll.h.html#pollfd::fd" title='pollfd::fd' data-ref="pollfd::fd">fd</a> = <a class="local col2 ref" href="#62rtp_fd" title='rtp_fd' data-ref="62rtp_fd">rtp_fd</a>;</td></tr>
+<tr><th id="110">110</th><td>    <a class="local col3 ref" href="#63ufd" title='ufd' data-ref="63ufd">ufd</a>[<var>0</var>].<a class="ref" href="../../../../include/x86_64-linux-gnu/sys/poll.h.html#pollfd::events" title='pollfd::events' data-ref="pollfd::events">events</a> = <a class="macro" href="../../../../include/x86_64-linux-gnu/bits/poll.h.html#25" title="0x001" data-ref="_M/POLLIN">POLLIN</a>;</td></tr>
+<tr><th id="111">111</th><td></td></tr>
+<tr><th id="112">112</th><td>    <b>for</b> (;;)</td></tr>
+<tr><th id="113">113</th><td>    {</td></tr>
+<tr><th id="114">114</th><td>        <em>int</em> <dfn class="local col4 decl" id="64n" title='n' data-type='int' data-ref="64n">n</dfn> = <a class="ref" href="../../../../include/x86_64-linux-gnu/sys/poll.h.html#poll" title='poll' data-ref="poll">poll</a> (<a class="local col3 ref" href="#63ufd" title='ufd' data-ref="63ufd">ufd</a>, <var>1</var>, <a class="tu ref" href="#rtp_timeout" title='rtp_timeout' data-use='c' data-ref="rtp_timeout">rtp_timeout</a> (<a class="local col1 ref" href="#61deadline" title='deadline' data-ref="61deadline">deadline</a>));</td></tr>
+<tr><th id="115">115</th><td>        <b>if</b> (<a class="local col4 ref" href="#64n" title='n' data-ref="64n">n</a> == -<var>1</var>)</td></tr>
+<tr><th id="116">116</th><td>            <b>continue</b>;</td></tr>
+<tr><th id="117">117</th><td></td></tr>
+<tr><th id="118">118</th><td>        <em>int</em> <dfn class="local col5 decl" id="65canc" title='canc' data-type='int' data-ref="65canc">canc</dfn> = <a class="ref" href="../../../include/vlc_threads.h.html#vlc_savecancel" title='vlc_savecancel' data-ref="vlc_savecancel">vlc_savecancel</a> ();</td></tr>
+<tr><th id="119">119</th><td>        <b>if</b> (<a class="local col4 ref" href="#64n" title='n' data-ref="64n">n</a> == <var>0</var>)</td></tr>
+<tr><th id="120">120</th><td>            <b>goto</b> <a class="lbl" href="#66dequeue" data-ref="66dequeue">dequeue</a>;</td></tr>
+<tr><th id="121">121</th><td></td></tr>
+<tr><th id="122">122</th><td>        <b>if</b> (<a class="local col3 ref" href="#63ufd" title='ufd' data-ref="63ufd">ufd</a>[<var>0</var>].<a class="ref" href="../../../../include/x86_64-linux-gnu/sys/poll.h.html#pollfd::revents" title='pollfd::revents' data-ref="pollfd::revents">revents</a>)</td></tr>
+<tr><th id="123">123</th><td>        {</td></tr>
+<tr><th id="124">124</th><td>            <a class="local col4 ref" href="#64n" title='n' data-ref="64n">n</a>--;</td></tr>
+<tr><th id="125">125</th><td>            <b>if</b> (<a class="macro" href="../../../include/vlc_common.h.html#116" title="__builtin_expect(!!(ufd[0].revents &amp; 0x010), 0)" data-ref="_M/unlikely">unlikely</a>(<a class="local col3 ref" href="#63ufd" title='ufd' data-ref="63ufd">ufd</a>[<var>0</var>].<a class="ref" href="../../../../include/x86_64-linux-gnu/sys/poll.h.html#pollfd::revents" title='pollfd::revents' data-ref="pollfd::revents">revents</a> &amp; <a class="macro" href="../../../../include/x86_64-linux-gnu/bits/poll.h.html#48" title="0x010" data-ref="_M/POLLHUP">POLLHUP</a>))</td></tr>
+<tr><th id="126">126</th><td>                <b>break</b>; <i>/* RTP socket dead (DCCP only) */</i></td></tr>
+<tr><th id="127">127</th><td></td></tr>
+<tr><th id="128">128</th><td>            <a class="typedef" href="../../../include/vlc_common.h.html#block_t" title='block_t' data-type='struct block_t' data-ref="block_t">block_t</a> *<dfn class="local col7 decl" id="67block" title='block' data-type='block_t *' data-ref="67block">block</dfn> = <a class="ref" href="../../../include/vlc_block.h.html#block_Alloc" title='block_Alloc' data-ref="block_Alloc">block_Alloc</a> (<var>0xffff</var>); <i>/* TODO: p_sys-&gt;mru */</i></td></tr>
+<tr><th id="129">129</th><td>            <b>if</b> (<a class="macro" href="../../../include/vlc_common.h.html#116" title="__builtin_expect(!!(block == ((void*)0)), 0)" data-ref="_M/unlikely">unlikely</a>(<a class="local col7 ref" href="#67block" title='block' data-ref="67block">block</a> == <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>))</td></tr>
+<tr><th id="130">130</th><td>                <b>break</b>; <i>/* we are totallly screwed */</i></td></tr>
+<tr><th id="131">131</th><td></td></tr>
+<tr><th id="132">132</th><td>            <a class="typedef" href="../../../../include/x86_64-linux-gnu/sys/types.h.html#ssize_t" title='ssize_t' data-type='__ssize_t' data-ref="ssize_t">ssize_t</a> <dfn class="local col8 decl" id="68len" title='len' data-type='ssize_t' data-ref="68len">len</dfn> = <a class="ref" href="../../../../include/x86_64-linux-gnu/sys/socket.h.html#recv" title='recv' data-ref="recv">recv</a> (<a class="local col2 ref" href="#62rtp_fd" title='rtp_fd' data-ref="62rtp_fd">rtp_fd</a>, <a class="local col7 ref" href="#67block" title='block' data-ref="67block">block</a>-&gt;<a class="ref" href="../../../include/vlc_block.h.html#block_t::p_buffer" title='block_t::p_buffer' data-ref="block_t::p_buffer">p_buffer</a>, <a class="local col7 ref" href="#67block" title='block' data-ref="67block">block</a>-&gt;<a class="ref" href="../../../include/vlc_block.h.html#block_t::i_buffer" title='block_t::i_buffer' data-ref="block_t::i_buffer">i_buffer</a>, <var>0</var>);</td></tr>
+<tr><th id="133">133</th><td>            <b>if</b> (<a class="local col8 ref" href="#68len" title='len' data-ref="68len">len</a> != -<var>1</var>)</td></tr>
+<tr><th id="134">134</th><td>            {</td></tr>
+<tr><th id="135">135</th><td>                <a class="local col7 ref" href="#67block" title='block' data-ref="67block">block</a>-&gt;<a class="ref" href="../../../include/vlc_block.h.html#block_t::i_buffer" title='block_t::i_buffer' data-ref="block_t::i_buffer">i_buffer</a> = <a class="local col8 ref" href="#68len" title='len' data-ref="68len">len</a>;</td></tr>
+<tr><th id="136">136</th><td>                <a class="tu ref" href="#rtp_process" title='rtp_process' data-use='c' data-ref="rtp_process">rtp_process</a> (<a class="local col9 ref" href="#59demux" title='demux' data-ref="59demux">demux</a>, <a class="local col7 ref" href="#67block" title='block' data-ref="67block">block</a>);</td></tr>
+<tr><th id="137">137</th><td>            }</td></tr>
+<tr><th id="138">138</th><td>            <b>else</b></td></tr>
+<tr><th id="139">139</th><td>            {</td></tr>
+<tr><th id="140">140</th><td>                <a class="macro" href="../../../include/vlc_messages.h.html#75" title="vlc_Log( __builtin_choose_expr( __builtin_offsetof(__typeof__(*(demux)), psz_object_type), (void)0 , (vlc_object_t *)(demux)), VLC_MSG_WARN, rtp, &quot;RTP network error: %s&quot;, vlc_strerror_c((*__errno_location ())) )" data-ref="_M/msg_Warn">msg_Warn</a> (demux, <q>"RTP network error: %s"</q>,</td></tr>
+<tr><th id="141">141</th><td>                          vlc_strerror_c(<a class="macro" href="../../../../include/x86_64-linux-gnu/bits/errno.h.html#54" title="(*__errno_location ())" data-ref="_M/errno">errno</a>));</td></tr>
+<tr><th id="142">142</th><td>                <a class="ref" href="../../../include/vlc_block.h.html#block_Release" title='block_Release' data-ref="block_Release">block_Release</a> (<a class="local col7 ref" href="#67block" title='block' data-ref="67block">block</a>);</td></tr>
+<tr><th id="143">143</th><td>            }</td></tr>
+<tr><th id="144">144</th><td>        }</td></tr>
+<tr><th id="145">145</th><td></td></tr>
+<tr><th id="146">146</th><td>    <dfn class="lbl" id="66dequeue" data-ref="66dequeue">dequeue</dfn>:</td></tr>
+<tr><th id="147">147</th><td>        <b>if</b> (!<a class="ref" href="rtp.h.html#rtp_dequeue" title='rtp_dequeue' data-ref="rtp_dequeue">rtp_dequeue</a> (<a class="local col9 ref" href="#59demux" title='demux' data-ref="59demux">demux</a>, <a class="local col0 ref" href="#60sys" title='sys' data-ref="60sys">sys</a>-&gt;<a class="ref" href="rtp.h.html#demux_sys_t::session" title='demux_sys_t::session' data-ref="demux_sys_t::session">session</a>, &amp;<a class="local col1 ref" href="#61deadline" title='deadline' data-ref="61deadline">deadline</a>))</td></tr>
+<tr><th id="148">148</th><td>            <a class="local col1 ref" href="#61deadline" title='deadline' data-ref="61deadline">deadline</a> = <a class="macro" href="../../../include/vlc_config.h.html#43" title="0L" data-ref="_M/VLC_TS_INVALID">VLC_TS_INVALID</a>;</td></tr>
+<tr><th id="149">149</th><td>        <a class="ref" href="../../../include/vlc_threads.h.html#vlc_restorecancel" title='vlc_restorecancel' data-ref="vlc_restorecancel">vlc_restorecancel</a> (<a class="local col5 ref" href="#65canc" title='canc' data-ref="65canc">canc</a>);</td></tr>
+<tr><th id="150">150</th><td>    }</td></tr>
+<tr><th id="151">151</th><td>    <b>return</b> <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="152">152</th><td>}</td></tr>
+<tr><th id="153">153</th><td></td></tr>
+<tr><th id="154">154</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="155">155</th><td><i class="doc"> * RTP/RTCP session thread for stream sockets (framed RTP)</i></td></tr>
+<tr><th id="156">156</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="157">157</th><td><em>void</em> *<dfn class="decl def" id="rtp_stream_thread" title='rtp_stream_thread' data-ref="rtp_stream_thread">rtp_stream_thread</dfn> (<em>void</em> *<dfn class="local col9 decl" id="69opaque" title='opaque' data-type='void *' data-ref="69opaque">opaque</dfn>)</td></tr>
+<tr><th id="158">158</th><td>{</td></tr>
+<tr><th id="159">159</th><td><u>#<span data-ppcond="159">ifndef</span> <span class="macro" data-ref="_M/_WIN32">_WIN32</span></u></td></tr>
+<tr><th id="160">160</th><td>    <a class="typedef" href="../../../include/vlc_common.h.html#demux_t" title='demux_t' data-type='struct demux_t' data-ref="demux_t">demux_t</a> *<dfn class="local col0 decl" id="70demux" title='demux' data-type='demux_t *' data-ref="70demux">demux</dfn> = <a class="local col9 ref" href="#69opaque" title='opaque' data-ref="69opaque">opaque</a>;</td></tr>
+<tr><th id="161">161</th><td>    <a class="typedef" href="../../../include/vlc_common.h.html#demux_sys_t" title='demux_sys_t' data-type='struct demux_sys_t' data-ref="demux_sys_t">demux_sys_t</a> *<dfn class="local col1 decl" id="71sys" title='sys' data-type='demux_sys_t *' data-ref="71sys">sys</dfn> = <a class="local col0 ref" href="#70demux" title='demux' data-ref="70demux">demux</a>-&gt;<a class="ref" href="../../../include/vlc_demux.h.html#demux_t::p_sys" title='demux_t::p_sys' data-ref="demux_t::p_sys">p_sys</a>;</td></tr>
+<tr><th id="162">162</th><td>    <em>int</em> <dfn class="local col2 decl" id="72fd" title='fd' data-type='int' data-ref="72fd">fd</dfn> = <a class="local col1 ref" href="#71sys" title='sys' data-ref="71sys">sys</a>-&gt;<a class="ref" href="rtp.h.html#demux_sys_t::fd" title='demux_sys_t::fd' data-ref="demux_sys_t::fd">fd</a>;</td></tr>
+<tr><th id="163">163</th><td></td></tr>
+<tr><th id="164">164</th><td>    <b>for</b> (;;)</td></tr>
+<tr><th id="165">165</th><td>    {</td></tr>
+<tr><th id="166">166</th><td>        <i>/* There is no reordering on stream sockets, so no timeout. */</i></td></tr>
+<tr><th id="167">167</th><td>        <a class="typedef" href="../../../../include/x86_64-linux-gnu/sys/types.h.html#ssize_t" title='ssize_t' data-type='__ssize_t' data-ref="ssize_t">ssize_t</a> <dfn class="local col3 decl" id="73val" title='val' data-type='ssize_t' data-ref="73val">val</dfn>;</td></tr>
+<tr><th id="168">168</th><td></td></tr>
+<tr><th id="169">169</th><td>        <a class="typedef" href="../../../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> <dfn class="local col4 decl" id="74frame_len" title='frame_len' data-type='uint16_t' data-ref="74frame_len">frame_len</dfn>;</td></tr>
+<tr><th id="170">170</th><td>        <b>if</b> (<a class="ref" href="../../../../include/x86_64-linux-gnu/sys/socket.h.html#recv" title='recv' data-ref="recv">recv</a> (<a class="local col2 ref" href="#72fd" title='fd' data-ref="72fd">fd</a>, &amp;<a class="local col4 ref" href="#74frame_len" title='frame_len' data-ref="74frame_len">frame_len</a>, <var>2</var>, <a class="macro" href="../../../../include/x86_64-linux-gnu/bits/socket.h.html#195" title="MSG_WAITALL" data-ref="_M/MSG_WAITALL">MSG_WAITALL</a>) != <var>2</var>)</td></tr>
+<tr><th id="171">171</th><td>            <b>break</b>;</td></tr>
+<tr><th id="172">172</th><td></td></tr>
+<tr><th id="173">173</th><td>        <a class="typedef" href="../../../include/vlc_common.h.html#block_t" title='block_t' data-type='struct block_t' data-ref="block_t">block_t</a> *<dfn class="local col5 decl" id="75block" title='block' data-type='block_t *' data-ref="75block">block</dfn> = <a class="ref" href="../../../include/vlc_block.h.html#block_Alloc" title='block_Alloc' data-ref="block_Alloc">block_Alloc</a> (<a class="macro" href="../../../../include/netinet/in.h.html#401" title="(__extension__ ({ unsigned short int __v, __x = (unsigned short int) (frame_len); if (__builtin_constant_p (__x)) __v = ((unsigned short int) ((((__x) &gt;&gt; 8) &amp; 0xff) | (((__x) &amp; 0xff) &lt;&lt; 8))); else __asm__ (&quot;rorw $8, %w0&quot; : &quot;=r&quot; (__v) : &quot;0&quot; (__x) : &quot;cc&quot;); __v; }))" data-ref="_M/ntohs">ntohs</a> (<a class="local col4 ref" href="#74frame_len" title='frame_len' data-ref="74frame_len">frame_len</a>));</td></tr>
+<tr><th id="174">174</th><td>        <b>if</b> (<a class="macro" href="../../../include/vlc_common.h.html#116" title="__builtin_expect(!!(block == ((void*)0)), 0)" data-ref="_M/unlikely">unlikely</a>(<a class="local col5 ref" href="#75block" title='block' data-ref="75block">block</a> == <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>))</td></tr>
+<tr><th id="175">175</th><td>            <b>break</b>;</td></tr>
+<tr><th id="176">176</th><td></td></tr>
+<tr><th id="177">177</th><td>        <a class="macro" href="../../../include/vlc_block.h.html#179" title="do { __pthread_unwind_buf_t __cancel_buf; void (*__cancel_routine) (void *) = (block_Cleanup); void *__cancel_arg = (block); int __not_first_call = __sigsetjmp ((struct __jmp_buf_tag *) (void *) __cancel_buf.__cancel_jmp_buf, 0); if (__builtin_expect ((__not_first_call), 0)) { __cancel_routine (__cancel_arg); __pthread_unwind_next (&amp;__cancel_buf); } __pthread_register_cancel (&amp;__cancel_buf); do {" data-ref="_M/block_cleanup_push">block_cleanup_push</a> (<a class="local col5 ref" href="#75block" title='block' data-ref="75block">block</a>);</td></tr>
+<tr><th id="178">178</th><td>        <a class="local col3 ref" href="#73val" title='val' data-ref="73val">val</a> = <a class="ref" href="../../../../include/x86_64-linux-gnu/sys/socket.h.html#recv" title='recv' data-ref="recv">recv</a> (<a class="local col2 ref" href="#72fd" title='fd' data-ref="72fd">fd</a>, <a class="local col5 ref" href="#75block" title='block' data-ref="75block">block</a>-&gt;<a class="ref" href="../../../include/vlc_block.h.html#block_t::p_buffer" title='block_t::p_buffer' data-ref="block_t::p_buffer">p_buffer</a>, <a class="local col5 ref" href="#75block" title='block' data-ref="75block">block</a>-&gt;<a class="ref" href="../../../include/vlc_block.h.html#block_t::i_buffer" title='block_t::i_buffer' data-ref="block_t::i_buffer">i_buffer</a>, <a class="macro" href="../../../../include/x86_64-linux-gnu/bits/socket.h.html#195" title="MSG_WAITALL" data-ref="_M/MSG_WAITALL">MSG_WAITALL</a>);</td></tr>
+<tr><th id="179">179</th><td>        <a class="macro" href="../../../include/vlc_threads.h.html#349" title="do { } while (0); } while (0); __pthread_unregister_cancel (&amp;__cancel_buf); if (0) __cancel_routine (__cancel_arg); } while (0)" data-ref="_M/vlc_cleanup_pop">vlc_cleanup_pop</a> ();</td></tr>
+<tr><th id="180">180</th><td></td></tr>
+<tr><th id="181">181</th><td>        <b>if</b> (<a class="local col3 ref" href="#73val" title='val' data-ref="73val">val</a> != (<a class="typedef" href="../../../../include/x86_64-linux-gnu/sys/types.h.html#ssize_t" title='ssize_t' data-type='__ssize_t' data-ref="ssize_t">ssize_t</a>)<a class="local col5 ref" href="#75block" title='block' data-ref="75block">block</a>-&gt;<a class="ref" href="../../../include/vlc_block.h.html#block_t::i_buffer" title='block_t::i_buffer' data-ref="block_t::i_buffer">i_buffer</a>)</td></tr>
+<tr><th id="182">182</th><td>        {</td></tr>
+<tr><th id="183">183</th><td>            <a class="ref" href="../../../include/vlc_block.h.html#block_Release" title='block_Release' data-ref="block_Release">block_Release</a> (<a class="local col5 ref" href="#75block" title='block' data-ref="75block">block</a>);</td></tr>
+<tr><th id="184">184</th><td>            <b>break</b>;</td></tr>
+<tr><th id="185">185</th><td>        }</td></tr>
+<tr><th id="186">186</th><td></td></tr>
+<tr><th id="187">187</th><td>        <em>int</em> <dfn class="local col6 decl" id="76canc" title='canc' data-type='int' data-ref="76canc">canc</dfn> = <a class="ref" href="../../../include/vlc_threads.h.html#vlc_savecancel" title='vlc_savecancel' data-ref="vlc_savecancel">vlc_savecancel</a> ();</td></tr>
+<tr><th id="188">188</th><td>        <a class="tu ref" href="#rtp_process" title='rtp_process' data-use='c' data-ref="rtp_process">rtp_process</a> (<a class="local col0 ref" href="#70demux" title='demux' data-ref="70demux">demux</a>, <a class="local col5 ref" href="#75block" title='block' data-ref="75block">block</a>);</td></tr>
+<tr><th id="189">189</th><td>        <a class="ref" href="rtp.h.html#rtp_dequeue_force" title='rtp_dequeue_force' data-ref="rtp_dequeue_force">rtp_dequeue_force</a> (<a class="local col0 ref" href="#70demux" title='demux' data-ref="70demux">demux</a>, <a class="local col1 ref" href="#71sys" title='sys' data-ref="71sys">sys</a>-&gt;<a class="ref" href="rtp.h.html#demux_sys_t::session" title='demux_sys_t::session' data-ref="demux_sys_t::session">session</a>);</td></tr>
+<tr><th id="190">190</th><td>        <a class="ref" href="../../../include/vlc_threads.h.html#vlc_restorecancel" title='vlc_restorecancel' data-ref="vlc_restorecancel">vlc_restorecancel</a> (<a class="local col6 ref" href="#76canc" title='canc' data-ref="76canc">canc</a>);</td></tr>
+<tr><th id="191">191</th><td>    }</td></tr>
+<tr><th id="192">192</th><td><u>#<span data-ppcond="159">else</span></u></td></tr>
+<tr><th id="193">193</th><td>    (<em>void</em>) opaque;</td></tr>
+<tr><th id="194">194</th><td><u>#<span data-ppcond="159">endif</span></u></td></tr>
+<tr><th id="195">195</th><td>    <b>return</b> <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="196">196</th><td>}</td></tr>
+<tr><th id="197">197</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project vlc revision <em>2.2.0-git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

@@ -1,0 +1,353 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>network.c source code [ffmpeg/libavformat/network.c] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavformat/network.c'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavformat</a>/<a href='network.c.html'>network.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * Copyright (c) 2007 The FFmpeg Project</i></td></tr>
+<tr><th id="3">3</th><td><i> *</i></td></tr>
+<tr><th id="4">4</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="5">5</th><td><i> *</i></td></tr>
+<tr><th id="6">6</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="7">7</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="8">8</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="9">9</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="10">10</th><td><i> *</i></td></tr>
+<tr><th id="11">11</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="12">12</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="13">13</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="14">14</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="15">15</th><td><i> *</i></td></tr>
+<tr><th id="16">16</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="17">17</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="18">18</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="19">19</th><td><i> */</i></td></tr>
+<tr><th id="20">20</th><td></td></tr>
+<tr><th id="21">21</th><td><u>#include <a href="../../include/fcntl.h.html">&lt;fcntl.h&gt;</a></u></td></tr>
+<tr><th id="22">22</th><td><u>#include <a href="network.h.html">"network.h"</a></u></td></tr>
+<tr><th id="23">23</th><td><u>#include <a href="tls.h.html">"tls.h"</a></u></td></tr>
+<tr><th id="24">24</th><td><u>#include <a href="url.h.html">"url.h"</a></u></td></tr>
+<tr><th id="25">25</th><td><u>#include <a href="../libavcodec/internal.h.html">"libavcodec/internal.h"</a></u></td></tr>
+<tr><th id="26">26</th><td><u>#include <a href="../libavutil/avutil.h.html">"libavutil/avutil.h"</a></u></td></tr>
+<tr><th id="27">27</th><td><u>#include <a href="../libavutil/mem.h.html">"libavutil/mem.h"</a></u></td></tr>
+<tr><th id="28">28</th><td><u>#include <a href="../libavutil/time.h.html">"libavutil/time.h"</a></u></td></tr>
+<tr><th id="29">29</th><td></td></tr>
+<tr><th id="30">30</th><td><em>int</em> <dfn class="decl def" id="ff_tls_init" title='ff_tls_init' data-ref="ff_tls_init">ff_tls_init</dfn>(<em>void</em>)</td></tr>
+<tr><th id="31">31</th><td>{</td></tr>
+<tr><th id="32">32</th><td><u>#<span data-ppcond="32">if</span> <a class="macro" href="../config.h.html#2221" title="0" data-ref="_M/CONFIG_TLS_OPENSSL_PROTOCOL">CONFIG_TLS_OPENSSL_PROTOCOL</a></u></td></tr>
+<tr><th id="33">33</th><td>    <em>int</em> ret;</td></tr>
+<tr><th id="34">34</th><td>    <b>if</b> ((ret = ff_openssl_init()) &lt; <var>0</var>)</td></tr>
+<tr><th id="35">35</th><td>        <b>return</b> ret;</td></tr>
+<tr><th id="36">36</th><td><u>#<span data-ppcond="32">endif</span></u></td></tr>
+<tr><th id="37">37</th><td><u>#<span data-ppcond="37">if</span> <a class="macro" href="../config.h.html#2218" title="0" data-ref="_M/CONFIG_TLS_GNUTLS_PROTOCOL">CONFIG_TLS_GNUTLS_PROTOCOL</a></u></td></tr>
+<tr><th id="38">38</th><td>    ff_gnutls_init();</td></tr>
+<tr><th id="39">39</th><td><u>#<span data-ppcond="37">endif</span></u></td></tr>
+<tr><th id="40">40</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="41">41</th><td>}</td></tr>
+<tr><th id="42">42</th><td></td></tr>
+<tr><th id="43">43</th><td><em>void</em> <dfn class="decl def" id="ff_tls_deinit" title='ff_tls_deinit' data-ref="ff_tls_deinit">ff_tls_deinit</dfn>(<em>void</em>)</td></tr>
+<tr><th id="44">44</th><td>{</td></tr>
+<tr><th id="45">45</th><td><u>#<span data-ppcond="45">if</span> <a class="macro" href="../config.h.html#2221" title="0" data-ref="_M/CONFIG_TLS_OPENSSL_PROTOCOL">CONFIG_TLS_OPENSSL_PROTOCOL</a></u></td></tr>
+<tr><th id="46">46</th><td>    ff_openssl_deinit();</td></tr>
+<tr><th id="47">47</th><td><u>#<span data-ppcond="45">endif</span></u></td></tr>
+<tr><th id="48">48</th><td><u>#<span data-ppcond="48">if</span> <a class="macro" href="../config.h.html#2218" title="0" data-ref="_M/CONFIG_TLS_GNUTLS_PROTOCOL">CONFIG_TLS_GNUTLS_PROTOCOL</a></u></td></tr>
+<tr><th id="49">49</th><td>    ff_gnutls_deinit();</td></tr>
+<tr><th id="50">50</th><td><u>#<span data-ppcond="48">endif</span></u></td></tr>
+<tr><th id="51">51</th><td>}</td></tr>
+<tr><th id="52">52</th><td></td></tr>
+<tr><th id="53">53</th><td><em>int</em> <dfn class="decl def" id="ff_network_inited_globally" title='ff_network_inited_globally' data-ref="ff_network_inited_globally">ff_network_inited_globally</dfn>;</td></tr>
+<tr><th id="54">54</th><td></td></tr>
+<tr><th id="55">55</th><td><em>int</em> <dfn class="decl def" id="ff_network_init" title='ff_network_init' data-ref="ff_network_init">ff_network_init</dfn>(<em>void</em>)</td></tr>
+<tr><th id="56">56</th><td>{</td></tr>
+<tr><th id="57">57</th><td><u>#<span data-ppcond="57">if</span> <a class="macro" href="../config.h.html#246" title="0" data-ref="_M/HAVE_WINSOCK2_H">HAVE_WINSOCK2_H</a></u></td></tr>
+<tr><th id="58">58</th><td>    WSADATA wsaData;</td></tr>
+<tr><th id="59">59</th><td><u>#<span data-ppcond="57">endif</span></u></td></tr>
+<tr><th id="60">60</th><td></td></tr>
+<tr><th id="61">61</th><td>    <b>if</b> (!<a class="ref" href="network.h.html#ff_network_inited_globally" title='ff_network_inited_globally' data-ref="ff_network_inited_globally">ff_network_inited_globally</a>)</td></tr>
+<tr><th id="62">62</th><td>        <a class="ref" href="../libavutil/log.h.html#av_log" title='av_log' data-ref="av_log">av_log</a>(<span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>, <a class="macro" href="../libavutil/log.h.html#182" title="24" data-ref="_M/AV_LOG_WARNING">AV_LOG_WARNING</a>, <q>"Using network protocols without global "</q></td></tr>
+<tr><th id="63">63</th><td>                                     <q>"network initialization. Please use "</q></td></tr>
+<tr><th id="64">64</th><td>                                     <q>"avformat_network_init(), this will "</q></td></tr>
+<tr><th id="65">65</th><td>                                     <q>"become mandatory later.\n"</q>);</td></tr>
+<tr><th id="66">66</th><td><u>#<span data-ppcond="66">if</span> <a class="macro" href="../config.h.html#246" title="0" data-ref="_M/HAVE_WINSOCK2_H">HAVE_WINSOCK2_H</a></u></td></tr>
+<tr><th id="67">67</th><td>    <b>if</b> (WSAStartup(MAKEWORD(<var>1</var>,<var>1</var>), &amp;wsaData))</td></tr>
+<tr><th id="68">68</th><td>        <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="69">69</th><td><u>#<span data-ppcond="66">endif</span></u></td></tr>
+<tr><th id="70">70</th><td>    <b>return</b> <var>1</var>;</td></tr>
+<tr><th id="71">71</th><td>}</td></tr>
+<tr><th id="72">72</th><td></td></tr>
+<tr><th id="73">73</th><td><em>int</em> <dfn class="decl def" id="ff_network_wait_fd" title='ff_network_wait_fd' data-ref="ff_network_wait_fd">ff_network_wait_fd</dfn>(<em>int</em> <dfn class="local col5 decl" id="5fd" title='fd' data-type='int' data-ref="5fd">fd</dfn>, <em>int</em> <dfn class="local col6 decl" id="6write" title='write' data-type='int' data-ref="6write">write</dfn>)</td></tr>
+<tr><th id="74">74</th><td>{</td></tr>
+<tr><th id="75">75</th><td>    <em>int</em> <dfn class="local col7 decl" id="7ev" title='ev' data-type='int' data-ref="7ev">ev</dfn> = <a class="local col6 ref" href="#6write" title='write' data-ref="6write">write</a> ? <a class="macro" href="../../include/x86_64-linux-gnu/bits/poll.h.html#27" title="0x004" data-ref="_M/POLLOUT">POLLOUT</a> : <a class="macro" href="../../include/x86_64-linux-gnu/bits/poll.h.html#25" title="0x001" data-ref="_M/POLLIN">POLLIN</a>;</td></tr>
+<tr><th id="76">76</th><td>    <b>struct</b> <a class="type" href="../../include/x86_64-linux-gnu/sys/poll.h.html#pollfd" title='pollfd' data-ref="pollfd">pollfd</a> <dfn class="local col8 decl" id="8p" title='p' data-type='struct pollfd' data-ref="8p">p</dfn> = { .<a class="ref" href="../../include/x86_64-linux-gnu/sys/poll.h.html#pollfd::fd" title='pollfd::fd' data-ref="pollfd::fd">fd</a> = <a class="local col5 ref" href="#5fd" title='fd' data-ref="5fd">fd</a>, .<a class="ref" href="../../include/x86_64-linux-gnu/sys/poll.h.html#pollfd::events" title='pollfd::events' data-ref="pollfd::events">events</a> = <a class="local col7 ref" href="#7ev" title='ev' data-ref="7ev">ev</a>, .<a class="ref" href="../../include/x86_64-linux-gnu/sys/poll.h.html#pollfd::revents" title='pollfd::revents' data-ref="pollfd::revents">revents</a> = <var>0</var> };</td></tr>
+<tr><th id="77">77</th><td>    <em>int</em> <dfn class="local col9 decl" id="9ret" title='ret' data-type='int' data-ref="9ret">ret</dfn>;</td></tr>
+<tr><th id="78">78</th><td>    <a class="local col9 ref" href="#9ret" title='ret' data-ref="9ret">ret</a> = <a class="ref" href="../../include/x86_64-linux-gnu/sys/poll.h.html#poll" title='poll' data-ref="poll">poll</a>(&amp;<a class="local col8 ref" href="#8p" title='p' data-ref="8p">p</a>, <var>1</var>, <a class="macro" href="network.h.html#239" title="100" data-ref="_M/POLLING_TIME">POLLING_TIME</a>);</td></tr>
+<tr><th id="79">79</th><td>    <b>return</b> <a class="local col9 ref" href="#9ret" title='ret' data-ref="9ret">ret</a> &lt; <var>0</var> ? <a class="macro" href="network.h.html#64" title="(-((*__errno_location ())))" data-ref="_M/ff_neterrno">ff_neterrno</a>() : <a class="local col8 ref" href="#8p" title='p' data-ref="8p">p</a>.<a class="ref" href="../../include/x86_64-linux-gnu/sys/poll.h.html#pollfd::revents" title='pollfd::revents' data-ref="pollfd::revents">revents</a> &amp; (<a class="local col7 ref" href="#7ev" title='ev' data-ref="7ev">ev</a> | <a class="macro" href="../../include/x86_64-linux-gnu/bits/poll.h.html#47" title="0x008" data-ref="_M/POLLERR">POLLERR</a> | <a class="macro" href="../../include/x86_64-linux-gnu/bits/poll.h.html#48" title="0x010" data-ref="_M/POLLHUP">POLLHUP</a>) ? <var>0</var> : <a class="macro" href="../libavutil/error.h.html#39" title="(-(11))" data-ref="_M/AVERROR">AVERROR</a>(<a class="macro" href="../../include/asm-generic/errno-base.h.html#14" title="11" data-ref="_M/EAGAIN">EAGAIN</a>);</td></tr>
+<tr><th id="80">80</th><td>}</td></tr>
+<tr><th id="81">81</th><td></td></tr>
+<tr><th id="82">82</th><td><em>int</em> <dfn class="decl def" id="ff_network_wait_fd_timeout" title='ff_network_wait_fd_timeout' data-ref="ff_network_wait_fd_timeout">ff_network_wait_fd_timeout</dfn>(<em>int</em> <dfn class="local col0 decl" id="10fd" title='fd' data-type='int' data-ref="10fd">fd</dfn>, <em>int</em> <dfn class="local col1 decl" id="11write" title='write' data-type='int' data-ref="11write">write</dfn>, <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="local col2 decl" id="12timeout" title='timeout' data-type='int64_t' data-ref="12timeout">timeout</dfn>, <a class="typedef" href="avio.h.html#AVIOInterruptCB" title='AVIOInterruptCB' data-type='struct AVIOInterruptCB' data-ref="AVIOInterruptCB">AVIOInterruptCB</a> *<dfn class="local col3 decl" id="13int_cb" title='int_cb' data-type='AVIOInterruptCB *' data-ref="13int_cb">int_cb</dfn>)</td></tr>
+<tr><th id="83">83</th><td>{</td></tr>
+<tr><th id="84">84</th><td>    <em>int</em> <dfn class="local col4 decl" id="14ret" title='ret' data-type='int' data-ref="14ret">ret</dfn>;</td></tr>
+<tr><th id="85">85</th><td>    <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="local col5 decl" id="15wait_start" title='wait_start' data-type='int64_t' data-ref="15wait_start">wait_start</dfn> = <var>0</var>;</td></tr>
+<tr><th id="86">86</th><td></td></tr>
+<tr><th id="87">87</th><td>    <b>while</b> (<var>1</var>) {</td></tr>
+<tr><th id="88">88</th><td>        <b>if</b> (<a class="ref" href="url.h.html#ff_check_interrupt" title='ff_check_interrupt' data-ref="ff_check_interrupt">ff_check_interrupt</a>(<a class="local col3 ref" href="#13int_cb" title='int_cb' data-ref="13int_cb">int_cb</a>))</td></tr>
+<tr><th id="89">89</th><td>            <b>return</b> <a class="macro" href="../libavutil/error.h.html#56" title="(-(int)((&apos;E&apos;) | ((&apos;X&apos;) &lt;&lt; 8) | ((&apos;I&apos;) &lt;&lt; 16) | ((unsigned)(&apos;T&apos;) &lt;&lt; 24)))" data-ref="_M/AVERROR_EXIT">AVERROR_EXIT</a>;</td></tr>
+<tr><th id="90">90</th><td>        <a class="local col4 ref" href="#14ret" title='ret' data-ref="14ret">ret</a> = <a class="ref" href="#ff_network_wait_fd" title='ff_network_wait_fd' data-ref="ff_network_wait_fd">ff_network_wait_fd</a>(<a class="local col0 ref" href="#10fd" title='fd' data-ref="10fd">fd</a>, <a class="local col1 ref" href="#11write" title='write' data-ref="11write">write</a>);</td></tr>
+<tr><th id="91">91</th><td>        <b>if</b> (<a class="local col4 ref" href="#14ret" title='ret' data-ref="14ret">ret</a> != <a class="macro" href="../libavutil/error.h.html#39" title="(-(11))" data-ref="_M/AVERROR">AVERROR</a>(<a class="macro" href="../../include/asm-generic/errno-base.h.html#14" title="11" data-ref="_M/EAGAIN">EAGAIN</a>))</td></tr>
+<tr><th id="92">92</th><td>            <b>return</b> <a class="local col4 ref" href="#14ret" title='ret' data-ref="14ret">ret</a>;</td></tr>
+<tr><th id="93">93</th><td>        <b>if</b> (<a class="local col2 ref" href="#12timeout" title='timeout' data-ref="12timeout">timeout</a> &gt; <var>0</var>) {</td></tr>
+<tr><th id="94">94</th><td>            <b>if</b> (!<a class="local col5 ref" href="#15wait_start" title='wait_start' data-ref="15wait_start">wait_start</a>)</td></tr>
+<tr><th id="95">95</th><td>                <a class="local col5 ref" href="#15wait_start" title='wait_start' data-ref="15wait_start">wait_start</a> = <a class="ref" href="../libavutil/time.h.html#av_gettime_relative" title='av_gettime_relative' data-ref="av_gettime_relative">av_gettime_relative</a>();</td></tr>
+<tr><th id="96">96</th><td>            <b>else</b> <b>if</b> (<a class="ref" href="../libavutil/time.h.html#av_gettime_relative" title='av_gettime_relative' data-ref="av_gettime_relative">av_gettime_relative</a>() - <a class="local col5 ref" href="#15wait_start" title='wait_start' data-ref="15wait_start">wait_start</a> &gt; <a class="local col2 ref" href="#12timeout" title='timeout' data-ref="12timeout">timeout</a>)</td></tr>
+<tr><th id="97">97</th><td>                <b>return</b> <a class="macro" href="../libavutil/error.h.html#39" title="(-(110))" data-ref="_M/AVERROR">AVERROR</a>(<a class="macro" href="../../include/asm-generic/errno.h.html#83" title="110" data-ref="_M/ETIMEDOUT">ETIMEDOUT</a>);</td></tr>
+<tr><th id="98">98</th><td>        }</td></tr>
+<tr><th id="99">99</th><td>    }</td></tr>
+<tr><th id="100">100</th><td>}</td></tr>
+<tr><th id="101">101</th><td></td></tr>
+<tr><th id="102">102</th><td><em>void</em> <dfn class="decl def" id="ff_network_close" title='ff_network_close' data-ref="ff_network_close">ff_network_close</dfn>(<em>void</em>)</td></tr>
+<tr><th id="103">103</th><td>{</td></tr>
+<tr><th id="104">104</th><td><u>#<span data-ppcond="104">if</span> <a class="macro" href="../config.h.html#246" title="0" data-ref="_M/HAVE_WINSOCK2_H">HAVE_WINSOCK2_H</a></u></td></tr>
+<tr><th id="105">105</th><td>    WSACleanup();</td></tr>
+<tr><th id="106">106</th><td><u>#<span data-ppcond="104">endif</span></u></td></tr>
+<tr><th id="107">107</th><td>}</td></tr>
+<tr><th id="108">108</th><td></td></tr>
+<tr><th id="109">109</th><td><u>#<span data-ppcond="109">if</span> <a class="macro" href="../config.h.html#246" title="0" data-ref="_M/HAVE_WINSOCK2_H">HAVE_WINSOCK2_H</a></u></td></tr>
+<tr><th id="110">110</th><td><em>int</em> ff_neterrno(<em>void</em>)</td></tr>
+<tr><th id="111">111</th><td>{</td></tr>
+<tr><th id="112">112</th><td>    <em>int</em> err = WSAGetLastError();</td></tr>
+<tr><th id="113">113</th><td>    <b>switch</b> (err) {</td></tr>
+<tr><th id="114">114</th><td>    <b>case</b> WSAEWOULDBLOCK:</td></tr>
+<tr><th id="115">115</th><td>        <b>return</b> AVERROR(EAGAIN);</td></tr>
+<tr><th id="116">116</th><td>    <b>case</b> WSAEINTR:</td></tr>
+<tr><th id="117">117</th><td>        <b>return</b> AVERROR(EINTR);</td></tr>
+<tr><th id="118">118</th><td>    <b>case</b> WSAEPROTONOSUPPORT:</td></tr>
+<tr><th id="119">119</th><td>        <b>return</b> AVERROR(EPROTONOSUPPORT);</td></tr>
+<tr><th id="120">120</th><td>    <b>case</b> WSAETIMEDOUT:</td></tr>
+<tr><th id="121">121</th><td>        <b>return</b> AVERROR(ETIMEDOUT);</td></tr>
+<tr><th id="122">122</th><td>    <b>case</b> WSAECONNREFUSED:</td></tr>
+<tr><th id="123">123</th><td>        <b>return</b> AVERROR(ECONNREFUSED);</td></tr>
+<tr><th id="124">124</th><td>    <b>case</b> WSAEINPROGRESS:</td></tr>
+<tr><th id="125">125</th><td>        <b>return</b> AVERROR(EINPROGRESS);</td></tr>
+<tr><th id="126">126</th><td>    }</td></tr>
+<tr><th id="127">127</th><td>    <b>return</b> -err;</td></tr>
+<tr><th id="128">128</th><td>}</td></tr>
+<tr><th id="129">129</th><td><u>#<span data-ppcond="109">endif</span></u></td></tr>
+<tr><th id="130">130</th><td></td></tr>
+<tr><th id="131">131</th><td><em>int</em> <dfn class="decl def" id="ff_is_multicast_address" title='ff_is_multicast_address' data-ref="ff_is_multicast_address">ff_is_multicast_address</dfn>(<b>struct</b> <a class="type" href="../../include/x86_64-linux-gnu/bits/socket.h.html#sockaddr" title='sockaddr' data-ref="sockaddr">sockaddr</a> *<dfn class="local col6 decl" id="16addr" title='addr' data-type='struct sockaddr *' data-ref="16addr">addr</dfn>)</td></tr>
+<tr><th id="132">132</th><td>{</td></tr>
+<tr><th id="133">133</th><td>    <b>if</b> (<a class="local col6 ref" href="#16addr" title='addr' data-ref="16addr">addr</a>-&gt;<a class="ref" href="../../include/x86_64-linux-gnu/bits/socket.h.html#151" title='sockaddr::sa_family' data-ref="sockaddr::sa_family">sa_family</a> == <a class="macro" href="../../include/x86_64-linux-gnu/bits/socket.h.html#90" title="2" data-ref="_M/AF_INET">AF_INET</a>) {</td></tr>
+<tr><th id="134">134</th><td>        <b>return</b> <a class="macro" href="../../include/netinet/in.h.html#182" title="((((in_addr_t)(ntohl(((struct sockaddr_in *)addr)-&gt;sin_addr.s_addr))) &amp; 0xf0000000) == 0xe0000000)" data-ref="_M/IN_MULTICAST">IN_MULTICAST</a>(<a class="ref" href="../../include/netinet/in.h.html#ntohl" title='ntohl' data-ref="ntohl">ntohl</a>(((<b>struct</b> <a class="type" href="../../include/netinet/in.h.html#sockaddr_in" title='sockaddr_in' data-ref="sockaddr_in">sockaddr_in</a> *)<a class="local col6 ref" href="#16addr" title='addr' data-ref="16addr">addr</a>)-&gt;<a class="ref" href="../../include/netinet/in.h.html#sockaddr_in::sin_addr" title='sockaddr_in::sin_addr' data-ref="sockaddr_in::sin_addr">sin_addr</a>.<a class="ref" href="../../include/netinet/in.h.html#in_addr::s_addr" title='in_addr::s_addr' data-ref="in_addr::s_addr">s_addr</a>));</td></tr>
+<tr><th id="135">135</th><td>    }</td></tr>
+<tr><th id="136">136</th><td><u>#<span data-ppcond="136">if</span> <a class="macro" href="../config.h.html#366" title="1" data-ref="_M/HAVE_STRUCT_SOCKADDR_IN6">HAVE_STRUCT_SOCKADDR_IN6</a></u></td></tr>
+<tr><th id="137">137</th><td>    <b>if</b> (<a class="local col6 ref" href="#16addr" title='addr' data-ref="16addr">addr</a>-&gt;<a class="ref" href="../../include/x86_64-linux-gnu/bits/socket.h.html#151" title='sockaddr::sa_family' data-ref="sockaddr::sa_family">sa_family</a> == <a class="macro" href="../../include/x86_64-linux-gnu/bits/socket.h.html#98" title="10" data-ref="_M/AF_INET6">AF_INET6</a>) {</td></tr>
+<tr><th id="138">138</th><td>        <b>return</b> <a class="macro" href="../../include/netinet/in.h.html#497" title="(((const uint8_t *) (&amp;((struct sockaddr_in6 *)addr)-&gt;sin6_addr))[0] == 0xff)" data-ref="_M/IN6_IS_ADDR_MULTICAST">IN6_IS_ADDR_MULTICAST</a>(&amp;((<b>struct</b> <a class="type" href="../../include/netinet/in.h.html#sockaddr_in6" title='sockaddr_in6' data-ref="sockaddr_in6">sockaddr_in6</a> *)<a class="local col6 ref" href="#16addr" title='addr' data-ref="16addr">addr</a>)-&gt;<a class="ref" href="../../include/netinet/in.h.html#sockaddr_in6::sin6_addr" title='sockaddr_in6::sin6_addr' data-ref="sockaddr_in6::sin6_addr">sin6_addr</a>);</td></tr>
+<tr><th id="139">139</th><td>    }</td></tr>
+<tr><th id="140">140</th><td><u>#<span data-ppcond="136">endif</span></u></td></tr>
+<tr><th id="141">141</th><td></td></tr>
+<tr><th id="142">142</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="143">143</th><td>}</td></tr>
+<tr><th id="144">144</th><td></td></tr>
+<tr><th id="145">145</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="ff_poll_interrupt" title='ff_poll_interrupt' data-type='int ff_poll_interrupt(struct pollfd * p, nfds_t nfds, int timeout, AVIOInterruptCB * cb)' data-ref="ff_poll_interrupt">ff_poll_interrupt</dfn>(<b>struct</b> <a class="type" href="../../include/x86_64-linux-gnu/sys/poll.h.html#pollfd" title='pollfd' data-ref="pollfd">pollfd</a> *<dfn class="local col7 decl" id="17p" title='p' data-type='struct pollfd *' data-ref="17p">p</dfn>, <a class="typedef" href="../../include/x86_64-linux-gnu/sys/poll.h.html#nfds_t" title='nfds_t' data-type='unsigned long' data-ref="nfds_t">nfds_t</a> <dfn class="local col8 decl" id="18nfds" title='nfds' data-type='nfds_t' data-ref="18nfds">nfds</dfn>, <em>int</em> <dfn class="local col9 decl" id="19timeout" title='timeout' data-type='int' data-ref="19timeout">timeout</dfn>,</td></tr>
+<tr><th id="146">146</th><td>                             <a class="typedef" href="avio.h.html#AVIOInterruptCB" title='AVIOInterruptCB' data-type='struct AVIOInterruptCB' data-ref="AVIOInterruptCB">AVIOInterruptCB</a> *<dfn class="local col0 decl" id="20cb" title='cb' data-type='AVIOInterruptCB *' data-ref="20cb">cb</dfn>)</td></tr>
+<tr><th id="147">147</th><td>{</td></tr>
+<tr><th id="148">148</th><td>    <em>int</em> <dfn class="local col1 decl" id="21runs" title='runs' data-type='int' data-ref="21runs">runs</dfn> = <a class="local col9 ref" href="#19timeout" title='timeout' data-ref="19timeout">timeout</a> / <a class="macro" href="network.h.html#239" title="100" data-ref="_M/POLLING_TIME">POLLING_TIME</a>;</td></tr>
+<tr><th id="149">149</th><td>    <em>int</em> <dfn class="local col2 decl" id="22ret" title='ret' data-type='int' data-ref="22ret">ret</dfn> = <var>0</var>;</td></tr>
+<tr><th id="150">150</th><td></td></tr>
+<tr><th id="151">151</th><td>    <b>do</b> {</td></tr>
+<tr><th id="152">152</th><td>        <b>if</b> (<a class="ref" href="url.h.html#ff_check_interrupt" title='ff_check_interrupt' data-ref="ff_check_interrupt">ff_check_interrupt</a>(<a class="local col0 ref" href="#20cb" title='cb' data-ref="20cb">cb</a>))</td></tr>
+<tr><th id="153">153</th><td>            <b>return</b> <a class="macro" href="../libavutil/error.h.html#56" title="(-(int)((&apos;E&apos;) | ((&apos;X&apos;) &lt;&lt; 8) | ((&apos;I&apos;) &lt;&lt; 16) | ((unsigned)(&apos;T&apos;) &lt;&lt; 24)))" data-ref="_M/AVERROR_EXIT">AVERROR_EXIT</a>;</td></tr>
+<tr><th id="154">154</th><td>        <a class="local col2 ref" href="#22ret" title='ret' data-ref="22ret">ret</a> = <a class="ref" href="../../include/x86_64-linux-gnu/sys/poll.h.html#poll" title='poll' data-ref="poll">poll</a>(<a class="local col7 ref" href="#17p" title='p' data-ref="17p">p</a>, <a class="local col8 ref" href="#18nfds" title='nfds' data-ref="18nfds">nfds</a>, <a class="macro" href="network.h.html#239" title="100" data-ref="_M/POLLING_TIME">POLLING_TIME</a>);</td></tr>
+<tr><th id="155">155</th><td>        <b>if</b> (<a class="local col2 ref" href="#22ret" title='ret' data-ref="22ret">ret</a> != <var>0</var>)</td></tr>
+<tr><th id="156">156</th><td>            <b>break</b>;</td></tr>
+<tr><th id="157">157</th><td>    } <b>while</b> (<a class="local col9 ref" href="#19timeout" title='timeout' data-ref="19timeout">timeout</a> &lt;= <var>0</var> || <a class="local col1 ref" href="#21runs" title='runs' data-ref="21runs">runs</a>-- &gt; <var>0</var>);</td></tr>
+<tr><th id="158">158</th><td></td></tr>
+<tr><th id="159">159</th><td>    <b>if</b> (!<a class="local col2 ref" href="#22ret" title='ret' data-ref="22ret">ret</a>)</td></tr>
+<tr><th id="160">160</th><td>        <b>return</b> <a class="macro" href="../libavutil/error.h.html#39" title="(-(110))" data-ref="_M/AVERROR">AVERROR</a>(<a class="macro" href="../../include/asm-generic/errno.h.html#83" title="110" data-ref="_M/ETIMEDOUT">ETIMEDOUT</a>);</td></tr>
+<tr><th id="161">161</th><td>    <b>if</b> (<a class="local col2 ref" href="#22ret" title='ret' data-ref="22ret">ret</a> &lt; <var>0</var>)</td></tr>
+<tr><th id="162">162</th><td>        <b>return</b> <a class="macro" href="../libavutil/error.h.html#39" title="(-((*__errno_location ())))" data-ref="_M/AVERROR">AVERROR</a>(<a class="macro" href="../../include/x86_64-linux-gnu/bits/errno.h.html#54" title="(*__errno_location ())" data-ref="_M/errno">errno</a>);</td></tr>
+<tr><th id="163">163</th><td>    <b>return</b> <a class="local col2 ref" href="#22ret" title='ret' data-ref="22ret">ret</a>;</td></tr>
+<tr><th id="164">164</th><td>}</td></tr>
+<tr><th id="165">165</th><td></td></tr>
+<tr><th id="166">166</th><td><em>int</em> <dfn class="decl def" id="ff_socket" title='ff_socket' data-ref="ff_socket">ff_socket</dfn>(<em>int</em> <dfn class="local col3 decl" id="23af" title='af' data-type='int' data-ref="23af">af</dfn>, <em>int</em> <dfn class="local col4 decl" id="24type" title='type' data-type='int' data-ref="24type">type</dfn>, <em>int</em> <dfn class="local col5 decl" id="25proto" title='proto' data-type='int' data-ref="25proto">proto</dfn>)</td></tr>
+<tr><th id="167">167</th><td>{</td></tr>
+<tr><th id="168">168</th><td>    <em>int</em> <dfn class="local col6 decl" id="26fd" title='fd' data-type='int' data-ref="26fd">fd</dfn>;</td></tr>
+<tr><th id="169">169</th><td></td></tr>
+<tr><th id="170">170</th><td><u>#<span data-ppcond="170">ifdef</span> <a class="macro" href="../../include/x86_64-linux-gnu/bits/socket_type.h.html#51" data-ref="_M/SOCK_CLOEXEC">SOCK_CLOEXEC</a></u></td></tr>
+<tr><th id="171">171</th><td>    <a class="local col6 ref" href="#26fd" title='fd' data-ref="26fd">fd</a> = <a class="ref" href="../../include/x86_64-linux-gnu/sys/socket.h.html#socket" title='socket' data-ref="socket">socket</a>(<a class="local col3 ref" href="#23af" title='af' data-ref="23af">af</a>, <a class="local col4 ref" href="#24type" title='type' data-ref="24type">type</a> | <a class="macro" href="../../include/x86_64-linux-gnu/bits/socket_type.h.html#51" title="SOCK_CLOEXEC" data-ref="_M/SOCK_CLOEXEC">SOCK_CLOEXEC</a>, <a class="local col5 ref" href="#25proto" title='proto' data-ref="25proto">proto</a>);</td></tr>
+<tr><th id="172">172</th><td>    <b>if</b> (<a class="local col6 ref" href="#26fd" title='fd' data-ref="26fd">fd</a> == -<var>1</var> &amp;&amp; <a class="macro" href="../../include/x86_64-linux-gnu/bits/errno.h.html#54" title="(*__errno_location ())" data-ref="_M/errno">errno</a> == <a class="macro" href="../../include/asm-generic/errno-base.h.html#25" title="22" data-ref="_M/EINVAL">EINVAL</a>)</td></tr>
+<tr><th id="173">173</th><td><u>#<span data-ppcond="170">endif</span></u></td></tr>
+<tr><th id="174">174</th><td>    {</td></tr>
+<tr><th id="175">175</th><td>        <a class="local col6 ref" href="#26fd" title='fd' data-ref="26fd">fd</a> = <a class="ref" href="../../include/x86_64-linux-gnu/sys/socket.h.html#socket" title='socket' data-ref="socket">socket</a>(<a class="local col3 ref" href="#23af" title='af' data-ref="23af">af</a>, <a class="local col4 ref" href="#24type" title='type' data-ref="24type">type</a>, <a class="local col5 ref" href="#25proto" title='proto' data-ref="25proto">proto</a>);</td></tr>
+<tr><th id="176">176</th><td><u>#<span data-ppcond="176">if</span> <a class="macro" href="../config.h.html#286" title="1" data-ref="_M/HAVE_FCNTL">HAVE_FCNTL</a></u></td></tr>
+<tr><th id="177">177</th><td>        <b>if</b> (<a class="local col6 ref" href="#26fd" title='fd' data-ref="26fd">fd</a> != -<var>1</var>) {</td></tr>
+<tr><th id="178">178</th><td>            <b>if</b> (<a class="ref" href="../../include/fcntl.h.html#fcntl" title='fcntl' data-ref="fcntl">fcntl</a>(<a class="local col6 ref" href="#26fd" title='fd' data-ref="26fd">fd</a>, <a class="macro" href="../../include/x86_64-linux-gnu/bits/fcntl-linux.h.html#152" title="2" data-ref="_M/F_SETFD">F_SETFD</a>, <a class="macro" href="../../include/x86_64-linux-gnu/bits/fcntl-linux.h.html#195" title="1" data-ref="_M/FD_CLOEXEC">FD_CLOEXEC</a>) == -<var>1</var>)</td></tr>
+<tr><th id="179">179</th><td>                <a class="ref" href="../libavutil/log.h.html#av_log" title='av_log' data-ref="av_log">av_log</a>(<span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>, <a class="macro" href="../libavutil/log.h.html#197" title="48" data-ref="_M/AV_LOG_DEBUG">AV_LOG_DEBUG</a>, <q>"Failed to set close on exec\n"</q>);</td></tr>
+<tr><th id="180">180</th><td>        }</td></tr>
+<tr><th id="181">181</th><td><u>#<span data-ppcond="176">endif</span></u></td></tr>
+<tr><th id="182">182</th><td>    }</td></tr>
+<tr><th id="183">183</th><td><u>#<span data-ppcond="183">ifdef</span> <span class="macro" data-ref="_M/SO_NOSIGPIPE">SO_NOSIGPIPE</span></u></td></tr>
+<tr><th id="184">184</th><td>    <b>if</b> (fd != -<var>1</var>)</td></tr>
+<tr><th id="185">185</th><td>        setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &amp;(<em>int</em>){<var>1</var>}, <b>sizeof</b>(<em>int</em>));</td></tr>
+<tr><th id="186">186</th><td><u>#<span data-ppcond="183">endif</span></u></td></tr>
+<tr><th id="187">187</th><td>    <b>return</b> <a class="local col6 ref" href="#26fd" title='fd' data-ref="26fd">fd</a>;</td></tr>
+<tr><th id="188">188</th><td>}</td></tr>
+<tr><th id="189">189</th><td></td></tr>
+<tr><th id="190">190</th><td><em>int</em> <dfn class="decl def" id="ff_listen" title='ff_listen' data-ref="ff_listen">ff_listen</dfn>(<em>int</em> <dfn class="local col7 decl" id="27fd" title='fd' data-type='int' data-ref="27fd">fd</dfn>, <em>const</em> <b>struct</b> <a class="type" href="../../include/x86_64-linux-gnu/bits/socket.h.html#sockaddr" title='sockaddr' data-ref="sockaddr">sockaddr</a> *<dfn class="local col8 decl" id="28addr" title='addr' data-type='const struct sockaddr *' data-ref="28addr">addr</dfn>,</td></tr>
+<tr><th id="191">191</th><td>              <a class="typedef" href="../../include/unistd.h.html#socklen_t" title='socklen_t' data-type='__socklen_t' data-ref="socklen_t">socklen_t</a> <dfn class="local col9 decl" id="29addrlen" title='addrlen' data-type='socklen_t' data-ref="29addrlen">addrlen</dfn>)</td></tr>
+<tr><th id="192">192</th><td>{</td></tr>
+<tr><th id="193">193</th><td>    <em>int</em> <dfn class="local col0 decl" id="30ret" title='ret' data-type='int' data-ref="30ret">ret</dfn>;</td></tr>
+<tr><th id="194">194</th><td>    <em>int</em> <dfn class="local col1 decl" id="31reuse" title='reuse' data-type='int' data-ref="31reuse">reuse</dfn> = <var>1</var>;</td></tr>
+<tr><th id="195">195</th><td>    <b>if</b> (<a class="ref" href="../../include/x86_64-linux-gnu/sys/socket.h.html#setsockopt" title='setsockopt' data-ref="setsockopt">setsockopt</a>(<a class="local col7 ref" href="#27fd" title='fd' data-ref="27fd">fd</a>, <a class="macro" href="../../include/asm-generic/socket.h.html#7" title="1" data-ref="_M/SOL_SOCKET">SOL_SOCKET</a>, <a class="macro" href="../../include/asm-generic/socket.h.html#10" title="2" data-ref="_M/SO_REUSEADDR">SO_REUSEADDR</a>, &amp;<a class="local col1 ref" href="#31reuse" title='reuse' data-ref="31reuse">reuse</a>, <b>sizeof</b>(<a class="local col1 ref" href="#31reuse" title='reuse' data-ref="31reuse">reuse</a>))) {</td></tr>
+<tr><th id="196">196</th><td>        <a class="ref" href="../libavutil/log.h.html#av_log" title='av_log' data-ref="av_log">av_log</a>(<span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>, <a class="macro" href="../libavutil/log.h.html#182" title="24" data-ref="_M/AV_LOG_WARNING">AV_LOG_WARNING</a>, <q>"setsockopt(SO_REUSEADDR) failed\n"</q>);</td></tr>
+<tr><th id="197">197</th><td>    }</td></tr>
+<tr><th id="198">198</th><td>    <a class="local col0 ref" href="#30ret" title='ret' data-ref="30ret">ret</a> = <a class="ref" href="../../include/x86_64-linux-gnu/sys/socket.h.html#bind" title='bind' data-ref="bind">bind</a>(<a class="local col7 ref" href="#27fd" title='fd' data-ref="27fd">fd</a>, <a class="local col8 ref" href="#28addr" title='addr' data-ref="28addr">addr</a>, <a class="local col9 ref" href="#29addrlen" title='addrlen' data-ref="29addrlen">addrlen</a>);</td></tr>
+<tr><th id="199">199</th><td>    <b>if</b> (<a class="local col0 ref" href="#30ret" title='ret' data-ref="30ret">ret</a>)</td></tr>
+<tr><th id="200">200</th><td>        <b>return</b> <a class="macro" href="network.h.html#64" title="(-((*__errno_location ())))" data-ref="_M/ff_neterrno">ff_neterrno</a>();</td></tr>
+<tr><th id="201">201</th><td></td></tr>
+<tr><th id="202">202</th><td>    <a class="local col0 ref" href="#30ret" title='ret' data-ref="30ret">ret</a> = <a class="ref" href="../../include/x86_64-linux-gnu/sys/socket.h.html#listen" title='listen' data-ref="listen">listen</a>(<a class="local col7 ref" href="#27fd" title='fd' data-ref="27fd">fd</a>, <var>1</var>);</td></tr>
+<tr><th id="203">203</th><td>    <b>if</b> (<a class="local col0 ref" href="#30ret" title='ret' data-ref="30ret">ret</a>)</td></tr>
+<tr><th id="204">204</th><td>        <b>return</b> <a class="macro" href="network.h.html#64" title="(-((*__errno_location ())))" data-ref="_M/ff_neterrno">ff_neterrno</a>();</td></tr>
+<tr><th id="205">205</th><td>    <b>return</b> <a class="local col0 ref" href="#30ret" title='ret' data-ref="30ret">ret</a>;</td></tr>
+<tr><th id="206">206</th><td>}</td></tr>
+<tr><th id="207">207</th><td></td></tr>
+<tr><th id="208">208</th><td><em>int</em> <dfn class="decl def" id="ff_accept" title='ff_accept' data-ref="ff_accept">ff_accept</dfn>(<em>int</em> <dfn class="local col2 decl" id="32fd" title='fd' data-type='int' data-ref="32fd">fd</dfn>, <em>int</em> <dfn class="local col3 decl" id="33timeout" title='timeout' data-type='int' data-ref="33timeout">timeout</dfn>, <a class="typedef" href="url.h.html#URLContext" title='URLContext' data-type='struct URLContext' data-ref="URLContext">URLContext</a> *<dfn class="local col4 decl" id="34h" title='h' data-type='URLContext *' data-ref="34h">h</dfn>)</td></tr>
+<tr><th id="209">209</th><td>{</td></tr>
+<tr><th id="210">210</th><td>    <em>int</em> <dfn class="local col5 decl" id="35ret" title='ret' data-type='int' data-ref="35ret">ret</dfn>;</td></tr>
+<tr><th id="211">211</th><td>    <b>struct</b> <a class="type" href="../../include/x86_64-linux-gnu/sys/poll.h.html#pollfd" title='pollfd' data-ref="pollfd">pollfd</a> <dfn class="local col6 decl" id="36lp" title='lp' data-type='struct pollfd' data-ref="36lp">lp</dfn> = { <a class="local col2 ref" href="#32fd" title='fd' data-ref="32fd">fd</a>, <a class="macro" href="../../include/x86_64-linux-gnu/bits/poll.h.html#25" title="0x001" data-ref="_M/POLLIN">POLLIN</a>, <var>0</var> };</td></tr>
+<tr><th id="212">212</th><td></td></tr>
+<tr><th id="213">213</th><td>    <a class="local col5 ref" href="#35ret" title='ret' data-ref="35ret">ret</a> = <a class="tu ref" href="#ff_poll_interrupt" title='ff_poll_interrupt' data-use='c' data-ref="ff_poll_interrupt">ff_poll_interrupt</a>(&amp;<a class="local col6 ref" href="#36lp" title='lp' data-ref="36lp">lp</a>, <var>1</var>, <a class="local col3 ref" href="#33timeout" title='timeout' data-ref="33timeout">timeout</a>, &amp;<a class="local col4 ref" href="#34h" title='h' data-ref="34h">h</a>-&gt;<a class="ref" href="url.h.html#URLContext::interrupt_callback" title='URLContext::interrupt_callback' data-ref="URLContext::interrupt_callback">interrupt_callback</a>);</td></tr>
+<tr><th id="214">214</th><td>    <b>if</b> (<a class="local col5 ref" href="#35ret" title='ret' data-ref="35ret">ret</a> &lt; <var>0</var>)</td></tr>
+<tr><th id="215">215</th><td>        <b>return</b> <a class="local col5 ref" href="#35ret" title='ret' data-ref="35ret">ret</a>;</td></tr>
+<tr><th id="216">216</th><td></td></tr>
+<tr><th id="217">217</th><td>    <a class="local col5 ref" href="#35ret" title='ret' data-ref="35ret">ret</a> = <a class="ref" href="../../include/x86_64-linux-gnu/sys/socket.h.html#accept" title='accept' data-ref="accept">accept</a>(<a class="local col2 ref" href="#32fd" title='fd' data-ref="32fd">fd</a>, <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>, <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>);</td></tr>
+<tr><th id="218">218</th><td>    <b>if</b> (<a class="local col5 ref" href="#35ret" title='ret' data-ref="35ret">ret</a> &lt; <var>0</var>)</td></tr>
+<tr><th id="219">219</th><td>        <b>return</b> <a class="macro" href="network.h.html#64" title="(-((*__errno_location ())))" data-ref="_M/ff_neterrno">ff_neterrno</a>();</td></tr>
+<tr><th id="220">220</th><td>    <b>if</b> (<a class="ref" href="network.h.html#ff_socket_nonblock" title='ff_socket_nonblock' data-ref="ff_socket_nonblock">ff_socket_nonblock</a>(<a class="local col5 ref" href="#35ret" title='ret' data-ref="35ret">ret</a>, <var>1</var>) &lt; <var>0</var>)</td></tr>
+<tr><th id="221">221</th><td>        <a class="ref" href="../libavutil/log.h.html#av_log" title='av_log' data-ref="av_log">av_log</a>(<span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>, <a class="macro" href="../libavutil/log.h.html#197" title="48" data-ref="_M/AV_LOG_DEBUG">AV_LOG_DEBUG</a>, <q>"ff_socket_nonblock failed\n"</q>);</td></tr>
+<tr><th id="222">222</th><td></td></tr>
+<tr><th id="223">223</th><td>    <b>return</b> <a class="local col5 ref" href="#35ret" title='ret' data-ref="35ret">ret</a>;</td></tr>
+<tr><th id="224">224</th><td>}</td></tr>
+<tr><th id="225">225</th><td></td></tr>
+<tr><th id="226">226</th><td><em>int</em> <dfn class="decl def" id="ff_listen_bind" title='ff_listen_bind' data-ref="ff_listen_bind">ff_listen_bind</dfn>(<em>int</em> <dfn class="local col7 decl" id="37fd" title='fd' data-type='int' data-ref="37fd">fd</dfn>, <em>const</em> <b>struct</b> <a class="type" href="../../include/x86_64-linux-gnu/bits/socket.h.html#sockaddr" title='sockaddr' data-ref="sockaddr">sockaddr</a> *<dfn class="local col8 decl" id="38addr" title='addr' data-type='const struct sockaddr *' data-ref="38addr">addr</dfn>,</td></tr>
+<tr><th id="227">227</th><td>                   <a class="typedef" href="../../include/unistd.h.html#socklen_t" title='socklen_t' data-type='__socklen_t' data-ref="socklen_t">socklen_t</a> <dfn class="local col9 decl" id="39addrlen" title='addrlen' data-type='socklen_t' data-ref="39addrlen">addrlen</dfn>, <em>int</em> <dfn class="local col0 decl" id="40timeout" title='timeout' data-type='int' data-ref="40timeout">timeout</dfn>, <a class="typedef" href="url.h.html#URLContext" title='URLContext' data-type='struct URLContext' data-ref="URLContext">URLContext</a> *<dfn class="local col1 decl" id="41h" title='h' data-type='URLContext *' data-ref="41h">h</dfn>)</td></tr>
+<tr><th id="228">228</th><td>{</td></tr>
+<tr><th id="229">229</th><td>    <em>int</em> <dfn class="local col2 decl" id="42ret" title='ret' data-type='int' data-ref="42ret">ret</dfn>;</td></tr>
+<tr><th id="230">230</th><td>    <b>if</b> ((<a class="local col2 ref" href="#42ret" title='ret' data-ref="42ret">ret</a> = <a class="ref" href="#ff_listen" title='ff_listen' data-ref="ff_listen">ff_listen</a>(<a class="local col7 ref" href="#37fd" title='fd' data-ref="37fd">fd</a>, <a class="local col8 ref" href="#38addr" title='addr' data-ref="38addr">addr</a>, <a class="local col9 ref" href="#39addrlen" title='addrlen' data-ref="39addrlen">addrlen</a>)) &lt; <var>0</var>)</td></tr>
+<tr><th id="231">231</th><td>        <b>return</b> <a class="local col2 ref" href="#42ret" title='ret' data-ref="42ret">ret</a>;</td></tr>
+<tr><th id="232">232</th><td>    <b>if</b> ((<a class="local col2 ref" href="#42ret" title='ret' data-ref="42ret">ret</a> = <a class="ref" href="#ff_accept" title='ff_accept' data-ref="ff_accept">ff_accept</a>(<a class="local col7 ref" href="#37fd" title='fd' data-ref="37fd">fd</a>, <a class="local col0 ref" href="#40timeout" title='timeout' data-ref="40timeout">timeout</a>, <a class="local col1 ref" href="#41h" title='h' data-ref="41h">h</a>)) &lt; <var>0</var>)</td></tr>
+<tr><th id="233">233</th><td>        <b>return</b> <a class="local col2 ref" href="#42ret" title='ret' data-ref="42ret">ret</a>;</td></tr>
+<tr><th id="234">234</th><td>    <a class="macro" href="os_support.h.html#105" title="close" data-ref="_M/closesocket">closesocket</a>(<a class="local col7 ref" href="#37fd" title='fd' data-ref="37fd">fd</a>);</td></tr>
+<tr><th id="235">235</th><td>    <b>return</b> <a class="local col2 ref" href="#42ret" title='ret' data-ref="42ret">ret</a>;</td></tr>
+<tr><th id="236">236</th><td>}</td></tr>
+<tr><th id="237">237</th><td></td></tr>
+<tr><th id="238">238</th><td><em>int</em> <dfn class="decl def" id="ff_listen_connect" title='ff_listen_connect' data-ref="ff_listen_connect">ff_listen_connect</dfn>(<em>int</em> <dfn class="local col3 decl" id="43fd" title='fd' data-type='int' data-ref="43fd">fd</dfn>, <em>const</em> <b>struct</b> <a class="type" href="../../include/x86_64-linux-gnu/bits/socket.h.html#sockaddr" title='sockaddr' data-ref="sockaddr">sockaddr</a> *<dfn class="local col4 decl" id="44addr" title='addr' data-type='const struct sockaddr *' data-ref="44addr">addr</dfn>,</td></tr>
+<tr><th id="239">239</th><td>                      <a class="typedef" href="../../include/unistd.h.html#socklen_t" title='socklen_t' data-type='__socklen_t' data-ref="socklen_t">socklen_t</a> <dfn class="local col5 decl" id="45addrlen" title='addrlen' data-type='socklen_t' data-ref="45addrlen">addrlen</dfn>, <em>int</em> <dfn class="local col6 decl" id="46timeout" title='timeout' data-type='int' data-ref="46timeout">timeout</dfn>, <a class="typedef" href="url.h.html#URLContext" title='URLContext' data-type='struct URLContext' data-ref="URLContext">URLContext</a> *<dfn class="local col7 decl" id="47h" title='h' data-type='URLContext *' data-ref="47h">h</dfn>,</td></tr>
+<tr><th id="240">240</th><td>                      <em>int</em> <dfn class="local col8 decl" id="48will_try_next" title='will_try_next' data-type='int' data-ref="48will_try_next">will_try_next</dfn>)</td></tr>
+<tr><th id="241">241</th><td>{</td></tr>
+<tr><th id="242">242</th><td>    <b>struct</b> <a class="type" href="../../include/x86_64-linux-gnu/sys/poll.h.html#pollfd" title='pollfd' data-ref="pollfd">pollfd</a> <dfn class="local col9 decl" id="49p" title='p' data-type='struct pollfd' data-ref="49p">p</dfn> = {<a class="local col3 ref" href="#43fd" title='fd' data-ref="43fd">fd</a>, <a class="macro" href="../../include/x86_64-linux-gnu/bits/poll.h.html#27" title="0x004" data-ref="_M/POLLOUT">POLLOUT</a>, <var>0</var>};</td></tr>
+<tr><th id="243">243</th><td>    <em>int</em> <dfn class="local col0 decl" id="50ret" title='ret' data-type='int' data-ref="50ret">ret</dfn>;</td></tr>
+<tr><th id="244">244</th><td>    <a class="typedef" href="../../include/unistd.h.html#socklen_t" title='socklen_t' data-type='__socklen_t' data-ref="socklen_t">socklen_t</a> <dfn class="local col1 decl" id="51optlen" title='optlen' data-type='socklen_t' data-ref="51optlen">optlen</dfn>;</td></tr>
+<tr><th id="245">245</th><td></td></tr>
+<tr><th id="246">246</th><td>    <b>if</b> (<a class="ref" href="network.h.html#ff_socket_nonblock" title='ff_socket_nonblock' data-ref="ff_socket_nonblock">ff_socket_nonblock</a>(<a class="local col3 ref" href="#43fd" title='fd' data-ref="43fd">fd</a>, <var>1</var>) &lt; <var>0</var>)</td></tr>
+<tr><th id="247">247</th><td>        <a class="ref" href="../libavutil/log.h.html#av_log" title='av_log' data-ref="av_log">av_log</a>(<span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>, <a class="macro" href="../libavutil/log.h.html#197" title="48" data-ref="_M/AV_LOG_DEBUG">AV_LOG_DEBUG</a>, <q>"ff_socket_nonblock failed\n"</q>);</td></tr>
+<tr><th id="248">248</th><td></td></tr>
+<tr><th id="249">249</th><td>    <b>while</b> ((<a class="local col0 ref" href="#50ret" title='ret' data-ref="50ret">ret</a> = <a class="ref" href="../../include/x86_64-linux-gnu/sys/socket.h.html#connect" title='connect' data-ref="connect">connect</a>(<a class="local col3 ref" href="#43fd" title='fd' data-ref="43fd">fd</a>, <a class="local col4 ref" href="#44addr" title='addr' data-ref="44addr">addr</a>, <a class="local col5 ref" href="#45addrlen" title='addrlen' data-ref="45addrlen">addrlen</a>))) {</td></tr>
+<tr><th id="250">250</th><td>        <a class="local col0 ref" href="#50ret" title='ret' data-ref="50ret">ret</a> = <a class="macro" href="network.h.html#64" title="(-((*__errno_location ())))" data-ref="_M/ff_neterrno">ff_neterrno</a>();</td></tr>
+<tr><th id="251">251</th><td>        <b>switch</b> (<a class="local col0 ref" href="#50ret" title='ret' data-ref="50ret">ret</a>) {</td></tr>
+<tr><th id="252">252</th><td>        <b>case</b> <a class="macro" href="../libavutil/error.h.html#39" title="(-(4))" data-ref="_M/AVERROR">AVERROR</a>(<a class="macro" href="../../include/asm-generic/errno-base.h.html#7" title="4" data-ref="_M/EINTR">EINTR</a>):</td></tr>
+<tr><th id="253">253</th><td>            <b>if</b> (<a class="ref" href="url.h.html#ff_check_interrupt" title='ff_check_interrupt' data-ref="ff_check_interrupt">ff_check_interrupt</a>(&amp;<a class="local col7 ref" href="#47h" title='h' data-ref="47h">h</a>-&gt;<a class="ref" href="url.h.html#URLContext::interrupt_callback" title='URLContext::interrupt_callback' data-ref="URLContext::interrupt_callback">interrupt_callback</a>))</td></tr>
+<tr><th id="254">254</th><td>                <b>return</b> <a class="macro" href="../libavutil/error.h.html#56" title="(-(int)((&apos;E&apos;) | ((&apos;X&apos;) &lt;&lt; 8) | ((&apos;I&apos;) &lt;&lt; 16) | ((unsigned)(&apos;T&apos;) &lt;&lt; 24)))" data-ref="_M/AVERROR_EXIT">AVERROR_EXIT</a>;</td></tr>
+<tr><th id="255">255</th><td>            <b>continue</b>;</td></tr>
+<tr><th id="256">256</th><td>        <b>case</b> <a class="macro" href="../libavutil/error.h.html#39" title="(-(115))" data-ref="_M/AVERROR">AVERROR</a>(<a class="macro" href="../../include/asm-generic/errno.h.html#88" title="115" data-ref="_M/EINPROGRESS">EINPROGRESS</a>):</td></tr>
+<tr><th id="257">257</th><td>        <b>case</b> <a class="macro" href="../libavutil/error.h.html#39" title="(-(11))" data-ref="_M/AVERROR">AVERROR</a>(<a class="macro" href="../../include/asm-generic/errno-base.h.html#14" title="11" data-ref="_M/EAGAIN">EAGAIN</a>):</td></tr>
+<tr><th id="258">258</th><td>            <a class="local col0 ref" href="#50ret" title='ret' data-ref="50ret">ret</a> = <a class="tu ref" href="#ff_poll_interrupt" title='ff_poll_interrupt' data-use='c' data-ref="ff_poll_interrupt">ff_poll_interrupt</a>(&amp;<a class="local col9 ref" href="#49p" title='p' data-ref="49p">p</a>, <var>1</var>, <a class="local col6 ref" href="#46timeout" title='timeout' data-ref="46timeout">timeout</a>, &amp;<a class="local col7 ref" href="#47h" title='h' data-ref="47h">h</a>-&gt;<a class="ref" href="url.h.html#URLContext::interrupt_callback" title='URLContext::interrupt_callback' data-ref="URLContext::interrupt_callback">interrupt_callback</a>);</td></tr>
+<tr><th id="259">259</th><td>            <b>if</b> (<a class="local col0 ref" href="#50ret" title='ret' data-ref="50ret">ret</a> &lt; <var>0</var>)</td></tr>
+<tr><th id="260">260</th><td>                <b>return</b> <a class="local col0 ref" href="#50ret" title='ret' data-ref="50ret">ret</a>;</td></tr>
+<tr><th id="261">261</th><td>            <a class="local col1 ref" href="#51optlen" title='optlen' data-ref="51optlen">optlen</a> = <b>sizeof</b>(<a class="local col0 ref" href="#50ret" title='ret' data-ref="50ret">ret</a>);</td></tr>
+<tr><th id="262">262</th><td>            <b>if</b> (<a class="ref" href="../../include/x86_64-linux-gnu/sys/socket.h.html#getsockopt" title='getsockopt' data-ref="getsockopt">getsockopt</a> (<a class="local col3 ref" href="#43fd" title='fd' data-ref="43fd">fd</a>, <a class="macro" href="../../include/asm-generic/socket.h.html#7" title="1" data-ref="_M/SOL_SOCKET">SOL_SOCKET</a>, <a class="macro" href="../../include/asm-generic/socket.h.html#12" title="4" data-ref="_M/SO_ERROR">SO_ERROR</a>, &amp;<a class="local col0 ref" href="#50ret" title='ret' data-ref="50ret">ret</a>, &amp;<a class="local col1 ref" href="#51optlen" title='optlen' data-ref="51optlen">optlen</a>))</td></tr>
+<tr><th id="263">263</th><td>                <a class="local col0 ref" href="#50ret" title='ret' data-ref="50ret">ret</a> = <a class="macro" href="../libavutil/error.h.html#40" title="(-((-((*__errno_location ())))))" data-ref="_M/AVUNERROR">AVUNERROR</a>(<a class="macro" href="network.h.html#64" title="(-((*__errno_location ())))" data-ref="_M/ff_neterrno">ff_neterrno</a>());</td></tr>
+<tr><th id="264">264</th><td>            <b>if</b> (<a class="local col0 ref" href="#50ret" title='ret' data-ref="50ret">ret</a> != <var>0</var>) {</td></tr>
+<tr><th id="265">265</th><td>                <em>char</em> <dfn class="local col2 decl" id="52errbuf" title='errbuf' data-type='char [100]' data-ref="52errbuf">errbuf</dfn>[<var>100</var>];</td></tr>
+<tr><th id="266">266</th><td>                <a class="local col0 ref" href="#50ret" title='ret' data-ref="50ret">ret</a> = <a class="macro" href="../libavutil/error.h.html#39" title="(-(ret))" data-ref="_M/AVERROR">AVERROR</a>(<a class="local col0 ref" href="#50ret" title='ret' data-ref="50ret">ret</a>);</td></tr>
+<tr><th id="267">267</th><td>                <a class="ref" href="../libavutil/error.h.html#av_strerror" title='av_strerror' data-ref="av_strerror">av_strerror</a>(<a class="local col0 ref" href="#50ret" title='ret' data-ref="50ret">ret</a>, <a class="local col2 ref" href="#52errbuf" title='errbuf' data-ref="52errbuf">errbuf</a>, <b>sizeof</b>(<a class="local col2 ref" href="#52errbuf" title='errbuf' data-ref="52errbuf">errbuf</a>));</td></tr>
+<tr><th id="268">268</th><td>                <b>if</b> (<a class="local col8 ref" href="#48will_try_next" title='will_try_next' data-ref="48will_try_next">will_try_next</a>)</td></tr>
+<tr><th id="269">269</th><td>                    <a class="ref" href="../libavutil/log.h.html#av_log" title='av_log' data-ref="av_log">av_log</a>(<a class="local col7 ref" href="#47h" title='h' data-ref="47h">h</a>, <a class="macro" href="../libavutil/log.h.html#182" title="24" data-ref="_M/AV_LOG_WARNING">AV_LOG_WARNING</a>,</td></tr>
+<tr><th id="270">270</th><td>                           <q>"Connection to %s failed (%s), trying next address\n"</q>,</td></tr>
+<tr><th id="271">271</th><td>                           <a class="local col7 ref" href="#47h" title='h' data-ref="47h">h</a>-&gt;<a class="ref" href="url.h.html#URLContext::filename" title='URLContext::filename' data-ref="URLContext::filename">filename</a>, <a class="local col2 ref" href="#52errbuf" title='errbuf' data-ref="52errbuf">errbuf</a>);</td></tr>
+<tr><th id="272">272</th><td>                <b>else</b></td></tr>
+<tr><th id="273">273</th><td>                    <a class="ref" href="../libavutil/log.h.html#av_log" title='av_log' data-ref="av_log">av_log</a>(<a class="local col7 ref" href="#47h" title='h' data-ref="47h">h</a>, <a class="macro" href="../libavutil/log.h.html#176" title="16" data-ref="_M/AV_LOG_ERROR">AV_LOG_ERROR</a>, <q>"Connection to %s failed: %s\n"</q>,</td></tr>
+<tr><th id="274">274</th><td>                           <a class="local col7 ref" href="#47h" title='h' data-ref="47h">h</a>-&gt;<a class="ref" href="url.h.html#URLContext::filename" title='URLContext::filename' data-ref="URLContext::filename">filename</a>, <a class="local col2 ref" href="#52errbuf" title='errbuf' data-ref="52errbuf">errbuf</a>);</td></tr>
+<tr><th id="275">275</th><td>            }</td></tr>
+<tr><th id="276">276</th><td>        <b>default</b>:</td></tr>
+<tr><th id="277">277</th><td>            <b>return</b> <a class="local col0 ref" href="#50ret" title='ret' data-ref="50ret">ret</a>;</td></tr>
+<tr><th id="278">278</th><td>        }</td></tr>
+<tr><th id="279">279</th><td>    }</td></tr>
+<tr><th id="280">280</th><td>    <b>return</b> <a class="local col0 ref" href="#50ret" title='ret' data-ref="50ret">ret</a>;</td></tr>
+<tr><th id="281">281</th><td>}</td></tr>
+<tr><th id="282">282</th><td></td></tr>
+<tr><th id="283">283</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="match_host_pattern" title='match_host_pattern' data-type='int match_host_pattern(const char * pattern, const char * hostname)' data-ref="match_host_pattern">match_host_pattern</dfn>(<em>const</em> <em>char</em> *<dfn class="local col3 decl" id="53pattern" title='pattern' data-type='const char *' data-ref="53pattern">pattern</dfn>, <em>const</em> <em>char</em> *<dfn class="local col4 decl" id="54hostname" title='hostname' data-type='const char *' data-ref="54hostname">hostname</dfn>)</td></tr>
+<tr><th id="284">284</th><td>{</td></tr>
+<tr><th id="285">285</th><td>    <em>int</em> <dfn class="local col5 decl" id="55len_p" title='len_p' data-type='int' data-ref="55len_p">len_p</dfn>, <dfn class="local col6 decl" id="56len_h" title='len_h' data-type='int' data-ref="56len_h">len_h</dfn>;</td></tr>
+<tr><th id="286">286</th><td>    <b>if</b> (!<a class="ref" href="../../include/string.h.html#strcmp" title='strcmp' data-ref="strcmp">strcmp</a>(<a class="local col3 ref" href="#53pattern" title='pattern' data-ref="53pattern">pattern</a>, <q>"*"</q>))</td></tr>
+<tr><th id="287">287</th><td>        <b>return</b> <var>1</var>;</td></tr>
+<tr><th id="288">288</th><td>    <i>// Skip a possible *. at the start of the pattern</i></td></tr>
+<tr><th id="289">289</th><td>    <b>if</b> (<a class="local col3 ref" href="#53pattern" title='pattern' data-ref="53pattern">pattern</a>[<var>0</var>] == <kbd>'*'</kbd>)</td></tr>
+<tr><th id="290">290</th><td>        <a class="local col3 ref" href="#53pattern" title='pattern' data-ref="53pattern">pattern</a>++;</td></tr>
+<tr><th id="291">291</th><td>    <b>if</b> (<a class="local col3 ref" href="#53pattern" title='pattern' data-ref="53pattern">pattern</a>[<var>0</var>] == <kbd>'.'</kbd>)</td></tr>
+<tr><th id="292">292</th><td>        <a class="local col3 ref" href="#53pattern" title='pattern' data-ref="53pattern">pattern</a>++;</td></tr>
+<tr><th id="293">293</th><td>    <a class="local col5 ref" href="#55len_p" title='len_p' data-ref="55len_p">len_p</a> = <a class="ref" href="../../include/string.h.html#strlen" title='strlen' data-ref="strlen">strlen</a>(<a class="local col3 ref" href="#53pattern" title='pattern' data-ref="53pattern">pattern</a>);</td></tr>
+<tr><th id="294">294</th><td>    <a class="local col6 ref" href="#56len_h" title='len_h' data-ref="56len_h">len_h</a> = <a class="ref" href="../../include/string.h.html#strlen" title='strlen' data-ref="strlen">strlen</a>(<a class="local col4 ref" href="#54hostname" title='hostname' data-ref="54hostname">hostname</a>);</td></tr>
+<tr><th id="295">295</th><td>    <b>if</b> (<a class="local col5 ref" href="#55len_p" title='len_p' data-ref="55len_p">len_p</a> &gt; <a class="local col6 ref" href="#56len_h" title='len_h' data-ref="56len_h">len_h</a>)</td></tr>
+<tr><th id="296">296</th><td>        <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="297">297</th><td>    <i>// Simply check if the end of hostname is equal to 'pattern'</i></td></tr>
+<tr><th id="298">298</th><td>    <b>if</b> (!<a class="ref" href="../../include/string.h.html#strcmp" title='strcmp' data-ref="strcmp">strcmp</a>(<a class="local col3 ref" href="#53pattern" title='pattern' data-ref="53pattern">pattern</a>, &amp;<a class="local col4 ref" href="#54hostname" title='hostname' data-ref="54hostname">hostname</a>[<a class="local col6 ref" href="#56len_h" title='len_h' data-ref="56len_h">len_h</a> - <a class="local col5 ref" href="#55len_p" title='len_p' data-ref="55len_p">len_p</a>])) {</td></tr>
+<tr><th id="299">299</th><td>        <b>if</b> (<a class="local col6 ref" href="#56len_h" title='len_h' data-ref="56len_h">len_h</a> == <a class="local col5 ref" href="#55len_p" title='len_p' data-ref="55len_p">len_p</a>)</td></tr>
+<tr><th id="300">300</th><td>            <b>return</b> <var>1</var>; <i>// Exact match</i></td></tr>
+<tr><th id="301">301</th><td>        <b>if</b> (<a class="local col4 ref" href="#54hostname" title='hostname' data-ref="54hostname">hostname</a>[<a class="local col6 ref" href="#56len_h" title='len_h' data-ref="56len_h">len_h</a> - <a class="local col5 ref" href="#55len_p" title='len_p' data-ref="55len_p">len_p</a> - <var>1</var>] == <kbd>'.'</kbd>)</td></tr>
+<tr><th id="302">302</th><td>            <b>return</b> <var>1</var>; <i>// The matched substring is a domain and not just a substring of a domain</i></td></tr>
+<tr><th id="303">303</th><td>    }</td></tr>
+<tr><th id="304">304</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="305">305</th><td>}</td></tr>
+<tr><th id="306">306</th><td></td></tr>
+<tr><th id="307">307</th><td><em>int</em> <dfn class="decl def" id="ff_http_match_no_proxy" title='ff_http_match_no_proxy' data-ref="ff_http_match_no_proxy">ff_http_match_no_proxy</dfn>(<em>const</em> <em>char</em> *<dfn class="local col7 decl" id="57no_proxy" title='no_proxy' data-type='const char *' data-ref="57no_proxy">no_proxy</dfn>, <em>const</em> <em>char</em> *<dfn class="local col8 decl" id="58hostname" title='hostname' data-type='const char *' data-ref="58hostname">hostname</dfn>)</td></tr>
+<tr><th id="308">308</th><td>{</td></tr>
+<tr><th id="309">309</th><td>    <em>char</em> *<dfn class="local col9 decl" id="59buf" title='buf' data-type='char *' data-ref="59buf">buf</dfn>, *<dfn class="local col0 decl" id="60start" title='start' data-type='char *' data-ref="60start">start</dfn>;</td></tr>
+<tr><th id="310">310</th><td>    <em>int</em> <dfn class="local col1 decl" id="61ret" title='ret' data-type='int' data-ref="61ret">ret</dfn> = <var>0</var>;</td></tr>
+<tr><th id="311">311</th><td>    <b>if</b> (!<a class="local col7 ref" href="#57no_proxy" title='no_proxy' data-ref="57no_proxy">no_proxy</a>)</td></tr>
+<tr><th id="312">312</th><td>        <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="313">313</th><td>    <b>if</b> (!<a class="local col8 ref" href="#58hostname" title='hostname' data-ref="58hostname">hostname</a>)</td></tr>
+<tr><th id="314">314</th><td>        <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="315">315</th><td>    <a class="local col9 ref" href="#59buf" title='buf' data-ref="59buf">buf</a> = <a class="ref" href="../libavutil/mem.h.html#av_strdup" title='av_strdup' data-ref="av_strdup">av_strdup</a>(<a class="local col7 ref" href="#57no_proxy" title='no_proxy' data-ref="57no_proxy">no_proxy</a>);</td></tr>
+<tr><th id="316">316</th><td>    <b>if</b> (!<a class="local col9 ref" href="#59buf" title='buf' data-ref="59buf">buf</a>)</td></tr>
+<tr><th id="317">317</th><td>        <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="318">318</th><td>    <a class="local col0 ref" href="#60start" title='start' data-ref="60start">start</a> = <a class="local col9 ref" href="#59buf" title='buf' data-ref="59buf">buf</a>;</td></tr>
+<tr><th id="319">319</th><td>    <b>while</b> (<a class="local col0 ref" href="#60start" title='start' data-ref="60start">start</a>) {</td></tr>
+<tr><th id="320">320</th><td>        <em>char</em> *<dfn class="local col2 decl" id="62sep" title='sep' data-type='char *' data-ref="62sep">sep</dfn>, *<dfn class="local col3 decl" id="63next" title='next' data-type='char *' data-ref="63next">next</dfn> = <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="321">321</th><td>        <a class="local col0 ref" href="#60start" title='start' data-ref="60start">start</a> += <a class="ref" href="../../include/string.h.html#strspn" title='strspn' data-ref="strspn">strspn</a>(<a class="local col0 ref" href="#60start" title='start' data-ref="60start">start</a>, <q>" ,"</q>);</td></tr>
+<tr><th id="322">322</th><td>        <a class="local col2 ref" href="#62sep" title='sep' data-ref="62sep">sep</a> = <a class="local col0 ref" href="#60start" title='start' data-ref="60start">start</a> + <a class="ref" href="../../include/string.h.html#strcspn" title='strcspn' data-ref="strcspn">strcspn</a>(<a class="local col0 ref" href="#60start" title='start' data-ref="60start">start</a>, <q>" ,"</q>);</td></tr>
+<tr><th id="323">323</th><td>        <b>if</b> (*<a class="local col2 ref" href="#62sep" title='sep' data-ref="62sep">sep</a>) {</td></tr>
+<tr><th id="324">324</th><td>            <a class="local col3 ref" href="#63next" title='next' data-ref="63next">next</a> = <a class="local col2 ref" href="#62sep" title='sep' data-ref="62sep">sep</a> + <var>1</var>;</td></tr>
+<tr><th id="325">325</th><td>            *<a class="local col2 ref" href="#62sep" title='sep' data-ref="62sep">sep</a> = <kbd>'\0'</kbd>;</td></tr>
+<tr><th id="326">326</th><td>        }</td></tr>
+<tr><th id="327">327</th><td>        <b>if</b> (<a class="tu ref" href="#match_host_pattern" title='match_host_pattern' data-use='c' data-ref="match_host_pattern">match_host_pattern</a>(<a class="local col0 ref" href="#60start" title='start' data-ref="60start">start</a>, <a class="local col8 ref" href="#58hostname" title='hostname' data-ref="58hostname">hostname</a>)) {</td></tr>
+<tr><th id="328">328</th><td>            <a class="local col1 ref" href="#61ret" title='ret' data-ref="61ret">ret</a> = <var>1</var>;</td></tr>
+<tr><th id="329">329</th><td>            <b>break</b>;</td></tr>
+<tr><th id="330">330</th><td>        }</td></tr>
+<tr><th id="331">331</th><td>        <a class="local col0 ref" href="#60start" title='start' data-ref="60start">start</a> = <a class="local col3 ref" href="#63next" title='next' data-ref="63next">next</a>;</td></tr>
+<tr><th id="332">332</th><td>    }</td></tr>
+<tr><th id="333">333</th><td>    <a class="ref" href="../libavutil/mem.h.html#av_free" title='av_free' data-ref="av_free">av_free</a>(<a class="local col9 ref" href="#59buf" title='buf' data-ref="59buf">buf</a>);</td></tr>
+<tr><th id="334">334</th><td>    <b>return</b> <a class="local col1 ref" href="#61ret" title='ret' data-ref="61ret">ret</a>;</td></tr>
+<tr><th id="335">335</th><td>}</td></tr>
+<tr><th id="336">336</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

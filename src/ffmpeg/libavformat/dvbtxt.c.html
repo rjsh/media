@@ -1,0 +1,68 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>dvbtxt.c source code [ffmpeg/libavformat/dvbtxt.c] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavformat/dvbtxt.c'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavformat</a>/<a href='dvbtxt.c.html'>dvbtxt.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * RAW dvb teletext demuxer</i></td></tr>
+<tr><th id="3">3</th><td><i> * Copyright (c) 2016 Marton Balnt &lt;cus@passwd.hu&gt;</i></td></tr>
+<tr><th id="4">4</th><td><i> *</i></td></tr>
+<tr><th id="5">5</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="8">8</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="9">9</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="10">10</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="11">11</th><td><i> *</i></td></tr>
+<tr><th id="12">12</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="13">13</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="14">14</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="15">15</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="16">16</th><td><i> *</i></td></tr>
+<tr><th id="17">17</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="18">18</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="19">19</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="20">20</th><td><i> */</i></td></tr>
+<tr><th id="21">21</th><td></td></tr>
+<tr><th id="22">22</th><td><u>#include <a href="../libavcodec/dvbtxt.h.html">"libavcodec/dvbtxt.h"</a></u></td></tr>
+<tr><th id="23">23</th><td></td></tr>
+<tr><th id="24">24</th><td><u>#include <a href="avformat.h.html">"avformat.h"</a></u></td></tr>
+<tr><th id="25">25</th><td><u>#include <a href="rawdec.h.html">"rawdec.h"</a></u></td></tr>
+<tr><th id="26">26</th><td></td></tr>
+<tr><th id="27">27</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="dvbtxt_probe" title='dvbtxt_probe' data-type='int dvbtxt_probe(AVProbeData * p)' data-ref="dvbtxt_probe">dvbtxt_probe</dfn>(<a class="typedef" href="avformat.h.html#AVProbeData" title='AVProbeData' data-type='struct AVProbeData' data-ref="AVProbeData">AVProbeData</a> *<dfn class="local col3 decl" id="3p" title='p' data-type='AVProbeData *' data-ref="3p">p</dfn>)</td></tr>
+<tr><th id="28">28</th><td>{</td></tr>
+<tr><th id="29">29</th><td>    <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col4 decl" id="4end" title='end' data-type='const uint8_t *' data-ref="4end">end</dfn> = <a class="local col3 ref" href="#3p" title='p' data-ref="3p">p</a>-&gt;<a class="ref" href="avformat.h.html#AVProbeData::buf" title='AVProbeData::buf' data-ref="AVProbeData::buf">buf</a> + <a class="local col3 ref" href="#3p" title='p' data-ref="3p">p</a>-&gt;<a class="ref" href="avformat.h.html#AVProbeData::buf_size" title='AVProbeData::buf_size' data-ref="AVProbeData::buf_size">buf_size</a>;</td></tr>
+<tr><th id="30">30</th><td>    <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col5 decl" id="5buf" title='buf' data-type='const uint8_t *' data-ref="5buf">buf</dfn>;</td></tr>
+<tr><th id="31">31</th><td></td></tr>
+<tr><th id="32">32</th><td>    <i>/* The purpose of this is demuxer is to detect DVB teletext streams in</i></td></tr>
+<tr><th id="33">33</th><td><i>     * mpegts, so we reject invalid buffer sizes */</i></td></tr>
+<tr><th id="34">34</th><td>    <b>if</b> ((<a class="local col3 ref" href="#3p" title='p' data-ref="3p">p</a>-&gt;<a class="ref" href="avformat.h.html#AVProbeData::buf_size" title='AVProbeData::buf_size' data-ref="AVProbeData::buf_size">buf_size</a> + <var>45</var>) % <var>184</var> != <var>0</var>)</td></tr>
+<tr><th id="35">35</th><td>        <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="36">36</th><td></td></tr>
+<tr><th id="37">37</th><td>    <b>if</b> (!<a class="ref" href="../libavcodec/dvbtxt.h.html#ff_data_identifier_is_teletext" title='ff_data_identifier_is_teletext' data-ref="ff_data_identifier_is_teletext">ff_data_identifier_is_teletext</a>(<a class="local col3 ref" href="#3p" title='p' data-ref="3p">p</a>-&gt;<a class="ref" href="avformat.h.html#AVProbeData::buf" title='AVProbeData::buf' data-ref="AVProbeData::buf">buf</a>[<var>0</var>]))</td></tr>
+<tr><th id="38">38</th><td>        <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="39">39</th><td></td></tr>
+<tr><th id="40">40</th><td>    <b>for</b> (<a class="local col5 ref" href="#5buf" title='buf' data-ref="5buf">buf</a> = <a class="local col3 ref" href="#3p" title='p' data-ref="3p">p</a>-&gt;<a class="ref" href="avformat.h.html#AVProbeData::buf" title='AVProbeData::buf' data-ref="AVProbeData::buf">buf</a> + <var>1</var>; <a class="local col5 ref" href="#5buf" title='buf' data-ref="5buf">buf</a> &lt; <a class="local col4 ref" href="#4end" title='end' data-ref="4end">end</a>; <a class="local col5 ref" href="#5buf" title='buf' data-ref="5buf">buf</a> += <var>46</var>) {</td></tr>
+<tr><th id="41">41</th><td>        <b>if</b> (!<a class="ref" href="../libavcodec/dvbtxt.h.html#ff_data_unit_id_is_teletext" title='ff_data_unit_id_is_teletext' data-ref="ff_data_unit_id_is_teletext">ff_data_unit_id_is_teletext</a>(<a class="local col5 ref" href="#5buf" title='buf' data-ref="5buf">buf</a>[<var>0</var>]) &amp;&amp; <a class="local col5 ref" href="#5buf" title='buf' data-ref="5buf">buf</a>[<var>0</var>] != <var>0xff</var>)</td></tr>
+<tr><th id="42">42</th><td>            <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="43">43</th><td>        <b>if</b> (<a class="local col5 ref" href="#5buf" title='buf' data-ref="5buf">buf</a>[<var>1</var>] != <var>0x2c</var>)     <i>// data_unit_length</i></td></tr>
+<tr><th id="44">44</th><td>            <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="45">45</th><td>    }</td></tr>
+<tr><th id="46">46</th><td></td></tr>
+<tr><th id="47">47</th><td>    <b>return</b> <a class="macro" href="avformat.h.html#473" title="100" data-ref="_M/AVPROBE_SCORE_MAX">AVPROBE_SCORE_MAX</a> / <var>2</var>;</td></tr>
+<tr><th id="48">48</th><td>}</td></tr>
+<tr><th id="49">49</th><td></td></tr>
+<tr><th id="50">50</th><td><a class="macro" href="rawdec.h.html#80" title="static const AVClass dvbtxt_demuxer_class = { .class_name = &quot;dvbtxt&quot; &quot; demuxer&quot;, .item_name = av_default_item_name, .option = ff_rawvideo_options, .version = ((55)&lt;&lt;16 | (33)&lt;&lt;8 | (100)),};AVInputFormat ff_dvbtxt_demuxer = { .name = &quot;dvbtxt&quot;, .long_name = &quot;dvbtxt&quot;, .read_probe = dvbtxt_probe, .read_header = ff_raw_data_read_header, .read_packet = ff_raw_read_partial_packet, .extensions = ((void*)0), .flags = 0, .raw_codec_id = AV_CODEC_ID_DVB_TELETEXT, .priv_data_size = 0, .priv_class = &amp;dvbtxt_demuxer_class,};" data-ref="_M/FF_DEF_RAWSUB_DEMUXER">FF_DEF_RAWSUB_DEMUXER</a>(dvbtxt, <q>"dvbtxt"</q>, <a class="tu ref" href="#dvbtxt_probe" title='dvbtxt_probe' data-ref="dvbtxt_probe">dvbtxt_probe</a>, <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>, <a class="enum" href="../libavcodec/avcodec.h.html#AVCodecID::AV_CODEC_ID_DVB_TELETEXT" title='AVCodecID::AV_CODEC_ID_DVB_TELETEXT' data-ref="AVCodecID::AV_CODEC_ID_DVB_TELETEXT">AV_CODEC_ID_DVB_TELETEXT</a>, <var>0</var>)</td></tr>
+<tr><th id="51">51</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

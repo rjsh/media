@@ -1,0 +1,292 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>lzwenc.c source code [ffmpeg/libavcodec/lzwenc.c] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="Code,LZWEncodeState "/>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavcodec/lzwenc.c'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavcodec</a>/<a href='lzwenc.c.html'>lzwenc.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * LZW encoder</i></td></tr>
+<tr><th id="3">3</th><td><i> * Copyright (c) 2007 Bartlomiej Wolowiec</i></td></tr>
+<tr><th id="4">4</th><td><i> *</i></td></tr>
+<tr><th id="5">5</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="8">8</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="9">9</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="10">10</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="11">11</th><td><i> *</i></td></tr>
+<tr><th id="12">12</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="13">13</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="14">14</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="15">15</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="16">16</th><td><i> *</i></td></tr>
+<tr><th id="17">17</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="18">18</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="19">19</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="20">20</th><td><i> */</i></td></tr>
+<tr><th id="21">21</th><td></td></tr>
+<tr><th id="22">22</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="23">23</th><td><i class="doc"> *<span class="command"> @file</span></i></td></tr>
+<tr><th id="24">24</th><td><i class="doc"> * LZW encoder</i></td></tr>
+<tr><th id="25">25</th><td><i class="doc"> * <span class="command">@author</span> Bartlomiej Wolowiec</i></td></tr>
+<tr><th id="26">26</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="27">27</th><td></td></tr>
+<tr><th id="28">28</th><td><u>#include <a href="avcodec.h.html">"avcodec.h"</a></u></td></tr>
+<tr><th id="29">29</th><td><u>#include <a href="lzw.h.html">"lzw.h"</a></u></td></tr>
+<tr><th id="30">30</th><td><u>#include <a href="mathops.h.html">"mathops.h"</a></u></td></tr>
+<tr><th id="31">31</th><td><u>#include <a href="put_bits.h.html">"put_bits.h"</a></u></td></tr>
+<tr><th id="32">32</th><td></td></tr>
+<tr><th id="33">33</th><td><u>#define <dfn class="macro" id="_M/LZW_MAXBITS" data-ref="_M/LZW_MAXBITS">LZW_MAXBITS</dfn> 12</u></td></tr>
+<tr><th id="34">34</th><td><u>#define <dfn class="macro" id="_M/LZW_SIZTABLE" data-ref="_M/LZW_SIZTABLE">LZW_SIZTABLE</dfn> (1&lt;&lt;LZW_MAXBITS)</u></td></tr>
+<tr><th id="35">35</th><td><u>#define <dfn class="macro" id="_M/LZW_HASH_SIZE" data-ref="_M/LZW_HASH_SIZE">LZW_HASH_SIZE</dfn> 16411</u></td></tr>
+<tr><th id="36">36</th><td><u>#define <dfn class="macro" id="_M/LZW_HASH_SHIFT" data-ref="_M/LZW_HASH_SHIFT">LZW_HASH_SHIFT</dfn> 6</u></td></tr>
+<tr><th id="37">37</th><td></td></tr>
+<tr><th id="38">38</th><td><u>#define <dfn class="macro" id="_M/LZW_PREFIX_EMPTY" data-ref="_M/LZW_PREFIX_EMPTY">LZW_PREFIX_EMPTY</dfn> -1</u></td></tr>
+<tr><th id="39">39</th><td><u>#define <dfn class="macro" id="_M/LZW_PREFIX_FREE" data-ref="_M/LZW_PREFIX_FREE">LZW_PREFIX_FREE</dfn> -2</u></td></tr>
+<tr><th id="40">40</th><td></td></tr>
+<tr><th id="41">41</th><td><i class="doc">/** One code in hash table */</i></td></tr>
+<tr><th id="42">42</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="Code" title='Code' data-ref="Code"><a class="type" href="#Code" title='Code' data-ref="Code">Code</a></dfn>{</td></tr>
+<tr><th id="43">43</th><td>    <i class="doc" data-doc="Code::hash_prefix">/// Hash code of prefix, LZW_PREFIX_EMPTY if empty prefix, or LZW_PREFIX_FREE if no code</i></td></tr>
+<tr><th id="44">44</th><td>    <em>int</em> <dfn class="tu decl" id="Code::hash_prefix" title='Code::hash_prefix' data-type='int' data-ref="Code::hash_prefix">hash_prefix</dfn>;</td></tr>
+<tr><th id="45">45</th><td>    <em>int</em> <dfn class="tu decl" id="Code::code" title='Code::code' data-type='int' data-ref="Code::code">code</dfn>;               <i class="doc" data-doc="Code::code">///&lt; LZW code</i></td></tr>
+<tr><th id="46">46</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="tu decl" id="Code::suffix" title='Code::suffix' data-type='uint8_t' data-ref="Code::suffix">suffix</dfn>;         <i class="doc" data-doc="Code::suffix">///&lt; Last character in code block</i></td></tr>
+<tr><th id="47">47</th><td>}<dfn class="typedef" id="Code" title='Code' data-type='struct Code' data-ref="Code">Code</dfn>;</td></tr>
+<tr><th id="48">48</th><td></td></tr>
+<tr><th id="49">49</th><td><i class="doc">/** LZW encode state */</i></td></tr>
+<tr><th id="50">50</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="LZWEncodeState" title='LZWEncodeState' data-ref="LZWEncodeState"><a class="type" href="#LZWEncodeState" title='LZWEncodeState' data-ref="LZWEncodeState">LZWEncodeState</a></dfn> {</td></tr>
+<tr><th id="51">51</th><td>    <em>int</em> <dfn class="decl" id="LZWEncodeState::clear_code" title='LZWEncodeState::clear_code' data-ref="LZWEncodeState::clear_code">clear_code</dfn>;          <i class="doc">///&lt; Value of clear code</i></td></tr>
+<tr><th id="52">52</th><td>    <em>int</em> <dfn class="decl" id="LZWEncodeState::end_code" title='LZWEncodeState::end_code' data-ref="LZWEncodeState::end_code">end_code</dfn>;            <i class="doc">///&lt; Value of end code</i></td></tr>
+<tr><th id="53">53</th><td>    <a class="typedef" href="#Code" title='Code' data-type='struct Code' data-ref="Code">Code</a> <dfn class="decl" id="LZWEncodeState::tab" title='LZWEncodeState::tab' data-ref="LZWEncodeState::tab">tab</dfn>[<a class="macro" href="#35" title="16411" data-ref="_M/LZW_HASH_SIZE">LZW_HASH_SIZE</a>]; <i class="doc">///&lt; Hash table</i></td></tr>
+<tr><th id="54">54</th><td>    <em>int</em> <dfn class="decl" id="LZWEncodeState::tabsize" title='LZWEncodeState::tabsize' data-ref="LZWEncodeState::tabsize">tabsize</dfn>;             <i class="doc">///&lt; Number of values in hash table</i></td></tr>
+<tr><th id="55">55</th><td>    <em>int</em> <dfn class="decl" id="LZWEncodeState::bits" title='LZWEncodeState::bits' data-ref="LZWEncodeState::bits">bits</dfn>;                <i class="doc">///&lt; Actual bits code</i></td></tr>
+<tr><th id="56">56</th><td>    <em>int</em> <dfn class="decl" id="LZWEncodeState::bufsize" title='LZWEncodeState::bufsize' data-ref="LZWEncodeState::bufsize">bufsize</dfn>;             <i class="doc">///&lt; Size of output buffer</i></td></tr>
+<tr><th id="57">57</th><td>    <a class="typedef" href="put_bits.h.html#PutBitContext" title='PutBitContext' data-type='struct PutBitContext' data-ref="PutBitContext">PutBitContext</a> <dfn class="decl" id="LZWEncodeState::pb" title='LZWEncodeState::pb' data-ref="LZWEncodeState::pb">pb</dfn>;        <i class="doc">///&lt; Put bit context for output</i></td></tr>
+<tr><th id="58">58</th><td>    <em>int</em> <dfn class="decl" id="LZWEncodeState::maxbits" title='LZWEncodeState::maxbits' data-ref="LZWEncodeState::maxbits">maxbits</dfn>;             <i class="doc">///&lt; Max bits code</i></td></tr>
+<tr><th id="59">59</th><td>    <em>int</em> <dfn class="decl" id="LZWEncodeState::maxcode" title='LZWEncodeState::maxcode' data-ref="LZWEncodeState::maxcode">maxcode</dfn>;             <i class="doc">///&lt; Max value of code</i></td></tr>
+<tr><th id="60">60</th><td>    <em>int</em> <dfn class="decl" id="LZWEncodeState::output_bytes" title='LZWEncodeState::output_bytes' data-ref="LZWEncodeState::output_bytes">output_bytes</dfn>;        <i class="doc">///&lt; Number of written bytes</i></td></tr>
+<tr><th id="61">61</th><td>    <em>int</em> <dfn class="decl" id="LZWEncodeState::last_code" title='LZWEncodeState::last_code' data-ref="LZWEncodeState::last_code">last_code</dfn>;           <i class="doc">///&lt; Value of last output code or LZW_PREFIX_EMPTY</i></td></tr>
+<tr><th id="62">62</th><td>    <b>enum</b> <a class="type" href="lzw.h.html#FF_LZW_MODES" title='FF_LZW_MODES' data-ref="FF_LZW_MODES">FF_LZW_MODES</a> <dfn class="decl" id="LZWEncodeState::mode" title='LZWEncodeState::mode' data-ref="LZWEncodeState::mode">mode</dfn>;  <i class="doc">///&lt; TIFF or GIF</i></td></tr>
+<tr><th id="63">63</th><td>    <em>void</em> (*<dfn class="decl" id="LZWEncodeState::put_bits" title='LZWEncodeState::put_bits' data-ref="LZWEncodeState::put_bits">put_bits</dfn>)(<a class="typedef" href="put_bits.h.html#PutBitContext" title='PutBitContext' data-type='struct PutBitContext' data-ref="PutBitContext">PutBitContext</a> *, <em>int</em>, <em>unsigned</em>); <i class="doc">///&lt; GIF is LE while TIFF is BE</i></td></tr>
+<tr><th id="64">64</th><td>}<dfn class="typedef" id="LZWEncodeState" title='LZWEncodeState' data-type='struct LZWEncodeState' data-ref="LZWEncodeState">LZWEncodeState</dfn>;</td></tr>
+<tr><th id="65">65</th><td></td></tr>
+<tr><th id="66">66</th><td></td></tr>
+<tr><th id="67">67</th><td><em>const</em> <em>int</em> <dfn class="decl def" id="ff_lzw_encode_state_size" title='ff_lzw_encode_state_size' data-ref="ff_lzw_encode_state_size">ff_lzw_encode_state_size</dfn> = <b>sizeof</b>(<a class="typedef" href="#LZWEncodeState" title='LZWEncodeState' data-type='struct LZWEncodeState' data-ref="LZWEncodeState">LZWEncodeState</a>);</td></tr>
+<tr><th id="68">68</th><td></td></tr>
+<tr><th id="69">69</th><td><i class="doc" data-doc="hash">/**</i></td></tr>
+<tr><th id="70">70</th><td><i class="doc" data-doc="hash"> * Hash function adding character</i></td></tr>
+<tr><th id="71">71</th><td><i class="doc" data-doc="hash"> * <span class="command">@param</span> <span class="arg">head</span> LZW code for prefix</i></td></tr>
+<tr><th id="72">72</th><td><i class="doc" data-doc="hash"> * <span class="command">@param</span> <span class="arg">add</span> Character to add</i></td></tr>
+<tr><th id="73">73</th><td><i class="doc" data-doc="hash"> * <span class="command">@return</span> New hash value</i></td></tr>
+<tr><th id="74">74</th><td><i class="doc" data-doc="hash"> */</i></td></tr>
+<tr><th id="75">75</th><td><em>static</em> <b>inline</b> <em>int</em> <dfn class="tu decl def" id="hash" title='hash' data-type='int hash(int head, const int add)' data-ref="hash">hash</dfn>(<em>int</em> <dfn class="local col1 decl" id="1head" title='head' data-type='int' data-ref="1head">head</dfn>, <em>const</em> <em>int</em> <dfn class="local col2 decl" id="2add" title='add' data-type='const int' data-ref="2add">add</dfn>)</td></tr>
+<tr><th id="76">76</th><td>{</td></tr>
+<tr><th id="77">77</th><td>    <a class="local col1 ref" href="#1head" title='head' data-ref="1head">head</a> ^= (<a class="local col2 ref" href="#2add" title='add' data-ref="2add">add</a> &lt;&lt; <a class="macro" href="#36" title="6" data-ref="_M/LZW_HASH_SHIFT">LZW_HASH_SHIFT</a>);</td></tr>
+<tr><th id="78">78</th><td>    <b>if</b> (<a class="local col1 ref" href="#1head" title='head' data-ref="1head">head</a> &gt;= <a class="macro" href="#35" title="16411" data-ref="_M/LZW_HASH_SIZE">LZW_HASH_SIZE</a>)</td></tr>
+<tr><th id="79">79</th><td>        <a class="local col1 ref" href="#1head" title='head' data-ref="1head">head</a> -= <a class="macro" href="#35" title="16411" data-ref="_M/LZW_HASH_SIZE">LZW_HASH_SIZE</a>;</td></tr>
+<tr><th id="80">80</th><td>    <a class="macro" href="../libavutil/avassert.h.html#64" title="((void)0)" data-ref="_M/av_assert2">av_assert2</a>(head &gt;= <var>0</var> &amp;&amp; head &lt; LZW_HASH_SIZE);</td></tr>
+<tr><th id="81">81</th><td>    <b>return</b> <a class="local col1 ref" href="#1head" title='head' data-ref="1head">head</a>;</td></tr>
+<tr><th id="82">82</th><td>}</td></tr>
+<tr><th id="83">83</th><td></td></tr>
+<tr><th id="84">84</th><td><i class="doc" data-doc="hashNext">/**</i></td></tr>
+<tr><th id="85">85</th><td><i class="doc" data-doc="hashNext"> * Hash function calculates next hash value</i></td></tr>
+<tr><th id="86">86</th><td><i class="doc" data-doc="hashNext"> * <span class="command">@param</span> <span class="arg">head</span> Actual hash code</i></td></tr>
+<tr><th id="87">87</th><td><i class="doc" data-doc="hashNext"> * <span class="command">@param</span> <span class="arg">offset</span> Offset calculated by hashOffset</i></td></tr>
+<tr><th id="88">88</th><td><i class="doc" data-doc="hashNext"> * <span class="command">@return</span> New hash value</i></td></tr>
+<tr><th id="89">89</th><td><i class="doc" data-doc="hashNext"> */</i></td></tr>
+<tr><th id="90">90</th><td><em>static</em> <b>inline</b> <em>int</em> <dfn class="tu decl def" id="hashNext" title='hashNext' data-type='int hashNext(int head, const int offset)' data-ref="hashNext">hashNext</dfn>(<em>int</em> <dfn class="local col3 decl" id="3head" title='head' data-type='int' data-ref="3head">head</dfn>, <em>const</em> <em>int</em> <dfn class="local col4 decl" id="4offset" title='offset' data-type='const int' data-ref="4offset">offset</dfn>)</td></tr>
+<tr><th id="91">91</th><td>{</td></tr>
+<tr><th id="92">92</th><td>    <a class="local col3 ref" href="#3head" title='head' data-ref="3head">head</a> -= <a class="local col4 ref" href="#4offset" title='offset' data-ref="4offset">offset</a>;</td></tr>
+<tr><th id="93">93</th><td>    <b>if</b>(<a class="local col3 ref" href="#3head" title='head' data-ref="3head">head</a> &lt; <var>0</var>)</td></tr>
+<tr><th id="94">94</th><td>        <a class="local col3 ref" href="#3head" title='head' data-ref="3head">head</a> += <a class="macro" href="#35" title="16411" data-ref="_M/LZW_HASH_SIZE">LZW_HASH_SIZE</a>;</td></tr>
+<tr><th id="95">95</th><td>    <b>return</b> <a class="local col3 ref" href="#3head" title='head' data-ref="3head">head</a>;</td></tr>
+<tr><th id="96">96</th><td>}</td></tr>
+<tr><th id="97">97</th><td></td></tr>
+<tr><th id="98">98</th><td><i class="doc" data-doc="hashOffset">/**</i></td></tr>
+<tr><th id="99">99</th><td><i class="doc" data-doc="hashOffset"> * Hash function calculates hash offset</i></td></tr>
+<tr><th id="100">100</th><td><i class="doc" data-doc="hashOffset"> * <span class="command">@param</span> <span class="arg">head</span> Actual hash code</i></td></tr>
+<tr><th id="101">101</th><td><i class="doc" data-doc="hashOffset"> * <span class="command">@return</span> Hash offset</i></td></tr>
+<tr><th id="102">102</th><td><i class="doc" data-doc="hashOffset"> */</i></td></tr>
+<tr><th id="103">103</th><td><em>static</em> <b>inline</b> <em>int</em> <dfn class="tu decl def" id="hashOffset" title='hashOffset' data-type='int hashOffset(const int head)' data-ref="hashOffset">hashOffset</dfn>(<em>const</em> <em>int</em> <dfn class="local col5 decl" id="5head" title='head' data-type='const int' data-ref="5head">head</dfn>)</td></tr>
+<tr><th id="104">104</th><td>{</td></tr>
+<tr><th id="105">105</th><td>    <b>return</b> <a class="local col5 ref" href="#5head" title='head' data-ref="5head">head</a> ? <a class="macro" href="#35" title="16411" data-ref="_M/LZW_HASH_SIZE">LZW_HASH_SIZE</a> - <a class="local col5 ref" href="#5head" title='head' data-ref="5head">head</a> : <var>1</var>;</td></tr>
+<tr><th id="106">106</th><td>}</td></tr>
+<tr><th id="107">107</th><td></td></tr>
+<tr><th id="108">108</th><td><i class="doc" data-doc="writeCode">/**</i></td></tr>
+<tr><th id="109">109</th><td><i class="doc" data-doc="writeCode"> * Write one code to stream</i></td></tr>
+<tr><th id="110">110</th><td><i class="doc" data-doc="writeCode"> * <span class="command">@param</span> <span class="arg">s</span> LZW state</i></td></tr>
+<tr><th id="111">111</th><td><i class="doc" data-doc="writeCode"> * <span class="command">@param</span> <span class="arg">c</span> code to write</i></td></tr>
+<tr><th id="112">112</th><td><i class="doc" data-doc="writeCode"> */</i></td></tr>
+<tr><th id="113">113</th><td><em>static</em> <b>inline</b> <em>void</em> <dfn class="tu decl def" id="writeCode" title='writeCode' data-type='void writeCode(LZWEncodeState * s, int c)' data-ref="writeCode">writeCode</dfn>(<a class="typedef" href="#LZWEncodeState" title='LZWEncodeState' data-type='struct LZWEncodeState' data-ref="LZWEncodeState">LZWEncodeState</a> * <dfn class="local col6 decl" id="6s" title='s' data-type='LZWEncodeState *' data-ref="6s">s</dfn>, <em>int</em> <dfn class="local col7 decl" id="7c" title='c' data-type='int' data-ref="7c">c</dfn>)</td></tr>
+<tr><th id="114">114</th><td>{</td></tr>
+<tr><th id="115">115</th><td>    <a class="macro" href="../libavutil/avassert.h.html#64" title="((void)0)" data-ref="_M/av_assert2">av_assert2</a>(<var>0</var> &lt;= c &amp;&amp; c &lt; <var>1</var> &lt;&lt; s-&gt;bits);</td></tr>
+<tr><th id="116">116</th><td>    <a class="local col6 ref" href="#6s" title='s' data-ref="6s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::put_bits" title='LZWEncodeState::put_bits' data-ref="LZWEncodeState::put_bits">put_bits</a>(&amp;<a class="local col6 ref" href="#6s" title='s' data-ref="6s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::pb" title='LZWEncodeState::pb' data-ref="LZWEncodeState::pb">pb</a>, <a class="local col6 ref" href="#6s" title='s' data-ref="6s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::bits" title='LZWEncodeState::bits' data-ref="LZWEncodeState::bits">bits</a>, <a class="local col7 ref" href="#7c" title='c' data-ref="7c">c</a>);</td></tr>
+<tr><th id="117">117</th><td>}</td></tr>
+<tr><th id="118">118</th><td></td></tr>
+<tr><th id="119">119</th><td></td></tr>
+<tr><th id="120">120</th><td><i class="doc" data-doc="findCode">/**</i></td></tr>
+<tr><th id="121">121</th><td><i class="doc" data-doc="findCode"> * Find LZW code for block</i></td></tr>
+<tr><th id="122">122</th><td><i class="doc" data-doc="findCode"> * <span class="command">@param</span> <span class="arg">s</span> LZW state</i></td></tr>
+<tr><th id="123">123</th><td><i class="doc" data-doc="findCode"> * <span class="command">@param</span> <span class="arg">c</span> Last character in block</i></td></tr>
+<tr><th id="124">124</th><td><i class="doc" data-doc="findCode"> * <span class="command">@param</span> <span class="arg">hash_prefix</span> LZW code for prefix</i></td></tr>
+<tr><th id="125">125</th><td><i class="doc" data-doc="findCode"> * <span class="command">@return</span> LZW code for block or -1 if not found in table</i></td></tr>
+<tr><th id="126">126</th><td><i class="doc" data-doc="findCode"> */</i></td></tr>
+<tr><th id="127">127</th><td><em>static</em> <b>inline</b> <em>int</em> <dfn class="tu decl def" id="findCode" title='findCode' data-type='int findCode(LZWEncodeState * s, uint8_t c, int hash_prefix)' data-ref="findCode">findCode</dfn>(<a class="typedef" href="#LZWEncodeState" title='LZWEncodeState' data-type='struct LZWEncodeState' data-ref="LZWEncodeState">LZWEncodeState</a> * <dfn class="local col8 decl" id="8s" title='s' data-type='LZWEncodeState *' data-ref="8s">s</dfn>, <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="local col9 decl" id="9c" title='c' data-type='uint8_t' data-ref="9c">c</dfn>, <em>int</em> <dfn class="local col0 decl" id="10hash_prefix" title='hash_prefix' data-type='int' data-ref="10hash_prefix">hash_prefix</dfn>)</td></tr>
+<tr><th id="128">128</th><td>{</td></tr>
+<tr><th id="129">129</th><td>    <em>int</em> <dfn class="local col1 decl" id="11h" title='h' data-type='int' data-ref="11h">h</dfn> = <a class="tu ref" href="#hash" title='hash' data-use='c' data-ref="hash">hash</a>(<a class="macro" href="../libavutil/common.h.html#94" title="((hash_prefix) &gt; (0) ? (hash_prefix) : (0))" data-ref="_M/FFMAX">FFMAX</a>(<a class="local col0 ref" href="#10hash_prefix" title='hash_prefix' data-ref="10hash_prefix">hash_prefix</a>, <var>0</var>), <a class="local col9 ref" href="#9c" title='c' data-ref="9c">c</a>);</td></tr>
+<tr><th id="130">130</th><td>    <em>int</em> <dfn class="local col2 decl" id="12hash_offset" title='hash_offset' data-type='int' data-ref="12hash_offset">hash_offset</dfn> = <a class="tu ref" href="#hashOffset" title='hashOffset' data-use='c' data-ref="hashOffset">hashOffset</a>(<a class="local col1 ref" href="#11h" title='h' data-ref="11h">h</a>);</td></tr>
+<tr><th id="131">131</th><td></td></tr>
+<tr><th id="132">132</th><td>    <b>while</b> (<a class="local col8 ref" href="#8s" title='s' data-ref="8s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::tab" title='LZWEncodeState::tab' data-ref="LZWEncodeState::tab">tab</a>[<a class="local col1 ref" href="#11h" title='h' data-ref="11h">h</a>].<a class="tu ref" href="#Code::hash_prefix" title='Code::hash_prefix' data-use='r' data-ref="Code::hash_prefix">hash_prefix</a> != <a class="macro" href="#39" title="-2" data-ref="_M/LZW_PREFIX_FREE">LZW_PREFIX_FREE</a>) {</td></tr>
+<tr><th id="133">133</th><td>        <b>if</b> ((<a class="local col8 ref" href="#8s" title='s' data-ref="8s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::tab" title='LZWEncodeState::tab' data-ref="LZWEncodeState::tab">tab</a>[<a class="local col1 ref" href="#11h" title='h' data-ref="11h">h</a>].<a class="tu ref" href="#Code::suffix" title='Code::suffix' data-use='r' data-ref="Code::suffix">suffix</a> == <a class="local col9 ref" href="#9c" title='c' data-ref="9c">c</a>)</td></tr>
+<tr><th id="134">134</th><td>            &amp;&amp; (<a class="local col8 ref" href="#8s" title='s' data-ref="8s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::tab" title='LZWEncodeState::tab' data-ref="LZWEncodeState::tab">tab</a>[<a class="local col1 ref" href="#11h" title='h' data-ref="11h">h</a>].<a class="tu ref" href="#Code::hash_prefix" title='Code::hash_prefix' data-use='r' data-ref="Code::hash_prefix">hash_prefix</a> == <a class="local col0 ref" href="#10hash_prefix" title='hash_prefix' data-ref="10hash_prefix">hash_prefix</a>))</td></tr>
+<tr><th id="135">135</th><td>            <b>return</b> <a class="local col1 ref" href="#11h" title='h' data-ref="11h">h</a>;</td></tr>
+<tr><th id="136">136</th><td>        <a class="local col1 ref" href="#11h" title='h' data-ref="11h">h</a> = <a class="tu ref" href="#hashNext" title='hashNext' data-use='c' data-ref="hashNext">hashNext</a>(<a class="local col1 ref" href="#11h" title='h' data-ref="11h">h</a>, <a class="local col2 ref" href="#12hash_offset" title='hash_offset' data-ref="12hash_offset">hash_offset</a>);</td></tr>
+<tr><th id="137">137</th><td>    }</td></tr>
+<tr><th id="138">138</th><td></td></tr>
+<tr><th id="139">139</th><td>    <b>return</b> <a class="local col1 ref" href="#11h" title='h' data-ref="11h">h</a>;</td></tr>
+<tr><th id="140">140</th><td>}</td></tr>
+<tr><th id="141">141</th><td></td></tr>
+<tr><th id="142">142</th><td><i class="doc" data-doc="addCode">/**</i></td></tr>
+<tr><th id="143">143</th><td><i class="doc" data-doc="addCode"> * Add block to LZW code table</i></td></tr>
+<tr><th id="144">144</th><td><i class="doc" data-doc="addCode"> * <span class="command">@param</span> <span class="arg">s</span> LZW state</i></td></tr>
+<tr><th id="145">145</th><td><i class="doc" data-doc="addCode"> * <span class="command">@param</span> <span class="arg">c</span> Last character in block</i></td></tr>
+<tr><th id="146">146</th><td><i class="doc" data-doc="addCode"> * <span class="command">@param</span> <span class="arg">hash_prefix</span> LZW code for prefix</i></td></tr>
+<tr><th id="147">147</th><td><i class="doc" data-doc="addCode"> * <span class="command">@param</span> <span class="arg">hash_code</span> LZW code for bytes block</i></td></tr>
+<tr><th id="148">148</th><td><i class="doc" data-doc="addCode"> */</i></td></tr>
+<tr><th id="149">149</th><td><em>static</em> <b>inline</b> <em>void</em> <dfn class="tu decl def" id="addCode" title='addCode' data-type='void addCode(LZWEncodeState * s, uint8_t c, int hash_prefix, int hash_code)' data-ref="addCode">addCode</dfn>(<a class="typedef" href="#LZWEncodeState" title='LZWEncodeState' data-type='struct LZWEncodeState' data-ref="LZWEncodeState">LZWEncodeState</a> * <dfn class="local col3 decl" id="13s" title='s' data-type='LZWEncodeState *' data-ref="13s">s</dfn>, <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="local col4 decl" id="14c" title='c' data-type='uint8_t' data-ref="14c">c</dfn>, <em>int</em> <dfn class="local col5 decl" id="15hash_prefix" title='hash_prefix' data-type='int' data-ref="15hash_prefix">hash_prefix</dfn>, <em>int</em> <dfn class="local col6 decl" id="16hash_code" title='hash_code' data-type='int' data-ref="16hash_code">hash_code</dfn>)</td></tr>
+<tr><th id="150">150</th><td>{</td></tr>
+<tr><th id="151">151</th><td>    <a class="local col3 ref" href="#13s" title='s' data-ref="13s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::tab" title='LZWEncodeState::tab' data-ref="LZWEncodeState::tab">tab</a>[<a class="local col6 ref" href="#16hash_code" title='hash_code' data-ref="16hash_code">hash_code</a>].<a class="tu ref" href="#Code::code" title='Code::code' data-use='w' data-ref="Code::code">code</a> = <a class="local col3 ref" href="#13s" title='s' data-ref="13s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::tabsize" title='LZWEncodeState::tabsize' data-ref="LZWEncodeState::tabsize">tabsize</a>;</td></tr>
+<tr><th id="152">152</th><td>    <a class="local col3 ref" href="#13s" title='s' data-ref="13s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::tab" title='LZWEncodeState::tab' data-ref="LZWEncodeState::tab">tab</a>[<a class="local col6 ref" href="#16hash_code" title='hash_code' data-ref="16hash_code">hash_code</a>].<a class="tu ref" href="#Code::suffix" title='Code::suffix' data-use='w' data-ref="Code::suffix">suffix</a> = <a class="local col4 ref" href="#14c" title='c' data-ref="14c">c</a>;</td></tr>
+<tr><th id="153">153</th><td>    <a class="local col3 ref" href="#13s" title='s' data-ref="13s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::tab" title='LZWEncodeState::tab' data-ref="LZWEncodeState::tab">tab</a>[<a class="local col6 ref" href="#16hash_code" title='hash_code' data-ref="16hash_code">hash_code</a>].<a class="tu ref" href="#Code::hash_prefix" title='Code::hash_prefix' data-use='w' data-ref="Code::hash_prefix">hash_prefix</a> = <a class="local col5 ref" href="#15hash_prefix" title='hash_prefix' data-ref="15hash_prefix">hash_prefix</a>;</td></tr>
+<tr><th id="154">154</th><td></td></tr>
+<tr><th id="155">155</th><td>    <a class="local col3 ref" href="#13s" title='s' data-ref="13s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::tabsize" title='LZWEncodeState::tabsize' data-ref="LZWEncodeState::tabsize">tabsize</a>++;</td></tr>
+<tr><th id="156">156</th><td></td></tr>
+<tr><th id="157">157</th><td>    <b>if</b> (<a class="local col3 ref" href="#13s" title='s' data-ref="13s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::tabsize" title='LZWEncodeState::tabsize' data-ref="LZWEncodeState::tabsize">tabsize</a> &gt;= (<var>1</var> &lt;&lt; <a class="local col3 ref" href="#13s" title='s' data-ref="13s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::bits" title='LZWEncodeState::bits' data-ref="LZWEncodeState::bits">bits</a>) + (<a class="local col3 ref" href="#13s" title='s' data-ref="13s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::mode" title='LZWEncodeState::mode' data-ref="LZWEncodeState::mode">mode</a> == <a class="enum" href="lzw.h.html#FF_LZW_MODES::FF_LZW_GIF" title='FF_LZW_MODES::FF_LZW_GIF' data-ref="FF_LZW_MODES::FF_LZW_GIF">FF_LZW_GIF</a>))</td></tr>
+<tr><th id="158">158</th><td>        <a class="local col3 ref" href="#13s" title='s' data-ref="13s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::bits" title='LZWEncodeState::bits' data-ref="LZWEncodeState::bits">bits</a>++;</td></tr>
+<tr><th id="159">159</th><td>}</td></tr>
+<tr><th id="160">160</th><td></td></tr>
+<tr><th id="161">161</th><td><i class="doc" data-doc="clearTable">/**</i></td></tr>
+<tr><th id="162">162</th><td><i class="doc" data-doc="clearTable"> * Clear LZW code table</i></td></tr>
+<tr><th id="163">163</th><td><i class="doc" data-doc="clearTable"> * <span class="command">@param</span> <span class="arg">s</span> LZW state</i></td></tr>
+<tr><th id="164">164</th><td><i class="doc" data-doc="clearTable"> */</i></td></tr>
+<tr><th id="165">165</th><td><em>static</em> <em>void</em> <dfn class="tu decl def" id="clearTable" title='clearTable' data-type='void clearTable(LZWEncodeState * s)' data-ref="clearTable">clearTable</dfn>(<a class="typedef" href="#LZWEncodeState" title='LZWEncodeState' data-type='struct LZWEncodeState' data-ref="LZWEncodeState">LZWEncodeState</a> * <dfn class="local col7 decl" id="17s" title='s' data-type='LZWEncodeState *' data-ref="17s">s</dfn>)</td></tr>
+<tr><th id="166">166</th><td>{</td></tr>
+<tr><th id="167">167</th><td>    <em>int</em> <dfn class="local col8 decl" id="18i" title='i' data-type='int' data-ref="18i">i</dfn>, <dfn class="local col9 decl" id="19h" title='h' data-type='int' data-ref="19h">h</dfn>;</td></tr>
+<tr><th id="168">168</th><td></td></tr>
+<tr><th id="169">169</th><td>    <a class="tu ref" href="#writeCode" title='writeCode' data-use='c' data-ref="writeCode">writeCode</a>(<a class="local col7 ref" href="#17s" title='s' data-ref="17s">s</a>, <a class="local col7 ref" href="#17s" title='s' data-ref="17s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::clear_code" title='LZWEncodeState::clear_code' data-ref="LZWEncodeState::clear_code">clear_code</a>);</td></tr>
+<tr><th id="170">170</th><td>    <a class="local col7 ref" href="#17s" title='s' data-ref="17s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::bits" title='LZWEncodeState::bits' data-ref="LZWEncodeState::bits">bits</a> = <var>9</var>;</td></tr>
+<tr><th id="171">171</th><td>    <b>for</b> (<a class="local col8 ref" href="#18i" title='i' data-ref="18i">i</a> = <var>0</var>; <a class="local col8 ref" href="#18i" title='i' data-ref="18i">i</a> &lt; <a class="macro" href="#35" title="16411" data-ref="_M/LZW_HASH_SIZE">LZW_HASH_SIZE</a>; <a class="local col8 ref" href="#18i" title='i' data-ref="18i">i</a>++) {</td></tr>
+<tr><th id="172">172</th><td>        <a class="local col7 ref" href="#17s" title='s' data-ref="17s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::tab" title='LZWEncodeState::tab' data-ref="LZWEncodeState::tab">tab</a>[<a class="local col8 ref" href="#18i" title='i' data-ref="18i">i</a>].<a class="tu ref" href="#Code::hash_prefix" title='Code::hash_prefix' data-use='w' data-ref="Code::hash_prefix">hash_prefix</a> = <a class="macro" href="#39" title="-2" data-ref="_M/LZW_PREFIX_FREE">LZW_PREFIX_FREE</a>;</td></tr>
+<tr><th id="173">173</th><td>    }</td></tr>
+<tr><th id="174">174</th><td>    <b>for</b> (<a class="local col8 ref" href="#18i" title='i' data-ref="18i">i</a> = <var>0</var>; <a class="local col8 ref" href="#18i" title='i' data-ref="18i">i</a> &lt; <var>256</var>; <a class="local col8 ref" href="#18i" title='i' data-ref="18i">i</a>++) {</td></tr>
+<tr><th id="175">175</th><td>        <a class="local col9 ref" href="#19h" title='h' data-ref="19h">h</a> = <a class="tu ref" href="#hash" title='hash' data-use='c' data-ref="hash">hash</a>(<var>0</var>, <a class="local col8 ref" href="#18i" title='i' data-ref="18i">i</a>);</td></tr>
+<tr><th id="176">176</th><td>        <a class="local col7 ref" href="#17s" title='s' data-ref="17s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::tab" title='LZWEncodeState::tab' data-ref="LZWEncodeState::tab">tab</a>[<a class="local col9 ref" href="#19h" title='h' data-ref="19h">h</a>].<a class="tu ref" href="#Code::code" title='Code::code' data-use='w' data-ref="Code::code">code</a> = <a class="local col8 ref" href="#18i" title='i' data-ref="18i">i</a>;</td></tr>
+<tr><th id="177">177</th><td>        <a class="local col7 ref" href="#17s" title='s' data-ref="17s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::tab" title='LZWEncodeState::tab' data-ref="LZWEncodeState::tab">tab</a>[<a class="local col9 ref" href="#19h" title='h' data-ref="19h">h</a>].<a class="tu ref" href="#Code::suffix" title='Code::suffix' data-use='w' data-ref="Code::suffix">suffix</a> = <a class="local col8 ref" href="#18i" title='i' data-ref="18i">i</a>;</td></tr>
+<tr><th id="178">178</th><td>        <a class="local col7 ref" href="#17s" title='s' data-ref="17s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::tab" title='LZWEncodeState::tab' data-ref="LZWEncodeState::tab">tab</a>[<a class="local col9 ref" href="#19h" title='h' data-ref="19h">h</a>].<a class="tu ref" href="#Code::hash_prefix" title='Code::hash_prefix' data-use='w' data-ref="Code::hash_prefix">hash_prefix</a> = <a class="macro" href="#38" title="-1" data-ref="_M/LZW_PREFIX_EMPTY">LZW_PREFIX_EMPTY</a>;</td></tr>
+<tr><th id="179">179</th><td>    }</td></tr>
+<tr><th id="180">180</th><td>    <a class="local col7 ref" href="#17s" title='s' data-ref="17s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::tabsize" title='LZWEncodeState::tabsize' data-ref="LZWEncodeState::tabsize">tabsize</a> = <var>258</var>;</td></tr>
+<tr><th id="181">181</th><td>}</td></tr>
+<tr><th id="182">182</th><td></td></tr>
+<tr><th id="183">183</th><td><i class="doc" data-doc="writtenBytes">/**</i></td></tr>
+<tr><th id="184">184</th><td><i class="doc" data-doc="writtenBytes"> * Calculate number of bytes written</i></td></tr>
+<tr><th id="185">185</th><td><i class="doc" data-doc="writtenBytes"> * <span class="command">@param</span> <span class="arg">s</span> LZW encode state</i></td></tr>
+<tr><th id="186">186</th><td><i class="doc" data-doc="writtenBytes"> * <span class="command">@return</span> Number of bytes written</i></td></tr>
+<tr><th id="187">187</th><td><i class="doc" data-doc="writtenBytes"> */</i></td></tr>
+<tr><th id="188">188</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="writtenBytes" title='writtenBytes' data-type='int writtenBytes(LZWEncodeState * s)' data-ref="writtenBytes">writtenBytes</dfn>(<a class="typedef" href="#LZWEncodeState" title='LZWEncodeState' data-type='struct LZWEncodeState' data-ref="LZWEncodeState">LZWEncodeState</a> *<dfn class="local col0 decl" id="20s" title='s' data-type='LZWEncodeState *' data-ref="20s">s</dfn>){</td></tr>
+<tr><th id="189">189</th><td>    <em>int</em> <dfn class="local col1 decl" id="21ret" title='ret' data-type='int' data-ref="21ret">ret</dfn> = <a class="ref" href="put_bits.h.html#put_bits_count" title='put_bits_count' data-ref="put_bits_count">put_bits_count</a>(&amp;<a class="local col0 ref" href="#20s" title='s' data-ref="20s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::pb" title='LZWEncodeState::pb' data-ref="LZWEncodeState::pb">pb</a>) &gt;&gt; <var>3</var>;</td></tr>
+<tr><th id="190">190</th><td>    <a class="local col1 ref" href="#21ret" title='ret' data-ref="21ret">ret</a> -= <a class="local col0 ref" href="#20s" title='s' data-ref="20s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::output_bytes" title='LZWEncodeState::output_bytes' data-ref="LZWEncodeState::output_bytes">output_bytes</a>;</td></tr>
+<tr><th id="191">191</th><td>    <a class="local col0 ref" href="#20s" title='s' data-ref="20s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::output_bytes" title='LZWEncodeState::output_bytes' data-ref="LZWEncodeState::output_bytes">output_bytes</a> += <a class="local col1 ref" href="#21ret" title='ret' data-ref="21ret">ret</a>;</td></tr>
+<tr><th id="192">192</th><td>    <b>return</b> <a class="local col1 ref" href="#21ret" title='ret' data-ref="21ret">ret</a>;</td></tr>
+<tr><th id="193">193</th><td>}</td></tr>
+<tr><th id="194">194</th><td></td></tr>
+<tr><th id="195">195</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="196">196</th><td><i class="doc"> * Initialize LZW encoder. Please set s-&gt;clear_code, s-&gt;end_code and s-&gt;maxbits before run.</i></td></tr>
+<tr><th id="197">197</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">s</span> LZW state</i></td></tr>
+<tr><th id="198">198</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">outbuf</span> Output buffer</i></td></tr>
+<tr><th id="199">199</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">outsize</span> Size of output buffer</i></td></tr>
+<tr><th id="200">200</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">maxbits</span> Maximum length of code</i></td></tr>
+<tr><th id="201">201</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="202">202</th><td><em>void</em> <dfn class="decl def" id="ff_lzw_encode_init" title='ff_lzw_encode_init' data-ref="ff_lzw_encode_init">ff_lzw_encode_init</dfn>(<a class="typedef" href="#LZWEncodeState" title='LZWEncodeState' data-type='struct LZWEncodeState' data-ref="LZWEncodeState">LZWEncodeState</a> *<dfn class="local col2 decl" id="22s" title='s' data-type='LZWEncodeState *' data-ref="22s">s</dfn>, <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col3 decl" id="23outbuf" title='outbuf' data-type='uint8_t *' data-ref="23outbuf">outbuf</dfn>, <em>int</em> <dfn class="local col4 decl" id="24outsize" title='outsize' data-type='int' data-ref="24outsize">outsize</dfn>,</td></tr>
+<tr><th id="203">203</th><td>                        <em>int</em> <dfn class="local col5 decl" id="25maxbits" title='maxbits' data-type='int' data-ref="25maxbits">maxbits</dfn>, <b>enum</b> <a class="type" href="lzw.h.html#FF_LZW_MODES" title='FF_LZW_MODES' data-ref="FF_LZW_MODES">FF_LZW_MODES</a> <dfn class="local col6 decl" id="26mode" title='mode' data-type='enum FF_LZW_MODES' data-ref="26mode">mode</dfn>,</td></tr>
+<tr><th id="204">204</th><td>                        <em>void</em> (*<dfn class="local col7 decl" id="27lzw_put_bits" title='lzw_put_bits' data-type='void (*)(PutBitContext *, int, unsigned int)' data-ref="27lzw_put_bits">lzw_put_bits</dfn>)(<a class="typedef" href="put_bits.h.html#PutBitContext" title='PutBitContext' data-type='struct PutBitContext' data-ref="PutBitContext">PutBitContext</a> *, <em>int</em>, <em>unsigned</em>))</td></tr>
+<tr><th id="205">205</th><td>{</td></tr>
+<tr><th id="206">206</th><td>    <a class="local col2 ref" href="#22s" title='s' data-ref="22s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::clear_code" title='LZWEncodeState::clear_code' data-ref="LZWEncodeState::clear_code">clear_code</a> = <var>256</var>;</td></tr>
+<tr><th id="207">207</th><td>    <a class="local col2 ref" href="#22s" title='s' data-ref="22s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::end_code" title='LZWEncodeState::end_code' data-ref="LZWEncodeState::end_code">end_code</a> = <var>257</var>;</td></tr>
+<tr><th id="208">208</th><td>    <a class="local col2 ref" href="#22s" title='s' data-ref="22s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::maxbits" title='LZWEncodeState::maxbits' data-ref="LZWEncodeState::maxbits">maxbits</a> = <a class="local col5 ref" href="#25maxbits" title='maxbits' data-ref="25maxbits">maxbits</a>;</td></tr>
+<tr><th id="209">209</th><td>    <a class="ref" href="put_bits.h.html#init_put_bits" title='init_put_bits' data-ref="init_put_bits">init_put_bits</a>(&amp;<a class="local col2 ref" href="#22s" title='s' data-ref="22s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::pb" title='LZWEncodeState::pb' data-ref="LZWEncodeState::pb">pb</a>, <a class="local col3 ref" href="#23outbuf" title='outbuf' data-ref="23outbuf">outbuf</a>, <a class="local col4 ref" href="#24outsize" title='outsize' data-ref="24outsize">outsize</a>);</td></tr>
+<tr><th id="210">210</th><td>    <a class="local col2 ref" href="#22s" title='s' data-ref="22s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::bufsize" title='LZWEncodeState::bufsize' data-ref="LZWEncodeState::bufsize">bufsize</a> = <a class="local col4 ref" href="#24outsize" title='outsize' data-ref="24outsize">outsize</a>;</td></tr>
+<tr><th id="211">211</th><td>    <a class="macro" href="../libavutil/avassert.h.html#37" title="do { if (!(s-&gt;maxbits &gt;= 9 &amp;&amp; s-&gt;maxbits &lt;= 12)) { av_log(((void*)0), 0, &quot;Assertion %s failed at %s:%d\n&quot;, &quot;s-&gt;maxbits &gt;= 9 &amp;&amp; s-&gt;maxbits &lt;= 12&quot;, &quot;/usr/local/google/home/robertshih/ffmpeg/src/ffmpeg/libavcodec/lzwenc.c&quot;, 211); abort(); } } while (0)" data-ref="_M/av_assert0">av_assert0</a>(<a class="local col2 ref" href="#22s" title='s' data-ref="22s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::maxbits" title='LZWEncodeState::maxbits' data-ref="LZWEncodeState::maxbits">maxbits</a> &gt;= <var>9</var> &amp;&amp; <a class="local col2 ref" href="#22s" title='s' data-ref="22s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::maxbits" title='LZWEncodeState::maxbits' data-ref="LZWEncodeState::maxbits">maxbits</a> &lt;= <a class="macro" href="#33" title="12" data-ref="_M/LZW_MAXBITS">LZW_MAXBITS</a>);</td></tr>
+<tr><th id="212">212</th><td>    <a class="local col2 ref" href="#22s" title='s' data-ref="22s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::maxcode" title='LZWEncodeState::maxcode' data-ref="LZWEncodeState::maxcode">maxcode</a> = <var>1</var> &lt;&lt; <a class="local col2 ref" href="#22s" title='s' data-ref="22s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::maxbits" title='LZWEncodeState::maxbits' data-ref="LZWEncodeState::maxbits">maxbits</a>;</td></tr>
+<tr><th id="213">213</th><td>    <a class="local col2 ref" href="#22s" title='s' data-ref="22s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::output_bytes" title='LZWEncodeState::output_bytes' data-ref="LZWEncodeState::output_bytes">output_bytes</a> = <var>0</var>;</td></tr>
+<tr><th id="214">214</th><td>    <a class="local col2 ref" href="#22s" title='s' data-ref="22s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::last_code" title='LZWEncodeState::last_code' data-ref="LZWEncodeState::last_code">last_code</a> = <a class="macro" href="#38" title="-1" data-ref="_M/LZW_PREFIX_EMPTY">LZW_PREFIX_EMPTY</a>;</td></tr>
+<tr><th id="215">215</th><td>    <a class="local col2 ref" href="#22s" title='s' data-ref="22s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::bits" title='LZWEncodeState::bits' data-ref="LZWEncodeState::bits">bits</a> = <var>9</var>;</td></tr>
+<tr><th id="216">216</th><td>    <a class="local col2 ref" href="#22s" title='s' data-ref="22s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::mode" title='LZWEncodeState::mode' data-ref="LZWEncodeState::mode">mode</a> = <a class="local col6 ref" href="#26mode" title='mode' data-ref="26mode">mode</a>;</td></tr>
+<tr><th id="217">217</th><td>    <a class="local col2 ref" href="#22s" title='s' data-ref="22s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::put_bits" title='LZWEncodeState::put_bits' data-ref="LZWEncodeState::put_bits">put_bits</a> = <a class="local col7 ref" href="#27lzw_put_bits" title='lzw_put_bits' data-ref="27lzw_put_bits">lzw_put_bits</a>;</td></tr>
+<tr><th id="218">218</th><td>}</td></tr>
+<tr><th id="219">219</th><td></td></tr>
+<tr><th id="220">220</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="221">221</th><td><i class="doc"> * LZW main compress function</i></td></tr>
+<tr><th id="222">222</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">s</span> LZW state</i></td></tr>
+<tr><th id="223">223</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">inbuf</span> Input buffer</i></td></tr>
+<tr><th id="224">224</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">insize</span> Size of input buffer</i></td></tr>
+<tr><th id="225">225</th><td><i class="doc"> * <span class="command">@return</span> Number of bytes written or -1 on error</i></td></tr>
+<tr><th id="226">226</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="227">227</th><td><em>int</em> <dfn class="decl def" id="ff_lzw_encode" title='ff_lzw_encode' data-ref="ff_lzw_encode">ff_lzw_encode</dfn>(<a class="typedef" href="#LZWEncodeState" title='LZWEncodeState' data-type='struct LZWEncodeState' data-ref="LZWEncodeState">LZWEncodeState</a> * <dfn class="local col8 decl" id="28s" title='s' data-type='LZWEncodeState *' data-ref="28s">s</dfn>, <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> * <dfn class="local col9 decl" id="29inbuf" title='inbuf' data-type='const uint8_t *' data-ref="29inbuf">inbuf</dfn>, <em>int</em> <dfn class="local col0 decl" id="30insize" title='insize' data-type='int' data-ref="30insize">insize</dfn>)</td></tr>
+<tr><th id="228">228</th><td>{</td></tr>
+<tr><th id="229">229</th><td>    <em>int</em> <dfn class="local col1 decl" id="31i" title='i' data-type='int' data-ref="31i">i</dfn>;</td></tr>
+<tr><th id="230">230</th><td></td></tr>
+<tr><th id="231">231</th><td>    <b>if</b>(<a class="local col0 ref" href="#30insize" title='insize' data-ref="30insize">insize</a> * <var>3</var> &gt; (<a class="local col8 ref" href="#28s" title='s' data-ref="28s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::bufsize" title='LZWEncodeState::bufsize' data-ref="LZWEncodeState::bufsize">bufsize</a> - <a class="local col8 ref" href="#28s" title='s' data-ref="28s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::output_bytes" title='LZWEncodeState::output_bytes' data-ref="LZWEncodeState::output_bytes">output_bytes</a>) * <var>2</var>){</td></tr>
+<tr><th id="232">232</th><td>        <b>return</b> -<var>1</var>;</td></tr>
+<tr><th id="233">233</th><td>    }</td></tr>
+<tr><th id="234">234</th><td></td></tr>
+<tr><th id="235">235</th><td>    <b>if</b> (<a class="local col8 ref" href="#28s" title='s' data-ref="28s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::last_code" title='LZWEncodeState::last_code' data-ref="LZWEncodeState::last_code">last_code</a> == <a class="macro" href="#38" title="-1" data-ref="_M/LZW_PREFIX_EMPTY">LZW_PREFIX_EMPTY</a>)</td></tr>
+<tr><th id="236">236</th><td>        <a class="tu ref" href="#clearTable" title='clearTable' data-use='c' data-ref="clearTable">clearTable</a>(<a class="local col8 ref" href="#28s" title='s' data-ref="28s">s</a>);</td></tr>
+<tr><th id="237">237</th><td></td></tr>
+<tr><th id="238">238</th><td>    <b>for</b> (<a class="local col1 ref" href="#31i" title='i' data-ref="31i">i</a> = <var>0</var>; <a class="local col1 ref" href="#31i" title='i' data-ref="31i">i</a> &lt; <a class="local col0 ref" href="#30insize" title='insize' data-ref="30insize">insize</a>; <a class="local col1 ref" href="#31i" title='i' data-ref="31i">i</a>++) {</td></tr>
+<tr><th id="239">239</th><td>        <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="local col2 decl" id="32c" title='c' data-type='uint8_t' data-ref="32c">c</dfn> = *<a class="local col9 ref" href="#29inbuf" title='inbuf' data-ref="29inbuf">inbuf</a>++;</td></tr>
+<tr><th id="240">240</th><td>        <em>int</em> <dfn class="local col3 decl" id="33code" title='code' data-type='int' data-ref="33code">code</dfn> = <a class="tu ref" href="#findCode" title='findCode' data-use='c' data-ref="findCode">findCode</a>(<a class="local col8 ref" href="#28s" title='s' data-ref="28s">s</a>, <a class="local col2 ref" href="#32c" title='c' data-ref="32c">c</a>, <a class="local col8 ref" href="#28s" title='s' data-ref="28s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::last_code" title='LZWEncodeState::last_code' data-ref="LZWEncodeState::last_code">last_code</a>);</td></tr>
+<tr><th id="241">241</th><td>        <b>if</b> (<a class="local col8 ref" href="#28s" title='s' data-ref="28s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::tab" title='LZWEncodeState::tab' data-ref="LZWEncodeState::tab">tab</a>[<a class="local col3 ref" href="#33code" title='code' data-ref="33code">code</a>].<a class="tu ref" href="#Code::hash_prefix" title='Code::hash_prefix' data-use='r' data-ref="Code::hash_prefix">hash_prefix</a> == <a class="macro" href="#39" title="-2" data-ref="_M/LZW_PREFIX_FREE">LZW_PREFIX_FREE</a>) {</td></tr>
+<tr><th id="242">242</th><td>            <a class="tu ref" href="#writeCode" title='writeCode' data-use='c' data-ref="writeCode">writeCode</a>(<a class="local col8 ref" href="#28s" title='s' data-ref="28s">s</a>, <a class="local col8 ref" href="#28s" title='s' data-ref="28s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::last_code" title='LZWEncodeState::last_code' data-ref="LZWEncodeState::last_code">last_code</a>);</td></tr>
+<tr><th id="243">243</th><td>            <a class="tu ref" href="#addCode" title='addCode' data-use='c' data-ref="addCode">addCode</a>(<a class="local col8 ref" href="#28s" title='s' data-ref="28s">s</a>, <a class="local col2 ref" href="#32c" title='c' data-ref="32c">c</a>, <a class="local col8 ref" href="#28s" title='s' data-ref="28s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::last_code" title='LZWEncodeState::last_code' data-ref="LZWEncodeState::last_code">last_code</a>, <a class="local col3 ref" href="#33code" title='code' data-ref="33code">code</a>);</td></tr>
+<tr><th id="244">244</th><td>            <a class="local col3 ref" href="#33code" title='code' data-ref="33code">code</a>= <a class="tu ref" href="#hash" title='hash' data-use='c' data-ref="hash">hash</a>(<var>0</var>, <a class="local col2 ref" href="#32c" title='c' data-ref="32c">c</a>);</td></tr>
+<tr><th id="245">245</th><td>        }</td></tr>
+<tr><th id="246">246</th><td>        <a class="local col8 ref" href="#28s" title='s' data-ref="28s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::last_code" title='LZWEncodeState::last_code' data-ref="LZWEncodeState::last_code">last_code</a> = <a class="local col8 ref" href="#28s" title='s' data-ref="28s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::tab" title='LZWEncodeState::tab' data-ref="LZWEncodeState::tab">tab</a>[<a class="local col3 ref" href="#33code" title='code' data-ref="33code">code</a>].<a class="tu ref" href="#Code::code" title='Code::code' data-use='r' data-ref="Code::code">code</a>;</td></tr>
+<tr><th id="247">247</th><td>        <b>if</b> (<a class="local col8 ref" href="#28s" title='s' data-ref="28s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::tabsize" title='LZWEncodeState::tabsize' data-ref="LZWEncodeState::tabsize">tabsize</a> &gt;= <a class="local col8 ref" href="#28s" title='s' data-ref="28s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::maxcode" title='LZWEncodeState::maxcode' data-ref="LZWEncodeState::maxcode">maxcode</a> - <var>1</var>) {</td></tr>
+<tr><th id="248">248</th><td>            <a class="tu ref" href="#clearTable" title='clearTable' data-use='c' data-ref="clearTable">clearTable</a>(<a class="local col8 ref" href="#28s" title='s' data-ref="28s">s</a>);</td></tr>
+<tr><th id="249">249</th><td>        }</td></tr>
+<tr><th id="250">250</th><td>    }</td></tr>
+<tr><th id="251">251</th><td></td></tr>
+<tr><th id="252">252</th><td>    <b>return</b> <a class="tu ref" href="#writtenBytes" title='writtenBytes' data-use='c' data-ref="writtenBytes">writtenBytes</a>(<a class="local col8 ref" href="#28s" title='s' data-ref="28s">s</a>);</td></tr>
+<tr><th id="253">253</th><td>}</td></tr>
+<tr><th id="254">254</th><td></td></tr>
+<tr><th id="255">255</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="256">256</th><td><i class="doc"> * Write end code and flush bitstream</i></td></tr>
+<tr><th id="257">257</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">s</span> LZW state</i></td></tr>
+<tr><th id="258">258</th><td><i class="doc"> * <span class="command">@return</span> Number of bytes written or -1 on error</i></td></tr>
+<tr><th id="259">259</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="260">260</th><td><em>int</em> <dfn class="decl def" id="ff_lzw_encode_flush" title='ff_lzw_encode_flush' data-ref="ff_lzw_encode_flush">ff_lzw_encode_flush</dfn>(<a class="typedef" href="#LZWEncodeState" title='LZWEncodeState' data-type='struct LZWEncodeState' data-ref="LZWEncodeState">LZWEncodeState</a> *<dfn class="local col4 decl" id="34s" title='s' data-type='LZWEncodeState *' data-ref="34s">s</dfn>,</td></tr>
+<tr><th id="261">261</th><td>                        <em>void</em> (*<dfn class="local col5 decl" id="35lzw_flush_put_bits" title='lzw_flush_put_bits' data-type='void (*)(PutBitContext *)' data-ref="35lzw_flush_put_bits">lzw_flush_put_bits</dfn>)(<a class="typedef" href="put_bits.h.html#PutBitContext" title='PutBitContext' data-type='struct PutBitContext' data-ref="PutBitContext">PutBitContext</a> *))</td></tr>
+<tr><th id="262">262</th><td>{</td></tr>
+<tr><th id="263">263</th><td>    <b>if</b> (<a class="local col4 ref" href="#34s" title='s' data-ref="34s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::last_code" title='LZWEncodeState::last_code' data-ref="LZWEncodeState::last_code">last_code</a> != -<var>1</var>)</td></tr>
+<tr><th id="264">264</th><td>        <a class="tu ref" href="#writeCode" title='writeCode' data-use='c' data-ref="writeCode">writeCode</a>(<a class="local col4 ref" href="#34s" title='s' data-ref="34s">s</a>, <a class="local col4 ref" href="#34s" title='s' data-ref="34s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::last_code" title='LZWEncodeState::last_code' data-ref="LZWEncodeState::last_code">last_code</a>);</td></tr>
+<tr><th id="265">265</th><td>    <a class="tu ref" href="#writeCode" title='writeCode' data-use='c' data-ref="writeCode">writeCode</a>(<a class="local col4 ref" href="#34s" title='s' data-ref="34s">s</a>, <a class="local col4 ref" href="#34s" title='s' data-ref="34s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::end_code" title='LZWEncodeState::end_code' data-ref="LZWEncodeState::end_code">end_code</a>);</td></tr>
+<tr><th id="266">266</th><td>    <b>if</b> (<a class="local col4 ref" href="#34s" title='s' data-ref="34s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::mode" title='LZWEncodeState::mode' data-ref="LZWEncodeState::mode">mode</a> == <a class="enum" href="lzw.h.html#FF_LZW_MODES::FF_LZW_GIF" title='FF_LZW_MODES::FF_LZW_GIF' data-ref="FF_LZW_MODES::FF_LZW_GIF">FF_LZW_GIF</a>)</td></tr>
+<tr><th id="267">267</th><td>        <a class="local col4 ref" href="#34s" title='s' data-ref="34s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::put_bits" title='LZWEncodeState::put_bits' data-ref="LZWEncodeState::put_bits">put_bits</a>(&amp;<a class="local col4 ref" href="#34s" title='s' data-ref="34s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::pb" title='LZWEncodeState::pb' data-ref="LZWEncodeState::pb">pb</a>, <var>1</var>, <var>0</var>);</td></tr>
+<tr><th id="268">268</th><td></td></tr>
+<tr><th id="269">269</th><td>    <a class="local col5 ref" href="#35lzw_flush_put_bits" title='lzw_flush_put_bits' data-ref="35lzw_flush_put_bits">lzw_flush_put_bits</a>(&amp;<a class="local col4 ref" href="#34s" title='s' data-ref="34s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::pb" title='LZWEncodeState::pb' data-ref="LZWEncodeState::pb">pb</a>);</td></tr>
+<tr><th id="270">270</th><td>    <a class="local col4 ref" href="#34s" title='s' data-ref="34s">s</a>-&gt;<a class="ref" href="#LZWEncodeState::last_code" title='LZWEncodeState::last_code' data-ref="LZWEncodeState::last_code">last_code</a> = -<var>1</var>;</td></tr>
+<tr><th id="271">271</th><td></td></tr>
+<tr><th id="272">272</th><td>    <b>return</b> <a class="tu ref" href="#writtenBytes" title='writtenBytes' data-use='c' data-ref="writtenBytes">writtenBytes</a>(<a class="local col4 ref" href="#34s" title='s' data-ref="34s">s</a>);</td></tr>
+<tr><th id="273">273</th><td>}</td></tr>
+<tr><th id="274">274</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

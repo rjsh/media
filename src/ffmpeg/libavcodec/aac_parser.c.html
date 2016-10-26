@@ -1,0 +1,87 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>aac_parser.c source code [ffmpeg/libavcodec/aac_parser.c] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavcodec/aac_parser.c'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavcodec</a>/<a href='aac_parser.c.html'>aac_parser.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * Audio and Video frame extraction</i></td></tr>
+<tr><th id="3">3</th><td><i> * Copyright (c) 2003 Fabrice Bellard</i></td></tr>
+<tr><th id="4">4</th><td><i> * Copyright (c) 2003 Michael Niedermayer</i></td></tr>
+<tr><th id="5">5</th><td><i> *</i></td></tr>
+<tr><th id="6">6</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="7">7</th><td><i> *</i></td></tr>
+<tr><th id="8">8</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="9">9</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="10">10</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="11">11</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="12">12</th><td><i> *</i></td></tr>
+<tr><th id="13">13</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="14">14</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="15">15</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="16">16</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="17">17</th><td><i> *</i></td></tr>
+<tr><th id="18">18</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="19">19</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="20">20</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="21">21</th><td><i> */</i></td></tr>
+<tr><th id="22">22</th><td></td></tr>
+<tr><th id="23">23</th><td><u>#include <a href="parser.h.html">"parser.h"</a></u></td></tr>
+<tr><th id="24">24</th><td><u>#include <a href="aac_ac3_parser.h.html">"aac_ac3_parser.h"</a></u></td></tr>
+<tr><th id="25">25</th><td><u>#include <a href="aacadtsdec.h.html">"aacadtsdec.h"</a></u></td></tr>
+<tr><th id="26">26</th><td><u>#include <a href="get_bits.h.html">"get_bits.h"</a></u></td></tr>
+<tr><th id="27">27</th><td><u>#include <a href="mpeg4audio.h.html">"mpeg4audio.h"</a></u></td></tr>
+<tr><th id="28">28</th><td></td></tr>
+<tr><th id="29">29</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="aac_sync" title='aac_sync' data-type='int aac_sync(uint64_t state, AACAC3ParseContext * hdr_info, int * need_next_header, int * new_frame_start)' data-ref="aac_sync">aac_sync</dfn>(<a class="typedef" href="../../include/stdint.h.html#uint64_t" title='uint64_t' data-type='unsigned long' data-ref="uint64_t">uint64_t</a> <dfn class="local col1 decl" id="1state" title='state' data-type='uint64_t' data-ref="1state">state</dfn>, <a class="typedef" href="aac_ac3_parser.h.html#AACAC3ParseContext" title='AACAC3ParseContext' data-type='struct AACAC3ParseContext' data-ref="AACAC3ParseContext">AACAC3ParseContext</a> *<dfn class="local col2 decl" id="2hdr_info" title='hdr_info' data-type='AACAC3ParseContext *' data-ref="2hdr_info">hdr_info</dfn>,</td></tr>
+<tr><th id="30">30</th><td>        <em>int</em> *<dfn class="local col3 decl" id="3need_next_header" title='need_next_header' data-type='int *' data-ref="3need_next_header">need_next_header</dfn>, <em>int</em> *<dfn class="local col4 decl" id="4new_frame_start" title='new_frame_start' data-type='int *' data-ref="4new_frame_start">new_frame_start</dfn>)</td></tr>
+<tr><th id="31">31</th><td>{</td></tr>
+<tr><th id="32">32</th><td>    <a class="typedef" href="get_bits.h.html#GetBitContext" title='GetBitContext' data-type='struct GetBitContext' data-ref="GetBitContext">GetBitContext</a> <dfn class="local col5 decl" id="5bits" title='bits' data-type='GetBitContext' data-ref="5bits">bits</dfn>;</td></tr>
+<tr><th id="33">33</th><td>    <a class="typedef" href="aacadtsdec.h.html#AACADTSHeaderInfo" title='AACADTSHeaderInfo' data-type='struct AACADTSHeaderInfo' data-ref="AACADTSHeaderInfo">AACADTSHeaderInfo</a> <dfn class="local col6 decl" id="6hdr" title='hdr' data-type='AACADTSHeaderInfo' data-ref="6hdr">hdr</dfn>;</td></tr>
+<tr><th id="34">34</th><td>    <em>int</em> <dfn class="local col7 decl" id="7size" title='size' data-type='int' data-ref="7size">size</dfn>;</td></tr>
+<tr><th id="35">35</th><td>    <b>union</b> {</td></tr>
+<tr><th id="36">36</th><td>        <a class="typedef" href="../../include/stdint.h.html#uint64_t" title='uint64_t' data-type='unsigned long' data-ref="uint64_t">uint64_t</a> <dfn class="local col8 decl" id="8u64" title='u64' data-type='uint64_t' data-ref="8u64">u64</dfn>;</td></tr>
+<tr><th id="37">37</th><td>        <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a>  <dfn class="local col9 decl" id="9u8" title='u8' data-type='uint8_t [40]' data-ref="9u8">u8</dfn>[<var>8</var> + <a class="macro" href="avcodec.h.html#734" title="32" data-ref="_M/AV_INPUT_BUFFER_PADDING_SIZE">AV_INPUT_BUFFER_PADDING_SIZE</a>];</td></tr>
+<tr><th id="38">38</th><td>    } <dfn class="local col0 decl" id="10tmp" title='tmp' data-type='union &lt;anonymous union at /usr/local/google/home/robertshih/ffmpeg/src/ffmpeg/libavcodec/aac_parser.c:35:5&gt;' data-ref="10tmp">tmp</dfn>;</td></tr>
+<tr><th id="39">39</th><td></td></tr>
+<tr><th id="40">40</th><td>    <a class="local col0 ref" href="#10tmp" title='tmp' data-ref="10tmp">tmp</a>.<a class="local col8 ref" href="#8u64" title='u64' data-ref="8u64">u64</a> = <a class="macro" href="../libavutil/bswap.h.html#94" title="av_bswap64(state)" data-ref="_M/av_be2ne64">av_be2ne64</a>(<a class="local col1 ref" href="#1state" title='state' data-ref="1state">state</a>);</td></tr>
+<tr><th id="41">41</th><td>    <a class="ref" href="get_bits.h.html#init_get_bits" title='init_get_bits' data-ref="init_get_bits">init_get_bits</a>(&amp;<a class="local col5 ref" href="#5bits" title='bits' data-ref="5bits">bits</a>, <a class="local col0 ref" href="#10tmp" title='tmp' data-ref="10tmp">tmp</a>.<a class="local col9 ref" href="#9u8" title='u8' data-ref="9u8">u8</a>+<var>8</var>-<a class="macro" href="aacadtsdec.h.html#29" title="7" data-ref="_M/AAC_ADTS_HEADER_SIZE">AAC_ADTS_HEADER_SIZE</a>, <a class="macro" href="aacadtsdec.h.html#29" title="7" data-ref="_M/AAC_ADTS_HEADER_SIZE">AAC_ADTS_HEADER_SIZE</a> * <var>8</var>);</td></tr>
+<tr><th id="42">42</th><td></td></tr>
+<tr><th id="43">43</th><td>    <b>if</b> ((<a class="local col7 ref" href="#7size" title='size' data-ref="7size">size</a> = <a class="ref" href="aacadtsdec.h.html#avpriv_aac_parse_header" title='avpriv_aac_parse_header' data-ref="avpriv_aac_parse_header">avpriv_aac_parse_header</a>(&amp;<a class="local col5 ref" href="#5bits" title='bits' data-ref="5bits">bits</a>, &amp;<a class="local col6 ref" href="#6hdr" title='hdr' data-ref="6hdr">hdr</a>)) &lt; <var>0</var>)</td></tr>
+<tr><th id="44">44</th><td>        <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="45">45</th><td>    *<a class="local col3 ref" href="#3need_next_header" title='need_next_header' data-ref="3need_next_header">need_next_header</a> = <var>0</var>;</td></tr>
+<tr><th id="46">46</th><td>    *<a class="local col4 ref" href="#4new_frame_start" title='new_frame_start' data-ref="4new_frame_start">new_frame_start</a>  = <var>1</var>;</td></tr>
+<tr><th id="47">47</th><td>    <a class="local col2 ref" href="#2hdr_info" title='hdr_info' data-ref="2hdr_info">hdr_info</a>-&gt;<a class="ref" href="aac_ac3_parser.h.html#AACAC3ParseContext::sample_rate" title='AACAC3ParseContext::sample_rate' data-ref="AACAC3ParseContext::sample_rate">sample_rate</a> = <a class="local col6 ref" href="#6hdr" title='hdr' data-ref="6hdr">hdr</a>.<a class="ref" href="aacadtsdec.h.html#AACADTSHeaderInfo::sample_rate" title='AACADTSHeaderInfo::sample_rate' data-ref="AACADTSHeaderInfo::sample_rate">sample_rate</a>;</td></tr>
+<tr><th id="48">48</th><td>    <a class="local col2 ref" href="#2hdr_info" title='hdr_info' data-ref="2hdr_info">hdr_info</a>-&gt;<a class="ref" href="aac_ac3_parser.h.html#AACAC3ParseContext::channels" title='AACAC3ParseContext::channels' data-ref="AACAC3ParseContext::channels">channels</a>    = <a class="ref" href="mpeg4audio.h.html#ff_mpeg4audio_channels" title='ff_mpeg4audio_channels' data-ref="ff_mpeg4audio_channels">ff_mpeg4audio_channels</a>[<a class="local col6 ref" href="#6hdr" title='hdr' data-ref="6hdr">hdr</a>.<a class="ref" href="aacadtsdec.h.html#AACADTSHeaderInfo::chan_config" title='AACADTSHeaderInfo::chan_config' data-ref="AACADTSHeaderInfo::chan_config">chan_config</a>];</td></tr>
+<tr><th id="49">49</th><td>    <a class="local col2 ref" href="#2hdr_info" title='hdr_info' data-ref="2hdr_info">hdr_info</a>-&gt;<a class="ref" href="aac_ac3_parser.h.html#AACAC3ParseContext::samples" title='AACAC3ParseContext::samples' data-ref="AACAC3ParseContext::samples">samples</a>     = <a class="local col6 ref" href="#6hdr" title='hdr' data-ref="6hdr">hdr</a>.<a class="ref" href="aacadtsdec.h.html#AACADTSHeaderInfo::samples" title='AACADTSHeaderInfo::samples' data-ref="AACADTSHeaderInfo::samples">samples</a>;</td></tr>
+<tr><th id="50">50</th><td>    <a class="local col2 ref" href="#2hdr_info" title='hdr_info' data-ref="2hdr_info">hdr_info</a>-&gt;<a class="ref" href="aac_ac3_parser.h.html#AACAC3ParseContext::bit_rate" title='AACAC3ParseContext::bit_rate' data-ref="AACAC3ParseContext::bit_rate">bit_rate</a>    = <a class="local col6 ref" href="#6hdr" title='hdr' data-ref="6hdr">hdr</a>.<a class="ref" href="aacadtsdec.h.html#AACADTSHeaderInfo::bit_rate" title='AACADTSHeaderInfo::bit_rate' data-ref="AACADTSHeaderInfo::bit_rate">bit_rate</a>;</td></tr>
+<tr><th id="51">51</th><td>    <b>return</b> <a class="local col7 ref" href="#7size" title='size' data-ref="7size">size</a>;</td></tr>
+<tr><th id="52">52</th><td>}</td></tr>
+<tr><th id="53">53</th><td></td></tr>
+<tr><th id="54">54</th><td><em>static</em> <a class="macro" href="../libavutil/attributes.h.html#84" title="" data-ref="_M/av_cold">av_cold</a> <em>int</em> <dfn class="tu decl def" id="aac_parse_init" title='aac_parse_init' data-type='int aac_parse_init(AVCodecParserContext * s1)' data-ref="aac_parse_init">aac_parse_init</dfn>(<a class="typedef" href="avcodec.h.html#AVCodecParserContext" title='AVCodecParserContext' data-type='struct AVCodecParserContext' data-ref="AVCodecParserContext">AVCodecParserContext</a> *<dfn class="local col1 decl" id="11s1" title='s1' data-type='AVCodecParserContext *' data-ref="11s1">s1</dfn>)</td></tr>
+<tr><th id="55">55</th><td>{</td></tr>
+<tr><th id="56">56</th><td>    <a class="typedef" href="aac_ac3_parser.h.html#AACAC3ParseContext" title='AACAC3ParseContext' data-type='struct AACAC3ParseContext' data-ref="AACAC3ParseContext">AACAC3ParseContext</a> *<dfn class="local col2 decl" id="12s" title='s' data-type='AACAC3ParseContext *' data-ref="12s">s</dfn> = <a class="local col1 ref" href="#11s1" title='s1' data-ref="11s1">s1</a>-&gt;<a class="ref" href="avcodec.h.html#AVCodecParserContext::priv_data" title='AVCodecParserContext::priv_data' data-ref="AVCodecParserContext::priv_data">priv_data</a>;</td></tr>
+<tr><th id="57">57</th><td>    <a class="local col2 ref" href="#12s" title='s' data-ref="12s">s</a>-&gt;<a class="ref" href="aac_ac3_parser.h.html#AACAC3ParseContext::header_size" title='AACAC3ParseContext::header_size' data-ref="AACAC3ParseContext::header_size">header_size</a> = <a class="macro" href="aacadtsdec.h.html#29" title="7" data-ref="_M/AAC_ADTS_HEADER_SIZE">AAC_ADTS_HEADER_SIZE</a>;</td></tr>
+<tr><th id="58">58</th><td>    <a class="local col2 ref" href="#12s" title='s' data-ref="12s">s</a>-&gt;<a class="ref" href="aac_ac3_parser.h.html#AACAC3ParseContext::sync" title='AACAC3ParseContext::sync' data-ref="AACAC3ParseContext::sync">sync</a> = <a class="tu ref" href="#aac_sync" title='aac_sync' data-use='r' data-ref="aac_sync">aac_sync</a>;</td></tr>
+<tr><th id="59">59</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="60">60</th><td>}</td></tr>
+<tr><th id="61">61</th><td></td></tr>
+<tr><th id="62">62</th><td></td></tr>
+<tr><th id="63">63</th><td><a class="typedef" href="avcodec.h.html#AVCodecParser" title='AVCodecParser' data-type='struct AVCodecParser' data-ref="AVCodecParser">AVCodecParser</a> <dfn class="decl def" id="ff_aac_parser" title='ff_aac_parser' data-ref="ff_aac_parser">ff_aac_parser</dfn> = {</td></tr>
+<tr><th id="64">64</th><td>    .<a class="ref" href="avcodec.h.html#AVCodecParser::codec_ids" title='AVCodecParser::codec_ids' data-ref="AVCodecParser::codec_ids">codec_ids</a>      = { <a class="enum" href="avcodec.h.html#AVCodecID::AV_CODEC_ID_AAC" title='AVCodecID::AV_CODEC_ID_AAC' data-ref="AVCodecID::AV_CODEC_ID_AAC">AV_CODEC_ID_AAC</a> },</td></tr>
+<tr><th id="65">65</th><td>    .<a class="ref" href="avcodec.h.html#AVCodecParser::priv_data_size" title='AVCodecParser::priv_data_size' data-ref="AVCodecParser::priv_data_size">priv_data_size</a> = <b>sizeof</b>(<a class="typedef" href="aac_ac3_parser.h.html#AACAC3ParseContext" title='AACAC3ParseContext' data-type='struct AACAC3ParseContext' data-ref="AACAC3ParseContext">AACAC3ParseContext</a>),</td></tr>
+<tr><th id="66">66</th><td>    .<a class="ref" href="avcodec.h.html#AVCodecParser::parser_init" title='AVCodecParser::parser_init' data-ref="AVCodecParser::parser_init">parser_init</a>    = <a class="tu ref" href="#aac_parse_init" title='aac_parse_init' data-use='r' data-ref="aac_parse_init">aac_parse_init</a>,</td></tr>
+<tr><th id="67">67</th><td>    .<a class="ref" href="avcodec.h.html#AVCodecParser::parser_parse" title='AVCodecParser::parser_parse' data-ref="AVCodecParser::parser_parse">parser_parse</a>   = <a class="ref" href="aac_ac3_parser.h.html#ff_aac_ac3_parse" title='ff_aac_ac3_parse' data-ref="ff_aac_ac3_parse">ff_aac_ac3_parse</a>,</td></tr>
+<tr><th id="68">68</th><td>    .<a class="ref" href="avcodec.h.html#AVCodecParser::parser_close" title='AVCodecParser::parser_close' data-ref="AVCodecParser::parser_close">parser_close</a>   = <a class="ref" href="parser.h.html#ff_parse_close" title='ff_parse_close' data-ref="ff_parse_close">ff_parse_close</a>,</td></tr>
+<tr><th id="69">69</th><td>};</td></tr>
+<tr><th id="70">70</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

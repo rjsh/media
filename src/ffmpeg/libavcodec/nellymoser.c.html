@@ -1,0 +1,241 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>nellymoser.c source code [ffmpeg/libavcodec/nellymoser.c] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavcodec/nellymoser.c'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavcodec</a>/<a href='nellymoser.c.html'>nellymoser.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * Common code between Nellymoser encoder and decoder</i></td></tr>
+<tr><th id="3">3</th><td><i> * Copyright (c) 2007 a840bda5870ba11f19698ff6eb9581dfb0f95fa5,</i></td></tr>
+<tr><th id="4">4</th><td><i> *                    539459aeb7d425140b62a3ec7dbf6dc8e408a306, and</i></td></tr>
+<tr><th id="5">5</th><td><i> *                    520e17cd55896441042b14df2566a6eb610ed444</i></td></tr>
+<tr><th id="6">6</th><td><i> * Copyright (c) 2007 Loic Minier &lt;lool at dooz.org&gt;</i></td></tr>
+<tr><th id="7">7</th><td><i> *                    Benjamin Larsson</i></td></tr>
+<tr><th id="8">8</th><td><i> *</i></td></tr>
+<tr><th id="9">9</th><td><i> * Permission is hereby granted, free of charge, to any person obtaining a</i></td></tr>
+<tr><th id="10">10</th><td><i> * copy of this software and associated documentation files (the "Software"),</i></td></tr>
+<tr><th id="11">11</th><td><i> * to deal in the Software without restriction, including without limitation</i></td></tr>
+<tr><th id="12">12</th><td><i> * the rights to use, copy, modify, merge, publish, distribute, sublicense,</i></td></tr>
+<tr><th id="13">13</th><td><i> * and/or sell copies of the Software, and to permit persons to whom the</i></td></tr>
+<tr><th id="14">14</th><td><i> * Software is furnished to do so, subject to the following conditions:</i></td></tr>
+<tr><th id="15">15</th><td><i> *</i></td></tr>
+<tr><th id="16">16</th><td><i> * The above copyright notice and this permission notice shall be included in</i></td></tr>
+<tr><th id="17">17</th><td><i> * all copies or substantial portions of the Software.</i></td></tr>
+<tr><th id="18">18</th><td><i> *</i></td></tr>
+<tr><th id="19">19</th><td><i> * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR</i></td></tr>
+<tr><th id="20">20</th><td><i> * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,</i></td></tr>
+<tr><th id="21">21</th><td><i> * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL</i></td></tr>
+<tr><th id="22">22</th><td><i> * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER</i></td></tr>
+<tr><th id="23">23</th><td><i> * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING</i></td></tr>
+<tr><th id="24">24</th><td><i> * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER</i></td></tr>
+<tr><th id="25">25</th><td><i> * DEALINGS IN THE SOFTWARE.</i></td></tr>
+<tr><th id="26">26</th><td><i> */</i></td></tr>
+<tr><th id="27">27</th><td></td></tr>
+<tr><th id="28">28</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="29">29</th><td><i class="doc"> *<span class="command"> @file</span></i></td></tr>
+<tr><th id="30">30</th><td><i class="doc"> * The 3 alphanumeric copyright notices are md5summed they are from the original</i></td></tr>
+<tr><th id="31">31</th><td><i class="doc"> * implementors. The original code is available from <a href="http://code.google.com/p/nelly2pcm/">http://code.google.com/p/nelly2pcm/</a></i></td></tr>
+<tr><th id="32">32</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="33">33</th><td></td></tr>
+<tr><th id="34">34</th><td><u>#include <a href="../libavutil/common.h.html">"libavutil/common.h"</a></u></td></tr>
+<tr><th id="35">35</th><td></td></tr>
+<tr><th id="36">36</th><td><u>#include <a href="avcodec.h.html">"avcodec.h"</a></u></td></tr>
+<tr><th id="37">37</th><td><u>#include <a href="nellymoser.h.html">"nellymoser.h"</a></u></td></tr>
+<tr><th id="38">38</th><td></td></tr>
+<tr><th id="39">39</th><td><em>const</em> <em>float</em> <dfn class="decl def" id="ff_nelly_dequantization_table" title='ff_nelly_dequantization_table' data-ref="ff_nelly_dequantization_table">ff_nelly_dequantization_table</dfn>[<var>127</var>] = {</td></tr>
+<tr><th id="40">40</th><td> <var>0.0000000000</var>,</td></tr>
+<tr><th id="41">41</th><td></td></tr>
+<tr><th id="42">42</th><td>-<var>0.8472560048</var>, <var>0.7224709988</var>,</td></tr>
+<tr><th id="43">43</th><td></td></tr>
+<tr><th id="44">44</th><td>-<var>1.5247479677</var>,-<var>0.4531480074</var>, <var>0.3753609955</var>, <var>1.4717899561</var>,</td></tr>
+<tr><th id="45">45</th><td></td></tr>
+<tr><th id="46">46</th><td>-<var>1.9822579622</var>,-<var>1.1929379702</var>,-<var>0.5829370022</var>,-<var>0.0693780035</var>, <var>0.3909569979</var>, <var>0.9069200158</var>, <var>1.4862740040</var>, <var>2.2215409279</var>,</td></tr>
+<tr><th id="47">47</th><td></td></tr>
+<tr><th id="48">48</th><td>-<var>2.3887870312</var>,-<var>1.8067539930</var>,-<var>1.4105420113</var>,-<var>1.0773609877</var>,-<var>0.7995010018</var>,-<var>0.5558109879</var>,-<var>0.3334020078</var>,-<var>0.1324490011</var>,</td></tr>
+<tr><th id="49">49</th><td> <var>0.0568020009</var>, <var>0.2548770010</var>, <var>0.4773550034</var>, <var>0.7386850119</var>, <var>1.0443060398</var>, <var>1.3954459429</var>, <var>1.8098750114</var>, <var>2.3918759823</var>,</td></tr>
+<tr><th id="50">50</th><td></td></tr>
+<tr><th id="51">51</th><td>-<var>2.3893830776</var>,-<var>1.9884680510</var>,-<var>1.7514040470</var>,-<var>1.5643119812</var>,-<var>1.3922129869</var>,-<var>1.2164649963</var>,-<var>1.0469499826</var>,-<var>0.8905100226</var>,</td></tr>
+<tr><th id="52">52</th><td>-<var>0.7645580173</var>,-<var>0.6454579830</var>,-<var>0.5259280205</var>,-<var>0.4059549868</var>,-<var>0.3029719889</var>,-<var>0.2096900046</var>,-<var>0.1239869967</var>,-<var>0.0479229987</var>,</td></tr>
+<tr><th id="53">53</th><td> <var>0.0257730000</var>, <var>0.1001340002</var>, <var>0.1737180054</var>, <var>0.2585540116</var>, <var>0.3522900045</var>, <var>0.4569880068</var>, <var>0.5767750144</var>, <var>0.7003160119</var>,</td></tr>
+<tr><th id="54">54</th><td> <var>0.8425520062</var>, <var>1.0093879700</var>, <var>1.1821349859</var>, <var>1.3534560204</var>, <var>1.5320819616</var>, <var>1.7332619429</var>, <var>1.9722349644</var>, <var>2.3978140354</var>,</td></tr>
+<tr><th id="55">55</th><td></td></tr>
+<tr><th id="56">56</th><td>-<var>2.5756309032</var>,-<var>2.0573320389</var>,-<var>1.8984919786</var>,-<var>1.7727810144</var>,-<var>1.6662600040</var>,-<var>1.5742180347</var>,-<var>1.4993319511</var>,-<var>1.4316639900</var>,</td></tr>
+<tr><th id="57">57</th><td>-<var>1.3652280569</var>,-<var>1.3000990152</var>,-<var>1.2280930281</var>,-<var>1.1588579416</var>,-<var>1.0921250582</var>,-<var>1.0135740042</var>,-<var>0.9202849865</var>,-<var>0.8287050128</var>,</td></tr>
+<tr><th id="58">58</th><td>-<var>0.7374889851</var>,-<var>0.6447759867</var>,-<var>0.5590940118</var>,-<var>0.4857139885</var>,-<var>0.4110319912</var>,-<var>0.3459700048</var>,-<var>0.2851159871</var>,-<var>0.2341620028</var>,</td></tr>
+<tr><th id="59">59</th><td>-<var>0.1870580018</var>,-<var>0.1442500055</var>,-<var>0.1107169986</var>,-<var>0.0739680007</var>,-<var>0.0365610011</var>,-<var>0.0073290002</var>, <var>0.0203610007</var>, <var>0.0479039997</var>,</td></tr>
+<tr><th id="60">60</th><td> <var>0.0751969963</var>, <var>0.0980999991</var>, <var>0.1220389977</var>, <var>0.1458999962</var>, <var>0.1694349945</var>, <var>0.1970459968</var>, <var>0.2252430022</var>, <var>0.2556869984</var>,</td></tr>
+<tr><th id="61">61</th><td> <var>0.2870100141</var>, <var>0.3197099864</var>, <var>0.3525829911</var>, <var>0.3889069855</var>, <var>0.4334920049</var>, <var>0.4769459963</var>, <var>0.5204820037</var>, <var>0.5644530058</var>,</td></tr>
+<tr><th id="62">62</th><td> <var>0.6122040153</var>, <var>0.6685929894</var>, <var>0.7341650128</var>, <var>0.8032159805</var>, <var>0.8784040213</var>, <var>0.9566209912</var>, <var>1.0397069454</var>, <var>1.1293770075</var>,</td></tr>
+<tr><th id="63">63</th><td> <var>1.2211159468</var>, <var>1.3080279827</var>, <var>1.4024800062</var>, <var>1.5056819916</var>, <var>1.6227730513</var>, <var>1.7724959850</var>, <var>1.9430880547</var>, <var>2.2903931141</var></td></tr>
+<tr><th id="64">64</th><td>};</td></tr>
+<tr><th id="65">65</th><td></td></tr>
+<tr><th id="66">66</th><td><em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl def" id="ff_nelly_band_sizes_table" title='ff_nelly_band_sizes_table' data-ref="ff_nelly_band_sizes_table">ff_nelly_band_sizes_table</dfn>[<a class="macro" href="nellymoser.h.html#39" title="23" data-ref="_M/NELLY_BANDS">NELLY_BANDS</a>] = {</td></tr>
+<tr><th id="67">67</th><td><var>2</var>, <var>2</var>, <var>2</var>, <var>2</var>, <var>2</var>, <var>2</var>, <var>2</var>, <var>2</var>, <var>2</var>, <var>3</var>, <var>3</var>, <var>4</var>, <var>4</var>, <var>5</var>, <var>6</var>, <var>6</var>, <var>7</var>, <var>8</var>, <var>9</var>, <var>10</var>, <var>12</var>, <var>14</var>, <var>15</var></td></tr>
+<tr><th id="68">68</th><td>};</td></tr>
+<tr><th id="69">69</th><td></td></tr>
+<tr><th id="70">70</th><td><em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> <dfn class="decl def" id="ff_nelly_init_table" title='ff_nelly_init_table' data-ref="ff_nelly_init_table">ff_nelly_init_table</dfn>[<var>64</var>] = {</td></tr>
+<tr><th id="71">71</th><td><var>3134</var>, <var>5342</var>, <var>6870</var>, <var>7792</var>, <var>8569</var>, <var>9185</var>, <var>9744</var>, <var>10191</var>, <var>10631</var>, <var>11061</var>, <var>11434</var>, <var>11770</var>,</td></tr>
+<tr><th id="72">72</th><td><var>12116</var>, <var>12513</var>, <var>12925</var>, <var>13300</var>, <var>13674</var>, <var>14027</var>, <var>14352</var>, <var>14716</var>, <var>15117</var>, <var>15477</var>, <var>15824</var>,</td></tr>
+<tr><th id="73">73</th><td><var>16157</var>, <var>16513</var>, <var>16804</var>, <var>17090</var>, <var>17401</var>, <var>17679</var>, <var>17948</var>, <var>18238</var>, <var>18520</var>, <var>18764</var>, <var>19078</var>,</td></tr>
+<tr><th id="74">74</th><td><var>19381</var>, <var>19640</var>, <var>19921</var>, <var>20205</var>, <var>20500</var>, <var>20813</var>, <var>21162</var>, <var>21465</var>, <var>21794</var>, <var>22137</var>, <var>22453</var>,</td></tr>
+<tr><th id="75">75</th><td><var>22756</var>, <var>23067</var>, <var>23350</var>, <var>23636</var>, <var>23926</var>, <var>24227</var>, <var>24521</var>, <var>24819</var>, <var>25107</var>, <var>25414</var>, <var>25730</var>,</td></tr>
+<tr><th id="76">76</th><td><var>26120</var>, <var>26497</var>, <var>26895</var>, <var>27344</var>, <var>27877</var>, <var>28463</var>, <var>29426</var>, <var>31355</var></td></tr>
+<tr><th id="77">77</th><td>};</td></tr>
+<tr><th id="78">78</th><td></td></tr>
+<tr><th id="79">79</th><td><em>const</em> <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> <dfn class="decl def" id="ff_nelly_delta_table" title='ff_nelly_delta_table' data-ref="ff_nelly_delta_table">ff_nelly_delta_table</dfn>[<var>32</var>] = {</td></tr>
+<tr><th id="80">80</th><td>-<var>11725</var>, -<var>9420</var>, -<var>7910</var>, -<var>6801</var>, -<var>5948</var>, -<var>5233</var>, -<var>4599</var>, -<var>4039</var>, -<var>3507</var>, -<var>3030</var>, -<var>2596</var>,</td></tr>
+<tr><th id="81">81</th><td>-<var>2170</var>, -<var>1774</var>, -<var>1383</var>, -<var>1016</var>, -<var>660</var>, -<var>329</var>, -<var>1</var>, <var>337</var>, <var>696</var>, <var>1085</var>, <var>1512</var>, <var>1962</var>, <var>2433</var>,</td></tr>
+<tr><th id="82">82</th><td><var>2968</var>, <var>3569</var>, <var>4314</var>, <var>5279</var>, <var>6622</var>, <var>8154</var>, <var>10076</var>, <var>12975</var></td></tr>
+<tr><th id="83">83</th><td>};</td></tr>
+<tr><th id="84">84</th><td></td></tr>
+<tr><th id="85">85</th><td><em>static</em> <b>inline</b> <em>int</em> <dfn class="tu decl def" id="signed_shift" title='signed_shift' data-type='int signed_shift(int i, int shift)' data-ref="signed_shift">signed_shift</dfn>(<em>int</em> <dfn class="local col3 decl" id="3i" title='i' data-type='int' data-ref="3i">i</dfn>, <em>int</em> <dfn class="local col4 decl" id="4shift" title='shift' data-type='int' data-ref="4shift">shift</dfn>) {</td></tr>
+<tr><th id="86">86</th><td>    <b>if</b> (<a class="local col4 ref" href="#4shift" title='shift' data-ref="4shift">shift</a> &gt; <var>0</var>)</td></tr>
+<tr><th id="87">87</th><td>        <b>return</b> <a class="local col3 ref" href="#3i" title='i' data-ref="3i">i</a> &lt;&lt; <a class="local col4 ref" href="#4shift" title='shift' data-ref="4shift">shift</a>;</td></tr>
+<tr><th id="88">88</th><td>    <b>return</b> <a class="local col3 ref" href="#3i" title='i' data-ref="3i">i</a> &gt;&gt; -<a class="local col4 ref" href="#4shift" title='shift' data-ref="4shift">shift</a>;</td></tr>
+<tr><th id="89">89</th><td>}</td></tr>
+<tr><th id="90">90</th><td></td></tr>
+<tr><th id="91">91</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="sum_bits" title='sum_bits' data-type='int sum_bits(short * buf, short shift, short off)' data-ref="sum_bits">sum_bits</dfn>(<em>short</em> *<dfn class="local col5 decl" id="5buf" title='buf' data-type='short *' data-ref="5buf">buf</dfn>, <em>short</em> <dfn class="local col6 decl" id="6shift" title='shift' data-type='short' data-ref="6shift">shift</dfn>, <em>short</em> <dfn class="local col7 decl" id="7off" title='off' data-type='short' data-ref="7off">off</dfn>)</td></tr>
+<tr><th id="92">92</th><td>{</td></tr>
+<tr><th id="93">93</th><td>    <em>int</em> <dfn class="local col8 decl" id="8i" title='i' data-type='int' data-ref="8i">i</dfn>, <dfn class="local col9 decl" id="9ret" title='ret' data-type='int' data-ref="9ret">ret</dfn> = <var>0</var>;</td></tr>
+<tr><th id="94">94</th><td></td></tr>
+<tr><th id="95">95</th><td>    <b>for</b> (<a class="local col8 ref" href="#8i" title='i' data-ref="8i">i</a> = <var>0</var>; <a class="local col8 ref" href="#8i" title='i' data-ref="8i">i</a> &lt; <a class="macro" href="nellymoser.h.html#44" title="124" data-ref="_M/NELLY_FILL_LEN">NELLY_FILL_LEN</a>; <a class="local col8 ref" href="#8i" title='i' data-ref="8i">i</a>++) {</td></tr>
+<tr><th id="96">96</th><td>        <em>int</em> <dfn class="local col0 decl" id="10b" title='b' data-type='int' data-ref="10b">b</dfn> = <a class="local col5 ref" href="#5buf" title='buf' data-ref="5buf">buf</a>[<a class="local col8 ref" href="#8i" title='i' data-ref="8i">i</a>]-<a class="local col7 ref" href="#7off" title='off' data-ref="7off">off</a>;</td></tr>
+<tr><th id="97">97</th><td>        <a class="local col0 ref" href="#10b" title='b' data-ref="10b">b</a> = ((<a class="local col0 ref" href="#10b" title='b' data-ref="10b">b</a>&gt;&gt;(<a class="local col6 ref" href="#6shift" title='shift' data-ref="6shift">shift</a>-<var>1</var>))+<var>1</var>)&gt;&gt;<var>1</var>;</td></tr>
+<tr><th id="98">98</th><td>        <a class="local col9 ref" href="#9ret" title='ret' data-ref="9ret">ret</a> += <a class="macro" href="../libavutil/common.h.html#481" title="av_clip_c" data-ref="_M/av_clip">av_clip</a>(<a class="local col0 ref" href="#10b" title='b' data-ref="10b">b</a>, <var>0</var>, <a class="macro" href="nellymoser.h.html#45" title="6" data-ref="_M/NELLY_BIT_CAP">NELLY_BIT_CAP</a>);</td></tr>
+<tr><th id="99">99</th><td>    }</td></tr>
+<tr><th id="100">100</th><td></td></tr>
+<tr><th id="101">101</th><td>    <b>return</b> <a class="local col9 ref" href="#9ret" title='ret' data-ref="9ret">ret</a>;</td></tr>
+<tr><th id="102">102</th><td>}</td></tr>
+<tr><th id="103">103</th><td></td></tr>
+<tr><th id="104">104</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="headroom" title='headroom' data-type='int headroom(int * la)' data-ref="headroom">headroom</dfn>(<em>int</em> *<dfn class="local col1 decl" id="11la" title='la' data-type='int *' data-ref="11la">la</dfn>)</td></tr>
+<tr><th id="105">105</th><td>{</td></tr>
+<tr><th id="106">106</th><td>    <em>int</em> <dfn class="local col2 decl" id="12l" title='l' data-type='int' data-ref="12l">l</dfn>;</td></tr>
+<tr><th id="107">107</th><td>    <b>if</b> (*<a class="local col1 ref" href="#11la" title='la' data-ref="11la">la</a> == <var>0</var>) {</td></tr>
+<tr><th id="108">108</th><td>        <b>return</b> <var>31</var>;</td></tr>
+<tr><th id="109">109</th><td>    }</td></tr>
+<tr><th id="110">110</th><td>    <a class="local col2 ref" href="#12l" title='l' data-ref="12l">l</a> = <var>30</var> - <a class="macro" href="../libavutil/intmath.h.html#83" title="ff_log2" data-ref="_M/av_log2">av_log2</a>(<a class="macro" href="../libavutil/common.h.html#72" title="((*la) &gt;= 0 ? (*la) : (-(*la)))" data-ref="_M/FFABS">FFABS</a>(*<a class="local col1 ref" href="#11la" title='la' data-ref="11la">la</a>));</td></tr>
+<tr><th id="111">111</th><td>    *<a class="local col1 ref" href="#11la" title='la' data-ref="11la">la</a> &lt;&lt;= <a class="local col2 ref" href="#12l" title='l' data-ref="12l">l</a>;</td></tr>
+<tr><th id="112">112</th><td>    <b>return</b> <a class="local col2 ref" href="#12l" title='l' data-ref="12l">l</a>;</td></tr>
+<tr><th id="113">113</th><td>}</td></tr>
+<tr><th id="114">114</th><td></td></tr>
+<tr><th id="115">115</th><td></td></tr>
+<tr><th id="116">116</th><td><em>void</em> <dfn class="decl def" id="ff_nelly_get_sample_bits" title='ff_nelly_get_sample_bits' data-ref="ff_nelly_get_sample_bits">ff_nelly_get_sample_bits</dfn>(<em>const</em> <em>float</em> *<dfn class="local col3 decl" id="13buf" title='buf' data-type='const float *' data-ref="13buf">buf</dfn>, <em>int</em> *<dfn class="local col4 decl" id="14bits" title='bits' data-type='int *' data-ref="14bits">bits</dfn>)</td></tr>
+<tr><th id="117">117</th><td>{</td></tr>
+<tr><th id="118">118</th><td>    <em>int</em> <dfn class="local col5 decl" id="15i" title='i' data-type='int' data-ref="15i">i</dfn>, <dfn class="local col6 decl" id="16j" title='j' data-type='int' data-ref="16j">j</dfn>;</td></tr>
+<tr><th id="119">119</th><td>    <em>short</em> <dfn class="local col7 decl" id="17sbuf" title='sbuf' data-type='short [128]' data-ref="17sbuf">sbuf</dfn>[<var>128</var>];</td></tr>
+<tr><th id="120">120</th><td>    <em>int</em> <dfn class="local col8 decl" id="18bitsum" title='bitsum' data-type='int' data-ref="18bitsum">bitsum</dfn> = <var>0</var>, <dfn class="local col9 decl" id="19last_bitsum" title='last_bitsum' data-type='int' data-ref="19last_bitsum">last_bitsum</dfn>, <dfn class="local col0 decl" id="20small_bitsum" title='small_bitsum' data-type='int' data-ref="20small_bitsum">small_bitsum</dfn>, <dfn class="local col1 decl" id="21big_bitsum" title='big_bitsum' data-type='int' data-ref="21big_bitsum">big_bitsum</dfn>;</td></tr>
+<tr><th id="121">121</th><td>    <em>short</em> <dfn class="local col2 decl" id="22shift" title='shift' data-type='short' data-ref="22shift">shift</dfn>, <dfn class="local col3 decl" id="23shift_saved" title='shift_saved' data-type='short' data-ref="23shift_saved">shift_saved</dfn>;</td></tr>
+<tr><th id="122">122</th><td>    <em>int</em> <dfn class="local col4 decl" id="24max" title='max' data-type='int' data-ref="24max">max</dfn>, <dfn class="local col5 decl" id="25sum" title='sum' data-type='int' data-ref="25sum">sum</dfn>, <dfn class="local col6 decl" id="26last_off" title='last_off' data-type='int' data-ref="26last_off">last_off</dfn>, <dfn class="local col7 decl" id="27tmp" title='tmp' data-type='int' data-ref="27tmp">tmp</dfn>;</td></tr>
+<tr><th id="123">123</th><td>    <em>int</em> <dfn class="local col8 decl" id="28big_off" title='big_off' data-type='int' data-ref="28big_off">big_off</dfn>, <dfn class="local col9 decl" id="29small_off" title='small_off' data-type='int' data-ref="29small_off">small_off</dfn>;</td></tr>
+<tr><th id="124">124</th><td>    <em>int</em> <dfn class="local col0 decl" id="30off" title='off' data-type='int' data-ref="30off">off</dfn>;</td></tr>
+<tr><th id="125">125</th><td></td></tr>
+<tr><th id="126">126</th><td>    <a class="local col4 ref" href="#24max" title='max' data-ref="24max">max</a> = <var>0</var>;</td></tr>
+<tr><th id="127">127</th><td>    <b>for</b> (<a class="local col5 ref" href="#15i" title='i' data-ref="15i">i</a> = <var>0</var>; <a class="local col5 ref" href="#15i" title='i' data-ref="15i">i</a> &lt; <a class="macro" href="nellymoser.h.html#44" title="124" data-ref="_M/NELLY_FILL_LEN">NELLY_FILL_LEN</a>; <a class="local col5 ref" href="#15i" title='i' data-ref="15i">i</a>++) {</td></tr>
+<tr><th id="128">128</th><td>        <a class="local col4 ref" href="#24max" title='max' data-ref="24max">max</a> = <a class="macro" href="../libavutil/common.h.html#94" title="((max) &gt; (buf[i]) ? (max) : (buf[i]))" data-ref="_M/FFMAX">FFMAX</a>(<a class="local col4 ref" href="#24max" title='max' data-ref="24max">max</a>, <a class="local col3 ref" href="#13buf" title='buf' data-ref="13buf">buf</a>[<a class="local col5 ref" href="#15i" title='i' data-ref="15i">i</a>]);</td></tr>
+<tr><th id="129">129</th><td>    }</td></tr>
+<tr><th id="130">130</th><td>    <a class="local col2 ref" href="#22shift" title='shift' data-ref="22shift">shift</a> = -<var>16</var>;</td></tr>
+<tr><th id="131">131</th><td>    <a class="local col2 ref" href="#22shift" title='shift' data-ref="22shift">shift</a> += <a class="tu ref" href="#headroom" title='headroom' data-use='c' data-ref="headroom">headroom</a>(&amp;<a class="local col4 ref" href="#24max" title='max' data-ref="24max">max</a>);</td></tr>
+<tr><th id="132">132</th><td></td></tr>
+<tr><th id="133">133</th><td>    <a class="local col5 ref" href="#25sum" title='sum' data-ref="25sum">sum</a> = <var>0</var>;</td></tr>
+<tr><th id="134">134</th><td>    <b>for</b> (<a class="local col5 ref" href="#15i" title='i' data-ref="15i">i</a> = <var>0</var>; <a class="local col5 ref" href="#15i" title='i' data-ref="15i">i</a> &lt; <a class="macro" href="nellymoser.h.html#44" title="124" data-ref="_M/NELLY_FILL_LEN">NELLY_FILL_LEN</a>; <a class="local col5 ref" href="#15i" title='i' data-ref="15i">i</a>++) {</td></tr>
+<tr><th id="135">135</th><td>        <a class="local col7 ref" href="#17sbuf" title='sbuf' data-ref="17sbuf">sbuf</a>[<a class="local col5 ref" href="#15i" title='i' data-ref="15i">i</a>] = <a class="tu ref" href="#signed_shift" title='signed_shift' data-use='c' data-ref="signed_shift">signed_shift</a>(<a class="local col3 ref" href="#13buf" title='buf' data-ref="13buf">buf</a>[<a class="local col5 ref" href="#15i" title='i' data-ref="15i">i</a>], <a class="local col2 ref" href="#22shift" title='shift' data-ref="22shift">shift</a>);</td></tr>
+<tr><th id="136">136</th><td>        <a class="local col7 ref" href="#17sbuf" title='sbuf' data-ref="17sbuf">sbuf</a>[<a class="local col5 ref" href="#15i" title='i' data-ref="15i">i</a>] = (<var>3</var>*<a class="local col7 ref" href="#17sbuf" title='sbuf' data-ref="17sbuf">sbuf</a>[<a class="local col5 ref" href="#15i" title='i' data-ref="15i">i</a>])&gt;&gt;<var>2</var>;</td></tr>
+<tr><th id="137">137</th><td>        <a class="local col5 ref" href="#25sum" title='sum' data-ref="25sum">sum</a> += <a class="local col7 ref" href="#17sbuf" title='sbuf' data-ref="17sbuf">sbuf</a>[<a class="local col5 ref" href="#15i" title='i' data-ref="15i">i</a>];</td></tr>
+<tr><th id="138">138</th><td>    }</td></tr>
+<tr><th id="139">139</th><td></td></tr>
+<tr><th id="140">140</th><td>    <a class="local col2 ref" href="#22shift" title='shift' data-ref="22shift">shift</a> += <var>11</var>;</td></tr>
+<tr><th id="141">141</th><td>    <a class="local col3 ref" href="#23shift_saved" title='shift_saved' data-ref="23shift_saved">shift_saved</a> = <a class="local col2 ref" href="#22shift" title='shift' data-ref="22shift">shift</a>;</td></tr>
+<tr><th id="142">142</th><td>    <a class="local col5 ref" href="#25sum" title='sum' data-ref="25sum">sum</a> -= <a class="macro" href="nellymoser.h.html#42" title="198" data-ref="_M/NELLY_DETAIL_BITS">NELLY_DETAIL_BITS</a> &lt;&lt; <a class="local col2 ref" href="#22shift" title='shift' data-ref="22shift">shift</a>;</td></tr>
+<tr><th id="143">143</th><td>    <a class="local col2 ref" href="#22shift" title='shift' data-ref="22shift">shift</a> += <a class="tu ref" href="#headroom" title='headroom' data-use='c' data-ref="headroom">headroom</a>(&amp;<a class="local col5 ref" href="#25sum" title='sum' data-ref="25sum">sum</a>);</td></tr>
+<tr><th id="144">144</th><td>    <a class="local col9 ref" href="#29small_off" title='small_off' data-ref="29small_off">small_off</a> = (<a class="macro" href="nellymoser.h.html#46" title="4228" data-ref="_M/NELLY_BASE_OFF">NELLY_BASE_OFF</a> * (<a class="local col5 ref" href="#25sum" title='sum' data-ref="25sum">sum</a>&gt;&gt;<var>16</var>)) &gt;&gt; <var>15</var>;</td></tr>
+<tr><th id="145">145</th><td>    <a class="local col2 ref" href="#22shift" title='shift' data-ref="22shift">shift</a> = <a class="local col3 ref" href="#23shift_saved" title='shift_saved' data-ref="23shift_saved">shift_saved</a> - (<a class="macro" href="nellymoser.h.html#47" title="19" data-ref="_M/NELLY_BASE_SHIFT">NELLY_BASE_SHIFT</a>+<a class="local col2 ref" href="#22shift" title='shift' data-ref="22shift">shift</a>-<var>31</var>);</td></tr>
+<tr><th id="146">146</th><td></td></tr>
+<tr><th id="147">147</th><td>    <a class="local col9 ref" href="#29small_off" title='small_off' data-ref="29small_off">small_off</a> = <a class="tu ref" href="#signed_shift" title='signed_shift' data-use='c' data-ref="signed_shift">signed_shift</a>(<a class="local col9 ref" href="#29small_off" title='small_off' data-ref="29small_off">small_off</a>, <a class="local col2 ref" href="#22shift" title='shift' data-ref="22shift">shift</a>);</td></tr>
+<tr><th id="148">148</th><td></td></tr>
+<tr><th id="149">149</th><td>    <a class="local col8 ref" href="#18bitsum" title='bitsum' data-ref="18bitsum">bitsum</a> = <a class="tu ref" href="#sum_bits" title='sum_bits' data-use='c' data-ref="sum_bits">sum_bits</a>(<a class="local col7 ref" href="#17sbuf" title='sbuf' data-ref="17sbuf">sbuf</a>, <a class="local col3 ref" href="#23shift_saved" title='shift_saved' data-ref="23shift_saved">shift_saved</a>, <a class="local col9 ref" href="#29small_off" title='small_off' data-ref="29small_off">small_off</a>);</td></tr>
+<tr><th id="150">150</th><td></td></tr>
+<tr><th id="151">151</th><td>    <b>if</b> (<a class="local col8 ref" href="#18bitsum" title='bitsum' data-ref="18bitsum">bitsum</a> != <a class="macro" href="nellymoser.h.html#42" title="198" data-ref="_M/NELLY_DETAIL_BITS">NELLY_DETAIL_BITS</a>) {</td></tr>
+<tr><th id="152">152</th><td>        <a class="local col0 ref" href="#30off" title='off' data-ref="30off">off</a> = <a class="local col8 ref" href="#18bitsum" title='bitsum' data-ref="18bitsum">bitsum</a> - <a class="macro" href="nellymoser.h.html#42" title="198" data-ref="_M/NELLY_DETAIL_BITS">NELLY_DETAIL_BITS</a>;</td></tr>
+<tr><th id="153">153</th><td></td></tr>
+<tr><th id="154">154</th><td>        <b>for</b>(<a class="local col2 ref" href="#22shift" title='shift' data-ref="22shift">shift</a>=<var>0</var>; <a class="macro" href="../libavutil/common.h.html#72" title="((off) &gt;= 0 ? (off) : (-(off)))" data-ref="_M/FFABS">FFABS</a>(<a class="local col0 ref" href="#30off" title='off' data-ref="30off">off</a>) &lt;= <var>16383</var>; <a class="local col2 ref" href="#22shift" title='shift' data-ref="22shift">shift</a>++)</td></tr>
+<tr><th id="155">155</th><td>            <a class="local col0 ref" href="#30off" title='off' data-ref="30off">off</a> *= <var>2</var>;</td></tr>
+<tr><th id="156">156</th><td></td></tr>
+<tr><th id="157">157</th><td>        <a class="local col0 ref" href="#30off" title='off' data-ref="30off">off</a> = (<a class="local col0 ref" href="#30off" title='off' data-ref="30off">off</a> * <a class="macro" href="nellymoser.h.html#46" title="4228" data-ref="_M/NELLY_BASE_OFF">NELLY_BASE_OFF</a>) &gt;&gt; <var>15</var>;</td></tr>
+<tr><th id="158">158</th><td>        <a class="local col2 ref" href="#22shift" title='shift' data-ref="22shift">shift</a> = <a class="local col3 ref" href="#23shift_saved" title='shift_saved' data-ref="23shift_saved">shift_saved</a>-(<a class="macro" href="nellymoser.h.html#47" title="19" data-ref="_M/NELLY_BASE_SHIFT">NELLY_BASE_SHIFT</a>+<a class="local col2 ref" href="#22shift" title='shift' data-ref="22shift">shift</a>-<var>15</var>);</td></tr>
+<tr><th id="159">159</th><td></td></tr>
+<tr><th id="160">160</th><td>        <a class="local col0 ref" href="#30off" title='off' data-ref="30off">off</a> = <a class="tu ref" href="#signed_shift" title='signed_shift' data-use='c' data-ref="signed_shift">signed_shift</a>(<a class="local col0 ref" href="#30off" title='off' data-ref="30off">off</a>, <a class="local col2 ref" href="#22shift" title='shift' data-ref="22shift">shift</a>);</td></tr>
+<tr><th id="161">161</th><td></td></tr>
+<tr><th id="162">162</th><td>        <b>for</b> (<a class="local col6 ref" href="#16j" title='j' data-ref="16j">j</a> = <var>1</var>; <a class="local col6 ref" href="#16j" title='j' data-ref="16j">j</a> &lt; <var>20</var>; <a class="local col6 ref" href="#16j" title='j' data-ref="16j">j</a>++) {</td></tr>
+<tr><th id="163">163</th><td>            <a class="local col6 ref" href="#26last_off" title='last_off' data-ref="26last_off">last_off</a> = <a class="local col9 ref" href="#29small_off" title='small_off' data-ref="29small_off">small_off</a>;</td></tr>
+<tr><th id="164">164</th><td>            <a class="local col9 ref" href="#29small_off" title='small_off' data-ref="29small_off">small_off</a> += <a class="local col0 ref" href="#30off" title='off' data-ref="30off">off</a>;</td></tr>
+<tr><th id="165">165</th><td>            <a class="local col9 ref" href="#19last_bitsum" title='last_bitsum' data-ref="19last_bitsum">last_bitsum</a> = <a class="local col8 ref" href="#18bitsum" title='bitsum' data-ref="18bitsum">bitsum</a>;</td></tr>
+<tr><th id="166">166</th><td></td></tr>
+<tr><th id="167">167</th><td>            <a class="local col8 ref" href="#18bitsum" title='bitsum' data-ref="18bitsum">bitsum</a> = <a class="tu ref" href="#sum_bits" title='sum_bits' data-use='c' data-ref="sum_bits">sum_bits</a>(<a class="local col7 ref" href="#17sbuf" title='sbuf' data-ref="17sbuf">sbuf</a>, <a class="local col3 ref" href="#23shift_saved" title='shift_saved' data-ref="23shift_saved">shift_saved</a>, <a class="local col9 ref" href="#29small_off" title='small_off' data-ref="29small_off">small_off</a>);</td></tr>
+<tr><th id="168">168</th><td></td></tr>
+<tr><th id="169">169</th><td>            <b>if</b> ((<a class="local col8 ref" href="#18bitsum" title='bitsum' data-ref="18bitsum">bitsum</a>-<a class="macro" href="nellymoser.h.html#42" title="198" data-ref="_M/NELLY_DETAIL_BITS">NELLY_DETAIL_BITS</a>) * (<a class="local col9 ref" href="#19last_bitsum" title='last_bitsum' data-ref="19last_bitsum">last_bitsum</a>-<a class="macro" href="nellymoser.h.html#42" title="198" data-ref="_M/NELLY_DETAIL_BITS">NELLY_DETAIL_BITS</a>) &lt;= <var>0</var>)</td></tr>
+<tr><th id="170">170</th><td>                <b>break</b>;</td></tr>
+<tr><th id="171">171</th><td>        }</td></tr>
+<tr><th id="172">172</th><td></td></tr>
+<tr><th id="173">173</th><td>        <b>if</b> (<a class="local col8 ref" href="#18bitsum" title='bitsum' data-ref="18bitsum">bitsum</a> &gt; <a class="macro" href="nellymoser.h.html#42" title="198" data-ref="_M/NELLY_DETAIL_BITS">NELLY_DETAIL_BITS</a>) {</td></tr>
+<tr><th id="174">174</th><td>            <a class="local col8 ref" href="#28big_off" title='big_off' data-ref="28big_off">big_off</a> = <a class="local col9 ref" href="#29small_off" title='small_off' data-ref="29small_off">small_off</a>;</td></tr>
+<tr><th id="175">175</th><td>            <a class="local col9 ref" href="#29small_off" title='small_off' data-ref="29small_off">small_off</a> = <a class="local col6 ref" href="#26last_off" title='last_off' data-ref="26last_off">last_off</a>;</td></tr>
+<tr><th id="176">176</th><td>            <a class="local col1 ref" href="#21big_bitsum" title='big_bitsum' data-ref="21big_bitsum">big_bitsum</a>=<a class="local col8 ref" href="#18bitsum" title='bitsum' data-ref="18bitsum">bitsum</a>;</td></tr>
+<tr><th id="177">177</th><td>            <a class="local col0 ref" href="#20small_bitsum" title='small_bitsum' data-ref="20small_bitsum">small_bitsum</a>=<a class="local col9 ref" href="#19last_bitsum" title='last_bitsum' data-ref="19last_bitsum">last_bitsum</a>;</td></tr>
+<tr><th id="178">178</th><td>        } <b>else</b> {</td></tr>
+<tr><th id="179">179</th><td>            <a class="local col8 ref" href="#28big_off" title='big_off' data-ref="28big_off">big_off</a> = <a class="local col6 ref" href="#26last_off" title='last_off' data-ref="26last_off">last_off</a>;</td></tr>
+<tr><th id="180">180</th><td>            <a class="local col1 ref" href="#21big_bitsum" title='big_bitsum' data-ref="21big_bitsum">big_bitsum</a>=<a class="local col9 ref" href="#19last_bitsum" title='last_bitsum' data-ref="19last_bitsum">last_bitsum</a>;</td></tr>
+<tr><th id="181">181</th><td>            <a class="local col0 ref" href="#20small_bitsum" title='small_bitsum' data-ref="20small_bitsum">small_bitsum</a>=<a class="local col8 ref" href="#18bitsum" title='bitsum' data-ref="18bitsum">bitsum</a>;</td></tr>
+<tr><th id="182">182</th><td>        }</td></tr>
+<tr><th id="183">183</th><td></td></tr>
+<tr><th id="184">184</th><td>        <b>while</b> (<a class="local col8 ref" href="#18bitsum" title='bitsum' data-ref="18bitsum">bitsum</a> != <a class="macro" href="nellymoser.h.html#42" title="198" data-ref="_M/NELLY_DETAIL_BITS">NELLY_DETAIL_BITS</a> &amp;&amp; <a class="local col6 ref" href="#16j" title='j' data-ref="16j">j</a> &lt;= <var>19</var>) {</td></tr>
+<tr><th id="185">185</th><td>            <a class="local col0 ref" href="#30off" title='off' data-ref="30off">off</a> = (<a class="local col8 ref" href="#28big_off" title='big_off' data-ref="28big_off">big_off</a>+<a class="local col9 ref" href="#29small_off" title='small_off' data-ref="29small_off">small_off</a>)&gt;&gt;<var>1</var>;</td></tr>
+<tr><th id="186">186</th><td>            <a class="local col8 ref" href="#18bitsum" title='bitsum' data-ref="18bitsum">bitsum</a> = <a class="tu ref" href="#sum_bits" title='sum_bits' data-use='c' data-ref="sum_bits">sum_bits</a>(<a class="local col7 ref" href="#17sbuf" title='sbuf' data-ref="17sbuf">sbuf</a>, <a class="local col3 ref" href="#23shift_saved" title='shift_saved' data-ref="23shift_saved">shift_saved</a>, <a class="local col0 ref" href="#30off" title='off' data-ref="30off">off</a>);</td></tr>
+<tr><th id="187">187</th><td>            <b>if</b> (<a class="local col8 ref" href="#18bitsum" title='bitsum' data-ref="18bitsum">bitsum</a> &gt; <a class="macro" href="nellymoser.h.html#42" title="198" data-ref="_M/NELLY_DETAIL_BITS">NELLY_DETAIL_BITS</a>) {</td></tr>
+<tr><th id="188">188</th><td>                <a class="local col8 ref" href="#28big_off" title='big_off' data-ref="28big_off">big_off</a>=<a class="local col0 ref" href="#30off" title='off' data-ref="30off">off</a>;</td></tr>
+<tr><th id="189">189</th><td>                <a class="local col1 ref" href="#21big_bitsum" title='big_bitsum' data-ref="21big_bitsum">big_bitsum</a>=<a class="local col8 ref" href="#18bitsum" title='bitsum' data-ref="18bitsum">bitsum</a>;</td></tr>
+<tr><th id="190">190</th><td>            } <b>else</b> {</td></tr>
+<tr><th id="191">191</th><td>                <a class="local col9 ref" href="#29small_off" title='small_off' data-ref="29small_off">small_off</a> = <a class="local col0 ref" href="#30off" title='off' data-ref="30off">off</a>;</td></tr>
+<tr><th id="192">192</th><td>                <a class="local col0 ref" href="#20small_bitsum" title='small_bitsum' data-ref="20small_bitsum">small_bitsum</a>=<a class="local col8 ref" href="#18bitsum" title='bitsum' data-ref="18bitsum">bitsum</a>;</td></tr>
+<tr><th id="193">193</th><td>            }</td></tr>
+<tr><th id="194">194</th><td>            <a class="local col6 ref" href="#16j" title='j' data-ref="16j">j</a>++;</td></tr>
+<tr><th id="195">195</th><td>        }</td></tr>
+<tr><th id="196">196</th><td></td></tr>
+<tr><th id="197">197</th><td>        <b>if</b> (<a class="ref" href="../../include/stdlib.h.html#abs" title='abs' data-ref="abs">abs</a>(<a class="local col1 ref" href="#21big_bitsum" title='big_bitsum' data-ref="21big_bitsum">big_bitsum</a>-<a class="macro" href="nellymoser.h.html#42" title="198" data-ref="_M/NELLY_DETAIL_BITS">NELLY_DETAIL_BITS</a>) &gt;=</td></tr>
+<tr><th id="198">198</th><td>            <a class="ref" href="../../include/stdlib.h.html#abs" title='abs' data-ref="abs">abs</a>(<a class="local col0 ref" href="#20small_bitsum" title='small_bitsum' data-ref="20small_bitsum">small_bitsum</a>-<a class="macro" href="nellymoser.h.html#42" title="198" data-ref="_M/NELLY_DETAIL_BITS">NELLY_DETAIL_BITS</a>)) {</td></tr>
+<tr><th id="199">199</th><td>            <a class="local col8 ref" href="#18bitsum" title='bitsum' data-ref="18bitsum">bitsum</a> = <a class="local col0 ref" href="#20small_bitsum" title='small_bitsum' data-ref="20small_bitsum">small_bitsum</a>;</td></tr>
+<tr><th id="200">200</th><td>        } <b>else</b> {</td></tr>
+<tr><th id="201">201</th><td>            <a class="local col9 ref" href="#29small_off" title='small_off' data-ref="29small_off">small_off</a> = <a class="local col8 ref" href="#28big_off" title='big_off' data-ref="28big_off">big_off</a>;</td></tr>
+<tr><th id="202">202</th><td>            <a class="local col8 ref" href="#18bitsum" title='bitsum' data-ref="18bitsum">bitsum</a> = <a class="local col1 ref" href="#21big_bitsum" title='big_bitsum' data-ref="21big_bitsum">big_bitsum</a>;</td></tr>
+<tr><th id="203">203</th><td>        }</td></tr>
+<tr><th id="204">204</th><td>    }</td></tr>
+<tr><th id="205">205</th><td></td></tr>
+<tr><th id="206">206</th><td>    <b>for</b> (<a class="local col5 ref" href="#15i" title='i' data-ref="15i">i</a> = <var>0</var>; <a class="local col5 ref" href="#15i" title='i' data-ref="15i">i</a> &lt; <a class="macro" href="nellymoser.h.html#44" title="124" data-ref="_M/NELLY_FILL_LEN">NELLY_FILL_LEN</a>; <a class="local col5 ref" href="#15i" title='i' data-ref="15i">i</a>++) {</td></tr>
+<tr><th id="207">207</th><td>        <a class="local col7 ref" href="#27tmp" title='tmp' data-ref="27tmp">tmp</a> = <a class="local col7 ref" href="#17sbuf" title='sbuf' data-ref="17sbuf">sbuf</a>[<a class="local col5 ref" href="#15i" title='i' data-ref="15i">i</a>]-<a class="local col9 ref" href="#29small_off" title='small_off' data-ref="29small_off">small_off</a>;</td></tr>
+<tr><th id="208">208</th><td>        <a class="local col7 ref" href="#27tmp" title='tmp' data-ref="27tmp">tmp</a> = ((<a class="local col7 ref" href="#27tmp" title='tmp' data-ref="27tmp">tmp</a>&gt;&gt;(<a class="local col3 ref" href="#23shift_saved" title='shift_saved' data-ref="23shift_saved">shift_saved</a>-<var>1</var>))+<var>1</var>)&gt;&gt;<var>1</var>;</td></tr>
+<tr><th id="209">209</th><td>        <a class="local col4 ref" href="#14bits" title='bits' data-ref="14bits">bits</a>[<a class="local col5 ref" href="#15i" title='i' data-ref="15i">i</a>] = <a class="macro" href="../libavutil/common.h.html#481" title="av_clip_c" data-ref="_M/av_clip">av_clip</a>(<a class="local col7 ref" href="#27tmp" title='tmp' data-ref="27tmp">tmp</a>, <var>0</var>, <a class="macro" href="nellymoser.h.html#45" title="6" data-ref="_M/NELLY_BIT_CAP">NELLY_BIT_CAP</a>);</td></tr>
+<tr><th id="210">210</th><td>    }</td></tr>
+<tr><th id="211">211</th><td></td></tr>
+<tr><th id="212">212</th><td>    <b>if</b> (<a class="local col8 ref" href="#18bitsum" title='bitsum' data-ref="18bitsum">bitsum</a> &gt; <a class="macro" href="nellymoser.h.html#42" title="198" data-ref="_M/NELLY_DETAIL_BITS">NELLY_DETAIL_BITS</a>) {</td></tr>
+<tr><th id="213">213</th><td>        <a class="local col7 ref" href="#27tmp" title='tmp' data-ref="27tmp">tmp</a> = <a class="local col5 ref" href="#15i" title='i' data-ref="15i">i</a> = <var>0</var>;</td></tr>
+<tr><th id="214">214</th><td>        <b>while</b> (<a class="local col7 ref" href="#27tmp" title='tmp' data-ref="27tmp">tmp</a> &lt; <a class="macro" href="nellymoser.h.html#42" title="198" data-ref="_M/NELLY_DETAIL_BITS">NELLY_DETAIL_BITS</a>) {</td></tr>
+<tr><th id="215">215</th><td>            <a class="local col7 ref" href="#27tmp" title='tmp' data-ref="27tmp">tmp</a> += <a class="local col4 ref" href="#14bits" title='bits' data-ref="14bits">bits</a>[<a class="local col5 ref" href="#15i" title='i' data-ref="15i">i</a>];</td></tr>
+<tr><th id="216">216</th><td>            <a class="local col5 ref" href="#15i" title='i' data-ref="15i">i</a>++;</td></tr>
+<tr><th id="217">217</th><td>        }</td></tr>
+<tr><th id="218">218</th><td></td></tr>
+<tr><th id="219">219</th><td>        <a class="local col4 ref" href="#14bits" title='bits' data-ref="14bits">bits</a>[<a class="local col5 ref" href="#15i" title='i' data-ref="15i">i</a>-<var>1</var>] -= <a class="local col7 ref" href="#27tmp" title='tmp' data-ref="27tmp">tmp</a> - <a class="macro" href="nellymoser.h.html#42" title="198" data-ref="_M/NELLY_DETAIL_BITS">NELLY_DETAIL_BITS</a>;</td></tr>
+<tr><th id="220">220</th><td>        <b>for</b>(; <a class="local col5 ref" href="#15i" title='i' data-ref="15i">i</a> &lt; <a class="macro" href="nellymoser.h.html#44" title="124" data-ref="_M/NELLY_FILL_LEN">NELLY_FILL_LEN</a>; <a class="local col5 ref" href="#15i" title='i' data-ref="15i">i</a>++)</td></tr>
+<tr><th id="221">221</th><td>            <a class="local col4 ref" href="#14bits" title='bits' data-ref="14bits">bits</a>[<a class="local col5 ref" href="#15i" title='i' data-ref="15i">i</a>] = <var>0</var>;</td></tr>
+<tr><th id="222">222</th><td>    }</td></tr>
+<tr><th id="223">223</th><td>}</td></tr>
+<tr><th id="224">224</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

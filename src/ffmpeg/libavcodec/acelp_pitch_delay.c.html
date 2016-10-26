@@ -1,0 +1,208 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>acelp_pitch_delay.c source code [ffmpeg/libavcodec/acelp_pitch_delay.c] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavcodec/acelp_pitch_delay.c'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavcodec</a>/<a href='acelp_pitch_delay.c.html'>acelp_pitch_delay.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * gain code, gain pitch and pitch delay decoding</i></td></tr>
+<tr><th id="3">3</th><td><i> *</i></td></tr>
+<tr><th id="4">4</th><td><i> * Copyright (c) 2008 Vladimir Voroshilov</i></td></tr>
+<tr><th id="5">5</th><td><i> *</i></td></tr>
+<tr><th id="6">6</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="7">7</th><td><i> *</i></td></tr>
+<tr><th id="8">8</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="9">9</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="10">10</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="11">11</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="12">12</th><td><i> *</i></td></tr>
+<tr><th id="13">13</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="14">14</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="15">15</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="16">16</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="17">17</th><td><i> *</i></td></tr>
+<tr><th id="18">18</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="19">19</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="20">20</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="21">21</th><td><i> */</i></td></tr>
+<tr><th id="22">22</th><td></td></tr>
+<tr><th id="23">23</th><td><u>#include <a href="../libavutil/common.h.html">"libavutil/common.h"</a></u></td></tr>
+<tr><th id="24">24</th><td><u>#include <a href="../libavutil/ffmath.h.html">"libavutil/ffmath.h"</a></u></td></tr>
+<tr><th id="25">25</th><td><u>#include <a href="../libavutil/float_dsp.h.html">"libavutil/float_dsp.h"</a></u></td></tr>
+<tr><th id="26">26</th><td><u>#include <a href="../libavutil/mathematics.h.html">"libavutil/mathematics.h"</a></u></td></tr>
+<tr><th id="27">27</th><td><u>#include <a href="avcodec.h.html">"avcodec.h"</a></u></td></tr>
+<tr><th id="28">28</th><td><u>#include <a href="acelp_pitch_delay.h.html">"acelp_pitch_delay.h"</a></u></td></tr>
+<tr><th id="29">29</th><td><u>#include <a href="celp_math.h.html">"celp_math.h"</a></u></td></tr>
+<tr><th id="30">30</th><td><u>#include <a href="audiodsp.h.html">"audiodsp.h"</a></u></td></tr>
+<tr><th id="31">31</th><td></td></tr>
+<tr><th id="32">32</th><td><em>int</em> <dfn class="decl def" id="ff_acelp_decode_8bit_to_1st_delay3" title='ff_acelp_decode_8bit_to_1st_delay3' data-ref="ff_acelp_decode_8bit_to_1st_delay3">ff_acelp_decode_8bit_to_1st_delay3</dfn>(<em>int</em> <dfn class="local col8 decl" id="48ac_index" title='ac_index' data-type='int' data-ref="48ac_index">ac_index</dfn>)</td></tr>
+<tr><th id="33">33</th><td>{</td></tr>
+<tr><th id="34">34</th><td>    <a class="local col8 ref" href="#48ac_index" title='ac_index' data-ref="48ac_index">ac_index</a> += <var>58</var>;</td></tr>
+<tr><th id="35">35</th><td>    <b>if</b>(<a class="local col8 ref" href="#48ac_index" title='ac_index' data-ref="48ac_index">ac_index</a> &gt; <var>254</var>)</td></tr>
+<tr><th id="36">36</th><td>        <a class="local col8 ref" href="#48ac_index" title='ac_index' data-ref="48ac_index">ac_index</a> = <var>3</var> * <a class="local col8 ref" href="#48ac_index" title='ac_index' data-ref="48ac_index">ac_index</a> - <var>510</var>;</td></tr>
+<tr><th id="37">37</th><td>    <b>return</b> <a class="local col8 ref" href="#48ac_index" title='ac_index' data-ref="48ac_index">ac_index</a>;</td></tr>
+<tr><th id="38">38</th><td>}</td></tr>
+<tr><th id="39">39</th><td></td></tr>
+<tr><th id="40">40</th><td><em>int</em> <dfn class="decl def" id="ff_acelp_decode_4bit_to_2nd_delay3" title='ff_acelp_decode_4bit_to_2nd_delay3' data-ref="ff_acelp_decode_4bit_to_2nd_delay3">ff_acelp_decode_4bit_to_2nd_delay3</dfn>(</td></tr>
+<tr><th id="41">41</th><td>        <em>int</em> <dfn class="local col9 decl" id="49ac_index" title='ac_index' data-type='int' data-ref="49ac_index">ac_index</dfn>,</td></tr>
+<tr><th id="42">42</th><td>        <em>int</em> <dfn class="local col0 decl" id="50pitch_delay_min" title='pitch_delay_min' data-type='int' data-ref="50pitch_delay_min">pitch_delay_min</dfn>)</td></tr>
+<tr><th id="43">43</th><td>{</td></tr>
+<tr><th id="44">44</th><td>    <b>if</b>(<a class="local col9 ref" href="#49ac_index" title='ac_index' data-ref="49ac_index">ac_index</a> &lt; <var>4</var>)</td></tr>
+<tr><th id="45">45</th><td>        <b>return</b> <var>3</var> * (<a class="local col9 ref" href="#49ac_index" title='ac_index' data-ref="49ac_index">ac_index</a> + <a class="local col0 ref" href="#50pitch_delay_min" title='pitch_delay_min' data-ref="50pitch_delay_min">pitch_delay_min</a>);</td></tr>
+<tr><th id="46">46</th><td>    <b>else</b> <b>if</b>(<a class="local col9 ref" href="#49ac_index" title='ac_index' data-ref="49ac_index">ac_index</a> &lt; <var>12</var>)</td></tr>
+<tr><th id="47">47</th><td>        <b>return</b> <var>3</var> * <a class="local col0 ref" href="#50pitch_delay_min" title='pitch_delay_min' data-ref="50pitch_delay_min">pitch_delay_min</a> + <a class="local col9 ref" href="#49ac_index" title='ac_index' data-ref="49ac_index">ac_index</a> + <var>6</var>;</td></tr>
+<tr><th id="48">48</th><td>    <b>else</b></td></tr>
+<tr><th id="49">49</th><td>        <b>return</b> <var>3</var> * (<a class="local col9 ref" href="#49ac_index" title='ac_index' data-ref="49ac_index">ac_index</a> + <a class="local col0 ref" href="#50pitch_delay_min" title='pitch_delay_min' data-ref="50pitch_delay_min">pitch_delay_min</a>) - <var>18</var>;</td></tr>
+<tr><th id="50">50</th><td>}</td></tr>
+<tr><th id="51">51</th><td></td></tr>
+<tr><th id="52">52</th><td><em>int</em> <dfn class="decl def" id="ff_acelp_decode_5_6_bit_to_2nd_delay3" title='ff_acelp_decode_5_6_bit_to_2nd_delay3' data-ref="ff_acelp_decode_5_6_bit_to_2nd_delay3">ff_acelp_decode_5_6_bit_to_2nd_delay3</dfn>(</td></tr>
+<tr><th id="53">53</th><td>        <em>int</em> <dfn class="local col1 decl" id="51ac_index" title='ac_index' data-type='int' data-ref="51ac_index">ac_index</dfn>,</td></tr>
+<tr><th id="54">54</th><td>        <em>int</em> <dfn class="local col2 decl" id="52pitch_delay_min" title='pitch_delay_min' data-type='int' data-ref="52pitch_delay_min">pitch_delay_min</dfn>)</td></tr>
+<tr><th id="55">55</th><td>{</td></tr>
+<tr><th id="56">56</th><td>        <b>return</b> <var>3</var> * <a class="local col2 ref" href="#52pitch_delay_min" title='pitch_delay_min' data-ref="52pitch_delay_min">pitch_delay_min</a> + <a class="local col1 ref" href="#51ac_index" title='ac_index' data-ref="51ac_index">ac_index</a> - <var>2</var>;</td></tr>
+<tr><th id="57">57</th><td>}</td></tr>
+<tr><th id="58">58</th><td></td></tr>
+<tr><th id="59">59</th><td><em>int</em> <dfn class="decl def" id="ff_acelp_decode_9bit_to_1st_delay6" title='ff_acelp_decode_9bit_to_1st_delay6' data-ref="ff_acelp_decode_9bit_to_1st_delay6">ff_acelp_decode_9bit_to_1st_delay6</dfn>(<em>int</em> <dfn class="local col3 decl" id="53ac_index" title='ac_index' data-type='int' data-ref="53ac_index">ac_index</dfn>)</td></tr>
+<tr><th id="60">60</th><td>{</td></tr>
+<tr><th id="61">61</th><td>    <b>if</b>(<a class="local col3 ref" href="#53ac_index" title='ac_index' data-ref="53ac_index">ac_index</a> &lt; <var>463</var>)</td></tr>
+<tr><th id="62">62</th><td>        <b>return</b> <a class="local col3 ref" href="#53ac_index" title='ac_index' data-ref="53ac_index">ac_index</a> + <var>105</var>;</td></tr>
+<tr><th id="63">63</th><td>    <b>else</b></td></tr>
+<tr><th id="64">64</th><td>        <b>return</b> <var>6</var> * (<a class="local col3 ref" href="#53ac_index" title='ac_index' data-ref="53ac_index">ac_index</a> - <var>368</var>);</td></tr>
+<tr><th id="65">65</th><td>}</td></tr>
+<tr><th id="66">66</th><td><em>int</em> <dfn class="decl def" id="ff_acelp_decode_6bit_to_2nd_delay6" title='ff_acelp_decode_6bit_to_2nd_delay6' data-ref="ff_acelp_decode_6bit_to_2nd_delay6">ff_acelp_decode_6bit_to_2nd_delay6</dfn>(</td></tr>
+<tr><th id="67">67</th><td>        <em>int</em> <dfn class="local col4 decl" id="54ac_index" title='ac_index' data-type='int' data-ref="54ac_index">ac_index</dfn>,</td></tr>
+<tr><th id="68">68</th><td>        <em>int</em> <dfn class="local col5 decl" id="55pitch_delay_min" title='pitch_delay_min' data-type='int' data-ref="55pitch_delay_min">pitch_delay_min</dfn>)</td></tr>
+<tr><th id="69">69</th><td>{</td></tr>
+<tr><th id="70">70</th><td>    <b>return</b> <var>6</var> * <a class="local col5 ref" href="#55pitch_delay_min" title='pitch_delay_min' data-ref="55pitch_delay_min">pitch_delay_min</a> + <a class="local col4 ref" href="#54ac_index" title='ac_index' data-ref="54ac_index">ac_index</a> - <var>3</var>;</td></tr>
+<tr><th id="71">71</th><td>}</td></tr>
+<tr><th id="72">72</th><td></td></tr>
+<tr><th id="73">73</th><td><em>void</em> <dfn class="decl def" id="ff_acelp_update_past_gain" title='ff_acelp_update_past_gain' data-ref="ff_acelp_update_past_gain">ff_acelp_update_past_gain</dfn>(</td></tr>
+<tr><th id="74">74</th><td>    <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a>* <dfn class="local col6 decl" id="56quant_energy" title='quant_energy' data-type='int16_t *' data-ref="56quant_energy">quant_energy</dfn>,</td></tr>
+<tr><th id="75">75</th><td>    <em>int</em> <dfn class="local col7 decl" id="57gain_corr_factor" title='gain_corr_factor' data-type='int' data-ref="57gain_corr_factor">gain_corr_factor</dfn>,</td></tr>
+<tr><th id="76">76</th><td>    <em>int</em> <dfn class="local col8 decl" id="58log2_ma_pred_order" title='log2_ma_pred_order' data-type='int' data-ref="58log2_ma_pred_order">log2_ma_pred_order</dfn>,</td></tr>
+<tr><th id="77">77</th><td>    <em>int</em> <dfn class="local col9 decl" id="59erasure" title='erasure' data-type='int' data-ref="59erasure">erasure</dfn>)</td></tr>
+<tr><th id="78">78</th><td>{</td></tr>
+<tr><th id="79">79</th><td>    <em>int</em> <dfn class="local col0 decl" id="60i" title='i' data-type='int' data-ref="60i">i</dfn>;</td></tr>
+<tr><th id="80">80</th><td>    <em>int</em> <dfn class="local col1 decl" id="61avg_gain" title='avg_gain' data-type='int' data-ref="61avg_gain">avg_gain</dfn>=<a class="local col6 ref" href="#56quant_energy" title='quant_energy' data-ref="56quant_energy">quant_energy</a>[(<var>1</var> &lt;&lt; <a class="local col8 ref" href="#58log2_ma_pred_order" title='log2_ma_pred_order' data-ref="58log2_ma_pred_order">log2_ma_pred_order</a>) - <var>1</var>]; <i>// (5.10)</i></td></tr>
+<tr><th id="81">81</th><td></td></tr>
+<tr><th id="82">82</th><td>    <b>for</b>(<a class="local col0 ref" href="#60i" title='i' data-ref="60i">i</a>=(<var>1</var> &lt;&lt; <a class="local col8 ref" href="#58log2_ma_pred_order" title='log2_ma_pred_order' data-ref="58log2_ma_pred_order">log2_ma_pred_order</a>) - <var>1</var>; <a class="local col0 ref" href="#60i" title='i' data-ref="60i">i</a>&gt;<var>0</var>; <a class="local col0 ref" href="#60i" title='i' data-ref="60i">i</a>--)</td></tr>
+<tr><th id="83">83</th><td>    {</td></tr>
+<tr><th id="84">84</th><td>        <a class="local col1 ref" href="#61avg_gain" title='avg_gain' data-ref="61avg_gain">avg_gain</a>       += <a class="local col6 ref" href="#56quant_energy" title='quant_energy' data-ref="56quant_energy">quant_energy</a>[<a class="local col0 ref" href="#60i" title='i' data-ref="60i">i</a>-<var>1</var>];</td></tr>
+<tr><th id="85">85</th><td>        <a class="local col6 ref" href="#56quant_energy" title='quant_energy' data-ref="56quant_energy">quant_energy</a>[<a class="local col0 ref" href="#60i" title='i' data-ref="60i">i</a>] = <a class="local col6 ref" href="#56quant_energy" title='quant_energy' data-ref="56quant_energy">quant_energy</a>[<a class="local col0 ref" href="#60i" title='i' data-ref="60i">i</a>-<var>1</var>];</td></tr>
+<tr><th id="86">86</th><td>    }</td></tr>
+<tr><th id="87">87</th><td></td></tr>
+<tr><th id="88">88</th><td>    <b>if</b>(<a class="local col9 ref" href="#59erasure" title='erasure' data-ref="59erasure">erasure</a>)</td></tr>
+<tr><th id="89">89</th><td>        <a class="local col6 ref" href="#56quant_energy" title='quant_energy' data-ref="56quant_energy">quant_energy</a>[<var>0</var>] = <a class="macro" href="../libavutil/common.h.html#94" title="((avg_gain &gt;&gt; log2_ma_pred_order) &gt; (-10240) ? (avg_gain &gt;&gt; log2_ma_pred_order) : (-10240))" data-ref="_M/FFMAX">FFMAX</a>(<a class="local col1 ref" href="#61avg_gain" title='avg_gain' data-ref="61avg_gain">avg_gain</a> &gt;&gt; <a class="local col8 ref" href="#58log2_ma_pred_order" title='log2_ma_pred_order' data-ref="58log2_ma_pred_order">log2_ma_pred_order</a>, -<var>10240</var>) - <var>4096</var>; <i>// -10 and -4 in (5.10)</i></td></tr>
+<tr><th id="90">90</th><td>    <b>else</b></td></tr>
+<tr><th id="91">91</th><td>        <a class="local col6 ref" href="#56quant_energy" title='quant_energy' data-ref="56quant_energy">quant_energy</a>[<var>0</var>] = (<var>6165</var> * ((<a class="ref" href="celp_math.h.html#ff_log2_q15" title='ff_log2_q15' data-ref="ff_log2_q15">ff_log2_q15</a>(<a class="local col7 ref" href="#57gain_corr_factor" title='gain_corr_factor' data-ref="57gain_corr_factor">gain_corr_factor</a>) &gt;&gt; <var>2</var>) - (<var>13</var> &lt;&lt; <var>13</var>))) &gt;&gt; <var>13</var>;</td></tr>
+<tr><th id="92">92</th><td>}</td></tr>
+<tr><th id="93">93</th><td></td></tr>
+<tr><th id="94">94</th><td><a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> <dfn class="decl def" id="ff_acelp_decode_gain_code" title='ff_acelp_decode_gain_code' data-ref="ff_acelp_decode_gain_code">ff_acelp_decode_gain_code</dfn>(</td></tr>
+<tr><th id="95">95</th><td>    <a class="typedef" href="audiodsp.h.html#AudioDSPContext" title='AudioDSPContext' data-type='struct AudioDSPContext' data-ref="AudioDSPContext">AudioDSPContext</a> *<dfn class="local col2 decl" id="62adsp" title='adsp' data-type='AudioDSPContext *' data-ref="62adsp">adsp</dfn>,</td></tr>
+<tr><th id="96">96</th><td>    <em>int</em> <dfn class="local col3 decl" id="63gain_corr_factor" title='gain_corr_factor' data-type='int' data-ref="63gain_corr_factor">gain_corr_factor</dfn>,</td></tr>
+<tr><th id="97">97</th><td>    <em>const</em> <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a>* <dfn class="local col4 decl" id="64fc_v" title='fc_v' data-type='const int16_t *' data-ref="64fc_v">fc_v</dfn>,</td></tr>
+<tr><th id="98">98</th><td>    <em>int</em> <dfn class="local col5 decl" id="65mr_energy" title='mr_energy' data-type='int' data-ref="65mr_energy">mr_energy</dfn>,</td></tr>
+<tr><th id="99">99</th><td>    <em>const</em> <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a>* <dfn class="local col6 decl" id="66quant_energy" title='quant_energy' data-type='const int16_t *' data-ref="66quant_energy">quant_energy</dfn>,</td></tr>
+<tr><th id="100">100</th><td>    <em>const</em> <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a>* <dfn class="local col7 decl" id="67ma_prediction_coeff" title='ma_prediction_coeff' data-type='const int16_t *' data-ref="67ma_prediction_coeff">ma_prediction_coeff</dfn>,</td></tr>
+<tr><th id="101">101</th><td>    <em>int</em> <dfn class="local col8 decl" id="68subframe_size" title='subframe_size' data-type='int' data-ref="68subframe_size">subframe_size</dfn>,</td></tr>
+<tr><th id="102">102</th><td>    <em>int</em> <dfn class="local col9 decl" id="69ma_pred_order" title='ma_pred_order' data-type='int' data-ref="69ma_pred_order">ma_pred_order</dfn>)</td></tr>
+<tr><th id="103">103</th><td>{</td></tr>
+<tr><th id="104">104</th><td>    <em>int</em> <dfn class="local col0 decl" id="70i" title='i' data-type='int' data-ref="70i">i</dfn>;</td></tr>
+<tr><th id="105">105</th><td></td></tr>
+<tr><th id="106">106</th><td>    <a class="local col5 ref" href="#65mr_energy" title='mr_energy' data-ref="65mr_energy">mr_energy</a> &lt;&lt;= <var>10</var>;</td></tr>
+<tr><th id="107">107</th><td></td></tr>
+<tr><th id="108">108</th><td>    <b>for</b>(<a class="local col0 ref" href="#70i" title='i' data-ref="70i">i</a>=<var>0</var>; <a class="local col0 ref" href="#70i" title='i' data-ref="70i">i</a>&lt;<a class="local col9 ref" href="#69ma_pred_order" title='ma_pred_order' data-ref="69ma_pred_order">ma_pred_order</a>; <a class="local col0 ref" href="#70i" title='i' data-ref="70i">i</a>++)</td></tr>
+<tr><th id="109">109</th><td>        <a class="local col5 ref" href="#65mr_energy" title='mr_energy' data-ref="65mr_energy">mr_energy</a> += <a class="local col6 ref" href="#66quant_energy" title='quant_energy' data-ref="66quant_energy">quant_energy</a>[<a class="local col0 ref" href="#70i" title='i' data-ref="70i">i</a>] * <a class="local col7 ref" href="#67ma_prediction_coeff" title='ma_prediction_coeff' data-ref="67ma_prediction_coeff">ma_prediction_coeff</a>[<a class="local col0 ref" href="#70i" title='i' data-ref="70i">i</a>];</td></tr>
+<tr><th id="110">110</th><td></td></tr>
+<tr><th id="111">111</th><td><u>#<span data-ppcond="111">ifdef</span> <span class="macro" data-ref="_M/G729_BITEXACT">G729_BITEXACT</span></u></td></tr>
+<tr><th id="112">112</th><td>    mr_energy += (((-<var>6165LL</var> * ff_log2(dsp-&gt;scalarproduct_int16(fc_v, fc_v, subframe_size, <var>0</var>))) &gt;&gt; <var>3</var>) &amp; ~<var>0x3ff</var>);</td></tr>
+<tr><th id="113">113</th><td></td></tr>
+<tr><th id="114">114</th><td>    mr_energy = (<var>5439</var> * (mr_energy &gt;&gt; <var>15</var>)) &gt;&gt; <var>8</var>;           <i>// (0.15) = (0.15) * (7.23)</i></td></tr>
+<tr><th id="115">115</th><td></td></tr>
+<tr><th id="116">116</th><td>    <b>return</b> bidir_sal(</td></tr>
+<tr><th id="117">117</th><td>               ((ff_exp2(mr_energy &amp; <var>0x7fff</var>) + <var>16</var>) &gt;&gt; <var>5</var>) * (gain_corr_factor &gt;&gt; <var>1</var>),</td></tr>
+<tr><th id="118">118</th><td>               (mr_energy &gt;&gt; <var>15</var>) - <var>25</var></td></tr>
+<tr><th id="119">119</th><td>           );</td></tr>
+<tr><th id="120">120</th><td><u>#<span data-ppcond="111">else</span></u></td></tr>
+<tr><th id="121">121</th><td>    <a class="local col5 ref" href="#65mr_energy" title='mr_energy' data-ref="65mr_energy">mr_energy</a> = <a class="local col3 ref" href="#63gain_corr_factor" title='gain_corr_factor' data-ref="63gain_corr_factor">gain_corr_factor</a> * <a class="ref" href="../../include/x86_64-linux-gnu/bits/mathcalls.h.html#100" title='exp' data-ref="exp">exp</a>(<a class="macro" href="../../include/math.h.html#371" title="2.30258509299404568402" data-ref="_M/M_LN10">M_LN10</a> / (<var>20</var> &lt;&lt; <var>23</var>) * <a class="local col5 ref" href="#65mr_energy" title='mr_energy' data-ref="65mr_energy">mr_energy</a>) /</td></tr>
+<tr><th id="122">122</th><td>                <a class="ref" href="../../include/x86_64-linux-gnu/bits/mathcalls.h.html#156" title='sqrt' data-ref="sqrt">sqrt</a>(<a class="local col2 ref" href="#62adsp" title='adsp' data-ref="62adsp">adsp</a>-&gt;<a class="ref" href="audiodsp.h.html#AudioDSPContext::scalarproduct_int16" title='AudioDSPContext::scalarproduct_int16' data-ref="AudioDSPContext::scalarproduct_int16">scalarproduct_int16</a>(<a class="local col4 ref" href="#64fc_v" title='fc_v' data-ref="64fc_v">fc_v</a>, <a class="local col4 ref" href="#64fc_v" title='fc_v' data-ref="64fc_v">fc_v</a>, <a class="local col8 ref" href="#68subframe_size" title='subframe_size' data-ref="68subframe_size">subframe_size</a>));</td></tr>
+<tr><th id="123">123</th><td>    <b>return</b> <a class="local col5 ref" href="#65mr_energy" title='mr_energy' data-ref="65mr_energy">mr_energy</a> &gt;&gt; <var>12</var>;</td></tr>
+<tr><th id="124">124</th><td><u>#<span data-ppcond="111">endif</span></u></td></tr>
+<tr><th id="125">125</th><td>}</td></tr>
+<tr><th id="126">126</th><td></td></tr>
+<tr><th id="127">127</th><td><em>float</em> <dfn class="decl def" id="ff_amr_set_fixed_gain" title='ff_amr_set_fixed_gain' data-ref="ff_amr_set_fixed_gain">ff_amr_set_fixed_gain</dfn>(<em>float</em> <dfn class="local col1 decl" id="71fixed_gain_factor" title='fixed_gain_factor' data-type='float' data-ref="71fixed_gain_factor">fixed_gain_factor</dfn>, <em>float</em> <dfn class="local col2 decl" id="72fixed_mean_energy" title='fixed_mean_energy' data-type='float' data-ref="72fixed_mean_energy">fixed_mean_energy</dfn>,</td></tr>
+<tr><th id="128">128</th><td>                            <em>float</em> *<dfn class="local col3 decl" id="73prediction_error" title='prediction_error' data-type='float *' data-ref="73prediction_error">prediction_error</dfn>, <em>float</em> <dfn class="local col4 decl" id="74energy_mean" title='energy_mean' data-type='float' data-ref="74energy_mean">energy_mean</dfn>,</td></tr>
+<tr><th id="129">129</th><td>                            <em>const</em> <em>float</em> *<dfn class="local col5 decl" id="75pred_table" title='pred_table' data-type='const float *' data-ref="75pred_table">pred_table</dfn>)</td></tr>
+<tr><th id="130">130</th><td>{</td></tr>
+<tr><th id="131">131</th><td>    <i>// Equations 66-69:</i></td></tr>
+<tr><th id="132">132</th><td><i>    // ^g_c = ^gamma_gc * 100.05 (predicted dB + mean dB - dB of fixed vector)</i></td></tr>
+<tr><th id="133">133</th><td><i>    // Note 10^(0.05 * -10log(average x2)) = 1/sqrt((average x2)).</i></td></tr>
+<tr><th id="134">134</th><td>    <em>float</em> <dfn class="local col6 decl" id="76val" title='val' data-type='float' data-ref="76val">val</dfn> = <a class="local col1 ref" href="#71fixed_gain_factor" title='fixed_gain_factor' data-ref="71fixed_gain_factor">fixed_gain_factor</a> *</td></tr>
+<tr><th id="135">135</th><td>        <a class="ref" href="../libavutil/ffmath.h.html#ff_exp10" title='ff_exp10' data-ref="ff_exp10">ff_exp10</a>(<var>0.05</var> *</td></tr>
+<tr><th id="136">136</th><td>              (<a class="ref" href="../libavutil/float_dsp.h.html#avpriv_scalarproduct_float_c" title='avpriv_scalarproduct_float_c' data-ref="avpriv_scalarproduct_float_c">avpriv_scalarproduct_float_c</a>(<a class="local col5 ref" href="#75pred_table" title='pred_table' data-ref="75pred_table">pred_table</a>, <a class="local col3 ref" href="#73prediction_error" title='prediction_error' data-ref="73prediction_error">prediction_error</a>, <var>4</var>) +</td></tr>
+<tr><th id="137">137</th><td>               <a class="local col4 ref" href="#74energy_mean" title='energy_mean' data-ref="74energy_mean">energy_mean</a>)) /</td></tr>
+<tr><th id="138">138</th><td>        <a class="ref" href="../../include/x86_64-linux-gnu/bits/mathcalls.h.html#156" title='sqrtf' data-ref="sqrtf">sqrtf</a>(<a class="local col2 ref" href="#72fixed_mean_energy" title='fixed_mean_energy' data-ref="72fixed_mean_energy">fixed_mean_energy</a>);</td></tr>
+<tr><th id="139">139</th><td></td></tr>
+<tr><th id="140">140</th><td>    <i>// update quantified prediction error energy history</i></td></tr>
+<tr><th id="141">141</th><td>    <a class="ref" href="../../include/string.h.html#memmove" title='memmove' data-ref="memmove">memmove</a>(&amp;<a class="local col3 ref" href="#73prediction_error" title='prediction_error' data-ref="73prediction_error">prediction_error</a>[<var>0</var>], &amp;<a class="local col3 ref" href="#73prediction_error" title='prediction_error' data-ref="73prediction_error">prediction_error</a>[<var>1</var>],</td></tr>
+<tr><th id="142">142</th><td>            <var>3</var> * <b>sizeof</b>(<a class="local col3 ref" href="#73prediction_error" title='prediction_error' data-ref="73prediction_error">prediction_error</a>[<var>0</var>]));</td></tr>
+<tr><th id="143">143</th><td>    <a class="local col3 ref" href="#73prediction_error" title='prediction_error' data-ref="73prediction_error">prediction_error</a>[<var>3</var>] = <var>20.0</var> * <a class="ref" href="../../include/x86_64-linux-gnu/bits/mathcalls.h.html#112" title='log10f' data-ref="log10f">log10f</a>(<a class="local col1 ref" href="#71fixed_gain_factor" title='fixed_gain_factor' data-ref="71fixed_gain_factor">fixed_gain_factor</a>);</td></tr>
+<tr><th id="144">144</th><td></td></tr>
+<tr><th id="145">145</th><td>    <b>return</b> <a class="local col6 ref" href="#76val" title='val' data-ref="76val">val</a>;</td></tr>
+<tr><th id="146">146</th><td>}</td></tr>
+<tr><th id="147">147</th><td></td></tr>
+<tr><th id="148">148</th><td><em>void</em> <dfn class="decl def" id="ff_decode_pitch_lag" title='ff_decode_pitch_lag' data-ref="ff_decode_pitch_lag">ff_decode_pitch_lag</dfn>(<em>int</em> *<dfn class="local col7 decl" id="77lag_int" title='lag_int' data-type='int *' data-ref="77lag_int">lag_int</dfn>, <em>int</em> *<dfn class="local col8 decl" id="78lag_frac" title='lag_frac' data-type='int *' data-ref="78lag_frac">lag_frac</dfn>, <em>int</em> <dfn class="local col9 decl" id="79pitch_index" title='pitch_index' data-type='int' data-ref="79pitch_index">pitch_index</dfn>,</td></tr>
+<tr><th id="149">149</th><td>                         <em>const</em> <em>int</em> <dfn class="local col0 decl" id="80prev_lag_int" title='prev_lag_int' data-type='const int' data-ref="80prev_lag_int">prev_lag_int</dfn>, <em>const</em> <em>int</em> <dfn class="local col1 decl" id="81subframe" title='subframe' data-type='const int' data-ref="81subframe">subframe</dfn>,</td></tr>
+<tr><th id="150">150</th><td>                         <em>int</em> <dfn class="local col2 decl" id="82third_as_first" title='third_as_first' data-type='int' data-ref="82third_as_first">third_as_first</dfn>, <em>int</em> <dfn class="local col3 decl" id="83resolution" title='resolution' data-type='int' data-ref="83resolution">resolution</dfn>)</td></tr>
+<tr><th id="151">151</th><td>{</td></tr>
+<tr><th id="152">152</th><td>    <i>/* Note n * 10923 &gt;&gt; 15 is floor(x/3) for 0 &lt;= n &lt;= 32767 */</i></td></tr>
+<tr><th id="153">153</th><td>    <b>if</b> (<a class="local col1 ref" href="#81subframe" title='subframe' data-ref="81subframe">subframe</a> == <var>0</var> || (<a class="local col1 ref" href="#81subframe" title='subframe' data-ref="81subframe">subframe</a> == <var>2</var> &amp;&amp; <a class="local col2 ref" href="#82third_as_first" title='third_as_first' data-ref="82third_as_first">third_as_first</a>)) {</td></tr>
+<tr><th id="154">154</th><td></td></tr>
+<tr><th id="155">155</th><td>        <b>if</b> (<a class="local col9 ref" href="#79pitch_index" title='pitch_index' data-ref="79pitch_index">pitch_index</a> &lt; <var>197</var>)</td></tr>
+<tr><th id="156">156</th><td>            <a class="local col9 ref" href="#79pitch_index" title='pitch_index' data-ref="79pitch_index">pitch_index</a> += <var>59</var>;</td></tr>
+<tr><th id="157">157</th><td>        <b>else</b></td></tr>
+<tr><th id="158">158</th><td>            <a class="local col9 ref" href="#79pitch_index" title='pitch_index' data-ref="79pitch_index">pitch_index</a> = <var>3</var> * <a class="local col9 ref" href="#79pitch_index" title='pitch_index' data-ref="79pitch_index">pitch_index</a> - <var>335</var>;</td></tr>
+<tr><th id="159">159</th><td></td></tr>
+<tr><th id="160">160</th><td>    } <b>else</b> {</td></tr>
+<tr><th id="161">161</th><td>        <b>if</b> (<a class="local col3 ref" href="#83resolution" title='resolution' data-ref="83resolution">resolution</a> == <var>4</var>) {</td></tr>
+<tr><th id="162">162</th><td>            <em>int</em> <dfn class="local col4 decl" id="84search_range_min" title='search_range_min' data-type='int' data-ref="84search_range_min">search_range_min</dfn> = <a class="macro" href="../libavutil/common.h.html#481" title="av_clip_c" data-ref="_M/av_clip">av_clip</a>(<a class="local col0 ref" href="#80prev_lag_int" title='prev_lag_int' data-ref="80prev_lag_int">prev_lag_int</a> - <var>5</var>, <a class="macro" href="acelp_pitch_delay.h.html#30" title="20" data-ref="_M/PITCH_DELAY_MIN">PITCH_DELAY_MIN</a>,</td></tr>
+<tr><th id="163">163</th><td>                                           <a class="macro" href="acelp_pitch_delay.h.html#31" title="143" data-ref="_M/PITCH_DELAY_MAX">PITCH_DELAY_MAX</a> - <var>9</var>);</td></tr>
+<tr><th id="164">164</th><td></td></tr>
+<tr><th id="165">165</th><td>            <i>// decoding with 4-bit resolution</i></td></tr>
+<tr><th id="166">166</th><td>            <b>if</b> (<a class="local col9 ref" href="#79pitch_index" title='pitch_index' data-ref="79pitch_index">pitch_index</a> &lt; <var>4</var>) {</td></tr>
+<tr><th id="167">167</th><td>                <i>// integer only precision for [search_range_min, search_range_min+3]</i></td></tr>
+<tr><th id="168">168</th><td>                <a class="local col9 ref" href="#79pitch_index" title='pitch_index' data-ref="79pitch_index">pitch_index</a> = <var>3</var> * (<a class="local col9 ref" href="#79pitch_index" title='pitch_index' data-ref="79pitch_index">pitch_index</a> + <a class="local col4 ref" href="#84search_range_min" title='search_range_min' data-ref="84search_range_min">search_range_min</a>) + <var>1</var>;</td></tr>
+<tr><th id="169">169</th><td>            } <b>else</b> <b>if</b> (<a class="local col9 ref" href="#79pitch_index" title='pitch_index' data-ref="79pitch_index">pitch_index</a> &lt; <var>12</var>) {</td></tr>
+<tr><th id="170">170</th><td>                <i>// 1/3 fractional precision for [search_range_min+3 1/3, search_range_min+5 2/3]</i></td></tr>
+<tr><th id="171">171</th><td>                <a class="local col9 ref" href="#79pitch_index" title='pitch_index' data-ref="79pitch_index">pitch_index</a> += <var>3</var> * <a class="local col4 ref" href="#84search_range_min" title='search_range_min' data-ref="84search_range_min">search_range_min</a> + <var>7</var>;</td></tr>
+<tr><th id="172">172</th><td>            } <b>else</b> {</td></tr>
+<tr><th id="173">173</th><td>                <i>// integer only precision for [search_range_min+6, search_range_min+9]</i></td></tr>
+<tr><th id="174">174</th><td>                <a class="local col9 ref" href="#79pitch_index" title='pitch_index' data-ref="79pitch_index">pitch_index</a> = <var>3</var> * (<a class="local col9 ref" href="#79pitch_index" title='pitch_index' data-ref="79pitch_index">pitch_index</a> + <a class="local col4 ref" href="#84search_range_min" title='search_range_min' data-ref="84search_range_min">search_range_min</a> - <var>6</var>) + <var>1</var>;</td></tr>
+<tr><th id="175">175</th><td>            }</td></tr>
+<tr><th id="176">176</th><td>        } <b>else</b> {</td></tr>
+<tr><th id="177">177</th><td>            <i>// decoding with 5 or 6 bit resolution, 1/3 fractional precision</i></td></tr>
+<tr><th id="178">178</th><td>            <a class="local col9 ref" href="#79pitch_index" title='pitch_index' data-ref="79pitch_index">pitch_index</a>--;</td></tr>
+<tr><th id="179">179</th><td></td></tr>
+<tr><th id="180">180</th><td>            <b>if</b> (<a class="local col3 ref" href="#83resolution" title='resolution' data-ref="83resolution">resolution</a> == <var>5</var>) {</td></tr>
+<tr><th id="181">181</th><td>                <a class="local col9 ref" href="#79pitch_index" title='pitch_index' data-ref="79pitch_index">pitch_index</a> += <var>3</var> * <a class="macro" href="../libavutil/common.h.html#481" title="av_clip_c" data-ref="_M/av_clip">av_clip</a>(<a class="local col0 ref" href="#80prev_lag_int" title='prev_lag_int' data-ref="80prev_lag_int">prev_lag_int</a> - <var>10</var>, <a class="macro" href="acelp_pitch_delay.h.html#30" title="20" data-ref="_M/PITCH_DELAY_MIN">PITCH_DELAY_MIN</a>,</td></tr>
+<tr><th id="182">182</th><td>                                           <a class="macro" href="acelp_pitch_delay.h.html#31" title="143" data-ref="_M/PITCH_DELAY_MAX">PITCH_DELAY_MAX</a> - <var>19</var>);</td></tr>
+<tr><th id="183">183</th><td>            } <b>else</b></td></tr>
+<tr><th id="184">184</th><td>                <a class="local col9 ref" href="#79pitch_index" title='pitch_index' data-ref="79pitch_index">pitch_index</a> += <var>3</var> * <a class="macro" href="../libavutil/common.h.html#481" title="av_clip_c" data-ref="_M/av_clip">av_clip</a>(<a class="local col0 ref" href="#80prev_lag_int" title='prev_lag_int' data-ref="80prev_lag_int">prev_lag_int</a> - <var>5</var>, <a class="macro" href="acelp_pitch_delay.h.html#30" title="20" data-ref="_M/PITCH_DELAY_MIN">PITCH_DELAY_MIN</a>,</td></tr>
+<tr><th id="185">185</th><td>                                           <a class="macro" href="acelp_pitch_delay.h.html#31" title="143" data-ref="_M/PITCH_DELAY_MAX">PITCH_DELAY_MAX</a> - <var>9</var>);</td></tr>
+<tr><th id="186">186</th><td>        }</td></tr>
+<tr><th id="187">187</th><td>    }</td></tr>
+<tr><th id="188">188</th><td>    *<a class="local col7 ref" href="#77lag_int" title='lag_int' data-ref="77lag_int">lag_int</a>  = <a class="local col9 ref" href="#79pitch_index" title='pitch_index' data-ref="79pitch_index">pitch_index</a> * <var>10923</var> &gt;&gt; <var>15</var>;</td></tr>
+<tr><th id="189">189</th><td>    *<a class="local col8 ref" href="#78lag_frac" title='lag_frac' data-ref="78lag_frac">lag_frac</a> = <a class="local col9 ref" href="#79pitch_index" title='pitch_index' data-ref="79pitch_index">pitch_index</a> - <var>3</var> * *<a class="local col7 ref" href="#77lag_int" title='lag_int' data-ref="77lag_int">lag_int</a> - <var>1</var>;</td></tr>
+<tr><th id="190">190</th><td>}</td></tr>
+<tr><th id="191">191</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

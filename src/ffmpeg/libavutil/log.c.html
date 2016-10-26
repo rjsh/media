@@ -1,0 +1,459 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>log.c source code [ffmpeg/libavutil/log.c] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavutil/log.c'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavutil</a>/<a href='log.c.html'>log.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * log functions</i></td></tr>
+<tr><th id="3">3</th><td><i> * Copyright (c) 2003 Michel Bardiaux</i></td></tr>
+<tr><th id="4">4</th><td><i> *</i></td></tr>
+<tr><th id="5">5</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="8">8</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="9">9</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="10">10</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="11">11</th><td><i> *</i></td></tr>
+<tr><th id="12">12</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="13">13</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="14">14</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="15">15</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="16">16</th><td><i> *</i></td></tr>
+<tr><th id="17">17</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="18">18</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="19">19</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="20">20</th><td><i> */</i></td></tr>
+<tr><th id="21">21</th><td></td></tr>
+<tr><th id="22">22</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="23">23</th><td><i class="doc"> *<span class="command"> @file</span></i></td></tr>
+<tr><th id="24">24</th><td><i class="doc"> * logging functions</i></td></tr>
+<tr><th id="25">25</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="26">26</th><td></td></tr>
+<tr><th id="27">27</th><td><u>#include <a href="../config.h.html">"config.h"</a></u></td></tr>
+<tr><th id="28">28</th><td></td></tr>
+<tr><th id="29">29</th><td><u>#<span data-ppcond="29">if</span> <a class="macro" href="../config.h.html#243" title="1" data-ref="_M/HAVE_UNISTD_H">HAVE_UNISTD_H</a></u></td></tr>
+<tr><th id="30">30</th><td><u>#include <a href="../../include/unistd.h.html">&lt;unistd.h&gt;</a></u></td></tr>
+<tr><th id="31">31</th><td><u>#<span data-ppcond="29">endif</span></u></td></tr>
+<tr><th id="32">32</th><td><u>#<span data-ppcond="32">if</span> <a class="macro" href="../config.h.html#220" title="0" data-ref="_M/HAVE_IO_H">HAVE_IO_H</a></u></td></tr>
+<tr><th id="33">33</th><td><u>#include &lt;io.h&gt;</u></td></tr>
+<tr><th id="34">34</th><td><u>#<span data-ppcond="32">endif</span></u></td></tr>
+<tr><th id="35">35</th><td><u>#include &lt;stdarg.h&gt;</u></td></tr>
+<tr><th id="36">36</th><td><u>#include <a href="../../include/stdlib.h.html">&lt;stdlib.h&gt;</a></u></td></tr>
+<tr><th id="37">37</th><td><u>#include <a href="avutil.h.html">"avutil.h"</a></u></td></tr>
+<tr><th id="38">38</th><td><u>#include <a href="bprint.h.html">"bprint.h"</a></u></td></tr>
+<tr><th id="39">39</th><td><u>#include <a href="common.h.html">"common.h"</a></u></td></tr>
+<tr><th id="40">40</th><td><u>#include <a href="internal.h.html">"internal.h"</a></u></td></tr>
+<tr><th id="41">41</th><td><u>#include <a href="log.h.html">"log.h"</a></u></td></tr>
+<tr><th id="42">42</th><td></td></tr>
+<tr><th id="43">43</th><td><u>#<span data-ppcond="43">if</span> <a class="macro" href="../config.h.html#332" title="1" data-ref="_M/HAVE_PTHREADS">HAVE_PTHREADS</a></u></td></tr>
+<tr><th id="44">44</th><td><u>#include <a href="../../include/pthread.h.html">&lt;pthread.h&gt;</a></u></td></tr>
+<tr><th id="45">45</th><td><em>static</em> <a class="typedef" href="../../include/x86_64-linux-gnu/bits/pthreadtypes.h.html#pthread_mutex_t" title='pthread_mutex_t' data-type='union pthread_mutex_t' data-ref="pthread_mutex_t">pthread_mutex_t</a> <dfn class="tu decl def" id="mutex" title='mutex' data-type='pthread_mutex_t' data-ref="mutex">mutex</dfn> = <a class="macro" href="../../include/pthread.h.html#95" title="{ { 0, 0, 0, 0, 0, 0, 0, { 0, 0 } } }" data-ref="_M/PTHREAD_MUTEX_INITIALIZER">PTHREAD_MUTEX_INITIALIZER</a>;</td></tr>
+<tr><th id="46">46</th><td><u>#<span data-ppcond="43">endif</span></u></td></tr>
+<tr><th id="47">47</th><td></td></tr>
+<tr><th id="48">48</th><td><u>#define <dfn class="macro" id="_M/LINE_SZ" data-ref="_M/LINE_SZ">LINE_SZ</dfn> 1024</u></td></tr>
+<tr><th id="49">49</th><td></td></tr>
+<tr><th id="50">50</th><td><u>#<span data-ppcond="50">if</span> <a class="macro" href="../config.h.html#244" title="0" data-ref="_M/HAVE_VALGRIND_VALGRIND_H">HAVE_VALGRIND_VALGRIND_H</a></u></td></tr>
+<tr><th id="51">51</th><td><u>#include &lt;valgrind/valgrind.h&gt;</u></td></tr>
+<tr><th id="52">52</th><td><i>/* this is the log level at which valgrind will output a full backtrace */</i></td></tr>
+<tr><th id="53">53</th><td><u>#define BACKTRACE_LOGLEVEL AV_LOG_ERROR</u></td></tr>
+<tr><th id="54">54</th><td><u>#<span data-ppcond="50">endif</span></u></td></tr>
+<tr><th id="55">55</th><td></td></tr>
+<tr><th id="56">56</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="av_log_level" title='av_log_level' data-type='int' data-ref="av_log_level">av_log_level</dfn> = <a class="macro" href="log.h.html#187" title="32" data-ref="_M/AV_LOG_INFO">AV_LOG_INFO</a>;</td></tr>
+<tr><th id="57">57</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="flags" title='flags' data-type='int' data-ref="flags">flags</dfn>;</td></tr>
+<tr><th id="58">58</th><td></td></tr>
+<tr><th id="59">59</th><td><u>#define <dfn class="macro" id="_M/NB_LEVELS" data-ref="_M/NB_LEVELS">NB_LEVELS</dfn> 8</u></td></tr>
+<tr><th id="60">60</th><td><u>#<span data-ppcond="60">if</span> defined(<span class="macro" data-ref="_M/_WIN32">_WIN32</span>) &amp;&amp; !defined(<span class="macro" data-ref="_M/__MINGW32CE__">__MINGW32CE__</span>) &amp;&amp; <a class="macro" href="../config.h.html#320" title="0" data-ref="_M/HAVE_SETCONSOLETEXTATTRIBUTE">HAVE_SETCONSOLETEXTATTRIBUTE</a></u></td></tr>
+<tr><th id="61">61</th><td><u>#include &lt;windows.h&gt;</u></td></tr>
+<tr><th id="62">62</th><td><em>static</em> <em>const</em> uint8_t color[<var>16</var> + AV_CLASS_CATEGORY_NB] = {</td></tr>
+<tr><th id="63">63</th><td>    [AV_LOG_PANIC  /<var>8</var>] = <var>12</var>,</td></tr>
+<tr><th id="64">64</th><td>    [AV_LOG_FATAL  /<var>8</var>] = <var>12</var>,</td></tr>
+<tr><th id="65">65</th><td>    [AV_LOG_ERROR  /<var>8</var>] = <var>12</var>,</td></tr>
+<tr><th id="66">66</th><td>    [AV_LOG_WARNING/<var>8</var>] = <var>14</var>,</td></tr>
+<tr><th id="67">67</th><td>    [AV_LOG_INFO   /<var>8</var>] =  <var>7</var>,</td></tr>
+<tr><th id="68">68</th><td>    [AV_LOG_VERBOSE/<var>8</var>] = <var>10</var>,</td></tr>
+<tr><th id="69">69</th><td>    [AV_LOG_DEBUG  /<var>8</var>] = <var>10</var>,</td></tr>
+<tr><th id="70">70</th><td>    [AV_LOG_TRACE  /<var>8</var>] = <var>8</var>,</td></tr>
+<tr><th id="71">71</th><td>    [<var>16</var>+AV_CLASS_CATEGORY_NA              ] =  <var>7</var>,</td></tr>
+<tr><th id="72">72</th><td>    [<var>16</var>+AV_CLASS_CATEGORY_INPUT           ] = <var>13</var>,</td></tr>
+<tr><th id="73">73</th><td>    [<var>16</var>+AV_CLASS_CATEGORY_OUTPUT          ] =  <var>5</var>,</td></tr>
+<tr><th id="74">74</th><td>    [<var>16</var>+AV_CLASS_CATEGORY_MUXER           ] = <var>13</var>,</td></tr>
+<tr><th id="75">75</th><td>    [<var>16</var>+AV_CLASS_CATEGORY_DEMUXER         ] =  <var>5</var>,</td></tr>
+<tr><th id="76">76</th><td>    [<var>16</var>+AV_CLASS_CATEGORY_ENCODER         ] = <var>11</var>,</td></tr>
+<tr><th id="77">77</th><td>    [<var>16</var>+AV_CLASS_CATEGORY_DECODER         ] =  <var>3</var>,</td></tr>
+<tr><th id="78">78</th><td>    [<var>16</var>+AV_CLASS_CATEGORY_FILTER          ] = <var>10</var>,</td></tr>
+<tr><th id="79">79</th><td>    [<var>16</var>+AV_CLASS_CATEGORY_BITSTREAM_FILTER] =  <var>9</var>,</td></tr>
+<tr><th id="80">80</th><td>    [<var>16</var>+AV_CLASS_CATEGORY_SWSCALER        ] =  <var>7</var>,</td></tr>
+<tr><th id="81">81</th><td>    [<var>16</var>+AV_CLASS_CATEGORY_SWRESAMPLER     ] =  <var>7</var>,</td></tr>
+<tr><th id="82">82</th><td>    [<var>16</var>+AV_CLASS_CATEGORY_DEVICE_VIDEO_OUTPUT ] = <var>13</var>,</td></tr>
+<tr><th id="83">83</th><td>    [<var>16</var>+AV_CLASS_CATEGORY_DEVICE_VIDEO_INPUT  ] = <var>5</var>,</td></tr>
+<tr><th id="84">84</th><td>    [<var>16</var>+AV_CLASS_CATEGORY_DEVICE_AUDIO_OUTPUT ] = <var>13</var>,</td></tr>
+<tr><th id="85">85</th><td>    [<var>16</var>+AV_CLASS_CATEGORY_DEVICE_AUDIO_INPUT  ] = <var>5</var>,</td></tr>
+<tr><th id="86">86</th><td>    [<var>16</var>+AV_CLASS_CATEGORY_DEVICE_OUTPUT       ] = <var>13</var>,</td></tr>
+<tr><th id="87">87</th><td>    [<var>16</var>+AV_CLASS_CATEGORY_DEVICE_INPUT        ] = <var>5</var>,</td></tr>
+<tr><th id="88">88</th><td>};</td></tr>
+<tr><th id="89">89</th><td></td></tr>
+<tr><th id="90">90</th><td><em>static</em> int16_t background, attr_orig;</td></tr>
+<tr><th id="91">91</th><td><em>static</em> HANDLE con;</td></tr>
+<tr><th id="92">92</th><td><u>#<span data-ppcond="60">else</span></u></td></tr>
+<tr><th id="93">93</th><td></td></tr>
+<tr><th id="94">94</th><td><em>static</em> <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a> <dfn class="tu decl def" id="color" title='color' data-type='const uint32_t [62]' data-ref="color">color</dfn>[<var>16</var> + <a class="enum" href="log.h.html#::AV_CLASS_CATEGORY_NB" title='::AV_CLASS_CATEGORY_NB' data-ref="::AV_CLASS_CATEGORY_NB">AV_CLASS_CATEGORY_NB</a>] = {</td></tr>
+<tr><th id="95">95</th><td>    [<a class="macro" href="log.h.html#163" title="0" data-ref="_M/AV_LOG_PANIC">AV_LOG_PANIC</a>  /<var>8</var>] =  <var>52</var> &lt;&lt; <var>16</var> | <var>196</var> &lt;&lt; <var>8</var> | <var>0x41</var>,</td></tr>
+<tr><th id="96">96</th><td>    [<a class="macro" href="log.h.html#170" title="8" data-ref="_M/AV_LOG_FATAL">AV_LOG_FATAL</a>  /<var>8</var>] = <var>208</var> &lt;&lt;  <var>8</var> | <var>0x41</var>,</td></tr>
+<tr><th id="97">97</th><td>    [<a class="macro" href="log.h.html#176" title="16" data-ref="_M/AV_LOG_ERROR">AV_LOG_ERROR</a>  /<var>8</var>] = <var>196</var> &lt;&lt;  <var>8</var> | <var>0x11</var>,</td></tr>
+<tr><th id="98">98</th><td>    [<a class="macro" href="log.h.html#182" title="24" data-ref="_M/AV_LOG_WARNING">AV_LOG_WARNING</a>/<var>8</var>] = <var>226</var> &lt;&lt;  <var>8</var> | <var>0x03</var>,</td></tr>
+<tr><th id="99">99</th><td>    [<a class="macro" href="log.h.html#187" title="32" data-ref="_M/AV_LOG_INFO">AV_LOG_INFO</a>   /<var>8</var>] = <var>253</var> &lt;&lt;  <var>8</var> | <var>0x09</var>,</td></tr>
+<tr><th id="100">100</th><td>    [<a class="macro" href="log.h.html#192" title="40" data-ref="_M/AV_LOG_VERBOSE">AV_LOG_VERBOSE</a>/<var>8</var>] =  <var>40</var> &lt;&lt;  <var>8</var> | <var>0x02</var>,</td></tr>
+<tr><th id="101">101</th><td>    [<a class="macro" href="log.h.html#197" title="48" data-ref="_M/AV_LOG_DEBUG">AV_LOG_DEBUG</a>  /<var>8</var>] =  <var>34</var> &lt;&lt;  <var>8</var> | <var>0x02</var>,</td></tr>
+<tr><th id="102">102</th><td>    [<a class="macro" href="log.h.html#202" title="56" data-ref="_M/AV_LOG_TRACE">AV_LOG_TRACE</a>  /<var>8</var>] =  <var>34</var> &lt;&lt;  <var>8</var> | <var>0x07</var>,</td></tr>
+<tr><th id="103">103</th><td>    [<var>16</var>+<a class="enum" href="log.h.html#::AV_CLASS_CATEGORY_NA" title='::AV_CLASS_CATEGORY_NA' data-ref="::AV_CLASS_CATEGORY_NA">AV_CLASS_CATEGORY_NA</a>              ] = <var>250</var> &lt;&lt; <var>8</var> | <var>0x09</var>,</td></tr>
+<tr><th id="104">104</th><td>    [<var>16</var>+<a class="enum" href="log.h.html#::AV_CLASS_CATEGORY_INPUT" title='::AV_CLASS_CATEGORY_INPUT' data-ref="::AV_CLASS_CATEGORY_INPUT">AV_CLASS_CATEGORY_INPUT</a>           ] = <var>219</var> &lt;&lt; <var>8</var> | <var>0x15</var>,</td></tr>
+<tr><th id="105">105</th><td>    [<var>16</var>+<a class="enum" href="log.h.html#::AV_CLASS_CATEGORY_OUTPUT" title='::AV_CLASS_CATEGORY_OUTPUT' data-ref="::AV_CLASS_CATEGORY_OUTPUT">AV_CLASS_CATEGORY_OUTPUT</a>          ] = <var>201</var> &lt;&lt; <var>8</var> | <var>0x05</var>,</td></tr>
+<tr><th id="106">106</th><td>    [<var>16</var>+<a class="enum" href="log.h.html#::AV_CLASS_CATEGORY_MUXER" title='::AV_CLASS_CATEGORY_MUXER' data-ref="::AV_CLASS_CATEGORY_MUXER">AV_CLASS_CATEGORY_MUXER</a>           ] = <var>213</var> &lt;&lt; <var>8</var> | <var>0x15</var>,</td></tr>
+<tr><th id="107">107</th><td>    [<var>16</var>+<a class="enum" href="log.h.html#::AV_CLASS_CATEGORY_DEMUXER" title='::AV_CLASS_CATEGORY_DEMUXER' data-ref="::AV_CLASS_CATEGORY_DEMUXER">AV_CLASS_CATEGORY_DEMUXER</a>         ] = <var>207</var> &lt;&lt; <var>8</var> | <var>0x05</var>,</td></tr>
+<tr><th id="108">108</th><td>    [<var>16</var>+<a class="enum" href="log.h.html#::AV_CLASS_CATEGORY_ENCODER" title='::AV_CLASS_CATEGORY_ENCODER' data-ref="::AV_CLASS_CATEGORY_ENCODER">AV_CLASS_CATEGORY_ENCODER</a>         ] =  <var>51</var> &lt;&lt; <var>8</var> | <var>0x16</var>,</td></tr>
+<tr><th id="109">109</th><td>    [<var>16</var>+<a class="enum" href="log.h.html#::AV_CLASS_CATEGORY_DECODER" title='::AV_CLASS_CATEGORY_DECODER' data-ref="::AV_CLASS_CATEGORY_DECODER">AV_CLASS_CATEGORY_DECODER</a>         ] =  <var>39</var> &lt;&lt; <var>8</var> | <var>0x06</var>,</td></tr>
+<tr><th id="110">110</th><td>    [<var>16</var>+<a class="enum" href="log.h.html#::AV_CLASS_CATEGORY_FILTER" title='::AV_CLASS_CATEGORY_FILTER' data-ref="::AV_CLASS_CATEGORY_FILTER">AV_CLASS_CATEGORY_FILTER</a>          ] = <var>155</var> &lt;&lt; <var>8</var> | <var>0x12</var>,</td></tr>
+<tr><th id="111">111</th><td>    [<var>16</var>+<a class="enum" href="log.h.html#::AV_CLASS_CATEGORY_BITSTREAM_FILTER" title='::AV_CLASS_CATEGORY_BITSTREAM_FILTER' data-ref="::AV_CLASS_CATEGORY_BITSTREAM_FILTER">AV_CLASS_CATEGORY_BITSTREAM_FILTER</a>] = <var>192</var> &lt;&lt; <var>8</var> | <var>0x14</var>,</td></tr>
+<tr><th id="112">112</th><td>    [<var>16</var>+<a class="enum" href="log.h.html#::AV_CLASS_CATEGORY_SWSCALER" title='::AV_CLASS_CATEGORY_SWSCALER' data-ref="::AV_CLASS_CATEGORY_SWSCALER">AV_CLASS_CATEGORY_SWSCALER</a>        ] = <var>153</var> &lt;&lt; <var>8</var> | <var>0x14</var>,</td></tr>
+<tr><th id="113">113</th><td>    [<var>16</var>+<a class="enum" href="log.h.html#::AV_CLASS_CATEGORY_SWRESAMPLER" title='::AV_CLASS_CATEGORY_SWRESAMPLER' data-ref="::AV_CLASS_CATEGORY_SWRESAMPLER">AV_CLASS_CATEGORY_SWRESAMPLER</a>     ] = <var>147</var> &lt;&lt; <var>8</var> | <var>0x14</var>,</td></tr>
+<tr><th id="114">114</th><td>    [<var>16</var>+<a class="enum" href="log.h.html#::AV_CLASS_CATEGORY_DEVICE_VIDEO_OUTPUT" title='::AV_CLASS_CATEGORY_DEVICE_VIDEO_OUTPUT' data-ref="::AV_CLASS_CATEGORY_DEVICE_VIDEO_OUTPUT">AV_CLASS_CATEGORY_DEVICE_VIDEO_OUTPUT</a> ] = <var>213</var> &lt;&lt; <var>8</var> | <var>0x15</var>,</td></tr>
+<tr><th id="115">115</th><td>    [<var>16</var>+<a class="enum" href="log.h.html#::AV_CLASS_CATEGORY_DEVICE_VIDEO_INPUT" title='::AV_CLASS_CATEGORY_DEVICE_VIDEO_INPUT' data-ref="::AV_CLASS_CATEGORY_DEVICE_VIDEO_INPUT">AV_CLASS_CATEGORY_DEVICE_VIDEO_INPUT</a>  ] = <var>207</var> &lt;&lt; <var>8</var> | <var>0x05</var>,</td></tr>
+<tr><th id="116">116</th><td>    [<var>16</var>+<a class="enum" href="log.h.html#::AV_CLASS_CATEGORY_DEVICE_AUDIO_OUTPUT" title='::AV_CLASS_CATEGORY_DEVICE_AUDIO_OUTPUT' data-ref="::AV_CLASS_CATEGORY_DEVICE_AUDIO_OUTPUT">AV_CLASS_CATEGORY_DEVICE_AUDIO_OUTPUT</a> ] = <var>213</var> &lt;&lt; <var>8</var> | <var>0x15</var>,</td></tr>
+<tr><th id="117">117</th><td>    [<var>16</var>+<a class="enum" href="log.h.html#::AV_CLASS_CATEGORY_DEVICE_AUDIO_INPUT" title='::AV_CLASS_CATEGORY_DEVICE_AUDIO_INPUT' data-ref="::AV_CLASS_CATEGORY_DEVICE_AUDIO_INPUT">AV_CLASS_CATEGORY_DEVICE_AUDIO_INPUT</a>  ] = <var>207</var> &lt;&lt; <var>8</var> | <var>0x05</var>,</td></tr>
+<tr><th id="118">118</th><td>    [<var>16</var>+<a class="enum" href="log.h.html#::AV_CLASS_CATEGORY_DEVICE_OUTPUT" title='::AV_CLASS_CATEGORY_DEVICE_OUTPUT' data-ref="::AV_CLASS_CATEGORY_DEVICE_OUTPUT">AV_CLASS_CATEGORY_DEVICE_OUTPUT</a>       ] = <var>213</var> &lt;&lt; <var>8</var> | <var>0x15</var>,</td></tr>
+<tr><th id="119">119</th><td>    [<var>16</var>+<a class="enum" href="log.h.html#::AV_CLASS_CATEGORY_DEVICE_INPUT" title='::AV_CLASS_CATEGORY_DEVICE_INPUT' data-ref="::AV_CLASS_CATEGORY_DEVICE_INPUT">AV_CLASS_CATEGORY_DEVICE_INPUT</a>        ] = <var>207</var> &lt;&lt; <var>8</var> | <var>0x05</var>,</td></tr>
+<tr><th id="120">120</th><td>};</td></tr>
+<tr><th id="121">121</th><td></td></tr>
+<tr><th id="122">122</th><td><u>#<span data-ppcond="60">endif</span></u></td></tr>
+<tr><th id="123">123</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="use_color" title='use_color' data-type='int' data-ref="use_color">use_color</dfn> = -<var>1</var>;</td></tr>
+<tr><th id="124">124</th><td></td></tr>
+<tr><th id="125">125</th><td><em>static</em> <em>void</em> <dfn class="tu decl def" id="check_color_terminal" title='check_color_terminal' data-type='void check_color_terminal()' data-ref="check_color_terminal">check_color_terminal</dfn>(<em>void</em>)</td></tr>
+<tr><th id="126">126</th><td>{</td></tr>
+<tr><th id="127">127</th><td><u>#<span data-ppcond="127">if</span> defined(<span class="macro" data-ref="_M/_WIN32">_WIN32</span>) &amp;&amp; !defined(<span class="macro" data-ref="_M/__MINGW32CE__">__MINGW32CE__</span>) &amp;&amp; <a class="macro" href="../config.h.html#320" title="0" data-ref="_M/HAVE_SETCONSOLETEXTATTRIBUTE">HAVE_SETCONSOLETEXTATTRIBUTE</a></u></td></tr>
+<tr><th id="128">128</th><td>    CONSOLE_SCREEN_BUFFER_INFO con_info;</td></tr>
+<tr><th id="129">129</th><td>    con = GetStdHandle(STD_ERROR_HANDLE);</td></tr>
+<tr><th id="130">130</th><td>    use_color = (con != INVALID_HANDLE_VALUE) &amp;&amp; !getenv(<q>"NO_COLOR"</q>) &amp;&amp;</td></tr>
+<tr><th id="131">131</th><td>                !getenv(<q>"AV_LOG_FORCE_NOCOLOR"</q>);</td></tr>
+<tr><th id="132">132</th><td>    <b>if</b> (use_color) {</td></tr>
+<tr><th id="133">133</th><td>        GetConsoleScreenBufferInfo(con, &amp;con_info);</td></tr>
+<tr><th id="134">134</th><td>        attr_orig  = con_info.wAttributes;</td></tr>
+<tr><th id="135">135</th><td>        background = attr_orig &amp; <var>0xF0</var>;</td></tr>
+<tr><th id="136">136</th><td>    }</td></tr>
+<tr><th id="137">137</th><td><u>#<span data-ppcond="127">elif</span> <a class="macro" href="../config.h.html#302" title="1" data-ref="_M/HAVE_ISATTY">HAVE_ISATTY</a></u></td></tr>
+<tr><th id="138">138</th><td>    <em>char</em> *<dfn class="local col1 decl" id="1term" title='term' data-type='char *' data-ref="1term">term</dfn> = <a class="ref" href="../../include/stdlib.h.html#getenv" title='getenv' data-ref="getenv">getenv</a>(<q>"TERM"</q>);</td></tr>
+<tr><th id="139">139</th><td>    <a class="tu ref" href="#use_color" title='use_color' data-use='w' data-ref="use_color">use_color</a> = !<a class="ref" href="../../include/stdlib.h.html#getenv" title='getenv' data-ref="getenv">getenv</a>(<q>"NO_COLOR"</q>) &amp;&amp; !<a class="ref" href="../../include/stdlib.h.html#getenv" title='getenv' data-ref="getenv">getenv</a>(<q>"AV_LOG_FORCE_NOCOLOR"</q>) &amp;&amp;</td></tr>
+<tr><th id="140">140</th><td>                (<a class="ref" href="../../include/stdlib.h.html#getenv" title='getenv' data-ref="getenv">getenv</a>(<q>"TERM"</q>) &amp;&amp; <a class="ref" href="../../include/unistd.h.html#isatty" title='isatty' data-ref="isatty">isatty</a>(<var>2</var>) || <a class="ref" href="../../include/stdlib.h.html#getenv" title='getenv' data-ref="getenv">getenv</a>(<q>"AV_LOG_FORCE_COLOR"</q>));</td></tr>
+<tr><th id="141">141</th><td>    <b>if</b> (   <a class="ref" href="../../include/stdlib.h.html#getenv" title='getenv' data-ref="getenv">getenv</a>(<q>"AV_LOG_FORCE_256COLOR"</q>)</td></tr>
+<tr><th id="142">142</th><td>        || (<a class="local col1 ref" href="#1term" title='term' data-ref="1term">term</a> &amp;&amp; <a class="ref" href="../../include/string.h.html#strstr" title='strstr' data-ref="strstr">strstr</a>(<a class="local col1 ref" href="#1term" title='term' data-ref="1term">term</a>, <q>"256color"</q>)))</td></tr>
+<tr><th id="143">143</th><td>        <a class="tu ref" href="#use_color" title='use_color' data-use='w' data-ref="use_color">use_color</a> *= <var>256</var>;</td></tr>
+<tr><th id="144">144</th><td><u>#<span data-ppcond="127">else</span></u></td></tr>
+<tr><th id="145">145</th><td>    use_color = getenv(<q>"AV_LOG_FORCE_COLOR"</q>) &amp;&amp; !getenv(<q>"NO_COLOR"</q>) &amp;&amp;</td></tr>
+<tr><th id="146">146</th><td>               !getenv(<q>"AV_LOG_FORCE_NOCOLOR"</q>);</td></tr>
+<tr><th id="147">147</th><td><u>#<span data-ppcond="127">endif</span></u></td></tr>
+<tr><th id="148">148</th><td>}</td></tr>
+<tr><th id="149">149</th><td></td></tr>
+<tr><th id="150">150</th><td><em>static</em> <em>void</em> <dfn class="tu decl def" id="colored_fputs" title='colored_fputs' data-type='void colored_fputs(int level, int tint, const char * str)' data-ref="colored_fputs">colored_fputs</dfn>(<em>int</em> <dfn class="local col2 decl" id="2level" title='level' data-type='int' data-ref="2level">level</dfn>, <em>int</em> <dfn class="local col3 decl" id="3tint" title='tint' data-type='int' data-ref="3tint">tint</dfn>, <em>const</em> <em>char</em> *<dfn class="local col4 decl" id="4str" title='str' data-type='const char *' data-ref="4str">str</dfn>)</td></tr>
+<tr><th id="151">151</th><td>{</td></tr>
+<tr><th id="152">152</th><td>    <em>int</em> <dfn class="local col5 decl" id="5local_use_color" title='local_use_color' data-type='int' data-ref="5local_use_color">local_use_color</dfn>;</td></tr>
+<tr><th id="153">153</th><td>    <b>if</b> (!*<a class="local col4 ref" href="#4str" title='str' data-ref="4str">str</a>)</td></tr>
+<tr><th id="154">154</th><td>        <b>return</b>;</td></tr>
+<tr><th id="155">155</th><td></td></tr>
+<tr><th id="156">156</th><td>    <b>if</b> (<a class="tu ref" href="#use_color" title='use_color' data-use='r' data-ref="use_color">use_color</a> &lt; <var>0</var>)</td></tr>
+<tr><th id="157">157</th><td>        <a class="tu ref" href="#check_color_terminal" title='check_color_terminal' data-use='c' data-ref="check_color_terminal">check_color_terminal</a>();</td></tr>
+<tr><th id="158">158</th><td></td></tr>
+<tr><th id="159">159</th><td>    <b>if</b> (<a class="local col2 ref" href="#2level" title='level' data-ref="2level">level</a> == <a class="macro" href="log.h.html#187" title="32" data-ref="_M/AV_LOG_INFO">AV_LOG_INFO</a>/<var>8</var>) <a class="local col5 ref" href="#5local_use_color" title='local_use_color' data-ref="5local_use_color">local_use_color</a> = <var>0</var>;</td></tr>
+<tr><th id="160">160</th><td>    <b>else</b>                        <a class="local col5 ref" href="#5local_use_color" title='local_use_color' data-ref="5local_use_color">local_use_color</a> = <a class="tu ref" href="#use_color" title='use_color' data-use='r' data-ref="use_color">use_color</a>;</td></tr>
+<tr><th id="161">161</th><td></td></tr>
+<tr><th id="162">162</th><td><u>#<span data-ppcond="162">if</span> defined(<span class="macro" data-ref="_M/_WIN32">_WIN32</span>) &amp;&amp; !defined(<span class="macro" data-ref="_M/__MINGW32CE__">__MINGW32CE__</span>) &amp;&amp; <a class="macro" href="../config.h.html#320" title="0" data-ref="_M/HAVE_SETCONSOLETEXTATTRIBUTE">HAVE_SETCONSOLETEXTATTRIBUTE</a></u></td></tr>
+<tr><th id="163">163</th><td>    <b>if</b> (local_use_color)</td></tr>
+<tr><th id="164">164</th><td>        SetConsoleTextAttribute(con, background | color[level]);</td></tr>
+<tr><th id="165">165</th><td>    fputs(str, stderr);</td></tr>
+<tr><th id="166">166</th><td>    <b>if</b> (local_use_color)</td></tr>
+<tr><th id="167">167</th><td>        SetConsoleTextAttribute(con, attr_orig);</td></tr>
+<tr><th id="168">168</th><td><u>#<span data-ppcond="162">else</span></u></td></tr>
+<tr><th id="169">169</th><td>    <b>if</b> (<a class="local col5 ref" href="#5local_use_color" title='local_use_color' data-ref="5local_use_color">local_use_color</a> == <var>1</var>) {</td></tr>
+<tr><th id="170">170</th><td>        <a class="ref" href="../../include/stdio.h.html#fprintf" title='fprintf' data-ref="fprintf">fprintf</a>(<a class="macro" href="../../include/stdio.h.html#174" title="stderr" data-ref="_M/stderr">stderr</a>,</td></tr>
+<tr><th id="171">171</th><td>                <q>"\033[%d;3%dm%s\033[0m"</q>,</td></tr>
+<tr><th id="172">172</th><td>                (<a class="tu ref" href="#color" title='color' data-use='r' data-ref="color">color</a>[<a class="local col2 ref" href="#2level" title='level' data-ref="2level">level</a>] &gt;&gt; <var>4</var>) &amp; <var>15</var>,</td></tr>
+<tr><th id="173">173</th><td>                <a class="tu ref" href="#color" title='color' data-use='r' data-ref="color">color</a>[<a class="local col2 ref" href="#2level" title='level' data-ref="2level">level</a>] &amp; <var>15</var>,</td></tr>
+<tr><th id="174">174</th><td>                <a class="local col4 ref" href="#4str" title='str' data-ref="4str">str</a>);</td></tr>
+<tr><th id="175">175</th><td>    } <b>else</b> <b>if</b> (<a class="local col3 ref" href="#3tint" title='tint' data-ref="3tint">tint</a> &amp;&amp; <a class="tu ref" href="#use_color" title='use_color' data-use='r' data-ref="use_color">use_color</a> == <var>256</var>) {</td></tr>
+<tr><th id="176">176</th><td>        <a class="ref" href="../../include/stdio.h.html#fprintf" title='fprintf' data-ref="fprintf">fprintf</a>(<a class="macro" href="../../include/stdio.h.html#174" title="stderr" data-ref="_M/stderr">stderr</a>,</td></tr>
+<tr><th id="177">177</th><td>                <q>"\033[48;5;%dm\033[38;5;%dm%s\033[0m"</q>,</td></tr>
+<tr><th id="178">178</th><td>                (<a class="tu ref" href="#color" title='color' data-use='r' data-ref="color">color</a>[<a class="local col2 ref" href="#2level" title='level' data-ref="2level">level</a>] &gt;&gt; <var>16</var>) &amp; <var>0xff</var>,</td></tr>
+<tr><th id="179">179</th><td>                <a class="local col3 ref" href="#3tint" title='tint' data-ref="3tint">tint</a>,</td></tr>
+<tr><th id="180">180</th><td>                <a class="local col4 ref" href="#4str" title='str' data-ref="4str">str</a>);</td></tr>
+<tr><th id="181">181</th><td>    } <b>else</b> <b>if</b> (<a class="local col5 ref" href="#5local_use_color" title='local_use_color' data-ref="5local_use_color">local_use_color</a> == <var>256</var>) {</td></tr>
+<tr><th id="182">182</th><td>        <a class="ref" href="../../include/stdio.h.html#fprintf" title='fprintf' data-ref="fprintf">fprintf</a>(<a class="macro" href="../../include/stdio.h.html#174" title="stderr" data-ref="_M/stderr">stderr</a>,</td></tr>
+<tr><th id="183">183</th><td>                <q>"\033[48;5;%dm\033[38;5;%dm%s\033[0m"</q>,</td></tr>
+<tr><th id="184">184</th><td>                (<a class="tu ref" href="#color" title='color' data-use='r' data-ref="color">color</a>[<a class="local col2 ref" href="#2level" title='level' data-ref="2level">level</a>] &gt;&gt; <var>16</var>) &amp; <var>0xff</var>,</td></tr>
+<tr><th id="185">185</th><td>                (<a class="tu ref" href="#color" title='color' data-use='r' data-ref="color">color</a>[<a class="local col2 ref" href="#2level" title='level' data-ref="2level">level</a>] &gt;&gt; <var>8</var>) &amp; <var>0xff</var>,</td></tr>
+<tr><th id="186">186</th><td>                <a class="local col4 ref" href="#4str" title='str' data-ref="4str">str</a>);</td></tr>
+<tr><th id="187">187</th><td>    } <b>else</b></td></tr>
+<tr><th id="188">188</th><td>        <a class="ref" href="../../include/stdio.h.html#fputs" title='fputs' data-ref="fputs">fputs</a>(<a class="local col4 ref" href="#4str" title='str' data-ref="4str">str</a>, <a class="macro" href="../../include/stdio.h.html#174" title="stderr" data-ref="_M/stderr">stderr</a>);</td></tr>
+<tr><th id="189">189</th><td><u>#<span data-ppcond="162">endif</span></u></td></tr>
+<tr><th id="190">190</th><td></td></tr>
+<tr><th id="191">191</th><td>}</td></tr>
+<tr><th id="192">192</th><td></td></tr>
+<tr><th id="193">193</th><td><em>const</em> <em>char</em> *<dfn class="decl def" id="av_default_item_name" title='av_default_item_name' data-ref="av_default_item_name">av_default_item_name</dfn>(<em>void</em> *<dfn class="local col6 decl" id="6ptr" title='ptr' data-type='void *' data-ref="6ptr">ptr</dfn>)</td></tr>
+<tr><th id="194">194</th><td>{</td></tr>
+<tr><th id="195">195</th><td>    <b>return</b> (*(<a class="typedef" href="log.h.html#AVClass" title='AVClass' data-type='struct AVClass' data-ref="AVClass">AVClass</a> **) <a class="local col6 ref" href="#6ptr" title='ptr' data-ref="6ptr">ptr</a>)-&gt;<a class="ref" href="log.h.html#AVClass::class_name" title='AVClass::class_name' data-ref="AVClass::class_name">class_name</a>;</td></tr>
+<tr><th id="196">196</th><td>}</td></tr>
+<tr><th id="197">197</th><td></td></tr>
+<tr><th id="198">198</th><td><a class="typedef" href="log.h.html#AVClassCategory" title='AVClassCategory' data-type='enum AVClassCategory' data-ref="AVClassCategory">AVClassCategory</a> <dfn class="decl def" id="av_default_get_category" title='av_default_get_category' data-ref="av_default_get_category">av_default_get_category</dfn>(<em>void</em> *<dfn class="local col7 decl" id="7ptr" title='ptr' data-type='void *' data-ref="7ptr">ptr</dfn>)</td></tr>
+<tr><th id="199">199</th><td>{</td></tr>
+<tr><th id="200">200</th><td>    <b>return</b> (*(<a class="typedef" href="log.h.html#AVClass" title='AVClass' data-type='struct AVClass' data-ref="AVClass">AVClass</a> **) <a class="local col7 ref" href="#7ptr" title='ptr' data-ref="7ptr">ptr</a>)-&gt;<a class="ref" href="log.h.html#AVClass::category" title='AVClass::category' data-ref="AVClass::category">category</a>;</td></tr>
+<tr><th id="201">201</th><td>}</td></tr>
+<tr><th id="202">202</th><td></td></tr>
+<tr><th id="203">203</th><td><em>static</em> <em>void</em> <dfn class="tu decl def" id="sanitize" title='sanitize' data-type='void sanitize(uint8_t * line)' data-ref="sanitize">sanitize</dfn>(<a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col8 decl" id="8line" title='line' data-type='uint8_t *' data-ref="8line">line</dfn>){</td></tr>
+<tr><th id="204">204</th><td>    <b>while</b>(*<a class="local col8 ref" href="#8line" title='line' data-ref="8line">line</a>){</td></tr>
+<tr><th id="205">205</th><td>        <b>if</b>(*<a class="local col8 ref" href="#8line" title='line' data-ref="8line">line</a> &lt; <var>0x08</var> || (*<a class="local col8 ref" href="#8line" title='line' data-ref="8line">line</a> &gt; <var>0x0D</var> &amp;&amp; *<a class="local col8 ref" href="#8line" title='line' data-ref="8line">line</a> &lt; <var>0x20</var>))</td></tr>
+<tr><th id="206">206</th><td>            *<a class="local col8 ref" href="#8line" title='line' data-ref="8line">line</a>=<kbd>'?'</kbd>;</td></tr>
+<tr><th id="207">207</th><td>        <a class="local col8 ref" href="#8line" title='line' data-ref="8line">line</a>++;</td></tr>
+<tr><th id="208">208</th><td>    }</td></tr>
+<tr><th id="209">209</th><td>}</td></tr>
+<tr><th id="210">210</th><td></td></tr>
+<tr><th id="211">211</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="get_category" title='get_category' data-type='int get_category(void * ptr)' data-ref="get_category">get_category</dfn>(<em>void</em> *<dfn class="local col9 decl" id="9ptr" title='ptr' data-type='void *' data-ref="9ptr">ptr</dfn>){</td></tr>
+<tr><th id="212">212</th><td>    <a class="typedef" href="log.h.html#AVClass" title='AVClass' data-type='struct AVClass' data-ref="AVClass">AVClass</a> *<dfn class="local col0 decl" id="10avc" title='avc' data-type='AVClass *' data-ref="10avc">avc</dfn> = *(<a class="typedef" href="log.h.html#AVClass" title='AVClass' data-type='struct AVClass' data-ref="AVClass">AVClass</a> **) <a class="local col9 ref" href="#9ptr" title='ptr' data-ref="9ptr">ptr</a>;</td></tr>
+<tr><th id="213">213</th><td>    <b>if</b>(    !<a class="local col0 ref" href="#10avc" title='avc' data-ref="10avc">avc</a></td></tr>
+<tr><th id="214">214</th><td>        || (<a class="local col0 ref" href="#10avc" title='avc' data-ref="10avc">avc</a>-&gt;<a class="ref" href="log.h.html#AVClass::version" title='AVClass::version' data-ref="AVClass::version">version</a>&amp;<var>0xFF</var>)&lt;<var>100</var></td></tr>
+<tr><th id="215">215</th><td>        ||  <a class="local col0 ref" href="#10avc" title='avc' data-ref="10avc">avc</a>-&gt;<a class="ref" href="log.h.html#AVClass::version" title='AVClass::version' data-ref="AVClass::version">version</a> &lt; (<var>51</var> &lt;&lt; <var>16</var> | <var>59</var> &lt;&lt; <var>8</var>)</td></tr>
+<tr><th id="216">216</th><td>        ||  <a class="local col0 ref" href="#10avc" title='avc' data-ref="10avc">avc</a>-&gt;<a class="ref" href="log.h.html#AVClass::category" title='AVClass::category' data-ref="AVClass::category">category</a> &gt;= <a class="enum" href="log.h.html#::AV_CLASS_CATEGORY_NB" title='::AV_CLASS_CATEGORY_NB' data-ref="::AV_CLASS_CATEGORY_NB">AV_CLASS_CATEGORY_NB</a>) <b>return</b> <a class="enum" href="log.h.html#::AV_CLASS_CATEGORY_NA" title='::AV_CLASS_CATEGORY_NA' data-ref="::AV_CLASS_CATEGORY_NA">AV_CLASS_CATEGORY_NA</a> + <var>16</var>;</td></tr>
+<tr><th id="217">217</th><td></td></tr>
+<tr><th id="218">218</th><td>    <b>if</b>(<a class="local col0 ref" href="#10avc" title='avc' data-ref="10avc">avc</a>-&gt;<a class="ref" href="log.h.html#AVClass::get_category" title='AVClass::get_category' data-ref="AVClass::get_category">get_category</a>)</td></tr>
+<tr><th id="219">219</th><td>        <b>return</b> <a class="local col0 ref" href="#10avc" title='avc' data-ref="10avc">avc</a>-&gt;<a class="ref" href="log.h.html#AVClass::get_category" title='AVClass::get_category' data-ref="AVClass::get_category">get_category</a>(<a class="local col9 ref" href="#9ptr" title='ptr' data-ref="9ptr">ptr</a>) + <var>16</var>;</td></tr>
+<tr><th id="220">220</th><td></td></tr>
+<tr><th id="221">221</th><td>    <b>return</b> <a class="local col0 ref" href="#10avc" title='avc' data-ref="10avc">avc</a>-&gt;<a class="ref" href="log.h.html#AVClass::category" title='AVClass::category' data-ref="AVClass::category">category</a> + <var>16</var>;</td></tr>
+<tr><th id="222">222</th><td>}</td></tr>
+<tr><th id="223">223</th><td></td></tr>
+<tr><th id="224">224</th><td><em>static</em> <em>const</em> <em>char</em> *<dfn class="tu decl def" id="get_level_str" title='get_level_str' data-type='const char * get_level_str(int level)' data-ref="get_level_str">get_level_str</dfn>(<em>int</em> <dfn class="local col1 decl" id="11level" title='level' data-type='int' data-ref="11level">level</dfn>)</td></tr>
+<tr><th id="225">225</th><td>{</td></tr>
+<tr><th id="226">226</th><td>    <b>switch</b> (<a class="local col1 ref" href="#11level" title='level' data-ref="11level">level</a>) {</td></tr>
+<tr><th id="227">227</th><td>    <b>case</b> <a class="macro" href="log.h.html#158" title="-8" data-ref="_M/AV_LOG_QUIET">AV_LOG_QUIET</a>:</td></tr>
+<tr><th id="228">228</th><td>        <b>return</b> <q>"quiet"</q>;</td></tr>
+<tr><th id="229">229</th><td>    <b>case</b> <a class="macro" href="log.h.html#197" title="48" data-ref="_M/AV_LOG_DEBUG">AV_LOG_DEBUG</a>:</td></tr>
+<tr><th id="230">230</th><td>        <b>return</b> <q>"debug"</q>;</td></tr>
+<tr><th id="231">231</th><td>    <b>case</b> <a class="macro" href="log.h.html#192" title="40" data-ref="_M/AV_LOG_VERBOSE">AV_LOG_VERBOSE</a>:</td></tr>
+<tr><th id="232">232</th><td>        <b>return</b> <q>"verbose"</q>;</td></tr>
+<tr><th id="233">233</th><td>    <b>case</b> <a class="macro" href="log.h.html#187" title="32" data-ref="_M/AV_LOG_INFO">AV_LOG_INFO</a>:</td></tr>
+<tr><th id="234">234</th><td>        <b>return</b> <q>"info"</q>;</td></tr>
+<tr><th id="235">235</th><td>    <b>case</b> <a class="macro" href="log.h.html#182" title="24" data-ref="_M/AV_LOG_WARNING">AV_LOG_WARNING</a>:</td></tr>
+<tr><th id="236">236</th><td>        <b>return</b> <q>"warning"</q>;</td></tr>
+<tr><th id="237">237</th><td>    <b>case</b> <a class="macro" href="log.h.html#176" title="16" data-ref="_M/AV_LOG_ERROR">AV_LOG_ERROR</a>:</td></tr>
+<tr><th id="238">238</th><td>        <b>return</b> <q>"error"</q>;</td></tr>
+<tr><th id="239">239</th><td>    <b>case</b> <a class="macro" href="log.h.html#170" title="8" data-ref="_M/AV_LOG_FATAL">AV_LOG_FATAL</a>:</td></tr>
+<tr><th id="240">240</th><td>        <b>return</b> <q>"fatal"</q>;</td></tr>
+<tr><th id="241">241</th><td>    <b>case</b> <a class="macro" href="log.h.html#163" title="0" data-ref="_M/AV_LOG_PANIC">AV_LOG_PANIC</a>:</td></tr>
+<tr><th id="242">242</th><td>        <b>return</b> <q>"panic"</q>;</td></tr>
+<tr><th id="243">243</th><td>    <b>default</b>:</td></tr>
+<tr><th id="244">244</th><td>        <b>return</b> <q>""</q>;</td></tr>
+<tr><th id="245">245</th><td>    }</td></tr>
+<tr><th id="246">246</th><td>}</td></tr>
+<tr><th id="247">247</th><td></td></tr>
+<tr><th id="248">248</th><td><em>static</em> <em>void</em> <dfn class="tu decl def" id="format_line" title='format_line' data-type='void format_line(void * avcl, int level, const char * fmt, __va_list_tag * vl, AVBPrint * part, int * print_prefix, int * type)' data-ref="format_line">format_line</dfn>(<em>void</em> *<dfn class="local col2 decl" id="12avcl" title='avcl' data-type='void *' data-ref="12avcl">avcl</dfn>, <em>int</em> <dfn class="local col3 decl" id="13level" title='level' data-type='int' data-ref="13level">level</dfn>, <em>const</em> <em>char</em> *<dfn class="local col4 decl" id="14fmt" title='fmt' data-type='const char *' data-ref="14fmt">fmt</dfn>, <span class='typedef' title='va_list' data-type='__gnuc_va_list' data-ref="va_list">va_list</span> <dfn class="local col5 decl" id="15vl" title='vl' data-type='__va_list_tag *' data-ref="15vl">vl</dfn>,</td></tr>
+<tr><th id="249">249</th><td>                        <a class="typedef" href="bprint.h.html#82" title='AVBPrint' data-type='struct AVBPrint' data-ref="AVBPrint">AVBPrint</a> <dfn class="local col6 decl" id="16part" title='part' data-type='AVBPrint *' data-ref="16part">part</dfn>[<var>4</var>], <em>int</em> *<dfn class="local col7 decl" id="17print_prefix" title='print_prefix' data-type='int *' data-ref="17print_prefix">print_prefix</dfn>, <em>int</em> <dfn class="local col8 decl" id="18type" title='type' data-type='int *' data-ref="18type">type</dfn>[<var>2</var>])</td></tr>
+<tr><th id="250">250</th><td>{</td></tr>
+<tr><th id="251">251</th><td>    <a class="typedef" href="log.h.html#AVClass" title='AVClass' data-type='struct AVClass' data-ref="AVClass">AVClass</a>* <dfn class="local col9 decl" id="19avc" title='avc' data-type='AVClass *' data-ref="19avc">avc</dfn> = <a class="local col2 ref" href="#12avcl" title='avcl' data-ref="12avcl">avcl</a> ? *(<a class="typedef" href="log.h.html#AVClass" title='AVClass' data-type='struct AVClass' data-ref="AVClass">AVClass</a> **) <a class="local col2 ref" href="#12avcl" title='avcl' data-ref="12avcl">avcl</a> : <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="252">252</th><td>    <a class="ref" href="bprint.h.html#av_bprint_init" title='av_bprint_init' data-ref="av_bprint_init">av_bprint_init</a>(<a class="local col6 ref" href="#16part" title='part' data-ref="16part">part</a>+<var>0</var>, <var>0</var>, <var>1</var>);</td></tr>
+<tr><th id="253">253</th><td>    <a class="ref" href="bprint.h.html#av_bprint_init" title='av_bprint_init' data-ref="av_bprint_init">av_bprint_init</a>(<a class="local col6 ref" href="#16part" title='part' data-ref="16part">part</a>+<var>1</var>, <var>0</var>, <var>1</var>);</td></tr>
+<tr><th id="254">254</th><td>    <a class="ref" href="bprint.h.html#av_bprint_init" title='av_bprint_init' data-ref="av_bprint_init">av_bprint_init</a>(<a class="local col6 ref" href="#16part" title='part' data-ref="16part">part</a>+<var>2</var>, <var>0</var>, <var>1</var>);</td></tr>
+<tr><th id="255">255</th><td>    <a class="ref" href="bprint.h.html#av_bprint_init" title='av_bprint_init' data-ref="av_bprint_init">av_bprint_init</a>(<a class="local col6 ref" href="#16part" title='part' data-ref="16part">part</a>+<var>3</var>, <var>0</var>, <var>65536</var>);</td></tr>
+<tr><th id="256">256</th><td></td></tr>
+<tr><th id="257">257</th><td>    <b>if</b>(<a class="local col8 ref" href="#18type" title='type' data-ref="18type">type</a>) <a class="local col8 ref" href="#18type" title='type' data-ref="18type">type</a>[<var>0</var>] = <a class="local col8 ref" href="#18type" title='type' data-ref="18type">type</a>[<var>1</var>] = <a class="enum" href="log.h.html#::AV_CLASS_CATEGORY_NA" title='::AV_CLASS_CATEGORY_NA' data-ref="::AV_CLASS_CATEGORY_NA">AV_CLASS_CATEGORY_NA</a> + <var>16</var>;</td></tr>
+<tr><th id="258">258</th><td>    <b>if</b> (*<a class="local col7 ref" href="#17print_prefix" title='print_prefix' data-ref="17print_prefix">print_prefix</a> &amp;&amp; <a class="local col9 ref" href="#19avc" title='avc' data-ref="19avc">avc</a>) {</td></tr>
+<tr><th id="259">259</th><td>        <b>if</b> (<a class="local col9 ref" href="#19avc" title='avc' data-ref="19avc">avc</a>-&gt;<a class="ref" href="log.h.html#AVClass::parent_log_context_offset" title='AVClass::parent_log_context_offset' data-ref="AVClass::parent_log_context_offset">parent_log_context_offset</a>) {</td></tr>
+<tr><th id="260">260</th><td>            <a class="typedef" href="log.h.html#AVClass" title='AVClass' data-type='struct AVClass' data-ref="AVClass">AVClass</a>** <dfn class="local col0 decl" id="20parent" title='parent' data-type='AVClass **' data-ref="20parent">parent</dfn> = *(<a class="typedef" href="log.h.html#AVClass" title='AVClass' data-type='struct AVClass' data-ref="AVClass">AVClass</a> ***) (((<a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *) <a class="local col2 ref" href="#12avcl" title='avcl' data-ref="12avcl">avcl</a>) +</td></tr>
+<tr><th id="261">261</th><td>                                   <a class="local col9 ref" href="#19avc" title='avc' data-ref="19avc">avc</a>-&gt;<a class="ref" href="log.h.html#AVClass::parent_log_context_offset" title='AVClass::parent_log_context_offset' data-ref="AVClass::parent_log_context_offset">parent_log_context_offset</a>);</td></tr>
+<tr><th id="262">262</th><td>            <b>if</b> (<a class="local col0 ref" href="#20parent" title='parent' data-ref="20parent">parent</a> &amp;&amp; *<a class="local col0 ref" href="#20parent" title='parent' data-ref="20parent">parent</a>) {</td></tr>
+<tr><th id="263">263</th><td>                <a class="ref" href="bprint.h.html#av_bprintf" title='av_bprintf' data-ref="av_bprintf">av_bprintf</a>(<a class="local col6 ref" href="#16part" title='part' data-ref="16part">part</a>+<var>0</var>, <q>"[%s @ %p] "</q>,</td></tr>
+<tr><th id="264">264</th><td>                         (*<a class="local col0 ref" href="#20parent" title='parent' data-ref="20parent">parent</a>)-&gt;<a class="ref" href="log.h.html#AVClass::item_name" title='AVClass::item_name' data-ref="AVClass::item_name">item_name</a>(<a class="local col0 ref" href="#20parent" title='parent' data-ref="20parent">parent</a>), <a class="local col0 ref" href="#20parent" title='parent' data-ref="20parent">parent</a>);</td></tr>
+<tr><th id="265">265</th><td>                <b>if</b>(<a class="local col8 ref" href="#18type" title='type' data-ref="18type">type</a>) <a class="local col8 ref" href="#18type" title='type' data-ref="18type">type</a>[<var>0</var>] = <a class="tu ref" href="#get_category" title='get_category' data-use='c' data-ref="get_category">get_category</a>(<a class="local col0 ref" href="#20parent" title='parent' data-ref="20parent">parent</a>);</td></tr>
+<tr><th id="266">266</th><td>            }</td></tr>
+<tr><th id="267">267</th><td>        }</td></tr>
+<tr><th id="268">268</th><td>        <a class="ref" href="bprint.h.html#av_bprintf" title='av_bprintf' data-ref="av_bprintf">av_bprintf</a>(<a class="local col6 ref" href="#16part" title='part' data-ref="16part">part</a>+<var>1</var>, <q>"[%s @ %p] "</q>,</td></tr>
+<tr><th id="269">269</th><td>                 <a class="local col9 ref" href="#19avc" title='avc' data-ref="19avc">avc</a>-&gt;<a class="ref" href="log.h.html#AVClass::item_name" title='AVClass::item_name' data-ref="AVClass::item_name">item_name</a>(<a class="local col2 ref" href="#12avcl" title='avcl' data-ref="12avcl">avcl</a>), <a class="local col2 ref" href="#12avcl" title='avcl' data-ref="12avcl">avcl</a>);</td></tr>
+<tr><th id="270">270</th><td>        <b>if</b>(<a class="local col8 ref" href="#18type" title='type' data-ref="18type">type</a>) <a class="local col8 ref" href="#18type" title='type' data-ref="18type">type</a>[<var>1</var>] = <a class="tu ref" href="#get_category" title='get_category' data-use='c' data-ref="get_category">get_category</a>(<a class="local col2 ref" href="#12avcl" title='avcl' data-ref="12avcl">avcl</a>);</td></tr>
+<tr><th id="271">271</th><td></td></tr>
+<tr><th id="272">272</th><td>        <b>if</b> (<a class="tu ref" href="#flags" title='flags' data-use='r' data-ref="flags">flags</a> &amp; <a class="macro" href="log.h.html#367" title="2" data-ref="_M/AV_LOG_PRINT_LEVEL">AV_LOG_PRINT_LEVEL</a>)</td></tr>
+<tr><th id="273">273</th><td>            <a class="ref" href="bprint.h.html#av_bprintf" title='av_bprintf' data-ref="av_bprintf">av_bprintf</a>(<a class="local col6 ref" href="#16part" title='part' data-ref="16part">part</a>+<var>2</var>, <q>"[%s] "</q>, <a class="tu ref" href="#get_level_str" title='get_level_str' data-use='c' data-ref="get_level_str">get_level_str</a>(<a class="local col3 ref" href="#13level" title='level' data-ref="13level">level</a>));</td></tr>
+<tr><th id="274">274</th><td>    }</td></tr>
+<tr><th id="275">275</th><td></td></tr>
+<tr><th id="276">276</th><td>    <a class="ref" href="bprint.h.html#av_vbprintf" title='av_vbprintf' data-ref="av_vbprintf">av_vbprintf</a>(<a class="local col6 ref" href="#16part" title='part' data-ref="16part">part</a>+<var>3</var>, <a class="local col4 ref" href="#14fmt" title='fmt' data-ref="14fmt">fmt</a>, <a class="local col5 ref" href="#15vl" title='vl' data-ref="15vl">vl</a>);</td></tr>
+<tr><th id="277">277</th><td></td></tr>
+<tr><th id="278">278</th><td>    <b>if</b>(*<a class="local col6 ref" href="#16part" title='part' data-ref="16part">part</a>[<var>0</var>].<a class="ref" href="bprint.h.html#82" title='AVBPrint::str' data-ref="AVBPrint::str">str</a> || *<a class="local col6 ref" href="#16part" title='part' data-ref="16part">part</a>[<var>1</var>].<a class="ref" href="bprint.h.html#82" title='AVBPrint::str' data-ref="AVBPrint::str">str</a> || *<a class="local col6 ref" href="#16part" title='part' data-ref="16part">part</a>[<var>2</var>].<a class="ref" href="bprint.h.html#82" title='AVBPrint::str' data-ref="AVBPrint::str">str</a> || *<a class="local col6 ref" href="#16part" title='part' data-ref="16part">part</a>[<var>3</var>].<a class="ref" href="bprint.h.html#82" title='AVBPrint::str' data-ref="AVBPrint::str">str</a>) {</td></tr>
+<tr><th id="279">279</th><td>        <em>char</em> <dfn class="local col1 decl" id="21lastc" title='lastc' data-type='char' data-ref="21lastc">lastc</dfn> = <a class="local col6 ref" href="#16part" title='part' data-ref="16part">part</a>[<var>3</var>].<a class="ref" href="bprint.h.html#82" title='AVBPrint::len' data-ref="AVBPrint::len">len</a> &amp;&amp; <a class="local col6 ref" href="#16part" title='part' data-ref="16part">part</a>[<var>3</var>].<a class="ref" href="bprint.h.html#82" title='AVBPrint::len' data-ref="AVBPrint::len">len</a> &lt;= <a class="local col6 ref" href="#16part" title='part' data-ref="16part">part</a>[<var>3</var>].<a class="ref" href="bprint.h.html#82" title='AVBPrint::size' data-ref="AVBPrint::size">size</a> ? <a class="local col6 ref" href="#16part" title='part' data-ref="16part">part</a>[<var>3</var>].<a class="ref" href="bprint.h.html#82" title='AVBPrint::str' data-ref="AVBPrint::str">str</a>[<a class="local col6 ref" href="#16part" title='part' data-ref="16part">part</a>[<var>3</var>].<a class="ref" href="bprint.h.html#82" title='AVBPrint::len' data-ref="AVBPrint::len">len</a> - <var>1</var>] : <var>0</var>;</td></tr>
+<tr><th id="280">280</th><td>        *<a class="local col7 ref" href="#17print_prefix" title='print_prefix' data-ref="17print_prefix">print_prefix</a> = <a class="local col1 ref" href="#21lastc" title='lastc' data-ref="21lastc">lastc</a> == <kbd>'\n'</kbd> || <a class="local col1 ref" href="#21lastc" title='lastc' data-ref="21lastc">lastc</a> == <kbd>'\r'</kbd>;</td></tr>
+<tr><th id="281">281</th><td>    }</td></tr>
+<tr><th id="282">282</th><td>}</td></tr>
+<tr><th id="283">283</th><td></td></tr>
+<tr><th id="284">284</th><td><em>void</em> <dfn class="decl def" id="av_log_format_line" title='av_log_format_line' data-ref="av_log_format_line">av_log_format_line</dfn>(<em>void</em> *<dfn class="local col2 decl" id="22ptr" title='ptr' data-type='void *' data-ref="22ptr">ptr</dfn>, <em>int</em> <dfn class="local col3 decl" id="23level" title='level' data-type='int' data-ref="23level">level</dfn>, <em>const</em> <em>char</em> *<dfn class="local col4 decl" id="24fmt" title='fmt' data-type='const char *' data-ref="24fmt">fmt</dfn>, <span class='typedef' title='va_list' data-type='__gnuc_va_list' data-ref="va_list">va_list</span> <dfn class="local col5 decl" id="25vl" title='vl' data-type='__va_list_tag *' data-ref="25vl">vl</dfn>,</td></tr>
+<tr><th id="285">285</th><td>                        <em>char</em> *<dfn class="local col6 decl" id="26line" title='line' data-type='char *' data-ref="26line">line</dfn>, <em>int</em> <dfn class="local col7 decl" id="27line_size" title='line_size' data-type='int' data-ref="27line_size">line_size</dfn>, <em>int</em> *<dfn class="local col8 decl" id="28print_prefix" title='print_prefix' data-type='int *' data-ref="28print_prefix">print_prefix</dfn>)</td></tr>
+<tr><th id="286">286</th><td>{</td></tr>
+<tr><th id="287">287</th><td>    <a class="ref" href="#av_log_format_line2" title='av_log_format_line2' data-ref="av_log_format_line2">av_log_format_line2</a>(<a class="local col2 ref" href="#22ptr" title='ptr' data-ref="22ptr">ptr</a>, <a class="local col3 ref" href="#23level" title='level' data-ref="23level">level</a>, <a class="local col4 ref" href="#24fmt" title='fmt' data-ref="24fmt">fmt</a>, <a class="local col5 ref" href="#25vl" title='vl' data-ref="25vl">vl</a>, <a class="local col6 ref" href="#26line" title='line' data-ref="26line">line</a>, <a class="local col7 ref" href="#27line_size" title='line_size' data-ref="27line_size">line_size</a>, <a class="local col8 ref" href="#28print_prefix" title='print_prefix' data-ref="28print_prefix">print_prefix</a>);</td></tr>
+<tr><th id="288">288</th><td>}</td></tr>
+<tr><th id="289">289</th><td></td></tr>
+<tr><th id="290">290</th><td><em>int</em> <dfn class="decl def" id="av_log_format_line2" title='av_log_format_line2' data-ref="av_log_format_line2">av_log_format_line2</dfn>(<em>void</em> *<dfn class="local col9 decl" id="29ptr" title='ptr' data-type='void *' data-ref="29ptr">ptr</dfn>, <em>int</em> <dfn class="local col0 decl" id="30level" title='level' data-type='int' data-ref="30level">level</dfn>, <em>const</em> <em>char</em> *<dfn class="local col1 decl" id="31fmt" title='fmt' data-type='const char *' data-ref="31fmt">fmt</dfn>, <span class='typedef' title='va_list' data-type='__gnuc_va_list' data-ref="va_list">va_list</span> <dfn class="local col2 decl" id="32vl" title='vl' data-type='__va_list_tag *' data-ref="32vl">vl</dfn>,</td></tr>
+<tr><th id="291">291</th><td>                        <em>char</em> *<dfn class="local col3 decl" id="33line" title='line' data-type='char *' data-ref="33line">line</dfn>, <em>int</em> <dfn class="local col4 decl" id="34line_size" title='line_size' data-type='int' data-ref="34line_size">line_size</dfn>, <em>int</em> *<dfn class="local col5 decl" id="35print_prefix" title='print_prefix' data-type='int *' data-ref="35print_prefix">print_prefix</dfn>)</td></tr>
+<tr><th id="292">292</th><td>{</td></tr>
+<tr><th id="293">293</th><td>    <a class="typedef" href="bprint.h.html#82" title='AVBPrint' data-type='struct AVBPrint' data-ref="AVBPrint">AVBPrint</a> <dfn class="local col6 decl" id="36part" title='part' data-type='AVBPrint [4]' data-ref="36part">part</dfn>[<var>4</var>];</td></tr>
+<tr><th id="294">294</th><td>    <em>int</em> <dfn class="local col7 decl" id="37ret" title='ret' data-type='int' data-ref="37ret">ret</dfn>;</td></tr>
+<tr><th id="295">295</th><td></td></tr>
+<tr><th id="296">296</th><td>    <a class="tu ref" href="#format_line" title='format_line' data-use='c' data-ref="format_line">format_line</a>(<a class="local col9 ref" href="#29ptr" title='ptr' data-ref="29ptr">ptr</a>, <a class="local col0 ref" href="#30level" title='level' data-ref="30level">level</a>, <a class="local col1 ref" href="#31fmt" title='fmt' data-ref="31fmt">fmt</a>, <a class="local col2 ref" href="#32vl" title='vl' data-ref="32vl">vl</a>, <a class="local col6 ref" href="#36part" title='part' data-ref="36part">part</a>, <a class="local col5 ref" href="#35print_prefix" title='print_prefix' data-ref="35print_prefix">print_prefix</a>, <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>);</td></tr>
+<tr><th id="297">297</th><td>    <a class="local col7 ref" href="#37ret" title='ret' data-ref="37ret">ret</a> = <a class="ref" href="../../include/stdio.h.html#snprintf" title='snprintf' data-ref="snprintf">snprintf</a>(<a class="local col3 ref" href="#33line" title='line' data-ref="33line">line</a>, <a class="local col4 ref" href="#34line_size" title='line_size' data-ref="34line_size">line_size</a>, <q>"%s%s%s%s"</q>, <a class="local col6 ref" href="#36part" title='part' data-ref="36part">part</a>[<var>0</var>].<a class="ref" href="bprint.h.html#82" title='AVBPrint::str' data-ref="AVBPrint::str">str</a>, <a class="local col6 ref" href="#36part" title='part' data-ref="36part">part</a>[<var>1</var>].<a class="ref" href="bprint.h.html#82" title='AVBPrint::str' data-ref="AVBPrint::str">str</a>, <a class="local col6 ref" href="#36part" title='part' data-ref="36part">part</a>[<var>2</var>].<a class="ref" href="bprint.h.html#82" title='AVBPrint::str' data-ref="AVBPrint::str">str</a>, <a class="local col6 ref" href="#36part" title='part' data-ref="36part">part</a>[<var>3</var>].<a class="ref" href="bprint.h.html#82" title='AVBPrint::str' data-ref="AVBPrint::str">str</a>);</td></tr>
+<tr><th id="298">298</th><td>    <a class="ref" href="bprint.h.html#av_bprint_finalize" title='av_bprint_finalize' data-ref="av_bprint_finalize">av_bprint_finalize</a>(<a class="local col6 ref" href="#36part" title='part' data-ref="36part">part</a>+<var>3</var>, <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>);</td></tr>
+<tr><th id="299">299</th><td>    <b>return</b> <a class="local col7 ref" href="#37ret" title='ret' data-ref="37ret">ret</a>;</td></tr>
+<tr><th id="300">300</th><td>}</td></tr>
+<tr><th id="301">301</th><td></td></tr>
+<tr><th id="302">302</th><td><em>void</em> <dfn class="decl def" id="av_log_default_callback" title='av_log_default_callback' data-ref="av_log_default_callback">av_log_default_callback</dfn>(<em>void</em>* <dfn class="local col8 decl" id="38ptr" title='ptr' data-type='void *' data-ref="38ptr">ptr</dfn>, <em>int</em> <dfn class="local col9 decl" id="39level" title='level' data-type='int' data-ref="39level">level</dfn>, <em>const</em> <em>char</em>* <dfn class="local col0 decl" id="40fmt" title='fmt' data-type='const char *' data-ref="40fmt">fmt</dfn>, <span class='typedef' title='va_list' data-type='__gnuc_va_list' data-ref="va_list">va_list</span> <dfn class="local col1 decl" id="41vl" title='vl' data-type='__va_list_tag *' data-ref="41vl">vl</dfn>)</td></tr>
+<tr><th id="303">303</th><td>{</td></tr>
+<tr><th id="304">304</th><td>    <em>static</em> <em>int</em> <dfn class="local col2 decl" id="42print_prefix" title='print_prefix' data-type='int' data-ref="42print_prefix">print_prefix</dfn> = <var>1</var>;</td></tr>
+<tr><th id="305">305</th><td>    <em>static</em> <em>int</em> <dfn class="local col3 decl" id="43count" title='count' data-type='int' data-ref="43count">count</dfn>;</td></tr>
+<tr><th id="306">306</th><td>    <em>static</em> <em>char</em> <dfn class="local col4 decl" id="44prev" title='prev' data-type='char [1024]' data-ref="44prev">prev</dfn>[<a class="macro" href="#48" title="1024" data-ref="_M/LINE_SZ">LINE_SZ</a>];</td></tr>
+<tr><th id="307">307</th><td>    <a class="typedef" href="bprint.h.html#82" title='AVBPrint' data-type='struct AVBPrint' data-ref="AVBPrint">AVBPrint</a> <dfn class="local col5 decl" id="45part" title='part' data-type='AVBPrint [4]' data-ref="45part">part</dfn>[<var>4</var>];</td></tr>
+<tr><th id="308">308</th><td>    <em>char</em> <dfn class="local col6 decl" id="46line" title='line' data-type='char [1024]' data-ref="46line">line</dfn>[<a class="macro" href="#48" title="1024" data-ref="_M/LINE_SZ">LINE_SZ</a>];</td></tr>
+<tr><th id="309">309</th><td>    <em>static</em> <em>int</em> <dfn class="local col7 decl" id="47is_atty" title='is_atty' data-type='int' data-ref="47is_atty">is_atty</dfn>;</td></tr>
+<tr><th id="310">310</th><td>    <em>int</em> <dfn class="local col8 decl" id="48type" title='type' data-type='int [2]' data-ref="48type">type</dfn>[<var>2</var>];</td></tr>
+<tr><th id="311">311</th><td>    <em>unsigned</em> <dfn class="local col9 decl" id="49tint" title='tint' data-type='unsigned int' data-ref="49tint">tint</dfn> = <var>0</var>;</td></tr>
+<tr><th id="312">312</th><td></td></tr>
+<tr><th id="313">313</th><td>    <b>if</b> (<a class="local col9 ref" href="#39level" title='level' data-ref="39level">level</a> &gt;= <var>0</var>) {</td></tr>
+<tr><th id="314">314</th><td>        <a class="local col9 ref" href="#49tint" title='tint' data-ref="49tint">tint</a> = <a class="local col9 ref" href="#39level" title='level' data-ref="39level">level</a> &amp; <var>0xff00</var>;</td></tr>
+<tr><th id="315">315</th><td>        <a class="local col9 ref" href="#39level" title='level' data-ref="39level">level</a> &amp;= <var>0xff</var>;</td></tr>
+<tr><th id="316">316</th><td>    }</td></tr>
+<tr><th id="317">317</th><td></td></tr>
+<tr><th id="318">318</th><td>    <b>if</b> (<a class="local col9 ref" href="#39level" title='level' data-ref="39level">level</a> &gt; <a class="tu ref" href="#av_log_level" title='av_log_level' data-use='r' data-ref="av_log_level">av_log_level</a>)</td></tr>
+<tr><th id="319">319</th><td>        <b>return</b>;</td></tr>
+<tr><th id="320">320</th><td><u>#<span data-ppcond="320">if</span> <a class="macro" href="../config.h.html#332" title="1" data-ref="_M/HAVE_PTHREADS">HAVE_PTHREADS</a></u></td></tr>
+<tr><th id="321">321</th><td>    <a class="ref" href="../../include/pthread.h.html#pthread_mutex_lock" title='pthread_mutex_lock' data-ref="pthread_mutex_lock">pthread_mutex_lock</a>(&amp;<a class="tu ref" href="#mutex" title='mutex' data-use='a' data-ref="mutex">mutex</a>);</td></tr>
+<tr><th id="322">322</th><td><u>#<span data-ppcond="320">endif</span></u></td></tr>
+<tr><th id="323">323</th><td></td></tr>
+<tr><th id="324">324</th><td>    <a class="tu ref" href="#format_line" title='format_line' data-use='c' data-ref="format_line">format_line</a>(<a class="local col8 ref" href="#38ptr" title='ptr' data-ref="38ptr">ptr</a>, <a class="local col9 ref" href="#39level" title='level' data-ref="39level">level</a>, <a class="local col0 ref" href="#40fmt" title='fmt' data-ref="40fmt">fmt</a>, <a class="local col1 ref" href="#41vl" title='vl' data-ref="41vl">vl</a>, <a class="local col5 ref" href="#45part" title='part' data-ref="45part">part</a>, &amp;<a class="local col2 ref" href="#42print_prefix" title='print_prefix' data-ref="42print_prefix">print_prefix</a>, <a class="local col8 ref" href="#48type" title='type' data-ref="48type">type</a>);</td></tr>
+<tr><th id="325">325</th><td>    <a class="ref" href="../../include/stdio.h.html#snprintf" title='snprintf' data-ref="snprintf">snprintf</a>(<a class="local col6 ref" href="#46line" title='line' data-ref="46line">line</a>, <b>sizeof</b>(<a class="local col6 ref" href="#46line" title='line' data-ref="46line">line</a>), <q>"%s%s%s%s"</q>, <a class="local col5 ref" href="#45part" title='part' data-ref="45part">part</a>[<var>0</var>].<a class="ref" href="bprint.h.html#82" title='AVBPrint::str' data-ref="AVBPrint::str">str</a>, <a class="local col5 ref" href="#45part" title='part' data-ref="45part">part</a>[<var>1</var>].<a class="ref" href="bprint.h.html#82" title='AVBPrint::str' data-ref="AVBPrint::str">str</a>, <a class="local col5 ref" href="#45part" title='part' data-ref="45part">part</a>[<var>2</var>].<a class="ref" href="bprint.h.html#82" title='AVBPrint::str' data-ref="AVBPrint::str">str</a>, <a class="local col5 ref" href="#45part" title='part' data-ref="45part">part</a>[<var>3</var>].<a class="ref" href="bprint.h.html#82" title='AVBPrint::str' data-ref="AVBPrint::str">str</a>);</td></tr>
+<tr><th id="326">326</th><td></td></tr>
+<tr><th id="327">327</th><td><u>#<span data-ppcond="327">if</span> <a class="macro" href="../config.h.html#302" title="1" data-ref="_M/HAVE_ISATTY">HAVE_ISATTY</a></u></td></tr>
+<tr><th id="328">328</th><td>    <b>if</b> (!<a class="local col7 ref" href="#47is_atty" title='is_atty' data-ref="47is_atty">is_atty</a>)</td></tr>
+<tr><th id="329">329</th><td>        <a class="local col7 ref" href="#47is_atty" title='is_atty' data-ref="47is_atty">is_atty</a> = <a class="ref" href="../../include/unistd.h.html#isatty" title='isatty' data-ref="isatty">isatty</a>(<var>2</var>) ? <var>1</var> : -<var>1</var>;</td></tr>
+<tr><th id="330">330</th><td><u>#<span data-ppcond="327">endif</span></u></td></tr>
+<tr><th id="331">331</th><td></td></tr>
+<tr><th id="332">332</th><td>    <b>if</b> (<a class="local col2 ref" href="#42print_prefix" title='print_prefix' data-ref="42print_prefix">print_prefix</a> &amp;&amp; (<a class="tu ref" href="#flags" title='flags' data-use='r' data-ref="flags">flags</a> &amp; <a class="macro" href="log.h.html#359" title="1" data-ref="_M/AV_LOG_SKIP_REPEATED">AV_LOG_SKIP_REPEATED</a>) &amp;&amp; !<a class="ref" href="../../include/string.h.html#strcmp" title='strcmp' data-ref="strcmp">strcmp</a>(<a class="local col6 ref" href="#46line" title='line' data-ref="46line">line</a>, <a class="local col4 ref" href="#44prev" title='prev' data-ref="44prev">prev</a>) &amp;&amp;</td></tr>
+<tr><th id="333">333</th><td>        *<a class="local col6 ref" href="#46line" title='line' data-ref="46line">line</a> &amp;&amp; <a class="local col6 ref" href="#46line" title='line' data-ref="46line">line</a>[<a class="ref" href="../../include/string.h.html#strlen" title='strlen' data-ref="strlen">strlen</a>(<a class="local col6 ref" href="#46line" title='line' data-ref="46line">line</a>) - <var>1</var>] != <kbd>'\r'</kbd>){</td></tr>
+<tr><th id="334">334</th><td>        <a class="local col3 ref" href="#43count" title='count' data-ref="43count">count</a>++;</td></tr>
+<tr><th id="335">335</th><td>        <b>if</b> (<a class="local col7 ref" href="#47is_atty" title='is_atty' data-ref="47is_atty">is_atty</a> == <var>1</var>)</td></tr>
+<tr><th id="336">336</th><td>            <a class="ref" href="../../include/stdio.h.html#fprintf" title='fprintf' data-ref="fprintf">fprintf</a>(<a class="macro" href="../../include/stdio.h.html#174" title="stderr" data-ref="_M/stderr">stderr</a>, <q>"    Last message repeated %d times\r"</q>, <a class="local col3 ref" href="#43count" title='count' data-ref="43count">count</a>);</td></tr>
+<tr><th id="337">337</th><td>        <b>goto</b> <a class="lbl" href="#50end" data-ref="50end">end</a>;</td></tr>
+<tr><th id="338">338</th><td>    }</td></tr>
+<tr><th id="339">339</th><td>    <b>if</b> (<a class="local col3 ref" href="#43count" title='count' data-ref="43count">count</a> &gt; <var>0</var>) {</td></tr>
+<tr><th id="340">340</th><td>        <a class="ref" href="../../include/stdio.h.html#fprintf" title='fprintf' data-ref="fprintf">fprintf</a>(<a class="macro" href="../../include/stdio.h.html#174" title="stderr" data-ref="_M/stderr">stderr</a>, <q>"    Last message repeated %d times\n"</q>, <a class="local col3 ref" href="#43count" title='count' data-ref="43count">count</a>);</td></tr>
+<tr><th id="341">341</th><td>        <a class="local col3 ref" href="#43count" title='count' data-ref="43count">count</a> = <var>0</var>;</td></tr>
+<tr><th id="342">342</th><td>    }</td></tr>
+<tr><th id="343">343</th><td>    <a class="ref" href="../../include/string.h.html#strcpy" title='strcpy' data-ref="strcpy">strcpy</a>(<a class="local col4 ref" href="#44prev" title='prev' data-ref="44prev">prev</a>, <a class="local col6 ref" href="#46line" title='line' data-ref="46line">line</a>);</td></tr>
+<tr><th id="344">344</th><td>    <a class="tu ref" href="#sanitize" title='sanitize' data-use='c' data-ref="sanitize">sanitize</a>(<a class="local col5 ref" href="#45part" title='part' data-ref="45part">part</a>[<var>0</var>].<a class="ref" href="bprint.h.html#82" title='AVBPrint::str' data-ref="AVBPrint::str">str</a>);</td></tr>
+<tr><th id="345">345</th><td>    <a class="tu ref" href="#colored_fputs" title='colored_fputs' data-use='c' data-ref="colored_fputs">colored_fputs</a>(<a class="local col8 ref" href="#48type" title='type' data-ref="48type">type</a>[<var>0</var>], <var>0</var>, <a class="local col5 ref" href="#45part" title='part' data-ref="45part">part</a>[<var>0</var>].<a class="ref" href="bprint.h.html#82" title='AVBPrint::str' data-ref="AVBPrint::str">str</a>);</td></tr>
+<tr><th id="346">346</th><td>    <a class="tu ref" href="#sanitize" title='sanitize' data-use='c' data-ref="sanitize">sanitize</a>(<a class="local col5 ref" href="#45part" title='part' data-ref="45part">part</a>[<var>1</var>].<a class="ref" href="bprint.h.html#82" title='AVBPrint::str' data-ref="AVBPrint::str">str</a>);</td></tr>
+<tr><th id="347">347</th><td>    <a class="tu ref" href="#colored_fputs" title='colored_fputs' data-use='c' data-ref="colored_fputs">colored_fputs</a>(<a class="local col8 ref" href="#48type" title='type' data-ref="48type">type</a>[<var>1</var>], <var>0</var>, <a class="local col5 ref" href="#45part" title='part' data-ref="45part">part</a>[<var>1</var>].<a class="ref" href="bprint.h.html#82" title='AVBPrint::str' data-ref="AVBPrint::str">str</a>);</td></tr>
+<tr><th id="348">348</th><td>    <a class="tu ref" href="#sanitize" title='sanitize' data-use='c' data-ref="sanitize">sanitize</a>(<a class="local col5 ref" href="#45part" title='part' data-ref="45part">part</a>[<var>2</var>].<a class="ref" href="bprint.h.html#82" title='AVBPrint::str' data-ref="AVBPrint::str">str</a>);</td></tr>
+<tr><th id="349">349</th><td>    <a class="tu ref" href="#colored_fputs" title='colored_fputs' data-use='c' data-ref="colored_fputs">colored_fputs</a>(<a class="macro" href="common.h.html#481" title="av_clip_c" data-ref="_M/av_clip">av_clip</a>(<a class="local col9 ref" href="#39level" title='level' data-ref="39level">level</a> &gt;&gt; <var>3</var>, <var>0</var>, <a class="macro" href="#59" title="8" data-ref="_M/NB_LEVELS">NB_LEVELS</a> - <var>1</var>), <a class="local col9 ref" href="#49tint" title='tint' data-ref="49tint">tint</a> &gt;&gt; <var>8</var>, <a class="local col5 ref" href="#45part" title='part' data-ref="45part">part</a>[<var>2</var>].<a class="ref" href="bprint.h.html#82" title='AVBPrint::str' data-ref="AVBPrint::str">str</a>);</td></tr>
+<tr><th id="350">350</th><td>    <a class="tu ref" href="#sanitize" title='sanitize' data-use='c' data-ref="sanitize">sanitize</a>(<a class="local col5 ref" href="#45part" title='part' data-ref="45part">part</a>[<var>3</var>].<a class="ref" href="bprint.h.html#82" title='AVBPrint::str' data-ref="AVBPrint::str">str</a>);</td></tr>
+<tr><th id="351">351</th><td>    <a class="tu ref" href="#colored_fputs" title='colored_fputs' data-use='c' data-ref="colored_fputs">colored_fputs</a>(<a class="macro" href="common.h.html#481" title="av_clip_c" data-ref="_M/av_clip">av_clip</a>(<a class="local col9 ref" href="#39level" title='level' data-ref="39level">level</a> &gt;&gt; <var>3</var>, <var>0</var>, <a class="macro" href="#59" title="8" data-ref="_M/NB_LEVELS">NB_LEVELS</a> - <var>1</var>), <a class="local col9 ref" href="#49tint" title='tint' data-ref="49tint">tint</a> &gt;&gt; <var>8</var>, <a class="local col5 ref" href="#45part" title='part' data-ref="45part">part</a>[<var>3</var>].<a class="ref" href="bprint.h.html#82" title='AVBPrint::str' data-ref="AVBPrint::str">str</a>);</td></tr>
+<tr><th id="352">352</th><td></td></tr>
+<tr><th id="353">353</th><td><u>#<span data-ppcond="353">if</span> <a class="macro" href="../config.h.html#573" title="0" data-ref="_M/CONFIG_VALGRIND_BACKTRACE">CONFIG_VALGRIND_BACKTRACE</a></u></td></tr>
+<tr><th id="354">354</th><td>    <b>if</b> (level &lt;= BACKTRACE_LOGLEVEL)</td></tr>
+<tr><th id="355">355</th><td>        VALGRIND_PRINTF_BACKTRACE(<q>"%s"</q>, <q>""</q>);</td></tr>
+<tr><th id="356">356</th><td><u>#<span data-ppcond="353">endif</span></u></td></tr>
+<tr><th id="357">357</th><td><dfn class="lbl" id="50end" data-ref="50end">end</dfn>:</td></tr>
+<tr><th id="358">358</th><td>    <a class="ref" href="bprint.h.html#av_bprint_finalize" title='av_bprint_finalize' data-ref="av_bprint_finalize">av_bprint_finalize</a>(<a class="local col5 ref" href="#45part" title='part' data-ref="45part">part</a>+<var>3</var>, <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>);</td></tr>
+<tr><th id="359">359</th><td><u>#<span data-ppcond="359">if</span> <a class="macro" href="../config.h.html#332" title="1" data-ref="_M/HAVE_PTHREADS">HAVE_PTHREADS</a></u></td></tr>
+<tr><th id="360">360</th><td>    <a class="ref" href="../../include/pthread.h.html#pthread_mutex_unlock" title='pthread_mutex_unlock' data-ref="pthread_mutex_unlock">pthread_mutex_unlock</a>(&amp;<a class="tu ref" href="#mutex" title='mutex' data-use='a' data-ref="mutex">mutex</a>);</td></tr>
+<tr><th id="361">361</th><td><u>#<span data-ppcond="359">endif</span></u></td></tr>
+<tr><th id="362">362</th><td>}</td></tr>
+<tr><th id="363">363</th><td></td></tr>
+<tr><th id="364">364</th><td><em>static</em> <em>void</em> (*<dfn class="tu decl def" id="av_log_callback" title='av_log_callback' data-type='void (*)(void *, int, const char *, __va_list_tag *)' data-ref="av_log_callback">av_log_callback</dfn>)(<em>void</em>*, <em>int</em>, <em>const</em> <em>char</em>*, <span class='typedef' title='va_list' data-type='__gnuc_va_list' data-ref="va_list">va_list</span>) =</td></tr>
+<tr><th id="365">365</th><td>    <a class="ref" href="#av_log_default_callback" title='av_log_default_callback' data-ref="av_log_default_callback">av_log_default_callback</a>;</td></tr>
+<tr><th id="366">366</th><td></td></tr>
+<tr><th id="367">367</th><td><em>void</em> <dfn class="decl def" id="av_log" title='av_log' data-ref="av_log">av_log</dfn>(<em>void</em>* <dfn class="local col1 decl" id="51avcl" title='avcl' data-type='void *' data-ref="51avcl">avcl</dfn>, <em>int</em> <dfn class="local col2 decl" id="52level" title='level' data-type='int' data-ref="52level">level</dfn>, <em>const</em> <em>char</em> *<dfn class="local col3 decl" id="53fmt" title='fmt' data-type='const char *' data-ref="53fmt">fmt</dfn>, ...)</td></tr>
+<tr><th id="368">368</th><td>{</td></tr>
+<tr><th id="369">369</th><td>    <a class="typedef" href="log.h.html#AVClass" title='AVClass' data-type='struct AVClass' data-ref="AVClass">AVClass</a>* <dfn class="local col4 decl" id="54avc" title='avc' data-type='AVClass *' data-ref="54avc">avc</dfn> = <a class="local col1 ref" href="#51avcl" title='avcl' data-ref="51avcl">avcl</a> ? *(<a class="typedef" href="log.h.html#AVClass" title='AVClass' data-type='struct AVClass' data-ref="AVClass">AVClass</a> **) <a class="local col1 ref" href="#51avcl" title='avcl' data-ref="51avcl">avcl</a> : <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="370">370</th><td>    <span class='typedef' title='va_list' data-type='__gnuc_va_list' data-ref="va_list">va_list</span> <dfn class="local col5 decl" id="55vl" title='vl' data-type='va_list' data-ref="55vl">vl</dfn>;</td></tr>
+<tr><th id="371">371</th><td>    <span class="macro" title="__builtin_va_start(vl, fmt)" data-ref="_M/va_start">va_start</span>(<a class="local col5 ref" href="#55vl" title='vl' data-ref="55vl">vl</a>, <a class="local col3 ref" href="#53fmt" title='fmt' data-ref="53fmt">fmt</a>);</td></tr>
+<tr><th id="372">372</th><td>    <b>if</b> (<a class="local col4 ref" href="#54avc" title='avc' data-ref="54avc">avc</a> &amp;&amp; <a class="local col4 ref" href="#54avc" title='avc' data-ref="54avc">avc</a>-&gt;<a class="ref" href="log.h.html#AVClass::version" title='AVClass::version' data-ref="AVClass::version">version</a> &gt;= (<var>50</var> &lt;&lt; <var>16</var> | <var>15</var> &lt;&lt; <var>8</var> | <var>2</var>) &amp;&amp;</td></tr>
+<tr><th id="373">373</th><td>        <a class="local col4 ref" href="#54avc" title='avc' data-ref="54avc">avc</a>-&gt;<a class="ref" href="log.h.html#AVClass::log_level_offset_offset" title='AVClass::log_level_offset_offset' data-ref="AVClass::log_level_offset_offset">log_level_offset_offset</a> &amp;&amp; <a class="local col2 ref" href="#52level" title='level' data-ref="52level">level</a> &gt;= <a class="macro" href="log.h.html#170" title="8" data-ref="_M/AV_LOG_FATAL">AV_LOG_FATAL</a>)</td></tr>
+<tr><th id="374">374</th><td>        <a class="local col2 ref" href="#52level" title='level' data-ref="52level">level</a> += *(<em>int</em> *) (((<a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *) <a class="local col1 ref" href="#51avcl" title='avcl' data-ref="51avcl">avcl</a>) + <a class="local col4 ref" href="#54avc" title='avc' data-ref="54avc">avc</a>-&gt;<a class="ref" href="log.h.html#AVClass::log_level_offset_offset" title='AVClass::log_level_offset_offset' data-ref="AVClass::log_level_offset_offset">log_level_offset_offset</a>);</td></tr>
+<tr><th id="375">375</th><td>    <a class="ref" href="#av_vlog" title='av_vlog' data-ref="av_vlog">av_vlog</a>(<a class="local col1 ref" href="#51avcl" title='avcl' data-ref="51avcl">avcl</a>, <a class="local col2 ref" href="#52level" title='level' data-ref="52level">level</a>, <a class="local col3 ref" href="#53fmt" title='fmt' data-ref="53fmt">fmt</a>, <a class="local col5 ref" href="#55vl" title='vl' data-ref="55vl">vl</a>);</td></tr>
+<tr><th id="376">376</th><td>    <span class="macro" title="__builtin_va_end(vl)" data-ref="_M/va_end">va_end</span>(<a class="local col5 ref" href="#55vl" title='vl' data-ref="55vl">vl</a>);</td></tr>
+<tr><th id="377">377</th><td>}</td></tr>
+<tr><th id="378">378</th><td></td></tr>
+<tr><th id="379">379</th><td><em>void</em> <dfn class="decl def" id="av_vlog" title='av_vlog' data-ref="av_vlog">av_vlog</dfn>(<em>void</em>* <dfn class="local col6 decl" id="56avcl" title='avcl' data-type='void *' data-ref="56avcl">avcl</dfn>, <em>int</em> <dfn class="local col7 decl" id="57level" title='level' data-type='int' data-ref="57level">level</dfn>, <em>const</em> <em>char</em> *<dfn class="local col8 decl" id="58fmt" title='fmt' data-type='const char *' data-ref="58fmt">fmt</dfn>, <span class='typedef' title='va_list' data-type='__gnuc_va_list' data-ref="va_list">va_list</span> <dfn class="local col9 decl" id="59vl" title='vl' data-type='__va_list_tag *' data-ref="59vl">vl</dfn>)</td></tr>
+<tr><th id="380">380</th><td>{</td></tr>
+<tr><th id="381">381</th><td>    <em>void</em> (*<dfn class="local col0 decl" id="60log_callback" title='log_callback' data-type='void (*)(void *, int, const char *, __va_list_tag *)' data-ref="60log_callback">log_callback</dfn>)(<em>void</em>*, <em>int</em>, <em>const</em> <em>char</em>*, <span class='typedef' title='va_list' data-type='__gnuc_va_list' data-ref="va_list">va_list</span>) = <a class="tu ref" href="#av_log_callback" title='av_log_callback' data-use='r' data-ref="av_log_callback">av_log_callback</a>;</td></tr>
+<tr><th id="382">382</th><td>    <b>if</b> (<a class="local col0 ref" href="#60log_callback" title='log_callback' data-ref="60log_callback">log_callback</a>)</td></tr>
+<tr><th id="383">383</th><td>        <a class="local col0 ref" href="#60log_callback" title='log_callback' data-ref="60log_callback">log_callback</a>(<a class="local col6 ref" href="#56avcl" title='avcl' data-ref="56avcl">avcl</a>, <a class="local col7 ref" href="#57level" title='level' data-ref="57level">level</a>, <a class="local col8 ref" href="#58fmt" title='fmt' data-ref="58fmt">fmt</a>, <a class="local col9 ref" href="#59vl" title='vl' data-ref="59vl">vl</a>);</td></tr>
+<tr><th id="384">384</th><td>}</td></tr>
+<tr><th id="385">385</th><td></td></tr>
+<tr><th id="386">386</th><td><em>int</em> <dfn class="decl def" id="av_log_get_level" title='av_log_get_level' data-ref="av_log_get_level">av_log_get_level</dfn>(<em>void</em>)</td></tr>
+<tr><th id="387">387</th><td>{</td></tr>
+<tr><th id="388">388</th><td>    <b>return</b> <a class="tu ref" href="#av_log_level" title='av_log_level' data-use='r' data-ref="av_log_level">av_log_level</a>;</td></tr>
+<tr><th id="389">389</th><td>}</td></tr>
+<tr><th id="390">390</th><td></td></tr>
+<tr><th id="391">391</th><td><em>void</em> <dfn class="decl def" id="av_log_set_level" title='av_log_set_level' data-ref="av_log_set_level">av_log_set_level</dfn>(<em>int</em> <dfn class="local col1 decl" id="61level" title='level' data-type='int' data-ref="61level">level</dfn>)</td></tr>
+<tr><th id="392">392</th><td>{</td></tr>
+<tr><th id="393">393</th><td>    <a class="tu ref" href="#av_log_level" title='av_log_level' data-use='w' data-ref="av_log_level">av_log_level</a> = <a class="local col1 ref" href="#61level" title='level' data-ref="61level">level</a>;</td></tr>
+<tr><th id="394">394</th><td>}</td></tr>
+<tr><th id="395">395</th><td></td></tr>
+<tr><th id="396">396</th><td><em>void</em> <dfn class="decl def" id="av_log_set_flags" title='av_log_set_flags' data-ref="av_log_set_flags">av_log_set_flags</dfn>(<em>int</em> <dfn class="local col2 decl" id="62arg" title='arg' data-type='int' data-ref="62arg">arg</dfn>)</td></tr>
+<tr><th id="397">397</th><td>{</td></tr>
+<tr><th id="398">398</th><td>    <a class="tu ref" href="#flags" title='flags' data-use='w' data-ref="flags">flags</a> = <a class="local col2 ref" href="#62arg" title='arg' data-ref="62arg">arg</a>;</td></tr>
+<tr><th id="399">399</th><td>}</td></tr>
+<tr><th id="400">400</th><td></td></tr>
+<tr><th id="401">401</th><td><em>int</em> <dfn class="decl def" id="av_log_get_flags" title='av_log_get_flags' data-ref="av_log_get_flags">av_log_get_flags</dfn>(<em>void</em>)</td></tr>
+<tr><th id="402">402</th><td>{</td></tr>
+<tr><th id="403">403</th><td>    <b>return</b> <a class="tu ref" href="#flags" title='flags' data-use='r' data-ref="flags">flags</a>;</td></tr>
+<tr><th id="404">404</th><td>}</td></tr>
+<tr><th id="405">405</th><td></td></tr>
+<tr><th id="406">406</th><td><em>void</em> <dfn class="decl def" id="av_log_set_callback" title='av_log_set_callback' data-ref="av_log_set_callback">av_log_set_callback</dfn>(<em>void</em> (*<dfn class="local col3 decl" id="63callback" title='callback' data-type='void (*)(void *, int, const char *, __va_list_tag *)' data-ref="63callback">callback</dfn>)(<em>void</em>*, <em>int</em>, <em>const</em> <em>char</em>*, <span class='typedef' title='va_list' data-type='__gnuc_va_list' data-ref="va_list">va_list</span>))</td></tr>
+<tr><th id="407">407</th><td>{</td></tr>
+<tr><th id="408">408</th><td>    <a class="tu ref" href="#av_log_callback" title='av_log_callback' data-use='w' data-ref="av_log_callback">av_log_callback</a> = <a class="local col3 ref" href="#63callback" title='callback' data-ref="63callback">callback</a>;</td></tr>
+<tr><th id="409">409</th><td>}</td></tr>
+<tr><th id="410">410</th><td></td></tr>
+<tr><th id="411">411</th><td><em>static</em> <em>void</em> <dfn class="tu decl def" id="missing_feature_sample" title='missing_feature_sample' data-type='void missing_feature_sample(int sample, void * avc, const char * msg, __va_list_tag * argument_list)' data-ref="missing_feature_sample">missing_feature_sample</dfn>(<em>int</em> <dfn class="local col4 decl" id="64sample" title='sample' data-type='int' data-ref="64sample">sample</dfn>, <em>void</em> *<dfn class="local col5 decl" id="65avc" title='avc' data-type='void *' data-ref="65avc">avc</dfn>, <em>const</em> <em>char</em> *<dfn class="local col6 decl" id="66msg" title='msg' data-type='const char *' data-ref="66msg">msg</dfn>,</td></tr>
+<tr><th id="412">412</th><td>                                   <span class='typedef' title='va_list' data-type='__gnuc_va_list' data-ref="va_list">va_list</span> <dfn class="local col7 decl" id="67argument_list" title='argument_list' data-type='__va_list_tag *' data-ref="67argument_list">argument_list</dfn>)</td></tr>
+<tr><th id="413">413</th><td>{</td></tr>
+<tr><th id="414">414</th><td>    <a class="ref" href="#av_vlog" title='av_vlog' data-ref="av_vlog">av_vlog</a>(<a class="local col5 ref" href="#65avc" title='avc' data-ref="65avc">avc</a>, <a class="macro" href="log.h.html#182" title="24" data-ref="_M/AV_LOG_WARNING">AV_LOG_WARNING</a>, <a class="local col6 ref" href="#66msg" title='msg' data-ref="66msg">msg</a>, <a class="local col7 ref" href="#67argument_list" title='argument_list' data-ref="67argument_list">argument_list</a>);</td></tr>
+<tr><th id="415">415</th><td>    <a class="ref" href="#av_log" title='av_log' data-ref="av_log">av_log</a>(<a class="local col5 ref" href="#65avc" title='avc' data-ref="65avc">avc</a>, <a class="macro" href="log.h.html#182" title="24" data-ref="_M/AV_LOG_WARNING">AV_LOG_WARNING</a>, <q>" is not implemented. Update your FFmpeg "</q></td></tr>
+<tr><th id="416">416</th><td>           <q>"version to the newest one from Git. If the problem still "</q></td></tr>
+<tr><th id="417">417</th><td>           <q>"occurs, it means that your file has a feature which has not "</q></td></tr>
+<tr><th id="418">418</th><td>           <q>"been implemented.\n"</q>);</td></tr>
+<tr><th id="419">419</th><td>    <b>if</b> (<a class="local col4 ref" href="#64sample" title='sample' data-ref="64sample">sample</a>)</td></tr>
+<tr><th id="420">420</th><td>        <a class="ref" href="#av_log" title='av_log' data-ref="av_log">av_log</a>(<a class="local col5 ref" href="#65avc" title='avc' data-ref="65avc">avc</a>, <a class="macro" href="log.h.html#182" title="24" data-ref="_M/AV_LOG_WARNING">AV_LOG_WARNING</a>, <q>"If you want to help, upload a sample "</q></td></tr>
+<tr><th id="421">421</th><td>               <q>"of this file to ftp://upload.ffmpeg.org/incoming/ "</q></td></tr>
+<tr><th id="422">422</th><td>               <q>"and contact the ffmpeg-devel mailing list. (ffmpeg-devel@ffmpeg.org)\n"</q>);</td></tr>
+<tr><th id="423">423</th><td>}</td></tr>
+<tr><th id="424">424</th><td></td></tr>
+<tr><th id="425">425</th><td><em>void</em> <dfn class="decl def" id="avpriv_request_sample" title='avpriv_request_sample' data-ref="avpriv_request_sample">avpriv_request_sample</dfn>(<em>void</em> *<dfn class="local col8 decl" id="68avc" title='avc' data-type='void *' data-ref="68avc">avc</dfn>, <em>const</em> <em>char</em> *<dfn class="local col9 decl" id="69msg" title='msg' data-type='const char *' data-ref="69msg">msg</dfn>, ...)</td></tr>
+<tr><th id="426">426</th><td>{</td></tr>
+<tr><th id="427">427</th><td>    <span class='typedef' title='va_list' data-type='__gnuc_va_list' data-ref="va_list">va_list</span> <dfn class="local col0 decl" id="70argument_list" title='argument_list' data-type='va_list' data-ref="70argument_list">argument_list</dfn>;</td></tr>
+<tr><th id="428">428</th><td></td></tr>
+<tr><th id="429">429</th><td>    <span class="macro" title="__builtin_va_start(argument_list, msg)" data-ref="_M/va_start">va_start</span>(<a class="local col0 ref" href="#70argument_list" title='argument_list' data-ref="70argument_list">argument_list</a>, <a class="local col9 ref" href="#69msg" title='msg' data-ref="69msg">msg</a>);</td></tr>
+<tr><th id="430">430</th><td>    <a class="tu ref" href="#missing_feature_sample" title='missing_feature_sample' data-use='c' data-ref="missing_feature_sample">missing_feature_sample</a>(<var>1</var>, <a class="local col8 ref" href="#68avc" title='avc' data-ref="68avc">avc</a>, <a class="local col9 ref" href="#69msg" title='msg' data-ref="69msg">msg</a>, <a class="local col0 ref" href="#70argument_list" title='argument_list' data-ref="70argument_list">argument_list</a>);</td></tr>
+<tr><th id="431">431</th><td>    <span class="macro" title="__builtin_va_end(argument_list)" data-ref="_M/va_end">va_end</span>(<a class="local col0 ref" href="#70argument_list" title='argument_list' data-ref="70argument_list">argument_list</a>);</td></tr>
+<tr><th id="432">432</th><td>}</td></tr>
+<tr><th id="433">433</th><td></td></tr>
+<tr><th id="434">434</th><td><em>void</em> <dfn class="decl def" id="avpriv_report_missing_feature" title='avpriv_report_missing_feature' data-ref="avpriv_report_missing_feature">avpriv_report_missing_feature</dfn>(<em>void</em> *<dfn class="local col1 decl" id="71avc" title='avc' data-type='void *' data-ref="71avc">avc</dfn>, <em>const</em> <em>char</em> *<dfn class="local col2 decl" id="72msg" title='msg' data-type='const char *' data-ref="72msg">msg</dfn>, ...)</td></tr>
+<tr><th id="435">435</th><td>{</td></tr>
+<tr><th id="436">436</th><td>    <span class='typedef' title='va_list' data-type='__gnuc_va_list' data-ref="va_list">va_list</span> <dfn class="local col3 decl" id="73argument_list" title='argument_list' data-type='va_list' data-ref="73argument_list">argument_list</dfn>;</td></tr>
+<tr><th id="437">437</th><td></td></tr>
+<tr><th id="438">438</th><td>    <span class="macro" title="__builtin_va_start(argument_list, msg)" data-ref="_M/va_start">va_start</span>(<a class="local col3 ref" href="#73argument_list" title='argument_list' data-ref="73argument_list">argument_list</a>, <a class="local col2 ref" href="#72msg" title='msg' data-ref="72msg">msg</a>);</td></tr>
+<tr><th id="439">439</th><td>    <a class="tu ref" href="#missing_feature_sample" title='missing_feature_sample' data-use='c' data-ref="missing_feature_sample">missing_feature_sample</a>(<var>0</var>, <a class="local col1 ref" href="#71avc" title='avc' data-ref="71avc">avc</a>, <a class="local col2 ref" href="#72msg" title='msg' data-ref="72msg">msg</a>, <a class="local col3 ref" href="#73argument_list" title='argument_list' data-ref="73argument_list">argument_list</a>);</td></tr>
+<tr><th id="440">440</th><td>    <span class="macro" title="__builtin_va_end(argument_list)" data-ref="_M/va_end">va_end</span>(<a class="local col3 ref" href="#73argument_list" title='argument_list' data-ref="73argument_list">argument_list</a>);</td></tr>
+<tr><th id="441">441</th><td>}</td></tr>
+<tr><th id="442">442</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

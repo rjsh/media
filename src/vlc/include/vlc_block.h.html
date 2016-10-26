@@ -1,0 +1,340 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>vlc_block.h source code [vlc/include/vlc_block.h] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="block_t "/>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'vlc/include/vlc_block.h'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>vlc</a>/<a href='./'>include</a>/<a href='vlc_block.h.html'>vlc_block.h</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*****************************************************************************</i></td></tr>
+<tr><th id="2">2</th><td><i> * vlc_block.h: Data blocks management functions</i></td></tr>
+<tr><th id="3">3</th><td><i> *****************************************************************************</i></td></tr>
+<tr><th id="4">4</th><td><i> * Copyright (C) 2003 VLC authors and VideoLAN</i></td></tr>
+<tr><th id="5">5</th><td><i> * $Id: 75f98ff4bd59bf3dad9356f9e84ebe53942efe69 $</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * Authors: Laurent Aimar &lt;fenrir@via.ecp.fr&gt;</i></td></tr>
+<tr><th id="8">8</th><td><i> *</i></td></tr>
+<tr><th id="9">9</th><td><i> * This program is free software; you can redistribute it and/or modify it</i></td></tr>
+<tr><th id="10">10</th><td><i> * under the terms of the GNU Lesser General Public License as published by</i></td></tr>
+<tr><th id="11">11</th><td><i> * the Free Software Foundation; either version 2.1 of the License, or</i></td></tr>
+<tr><th id="12">12</th><td><i> * (at your option) any later version.</i></td></tr>
+<tr><th id="13">13</th><td><i> *</i></td></tr>
+<tr><th id="14">14</th><td><i> * This program is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="15">15</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="16">16</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</i></td></tr>
+<tr><th id="17">17</th><td><i> * GNU Lesser General Public License for more details.</i></td></tr>
+<tr><th id="18">18</th><td><i> *</i></td></tr>
+<tr><th id="19">19</th><td><i> * You should have received a copy of the GNU Lesser General Public License</i></td></tr>
+<tr><th id="20">20</th><td><i> * along with this program; if not, write to the Free Software Foundation,</i></td></tr>
+<tr><th id="21">21</th><td><i> * Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.</i></td></tr>
+<tr><th id="22">22</th><td><i> *****************************************************************************/</i></td></tr>
+<tr><th id="23">23</th><td></td></tr>
+<tr><th id="24">24</th><td><u>#<span data-ppcond="24">ifndef</span> <span class="macro" data-ref="_M/VLC_BLOCK_H">VLC_BLOCK_H</span></u></td></tr>
+<tr><th id="25">25</th><td><u>#define <dfn class="macro" id="_M/VLC_BLOCK_H" data-ref="_M/VLC_BLOCK_H">VLC_BLOCK_H</dfn> 1</u></td></tr>
+<tr><th id="26">26</th><td></td></tr>
+<tr><th id="27">27</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="28">28</th><td><i class="doc"> *<span class="command"> \file</span></i></td></tr>
+<tr><th id="29">29</th><td><i class="doc"> * This file implements functions and structures to handle blocks of data in vlc</i></td></tr>
+<tr><th id="30">30</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="31">31</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="32">32</th><td></td></tr>
+<tr><th id="33">33</th><td><u>#include <a href="../../include/x86_64-linux-gnu/sys/types.h.html">&lt;sys/types.h&gt;</a>  /* for ssize_t */</u></td></tr>
+<tr><th id="34">34</th><td></td></tr>
+<tr><th id="35">35</th><td><i>/****************************************************************************</i></td></tr>
+<tr><th id="36">36</th><td><i> * block:</i></td></tr>
+<tr><th id="37">37</th><td><i> ****************************************************************************</i></td></tr>
+<tr><th id="38">38</th><td><i> * - i_flags may not always be set (ie could be 0, even for a key frame</i></td></tr>
+<tr><th id="39">39</th><td><i> *      it depends where you receive the buffer (before/after a packetizer</i></td></tr>
+<tr><th id="40">40</th><td><i> *      and the demux/packetizer implementations.</i></td></tr>
+<tr><th id="41">41</th><td><i> * - i_dts/i_pts could be VLC_TS_INVALID, it means no pts/dts</i></td></tr>
+<tr><th id="42">42</th><td><i> * - i_length: length in microseond of the packet, can be null except in the</i></td></tr>
+<tr><th id="43">43</th><td><i> *      sout where it is mandatory.</i></td></tr>
+<tr><th id="44">44</th><td><i> *</i></td></tr>
+<tr><th id="45">45</th><td><i> * - i_buffer number of valid data pointed by p_buffer</i></td></tr>
+<tr><th id="46">46</th><td><i> *      you can freely decrease it but never increase it yourself</i></td></tr>
+<tr><th id="47">47</th><td><i> *      (use block_Realloc)</i></td></tr>
+<tr><th id="48">48</th><td><i> * - p_buffer: pointer over datas. You should never overwrite it, you can</i></td></tr>
+<tr><th id="49">49</th><td><i> *   only incremment it to skip datas, in others cases use block_Realloc</i></td></tr>
+<tr><th id="50">50</th><td><i> *   (don't duplicate yourself in a bigger buffer, block_Realloc is</i></td></tr>
+<tr><th id="51">51</th><td><i> *   optimised for preheader/postdatas increase)</i></td></tr>
+<tr><th id="52">52</th><td><i> ****************************************************************************/</i></td></tr>
+<tr><th id="53">53</th><td></td></tr>
+<tr><th id="54">54</th><td><i class="doc">/** The content doesn't follow the last block, or is probably broken */</i></td></tr>
+<tr><th id="55">55</th><td><u>#define <dfn class="macro" id="_M/BLOCK_FLAG_DISCONTINUITY" data-ref="_M/BLOCK_FLAG_DISCONTINUITY">BLOCK_FLAG_DISCONTINUITY</dfn> 0x0001</u></td></tr>
+<tr><th id="56">56</th><td><i class="doc">/** Intra frame */</i></td></tr>
+<tr><th id="57">57</th><td><u>#define <dfn class="macro" id="_M/BLOCK_FLAG_TYPE_I" data-ref="_M/BLOCK_FLAG_TYPE_I">BLOCK_FLAG_TYPE_I</dfn>        0x0002</u></td></tr>
+<tr><th id="58">58</th><td><i class="doc">/** Inter frame with backward reference only */</i></td></tr>
+<tr><th id="59">59</th><td><u>#define <dfn class="macro" id="_M/BLOCK_FLAG_TYPE_P" data-ref="_M/BLOCK_FLAG_TYPE_P">BLOCK_FLAG_TYPE_P</dfn>        0x0004</u></td></tr>
+<tr><th id="60">60</th><td><i class="doc">/** Inter frame with backward and forward reference */</i></td></tr>
+<tr><th id="61">61</th><td><u>#define <dfn class="macro" id="_M/BLOCK_FLAG_TYPE_B" data-ref="_M/BLOCK_FLAG_TYPE_B">BLOCK_FLAG_TYPE_B</dfn>        0x0008</u></td></tr>
+<tr><th id="62">62</th><td><i class="doc">/** For inter frame when you don't know the real type */</i></td></tr>
+<tr><th id="63">63</th><td><u>#define <dfn class="macro" id="_M/BLOCK_FLAG_TYPE_PB" data-ref="_M/BLOCK_FLAG_TYPE_PB">BLOCK_FLAG_TYPE_PB</dfn>       0x0010</u></td></tr>
+<tr><th id="64">64</th><td><i class="doc">/** Warn that this block is a header one */</i></td></tr>
+<tr><th id="65">65</th><td><u>#define <dfn class="macro" id="_M/BLOCK_FLAG_HEADER" data-ref="_M/BLOCK_FLAG_HEADER">BLOCK_FLAG_HEADER</dfn>        0x0020</u></td></tr>
+<tr><th id="66">66</th><td><i class="doc">/** This is the last block of the frame */</i></td></tr>
+<tr><th id="67">67</th><td><u>#define <dfn class="macro" id="_M/BLOCK_FLAG_END_OF_FRAME" data-ref="_M/BLOCK_FLAG_END_OF_FRAME">BLOCK_FLAG_END_OF_FRAME</dfn>  0x0040</u></td></tr>
+<tr><th id="68">68</th><td><i class="doc">/** This is not a key frame for bitrate shaping */</i></td></tr>
+<tr><th id="69">69</th><td><u>#define <dfn class="macro" id="_M/BLOCK_FLAG_NO_KEYFRAME" data-ref="_M/BLOCK_FLAG_NO_KEYFRAME">BLOCK_FLAG_NO_KEYFRAME</dfn>   0x0080</u></td></tr>
+<tr><th id="70">70</th><td><i class="doc">/** This block contains the last part of a sequence  */</i></td></tr>
+<tr><th id="71">71</th><td><u>#define <dfn class="macro" id="_M/BLOCK_FLAG_END_OF_SEQUENCE" data-ref="_M/BLOCK_FLAG_END_OF_SEQUENCE">BLOCK_FLAG_END_OF_SEQUENCE</dfn> 0x0100</u></td></tr>
+<tr><th id="72">72</th><td><i class="doc">/** This block contains a clock reference */</i></td></tr>
+<tr><th id="73">73</th><td><u>#define <dfn class="macro" id="_M/BLOCK_FLAG_CLOCK" data-ref="_M/BLOCK_FLAG_CLOCK">BLOCK_FLAG_CLOCK</dfn>         0x0200</u></td></tr>
+<tr><th id="74">74</th><td><i class="doc">/** This block is scrambled */</i></td></tr>
+<tr><th id="75">75</th><td><u>#define <dfn class="macro" id="_M/BLOCK_FLAG_SCRAMBLED" data-ref="_M/BLOCK_FLAG_SCRAMBLED">BLOCK_FLAG_SCRAMBLED</dfn>     0x0400</u></td></tr>
+<tr><th id="76">76</th><td><i class="doc">/** This block has to be decoded but not be displayed */</i></td></tr>
+<tr><th id="77">77</th><td><u>#define <dfn class="macro" id="_M/BLOCK_FLAG_PREROLL" data-ref="_M/BLOCK_FLAG_PREROLL">BLOCK_FLAG_PREROLL</dfn>       0x0800</u></td></tr>
+<tr><th id="78">78</th><td><i class="doc">/** This block is corrupted and/or there is data loss  */</i></td></tr>
+<tr><th id="79">79</th><td><u>#define <dfn class="macro" id="_M/BLOCK_FLAG_CORRUPTED" data-ref="_M/BLOCK_FLAG_CORRUPTED">BLOCK_FLAG_CORRUPTED</dfn>     0x1000</u></td></tr>
+<tr><th id="80">80</th><td><i class="doc">/** This block contains an interlaced picture with top field first */</i></td></tr>
+<tr><th id="81">81</th><td><u>#define <dfn class="macro" id="_M/BLOCK_FLAG_TOP_FIELD_FIRST" data-ref="_M/BLOCK_FLAG_TOP_FIELD_FIRST">BLOCK_FLAG_TOP_FIELD_FIRST</dfn> 0x2000</u></td></tr>
+<tr><th id="82">82</th><td><i class="doc">/** This block contains an interlaced picture with bottom field first */</i></td></tr>
+<tr><th id="83">83</th><td><u>#define <dfn class="macro" id="_M/BLOCK_FLAG_BOTTOM_FIELD_FIRST" data-ref="_M/BLOCK_FLAG_BOTTOM_FIELD_FIRST">BLOCK_FLAG_BOTTOM_FIELD_FIRST</dfn> 0x4000</u></td></tr>
+<tr><th id="84">84</th><td></td></tr>
+<tr><th id="85">85</th><td><i class="doc">/** This block contains an interlaced picture */</i></td></tr>
+<tr><th id="86">86</th><td><u>#define <dfn class="macro" id="_M/BLOCK_FLAG_INTERLACED_MASK" data-ref="_M/BLOCK_FLAG_INTERLACED_MASK">BLOCK_FLAG_INTERLACED_MASK</dfn> \</u></td></tr>
+<tr><th id="87">87</th><td><u>    (BLOCK_FLAG_TOP_FIELD_FIRST|BLOCK_FLAG_BOTTOM_FIELD_FIRST)</u></td></tr>
+<tr><th id="88">88</th><td></td></tr>
+<tr><th id="89">89</th><td><u>#define <dfn class="macro" id="_M/BLOCK_FLAG_TYPE_MASK" data-ref="_M/BLOCK_FLAG_TYPE_MASK">BLOCK_FLAG_TYPE_MASK</dfn> \</u></td></tr>
+<tr><th id="90">90</th><td><u>    (BLOCK_FLAG_TYPE_I|BLOCK_FLAG_TYPE_P|BLOCK_FLAG_TYPE_B|BLOCK_FLAG_TYPE_PB)</u></td></tr>
+<tr><th id="91">91</th><td></td></tr>
+<tr><th id="92">92</th><td><i>/* These are for input core private usage only */</i></td></tr>
+<tr><th id="93">93</th><td><u>#define <dfn class="macro" id="_M/BLOCK_FLAG_CORE_PRIVATE_MASK" data-ref="_M/BLOCK_FLAG_CORE_PRIVATE_MASK">BLOCK_FLAG_CORE_PRIVATE_MASK</dfn>  0x00ff0000</u></td></tr>
+<tr><th id="94">94</th><td><u>#define <dfn class="macro" id="_M/BLOCK_FLAG_CORE_PRIVATE_SHIFT" data-ref="_M/BLOCK_FLAG_CORE_PRIVATE_SHIFT">BLOCK_FLAG_CORE_PRIVATE_SHIFT</dfn> 16</u></td></tr>
+<tr><th id="95">95</th><td></td></tr>
+<tr><th id="96">96</th><td><i>/* These are for module private usage only */</i></td></tr>
+<tr><th id="97">97</th><td><u>#define <dfn class="macro" id="_M/BLOCK_FLAG_PRIVATE_MASK" data-ref="_M/BLOCK_FLAG_PRIVATE_MASK">BLOCK_FLAG_PRIVATE_MASK</dfn>  0xff000000</u></td></tr>
+<tr><th id="98">98</th><td><u>#define <dfn class="macro" id="_M/BLOCK_FLAG_PRIVATE_SHIFT" data-ref="_M/BLOCK_FLAG_PRIVATE_SHIFT">BLOCK_FLAG_PRIVATE_SHIFT</dfn> 24</u></td></tr>
+<tr><th id="99">99</th><td></td></tr>
+<tr><th id="100">100</th><td><b>typedef</b> <em>void</em> (*<dfn class="typedef" id="block_free_t" title='block_free_t' data-type='void (*)(block_t *)' data-ref="block_free_t">block_free_t</dfn>) (<a class="typedef" href="vlc_common.h.html#block_t" title='block_t' data-type='struct block_t' data-ref="block_t">block_t</a> *);</td></tr>
+<tr><th id="101">101</th><td></td></tr>
+<tr><th id="102">102</th><td><b>struct</b> <dfn class="type def" id="block_t" title='block_t' data-ref="block_t">block_t</dfn></td></tr>
+<tr><th id="103">103</th><td>{</td></tr>
+<tr><th id="104">104</th><td>    <a class="typedef" href="vlc_common.h.html#block_t" title='block_t' data-type='struct block_t' data-ref="block_t">block_t</a>    *<dfn class="decl" id="block_t::p_next" title='block_t::p_next' data-ref="block_t::p_next">p_next</dfn>;</td></tr>
+<tr><th id="105">105</th><td></td></tr>
+<tr><th id="106">106</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a>    *<dfn class="decl" id="block_t::p_buffer" title='block_t::p_buffer' data-ref="block_t::p_buffer">p_buffer</dfn>; <i class="doc">/**&lt; Payload start */</i></td></tr>
+<tr><th id="107">107</th><td>    <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span>      <dfn class="decl" id="block_t::i_buffer" title='block_t::i_buffer' data-ref="block_t::i_buffer">i_buffer</dfn>; <i class="doc">/**&lt; Payload length */</i></td></tr>
+<tr><th id="108">108</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a>    *<dfn class="decl" id="block_t::p_start" title='block_t::p_start' data-ref="block_t::p_start">p_start</dfn>; <i class="doc">/**&lt; Buffer start */</i></td></tr>
+<tr><th id="109">109</th><td>    <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span>      <dfn class="decl" id="block_t::i_size" title='block_t::i_size' data-ref="block_t::i_size">i_size</dfn>; <i class="doc">/**&lt; Buffer total size */</i></td></tr>
+<tr><th id="110">110</th><td></td></tr>
+<tr><th id="111">111</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a>    <dfn class="decl" id="block_t::i_flags" title='block_t::i_flags' data-ref="block_t::i_flags">i_flags</dfn>;</td></tr>
+<tr><th id="112">112</th><td>    <em>unsigned</em>    <dfn class="decl" id="block_t::i_nb_samples" title='block_t::i_nb_samples' data-ref="block_t::i_nb_samples">i_nb_samples</dfn>; <i>/* Used for audio */</i></td></tr>
+<tr><th id="113">113</th><td></td></tr>
+<tr><th id="114">114</th><td>    <a class="typedef" href="vlc_common.h.html#mtime_t" title='mtime_t' data-type='int64_t' data-ref="mtime_t">mtime_t</a>     <dfn class="decl" id="block_t::i_pts" title='block_t::i_pts' data-ref="block_t::i_pts">i_pts</dfn>;</td></tr>
+<tr><th id="115">115</th><td>    <a class="typedef" href="vlc_common.h.html#mtime_t" title='mtime_t' data-type='int64_t' data-ref="mtime_t">mtime_t</a>     <dfn class="decl" id="block_t::i_dts" title='block_t::i_dts' data-ref="block_t::i_dts">i_dts</dfn>;</td></tr>
+<tr><th id="116">116</th><td>    <a class="typedef" href="vlc_common.h.html#mtime_t" title='mtime_t' data-type='int64_t' data-ref="mtime_t">mtime_t</a>     <dfn class="decl" id="block_t::i_length" title='block_t::i_length' data-ref="block_t::i_length">i_length</dfn>;</td></tr>
+<tr><th id="117">117</th><td></td></tr>
+<tr><th id="118">118</th><td>    <i>/* Rudimentary support for overloading block (de)allocation. */</i></td></tr>
+<tr><th id="119">119</th><td>    <a class="typedef" href="#block_free_t" title='block_free_t' data-type='void (*)(block_t *)' data-ref="block_free_t">block_free_t</a> <dfn class="decl" id="block_t::pf_release" title='block_t::pf_release' data-ref="block_t::pf_release">pf_release</dfn>;</td></tr>
+<tr><th id="120">120</th><td>};</td></tr>
+<tr><th id="121">121</th><td></td></tr>
+<tr><th id="122">122</th><td><i>/****************************************************************************</i></td></tr>
+<tr><th id="123">123</th><td><i> * Blocks functions:</i></td></tr>
+<tr><th id="124">124</th><td><i> ****************************************************************************</i></td></tr>
+<tr><th id="125">125</th><td><i> * - block_Alloc : create a new block with the requested size ( &gt;= 0 ), return</i></td></tr>
+<tr><th id="126">126</th><td><i> *      NULL for failure.</i></td></tr>
+<tr><th id="127">127</th><td><i> * - block_Release : release a block allocated with block_Alloc.</i></td></tr>
+<tr><th id="128">128</th><td><i> * - block_Realloc : realloc a block,</i></td></tr>
+<tr><th id="129">129</th><td><i> *      i_pre: how many bytes to insert before body if &gt; 0, else how many</i></td></tr>
+<tr><th id="130">130</th><td><i> *      bytes of body to skip (the latter can be done without using</i></td></tr>
+<tr><th id="131">131</th><td><i> *      block_Realloc i_buffer -= -i_pre, p_buffer += -i_pre as i_pre &lt; 0)</i></td></tr>
+<tr><th id="132">132</th><td><i> *      i_body (&gt;= 0): the final size of the body (decreasing it can directly</i></td></tr>
+<tr><th id="133">133</th><td><i> *      be done with i_buffer = i_body).</i></td></tr>
+<tr><th id="134">134</th><td><i> *      with preheader and or body (increase</i></td></tr>
+<tr><th id="135">135</th><td><i> *      and decrease are supported). Use it as it is optimised.</i></td></tr>
+<tr><th id="136">136</th><td><i> * - block_Duplicate : create a copy of a block.</i></td></tr>
+<tr><th id="137">137</th><td><i> ****************************************************************************/</i></td></tr>
+<tr><th id="138">138</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>void</em> <dfn class="decl" id="block_Init" title='block_Init' data-ref="block_Init">block_Init</dfn>( <a class="typedef" href="vlc_common.h.html#block_t" title='block_t' data-type='struct block_t' data-ref="block_t">block_t</a> *, <em>void</em> *, <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> );</td></tr>
+<tr><th id="139">139</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <a class="typedef" href="vlc_common.h.html#block_t" title='block_t' data-type='struct block_t' data-ref="block_t">block_t</a> *<dfn class="decl" id="block_Alloc" title='block_Alloc' data-ref="block_Alloc">block_Alloc</dfn>( <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> ) <a class="macro" href="vlc_common.h.html#98" title="__attribute__ ((warn_unused_result))" data-ref="_M/VLC_USED">VLC_USED</a> <a class="macro" href="vlc_common.h.html#94" title="__attribute__ ((malloc))" data-ref="_M/VLC_MALLOC">VLC_MALLOC</a>;</td></tr>
+<tr><th id="140">140</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <a class="typedef" href="vlc_common.h.html#block_t" title='block_t' data-type='struct block_t' data-ref="block_t">block_t</a> *<dfn class="decl" id="block_Realloc" title='block_Realloc' data-ref="block_Realloc">block_Realloc</dfn>( <a class="typedef" href="vlc_common.h.html#block_t" title='block_t' data-type='struct block_t' data-ref="block_t">block_t</a> *, <a class="typedef" href="../../include/stdio.h.html#ssize_t" title='ssize_t' data-type='__ssize_t' data-ref="ssize_t">ssize_t</a> <dfn class="local col8 decl" id="608i_pre" title='i_pre' data-type='ssize_t' data-ref="608i_pre">i_pre</dfn>, <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="local col9 decl" id="609i_body" title='i_body' data-type='size_t' data-ref="609i_body">i_body</dfn> ) <a class="macro" href="vlc_common.h.html#98" title="__attribute__ ((warn_unused_result))" data-ref="_M/VLC_USED">VLC_USED</a>;</td></tr>
+<tr><th id="141">141</th><td></td></tr>
+<tr><th id="142">142</th><td><em>static</em> <b>inline</b> <em>void</em> <dfn class="decl def" id="block_CopyProperties" title='block_CopyProperties' data-ref="block_CopyProperties">block_CopyProperties</dfn>( <a class="typedef" href="vlc_common.h.html#block_t" title='block_t' data-type='struct block_t' data-ref="block_t">block_t</a> *<dfn class="local col0 decl" id="610dst" title='dst' data-type='block_t *' data-ref="610dst">dst</dfn>, <a class="typedef" href="vlc_common.h.html#block_t" title='block_t' data-type='struct block_t' data-ref="block_t">block_t</a> *<dfn class="local col1 decl" id="611src" title='src' data-type='block_t *' data-ref="611src">src</dfn> )</td></tr>
+<tr><th id="143">143</th><td>{</td></tr>
+<tr><th id="144">144</th><td>    <a class="local col0 ref" href="#610dst" title='dst' data-ref="610dst">dst</a>-&gt;<a class="ref" href="#block_t::i_flags" title='block_t::i_flags' data-ref="block_t::i_flags">i_flags</a>   = <a class="local col1 ref" href="#611src" title='src' data-ref="611src">src</a>-&gt;<a class="ref" href="#block_t::i_flags" title='block_t::i_flags' data-ref="block_t::i_flags">i_flags</a>;</td></tr>
+<tr><th id="145">145</th><td>    <a class="local col0 ref" href="#610dst" title='dst' data-ref="610dst">dst</a>-&gt;<a class="ref" href="#block_t::i_nb_samples" title='block_t::i_nb_samples' data-ref="block_t::i_nb_samples">i_nb_samples</a> = <a class="local col1 ref" href="#611src" title='src' data-ref="611src">src</a>-&gt;<a class="ref" href="#block_t::i_nb_samples" title='block_t::i_nb_samples' data-ref="block_t::i_nb_samples">i_nb_samples</a>;</td></tr>
+<tr><th id="146">146</th><td>    <a class="local col0 ref" href="#610dst" title='dst' data-ref="610dst">dst</a>-&gt;<a class="ref" href="#block_t::i_dts" title='block_t::i_dts' data-ref="block_t::i_dts">i_dts</a>     = <a class="local col1 ref" href="#611src" title='src' data-ref="611src">src</a>-&gt;<a class="ref" href="#block_t::i_dts" title='block_t::i_dts' data-ref="block_t::i_dts">i_dts</a>;</td></tr>
+<tr><th id="147">147</th><td>    <a class="local col0 ref" href="#610dst" title='dst' data-ref="610dst">dst</a>-&gt;<a class="ref" href="#block_t::i_pts" title='block_t::i_pts' data-ref="block_t::i_pts">i_pts</a>     = <a class="local col1 ref" href="#611src" title='src' data-ref="611src">src</a>-&gt;<a class="ref" href="#block_t::i_pts" title='block_t::i_pts' data-ref="block_t::i_pts">i_pts</a>;</td></tr>
+<tr><th id="148">148</th><td>    <a class="local col0 ref" href="#610dst" title='dst' data-ref="610dst">dst</a>-&gt;<a class="ref" href="#block_t::i_length" title='block_t::i_length' data-ref="block_t::i_length">i_length</a>  = <a class="local col1 ref" href="#611src" title='src' data-ref="611src">src</a>-&gt;<a class="ref" href="#block_t::i_length" title='block_t::i_length' data-ref="block_t::i_length">i_length</a>;</td></tr>
+<tr><th id="149">149</th><td>}</td></tr>
+<tr><th id="150">150</th><td></td></tr>
+<tr><th id="151">151</th><td><a class="macro" href="vlc_common.h.html#98" title="__attribute__ ((warn_unused_result))" data-ref="_M/VLC_USED">VLC_USED</a></td></tr>
+<tr><th id="152">152</th><td><em>static</em> <b>inline</b> <a class="typedef" href="vlc_common.h.html#block_t" title='block_t' data-type='struct block_t' data-ref="block_t">block_t</a> *<dfn class="decl def" id="block_Duplicate" title='block_Duplicate' data-ref="block_Duplicate">block_Duplicate</dfn>( <a class="typedef" href="vlc_common.h.html#block_t" title='block_t' data-type='struct block_t' data-ref="block_t">block_t</a> *<dfn class="local col2 decl" id="612p_block" title='p_block' data-type='block_t *' data-ref="612p_block">p_block</dfn> )</td></tr>
+<tr><th id="153">153</th><td>{</td></tr>
+<tr><th id="154">154</th><td>    <a class="typedef" href="vlc_common.h.html#block_t" title='block_t' data-type='struct block_t' data-ref="block_t">block_t</a> *<dfn class="local col3 decl" id="613p_dup" title='p_dup' data-type='block_t *' data-ref="613p_dup">p_dup</dfn> = <a class="ref" href="#block_Alloc" title='block_Alloc' data-ref="block_Alloc">block_Alloc</a>( <a class="local col2 ref" href="#612p_block" title='p_block' data-ref="612p_block">p_block</a>-&gt;<a class="ref" href="#block_t::i_buffer" title='block_t::i_buffer' data-ref="block_t::i_buffer">i_buffer</a> );</td></tr>
+<tr><th id="155">155</th><td>    <b>if</b>( <a class="local col3 ref" href="#613p_dup" title='p_dup' data-ref="613p_dup">p_dup</a> == <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span> )</td></tr>
+<tr><th id="156">156</th><td>        <b>return</b> <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="157">157</th><td></td></tr>
+<tr><th id="158">158</th><td>    <a class="ref" href="#block_CopyProperties" title='block_CopyProperties' data-ref="block_CopyProperties">block_CopyProperties</a>( <a class="local col3 ref" href="#613p_dup" title='p_dup' data-ref="613p_dup">p_dup</a>, <a class="local col2 ref" href="#612p_block" title='p_block' data-ref="612p_block">p_block</a> );</td></tr>
+<tr><th id="159">159</th><td>    <a class="ref" href="../../include/string.h.html#memcpy" title='memcpy' data-ref="memcpy">memcpy</a>( <a class="local col3 ref" href="#613p_dup" title='p_dup' data-ref="613p_dup">p_dup</a>-&gt;<a class="ref" href="#block_t::p_buffer" title='block_t::p_buffer' data-ref="block_t::p_buffer">p_buffer</a>, <a class="local col2 ref" href="#612p_block" title='p_block' data-ref="612p_block">p_block</a>-&gt;<a class="ref" href="#block_t::p_buffer" title='block_t::p_buffer' data-ref="block_t::p_buffer">p_buffer</a>, <a class="local col2 ref" href="#612p_block" title='p_block' data-ref="612p_block">p_block</a>-&gt;<a class="ref" href="#block_t::i_buffer" title='block_t::i_buffer' data-ref="block_t::i_buffer">i_buffer</a> );</td></tr>
+<tr><th id="160">160</th><td></td></tr>
+<tr><th id="161">161</th><td>    <b>return</b> <a class="local col3 ref" href="#613p_dup" title='p_dup' data-ref="613p_dup">p_dup</a>;</td></tr>
+<tr><th id="162">162</th><td>}</td></tr>
+<tr><th id="163">163</th><td></td></tr>
+<tr><th id="164">164</th><td><em>static</em> <b>inline</b> <em>void</em> <dfn class="decl def" id="block_Release" title='block_Release' data-ref="block_Release">block_Release</dfn>( <a class="typedef" href="vlc_common.h.html#block_t" title='block_t' data-type='struct block_t' data-ref="block_t">block_t</a> *<dfn class="local col4 decl" id="614p_block" title='p_block' data-type='block_t *' data-ref="614p_block">p_block</dfn> )</td></tr>
+<tr><th id="165">165</th><td>{</td></tr>
+<tr><th id="166">166</th><td>    <a class="local col4 ref" href="#614p_block" title='p_block' data-ref="614p_block">p_block</a>-&gt;<a class="ref" href="#block_t::pf_release" title='block_t::pf_release' data-ref="block_t::pf_release">pf_release</a>( <a class="local col4 ref" href="#614p_block" title='p_block' data-ref="614p_block">p_block</a> );</td></tr>
+<tr><th id="167">167</th><td>}</td></tr>
+<tr><th id="168">168</th><td></td></tr>
+<tr><th id="169">169</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <a class="typedef" href="vlc_common.h.html#block_t" title='block_t' data-type='struct block_t' data-ref="block_t">block_t</a> *<dfn class="decl" id="block_heap_Alloc" title='block_heap_Alloc' data-ref="block_heap_Alloc">block_heap_Alloc</dfn>(<em>void</em> *, <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span>) <a class="macro" href="vlc_common.h.html#98" title="__attribute__ ((warn_unused_result))" data-ref="_M/VLC_USED">VLC_USED</a> <a class="macro" href="vlc_common.h.html#94" title="__attribute__ ((malloc))" data-ref="_M/VLC_MALLOC">VLC_MALLOC</a>;</td></tr>
+<tr><th id="170">170</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <a class="typedef" href="vlc_common.h.html#block_t" title='block_t' data-type='struct block_t' data-ref="block_t">block_t</a> *<dfn class="decl" id="block_mmap_Alloc" title='block_mmap_Alloc' data-ref="block_mmap_Alloc">block_mmap_Alloc</dfn>(<em>void</em> *<dfn class="local col5 decl" id="615addr" title='addr' data-type='void *' data-ref="615addr">addr</dfn>, <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="local col6 decl" id="616length" title='length' data-type='size_t' data-ref="616length">length</dfn>) <a class="macro" href="vlc_common.h.html#98" title="__attribute__ ((warn_unused_result))" data-ref="_M/VLC_USED">VLC_USED</a> <a class="macro" href="vlc_common.h.html#94" title="__attribute__ ((malloc))" data-ref="_M/VLC_MALLOC">VLC_MALLOC</a>;</td></tr>
+<tr><th id="171">171</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <a class="typedef" href="vlc_common.h.html#block_t" title='block_t' data-type='struct block_t' data-ref="block_t">block_t</a> * <dfn class="decl" id="block_shm_Alloc" title='block_shm_Alloc' data-ref="block_shm_Alloc">block_shm_Alloc</dfn>(<em>void</em> *<dfn class="local col7 decl" id="617addr" title='addr' data-type='void *' data-ref="617addr">addr</dfn>, <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="local col8 decl" id="618length" title='length' data-type='size_t' data-ref="618length">length</dfn>) <a class="macro" href="vlc_common.h.html#98" title="__attribute__ ((warn_unused_result))" data-ref="_M/VLC_USED">VLC_USED</a> <a class="macro" href="vlc_common.h.html#94" title="__attribute__ ((malloc))" data-ref="_M/VLC_MALLOC">VLC_MALLOC</a>;</td></tr>
+<tr><th id="172">172</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <a class="typedef" href="vlc_common.h.html#block_t" title='block_t' data-type='struct block_t' data-ref="block_t">block_t</a> *<dfn class="decl" id="block_File" title='block_File' data-ref="block_File">block_File</dfn>(<em>int</em> <dfn class="local col9 decl" id="619fd" title='fd' data-type='int' data-ref="619fd">fd</dfn>) <a class="macro" href="vlc_common.h.html#98" title="__attribute__ ((warn_unused_result))" data-ref="_M/VLC_USED">VLC_USED</a> <a class="macro" href="vlc_common.h.html#94" title="__attribute__ ((malloc))" data-ref="_M/VLC_MALLOC">VLC_MALLOC</a>;</td></tr>
+<tr><th id="173">173</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <a class="typedef" href="vlc_common.h.html#block_t" title='block_t' data-type='struct block_t' data-ref="block_t">block_t</a> *<dfn class="decl" id="block_FilePath" title='block_FilePath' data-ref="block_FilePath">block_FilePath</dfn>(<em>const</em> <em>char</em> *) <a class="macro" href="vlc_common.h.html#98" title="__attribute__ ((warn_unused_result))" data-ref="_M/VLC_USED">VLC_USED</a> <a class="macro" href="vlc_common.h.html#94" title="__attribute__ ((malloc))" data-ref="_M/VLC_MALLOC">VLC_MALLOC</a>;</td></tr>
+<tr><th id="174">174</th><td></td></tr>
+<tr><th id="175">175</th><td><em>static</em> <b>inline</b> <em>void</em> <dfn class="decl def" id="block_Cleanup" title='block_Cleanup' data-ref="block_Cleanup">block_Cleanup</dfn> (<em>void</em> *<dfn class="local col0 decl" id="620block" title='block' data-type='void *' data-ref="620block">block</dfn>)</td></tr>
+<tr><th id="176">176</th><td>{</td></tr>
+<tr><th id="177">177</th><td>    <a class="ref" href="#block_Release" title='block_Release' data-ref="block_Release">block_Release</a> ((<a class="typedef" href="vlc_common.h.html#block_t" title='block_t' data-type='struct block_t' data-ref="block_t">block_t</a> *)<a class="local col0 ref" href="#620block" title='block' data-ref="620block">block</a>);</td></tr>
+<tr><th id="178">178</th><td>}</td></tr>
+<tr><th id="179">179</th><td><u>#define <dfn class="macro" id="_M/block_cleanup_push" data-ref="_M/block_cleanup_push">block_cleanup_push</dfn>( block ) vlc_cleanup_push (block_Cleanup, block)</u></td></tr>
+<tr><th id="180">180</th><td></td></tr>
+<tr><th id="181">181</th><td><i>/****************************************************************************</i></td></tr>
+<tr><th id="182">182</th><td><i> * Chains of blocks functions helper</i></td></tr>
+<tr><th id="183">183</th><td><i> ****************************************************************************</i></td></tr>
+<tr><th id="184">184</th><td><i> * - block_ChainAppend : append a block to the last block of a chain. Try to</i></td></tr>
+<tr><th id="185">185</th><td><i> *      avoid using with a lot of data as it's really slow, prefer</i></td></tr>
+<tr><th id="186">186</th><td><i> *      block_ChainLastAppend, p_block can be NULL</i></td></tr>
+<tr><th id="187">187</th><td><i> * - block_ChainLastAppend : use a pointer over a pointer to the next blocks,</i></td></tr>
+<tr><th id="188">188</th><td><i> *      and update it.</i></td></tr>
+<tr><th id="189">189</th><td><i> * - block_ChainRelease : release a chain of block</i></td></tr>
+<tr><th id="190">190</th><td><i> * - block_ChainExtract : extract data from a chain, return real bytes counts</i></td></tr>
+<tr><th id="191">191</th><td><i> * - block_ChainGather : gather a chain, free it and return one block.</i></td></tr>
+<tr><th id="192">192</th><td><i> ****************************************************************************/</i></td></tr>
+<tr><th id="193">193</th><td><em>static</em> <b>inline</b> <em>void</em> <dfn class="decl def" id="block_ChainAppend" title='block_ChainAppend' data-ref="block_ChainAppend">block_ChainAppend</dfn>( <a class="typedef" href="vlc_common.h.html#block_t" title='block_t' data-type='struct block_t' data-ref="block_t">block_t</a> **<dfn class="local col1 decl" id="621pp_list" title='pp_list' data-type='block_t **' data-ref="621pp_list">pp_list</dfn>, <a class="typedef" href="vlc_common.h.html#block_t" title='block_t' data-type='struct block_t' data-ref="block_t">block_t</a> *<dfn class="local col2 decl" id="622p_block" title='p_block' data-type='block_t *' data-ref="622p_block">p_block</dfn> )</td></tr>
+<tr><th id="194">194</th><td>{</td></tr>
+<tr><th id="195">195</th><td>    <b>if</b>( *<a class="local col1 ref" href="#621pp_list" title='pp_list' data-ref="621pp_list">pp_list</a> == <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span> )</td></tr>
+<tr><th id="196">196</th><td>    {</td></tr>
+<tr><th id="197">197</th><td>        *<a class="local col1 ref" href="#621pp_list" title='pp_list' data-ref="621pp_list">pp_list</a> = <a class="local col2 ref" href="#622p_block" title='p_block' data-ref="622p_block">p_block</a>;</td></tr>
+<tr><th id="198">198</th><td>    }</td></tr>
+<tr><th id="199">199</th><td>    <b>else</b></td></tr>
+<tr><th id="200">200</th><td>    {</td></tr>
+<tr><th id="201">201</th><td>        <a class="typedef" href="vlc_common.h.html#block_t" title='block_t' data-type='struct block_t' data-ref="block_t">block_t</a> *<dfn class="local col3 decl" id="623p" title='p' data-type='block_t *' data-ref="623p">p</dfn> = *<a class="local col1 ref" href="#621pp_list" title='pp_list' data-ref="621pp_list">pp_list</a>;</td></tr>
+<tr><th id="202">202</th><td></td></tr>
+<tr><th id="203">203</th><td>        <b>while</b>( <a class="local col3 ref" href="#623p" title='p' data-ref="623p">p</a>-&gt;<a class="ref" href="#block_t::p_next" title='block_t::p_next' data-ref="block_t::p_next">p_next</a> ) <a class="local col3 ref" href="#623p" title='p' data-ref="623p">p</a> = <a class="local col3 ref" href="#623p" title='p' data-ref="623p">p</a>-&gt;<a class="ref" href="#block_t::p_next" title='block_t::p_next' data-ref="block_t::p_next">p_next</a>;</td></tr>
+<tr><th id="204">204</th><td>        <a class="local col3 ref" href="#623p" title='p' data-ref="623p">p</a>-&gt;<a class="ref" href="#block_t::p_next" title='block_t::p_next' data-ref="block_t::p_next">p_next</a> = <a class="local col2 ref" href="#622p_block" title='p_block' data-ref="622p_block">p_block</a>;</td></tr>
+<tr><th id="205">205</th><td>    }</td></tr>
+<tr><th id="206">206</th><td>}</td></tr>
+<tr><th id="207">207</th><td></td></tr>
+<tr><th id="208">208</th><td><em>static</em> <b>inline</b> <em>void</em> <dfn class="decl def" id="block_ChainLastAppend" title='block_ChainLastAppend' data-ref="block_ChainLastAppend">block_ChainLastAppend</dfn>( <a class="typedef" href="vlc_common.h.html#block_t" title='block_t' data-type='struct block_t' data-ref="block_t">block_t</a> ***<dfn class="local col4 decl" id="624ppp_last" title='ppp_last' data-type='block_t ***' data-ref="624ppp_last">ppp_last</dfn>, <a class="typedef" href="vlc_common.h.html#block_t" title='block_t' data-type='struct block_t' data-ref="block_t">block_t</a> *<dfn class="local col5 decl" id="625p_block" title='p_block' data-type='block_t *' data-ref="625p_block">p_block</dfn> )</td></tr>
+<tr><th id="209">209</th><td>{</td></tr>
+<tr><th id="210">210</th><td>    <a class="typedef" href="vlc_common.h.html#block_t" title='block_t' data-type='struct block_t' data-ref="block_t">block_t</a> *<dfn class="local col6 decl" id="626p_last" title='p_last' data-type='block_t *' data-ref="626p_last">p_last</dfn> = <a class="local col5 ref" href="#625p_block" title='p_block' data-ref="625p_block">p_block</a>;</td></tr>
+<tr><th id="211">211</th><td></td></tr>
+<tr><th id="212">212</th><td>    **<a class="local col4 ref" href="#624ppp_last" title='ppp_last' data-ref="624ppp_last">ppp_last</a> = <a class="local col5 ref" href="#625p_block" title='p_block' data-ref="625p_block">p_block</a>;</td></tr>
+<tr><th id="213">213</th><td></td></tr>
+<tr><th id="214">214</th><td>    <b>while</b>( <a class="local col6 ref" href="#626p_last" title='p_last' data-ref="626p_last">p_last</a>-&gt;<a class="ref" href="#block_t::p_next" title='block_t::p_next' data-ref="block_t::p_next">p_next</a> ) <a class="local col6 ref" href="#626p_last" title='p_last' data-ref="626p_last">p_last</a> = <a class="local col6 ref" href="#626p_last" title='p_last' data-ref="626p_last">p_last</a>-&gt;<a class="ref" href="#block_t::p_next" title='block_t::p_next' data-ref="block_t::p_next">p_next</a>;</td></tr>
+<tr><th id="215">215</th><td>    *<a class="local col4 ref" href="#624ppp_last" title='ppp_last' data-ref="624ppp_last">ppp_last</a> = &amp;<a class="local col6 ref" href="#626p_last" title='p_last' data-ref="626p_last">p_last</a>-&gt;<a class="ref" href="#block_t::p_next" title='block_t::p_next' data-ref="block_t::p_next">p_next</a>;</td></tr>
+<tr><th id="216">216</th><td>}</td></tr>
+<tr><th id="217">217</th><td></td></tr>
+<tr><th id="218">218</th><td><em>static</em> <b>inline</b> <em>void</em> <dfn class="decl def" id="block_ChainRelease" title='block_ChainRelease' data-ref="block_ChainRelease">block_ChainRelease</dfn>( <a class="typedef" href="vlc_common.h.html#block_t" title='block_t' data-type='struct block_t' data-ref="block_t">block_t</a> *<dfn class="local col7 decl" id="627p_block" title='p_block' data-type='block_t *' data-ref="627p_block">p_block</dfn> )</td></tr>
+<tr><th id="219">219</th><td>{</td></tr>
+<tr><th id="220">220</th><td>    <b>while</b>( <a class="local col7 ref" href="#627p_block" title='p_block' data-ref="627p_block">p_block</a> )</td></tr>
+<tr><th id="221">221</th><td>    {</td></tr>
+<tr><th id="222">222</th><td>        <a class="typedef" href="vlc_common.h.html#block_t" title='block_t' data-type='struct block_t' data-ref="block_t">block_t</a> *<dfn class="local col8 decl" id="628p_next" title='p_next' data-type='block_t *' data-ref="628p_next">p_next</dfn> = <a class="local col7 ref" href="#627p_block" title='p_block' data-ref="627p_block">p_block</a>-&gt;<a class="ref" href="#block_t::p_next" title='block_t::p_next' data-ref="block_t::p_next">p_next</a>;</td></tr>
+<tr><th id="223">223</th><td>        <a class="ref" href="#block_Release" title='block_Release' data-ref="block_Release">block_Release</a>( <a class="local col7 ref" href="#627p_block" title='p_block' data-ref="627p_block">p_block</a> );</td></tr>
+<tr><th id="224">224</th><td>        <a class="local col7 ref" href="#627p_block" title='p_block' data-ref="627p_block">p_block</a> = <a class="local col8 ref" href="#628p_next" title='p_next' data-ref="628p_next">p_next</a>;</td></tr>
+<tr><th id="225">225</th><td>    }</td></tr>
+<tr><th id="226">226</th><td>}</td></tr>
+<tr><th id="227">227</th><td></td></tr>
+<tr><th id="228">228</th><td><em>static</em> <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="decl def" id="block_ChainExtract" title='block_ChainExtract' data-ref="block_ChainExtract">block_ChainExtract</dfn>( <a class="typedef" href="vlc_common.h.html#block_t" title='block_t' data-type='struct block_t' data-ref="block_t">block_t</a> *<dfn class="local col9 decl" id="629p_list" title='p_list' data-type='block_t *' data-ref="629p_list">p_list</dfn>, <em>void</em> *<dfn class="local col0 decl" id="630p_data" title='p_data' data-type='void *' data-ref="630p_data">p_data</dfn>, <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="local col1 decl" id="631i_max" title='i_max' data-type='size_t' data-ref="631i_max">i_max</dfn> )</td></tr>
+<tr><th id="229">229</th><td>{</td></tr>
+<tr><th id="230">230</th><td>    <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span>  <dfn class="local col2 decl" id="632i_total" title='i_total' data-type='size_t' data-ref="632i_total">i_total</dfn> = <var>0</var>;</td></tr>
+<tr><th id="231">231</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col3 decl" id="633p" title='p' data-type='uint8_t *' data-ref="633p">p</dfn> = (<a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a>*)<a class="local col0 ref" href="#630p_data" title='p_data' data-ref="630p_data">p_data</a>;</td></tr>
+<tr><th id="232">232</th><td></td></tr>
+<tr><th id="233">233</th><td>    <b>while</b>( <a class="local col9 ref" href="#629p_list" title='p_list' data-ref="629p_list">p_list</a> &amp;&amp; <a class="local col1 ref" href="#631i_max" title='i_max' data-ref="631i_max">i_max</a> )</td></tr>
+<tr><th id="234">234</th><td>    {</td></tr>
+<tr><th id="235">235</th><td>        <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="local col4 decl" id="634i_copy" title='i_copy' data-type='size_t' data-ref="634i_copy">i_copy</dfn> = <a class="macro" href="vlc_common.h.html#477" title="( ((i_max) &lt; (p_list-&gt;i_buffer)) ? (i_max) : (p_list-&gt;i_buffer) )" data-ref="_M/__MIN">__MIN</a>( <a class="local col1 ref" href="#631i_max" title='i_max' data-ref="631i_max">i_max</a>, <a class="local col9 ref" href="#629p_list" title='p_list' data-ref="629p_list">p_list</a>-&gt;<a class="ref" href="#block_t::i_buffer" title='block_t::i_buffer' data-ref="block_t::i_buffer">i_buffer</a> );</td></tr>
+<tr><th id="236">236</th><td>        <a class="ref" href="../../include/string.h.html#memcpy" title='memcpy' data-ref="memcpy">memcpy</a>( <a class="local col3 ref" href="#633p" title='p' data-ref="633p">p</a>, <a class="local col9 ref" href="#629p_list" title='p_list' data-ref="629p_list">p_list</a>-&gt;<a class="ref" href="#block_t::p_buffer" title='block_t::p_buffer' data-ref="block_t::p_buffer">p_buffer</a>, <a class="local col4 ref" href="#634i_copy" title='i_copy' data-ref="634i_copy">i_copy</a> );</td></tr>
+<tr><th id="237">237</th><td>        <a class="local col1 ref" href="#631i_max" title='i_max' data-ref="631i_max">i_max</a>   -= <a class="local col4 ref" href="#634i_copy" title='i_copy' data-ref="634i_copy">i_copy</a>;</td></tr>
+<tr><th id="238">238</th><td>        <a class="local col2 ref" href="#632i_total" title='i_total' data-ref="632i_total">i_total</a> += <a class="local col4 ref" href="#634i_copy" title='i_copy' data-ref="634i_copy">i_copy</a>;</td></tr>
+<tr><th id="239">239</th><td>        <a class="local col3 ref" href="#633p" title='p' data-ref="633p">p</a>       += <a class="local col4 ref" href="#634i_copy" title='i_copy' data-ref="634i_copy">i_copy</a>;</td></tr>
+<tr><th id="240">240</th><td></td></tr>
+<tr><th id="241">241</th><td>        <a class="local col9 ref" href="#629p_list" title='p_list' data-ref="629p_list">p_list</a> = <a class="local col9 ref" href="#629p_list" title='p_list' data-ref="629p_list">p_list</a>-&gt;<a class="ref" href="#block_t::p_next" title='block_t::p_next' data-ref="block_t::p_next">p_next</a>;</td></tr>
+<tr><th id="242">242</th><td>    }</td></tr>
+<tr><th id="243">243</th><td>    <b>return</b> <a class="local col2 ref" href="#632i_total" title='i_total' data-ref="632i_total">i_total</a>;</td></tr>
+<tr><th id="244">244</th><td>}</td></tr>
+<tr><th id="245">245</th><td></td></tr>
+<tr><th id="246">246</th><td><em>static</em> <b>inline</b> <em>void</em> <dfn class="decl def" id="block_ChainProperties" title='block_ChainProperties' data-ref="block_ChainProperties">block_ChainProperties</dfn>( <a class="typedef" href="vlc_common.h.html#block_t" title='block_t' data-type='struct block_t' data-ref="block_t">block_t</a> *<dfn class="local col5 decl" id="635p_list" title='p_list' data-type='block_t *' data-ref="635p_list">p_list</dfn>, <em>int</em> *<dfn class="local col6 decl" id="636pi_count" title='pi_count' data-type='int *' data-ref="636pi_count">pi_count</dfn>, <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> *<dfn class="local col7 decl" id="637pi_size" title='pi_size' data-type='size_t *' data-ref="637pi_size">pi_size</dfn>, <a class="typedef" href="vlc_common.h.html#mtime_t" title='mtime_t' data-type='int64_t' data-ref="mtime_t">mtime_t</a> *<dfn class="local col8 decl" id="638pi_length" title='pi_length' data-type='mtime_t *' data-ref="638pi_length">pi_length</dfn> )</td></tr>
+<tr><th id="247">247</th><td>{</td></tr>
+<tr><th id="248">248</th><td>    <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="local col9 decl" id="639i_size" title='i_size' data-type='size_t' data-ref="639i_size">i_size</dfn> = <var>0</var>;</td></tr>
+<tr><th id="249">249</th><td>    <a class="typedef" href="vlc_common.h.html#mtime_t" title='mtime_t' data-type='int64_t' data-ref="mtime_t">mtime_t</a> <dfn class="local col0 decl" id="640i_length" title='i_length' data-type='mtime_t' data-ref="640i_length">i_length</dfn> = <var>0</var>;</td></tr>
+<tr><th id="250">250</th><td>    <em>int</em> <dfn class="local col1 decl" id="641i_count" title='i_count' data-type='int' data-ref="641i_count">i_count</dfn> = <var>0</var>;</td></tr>
+<tr><th id="251">251</th><td></td></tr>
+<tr><th id="252">252</th><td>    <b>while</b>( <a class="local col5 ref" href="#635p_list" title='p_list' data-ref="635p_list">p_list</a> )</td></tr>
+<tr><th id="253">253</th><td>    {</td></tr>
+<tr><th id="254">254</th><td>        <a class="local col9 ref" href="#639i_size" title='i_size' data-ref="639i_size">i_size</a> += <a class="local col5 ref" href="#635p_list" title='p_list' data-ref="635p_list">p_list</a>-&gt;<a class="ref" href="#block_t::i_buffer" title='block_t::i_buffer' data-ref="block_t::i_buffer">i_buffer</a>;</td></tr>
+<tr><th id="255">255</th><td>        <a class="local col0 ref" href="#640i_length" title='i_length' data-ref="640i_length">i_length</a> += <a class="local col5 ref" href="#635p_list" title='p_list' data-ref="635p_list">p_list</a>-&gt;<a class="ref" href="#block_t::i_length" title='block_t::i_length' data-ref="block_t::i_length">i_length</a>;</td></tr>
+<tr><th id="256">256</th><td>        <a class="local col1 ref" href="#641i_count" title='i_count' data-ref="641i_count">i_count</a>++;</td></tr>
+<tr><th id="257">257</th><td></td></tr>
+<tr><th id="258">258</th><td>        <a class="local col5 ref" href="#635p_list" title='p_list' data-ref="635p_list">p_list</a> = <a class="local col5 ref" href="#635p_list" title='p_list' data-ref="635p_list">p_list</a>-&gt;<a class="ref" href="#block_t::p_next" title='block_t::p_next' data-ref="block_t::p_next">p_next</a>;</td></tr>
+<tr><th id="259">259</th><td>    }</td></tr>
+<tr><th id="260">260</th><td></td></tr>
+<tr><th id="261">261</th><td>    <b>if</b>( <a class="local col7 ref" href="#637pi_size" title='pi_size' data-ref="637pi_size">pi_size</a> )</td></tr>
+<tr><th id="262">262</th><td>        *<a class="local col7 ref" href="#637pi_size" title='pi_size' data-ref="637pi_size">pi_size</a> = <a class="local col9 ref" href="#639i_size" title='i_size' data-ref="639i_size">i_size</a>;</td></tr>
+<tr><th id="263">263</th><td>    <b>if</b>( <a class="local col8 ref" href="#638pi_length" title='pi_length' data-ref="638pi_length">pi_length</a> )</td></tr>
+<tr><th id="264">264</th><td>        *<a class="local col8 ref" href="#638pi_length" title='pi_length' data-ref="638pi_length">pi_length</a> = <a class="local col0 ref" href="#640i_length" title='i_length' data-ref="640i_length">i_length</a>;</td></tr>
+<tr><th id="265">265</th><td>    <b>if</b>( <a class="local col6 ref" href="#636pi_count" title='pi_count' data-ref="636pi_count">pi_count</a> )</td></tr>
+<tr><th id="266">266</th><td>        *<a class="local col6 ref" href="#636pi_count" title='pi_count' data-ref="636pi_count">pi_count</a> = <a class="local col1 ref" href="#641i_count" title='i_count' data-ref="641i_count">i_count</a>;</td></tr>
+<tr><th id="267">267</th><td>}</td></tr>
+<tr><th id="268">268</th><td></td></tr>
+<tr><th id="269">269</th><td><em>static</em> <b>inline</b> <a class="typedef" href="vlc_common.h.html#block_t" title='block_t' data-type='struct block_t' data-ref="block_t">block_t</a> *<dfn class="decl def" id="block_ChainGather" title='block_ChainGather' data-ref="block_ChainGather">block_ChainGather</dfn>( <a class="typedef" href="vlc_common.h.html#block_t" title='block_t' data-type='struct block_t' data-ref="block_t">block_t</a> *<dfn class="local col2 decl" id="642p_list" title='p_list' data-type='block_t *' data-ref="642p_list">p_list</dfn> )</td></tr>
+<tr><th id="270">270</th><td>{</td></tr>
+<tr><th id="271">271</th><td>    <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span>  <dfn class="local col3 decl" id="643i_total" title='i_total' data-type='size_t' data-ref="643i_total">i_total</dfn> = <var>0</var>;</td></tr>
+<tr><th id="272">272</th><td>    <a class="typedef" href="vlc_common.h.html#mtime_t" title='mtime_t' data-type='int64_t' data-ref="mtime_t">mtime_t</a> <dfn class="local col4 decl" id="644i_length" title='i_length' data-type='mtime_t' data-ref="644i_length">i_length</dfn> = <var>0</var>;</td></tr>
+<tr><th id="273">273</th><td>    <a class="typedef" href="vlc_common.h.html#block_t" title='block_t' data-type='struct block_t' data-ref="block_t">block_t</a> *<dfn class="local col5 decl" id="645g" title='g' data-type='block_t *' data-ref="645g">g</dfn>;</td></tr>
+<tr><th id="274">274</th><td></td></tr>
+<tr><th id="275">275</th><td>    <b>if</b>( <a class="local col2 ref" href="#642p_list" title='p_list' data-ref="642p_list">p_list</a>-&gt;<a class="ref" href="#block_t::p_next" title='block_t::p_next' data-ref="block_t::p_next">p_next</a> == <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span> )</td></tr>
+<tr><th id="276">276</th><td>        <b>return</b> <a class="local col2 ref" href="#642p_list" title='p_list' data-ref="642p_list">p_list</a>;  <i>/* Already gathered */</i></td></tr>
+<tr><th id="277">277</th><td></td></tr>
+<tr><th id="278">278</th><td>    <a class="ref" href="#block_ChainProperties" title='block_ChainProperties' data-ref="block_ChainProperties">block_ChainProperties</a>( <a class="local col2 ref" href="#642p_list" title='p_list' data-ref="642p_list">p_list</a>, <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>, &amp;<a class="local col3 ref" href="#643i_total" title='i_total' data-ref="643i_total">i_total</a>, &amp;<a class="local col4 ref" href="#644i_length" title='i_length' data-ref="644i_length">i_length</a> );</td></tr>
+<tr><th id="279">279</th><td></td></tr>
+<tr><th id="280">280</th><td>    <a class="local col5 ref" href="#645g" title='g' data-ref="645g">g</a> = <a class="ref" href="#block_Alloc" title='block_Alloc' data-ref="block_Alloc">block_Alloc</a>( <a class="local col3 ref" href="#643i_total" title='i_total' data-ref="643i_total">i_total</a> );</td></tr>
+<tr><th id="281">281</th><td>    <a class="ref" href="#block_ChainExtract" title='block_ChainExtract' data-ref="block_ChainExtract">block_ChainExtract</a>( <a class="local col2 ref" href="#642p_list" title='p_list' data-ref="642p_list">p_list</a>, <a class="local col5 ref" href="#645g" title='g' data-ref="645g">g</a>-&gt;<a class="ref" href="#block_t::p_buffer" title='block_t::p_buffer' data-ref="block_t::p_buffer">p_buffer</a>, <a class="local col5 ref" href="#645g" title='g' data-ref="645g">g</a>-&gt;<a class="ref" href="#block_t::i_buffer" title='block_t::i_buffer' data-ref="block_t::i_buffer">i_buffer</a> );</td></tr>
+<tr><th id="282">282</th><td></td></tr>
+<tr><th id="283">283</th><td>    <a class="local col5 ref" href="#645g" title='g' data-ref="645g">g</a>-&gt;<a class="ref" href="#block_t::i_flags" title='block_t::i_flags' data-ref="block_t::i_flags">i_flags</a> = <a class="local col2 ref" href="#642p_list" title='p_list' data-ref="642p_list">p_list</a>-&gt;<a class="ref" href="#block_t::i_flags" title='block_t::i_flags' data-ref="block_t::i_flags">i_flags</a>;</td></tr>
+<tr><th id="284">284</th><td>    <a class="local col5 ref" href="#645g" title='g' data-ref="645g">g</a>-&gt;<a class="ref" href="#block_t::i_pts" title='block_t::i_pts' data-ref="block_t::i_pts">i_pts</a>   = <a class="local col2 ref" href="#642p_list" title='p_list' data-ref="642p_list">p_list</a>-&gt;<a class="ref" href="#block_t::i_pts" title='block_t::i_pts' data-ref="block_t::i_pts">i_pts</a>;</td></tr>
+<tr><th id="285">285</th><td>    <a class="local col5 ref" href="#645g" title='g' data-ref="645g">g</a>-&gt;<a class="ref" href="#block_t::i_dts" title='block_t::i_dts' data-ref="block_t::i_dts">i_dts</a>   = <a class="local col2 ref" href="#642p_list" title='p_list' data-ref="642p_list">p_list</a>-&gt;<a class="ref" href="#block_t::i_dts" title='block_t::i_dts' data-ref="block_t::i_dts">i_dts</a>;</td></tr>
+<tr><th id="286">286</th><td>    <a class="local col5 ref" href="#645g" title='g' data-ref="645g">g</a>-&gt;<a class="ref" href="#block_t::i_length" title='block_t::i_length' data-ref="block_t::i_length">i_length</a> = <a class="local col4 ref" href="#644i_length" title='i_length' data-ref="644i_length">i_length</a>;</td></tr>
+<tr><th id="287">287</th><td></td></tr>
+<tr><th id="288">288</th><td>    <i>/* free p_list */</i></td></tr>
+<tr><th id="289">289</th><td>    <a class="ref" href="#block_ChainRelease" title='block_ChainRelease' data-ref="block_ChainRelease">block_ChainRelease</a>( <a class="local col2 ref" href="#642p_list" title='p_list' data-ref="642p_list">p_list</a> );</td></tr>
+<tr><th id="290">290</th><td>    <b>return</b> <a class="local col5 ref" href="#645g" title='g' data-ref="645g">g</a>;</td></tr>
+<tr><th id="291">291</th><td>}</td></tr>
+<tr><th id="292">292</th><td></td></tr>
+<tr><th id="293">293</th><td><i>/****************************************************************************</i></td></tr>
+<tr><th id="294">294</th><td><i> * Fifos of blocks.</i></td></tr>
+<tr><th id="295">295</th><td><i> ****************************************************************************</i></td></tr>
+<tr><th id="296">296</th><td><i> * - block_FifoNew : create and init a new fifo</i></td></tr>
+<tr><th id="297">297</th><td><i> * - block_FifoRelease : destroy a fifo and free all blocks in it.</i></td></tr>
+<tr><th id="298">298</th><td><i> * - block_FifoPace : wait for a fifo to drain to a specified number of packets or total data size</i></td></tr>
+<tr><th id="299">299</th><td><i> * - block_FifoEmpty : free all blocks in a fifo</i></td></tr>
+<tr><th id="300">300</th><td><i> * - block_FifoPut : put a block</i></td></tr>
+<tr><th id="301">301</th><td><i> * - block_FifoGet : get a packet from the fifo (and wait if it is empty)</i></td></tr>
+<tr><th id="302">302</th><td><i> * - block_FifoShow : show the first packet of the fifo (and wait if</i></td></tr>
+<tr><th id="303">303</th><td><i> *      needed), be carefull, you can use it ONLY if you are sure to be the</i></td></tr>
+<tr><th id="304">304</th><td><i> *      only one getting data from the fifo.</i></td></tr>
+<tr><th id="305">305</th><td><i> * - block_FifoCount : how many packets are waiting in the fifo</i></td></tr>
+<tr><th id="306">306</th><td><i> *</i></td></tr>
+<tr><th id="307">307</th><td><i> * block_FifoGet and block_FifoShow are cancellation points.</i></td></tr>
+<tr><th id="308">308</th><td><i> ****************************************************************************/</i></td></tr>
+<tr><th id="309">309</th><td></td></tr>
+<tr><th id="310">310</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <a class="typedef" href="vlc_common.h.html#block_fifo_t" title='block_fifo_t' data-type='struct block_fifo_t' data-ref="block_fifo_t">block_fifo_t</a> *<dfn class="decl" id="block_FifoNew" title='block_FifoNew' data-ref="block_FifoNew">block_FifoNew</dfn>( <em>void</em> ) <a class="macro" href="vlc_common.h.html#98" title="__attribute__ ((warn_unused_result))" data-ref="_M/VLC_USED">VLC_USED</a> <a class="macro" href="vlc_common.h.html#94" title="__attribute__ ((malloc))" data-ref="_M/VLC_MALLOC">VLC_MALLOC</a>;</td></tr>
+<tr><th id="311">311</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>void</em> <dfn class="decl" id="block_FifoRelease" title='block_FifoRelease' data-ref="block_FifoRelease">block_FifoRelease</dfn>( <a class="typedef" href="vlc_common.h.html#block_fifo_t" title='block_fifo_t' data-type='struct block_fifo_t' data-ref="block_fifo_t">block_fifo_t</a> * );</td></tr>
+<tr><th id="312">312</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>void</em> <dfn class="decl" id="block_FifoPace" title='block_FifoPace' data-ref="block_FifoPace">block_FifoPace</dfn>( <a class="typedef" href="vlc_common.h.html#block_fifo_t" title='block_fifo_t' data-type='struct block_fifo_t' data-ref="block_fifo_t">block_fifo_t</a> *<dfn class="local col6 decl" id="646fifo" title='fifo' data-type='block_fifo_t *' data-ref="646fifo">fifo</dfn>, <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="local col7 decl" id="647max_depth" title='max_depth' data-type='size_t' data-ref="647max_depth">max_depth</dfn>, <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="local col8 decl" id="648max_size" title='max_size' data-type='size_t' data-ref="648max_size">max_size</dfn> );</td></tr>
+<tr><th id="313">313</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>void</em> <dfn class="decl" id="block_FifoEmpty" title='block_FifoEmpty' data-ref="block_FifoEmpty">block_FifoEmpty</dfn>( <a class="typedef" href="vlc_common.h.html#block_fifo_t" title='block_fifo_t' data-type='struct block_fifo_t' data-ref="block_fifo_t">block_fifo_t</a> * );</td></tr>
+<tr><th id="314">314</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="decl" id="block_FifoPut" title='block_FifoPut' data-ref="block_FifoPut">block_FifoPut</dfn>( <a class="typedef" href="vlc_common.h.html#block_fifo_t" title='block_fifo_t' data-type='struct block_fifo_t' data-ref="block_fifo_t">block_fifo_t</a> *, <a class="typedef" href="vlc_common.h.html#block_t" title='block_t' data-type='struct block_t' data-ref="block_t">block_t</a> * );</td></tr>
+<tr><th id="315">315</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>void</em> <dfn class="decl" id="block_FifoWake" title='block_FifoWake' data-ref="block_FifoWake">block_FifoWake</dfn>( <a class="typedef" href="vlc_common.h.html#block_fifo_t" title='block_fifo_t' data-type='struct block_fifo_t' data-ref="block_fifo_t">block_fifo_t</a> * );</td></tr>
+<tr><th id="316">316</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <a class="typedef" href="vlc_common.h.html#block_t" title='block_t' data-type='struct block_t' data-ref="block_t">block_t</a> * <dfn class="decl" id="block_FifoGet" title='block_FifoGet' data-ref="block_FifoGet">block_FifoGet</dfn>( <a class="typedef" href="vlc_common.h.html#block_fifo_t" title='block_fifo_t' data-type='struct block_fifo_t' data-ref="block_fifo_t">block_fifo_t</a> * ) <a class="macro" href="vlc_common.h.html#98" title="__attribute__ ((warn_unused_result))" data-ref="_M/VLC_USED">VLC_USED</a>;</td></tr>
+<tr><th id="317">317</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <a class="typedef" href="vlc_common.h.html#block_t" title='block_t' data-type='struct block_t' data-ref="block_t">block_t</a> * <dfn class="decl" id="block_FifoShow" title='block_FifoShow' data-ref="block_FifoShow">block_FifoShow</dfn>( <a class="typedef" href="vlc_common.h.html#block_fifo_t" title='block_fifo_t' data-type='struct block_fifo_t' data-ref="block_fifo_t">block_fifo_t</a> * );</td></tr>
+<tr><th id="318">318</th><td><span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="decl" id="block_FifoSize" title='block_FifoSize' data-ref="block_FifoSize">block_FifoSize</dfn>( <em>const</em> <a class="typedef" href="vlc_common.h.html#block_fifo_t" title='block_fifo_t' data-type='struct block_fifo_t' data-ref="block_fifo_t">block_fifo_t</a> *<dfn class="local col9 decl" id="649p_fifo" title='p_fifo' data-type='const block_fifo_t *' data-ref="649p_fifo">p_fifo</dfn> ) <a class="macro" href="vlc_common.h.html#98" title="__attribute__ ((warn_unused_result))" data-ref="_M/VLC_USED">VLC_USED</a>;</td></tr>
+<tr><th id="319">319</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="decl" id="block_FifoCount" title='block_FifoCount' data-ref="block_FifoCount">block_FifoCount</dfn>( <em>const</em> <a class="typedef" href="vlc_common.h.html#block_fifo_t" title='block_fifo_t' data-type='struct block_fifo_t' data-ref="block_fifo_t">block_fifo_t</a> *<dfn class="local col0 decl" id="650p_fifo" title='p_fifo' data-type='const block_fifo_t *' data-ref="650p_fifo">p_fifo</dfn> ) <a class="macro" href="vlc_common.h.html#98" title="__attribute__ ((warn_unused_result))" data-ref="_M/VLC_USED">VLC_USED</a>;</td></tr>
+<tr><th id="320">320</th><td></td></tr>
+<tr><th id="321">321</th><td><u>#<span data-ppcond="24">endif</span> /* VLC_BLOCK_H */</u></td></tr>
+<tr><th id="322">322</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated while processing <a href='../lib/audio.c.html'>vlc/lib/audio.c</a><br/>Generated on <em>2016-Oct-25</em> from project vlc revision <em>2.2.0-git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

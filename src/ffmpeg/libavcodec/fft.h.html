@@ -1,0 +1,194 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>fft.h source code [ffmpeg/libavcodec/fft.h] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="FFTContext,FFTDComplex,fft_permutation_type,mdct_permutation_type "/>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavcodec/fft.h'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavcodec</a>/<a href='fft.h.html'>fft.h</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * Copyright (c) 2000, 2001, 2002 Fabrice Bellard</i></td></tr>
+<tr><th id="3">3</th><td><i> * Copyright (c) 2002-2004 Michael Niedermayer &lt;michaelni@gmx.at&gt;</i></td></tr>
+<tr><th id="4">4</th><td><i> *</i></td></tr>
+<tr><th id="5">5</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="8">8</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="9">9</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="10">10</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="11">11</th><td><i> *</i></td></tr>
+<tr><th id="12">12</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="13">13</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="14">14</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="15">15</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="16">16</th><td><i> *</i></td></tr>
+<tr><th id="17">17</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="18">18</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="19">19</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="20">20</th><td><i> */</i></td></tr>
+<tr><th id="21">21</th><td></td></tr>
+<tr><th id="22">22</th><td><u>#<span data-ppcond="22">ifndef</span> <span class="macro" data-ref="_M/AVCODEC_FFT_H">AVCODEC_FFT_H</span></u></td></tr>
+<tr><th id="23">23</th><td><u>#define <dfn class="macro" id="_M/AVCODEC_FFT_H" data-ref="_M/AVCODEC_FFT_H">AVCODEC_FFT_H</dfn></u></td></tr>
+<tr><th id="24">24</th><td></td></tr>
+<tr><th id="25">25</th><td><u>#<span data-ppcond="25">ifndef</span> <a class="macro" href="aac_defines.h.html#80" data-ref="_M/FFT_FLOAT">FFT_FLOAT</a></u></td></tr>
+<tr><th id="26">26</th><td><u>#define FFT_FLOAT 1</u></td></tr>
+<tr><th id="27">27</th><td><u>#<span data-ppcond="25">endif</span></u></td></tr>
+<tr><th id="28">28</th><td></td></tr>
+<tr><th id="29">29</th><td><u>#<span data-ppcond="29">ifndef</span> <a class="macro" href="aac_defines.h.html#81" data-ref="_M/FFT_FIXED_32">FFT_FIXED_32</a></u></td></tr>
+<tr><th id="30">30</th><td><u>#define FFT_FIXED_32 0</u></td></tr>
+<tr><th id="31">31</th><td><u>#<span data-ppcond="29">endif</span></u></td></tr>
+<tr><th id="32">32</th><td></td></tr>
+<tr><th id="33">33</th><td><u>#include &lt;stdint.h&gt;</u></td></tr>
+<tr><th id="34">34</th><td><u>#include <a href="../config.h.html">"config.h"</a></u></td></tr>
+<tr><th id="35">35</th><td><u>#include <a href="../libavutil/mem.h.html">"libavutil/mem.h"</a></u></td></tr>
+<tr><th id="36">36</th><td></td></tr>
+<tr><th id="37">37</th><td><u>#<span data-ppcond="37">if</span> <a class="macro" href="aac_defines.h.html#80" title="1" data-ref="_M/FFT_FLOAT">FFT_FLOAT</a></u></td></tr>
+<tr><th id="38">38</th><td></td></tr>
+<tr><th id="39">39</th><td><u>#include <a href="avfft.h.html">"avfft.h"</a></u></td></tr>
+<tr><th id="40">40</th><td></td></tr>
+<tr><th id="41">41</th><td><u>#define <dfn class="macro" id="_M/FFT_NAME" data-ref="_M/FFT_NAME">FFT_NAME</dfn>(x) x</u></td></tr>
+<tr><th id="42">42</th><td></td></tr>
+<tr><th id="43">43</th><td><b>typedef</b> <em>float</em> <dfn class="typedef" id="FFTDouble" title='FFTDouble' data-type='float' data-ref="FFTDouble">FFTDouble</dfn>;</td></tr>
+<tr><th id="44">44</th><td></td></tr>
+<tr><th id="45">45</th><td><u>#<span data-ppcond="37">else</span></u></td></tr>
+<tr><th id="46">46</th><td></td></tr>
+<tr><th id="47">47</th><td><u>#if FFT_FIXED_32</u></td></tr>
+<tr><th id="48">48</th><td></td></tr>
+<tr><th id="49">49</th><td><u>#define Q31(x) (int)((x)*2147483648.0 + 0.5)</u></td></tr>
+<tr><th id="50">50</th><td><u>#define FFT_NAME(x) x ## _fixed_32</u></td></tr>
+<tr><th id="51">51</th><td></td></tr>
+<tr><th id="52">52</th><td><b>typedef</b> int32_t FFTSample;</td></tr>
+<tr><th id="53">53</th><td></td></tr>
+<tr><th id="54">54</th><td><u>#else /* FFT_FIXED_32 */</u></td></tr>
+<tr><th id="55">55</th><td></td></tr>
+<tr><th id="56">56</th><td><u>#define FFT_NAME(x) x ## _fixed</u></td></tr>
+<tr><th id="57">57</th><td></td></tr>
+<tr><th id="58">58</th><td><b>typedef</b> int16_t FFTSample;</td></tr>
+<tr><th id="59">59</th><td></td></tr>
+<tr><th id="60">60</th><td><u>#endif /* FFT_FIXED_32 */</u></td></tr>
+<tr><th id="61">61</th><td></td></tr>
+<tr><th id="62">62</th><td><b>typedef</b> <b>struct</b> FFTComplex {</td></tr>
+<tr><th id="63">63</th><td>    FFTSample re, im;</td></tr>
+<tr><th id="64">64</th><td>} FFTComplex;</td></tr>
+<tr><th id="65">65</th><td></td></tr>
+<tr><th id="66">66</th><td><b>typedef</b> <em>int</em>    FFTDouble;</td></tr>
+<tr><th id="67">67</th><td><b>typedef</b> <b>struct</b> FFTContext FFTContext;</td></tr>
+<tr><th id="68">68</th><td></td></tr>
+<tr><th id="69">69</th><td><u>#<span data-ppcond="37">endif</span> /* FFT_FLOAT */</u></td></tr>
+<tr><th id="70">70</th><td></td></tr>
+<tr><th id="71">71</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="FFTDComplex" title='FFTDComplex' data-ref="FFTDComplex"><a class="type" href="#FFTDComplex" title='FFTDComplex' data-ref="FFTDComplex">FFTDComplex</a></dfn> {</td></tr>
+<tr><th id="72">72</th><td>    <a class="typedef" href="#FFTDouble" title='FFTDouble' data-type='float' data-ref="FFTDouble">FFTDouble</a> <dfn class="decl" id="FFTDComplex::re" title='FFTDComplex::re' data-ref="FFTDComplex::re">re</dfn>, <dfn class="decl" id="FFTDComplex::im" title='FFTDComplex::im' data-ref="FFTDComplex::im">im</dfn>;</td></tr>
+<tr><th id="73">73</th><td>} <dfn class="typedef" id="FFTDComplex" title='FFTDComplex' data-type='struct FFTDComplex' data-ref="FFTDComplex">FFTDComplex</dfn>;</td></tr>
+<tr><th id="74">74</th><td></td></tr>
+<tr><th id="75">75</th><td><i>/* FFT computation */</i></td></tr>
+<tr><th id="76">76</th><td></td></tr>
+<tr><th id="77">77</th><td><b>enum</b> <dfn class="type def" id="fft_permutation_type" title='fft_permutation_type' data-ref="fft_permutation_type">fft_permutation_type</dfn> {</td></tr>
+<tr><th id="78">78</th><td>    <dfn class="enum" id="fft_permutation_type::FF_FFT_PERM_DEFAULT" title='fft_permutation_type::FF_FFT_PERM_DEFAULT' data-ref="fft_permutation_type::FF_FFT_PERM_DEFAULT">FF_FFT_PERM_DEFAULT</dfn>,</td></tr>
+<tr><th id="79">79</th><td>    <dfn class="enum" id="fft_permutation_type::FF_FFT_PERM_SWAP_LSBS" title='fft_permutation_type::FF_FFT_PERM_SWAP_LSBS' data-ref="fft_permutation_type::FF_FFT_PERM_SWAP_LSBS">FF_FFT_PERM_SWAP_LSBS</dfn>,</td></tr>
+<tr><th id="80">80</th><td>    <dfn class="enum" id="fft_permutation_type::FF_FFT_PERM_AVX" title='fft_permutation_type::FF_FFT_PERM_AVX' data-ref="fft_permutation_type::FF_FFT_PERM_AVX">FF_FFT_PERM_AVX</dfn>,</td></tr>
+<tr><th id="81">81</th><td>};</td></tr>
+<tr><th id="82">82</th><td></td></tr>
+<tr><th id="83">83</th><td><b>enum</b> <dfn class="type def" id="mdct_permutation_type" title='mdct_permutation_type' data-ref="mdct_permutation_type">mdct_permutation_type</dfn> {</td></tr>
+<tr><th id="84">84</th><td>    <dfn class="enum" id="mdct_permutation_type::FF_MDCT_PERM_NONE" title='mdct_permutation_type::FF_MDCT_PERM_NONE' data-ref="mdct_permutation_type::FF_MDCT_PERM_NONE">FF_MDCT_PERM_NONE</dfn>,</td></tr>
+<tr><th id="85">85</th><td>    <dfn class="enum" id="mdct_permutation_type::FF_MDCT_PERM_INTERLEAVE" title='mdct_permutation_type::FF_MDCT_PERM_INTERLEAVE' data-ref="mdct_permutation_type::FF_MDCT_PERM_INTERLEAVE">FF_MDCT_PERM_INTERLEAVE</dfn>,</td></tr>
+<tr><th id="86">86</th><td>};</td></tr>
+<tr><th id="87">87</th><td></td></tr>
+<tr><th id="88">88</th><td><b>struct</b> <dfn class="type def" id="FFTContext" title='FFTContext' data-ref="FFTContext">FFTContext</dfn> {</td></tr>
+<tr><th id="89">89</th><td>    <em>int</em> <dfn class="decl" id="FFTContext::nbits" title='FFTContext::nbits' data-ref="FFTContext::nbits">nbits</dfn>;</td></tr>
+<tr><th id="90">90</th><td>    <em>int</em> <dfn class="decl" id="FFTContext::inverse" title='FFTContext::inverse' data-ref="FFTContext::inverse">inverse</dfn>;</td></tr>
+<tr><th id="91">91</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> *<dfn class="decl" id="FFTContext::revtab" title='FFTContext::revtab' data-ref="FFTContext::revtab">revtab</dfn>;</td></tr>
+<tr><th id="92">92</th><td>    <a class="typedef" href="avfft.h.html#FFTComplex" title='FFTComplex' data-type='struct FFTComplex' data-ref="FFTComplex">FFTComplex</a> *<dfn class="decl" id="FFTContext::tmp_buf" title='FFTContext::tmp_buf' data-ref="FFTContext::tmp_buf">tmp_buf</dfn>;</td></tr>
+<tr><th id="93">93</th><td>    <em>int</em> <dfn class="decl" id="FFTContext::mdct_size" title='FFTContext::mdct_size' data-ref="FFTContext::mdct_size">mdct_size</dfn>; <i>/* size of MDCT (i.e. number of input data * 2) */</i></td></tr>
+<tr><th id="94">94</th><td>    <em>int</em> <dfn class="decl" id="FFTContext::mdct_bits" title='FFTContext::mdct_bits' data-ref="FFTContext::mdct_bits">mdct_bits</dfn>; <i>/* n = 2^nbits */</i></td></tr>
+<tr><th id="95">95</th><td>    <i>/* pre/post rotation tables */</i></td></tr>
+<tr><th id="96">96</th><td>    <a class="typedef" href="avfft.h.html#FFTSample" title='FFTSample' data-type='float' data-ref="FFTSample">FFTSample</a> *<dfn class="decl" id="FFTContext::tcos" title='FFTContext::tcos' data-ref="FFTContext::tcos">tcos</dfn>;</td></tr>
+<tr><th id="97">97</th><td>    <a class="typedef" href="avfft.h.html#FFTSample" title='FFTSample' data-type='float' data-ref="FFTSample">FFTSample</a> *<dfn class="decl" id="FFTContext::tsin" title='FFTContext::tsin' data-ref="FFTContext::tsin">tsin</dfn>;</td></tr>
+<tr><th id="98">98</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="99">99</th><td><i class="doc">     * Do the permutation needed BEFORE calling fft_calc().</i></td></tr>
+<tr><th id="100">100</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="101">101</th><td>    <em>void</em> (*<dfn class="decl" id="FFTContext::fft_permute" title='FFTContext::fft_permute' data-ref="FFTContext::fft_permute">fft_permute</dfn>)(<b>struct</b> <a class="type" href="#FFTContext" title='FFTContext' data-ref="FFTContext">FFTContext</a> *<dfn class="local col2 decl" id="52s" title='s' data-type='struct FFTContext *' data-ref="52s">s</dfn>, <a class="typedef" href="avfft.h.html#FFTComplex" title='FFTComplex' data-type='struct FFTComplex' data-ref="FFTComplex">FFTComplex</a> *<dfn class="local col3 decl" id="53z" title='z' data-type='FFTComplex *' data-ref="53z">z</dfn>);</td></tr>
+<tr><th id="102">102</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="103">103</th><td><i class="doc">     * Do a complex FFT with the parameters defined in ff_fft_init(). The</i></td></tr>
+<tr><th id="104">104</th><td><i class="doc">     * input data must be permuted before. No 1.0/sqrt(n) normalization is done.</i></td></tr>
+<tr><th id="105">105</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="106">106</th><td>    <em>void</em> (*<dfn class="decl" id="FFTContext::fft_calc" title='FFTContext::fft_calc' data-ref="FFTContext::fft_calc">fft_calc</dfn>)(<b>struct</b> <a class="type" href="#FFTContext" title='FFTContext' data-ref="FFTContext">FFTContext</a> *<dfn class="local col4 decl" id="54s" title='s' data-type='struct FFTContext *' data-ref="54s">s</dfn>, <a class="typedef" href="avfft.h.html#FFTComplex" title='FFTComplex' data-type='struct FFTComplex' data-ref="FFTComplex">FFTComplex</a> *<dfn class="local col5 decl" id="55z" title='z' data-type='FFTComplex *' data-ref="55z">z</dfn>);</td></tr>
+<tr><th id="107">107</th><td>    <em>void</em> (*<dfn class="decl" id="FFTContext::imdct_calc" title='FFTContext::imdct_calc' data-ref="FFTContext::imdct_calc">imdct_calc</dfn>)(<b>struct</b> <a class="type" href="#FFTContext" title='FFTContext' data-ref="FFTContext">FFTContext</a> *<dfn class="local col6 decl" id="56s" title='s' data-type='struct FFTContext *' data-ref="56s">s</dfn>, <a class="typedef" href="avfft.h.html#FFTSample" title='FFTSample' data-type='float' data-ref="FFTSample">FFTSample</a> *<dfn class="local col7 decl" id="57output" title='output' data-type='FFTSample *' data-ref="57output">output</dfn>, <em>const</em> <a class="typedef" href="avfft.h.html#FFTSample" title='FFTSample' data-type='float' data-ref="FFTSample">FFTSample</a> *<dfn class="local col8 decl" id="58input" title='input' data-type='const FFTSample *' data-ref="58input">input</dfn>);</td></tr>
+<tr><th id="108">108</th><td>    <em>void</em> (*<dfn class="decl" id="FFTContext::imdct_half" title='FFTContext::imdct_half' data-ref="FFTContext::imdct_half">imdct_half</dfn>)(<b>struct</b> <a class="type" href="#FFTContext" title='FFTContext' data-ref="FFTContext">FFTContext</a> *<dfn class="local col9 decl" id="59s" title='s' data-type='struct FFTContext *' data-ref="59s">s</dfn>, <a class="typedef" href="avfft.h.html#FFTSample" title='FFTSample' data-type='float' data-ref="FFTSample">FFTSample</a> *<dfn class="local col0 decl" id="60output" title='output' data-type='FFTSample *' data-ref="60output">output</dfn>, <em>const</em> <a class="typedef" href="avfft.h.html#FFTSample" title='FFTSample' data-type='float' data-ref="FFTSample">FFTSample</a> *<dfn class="local col1 decl" id="61input" title='input' data-type='const FFTSample *' data-ref="61input">input</dfn>);</td></tr>
+<tr><th id="109">109</th><td>    <em>void</em> (*<dfn class="decl" id="FFTContext::mdct_calc" title='FFTContext::mdct_calc' data-ref="FFTContext::mdct_calc">mdct_calc</dfn>)(<b>struct</b> <a class="type" href="#FFTContext" title='FFTContext' data-ref="FFTContext">FFTContext</a> *<dfn class="local col2 decl" id="62s" title='s' data-type='struct FFTContext *' data-ref="62s">s</dfn>, <a class="typedef" href="avfft.h.html#FFTSample" title='FFTSample' data-type='float' data-ref="FFTSample">FFTSample</a> *<dfn class="local col3 decl" id="63output" title='output' data-type='FFTSample *' data-ref="63output">output</dfn>, <em>const</em> <a class="typedef" href="avfft.h.html#FFTSample" title='FFTSample' data-type='float' data-ref="FFTSample">FFTSample</a> *<dfn class="local col4 decl" id="64input" title='input' data-type='const FFTSample *' data-ref="64input">input</dfn>);</td></tr>
+<tr><th id="110">110</th><td>    <em>void</em> (*<dfn class="decl" id="FFTContext::mdct_calcw" title='FFTContext::mdct_calcw' data-ref="FFTContext::mdct_calcw">mdct_calcw</dfn>)(<b>struct</b> <a class="type" href="#FFTContext" title='FFTContext' data-ref="FFTContext">FFTContext</a> *<dfn class="local col5 decl" id="65s" title='s' data-type='struct FFTContext *' data-ref="65s">s</dfn>, <a class="typedef" href="#FFTDouble" title='FFTDouble' data-type='float' data-ref="FFTDouble">FFTDouble</a> *<dfn class="local col6 decl" id="66output" title='output' data-type='FFTDouble *' data-ref="66output">output</dfn>, <em>const</em> <a class="typedef" href="avfft.h.html#FFTSample" title='FFTSample' data-type='float' data-ref="FFTSample">FFTSample</a> *<dfn class="local col7 decl" id="67input" title='input' data-type='const FFTSample *' data-ref="67input">input</dfn>);</td></tr>
+<tr><th id="111">111</th><td>    <b>enum</b> <a class="type" href="#fft_permutation_type" title='fft_permutation_type' data-ref="fft_permutation_type">fft_permutation_type</a> <dfn class="decl" id="FFTContext::fft_permutation" title='FFTContext::fft_permutation' data-ref="FFTContext::fft_permutation">fft_permutation</dfn>;</td></tr>
+<tr><th id="112">112</th><td>    <b>enum</b> <a class="type" href="#mdct_permutation_type" title='mdct_permutation_type' data-ref="mdct_permutation_type">mdct_permutation_type</a> <dfn class="decl" id="FFTContext::mdct_permutation" title='FFTContext::mdct_permutation' data-ref="FFTContext::mdct_permutation">mdct_permutation</dfn>;</td></tr>
+<tr><th id="113">113</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a> *<dfn class="decl" id="FFTContext::revtab32" title='FFTContext::revtab32' data-ref="FFTContext::revtab32">revtab32</dfn>;</td></tr>
+<tr><th id="114">114</th><td>};</td></tr>
+<tr><th id="115">115</th><td></td></tr>
+<tr><th id="116">116</th><td><u>#<span data-ppcond="116">if</span> <a class="macro" href="../config.h.html#528" title="0" data-ref="_M/CONFIG_HARDCODED_TABLES">CONFIG_HARDCODED_TABLES</a></u></td></tr>
+<tr><th id="117">117</th><td><u>#define COSTABLE_CONST const</u></td></tr>
+<tr><th id="118">118</th><td><u>#<span data-ppcond="116">else</span></u></td></tr>
+<tr><th id="119">119</th><td><u>#define <dfn class="macro" id="_M/COSTABLE_CONST" data-ref="_M/COSTABLE_CONST">COSTABLE_CONST</dfn></u></td></tr>
+<tr><th id="120">120</th><td><u>#<span data-ppcond="116">endif</span></u></td></tr>
+<tr><th id="121">121</th><td></td></tr>
+<tr><th id="122">122</th><td><u>#define <dfn class="macro" id="_M/COSTABLE" data-ref="_M/COSTABLE">COSTABLE</dfn>(size) \</u></td></tr>
+<tr><th id="123">123</th><td><u>    COSTABLE_CONST DECLARE_ALIGNED(32, <a class="typedef" href="avfft.h.html#FFTSample" title='FFTSample' data-type='float' data-ref="FFTSample">FFTSample</a>, FFT_NAME(ff_cos_##size))[size/2]</u></td></tr>
+<tr><th id="124">124</th><td></td></tr>
+<tr><th id="125">125</th><td><b>extern</b> <a class="macro" href="#122" title=" FFTSample __attribute__ ((aligned (32))) ff_cos_16[16/2]" data-ref="_M/COSTABLE">COSTABLE</a>(<var>16</var>);</td></tr>
+<tr><th id="126">126</th><td><b>extern</b> <a class="macro" href="#122" title=" FFTSample __attribute__ ((aligned (32))) ff_cos_32[32/2]" data-ref="_M/COSTABLE">COSTABLE</a>(<var>32</var>);</td></tr>
+<tr><th id="127">127</th><td><b>extern</b> <a class="macro" href="#122" title=" FFTSample __attribute__ ((aligned (32))) ff_cos_64[64/2]" data-ref="_M/COSTABLE">COSTABLE</a>(<var>64</var>);</td></tr>
+<tr><th id="128">128</th><td><b>extern</b> <a class="macro" href="#122" title=" FFTSample __attribute__ ((aligned (32))) ff_cos_128[128/2]" data-ref="_M/COSTABLE">COSTABLE</a>(<var>128</var>);</td></tr>
+<tr><th id="129">129</th><td><b>extern</b> <a class="macro" href="#122" title=" FFTSample __attribute__ ((aligned (32))) ff_cos_256[256/2]" data-ref="_M/COSTABLE">COSTABLE</a>(<var>256</var>);</td></tr>
+<tr><th id="130">130</th><td><b>extern</b> <a class="macro" href="#122" title=" FFTSample __attribute__ ((aligned (32))) ff_cos_512[512/2]" data-ref="_M/COSTABLE">COSTABLE</a>(<var>512</var>);</td></tr>
+<tr><th id="131">131</th><td><b>extern</b> <a class="macro" href="#122" title=" FFTSample __attribute__ ((aligned (32))) ff_cos_1024[1024/2]" data-ref="_M/COSTABLE">COSTABLE</a>(<var>1024</var>);</td></tr>
+<tr><th id="132">132</th><td><b>extern</b> <a class="macro" href="#122" title=" FFTSample __attribute__ ((aligned (32))) ff_cos_2048[2048/2]" data-ref="_M/COSTABLE">COSTABLE</a>(<var>2048</var>);</td></tr>
+<tr><th id="133">133</th><td><b>extern</b> <a class="macro" href="#122" title=" FFTSample __attribute__ ((aligned (32))) ff_cos_4096[4096/2]" data-ref="_M/COSTABLE">COSTABLE</a>(<var>4096</var>);</td></tr>
+<tr><th id="134">134</th><td><b>extern</b> <a class="macro" href="#122" title=" FFTSample __attribute__ ((aligned (32))) ff_cos_8192[8192/2]" data-ref="_M/COSTABLE">COSTABLE</a>(<var>8192</var>);</td></tr>
+<tr><th id="135">135</th><td><b>extern</b> <a class="macro" href="#122" title=" FFTSample __attribute__ ((aligned (32))) ff_cos_16384[16384/2]" data-ref="_M/COSTABLE">COSTABLE</a>(<var>16384</var>);</td></tr>
+<tr><th id="136">136</th><td><b>extern</b> <a class="macro" href="#122" title=" FFTSample __attribute__ ((aligned (32))) ff_cos_32768[32768/2]" data-ref="_M/COSTABLE">COSTABLE</a>(<var>32768</var>);</td></tr>
+<tr><th id="137">137</th><td><b>extern</b> <a class="macro" href="#122" title=" FFTSample __attribute__ ((aligned (32))) ff_cos_65536[65536/2]" data-ref="_M/COSTABLE">COSTABLE</a>(<var>65536</var>);</td></tr>
+<tr><th id="138">138</th><td><b>extern</b> <a class="macro" href="#122" title=" FFTSample __attribute__ ((aligned (32))) ff_cos_131072[131072/2]" data-ref="_M/COSTABLE">COSTABLE</a>(<var>131072</var>);</td></tr>
+<tr><th id="139">139</th><td><b>extern</b> <a class="macro" href="#119" title="" data-ref="_M/COSTABLE_CONST">COSTABLE_CONST</a> <a class="typedef" href="avfft.h.html#FFTSample" title='FFTSample' data-type='float' data-ref="FFTSample">FFTSample</a>* <em>const</em> <a class="macro" href="#41" title="ff_cos_tabs" data-ref="_M/FFT_NAME">FFT_NAME</a>(<dfn class="decl" id="ff_cos_tabs" title='ff_cos_tabs' data-ref="ff_cos_tabs">ff_cos_tabs</dfn>)[<var>18</var>];</td></tr>
+<tr><th id="140">140</th><td></td></tr>
+<tr><th id="141">141</th><td><u>#define <dfn class="macro" id="_M/ff_init_ff_cos_tabs" data-ref="_M/ff_init_ff_cos_tabs">ff_init_ff_cos_tabs</dfn> FFT_NAME(<dfn class="decl" id="ff_init_ff_cos_tabs" title='ff_init_ff_cos_tabs' data-ref="ff_init_ff_cos_tabs">ff_init_ff_cos_tabs</dfn>)</u></td></tr>
+<tr><th id="142">142</th><td></td></tr>
+<tr><th id="143">143</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="144">144</th><td><i class="doc"> * Initialize the cosine table in ff_cos_tabs[index]</i></td></tr>
+<tr><th id="145">145</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">index</span> index in ff_cos_tabs array of the table to initialize</i></td></tr>
+<tr><th id="146">146</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="147">147</th><td><em>void</em> <a class="macro" href="#141" title="ff_init_ff_cos_tabs" data-ref="_M/ff_init_ff_cos_tabs">ff_init_ff_cos_tabs</a>(<em>int</em> <dfn class="local col8 decl" id="68index" title='index' data-type='int' data-ref="68index">index</dfn>);</td></tr>
+<tr><th id="148">148</th><td></td></tr>
+<tr><th id="149">149</th><td><u>#define <dfn class="macro" id="_M/ff_fft_init" data-ref="_M/ff_fft_init">ff_fft_init</dfn> FFT_NAME(<dfn class="decl" id="ff_fft_init" title='ff_fft_init' data-ref="ff_fft_init">ff_fft_init</dfn>)</u></td></tr>
+<tr><th id="150">150</th><td><u>#define <dfn class="macro" id="_M/ff_fft_end" data-ref="_M/ff_fft_end">ff_fft_end</dfn>  FFT_NAME(<dfn class="decl" id="ff_fft_end" title='ff_fft_end' data-ref="ff_fft_end">ff_fft_end</dfn>)</u></td></tr>
+<tr><th id="151">151</th><td></td></tr>
+<tr><th id="152">152</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="153">153</th><td><i class="doc"> * Set up a complex FFT.</i></td></tr>
+<tr><th id="154">154</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">nbits</span>           log2 of the length of the input array</i></td></tr>
+<tr><th id="155">155</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">inverse</span>         if 0 perform the forward transform, if 1 perform the inverse</i></td></tr>
+<tr><th id="156">156</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="157">157</th><td><em>int</em> <a class="macro" href="#149" title="ff_fft_init" data-ref="_M/ff_fft_init">ff_fft_init</a>(<a class="typedef" href="avfft.h.html#FFTContext" title='FFTContext' data-type='struct FFTContext' data-ref="FFTContext">FFTContext</a> *<dfn class="local col9 decl" id="69s" title='s' data-type='FFTContext *' data-ref="69s">s</dfn>, <em>int</em> <dfn class="local col0 decl" id="70nbits" title='nbits' data-type='int' data-ref="70nbits">nbits</dfn>, <em>int</em> <dfn class="local col1 decl" id="71inverse" title='inverse' data-type='int' data-ref="71inverse">inverse</dfn>);</td></tr>
+<tr><th id="158">158</th><td></td></tr>
+<tr><th id="159">159</th><td><em>void</em> <dfn class="decl" id="ff_fft_init_aarch64" title='ff_fft_init_aarch64' data-ref="ff_fft_init_aarch64">ff_fft_init_aarch64</dfn>(<a class="typedef" href="avfft.h.html#FFTContext" title='FFTContext' data-type='struct FFTContext' data-ref="FFTContext">FFTContext</a> *<dfn class="local col2 decl" id="72s" title='s' data-type='FFTContext *' data-ref="72s">s</dfn>);</td></tr>
+<tr><th id="160">160</th><td><em>void</em> <dfn class="decl" id="ff_fft_init_x86" title='ff_fft_init_x86' data-ref="ff_fft_init_x86">ff_fft_init_x86</dfn>(<a class="typedef" href="avfft.h.html#FFTContext" title='FFTContext' data-type='struct FFTContext' data-ref="FFTContext">FFTContext</a> *<dfn class="local col3 decl" id="73s" title='s' data-type='FFTContext *' data-ref="73s">s</dfn>);</td></tr>
+<tr><th id="161">161</th><td><em>void</em> <dfn class="decl" id="ff_fft_init_arm" title='ff_fft_init_arm' data-ref="ff_fft_init_arm">ff_fft_init_arm</dfn>(<a class="typedef" href="avfft.h.html#FFTContext" title='FFTContext' data-type='struct FFTContext' data-ref="FFTContext">FFTContext</a> *<dfn class="local col4 decl" id="74s" title='s' data-type='FFTContext *' data-ref="74s">s</dfn>);</td></tr>
+<tr><th id="162">162</th><td><em>void</em> <dfn class="decl" id="ff_fft_init_mips" title='ff_fft_init_mips' data-ref="ff_fft_init_mips">ff_fft_init_mips</dfn>(<a class="typedef" href="avfft.h.html#FFTContext" title='FFTContext' data-type='struct FFTContext' data-ref="FFTContext">FFTContext</a> *<dfn class="local col5 decl" id="75s" title='s' data-type='FFTContext *' data-ref="75s">s</dfn>);</td></tr>
+<tr><th id="163">163</th><td><em>void</em> <dfn class="decl" id="ff_fft_init_ppc" title='ff_fft_init_ppc' data-ref="ff_fft_init_ppc">ff_fft_init_ppc</dfn>(<a class="typedef" href="avfft.h.html#FFTContext" title='FFTContext' data-type='struct FFTContext' data-ref="FFTContext">FFTContext</a> *<dfn class="local col6 decl" id="76s" title='s' data-type='FFTContext *' data-ref="76s">s</dfn>);</td></tr>
+<tr><th id="164">164</th><td></td></tr>
+<tr><th id="165">165</th><td><em>void</em> <dfn class="decl" id="ff_fft_fixed_init_arm" title='ff_fft_fixed_init_arm' data-ref="ff_fft_fixed_init_arm">ff_fft_fixed_init_arm</dfn>(<a class="typedef" href="avfft.h.html#FFTContext" title='FFTContext' data-type='struct FFTContext' data-ref="FFTContext">FFTContext</a> *<dfn class="local col7 decl" id="77s" title='s' data-type='FFTContext *' data-ref="77s">s</dfn>);</td></tr>
+<tr><th id="166">166</th><td></td></tr>
+<tr><th id="167">167</th><td><em>void</em> <a class="macro" href="#150" title="ff_fft_end" data-ref="_M/ff_fft_end">ff_fft_end</a>(<a class="typedef" href="avfft.h.html#FFTContext" title='FFTContext' data-type='struct FFTContext' data-ref="FFTContext">FFTContext</a> *<dfn class="local col8 decl" id="78s" title='s' data-type='FFTContext *' data-ref="78s">s</dfn>);</td></tr>
+<tr><th id="168">168</th><td></td></tr>
+<tr><th id="169">169</th><td><u>#define <dfn class="macro" id="_M/ff_mdct_init" data-ref="_M/ff_mdct_init">ff_mdct_init</dfn> FFT_NAME(<dfn class="decl" id="ff_mdct_init" title='ff_mdct_init' data-ref="ff_mdct_init">ff_mdct_init</dfn>)</u></td></tr>
+<tr><th id="170">170</th><td><u>#define <dfn class="macro" id="_M/ff_mdct_end" data-ref="_M/ff_mdct_end">ff_mdct_end</dfn>  FFT_NAME(<dfn class="decl" id="ff_mdct_end" title='ff_mdct_end' data-ref="ff_mdct_end">ff_mdct_end</dfn>)</u></td></tr>
+<tr><th id="171">171</th><td></td></tr>
+<tr><th id="172">172</th><td><em>int</em> <a class="macro" href="#169" title="ff_mdct_init" data-ref="_M/ff_mdct_init">ff_mdct_init</a>(<a class="typedef" href="avfft.h.html#FFTContext" title='FFTContext' data-type='struct FFTContext' data-ref="FFTContext">FFTContext</a> *<dfn class="local col9 decl" id="79s" title='s' data-type='FFTContext *' data-ref="79s">s</dfn>, <em>int</em> <dfn class="local col0 decl" id="80nbits" title='nbits' data-type='int' data-ref="80nbits">nbits</dfn>, <em>int</em> <dfn class="local col1 decl" id="81inverse" title='inverse' data-type='int' data-ref="81inverse">inverse</dfn>, <em>double</em> <dfn class="local col2 decl" id="82scale" title='scale' data-type='double' data-ref="82scale">scale</dfn>);</td></tr>
+<tr><th id="173">173</th><td><em>void</em> <a class="macro" href="#170" title="ff_mdct_end" data-ref="_M/ff_mdct_end">ff_mdct_end</a>(<a class="typedef" href="avfft.h.html#FFTContext" title='FFTContext' data-type='struct FFTContext' data-ref="FFTContext">FFTContext</a> *<dfn class="local col3 decl" id="83s" title='s' data-type='FFTContext *' data-ref="83s">s</dfn>);</td></tr>
+<tr><th id="174">174</th><td></td></tr>
+<tr><th id="175">175</th><td><u>#<span data-ppcond="22">endif</span> /* AVCODEC_FFT_H */</u></td></tr>
+<tr><th id="176">176</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated while processing <a href='aaccoder.c.html'>ffmpeg/libavcodec/aaccoder.c</a><br/>Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

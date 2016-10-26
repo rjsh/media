@@ -1,0 +1,718 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>async.c source code [ffmpeg/libavformat/async.c] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="Context,RingBuffer "/>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavformat/async.c'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavformat</a>/<a href='async.c.html'>async.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * Input async protocol.</i></td></tr>
+<tr><th id="3">3</th><td><i> * Copyright (c) 2015 Zhang Rui &lt;bbcallen@gmail.com&gt;</i></td></tr>
+<tr><th id="4">4</th><td><i> *</i></td></tr>
+<tr><th id="5">5</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="8">8</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="9">9</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="10">10</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="11">11</th><td><i> *</i></td></tr>
+<tr><th id="12">12</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="13">13</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="14">14</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="15">15</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="16">16</th><td><i> *</i></td></tr>
+<tr><th id="17">17</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="18">18</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="19">19</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="20">20</th><td><i> *</i></td></tr>
+<tr><th id="21">21</th><td><i> * Based on libavformat/cache.c by Michael Niedermayer</i></td></tr>
+<tr><th id="22">22</th><td><i> */</i></td></tr>
+<tr><th id="23">23</th><td></td></tr>
+<tr><th id="24">24</th><td> <i class="doc">/**</i></td></tr>
+<tr><th id="25">25</th><td><i class="doc"> *<span class="command"> @TODO</span></i></td></tr>
+<tr><th id="26">26</th><td><i class="doc"> *      support timeout</i></td></tr>
+<tr><th id="27">27</th><td><i class="doc"> *      support work with concatdec, hls</i></td></tr>
+<tr><th id="28">28</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="29">29</th><td></td></tr>
+<tr><th id="30">30</th><td><u>#include <a href="../libavutil/avassert.h.html">"libavutil/avassert.h"</a></u></td></tr>
+<tr><th id="31">31</th><td><u>#include <a href="../libavutil/avstring.h.html">"libavutil/avstring.h"</a></u></td></tr>
+<tr><th id="32">32</th><td><u>#include <a href="../libavutil/error.h.html">"libavutil/error.h"</a></u></td></tr>
+<tr><th id="33">33</th><td><u>#include <a href="../libavutil/fifo.h.html">"libavutil/fifo.h"</a></u></td></tr>
+<tr><th id="34">34</th><td><u>#include <a href="../libavutil/log.h.html">"libavutil/log.h"</a></u></td></tr>
+<tr><th id="35">35</th><td><u>#include <a href="../libavutil/opt.h.html">"libavutil/opt.h"</a></u></td></tr>
+<tr><th id="36">36</th><td><u>#include <a href="../libavutil/thread.h.html">"libavutil/thread.h"</a></u></td></tr>
+<tr><th id="37">37</th><td><u>#include <a href="url.h.html">"url.h"</a></u></td></tr>
+<tr><th id="38">38</th><td><u>#include &lt;stdint.h&gt;</u></td></tr>
+<tr><th id="39">39</th><td></td></tr>
+<tr><th id="40">40</th><td><u>#<span data-ppcond="40">if</span> <a class="macro" href="../config.h.html#243" title="1" data-ref="_M/HAVE_UNISTD_H">HAVE_UNISTD_H</a></u></td></tr>
+<tr><th id="41">41</th><td><u>#include <a href="../../include/unistd.h.html">&lt;unistd.h&gt;</a></u></td></tr>
+<tr><th id="42">42</th><td><u>#<span data-ppcond="40">endif</span></u></td></tr>
+<tr><th id="43">43</th><td></td></tr>
+<tr><th id="44">44</th><td><u>#define <dfn class="macro" id="_M/BUFFER_CAPACITY" data-ref="_M/BUFFER_CAPACITY">BUFFER_CAPACITY</dfn>         (4 * 1024 * 1024)</u></td></tr>
+<tr><th id="45">45</th><td><u>#define <dfn class="macro" id="_M/READ_BACK_CAPACITY" data-ref="_M/READ_BACK_CAPACITY">READ_BACK_CAPACITY</dfn>      (4 * 1024 * 1024)</u></td></tr>
+<tr><th id="46">46</th><td><u>#define <dfn class="macro" id="_M/SHORT_SEEK_THRESHOLD" data-ref="_M/SHORT_SEEK_THRESHOLD">SHORT_SEEK_THRESHOLD</dfn>    (256 * 1024)</u></td></tr>
+<tr><th id="47">47</th><td></td></tr>
+<tr><th id="48">48</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="RingBuffer" title='RingBuffer' data-ref="RingBuffer"><a class="type" href="#RingBuffer" title='RingBuffer' data-ref="RingBuffer">RingBuffer</a></dfn></td></tr>
+<tr><th id="49">49</th><td>{</td></tr>
+<tr><th id="50">50</th><td>    <a class="typedef" href="../libavutil/fifo.h.html#AVFifoBuffer" title='AVFifoBuffer' data-type='struct AVFifoBuffer' data-ref="AVFifoBuffer">AVFifoBuffer</a> *<dfn class="tu decl" id="RingBuffer::fifo" title='RingBuffer::fifo' data-type='AVFifoBuffer *' data-ref="RingBuffer::fifo">fifo</dfn>;</td></tr>
+<tr><th id="51">51</th><td>    <em>int</em>           <dfn class="tu decl" id="RingBuffer::read_back_capacity" title='RingBuffer::read_back_capacity' data-type='int' data-ref="RingBuffer::read_back_capacity">read_back_capacity</dfn>;</td></tr>
+<tr><th id="52">52</th><td></td></tr>
+<tr><th id="53">53</th><td>    <em>int</em>           <dfn class="tu decl" id="RingBuffer::read_pos" title='RingBuffer::read_pos' data-type='int' data-ref="RingBuffer::read_pos">read_pos</dfn>;</td></tr>
+<tr><th id="54">54</th><td>} <dfn class="typedef" id="RingBuffer" title='RingBuffer' data-type='struct RingBuffer' data-ref="RingBuffer">RingBuffer</dfn>;</td></tr>
+<tr><th id="55">55</th><td></td></tr>
+<tr><th id="56">56</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="Context" title='Context' data-ref="Context"><a class="type" href="#Context" title='Context' data-ref="Context">Context</a></dfn> {</td></tr>
+<tr><th id="57">57</th><td>    <a class="typedef" href="../libavutil/log.h.html#AVClass" title='AVClass' data-type='struct AVClass' data-ref="AVClass">AVClass</a>        *<dfn class="tu decl" id="Context::class" title='Context::class' data-type='AVClass *' data-ref="Context::class">class</dfn>;</td></tr>
+<tr><th id="58">58</th><td>    <a class="typedef" href="url.h.html#URLContext" title='URLContext' data-type='struct URLContext' data-ref="URLContext">URLContext</a>     *<dfn class="tu decl" id="Context::inner" title='Context::inner' data-type='URLContext *' data-ref="Context::inner">inner</dfn>;</td></tr>
+<tr><th id="59">59</th><td></td></tr>
+<tr><th id="60">60</th><td>    <em>int</em>             <dfn class="tu decl" id="Context::seek_request" title='Context::seek_request' data-type='int' data-ref="Context::seek_request">seek_request</dfn>;</td></tr>
+<tr><th id="61">61</th><td>    <a class="typedef" href="../../include/x86_64-linux-gnu/sys/types.h.html#197" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a>         <dfn class="tu decl" id="Context::seek_pos" title='Context::seek_pos' data-type='int64_t' data-ref="Context::seek_pos">seek_pos</dfn>;</td></tr>
+<tr><th id="62">62</th><td>    <em>int</em>             <dfn class="tu decl" id="Context::seek_whence" title='Context::seek_whence' data-type='int' data-ref="Context::seek_whence">seek_whence</dfn>;</td></tr>
+<tr><th id="63">63</th><td>    <em>int</em>             <dfn class="tu decl" id="Context::seek_completed" title='Context::seek_completed' data-type='int' data-ref="Context::seek_completed">seek_completed</dfn>;</td></tr>
+<tr><th id="64">64</th><td>    <a class="typedef" href="../../include/x86_64-linux-gnu/sys/types.h.html#197" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a>         <dfn class="tu decl" id="Context::seek_ret" title='Context::seek_ret' data-type='int64_t' data-ref="Context::seek_ret">seek_ret</dfn>;</td></tr>
+<tr><th id="65">65</th><td></td></tr>
+<tr><th id="66">66</th><td>    <em>int</em>             <dfn class="tu decl" id="Context::inner_io_error" title='Context::inner_io_error' data-type='int' data-ref="Context::inner_io_error">inner_io_error</dfn>;</td></tr>
+<tr><th id="67">67</th><td>    <em>int</em>             <dfn class="tu decl" id="Context::io_error" title='Context::io_error' data-type='int' data-ref="Context::io_error">io_error</dfn>;</td></tr>
+<tr><th id="68">68</th><td>    <em>int</em>             <dfn class="tu decl" id="Context::io_eof_reached" title='Context::io_eof_reached' data-type='int' data-ref="Context::io_eof_reached">io_eof_reached</dfn>;</td></tr>
+<tr><th id="69">69</th><td></td></tr>
+<tr><th id="70">70</th><td>    <a class="typedef" href="../../include/x86_64-linux-gnu/sys/types.h.html#197" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a>         <dfn class="tu decl" id="Context::logical_pos" title='Context::logical_pos' data-type='int64_t' data-ref="Context::logical_pos">logical_pos</dfn>;</td></tr>
+<tr><th id="71">71</th><td>    <a class="typedef" href="../../include/x86_64-linux-gnu/sys/types.h.html#197" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a>         <dfn class="tu decl" id="Context::logical_size" title='Context::logical_size' data-type='int64_t' data-ref="Context::logical_size">logical_size</dfn>;</td></tr>
+<tr><th id="72">72</th><td>    <a class="typedef" href="#RingBuffer" title='RingBuffer' data-type='struct RingBuffer' data-ref="RingBuffer">RingBuffer</a>      <dfn class="tu decl" id="Context::ring" title='Context::ring' data-type='RingBuffer' data-ref="Context::ring">ring</dfn>;</td></tr>
+<tr><th id="73">73</th><td></td></tr>
+<tr><th id="74">74</th><td>    <a class="typedef" href="../../include/x86_64-linux-gnu/bits/pthreadtypes.h.html#pthread_cond_t" title='pthread_cond_t' data-type='union pthread_cond_t' data-ref="pthread_cond_t">pthread_cond_t</a>  <dfn class="tu decl" id="Context::cond_wakeup_main" title='Context::cond_wakeup_main' data-type='pthread_cond_t' data-ref="Context::cond_wakeup_main">cond_wakeup_main</dfn>;</td></tr>
+<tr><th id="75">75</th><td>    <a class="typedef" href="../../include/x86_64-linux-gnu/bits/pthreadtypes.h.html#pthread_cond_t" title='pthread_cond_t' data-type='union pthread_cond_t' data-ref="pthread_cond_t">pthread_cond_t</a>  <dfn class="tu decl" id="Context::cond_wakeup_background" title='Context::cond_wakeup_background' data-type='pthread_cond_t' data-ref="Context::cond_wakeup_background">cond_wakeup_background</dfn>;</td></tr>
+<tr><th id="76">76</th><td>    <a class="typedef" href="../../include/x86_64-linux-gnu/bits/pthreadtypes.h.html#pthread_mutex_t" title='pthread_mutex_t' data-type='union pthread_mutex_t' data-ref="pthread_mutex_t">pthread_mutex_t</a> <dfn class="tu decl" id="Context::mutex" title='Context::mutex' data-type='pthread_mutex_t' data-ref="Context::mutex">mutex</dfn>;</td></tr>
+<tr><th id="77">77</th><td>    <a class="typedef" href="../../include/x86_64-linux-gnu/bits/pthreadtypes.h.html#pthread_t" title='pthread_t' data-type='unsigned long' data-ref="pthread_t">pthread_t</a>       <dfn class="tu decl" id="Context::async_buffer_thread" title='Context::async_buffer_thread' data-type='pthread_t' data-ref="Context::async_buffer_thread">async_buffer_thread</dfn>;</td></tr>
+<tr><th id="78">78</th><td></td></tr>
+<tr><th id="79">79</th><td>    <em>int</em>             <dfn class="tu decl" id="Context::abort_request" title='Context::abort_request' data-type='int' data-ref="Context::abort_request">abort_request</dfn>;</td></tr>
+<tr><th id="80">80</th><td>    <a class="typedef" href="avio.h.html#AVIOInterruptCB" title='AVIOInterruptCB' data-type='struct AVIOInterruptCB' data-ref="AVIOInterruptCB">AVIOInterruptCB</a> <dfn class="tu decl" id="Context::interrupt_callback" title='Context::interrupt_callback' data-type='AVIOInterruptCB' data-ref="Context::interrupt_callback">interrupt_callback</dfn>;</td></tr>
+<tr><th id="81">81</th><td>} <dfn class="typedef" id="Context" title='Context' data-type='struct Context' data-ref="Context">Context</dfn>;</td></tr>
+<tr><th id="82">82</th><td></td></tr>
+<tr><th id="83">83</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="ring_init" title='ring_init' data-type='int ring_init(RingBuffer * ring, unsigned int capacity, int read_back_capacity)' data-ref="ring_init">ring_init</dfn>(<a class="typedef" href="#RingBuffer" title='RingBuffer' data-type='struct RingBuffer' data-ref="RingBuffer">RingBuffer</a> *<dfn class="local col1 decl" id="1ring" title='ring' data-type='RingBuffer *' data-ref="1ring">ring</dfn>, <em>unsigned</em> <em>int</em> <dfn class="local col2 decl" id="2capacity" title='capacity' data-type='unsigned int' data-ref="2capacity">capacity</dfn>, <em>int</em> <dfn class="local col3 decl" id="3read_back_capacity" title='read_back_capacity' data-type='int' data-ref="3read_back_capacity">read_back_capacity</dfn>)</td></tr>
+<tr><th id="84">84</th><td>{</td></tr>
+<tr><th id="85">85</th><td>    <a class="ref" href="../../include/string.h.html#memset" title='memset' data-ref="memset">memset</a>(<a class="local col1 ref" href="#1ring" title='ring' data-ref="1ring">ring</a>, <var>0</var>, <b>sizeof</b>(<a class="typedef" href="#RingBuffer" title='RingBuffer' data-type='struct RingBuffer' data-ref="RingBuffer">RingBuffer</a>));</td></tr>
+<tr><th id="86">86</th><td>    <a class="local col1 ref" href="#1ring" title='ring' data-ref="1ring">ring</a>-&gt;<a class="tu ref" href="#RingBuffer::fifo" title='RingBuffer::fifo' data-use='w' data-ref="RingBuffer::fifo">fifo</a> = <a class="ref" href="../libavutil/fifo.h.html#av_fifo_alloc" title='av_fifo_alloc' data-ref="av_fifo_alloc">av_fifo_alloc</a>(<a class="local col2 ref" href="#2capacity" title='capacity' data-ref="2capacity">capacity</a> + <a class="local col3 ref" href="#3read_back_capacity" title='read_back_capacity' data-ref="3read_back_capacity">read_back_capacity</a>);</td></tr>
+<tr><th id="87">87</th><td>    <b>if</b> (!<a class="local col1 ref" href="#1ring" title='ring' data-ref="1ring">ring</a>-&gt;<a class="tu ref" href="#RingBuffer::fifo" title='RingBuffer::fifo' data-use='r' data-ref="RingBuffer::fifo">fifo</a>)</td></tr>
+<tr><th id="88">88</th><td>        <b>return</b> <a class="macro" href="../libavutil/error.h.html#39" title="(-(12))" data-ref="_M/AVERROR">AVERROR</a>(<a class="macro" href="../../include/asm-generic/errno-base.h.html#15" title="12" data-ref="_M/ENOMEM">ENOMEM</a>);</td></tr>
+<tr><th id="89">89</th><td></td></tr>
+<tr><th id="90">90</th><td>    <a class="local col1 ref" href="#1ring" title='ring' data-ref="1ring">ring</a>-&gt;<a class="tu ref" href="#RingBuffer::read_back_capacity" title='RingBuffer::read_back_capacity' data-use='w' data-ref="RingBuffer::read_back_capacity">read_back_capacity</a> = <a class="local col3 ref" href="#3read_back_capacity" title='read_back_capacity' data-ref="3read_back_capacity">read_back_capacity</a>;</td></tr>
+<tr><th id="91">91</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="92">92</th><td>}</td></tr>
+<tr><th id="93">93</th><td></td></tr>
+<tr><th id="94">94</th><td><em>static</em> <em>void</em> <dfn class="tu decl def" id="ring_destroy" title='ring_destroy' data-type='void ring_destroy(RingBuffer * ring)' data-ref="ring_destroy">ring_destroy</dfn>(<a class="typedef" href="#RingBuffer" title='RingBuffer' data-type='struct RingBuffer' data-ref="RingBuffer">RingBuffer</a> *<dfn class="local col4 decl" id="4ring" title='ring' data-type='RingBuffer *' data-ref="4ring">ring</dfn>)</td></tr>
+<tr><th id="95">95</th><td>{</td></tr>
+<tr><th id="96">96</th><td>    <a class="ref" href="../libavutil/fifo.h.html#av_fifo_freep" title='av_fifo_freep' data-ref="av_fifo_freep">av_fifo_freep</a>(&amp;<a class="local col4 ref" href="#4ring" title='ring' data-ref="4ring">ring</a>-&gt;<a class="tu ref" href="#RingBuffer::fifo" title='RingBuffer::fifo' data-use='a' data-ref="RingBuffer::fifo">fifo</a>);</td></tr>
+<tr><th id="97">97</th><td>}</td></tr>
+<tr><th id="98">98</th><td></td></tr>
+<tr><th id="99">99</th><td><em>static</em> <em>void</em> <dfn class="tu decl def" id="ring_reset" title='ring_reset' data-type='void ring_reset(RingBuffer * ring)' data-ref="ring_reset">ring_reset</dfn>(<a class="typedef" href="#RingBuffer" title='RingBuffer' data-type='struct RingBuffer' data-ref="RingBuffer">RingBuffer</a> *<dfn class="local col5 decl" id="5ring" title='ring' data-type='RingBuffer *' data-ref="5ring">ring</dfn>)</td></tr>
+<tr><th id="100">100</th><td>{</td></tr>
+<tr><th id="101">101</th><td>    <a class="ref" href="../libavutil/fifo.h.html#av_fifo_reset" title='av_fifo_reset' data-ref="av_fifo_reset">av_fifo_reset</a>(<a class="local col5 ref" href="#5ring" title='ring' data-ref="5ring">ring</a>-&gt;<a class="tu ref" href="#RingBuffer::fifo" title='RingBuffer::fifo' data-use='r' data-ref="RingBuffer::fifo">fifo</a>);</td></tr>
+<tr><th id="102">102</th><td>    <a class="local col5 ref" href="#5ring" title='ring' data-ref="5ring">ring</a>-&gt;<a class="tu ref" href="#RingBuffer::read_pos" title='RingBuffer::read_pos' data-use='w' data-ref="RingBuffer::read_pos">read_pos</a> = <var>0</var>;</td></tr>
+<tr><th id="103">103</th><td>}</td></tr>
+<tr><th id="104">104</th><td></td></tr>
+<tr><th id="105">105</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="ring_size" title='ring_size' data-type='int ring_size(RingBuffer * ring)' data-ref="ring_size">ring_size</dfn>(<a class="typedef" href="#RingBuffer" title='RingBuffer' data-type='struct RingBuffer' data-ref="RingBuffer">RingBuffer</a> *<dfn class="local col6 decl" id="6ring" title='ring' data-type='RingBuffer *' data-ref="6ring">ring</dfn>)</td></tr>
+<tr><th id="106">106</th><td>{</td></tr>
+<tr><th id="107">107</th><td>    <b>return</b> <a class="ref" href="../libavutil/fifo.h.html#av_fifo_size" title='av_fifo_size' data-ref="av_fifo_size">av_fifo_size</a>(<a class="local col6 ref" href="#6ring" title='ring' data-ref="6ring">ring</a>-&gt;<a class="tu ref" href="#RingBuffer::fifo" title='RingBuffer::fifo' data-use='r' data-ref="RingBuffer::fifo">fifo</a>) - <a class="local col6 ref" href="#6ring" title='ring' data-ref="6ring">ring</a>-&gt;<a class="tu ref" href="#RingBuffer::read_pos" title='RingBuffer::read_pos' data-use='r' data-ref="RingBuffer::read_pos">read_pos</a>;</td></tr>
+<tr><th id="108">108</th><td>}</td></tr>
+<tr><th id="109">109</th><td></td></tr>
+<tr><th id="110">110</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="ring_space" title='ring_space' data-type='int ring_space(RingBuffer * ring)' data-ref="ring_space">ring_space</dfn>(<a class="typedef" href="#RingBuffer" title='RingBuffer' data-type='struct RingBuffer' data-ref="RingBuffer">RingBuffer</a> *<dfn class="local col7 decl" id="7ring" title='ring' data-type='RingBuffer *' data-ref="7ring">ring</dfn>)</td></tr>
+<tr><th id="111">111</th><td>{</td></tr>
+<tr><th id="112">112</th><td>    <b>return</b> <a class="ref" href="../libavutil/fifo.h.html#av_fifo_space" title='av_fifo_space' data-ref="av_fifo_space">av_fifo_space</a>(<a class="local col7 ref" href="#7ring" title='ring' data-ref="7ring">ring</a>-&gt;<a class="tu ref" href="#RingBuffer::fifo" title='RingBuffer::fifo' data-use='r' data-ref="RingBuffer::fifo">fifo</a>);</td></tr>
+<tr><th id="113">113</th><td>}</td></tr>
+<tr><th id="114">114</th><td></td></tr>
+<tr><th id="115">115</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="ring_generic_read" title='ring_generic_read' data-type='int ring_generic_read(RingBuffer * ring, void * dest, int buf_size, void (*)(void *, void *, int) func)' data-ref="ring_generic_read">ring_generic_read</dfn>(<a class="typedef" href="#RingBuffer" title='RingBuffer' data-type='struct RingBuffer' data-ref="RingBuffer">RingBuffer</a> *<dfn class="local col8 decl" id="8ring" title='ring' data-type='RingBuffer *' data-ref="8ring">ring</dfn>, <em>void</em> *<dfn class="local col9 decl" id="9dest" title='dest' data-type='void *' data-ref="9dest">dest</dfn>, <em>int</em> <dfn class="local col0 decl" id="10buf_size" title='buf_size' data-type='int' data-ref="10buf_size">buf_size</dfn>, <em>void</em> (*<dfn class="local col1 decl" id="11func" title='func' data-type='void (*)(void *, void *, int)' data-ref="11func">func</dfn>)(<em>void</em>*, <em>void</em>*, <em>int</em>))</td></tr>
+<tr><th id="116">116</th><td>{</td></tr>
+<tr><th id="117">117</th><td>    <em>int</em> <dfn class="local col2 decl" id="12ret" title='ret' data-type='int' data-ref="12ret">ret</dfn>;</td></tr>
+<tr><th id="118">118</th><td></td></tr>
+<tr><th id="119">119</th><td>    <a class="macro" href="../libavutil/avassert.h.html#64" title="((void)0)" data-ref="_M/av_assert2">av_assert2</a>(buf_size &lt;= ring_size(ring));</td></tr>
+<tr><th id="120">120</th><td>    <a class="local col2 ref" href="#12ret" title='ret' data-ref="12ret">ret</a> = <a class="ref" href="../libavutil/fifo.h.html#av_fifo_generic_peek_at" title='av_fifo_generic_peek_at' data-ref="av_fifo_generic_peek_at">av_fifo_generic_peek_at</a>(<a class="local col8 ref" href="#8ring" title='ring' data-ref="8ring">ring</a>-&gt;<a class="tu ref" href="#RingBuffer::fifo" title='RingBuffer::fifo' data-use='r' data-ref="RingBuffer::fifo">fifo</a>, <a class="local col9 ref" href="#9dest" title='dest' data-ref="9dest">dest</a>, <a class="local col8 ref" href="#8ring" title='ring' data-ref="8ring">ring</a>-&gt;<a class="tu ref" href="#RingBuffer::read_pos" title='RingBuffer::read_pos' data-use='r' data-ref="RingBuffer::read_pos">read_pos</a>, <a class="local col0 ref" href="#10buf_size" title='buf_size' data-ref="10buf_size">buf_size</a>, <a class="local col1 ref" href="#11func" title='func' data-ref="11func">func</a>);</td></tr>
+<tr><th id="121">121</th><td>    <a class="local col8 ref" href="#8ring" title='ring' data-ref="8ring">ring</a>-&gt;<a class="tu ref" href="#RingBuffer::read_pos" title='RingBuffer::read_pos' data-use='w' data-ref="RingBuffer::read_pos">read_pos</a> += <a class="local col0 ref" href="#10buf_size" title='buf_size' data-ref="10buf_size">buf_size</a>;</td></tr>
+<tr><th id="122">122</th><td></td></tr>
+<tr><th id="123">123</th><td>    <b>if</b> (<a class="local col8 ref" href="#8ring" title='ring' data-ref="8ring">ring</a>-&gt;<a class="tu ref" href="#RingBuffer::read_pos" title='RingBuffer::read_pos' data-use='r' data-ref="RingBuffer::read_pos">read_pos</a> &gt; <a class="local col8 ref" href="#8ring" title='ring' data-ref="8ring">ring</a>-&gt;<a class="tu ref" href="#RingBuffer::read_back_capacity" title='RingBuffer::read_back_capacity' data-use='r' data-ref="RingBuffer::read_back_capacity">read_back_capacity</a>) {</td></tr>
+<tr><th id="124">124</th><td>        <a class="ref" href="../libavutil/fifo.h.html#av_fifo_drain" title='av_fifo_drain' data-ref="av_fifo_drain">av_fifo_drain</a>(<a class="local col8 ref" href="#8ring" title='ring' data-ref="8ring">ring</a>-&gt;<a class="tu ref" href="#RingBuffer::fifo" title='RingBuffer::fifo' data-use='r' data-ref="RingBuffer::fifo">fifo</a>, <a class="local col8 ref" href="#8ring" title='ring' data-ref="8ring">ring</a>-&gt;<a class="tu ref" href="#RingBuffer::read_pos" title='RingBuffer::read_pos' data-use='r' data-ref="RingBuffer::read_pos">read_pos</a> - <a class="local col8 ref" href="#8ring" title='ring' data-ref="8ring">ring</a>-&gt;<a class="tu ref" href="#RingBuffer::read_back_capacity" title='RingBuffer::read_back_capacity' data-use='r' data-ref="RingBuffer::read_back_capacity">read_back_capacity</a>);</td></tr>
+<tr><th id="125">125</th><td>        <a class="local col8 ref" href="#8ring" title='ring' data-ref="8ring">ring</a>-&gt;<a class="tu ref" href="#RingBuffer::read_pos" title='RingBuffer::read_pos' data-use='w' data-ref="RingBuffer::read_pos">read_pos</a> = <a class="local col8 ref" href="#8ring" title='ring' data-ref="8ring">ring</a>-&gt;<a class="tu ref" href="#RingBuffer::read_back_capacity" title='RingBuffer::read_back_capacity' data-use='r' data-ref="RingBuffer::read_back_capacity">read_back_capacity</a>;</td></tr>
+<tr><th id="126">126</th><td>    }</td></tr>
+<tr><th id="127">127</th><td></td></tr>
+<tr><th id="128">128</th><td>    <b>return</b> <a class="local col2 ref" href="#12ret" title='ret' data-ref="12ret">ret</a>;</td></tr>
+<tr><th id="129">129</th><td>}</td></tr>
+<tr><th id="130">130</th><td></td></tr>
+<tr><th id="131">131</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="ring_generic_write" title='ring_generic_write' data-type='int ring_generic_write(RingBuffer * ring, void * src, int size, int (*)(void *, void *, int) func)' data-ref="ring_generic_write">ring_generic_write</dfn>(<a class="typedef" href="#RingBuffer" title='RingBuffer' data-type='struct RingBuffer' data-ref="RingBuffer">RingBuffer</a> *<dfn class="local col3 decl" id="13ring" title='ring' data-type='RingBuffer *' data-ref="13ring">ring</dfn>, <em>void</em> *<dfn class="local col4 decl" id="14src" title='src' data-type='void *' data-ref="14src">src</dfn>, <em>int</em> <dfn class="local col5 decl" id="15size" title='size' data-type='int' data-ref="15size">size</dfn>, <em>int</em> (*<dfn class="local col6 decl" id="16func" title='func' data-type='int (*)(void *, void *, int)' data-ref="16func">func</dfn>)(<em>void</em>*, <em>void</em>*, <em>int</em>))</td></tr>
+<tr><th id="132">132</th><td>{</td></tr>
+<tr><th id="133">133</th><td>    <a class="macro" href="../libavutil/avassert.h.html#64" title="((void)0)" data-ref="_M/av_assert2">av_assert2</a>(size &lt;= ring_space(ring));</td></tr>
+<tr><th id="134">134</th><td>    <b>return</b> <a class="ref" href="../libavutil/fifo.h.html#av_fifo_generic_write" title='av_fifo_generic_write' data-ref="av_fifo_generic_write">av_fifo_generic_write</a>(<a class="local col3 ref" href="#13ring" title='ring' data-ref="13ring">ring</a>-&gt;<a class="tu ref" href="#RingBuffer::fifo" title='RingBuffer::fifo' data-use='r' data-ref="RingBuffer::fifo">fifo</a>, <a class="local col4 ref" href="#14src" title='src' data-ref="14src">src</a>, <a class="local col5 ref" href="#15size" title='size' data-ref="15size">size</a>, <a class="local col6 ref" href="#16func" title='func' data-ref="16func">func</a>);</td></tr>
+<tr><th id="135">135</th><td>}</td></tr>
+<tr><th id="136">136</th><td></td></tr>
+<tr><th id="137">137</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="ring_size_of_read_back" title='ring_size_of_read_back' data-type='int ring_size_of_read_back(RingBuffer * ring)' data-ref="ring_size_of_read_back">ring_size_of_read_back</dfn>(<a class="typedef" href="#RingBuffer" title='RingBuffer' data-type='struct RingBuffer' data-ref="RingBuffer">RingBuffer</a> *<dfn class="local col7 decl" id="17ring" title='ring' data-type='RingBuffer *' data-ref="17ring">ring</dfn>)</td></tr>
+<tr><th id="138">138</th><td>{</td></tr>
+<tr><th id="139">139</th><td>    <b>return</b> <a class="local col7 ref" href="#17ring" title='ring' data-ref="17ring">ring</a>-&gt;<a class="tu ref" href="#RingBuffer::read_pos" title='RingBuffer::read_pos' data-use='r' data-ref="RingBuffer::read_pos">read_pos</a>;</td></tr>
+<tr><th id="140">140</th><td>}</td></tr>
+<tr><th id="141">141</th><td></td></tr>
+<tr><th id="142">142</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="ring_drain" title='ring_drain' data-type='int ring_drain(RingBuffer * ring, int offset)' data-ref="ring_drain">ring_drain</dfn>(<a class="typedef" href="#RingBuffer" title='RingBuffer' data-type='struct RingBuffer' data-ref="RingBuffer">RingBuffer</a> *<dfn class="local col8 decl" id="18ring" title='ring' data-type='RingBuffer *' data-ref="18ring">ring</dfn>, <em>int</em> <dfn class="local col9 decl" id="19offset" title='offset' data-type='int' data-ref="19offset">offset</dfn>)</td></tr>
+<tr><th id="143">143</th><td>{</td></tr>
+<tr><th id="144">144</th><td>    <a class="macro" href="../libavutil/avassert.h.html#64" title="((void)0)" data-ref="_M/av_assert2">av_assert2</a>(offset &gt;= -ring_size_of_read_back(ring));</td></tr>
+<tr><th id="145">145</th><td>    <a class="macro" href="../libavutil/avassert.h.html#64" title="((void)0)" data-ref="_M/av_assert2">av_assert2</a>(offset &lt;= -ring_size(ring));</td></tr>
+<tr><th id="146">146</th><td>    <a class="local col8 ref" href="#18ring" title='ring' data-ref="18ring">ring</a>-&gt;<a class="tu ref" href="#RingBuffer::read_pos" title='RingBuffer::read_pos' data-use='w' data-ref="RingBuffer::read_pos">read_pos</a> += <a class="local col9 ref" href="#19offset" title='offset' data-ref="19offset">offset</a>;</td></tr>
+<tr><th id="147">147</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="148">148</th><td>}</td></tr>
+<tr><th id="149">149</th><td></td></tr>
+<tr><th id="150">150</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="async_check_interrupt" title='async_check_interrupt' data-type='int async_check_interrupt(void * arg)' data-ref="async_check_interrupt">async_check_interrupt</dfn>(<em>void</em> *<dfn class="local col0 decl" id="20arg" title='arg' data-type='void *' data-ref="20arg">arg</dfn>)</td></tr>
+<tr><th id="151">151</th><td>{</td></tr>
+<tr><th id="152">152</th><td>    <a class="typedef" href="url.h.html#URLContext" title='URLContext' data-type='struct URLContext' data-ref="URLContext">URLContext</a> *<dfn class="local col1 decl" id="21h" title='h' data-type='URLContext *' data-ref="21h">h</dfn>   = <a class="local col0 ref" href="#20arg" title='arg' data-ref="20arg">arg</a>;</td></tr>
+<tr><th id="153">153</th><td>    <a class="typedef" href="#Context" title='Context' data-type='struct Context' data-ref="Context">Context</a>    *<dfn class="local col2 decl" id="22c" title='c' data-type='Context *' data-ref="22c">c</dfn>   = <a class="local col1 ref" href="#21h" title='h' data-ref="21h">h</a>-&gt;<a class="ref" href="url.h.html#URLContext::priv_data" title='URLContext::priv_data' data-ref="URLContext::priv_data">priv_data</a>;</td></tr>
+<tr><th id="154">154</th><td></td></tr>
+<tr><th id="155">155</th><td>    <b>if</b> (<a class="local col2 ref" href="#22c" title='c' data-ref="22c">c</a>-&gt;<a class="tu ref" href="#Context::abort_request" title='Context::abort_request' data-use='r' data-ref="Context::abort_request">abort_request</a>)</td></tr>
+<tr><th id="156">156</th><td>        <b>return</b> <var>1</var>;</td></tr>
+<tr><th id="157">157</th><td></td></tr>
+<tr><th id="158">158</th><td>    <b>if</b> (<a class="ref" href="url.h.html#ff_check_interrupt" title='ff_check_interrupt' data-ref="ff_check_interrupt">ff_check_interrupt</a>(&amp;<a class="local col2 ref" href="#22c" title='c' data-ref="22c">c</a>-&gt;<a class="tu ref" href="#Context::interrupt_callback" title='Context::interrupt_callback' data-use='a' data-ref="Context::interrupt_callback">interrupt_callback</a>))</td></tr>
+<tr><th id="159">159</th><td>        <a class="local col2 ref" href="#22c" title='c' data-ref="22c">c</a>-&gt;<a class="tu ref" href="#Context::abort_request" title='Context::abort_request' data-use='w' data-ref="Context::abort_request">abort_request</a> = <var>1</var>;</td></tr>
+<tr><th id="160">160</th><td></td></tr>
+<tr><th id="161">161</th><td>    <b>return</b> <a class="local col2 ref" href="#22c" title='c' data-ref="22c">c</a>-&gt;<a class="tu ref" href="#Context::abort_request" title='Context::abort_request' data-use='r' data-ref="Context::abort_request">abort_request</a>;</td></tr>
+<tr><th id="162">162</th><td>}</td></tr>
+<tr><th id="163">163</th><td></td></tr>
+<tr><th id="164">164</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="wrapped_url_read" title='wrapped_url_read' data-type='int wrapped_url_read(void * src, void * dst, int size)' data-ref="wrapped_url_read">wrapped_url_read</dfn>(<em>void</em> *<dfn class="local col3 decl" id="23src" title='src' data-type='void *' data-ref="23src">src</dfn>, <em>void</em> *<dfn class="local col4 decl" id="24dst" title='dst' data-type='void *' data-ref="24dst">dst</dfn>, <em>int</em> <dfn class="local col5 decl" id="25size" title='size' data-type='int' data-ref="25size">size</dfn>)</td></tr>
+<tr><th id="165">165</th><td>{</td></tr>
+<tr><th id="166">166</th><td>    <a class="typedef" href="url.h.html#URLContext" title='URLContext' data-type='struct URLContext' data-ref="URLContext">URLContext</a> *<dfn class="local col6 decl" id="26h" title='h' data-type='URLContext *' data-ref="26h">h</dfn>   = <a class="local col3 ref" href="#23src" title='src' data-ref="23src">src</a>;</td></tr>
+<tr><th id="167">167</th><td>    <a class="typedef" href="#Context" title='Context' data-type='struct Context' data-ref="Context">Context</a>    *<dfn class="local col7 decl" id="27c" title='c' data-type='Context *' data-ref="27c">c</dfn>   = <a class="local col6 ref" href="#26h" title='h' data-ref="26h">h</a>-&gt;<a class="ref" href="url.h.html#URLContext::priv_data" title='URLContext::priv_data' data-ref="URLContext::priv_data">priv_data</a>;</td></tr>
+<tr><th id="168">168</th><td>    <em>int</em>         <dfn class="local col8 decl" id="28ret" title='ret' data-type='int' data-ref="28ret">ret</dfn>;</td></tr>
+<tr><th id="169">169</th><td></td></tr>
+<tr><th id="170">170</th><td>    <a class="local col8 ref" href="#28ret" title='ret' data-ref="28ret">ret</a> = <a class="ref" href="url.h.html#ffurl_read" title='ffurl_read' data-ref="ffurl_read">ffurl_read</a>(<a class="local col7 ref" href="#27c" title='c' data-ref="27c">c</a>-&gt;<a class="tu ref" href="#Context::inner" title='Context::inner' data-use='r' data-ref="Context::inner">inner</a>, <a class="local col4 ref" href="#24dst" title='dst' data-ref="24dst">dst</a>, <a class="local col5 ref" href="#25size" title='size' data-ref="25size">size</a>);</td></tr>
+<tr><th id="171">171</th><td>    <a class="local col7 ref" href="#27c" title='c' data-ref="27c">c</a>-&gt;<a class="tu ref" href="#Context::inner_io_error" title='Context::inner_io_error' data-use='w' data-ref="Context::inner_io_error">inner_io_error</a> = <a class="local col8 ref" href="#28ret" title='ret' data-ref="28ret">ret</a> &lt; <var>0</var> ? <a class="local col8 ref" href="#28ret" title='ret' data-ref="28ret">ret</a> : <var>0</var>;</td></tr>
+<tr><th id="172">172</th><td></td></tr>
+<tr><th id="173">173</th><td>    <b>return</b> <a class="local col8 ref" href="#28ret" title='ret' data-ref="28ret">ret</a>;</td></tr>
+<tr><th id="174">174</th><td>}</td></tr>
+<tr><th id="175">175</th><td></td></tr>
+<tr><th id="176">176</th><td><em>static</em> <em>void</em> *<dfn class="tu decl def" id="async_buffer_task" title='async_buffer_task' data-type='void * async_buffer_task(void * arg)' data-ref="async_buffer_task">async_buffer_task</dfn>(<em>void</em> *<dfn class="local col9 decl" id="29arg" title='arg' data-type='void *' data-ref="29arg">arg</dfn>)</td></tr>
+<tr><th id="177">177</th><td>{</td></tr>
+<tr><th id="178">178</th><td>    <a class="typedef" href="url.h.html#URLContext" title='URLContext' data-type='struct URLContext' data-ref="URLContext">URLContext</a>   *<dfn class="local col0 decl" id="30h" title='h' data-type='URLContext *' data-ref="30h">h</dfn>    = <a class="local col9 ref" href="#29arg" title='arg' data-ref="29arg">arg</a>;</td></tr>
+<tr><th id="179">179</th><td>    <a class="typedef" href="#Context" title='Context' data-type='struct Context' data-ref="Context">Context</a>      *<dfn class="local col1 decl" id="31c" title='c' data-type='Context *' data-ref="31c">c</dfn>    = <a class="local col0 ref" href="#30h" title='h' data-ref="30h">h</a>-&gt;<a class="ref" href="url.h.html#URLContext::priv_data" title='URLContext::priv_data' data-ref="URLContext::priv_data">priv_data</a>;</td></tr>
+<tr><th id="180">180</th><td>    <a class="typedef" href="#RingBuffer" title='RingBuffer' data-type='struct RingBuffer' data-ref="RingBuffer">RingBuffer</a>   *<dfn class="local col2 decl" id="32ring" title='ring' data-type='RingBuffer *' data-ref="32ring">ring</dfn> = &amp;<a class="local col1 ref" href="#31c" title='c' data-ref="31c">c</a>-&gt;<a class="tu ref" href="#Context::ring" title='Context::ring' data-use='a' data-ref="Context::ring">ring</a>;</td></tr>
+<tr><th id="181">181</th><td>    <em>int</em>           <dfn class="local col3 decl" id="33ret" title='ret' data-type='int' data-ref="33ret">ret</dfn>  = <var>0</var>;</td></tr>
+<tr><th id="182">182</th><td>    <a class="typedef" href="../../include/x86_64-linux-gnu/sys/types.h.html#197" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a>       <dfn class="local col4 decl" id="34seek_ret" title='seek_ret' data-type='int64_t' data-ref="34seek_ret">seek_ret</dfn>;</td></tr>
+<tr><th id="183">183</th><td></td></tr>
+<tr><th id="184">184</th><td>    <b>while</b> (<var>1</var>) {</td></tr>
+<tr><th id="185">185</th><td>        <em>int</em> <dfn class="local col5 decl" id="35fifo_space" title='fifo_space' data-type='int' data-ref="35fifo_space">fifo_space</dfn>, <dfn class="local col6 decl" id="36to_copy" title='to_copy' data-type='int' data-ref="36to_copy">to_copy</dfn>;</td></tr>
+<tr><th id="186">186</th><td></td></tr>
+<tr><th id="187">187</th><td>        <a class="ref" href="../../include/pthread.h.html#pthread_mutex_lock" title='pthread_mutex_lock' data-ref="pthread_mutex_lock">pthread_mutex_lock</a>(&amp;<a class="local col1 ref" href="#31c" title='c' data-ref="31c">c</a>-&gt;<a class="tu ref" href="#Context::mutex" title='Context::mutex' data-use='a' data-ref="Context::mutex">mutex</a>);</td></tr>
+<tr><th id="188">188</th><td>        <b>if</b> (<a class="tu ref" href="#async_check_interrupt" title='async_check_interrupt' data-use='c' data-ref="async_check_interrupt">async_check_interrupt</a>(<a class="local col0 ref" href="#30h" title='h' data-ref="30h">h</a>)) {</td></tr>
+<tr><th id="189">189</th><td>            <a class="local col1 ref" href="#31c" title='c' data-ref="31c">c</a>-&gt;<a class="tu ref" href="#Context::io_eof_reached" title='Context::io_eof_reached' data-use='w' data-ref="Context::io_eof_reached">io_eof_reached</a> = <var>1</var>;</td></tr>
+<tr><th id="190">190</th><td>            <a class="local col1 ref" href="#31c" title='c' data-ref="31c">c</a>-&gt;<a class="tu ref" href="#Context::io_error" title='Context::io_error' data-use='w' data-ref="Context::io_error">io_error</a>       = <a class="macro" href="../libavutil/error.h.html#56" title="(-(int)((&apos;E&apos;) | ((&apos;X&apos;) &lt;&lt; 8) | ((&apos;I&apos;) &lt;&lt; 16) | ((unsigned)(&apos;T&apos;) &lt;&lt; 24)))" data-ref="_M/AVERROR_EXIT">AVERROR_EXIT</a>;</td></tr>
+<tr><th id="191">191</th><td>            <a class="ref" href="../../include/pthread.h.html#pthread_cond_signal" title='pthread_cond_signal' data-ref="pthread_cond_signal">pthread_cond_signal</a>(&amp;<a class="local col1 ref" href="#31c" title='c' data-ref="31c">c</a>-&gt;<a class="tu ref" href="#Context::cond_wakeup_main" title='Context::cond_wakeup_main' data-use='a' data-ref="Context::cond_wakeup_main">cond_wakeup_main</a>);</td></tr>
+<tr><th id="192">192</th><td>            <a class="ref" href="../../include/pthread.h.html#pthread_mutex_unlock" title='pthread_mutex_unlock' data-ref="pthread_mutex_unlock">pthread_mutex_unlock</a>(&amp;<a class="local col1 ref" href="#31c" title='c' data-ref="31c">c</a>-&gt;<a class="tu ref" href="#Context::mutex" title='Context::mutex' data-use='a' data-ref="Context::mutex">mutex</a>);</td></tr>
+<tr><th id="193">193</th><td>            <b>break</b>;</td></tr>
+<tr><th id="194">194</th><td>        }</td></tr>
+<tr><th id="195">195</th><td></td></tr>
+<tr><th id="196">196</th><td>        <b>if</b> (<a class="local col1 ref" href="#31c" title='c' data-ref="31c">c</a>-&gt;<a class="tu ref" href="#Context::seek_request" title='Context::seek_request' data-use='r' data-ref="Context::seek_request">seek_request</a>) {</td></tr>
+<tr><th id="197">197</th><td>            <a class="local col4 ref" href="#34seek_ret" title='seek_ret' data-ref="34seek_ret">seek_ret</a> = <a class="ref" href="url.h.html#ffurl_seek" title='ffurl_seek' data-ref="ffurl_seek">ffurl_seek</a>(<a class="local col1 ref" href="#31c" title='c' data-ref="31c">c</a>-&gt;<a class="tu ref" href="#Context::inner" title='Context::inner' data-use='r' data-ref="Context::inner">inner</a>, <a class="local col1 ref" href="#31c" title='c' data-ref="31c">c</a>-&gt;<a class="tu ref" href="#Context::seek_pos" title='Context::seek_pos' data-use='r' data-ref="Context::seek_pos">seek_pos</a>, <a class="local col1 ref" href="#31c" title='c' data-ref="31c">c</a>-&gt;<a class="tu ref" href="#Context::seek_whence" title='Context::seek_whence' data-use='r' data-ref="Context::seek_whence">seek_whence</a>);</td></tr>
+<tr><th id="198">198</th><td>            <b>if</b> (<a class="local col4 ref" href="#34seek_ret" title='seek_ret' data-ref="34seek_ret">seek_ret</a> &gt;= <var>0</var>) {</td></tr>
+<tr><th id="199">199</th><td>                <a class="local col1 ref" href="#31c" title='c' data-ref="31c">c</a>-&gt;<a class="tu ref" href="#Context::io_eof_reached" title='Context::io_eof_reached' data-use='w' data-ref="Context::io_eof_reached">io_eof_reached</a> = <var>0</var>;</td></tr>
+<tr><th id="200">200</th><td>                <a class="local col1 ref" href="#31c" title='c' data-ref="31c">c</a>-&gt;<a class="tu ref" href="#Context::io_error" title='Context::io_error' data-use='w' data-ref="Context::io_error">io_error</a>       = <var>0</var>;</td></tr>
+<tr><th id="201">201</th><td>                <a class="tu ref" href="#ring_reset" title='ring_reset' data-use='c' data-ref="ring_reset">ring_reset</a>(<a class="local col2 ref" href="#32ring" title='ring' data-ref="32ring">ring</a>);</td></tr>
+<tr><th id="202">202</th><td>            }</td></tr>
+<tr><th id="203">203</th><td></td></tr>
+<tr><th id="204">204</th><td>            <a class="local col1 ref" href="#31c" title='c' data-ref="31c">c</a>-&gt;<a class="tu ref" href="#Context::seek_completed" title='Context::seek_completed' data-use='w' data-ref="Context::seek_completed">seek_completed</a> = <var>1</var>;</td></tr>
+<tr><th id="205">205</th><td>            <a class="local col1 ref" href="#31c" title='c' data-ref="31c">c</a>-&gt;<a class="tu ref" href="#Context::seek_ret" title='Context::seek_ret' data-use='w' data-ref="Context::seek_ret">seek_ret</a>       = <a class="local col4 ref" href="#34seek_ret" title='seek_ret' data-ref="34seek_ret">seek_ret</a>;</td></tr>
+<tr><th id="206">206</th><td>            <a class="local col1 ref" href="#31c" title='c' data-ref="31c">c</a>-&gt;<a class="tu ref" href="#Context::seek_request" title='Context::seek_request' data-use='w' data-ref="Context::seek_request">seek_request</a>   = <var>0</var>;</td></tr>
+<tr><th id="207">207</th><td></td></tr>
+<tr><th id="208">208</th><td></td></tr>
+<tr><th id="209">209</th><td>            <a class="ref" href="../../include/pthread.h.html#pthread_cond_signal" title='pthread_cond_signal' data-ref="pthread_cond_signal">pthread_cond_signal</a>(&amp;<a class="local col1 ref" href="#31c" title='c' data-ref="31c">c</a>-&gt;<a class="tu ref" href="#Context::cond_wakeup_main" title='Context::cond_wakeup_main' data-use='a' data-ref="Context::cond_wakeup_main">cond_wakeup_main</a>);</td></tr>
+<tr><th id="210">210</th><td>            <a class="ref" href="../../include/pthread.h.html#pthread_mutex_unlock" title='pthread_mutex_unlock' data-ref="pthread_mutex_unlock">pthread_mutex_unlock</a>(&amp;<a class="local col1 ref" href="#31c" title='c' data-ref="31c">c</a>-&gt;<a class="tu ref" href="#Context::mutex" title='Context::mutex' data-use='a' data-ref="Context::mutex">mutex</a>);</td></tr>
+<tr><th id="211">211</th><td>            <b>continue</b>;</td></tr>
+<tr><th id="212">212</th><td>        }</td></tr>
+<tr><th id="213">213</th><td></td></tr>
+<tr><th id="214">214</th><td>        <a class="local col5 ref" href="#35fifo_space" title='fifo_space' data-ref="35fifo_space">fifo_space</a> = <a class="tu ref" href="#ring_space" title='ring_space' data-use='c' data-ref="ring_space">ring_space</a>(<a class="local col2 ref" href="#32ring" title='ring' data-ref="32ring">ring</a>);</td></tr>
+<tr><th id="215">215</th><td>        <b>if</b> (<a class="local col1 ref" href="#31c" title='c' data-ref="31c">c</a>-&gt;<a class="tu ref" href="#Context::io_eof_reached" title='Context::io_eof_reached' data-use='r' data-ref="Context::io_eof_reached">io_eof_reached</a> || <a class="local col5 ref" href="#35fifo_space" title='fifo_space' data-ref="35fifo_space">fifo_space</a> &lt;= <var>0</var>) {</td></tr>
+<tr><th id="216">216</th><td>            <a class="ref" href="../../include/pthread.h.html#pthread_cond_signal" title='pthread_cond_signal' data-ref="pthread_cond_signal">pthread_cond_signal</a>(&amp;<a class="local col1 ref" href="#31c" title='c' data-ref="31c">c</a>-&gt;<a class="tu ref" href="#Context::cond_wakeup_main" title='Context::cond_wakeup_main' data-use='a' data-ref="Context::cond_wakeup_main">cond_wakeup_main</a>);</td></tr>
+<tr><th id="217">217</th><td>            <a class="ref" href="../../include/pthread.h.html#pthread_cond_wait" title='pthread_cond_wait' data-ref="pthread_cond_wait">pthread_cond_wait</a>(&amp;<a class="local col1 ref" href="#31c" title='c' data-ref="31c">c</a>-&gt;<a class="tu ref" href="#Context::cond_wakeup_background" title='Context::cond_wakeup_background' data-use='a' data-ref="Context::cond_wakeup_background">cond_wakeup_background</a>, &amp;<a class="local col1 ref" href="#31c" title='c' data-ref="31c">c</a>-&gt;<a class="tu ref" href="#Context::mutex" title='Context::mutex' data-use='a' data-ref="Context::mutex">mutex</a>);</td></tr>
+<tr><th id="218">218</th><td>            <a class="ref" href="../../include/pthread.h.html#pthread_mutex_unlock" title='pthread_mutex_unlock' data-ref="pthread_mutex_unlock">pthread_mutex_unlock</a>(&amp;<a class="local col1 ref" href="#31c" title='c' data-ref="31c">c</a>-&gt;<a class="tu ref" href="#Context::mutex" title='Context::mutex' data-use='a' data-ref="Context::mutex">mutex</a>);</td></tr>
+<tr><th id="219">219</th><td>            <b>continue</b>;</td></tr>
+<tr><th id="220">220</th><td>        }</td></tr>
+<tr><th id="221">221</th><td>        <a class="ref" href="../../include/pthread.h.html#pthread_mutex_unlock" title='pthread_mutex_unlock' data-ref="pthread_mutex_unlock">pthread_mutex_unlock</a>(&amp;<a class="local col1 ref" href="#31c" title='c' data-ref="31c">c</a>-&gt;<a class="tu ref" href="#Context::mutex" title='Context::mutex' data-use='a' data-ref="Context::mutex">mutex</a>);</td></tr>
+<tr><th id="222">222</th><td></td></tr>
+<tr><th id="223">223</th><td>        <a class="local col6 ref" href="#36to_copy" title='to_copy' data-ref="36to_copy">to_copy</a> = <a class="macro" href="../libavutil/common.h.html#96" title="((4096) &gt; (fifo_space) ? (fifo_space) : (4096))" data-ref="_M/FFMIN">FFMIN</a>(<var>4096</var>, <a class="local col5 ref" href="#35fifo_space" title='fifo_space' data-ref="35fifo_space">fifo_space</a>);</td></tr>
+<tr><th id="224">224</th><td>        <a class="local col3 ref" href="#33ret" title='ret' data-ref="33ret">ret</a> = <a class="tu ref" href="#ring_generic_write" title='ring_generic_write' data-use='c' data-ref="ring_generic_write">ring_generic_write</a>(<a class="local col2 ref" href="#32ring" title='ring' data-ref="32ring">ring</a>, (<em>void</em> *)<a class="local col0 ref" href="#30h" title='h' data-ref="30h">h</a>, <a class="local col6 ref" href="#36to_copy" title='to_copy' data-ref="36to_copy">to_copy</a>, <a class="tu ref" href="#wrapped_url_read" title='wrapped_url_read' data-use='r' data-ref="wrapped_url_read">wrapped_url_read</a>);</td></tr>
+<tr><th id="225">225</th><td></td></tr>
+<tr><th id="226">226</th><td>        <a class="ref" href="../../include/pthread.h.html#pthread_mutex_lock" title='pthread_mutex_lock' data-ref="pthread_mutex_lock">pthread_mutex_lock</a>(&amp;<a class="local col1 ref" href="#31c" title='c' data-ref="31c">c</a>-&gt;<a class="tu ref" href="#Context::mutex" title='Context::mutex' data-use='a' data-ref="Context::mutex">mutex</a>);</td></tr>
+<tr><th id="227">227</th><td>        <b>if</b> (<a class="local col3 ref" href="#33ret" title='ret' data-ref="33ret">ret</a> &lt;= <var>0</var>) {</td></tr>
+<tr><th id="228">228</th><td>            <a class="local col1 ref" href="#31c" title='c' data-ref="31c">c</a>-&gt;<a class="tu ref" href="#Context::io_eof_reached" title='Context::io_eof_reached' data-use='w' data-ref="Context::io_eof_reached">io_eof_reached</a> = <var>1</var>;</td></tr>
+<tr><th id="229">229</th><td>            <b>if</b> (<a class="local col1 ref" href="#31c" title='c' data-ref="31c">c</a>-&gt;<a class="tu ref" href="#Context::inner_io_error" title='Context::inner_io_error' data-use='r' data-ref="Context::inner_io_error">inner_io_error</a> &lt; <var>0</var>)</td></tr>
+<tr><th id="230">230</th><td>                <a class="local col1 ref" href="#31c" title='c' data-ref="31c">c</a>-&gt;<a class="tu ref" href="#Context::io_error" title='Context::io_error' data-use='w' data-ref="Context::io_error">io_error</a> = <a class="local col1 ref" href="#31c" title='c' data-ref="31c">c</a>-&gt;<a class="tu ref" href="#Context::inner_io_error" title='Context::inner_io_error' data-use='r' data-ref="Context::inner_io_error">inner_io_error</a>;</td></tr>
+<tr><th id="231">231</th><td>        }</td></tr>
+<tr><th id="232">232</th><td></td></tr>
+<tr><th id="233">233</th><td>        <a class="ref" href="../../include/pthread.h.html#pthread_cond_signal" title='pthread_cond_signal' data-ref="pthread_cond_signal">pthread_cond_signal</a>(&amp;<a class="local col1 ref" href="#31c" title='c' data-ref="31c">c</a>-&gt;<a class="tu ref" href="#Context::cond_wakeup_main" title='Context::cond_wakeup_main' data-use='a' data-ref="Context::cond_wakeup_main">cond_wakeup_main</a>);</td></tr>
+<tr><th id="234">234</th><td>        <a class="ref" href="../../include/pthread.h.html#pthread_mutex_unlock" title='pthread_mutex_unlock' data-ref="pthread_mutex_unlock">pthread_mutex_unlock</a>(&amp;<a class="local col1 ref" href="#31c" title='c' data-ref="31c">c</a>-&gt;<a class="tu ref" href="#Context::mutex" title='Context::mutex' data-use='a' data-ref="Context::mutex">mutex</a>);</td></tr>
+<tr><th id="235">235</th><td>    }</td></tr>
+<tr><th id="236">236</th><td></td></tr>
+<tr><th id="237">237</th><td>    <b>return</b> <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="238">238</th><td>}</td></tr>
+<tr><th id="239">239</th><td></td></tr>
+<tr><th id="240">240</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="async_open" title='async_open' data-type='int async_open(URLContext * h, const char * arg, int flags, AVDictionary ** options)' data-ref="async_open">async_open</dfn>(<a class="typedef" href="url.h.html#URLContext" title='URLContext' data-type='struct URLContext' data-ref="URLContext">URLContext</a> *<dfn class="local col7 decl" id="37h" title='h' data-type='URLContext *' data-ref="37h">h</dfn>, <em>const</em> <em>char</em> *<dfn class="local col8 decl" id="38arg" title='arg' data-type='const char *' data-ref="38arg">arg</dfn>, <em>int</em> <dfn class="local col9 decl" id="39flags" title='flags' data-type='int' data-ref="39flags">flags</dfn>, <a class="typedef" href="../libavutil/dict.h.html#AVDictionary" title='AVDictionary' data-type='struct AVDictionary' data-ref="AVDictionary">AVDictionary</a> **<dfn class="local col0 decl" id="40options" title='options' data-type='AVDictionary **' data-ref="40options">options</dfn>)</td></tr>
+<tr><th id="241">241</th><td>{</td></tr>
+<tr><th id="242">242</th><td>    <a class="typedef" href="#Context" title='Context' data-type='struct Context' data-ref="Context">Context</a>         *<dfn class="local col1 decl" id="41c" title='c' data-type='Context *' data-ref="41c">c</dfn> = <a class="local col7 ref" href="#37h" title='h' data-ref="37h">h</a>-&gt;<a class="ref" href="url.h.html#URLContext::priv_data" title='URLContext::priv_data' data-ref="URLContext::priv_data">priv_data</a>;</td></tr>
+<tr><th id="243">243</th><td>    <em>int</em>              <dfn class="local col2 decl" id="42ret" title='ret' data-type='int' data-ref="42ret">ret</dfn>;</td></tr>
+<tr><th id="244">244</th><td>    <a class="typedef" href="avio.h.html#AVIOInterruptCB" title='AVIOInterruptCB' data-type='struct AVIOInterruptCB' data-ref="AVIOInterruptCB">AVIOInterruptCB</a>  <dfn class="local col3 decl" id="43interrupt_callback" title='interrupt_callback' data-type='AVIOInterruptCB' data-ref="43interrupt_callback">interrupt_callback</dfn> = {.<a class="ref" href="avio.h.html#AVIOInterruptCB::callback" title='AVIOInterruptCB::callback' data-ref="AVIOInterruptCB::callback">callback</a> = <a class="tu ref" href="#async_check_interrupt" title='async_check_interrupt' data-use='r' data-ref="async_check_interrupt">async_check_interrupt</a>, .<a class="ref" href="avio.h.html#AVIOInterruptCB::opaque" title='AVIOInterruptCB::opaque' data-ref="AVIOInterruptCB::opaque">opaque</a> = <a class="local col7 ref" href="#37h" title='h' data-ref="37h">h</a>};</td></tr>
+<tr><th id="245">245</th><td></td></tr>
+<tr><th id="246">246</th><td>    <a class="ref" href="../libavutil/avstring.h.html#av_strstart" title='av_strstart' data-ref="av_strstart">av_strstart</a>(<a class="local col8 ref" href="#38arg" title='arg' data-ref="38arg">arg</a>, <q>"async:"</q>, &amp;<a class="local col8 ref" href="#38arg" title='arg' data-ref="38arg">arg</a>);</td></tr>
+<tr><th id="247">247</th><td></td></tr>
+<tr><th id="248">248</th><td>    <a class="local col2 ref" href="#42ret" title='ret' data-ref="42ret">ret</a> = <a class="tu ref" href="#ring_init" title='ring_init' data-use='c' data-ref="ring_init">ring_init</a>(&amp;<a class="local col1 ref" href="#41c" title='c' data-ref="41c">c</a>-&gt;<a class="tu ref" href="#Context::ring" title='Context::ring' data-use='a' data-ref="Context::ring">ring</a>, <a class="macro" href="#44" title="(4 * 1024 * 1024)" data-ref="_M/BUFFER_CAPACITY">BUFFER_CAPACITY</a>, <a class="macro" href="#45" title="(4 * 1024 * 1024)" data-ref="_M/READ_BACK_CAPACITY">READ_BACK_CAPACITY</a>);</td></tr>
+<tr><th id="249">249</th><td>    <b>if</b> (<a class="local col2 ref" href="#42ret" title='ret' data-ref="42ret">ret</a> &lt; <var>0</var>)</td></tr>
+<tr><th id="250">250</th><td>        <b>goto</b> <a class="lbl" href="#44fifo_fail" data-ref="44fifo_fail">fifo_fail</a>;</td></tr>
+<tr><th id="251">251</th><td></td></tr>
+<tr><th id="252">252</th><td>    <i>/* wrap interrupt callback */</i></td></tr>
+<tr><th id="253">253</th><td>    <a class="local col1 ref" href="#41c" title='c' data-ref="41c">c</a>-&gt;<a class="tu ref" href="#Context::interrupt_callback" title='Context::interrupt_callback' data-use='w' data-ref="Context::interrupt_callback">interrupt_callback</a> = <a class="local col7 ref" href="#37h" title='h' data-ref="37h">h</a>-&gt;<a class="ref" href="url.h.html#URLContext::interrupt_callback" title='URLContext::interrupt_callback' data-ref="URLContext::interrupt_callback">interrupt_callback</a>;</td></tr>
+<tr><th id="254">254</th><td>    <a class="local col2 ref" href="#42ret" title='ret' data-ref="42ret">ret</a> = <a class="ref" href="url.h.html#ffurl_open_whitelist" title='ffurl_open_whitelist' data-ref="ffurl_open_whitelist">ffurl_open_whitelist</a>(&amp;<a class="local col1 ref" href="#41c" title='c' data-ref="41c">c</a>-&gt;<a class="tu ref" href="#Context::inner" title='Context::inner' data-use='a' data-ref="Context::inner">inner</a>, <a class="local col8 ref" href="#38arg" title='arg' data-ref="38arg">arg</a>, <a class="local col9 ref" href="#39flags" title='flags' data-ref="39flags">flags</a>, &amp;<a class="local col3 ref" href="#43interrupt_callback" title='interrupt_callback' data-ref="43interrupt_callback">interrupt_callback</a>, <a class="local col0 ref" href="#40options" title='options' data-ref="40options">options</a>, <a class="local col7 ref" href="#37h" title='h' data-ref="37h">h</a>-&gt;<a class="ref" href="url.h.html#URLContext::protocol_whitelist" title='URLContext::protocol_whitelist' data-ref="URLContext::protocol_whitelist">protocol_whitelist</a>, <a class="local col7 ref" href="#37h" title='h' data-ref="37h">h</a>-&gt;<a class="ref" href="url.h.html#URLContext::protocol_blacklist" title='URLContext::protocol_blacklist' data-ref="URLContext::protocol_blacklist">protocol_blacklist</a>, <a class="local col7 ref" href="#37h" title='h' data-ref="37h">h</a>);</td></tr>
+<tr><th id="255">255</th><td>    <b>if</b> (<a class="local col2 ref" href="#42ret" title='ret' data-ref="42ret">ret</a> != <var>0</var>) {</td></tr>
+<tr><th id="256">256</th><td>        <a class="ref" href="../libavutil/log.h.html#av_log" title='av_log' data-ref="av_log">av_log</a>(<a class="local col7 ref" href="#37h" title='h' data-ref="37h">h</a>, <a class="macro" href="../libavutil/log.h.html#176" title="16" data-ref="_M/AV_LOG_ERROR">AV_LOG_ERROR</a>, <q>"ffurl_open failed : %s, %s\n"</q>, <a class="macro" href="../libavutil/error.h.html#119" title="av_make_error_string((char[64]){0}, 64, ret)" data-ref="_M/av_err2str">av_err2str</a>(<a class="local col2 ref" href="#42ret" title='ret' data-ref="42ret">ret</a>), <a class="local col8 ref" href="#38arg" title='arg' data-ref="38arg">arg</a>);</td></tr>
+<tr><th id="257">257</th><td>        <b>goto</b> <a class="lbl" href="#45url_fail" data-ref="45url_fail">url_fail</a>;</td></tr>
+<tr><th id="258">258</th><td>    }</td></tr>
+<tr><th id="259">259</th><td></td></tr>
+<tr><th id="260">260</th><td>    <a class="local col1 ref" href="#41c" title='c' data-ref="41c">c</a>-&gt;<a class="tu ref" href="#Context::logical_size" title='Context::logical_size' data-use='w' data-ref="Context::logical_size">logical_size</a> = <a class="ref" href="url.h.html#ffurl_size" title='ffurl_size' data-ref="ffurl_size">ffurl_size</a>(<a class="local col1 ref" href="#41c" title='c' data-ref="41c">c</a>-&gt;<a class="tu ref" href="#Context::inner" title='Context::inner' data-use='r' data-ref="Context::inner">inner</a>);</td></tr>
+<tr><th id="261">261</th><td>    <a class="local col7 ref" href="#37h" title='h' data-ref="37h">h</a>-&gt;<a class="ref" href="url.h.html#URLContext::is_streamed" title='URLContext::is_streamed' data-ref="URLContext::is_streamed">is_streamed</a>  = <a class="local col1 ref" href="#41c" title='c' data-ref="41c">c</a>-&gt;<a class="tu ref" href="#Context::inner" title='Context::inner' data-use='r' data-ref="Context::inner">inner</a>-&gt;<a class="ref" href="url.h.html#URLContext::is_streamed" title='URLContext::is_streamed' data-ref="URLContext::is_streamed">is_streamed</a>;</td></tr>
+<tr><th id="262">262</th><td></td></tr>
+<tr><th id="263">263</th><td>    <a class="local col2 ref" href="#42ret" title='ret' data-ref="42ret">ret</a> = <a class="ref" href="../../include/pthread.h.html#pthread_mutex_init" title='pthread_mutex_init' data-ref="pthread_mutex_init">pthread_mutex_init</a>(&amp;<a class="local col1 ref" href="#41c" title='c' data-ref="41c">c</a>-&gt;<a class="tu ref" href="#Context::mutex" title='Context::mutex' data-use='a' data-ref="Context::mutex">mutex</a>, <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>);</td></tr>
+<tr><th id="264">264</th><td>    <b>if</b> (<a class="local col2 ref" href="#42ret" title='ret' data-ref="42ret">ret</a> != <var>0</var>) {</td></tr>
+<tr><th id="265">265</th><td>        <a class="ref" href="../libavutil/log.h.html#av_log" title='av_log' data-ref="av_log">av_log</a>(<a class="local col7 ref" href="#37h" title='h' data-ref="37h">h</a>, <a class="macro" href="../libavutil/log.h.html#176" title="16" data-ref="_M/AV_LOG_ERROR">AV_LOG_ERROR</a>, <q>"pthread_mutex_init failed : %s\n"</q>, <a class="macro" href="../libavutil/error.h.html#119" title="av_make_error_string((char[64]){0}, 64, ret)" data-ref="_M/av_err2str">av_err2str</a>(<a class="local col2 ref" href="#42ret" title='ret' data-ref="42ret">ret</a>));</td></tr>
+<tr><th id="266">266</th><td>        <b>goto</b> <a class="lbl" href="#46mutex_fail" data-ref="46mutex_fail">mutex_fail</a>;</td></tr>
+<tr><th id="267">267</th><td>    }</td></tr>
+<tr><th id="268">268</th><td></td></tr>
+<tr><th id="269">269</th><td>    <a class="local col2 ref" href="#42ret" title='ret' data-ref="42ret">ret</a> = <a class="ref" href="../../include/pthread.h.html#pthread_cond_init" title='pthread_cond_init' data-ref="pthread_cond_init">pthread_cond_init</a>(&amp;<a class="local col1 ref" href="#41c" title='c' data-ref="41c">c</a>-&gt;<a class="tu ref" href="#Context::cond_wakeup_main" title='Context::cond_wakeup_main' data-use='a' data-ref="Context::cond_wakeup_main">cond_wakeup_main</a>, <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>);</td></tr>
+<tr><th id="270">270</th><td>    <b>if</b> (<a class="local col2 ref" href="#42ret" title='ret' data-ref="42ret">ret</a> != <var>0</var>) {</td></tr>
+<tr><th id="271">271</th><td>        <a class="ref" href="../libavutil/log.h.html#av_log" title='av_log' data-ref="av_log">av_log</a>(<a class="local col7 ref" href="#37h" title='h' data-ref="37h">h</a>, <a class="macro" href="../libavutil/log.h.html#176" title="16" data-ref="_M/AV_LOG_ERROR">AV_LOG_ERROR</a>, <q>"pthread_cond_init failed : %s\n"</q>, <a class="macro" href="../libavutil/error.h.html#119" title="av_make_error_string((char[64]){0}, 64, ret)" data-ref="_M/av_err2str">av_err2str</a>(<a class="local col2 ref" href="#42ret" title='ret' data-ref="42ret">ret</a>));</td></tr>
+<tr><th id="272">272</th><td>        <b>goto</b> <a class="lbl" href="#47cond_wakeup_main_fail" data-ref="47cond_wakeup_main_fail">cond_wakeup_main_fail</a>;</td></tr>
+<tr><th id="273">273</th><td>    }</td></tr>
+<tr><th id="274">274</th><td></td></tr>
+<tr><th id="275">275</th><td>    <a class="local col2 ref" href="#42ret" title='ret' data-ref="42ret">ret</a> = <a class="ref" href="../../include/pthread.h.html#pthread_cond_init" title='pthread_cond_init' data-ref="pthread_cond_init">pthread_cond_init</a>(&amp;<a class="local col1 ref" href="#41c" title='c' data-ref="41c">c</a>-&gt;<a class="tu ref" href="#Context::cond_wakeup_background" title='Context::cond_wakeup_background' data-use='a' data-ref="Context::cond_wakeup_background">cond_wakeup_background</a>, <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>);</td></tr>
+<tr><th id="276">276</th><td>    <b>if</b> (<a class="local col2 ref" href="#42ret" title='ret' data-ref="42ret">ret</a> != <var>0</var>) {</td></tr>
+<tr><th id="277">277</th><td>        <a class="ref" href="../libavutil/log.h.html#av_log" title='av_log' data-ref="av_log">av_log</a>(<a class="local col7 ref" href="#37h" title='h' data-ref="37h">h</a>, <a class="macro" href="../libavutil/log.h.html#176" title="16" data-ref="_M/AV_LOG_ERROR">AV_LOG_ERROR</a>, <q>"pthread_cond_init failed : %s\n"</q>, <a class="macro" href="../libavutil/error.h.html#119" title="av_make_error_string((char[64]){0}, 64, ret)" data-ref="_M/av_err2str">av_err2str</a>(<a class="local col2 ref" href="#42ret" title='ret' data-ref="42ret">ret</a>));</td></tr>
+<tr><th id="278">278</th><td>        <b>goto</b> <a class="lbl" href="#48cond_wakeup_background_fail" data-ref="48cond_wakeup_background_fail">cond_wakeup_background_fail</a>;</td></tr>
+<tr><th id="279">279</th><td>    }</td></tr>
+<tr><th id="280">280</th><td></td></tr>
+<tr><th id="281">281</th><td>    <a class="local col2 ref" href="#42ret" title='ret' data-ref="42ret">ret</a> = <a class="ref" href="../../include/pthread.h.html#pthread_create" title='pthread_create' data-ref="pthread_create">pthread_create</a>(&amp;<a class="local col1 ref" href="#41c" title='c' data-ref="41c">c</a>-&gt;<a class="tu ref" href="#Context::async_buffer_thread" title='Context::async_buffer_thread' data-use='a' data-ref="Context::async_buffer_thread">async_buffer_thread</a>, <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>, <a class="tu ref" href="#async_buffer_task" title='async_buffer_task' data-use='r' data-ref="async_buffer_task">async_buffer_task</a>, <a class="local col7 ref" href="#37h" title='h' data-ref="37h">h</a>);</td></tr>
+<tr><th id="282">282</th><td>    <b>if</b> (<a class="local col2 ref" href="#42ret" title='ret' data-ref="42ret">ret</a>) {</td></tr>
+<tr><th id="283">283</th><td>        <a class="ref" href="../libavutil/log.h.html#av_log" title='av_log' data-ref="av_log">av_log</a>(<a class="local col7 ref" href="#37h" title='h' data-ref="37h">h</a>, <a class="macro" href="../libavutil/log.h.html#176" title="16" data-ref="_M/AV_LOG_ERROR">AV_LOG_ERROR</a>, <q>"pthread_create failed : %s\n"</q>, <a class="macro" href="../libavutil/error.h.html#119" title="av_make_error_string((char[64]){0}, 64, ret)" data-ref="_M/av_err2str">av_err2str</a>(<a class="local col2 ref" href="#42ret" title='ret' data-ref="42ret">ret</a>));</td></tr>
+<tr><th id="284">284</th><td>        <b>goto</b> <a class="lbl" href="#49thread_fail" data-ref="49thread_fail">thread_fail</a>;</td></tr>
+<tr><th id="285">285</th><td>    }</td></tr>
+<tr><th id="286">286</th><td></td></tr>
+<tr><th id="287">287</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="288">288</th><td></td></tr>
+<tr><th id="289">289</th><td><dfn class="lbl" id="49thread_fail" data-ref="49thread_fail">thread_fail</dfn>:</td></tr>
+<tr><th id="290">290</th><td>    <a class="ref" href="../../include/pthread.h.html#pthread_cond_destroy" title='pthread_cond_destroy' data-ref="pthread_cond_destroy">pthread_cond_destroy</a>(&amp;<a class="local col1 ref" href="#41c" title='c' data-ref="41c">c</a>-&gt;<a class="tu ref" href="#Context::cond_wakeup_background" title='Context::cond_wakeup_background' data-use='a' data-ref="Context::cond_wakeup_background">cond_wakeup_background</a>);</td></tr>
+<tr><th id="291">291</th><td><dfn class="lbl" id="48cond_wakeup_background_fail" data-ref="48cond_wakeup_background_fail">cond_wakeup_background_fail</dfn>:</td></tr>
+<tr><th id="292">292</th><td>    <a class="ref" href="../../include/pthread.h.html#pthread_cond_destroy" title='pthread_cond_destroy' data-ref="pthread_cond_destroy">pthread_cond_destroy</a>(&amp;<a class="local col1 ref" href="#41c" title='c' data-ref="41c">c</a>-&gt;<a class="tu ref" href="#Context::cond_wakeup_main" title='Context::cond_wakeup_main' data-use='a' data-ref="Context::cond_wakeup_main">cond_wakeup_main</a>);</td></tr>
+<tr><th id="293">293</th><td><dfn class="lbl" id="47cond_wakeup_main_fail" data-ref="47cond_wakeup_main_fail">cond_wakeup_main_fail</dfn>:</td></tr>
+<tr><th id="294">294</th><td>    <a class="ref" href="../../include/pthread.h.html#pthread_mutex_destroy" title='pthread_mutex_destroy' data-ref="pthread_mutex_destroy">pthread_mutex_destroy</a>(&amp;<a class="local col1 ref" href="#41c" title='c' data-ref="41c">c</a>-&gt;<a class="tu ref" href="#Context::mutex" title='Context::mutex' data-use='a' data-ref="Context::mutex">mutex</a>);</td></tr>
+<tr><th id="295">295</th><td><dfn class="lbl" id="46mutex_fail" data-ref="46mutex_fail">mutex_fail</dfn>:</td></tr>
+<tr><th id="296">296</th><td>    <a class="ref" href="url.h.html#ffurl_close" title='ffurl_close' data-ref="ffurl_close">ffurl_close</a>(<a class="local col1 ref" href="#41c" title='c' data-ref="41c">c</a>-&gt;<a class="tu ref" href="#Context::inner" title='Context::inner' data-use='r' data-ref="Context::inner">inner</a>);</td></tr>
+<tr><th id="297">297</th><td><dfn class="lbl" id="45url_fail" data-ref="45url_fail">url_fail</dfn>:</td></tr>
+<tr><th id="298">298</th><td>    <a class="tu ref" href="#ring_destroy" title='ring_destroy' data-use='c' data-ref="ring_destroy">ring_destroy</a>(&amp;<a class="local col1 ref" href="#41c" title='c' data-ref="41c">c</a>-&gt;<a class="tu ref" href="#Context::ring" title='Context::ring' data-use='a' data-ref="Context::ring">ring</a>);</td></tr>
+<tr><th id="299">299</th><td><dfn class="lbl" id="44fifo_fail" data-ref="44fifo_fail">fifo_fail</dfn>:</td></tr>
+<tr><th id="300">300</th><td>    <b>return</b> <a class="local col2 ref" href="#42ret" title='ret' data-ref="42ret">ret</a>;</td></tr>
+<tr><th id="301">301</th><td>}</td></tr>
+<tr><th id="302">302</th><td></td></tr>
+<tr><th id="303">303</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="async_close" title='async_close' data-type='int async_close(URLContext * h)' data-ref="async_close">async_close</dfn>(<a class="typedef" href="url.h.html#URLContext" title='URLContext' data-type='struct URLContext' data-ref="URLContext">URLContext</a> *<dfn class="local col0 decl" id="50h" title='h' data-type='URLContext *' data-ref="50h">h</dfn>)</td></tr>
+<tr><th id="304">304</th><td>{</td></tr>
+<tr><th id="305">305</th><td>    <a class="typedef" href="#Context" title='Context' data-type='struct Context' data-ref="Context">Context</a> *<dfn class="local col1 decl" id="51c" title='c' data-type='Context *' data-ref="51c">c</dfn> = <a class="local col0 ref" href="#50h" title='h' data-ref="50h">h</a>-&gt;<a class="ref" href="url.h.html#URLContext::priv_data" title='URLContext::priv_data' data-ref="URLContext::priv_data">priv_data</a>;</td></tr>
+<tr><th id="306">306</th><td>    <em>int</em>      <dfn class="local col2 decl" id="52ret" title='ret' data-type='int' data-ref="52ret">ret</dfn>;</td></tr>
+<tr><th id="307">307</th><td></td></tr>
+<tr><th id="308">308</th><td>    <a class="ref" href="../../include/pthread.h.html#pthread_mutex_lock" title='pthread_mutex_lock' data-ref="pthread_mutex_lock">pthread_mutex_lock</a>(&amp;<a class="local col1 ref" href="#51c" title='c' data-ref="51c">c</a>-&gt;<a class="tu ref" href="#Context::mutex" title='Context::mutex' data-use='a' data-ref="Context::mutex">mutex</a>);</td></tr>
+<tr><th id="309">309</th><td>    <a class="local col1 ref" href="#51c" title='c' data-ref="51c">c</a>-&gt;<a class="tu ref" href="#Context::abort_request" title='Context::abort_request' data-use='w' data-ref="Context::abort_request">abort_request</a> = <var>1</var>;</td></tr>
+<tr><th id="310">310</th><td>    <a class="ref" href="../../include/pthread.h.html#pthread_cond_signal" title='pthread_cond_signal' data-ref="pthread_cond_signal">pthread_cond_signal</a>(&amp;<a class="local col1 ref" href="#51c" title='c' data-ref="51c">c</a>-&gt;<a class="tu ref" href="#Context::cond_wakeup_background" title='Context::cond_wakeup_background' data-use='a' data-ref="Context::cond_wakeup_background">cond_wakeup_background</a>);</td></tr>
+<tr><th id="311">311</th><td>    <a class="ref" href="../../include/pthread.h.html#pthread_mutex_unlock" title='pthread_mutex_unlock' data-ref="pthread_mutex_unlock">pthread_mutex_unlock</a>(&amp;<a class="local col1 ref" href="#51c" title='c' data-ref="51c">c</a>-&gt;<a class="tu ref" href="#Context::mutex" title='Context::mutex' data-use='a' data-ref="Context::mutex">mutex</a>);</td></tr>
+<tr><th id="312">312</th><td></td></tr>
+<tr><th id="313">313</th><td>    <a class="local col2 ref" href="#52ret" title='ret' data-ref="52ret">ret</a> = <a class="ref" href="../../include/pthread.h.html#pthread_join" title='pthread_join' data-ref="pthread_join">pthread_join</a>(<a class="local col1 ref" href="#51c" title='c' data-ref="51c">c</a>-&gt;<a class="tu ref" href="#Context::async_buffer_thread" title='Context::async_buffer_thread' data-use='r' data-ref="Context::async_buffer_thread">async_buffer_thread</a>, <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>);</td></tr>
+<tr><th id="314">314</th><td>    <b>if</b> (<a class="local col2 ref" href="#52ret" title='ret' data-ref="52ret">ret</a> != <var>0</var>)</td></tr>
+<tr><th id="315">315</th><td>        <a class="ref" href="../libavutil/log.h.html#av_log" title='av_log' data-ref="av_log">av_log</a>(<a class="local col0 ref" href="#50h" title='h' data-ref="50h">h</a>, <a class="macro" href="../libavutil/log.h.html#176" title="16" data-ref="_M/AV_LOG_ERROR">AV_LOG_ERROR</a>, <q>"pthread_join(): %s\n"</q>, <a class="macro" href="../libavutil/error.h.html#119" title="av_make_error_string((char[64]){0}, 64, ret)" data-ref="_M/av_err2str">av_err2str</a>(<a class="local col2 ref" href="#52ret" title='ret' data-ref="52ret">ret</a>));</td></tr>
+<tr><th id="316">316</th><td></td></tr>
+<tr><th id="317">317</th><td>    <a class="ref" href="../../include/pthread.h.html#pthread_cond_destroy" title='pthread_cond_destroy' data-ref="pthread_cond_destroy">pthread_cond_destroy</a>(&amp;<a class="local col1 ref" href="#51c" title='c' data-ref="51c">c</a>-&gt;<a class="tu ref" href="#Context::cond_wakeup_background" title='Context::cond_wakeup_background' data-use='a' data-ref="Context::cond_wakeup_background">cond_wakeup_background</a>);</td></tr>
+<tr><th id="318">318</th><td>    <a class="ref" href="../../include/pthread.h.html#pthread_cond_destroy" title='pthread_cond_destroy' data-ref="pthread_cond_destroy">pthread_cond_destroy</a>(&amp;<a class="local col1 ref" href="#51c" title='c' data-ref="51c">c</a>-&gt;<a class="tu ref" href="#Context::cond_wakeup_main" title='Context::cond_wakeup_main' data-use='a' data-ref="Context::cond_wakeup_main">cond_wakeup_main</a>);</td></tr>
+<tr><th id="319">319</th><td>    <a class="ref" href="../../include/pthread.h.html#pthread_mutex_destroy" title='pthread_mutex_destroy' data-ref="pthread_mutex_destroy">pthread_mutex_destroy</a>(&amp;<a class="local col1 ref" href="#51c" title='c' data-ref="51c">c</a>-&gt;<a class="tu ref" href="#Context::mutex" title='Context::mutex' data-use='a' data-ref="Context::mutex">mutex</a>);</td></tr>
+<tr><th id="320">320</th><td>    <a class="ref" href="url.h.html#ffurl_close" title='ffurl_close' data-ref="ffurl_close">ffurl_close</a>(<a class="local col1 ref" href="#51c" title='c' data-ref="51c">c</a>-&gt;<a class="tu ref" href="#Context::inner" title='Context::inner' data-use='r' data-ref="Context::inner">inner</a>);</td></tr>
+<tr><th id="321">321</th><td>    <a class="tu ref" href="#ring_destroy" title='ring_destroy' data-use='c' data-ref="ring_destroy">ring_destroy</a>(&amp;<a class="local col1 ref" href="#51c" title='c' data-ref="51c">c</a>-&gt;<a class="tu ref" href="#Context::ring" title='Context::ring' data-use='a' data-ref="Context::ring">ring</a>);</td></tr>
+<tr><th id="322">322</th><td></td></tr>
+<tr><th id="323">323</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="324">324</th><td>}</td></tr>
+<tr><th id="325">325</th><td></td></tr>
+<tr><th id="326">326</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="async_read_internal" title='async_read_internal' data-type='int async_read_internal(URLContext * h, void * dest, int size, int read_complete, void (*)(void *, void *, int) func)' data-ref="async_read_internal">async_read_internal</dfn>(<a class="typedef" href="url.h.html#URLContext" title='URLContext' data-type='struct URLContext' data-ref="URLContext">URLContext</a> *<dfn class="local col3 decl" id="53h" title='h' data-type='URLContext *' data-ref="53h">h</dfn>, <em>void</em> *<dfn class="local col4 decl" id="54dest" title='dest' data-type='void *' data-ref="54dest">dest</dfn>, <em>int</em> <dfn class="local col5 decl" id="55size" title='size' data-type='int' data-ref="55size">size</dfn>, <em>int</em> <dfn class="local col6 decl" id="56read_complete" title='read_complete' data-type='int' data-ref="56read_complete">read_complete</dfn>,</td></tr>
+<tr><th id="327">327</th><td>                               <em>void</em> (*<dfn class="local col7 decl" id="57func" title='func' data-type='void (*)(void *, void *, int)' data-ref="57func">func</dfn>)(<em>void</em>*, <em>void</em>*, <em>int</em>))</td></tr>
+<tr><th id="328">328</th><td>{</td></tr>
+<tr><th id="329">329</th><td>    <a class="typedef" href="#Context" title='Context' data-type='struct Context' data-ref="Context">Context</a>      *<dfn class="local col8 decl" id="58c" title='c' data-type='Context *' data-ref="58c">c</dfn>       = <a class="local col3 ref" href="#53h" title='h' data-ref="53h">h</a>-&gt;<a class="ref" href="url.h.html#URLContext::priv_data" title='URLContext::priv_data' data-ref="URLContext::priv_data">priv_data</a>;</td></tr>
+<tr><th id="330">330</th><td>    <a class="typedef" href="#RingBuffer" title='RingBuffer' data-type='struct RingBuffer' data-ref="RingBuffer">RingBuffer</a>   *<dfn class="local col9 decl" id="59ring" title='ring' data-type='RingBuffer *' data-ref="59ring">ring</dfn>    = &amp;<a class="local col8 ref" href="#58c" title='c' data-ref="58c">c</a>-&gt;<a class="tu ref" href="#Context::ring" title='Context::ring' data-use='a' data-ref="Context::ring">ring</a>;</td></tr>
+<tr><th id="331">331</th><td>    <em>int</em>           <dfn class="local col0 decl" id="60to_read" title='to_read' data-type='int' data-ref="60to_read">to_read</dfn> = <a class="local col5 ref" href="#55size" title='size' data-ref="55size">size</a>;</td></tr>
+<tr><th id="332">332</th><td>    <em>int</em>           <dfn class="local col1 decl" id="61ret" title='ret' data-type='int' data-ref="61ret">ret</dfn>     = <var>0</var>;</td></tr>
+<tr><th id="333">333</th><td></td></tr>
+<tr><th id="334">334</th><td>    <a class="ref" href="../../include/pthread.h.html#pthread_mutex_lock" title='pthread_mutex_lock' data-ref="pthread_mutex_lock">pthread_mutex_lock</a>(&amp;<a class="local col8 ref" href="#58c" title='c' data-ref="58c">c</a>-&gt;<a class="tu ref" href="#Context::mutex" title='Context::mutex' data-use='a' data-ref="Context::mutex">mutex</a>);</td></tr>
+<tr><th id="335">335</th><td></td></tr>
+<tr><th id="336">336</th><td>    <b>while</b> (<a class="local col0 ref" href="#60to_read" title='to_read' data-ref="60to_read">to_read</a> &gt; <var>0</var>) {</td></tr>
+<tr><th id="337">337</th><td>        <em>int</em> <dfn class="local col2 decl" id="62fifo_size" title='fifo_size' data-type='int' data-ref="62fifo_size">fifo_size</dfn>, <dfn class="local col3 decl" id="63to_copy" title='to_copy' data-type='int' data-ref="63to_copy">to_copy</dfn>;</td></tr>
+<tr><th id="338">338</th><td>        <b>if</b> (<a class="tu ref" href="#async_check_interrupt" title='async_check_interrupt' data-use='c' data-ref="async_check_interrupt">async_check_interrupt</a>(<a class="local col3 ref" href="#53h" title='h' data-ref="53h">h</a>)) {</td></tr>
+<tr><th id="339">339</th><td>            <a class="local col1 ref" href="#61ret" title='ret' data-ref="61ret">ret</a> = <a class="macro" href="../libavutil/error.h.html#56" title="(-(int)((&apos;E&apos;) | ((&apos;X&apos;) &lt;&lt; 8) | ((&apos;I&apos;) &lt;&lt; 16) | ((unsigned)(&apos;T&apos;) &lt;&lt; 24)))" data-ref="_M/AVERROR_EXIT">AVERROR_EXIT</a>;</td></tr>
+<tr><th id="340">340</th><td>            <b>break</b>;</td></tr>
+<tr><th id="341">341</th><td>        }</td></tr>
+<tr><th id="342">342</th><td>        <a class="local col2 ref" href="#62fifo_size" title='fifo_size' data-ref="62fifo_size">fifo_size</a> = <a class="tu ref" href="#ring_size" title='ring_size' data-use='c' data-ref="ring_size">ring_size</a>(<a class="local col9 ref" href="#59ring" title='ring' data-ref="59ring">ring</a>);</td></tr>
+<tr><th id="343">343</th><td>        <a class="local col3 ref" href="#63to_copy" title='to_copy' data-ref="63to_copy">to_copy</a>   = <a class="macro" href="../libavutil/common.h.html#96" title="((to_read) &gt; (fifo_size) ? (fifo_size) : (to_read))" data-ref="_M/FFMIN">FFMIN</a>(<a class="local col0 ref" href="#60to_read" title='to_read' data-ref="60to_read">to_read</a>, <a class="local col2 ref" href="#62fifo_size" title='fifo_size' data-ref="62fifo_size">fifo_size</a>);</td></tr>
+<tr><th id="344">344</th><td>        <b>if</b> (<a class="local col3 ref" href="#63to_copy" title='to_copy' data-ref="63to_copy">to_copy</a> &gt; <var>0</var>) {</td></tr>
+<tr><th id="345">345</th><td>            <a class="tu ref" href="#ring_generic_read" title='ring_generic_read' data-use='c' data-ref="ring_generic_read">ring_generic_read</a>(<a class="local col9 ref" href="#59ring" title='ring' data-ref="59ring">ring</a>, <a class="local col4 ref" href="#54dest" title='dest' data-ref="54dest">dest</a>, <a class="local col3 ref" href="#63to_copy" title='to_copy' data-ref="63to_copy">to_copy</a>, <a class="local col7 ref" href="#57func" title='func' data-ref="57func">func</a>);</td></tr>
+<tr><th id="346">346</th><td>            <b>if</b> (!<a class="local col7 ref" href="#57func" title='func' data-ref="57func">func</a>)</td></tr>
+<tr><th id="347">347</th><td>                <a class="local col4 ref" href="#54dest" title='dest' data-ref="54dest">dest</a> = (<a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *)<a class="local col4 ref" href="#54dest" title='dest' data-ref="54dest">dest</a> + <a class="local col3 ref" href="#63to_copy" title='to_copy' data-ref="63to_copy">to_copy</a>;</td></tr>
+<tr><th id="348">348</th><td>            <a class="local col8 ref" href="#58c" title='c' data-ref="58c">c</a>-&gt;<a class="tu ref" href="#Context::logical_pos" title='Context::logical_pos' data-use='w' data-ref="Context::logical_pos">logical_pos</a> += <a class="local col3 ref" href="#63to_copy" title='to_copy' data-ref="63to_copy">to_copy</a>;</td></tr>
+<tr><th id="349">349</th><td>            <a class="local col0 ref" href="#60to_read" title='to_read' data-ref="60to_read">to_read</a>        -= <a class="local col3 ref" href="#63to_copy" title='to_copy' data-ref="63to_copy">to_copy</a>;</td></tr>
+<tr><th id="350">350</th><td>            <a class="local col1 ref" href="#61ret" title='ret' data-ref="61ret">ret</a>             = <a class="local col5 ref" href="#55size" title='size' data-ref="55size">size</a> - <a class="local col0 ref" href="#60to_read" title='to_read' data-ref="60to_read">to_read</a>;</td></tr>
+<tr><th id="351">351</th><td></td></tr>
+<tr><th id="352">352</th><td>            <b>if</b> (<a class="local col0 ref" href="#60to_read" title='to_read' data-ref="60to_read">to_read</a> &lt;= <var>0</var> || !<a class="local col6 ref" href="#56read_complete" title='read_complete' data-ref="56read_complete">read_complete</a>)</td></tr>
+<tr><th id="353">353</th><td>                <b>break</b>;</td></tr>
+<tr><th id="354">354</th><td>        } <b>else</b> <b>if</b> (<a class="local col8 ref" href="#58c" title='c' data-ref="58c">c</a>-&gt;<a class="tu ref" href="#Context::io_eof_reached" title='Context::io_eof_reached' data-use='r' data-ref="Context::io_eof_reached">io_eof_reached</a>) {</td></tr>
+<tr><th id="355">355</th><td>            <b>if</b> (<a class="local col1 ref" href="#61ret" title='ret' data-ref="61ret">ret</a> &lt;= <var>0</var>) {</td></tr>
+<tr><th id="356">356</th><td>                <b>if</b> (<a class="local col8 ref" href="#58c" title='c' data-ref="58c">c</a>-&gt;<a class="tu ref" href="#Context::io_error" title='Context::io_error' data-use='r' data-ref="Context::io_error">io_error</a>)</td></tr>
+<tr><th id="357">357</th><td>                    <a class="local col1 ref" href="#61ret" title='ret' data-ref="61ret">ret</a> = <a class="local col8 ref" href="#58c" title='c' data-ref="58c">c</a>-&gt;<a class="tu ref" href="#Context::io_error" title='Context::io_error' data-use='r' data-ref="Context::io_error">io_error</a>;</td></tr>
+<tr><th id="358">358</th><td>                <b>else</b></td></tr>
+<tr><th id="359">359</th><td>                    <a class="local col1 ref" href="#61ret" title='ret' data-ref="61ret">ret</a> = <a class="macro" href="../libavutil/error.h.html#55" title="(-(int)((&apos;E&apos;) | ((&apos;O&apos;) &lt;&lt; 8) | ((&apos;F&apos;) &lt;&lt; 16) | ((unsigned)(&apos; &apos;) &lt;&lt; 24)))" data-ref="_M/AVERROR_EOF">AVERROR_EOF</a>;</td></tr>
+<tr><th id="360">360</th><td>            }</td></tr>
+<tr><th id="361">361</th><td>            <b>break</b>;</td></tr>
+<tr><th id="362">362</th><td>        }</td></tr>
+<tr><th id="363">363</th><td>        <a class="ref" href="../../include/pthread.h.html#pthread_cond_signal" title='pthread_cond_signal' data-ref="pthread_cond_signal">pthread_cond_signal</a>(&amp;<a class="local col8 ref" href="#58c" title='c' data-ref="58c">c</a>-&gt;<a class="tu ref" href="#Context::cond_wakeup_background" title='Context::cond_wakeup_background' data-use='a' data-ref="Context::cond_wakeup_background">cond_wakeup_background</a>);</td></tr>
+<tr><th id="364">364</th><td>        <a class="ref" href="../../include/pthread.h.html#pthread_cond_wait" title='pthread_cond_wait' data-ref="pthread_cond_wait">pthread_cond_wait</a>(&amp;<a class="local col8 ref" href="#58c" title='c' data-ref="58c">c</a>-&gt;<a class="tu ref" href="#Context::cond_wakeup_main" title='Context::cond_wakeup_main' data-use='a' data-ref="Context::cond_wakeup_main">cond_wakeup_main</a>, &amp;<a class="local col8 ref" href="#58c" title='c' data-ref="58c">c</a>-&gt;<a class="tu ref" href="#Context::mutex" title='Context::mutex' data-use='a' data-ref="Context::mutex">mutex</a>);</td></tr>
+<tr><th id="365">365</th><td>    }</td></tr>
+<tr><th id="366">366</th><td></td></tr>
+<tr><th id="367">367</th><td>    <a class="ref" href="../../include/pthread.h.html#pthread_cond_signal" title='pthread_cond_signal' data-ref="pthread_cond_signal">pthread_cond_signal</a>(&amp;<a class="local col8 ref" href="#58c" title='c' data-ref="58c">c</a>-&gt;<a class="tu ref" href="#Context::cond_wakeup_background" title='Context::cond_wakeup_background' data-use='a' data-ref="Context::cond_wakeup_background">cond_wakeup_background</a>);</td></tr>
+<tr><th id="368">368</th><td>    <a class="ref" href="../../include/pthread.h.html#pthread_mutex_unlock" title='pthread_mutex_unlock' data-ref="pthread_mutex_unlock">pthread_mutex_unlock</a>(&amp;<a class="local col8 ref" href="#58c" title='c' data-ref="58c">c</a>-&gt;<a class="tu ref" href="#Context::mutex" title='Context::mutex' data-use='a' data-ref="Context::mutex">mutex</a>);</td></tr>
+<tr><th id="369">369</th><td></td></tr>
+<tr><th id="370">370</th><td>    <b>return</b> <a class="local col1 ref" href="#61ret" title='ret' data-ref="61ret">ret</a>;</td></tr>
+<tr><th id="371">371</th><td>}</td></tr>
+<tr><th id="372">372</th><td></td></tr>
+<tr><th id="373">373</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="async_read" title='async_read' data-type='int async_read(URLContext * h, unsigned char * buf, int size)' data-ref="async_read">async_read</dfn>(<a class="typedef" href="url.h.html#URLContext" title='URLContext' data-type='struct URLContext' data-ref="URLContext">URLContext</a> *<dfn class="local col4 decl" id="64h" title='h' data-type='URLContext *' data-ref="64h">h</dfn>, <em>unsigned</em> <em>char</em> *<dfn class="local col5 decl" id="65buf" title='buf' data-type='unsigned char *' data-ref="65buf">buf</dfn>, <em>int</em> <dfn class="local col6 decl" id="66size" title='size' data-type='int' data-ref="66size">size</dfn>)</td></tr>
+<tr><th id="374">374</th><td>{</td></tr>
+<tr><th id="375">375</th><td>    <b>return</b> <a class="tu ref" href="#async_read_internal" title='async_read_internal' data-use='c' data-ref="async_read_internal">async_read_internal</a>(<a class="local col4 ref" href="#64h" title='h' data-ref="64h">h</a>, <a class="local col5 ref" href="#65buf" title='buf' data-ref="65buf">buf</a>, <a class="local col6 ref" href="#66size" title='size' data-ref="66size">size</a>, <var>0</var>, <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>);</td></tr>
+<tr><th id="376">376</th><td>}</td></tr>
+<tr><th id="377">377</th><td></td></tr>
+<tr><th id="378">378</th><td><em>static</em> <em>void</em> <dfn class="tu decl def" id="fifo_do_not_copy_func" title='fifo_do_not_copy_func' data-type='void fifo_do_not_copy_func(void * dest, void * src, int size)' data-ref="fifo_do_not_copy_func">fifo_do_not_copy_func</dfn>(<em>void</em>* <dfn class="local col7 decl" id="67dest" title='dest' data-type='void *' data-ref="67dest">dest</dfn>, <em>void</em>* <dfn class="local col8 decl" id="68src" title='src' data-type='void *' data-ref="68src">src</dfn>, <em>int</em> <dfn class="local col9 decl" id="69size" title='size' data-type='int' data-ref="69size">size</dfn>) {</td></tr>
+<tr><th id="379">379</th><td>    <i>// do not copy</i></td></tr>
+<tr><th id="380">380</th><td>}</td></tr>
+<tr><th id="381">381</th><td></td></tr>
+<tr><th id="382">382</th><td><em>static</em> <a class="typedef" href="../../include/x86_64-linux-gnu/sys/types.h.html#197" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="tu decl def" id="async_seek" title='async_seek' data-type='int64_t async_seek(URLContext * h, int64_t pos, int whence)' data-ref="async_seek">async_seek</dfn>(<a class="typedef" href="url.h.html#URLContext" title='URLContext' data-type='struct URLContext' data-ref="URLContext">URLContext</a> *<dfn class="local col0 decl" id="70h" title='h' data-type='URLContext *' data-ref="70h">h</dfn>, <a class="typedef" href="../../include/x86_64-linux-gnu/sys/types.h.html#197" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="local col1 decl" id="71pos" title='pos' data-type='int64_t' data-ref="71pos">pos</dfn>, <em>int</em> <dfn class="local col2 decl" id="72whence" title='whence' data-type='int' data-ref="72whence">whence</dfn>)</td></tr>
+<tr><th id="383">383</th><td>{</td></tr>
+<tr><th id="384">384</th><td>    <a class="typedef" href="#Context" title='Context' data-type='struct Context' data-ref="Context">Context</a>      *<dfn class="local col3 decl" id="73c" title='c' data-type='Context *' data-ref="73c">c</dfn>    = <a class="local col0 ref" href="#70h" title='h' data-ref="70h">h</a>-&gt;<a class="ref" href="url.h.html#URLContext::priv_data" title='URLContext::priv_data' data-ref="URLContext::priv_data">priv_data</a>;</td></tr>
+<tr><th id="385">385</th><td>    <a class="typedef" href="#RingBuffer" title='RingBuffer' data-type='struct RingBuffer' data-ref="RingBuffer">RingBuffer</a>   *<dfn class="local col4 decl" id="74ring" title='ring' data-type='RingBuffer *' data-ref="74ring">ring</dfn> = &amp;<a class="local col3 ref" href="#73c" title='c' data-ref="73c">c</a>-&gt;<a class="tu ref" href="#Context::ring" title='Context::ring' data-use='a' data-ref="Context::ring">ring</a>;</td></tr>
+<tr><th id="386">386</th><td>    <a class="typedef" href="../../include/x86_64-linux-gnu/sys/types.h.html#197" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a>       <dfn class="local col5 decl" id="75ret" title='ret' data-type='int64_t' data-ref="75ret">ret</dfn>;</td></tr>
+<tr><th id="387">387</th><td>    <a class="typedef" href="../../include/x86_64-linux-gnu/sys/types.h.html#197" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a>       <dfn class="local col6 decl" id="76new_logical_pos" title='new_logical_pos' data-type='int64_t' data-ref="76new_logical_pos">new_logical_pos</dfn>;</td></tr>
+<tr><th id="388">388</th><td>    <em>int</em> <dfn class="local col7 decl" id="77fifo_size" title='fifo_size' data-type='int' data-ref="77fifo_size">fifo_size</dfn>;</td></tr>
+<tr><th id="389">389</th><td>    <em>int</em> <dfn class="local col8 decl" id="78fifo_size_of_read_back" title='fifo_size_of_read_back' data-type='int' data-ref="78fifo_size_of_read_back">fifo_size_of_read_back</dfn>;</td></tr>
+<tr><th id="390">390</th><td></td></tr>
+<tr><th id="391">391</th><td>    <b>if</b> (<a class="local col2 ref" href="#72whence" title='whence' data-ref="72whence">whence</a> == <a class="macro" href="avio.h.html#485" title="0x10000" data-ref="_M/AVSEEK_SIZE">AVSEEK_SIZE</a>) {</td></tr>
+<tr><th id="392">392</th><td>        <a class="ref" href="../libavutil/log.h.html#av_log" title='av_log' data-ref="av_log">av_log</a>(<a class="local col0 ref" href="#70h" title='h' data-ref="70h">h</a>, <a class="macro" href="../libavutil/log.h.html#202" title="56" data-ref="_M/AV_LOG_TRACE">AV_LOG_TRACE</a>, <q>"async_seek: AVSEEK_SIZE: %"</q><a class="macro" href="../../include/inttypes.h.html#57" title="&quot;l&quot; &quot;d&quot;" data-ref="_M/PRId64">PRId64</a><q>"\n"</q>, (<a class="typedef" href="../../include/x86_64-linux-gnu/sys/types.h.html#197" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a>)<a class="local col3 ref" href="#73c" title='c' data-ref="73c">c</a>-&gt;<a class="tu ref" href="#Context::logical_size" title='Context::logical_size' data-use='r' data-ref="Context::logical_size">logical_size</a>);</td></tr>
+<tr><th id="393">393</th><td>        <b>return</b> <a class="local col3 ref" href="#73c" title='c' data-ref="73c">c</a>-&gt;<a class="tu ref" href="#Context::logical_size" title='Context::logical_size' data-use='r' data-ref="Context::logical_size">logical_size</a>;</td></tr>
+<tr><th id="394">394</th><td>    } <b>else</b> <b>if</b> (<a class="local col2 ref" href="#72whence" title='whence' data-ref="72whence">whence</a> == <a class="macro" href="../../include/stdio.h.html#141" title="1" data-ref="_M/SEEK_CUR">SEEK_CUR</a>) {</td></tr>
+<tr><th id="395">395</th><td>        <a class="ref" href="../libavutil/log.h.html#av_log" title='av_log' data-ref="av_log">av_log</a>(<a class="local col0 ref" href="#70h" title='h' data-ref="70h">h</a>, <a class="macro" href="../libavutil/log.h.html#202" title="56" data-ref="_M/AV_LOG_TRACE">AV_LOG_TRACE</a>, <q>"async_seek: %"</q><a class="macro" href="../../include/inttypes.h.html#57" title="&quot;l&quot; &quot;d&quot;" data-ref="_M/PRId64">PRId64</a><q>"\n"</q>, <a class="local col1 ref" href="#71pos" title='pos' data-ref="71pos">pos</a>);</td></tr>
+<tr><th id="396">396</th><td>        <a class="local col6 ref" href="#76new_logical_pos" title='new_logical_pos' data-ref="76new_logical_pos">new_logical_pos</a> = <a class="local col1 ref" href="#71pos" title='pos' data-ref="71pos">pos</a> + <a class="local col3 ref" href="#73c" title='c' data-ref="73c">c</a>-&gt;<a class="tu ref" href="#Context::logical_pos" title='Context::logical_pos' data-use='r' data-ref="Context::logical_pos">logical_pos</a>;</td></tr>
+<tr><th id="397">397</th><td>    } <b>else</b> <b>if</b> (<a class="local col2 ref" href="#72whence" title='whence' data-ref="72whence">whence</a> == <a class="macro" href="../../include/stdio.h.html#140" title="0" data-ref="_M/SEEK_SET">SEEK_SET</a>){</td></tr>
+<tr><th id="398">398</th><td>        <a class="ref" href="../libavutil/log.h.html#av_log" title='av_log' data-ref="av_log">av_log</a>(<a class="local col0 ref" href="#70h" title='h' data-ref="70h">h</a>, <a class="macro" href="../libavutil/log.h.html#202" title="56" data-ref="_M/AV_LOG_TRACE">AV_LOG_TRACE</a>, <q>"async_seek: %"</q><a class="macro" href="../../include/inttypes.h.html#57" title="&quot;l&quot; &quot;d&quot;" data-ref="_M/PRId64">PRId64</a><q>"\n"</q>, <a class="local col1 ref" href="#71pos" title='pos' data-ref="71pos">pos</a>);</td></tr>
+<tr><th id="399">399</th><td>        <a class="local col6 ref" href="#76new_logical_pos" title='new_logical_pos' data-ref="76new_logical_pos">new_logical_pos</a> = <a class="local col1 ref" href="#71pos" title='pos' data-ref="71pos">pos</a>;</td></tr>
+<tr><th id="400">400</th><td>    } <b>else</b> {</td></tr>
+<tr><th id="401">401</th><td>        <b>return</b> <a class="macro" href="../libavutil/error.h.html#39" title="(-(22))" data-ref="_M/AVERROR">AVERROR</a>(<a class="macro" href="../../include/asm-generic/errno-base.h.html#25" title="22" data-ref="_M/EINVAL">EINVAL</a>);</td></tr>
+<tr><th id="402">402</th><td>    }</td></tr>
+<tr><th id="403">403</th><td>    <b>if</b> (<a class="local col6 ref" href="#76new_logical_pos" title='new_logical_pos' data-ref="76new_logical_pos">new_logical_pos</a> &lt; <var>0</var>)</td></tr>
+<tr><th id="404">404</th><td>        <b>return</b> <a class="macro" href="../libavutil/error.h.html#39" title="(-(22))" data-ref="_M/AVERROR">AVERROR</a>(<a class="macro" href="../../include/asm-generic/errno-base.h.html#25" title="22" data-ref="_M/EINVAL">EINVAL</a>);</td></tr>
+<tr><th id="405">405</th><td></td></tr>
+<tr><th id="406">406</th><td>    <a class="local col7 ref" href="#77fifo_size" title='fifo_size' data-ref="77fifo_size">fifo_size</a> = <a class="tu ref" href="#ring_size" title='ring_size' data-use='c' data-ref="ring_size">ring_size</a>(<a class="local col4 ref" href="#74ring" title='ring' data-ref="74ring">ring</a>);</td></tr>
+<tr><th id="407">407</th><td>    <a class="local col8 ref" href="#78fifo_size_of_read_back" title='fifo_size_of_read_back' data-ref="78fifo_size_of_read_back">fifo_size_of_read_back</a> = <a class="tu ref" href="#ring_size_of_read_back" title='ring_size_of_read_back' data-use='c' data-ref="ring_size_of_read_back">ring_size_of_read_back</a>(<a class="local col4 ref" href="#74ring" title='ring' data-ref="74ring">ring</a>);</td></tr>
+<tr><th id="408">408</th><td>    <b>if</b> (<a class="local col6 ref" href="#76new_logical_pos" title='new_logical_pos' data-ref="76new_logical_pos">new_logical_pos</a> == <a class="local col3 ref" href="#73c" title='c' data-ref="73c">c</a>-&gt;<a class="tu ref" href="#Context::logical_pos" title='Context::logical_pos' data-use='r' data-ref="Context::logical_pos">logical_pos</a>) {</td></tr>
+<tr><th id="409">409</th><td>        <i>/* current position */</i></td></tr>
+<tr><th id="410">410</th><td>        <b>return</b> <a class="local col3 ref" href="#73c" title='c' data-ref="73c">c</a>-&gt;<a class="tu ref" href="#Context::logical_pos" title='Context::logical_pos' data-use='r' data-ref="Context::logical_pos">logical_pos</a>;</td></tr>
+<tr><th id="411">411</th><td>    } <b>else</b> <b>if</b> ((<a class="local col6 ref" href="#76new_logical_pos" title='new_logical_pos' data-ref="76new_logical_pos">new_logical_pos</a> &gt;= (<a class="local col3 ref" href="#73c" title='c' data-ref="73c">c</a>-&gt;<a class="tu ref" href="#Context::logical_pos" title='Context::logical_pos' data-use='r' data-ref="Context::logical_pos">logical_pos</a> - <a class="local col8 ref" href="#78fifo_size_of_read_back" title='fifo_size_of_read_back' data-ref="78fifo_size_of_read_back">fifo_size_of_read_back</a>)) &amp;&amp;</td></tr>
+<tr><th id="412">412</th><td>               (<a class="local col6 ref" href="#76new_logical_pos" title='new_logical_pos' data-ref="76new_logical_pos">new_logical_pos</a> &lt; (<a class="local col3 ref" href="#73c" title='c' data-ref="73c">c</a>-&gt;<a class="tu ref" href="#Context::logical_pos" title='Context::logical_pos' data-use='r' data-ref="Context::logical_pos">logical_pos</a> + <a class="local col7 ref" href="#77fifo_size" title='fifo_size' data-ref="77fifo_size">fifo_size</a> + <a class="macro" href="#46" title="(256 * 1024)" data-ref="_M/SHORT_SEEK_THRESHOLD">SHORT_SEEK_THRESHOLD</a>))) {</td></tr>
+<tr><th id="413">413</th><td>        <em>int</em> <dfn class="local col9 decl" id="79pos_delta" title='pos_delta' data-type='int' data-ref="79pos_delta">pos_delta</dfn> = (<em>int</em>)(<a class="local col6 ref" href="#76new_logical_pos" title='new_logical_pos' data-ref="76new_logical_pos">new_logical_pos</a> - <a class="local col3 ref" href="#73c" title='c' data-ref="73c">c</a>-&gt;<a class="tu ref" href="#Context::logical_pos" title='Context::logical_pos' data-use='r' data-ref="Context::logical_pos">logical_pos</a>);</td></tr>
+<tr><th id="414">414</th><td>        <i>/* fast seek */</i></td></tr>
+<tr><th id="415">415</th><td>        <a class="ref" href="../libavutil/log.h.html#av_log" title='av_log' data-ref="av_log">av_log</a>(<a class="local col0 ref" href="#70h" title='h' data-ref="70h">h</a>, <a class="macro" href="../libavutil/log.h.html#202" title="56" data-ref="_M/AV_LOG_TRACE">AV_LOG_TRACE</a>, <q>"async_seek: fask_seek %"</q><a class="macro" href="../../include/inttypes.h.html#57" title="&quot;l&quot; &quot;d&quot;" data-ref="_M/PRId64">PRId64</a><q>" from %d dist:%d/%d\n"</q>,</td></tr>
+<tr><th id="416">416</th><td>                <a class="local col6 ref" href="#76new_logical_pos" title='new_logical_pos' data-ref="76new_logical_pos">new_logical_pos</a>, (<em>int</em>)<a class="local col3 ref" href="#73c" title='c' data-ref="73c">c</a>-&gt;<a class="tu ref" href="#Context::logical_pos" title='Context::logical_pos' data-use='r' data-ref="Context::logical_pos">logical_pos</a>,</td></tr>
+<tr><th id="417">417</th><td>                (<em>int</em>)(<a class="local col6 ref" href="#76new_logical_pos" title='new_logical_pos' data-ref="76new_logical_pos">new_logical_pos</a> - <a class="local col3 ref" href="#73c" title='c' data-ref="73c">c</a>-&gt;<a class="tu ref" href="#Context::logical_pos" title='Context::logical_pos' data-use='r' data-ref="Context::logical_pos">logical_pos</a>), <a class="local col7 ref" href="#77fifo_size" title='fifo_size' data-ref="77fifo_size">fifo_size</a>);</td></tr>
+<tr><th id="418">418</th><td></td></tr>
+<tr><th id="419">419</th><td>        <b>if</b> (<a class="local col9 ref" href="#79pos_delta" title='pos_delta' data-ref="79pos_delta">pos_delta</a> &gt; <var>0</var>) {</td></tr>
+<tr><th id="420">420</th><td>            <i>// fast seek forwards</i></td></tr>
+<tr><th id="421">421</th><td>            <a class="tu ref" href="#async_read_internal" title='async_read_internal' data-use='c' data-ref="async_read_internal">async_read_internal</a>(<a class="local col0 ref" href="#70h" title='h' data-ref="70h">h</a>, <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>, <a class="local col9 ref" href="#79pos_delta" title='pos_delta' data-ref="79pos_delta">pos_delta</a>, <var>1</var>, <a class="tu ref" href="#fifo_do_not_copy_func" title='fifo_do_not_copy_func' data-use='r' data-ref="fifo_do_not_copy_func">fifo_do_not_copy_func</a>);</td></tr>
+<tr><th id="422">422</th><td>        } <b>else</b> {</td></tr>
+<tr><th id="423">423</th><td>            <i>// fast seek backwards</i></td></tr>
+<tr><th id="424">424</th><td>            <a class="tu ref" href="#ring_drain" title='ring_drain' data-use='c' data-ref="ring_drain">ring_drain</a>(<a class="local col4 ref" href="#74ring" title='ring' data-ref="74ring">ring</a>, <a class="local col9 ref" href="#79pos_delta" title='pos_delta' data-ref="79pos_delta">pos_delta</a>);</td></tr>
+<tr><th id="425">425</th><td>            <a class="local col3 ref" href="#73c" title='c' data-ref="73c">c</a>-&gt;<a class="tu ref" href="#Context::logical_pos" title='Context::logical_pos' data-use='w' data-ref="Context::logical_pos">logical_pos</a> = <a class="local col6 ref" href="#76new_logical_pos" title='new_logical_pos' data-ref="76new_logical_pos">new_logical_pos</a>;</td></tr>
+<tr><th id="426">426</th><td>        }</td></tr>
+<tr><th id="427">427</th><td></td></tr>
+<tr><th id="428">428</th><td>        <b>return</b> <a class="local col3 ref" href="#73c" title='c' data-ref="73c">c</a>-&gt;<a class="tu ref" href="#Context::logical_pos" title='Context::logical_pos' data-use='r' data-ref="Context::logical_pos">logical_pos</a>;</td></tr>
+<tr><th id="429">429</th><td>    } <b>else</b> <b>if</b> (<a class="local col3 ref" href="#73c" title='c' data-ref="73c">c</a>-&gt;<a class="tu ref" href="#Context::logical_size" title='Context::logical_size' data-use='r' data-ref="Context::logical_size">logical_size</a> &lt;= <var>0</var>) {</td></tr>
+<tr><th id="430">430</th><td>        <i>/* can not seek */</i></td></tr>
+<tr><th id="431">431</th><td>        <b>return</b> <a class="macro" href="../libavutil/error.h.html#39" title="(-(22))" data-ref="_M/AVERROR">AVERROR</a>(<a class="macro" href="../../include/asm-generic/errno-base.h.html#25" title="22" data-ref="_M/EINVAL">EINVAL</a>);</td></tr>
+<tr><th id="432">432</th><td>    } <b>else</b> <b>if</b> (<a class="local col6 ref" href="#76new_logical_pos" title='new_logical_pos' data-ref="76new_logical_pos">new_logical_pos</a> &gt; <a class="local col3 ref" href="#73c" title='c' data-ref="73c">c</a>-&gt;<a class="tu ref" href="#Context::logical_size" title='Context::logical_size' data-use='r' data-ref="Context::logical_size">logical_size</a>) {</td></tr>
+<tr><th id="433">433</th><td>        <i>/* beyond end */</i></td></tr>
+<tr><th id="434">434</th><td>        <b>return</b> <a class="macro" href="../libavutil/error.h.html#39" title="(-(22))" data-ref="_M/AVERROR">AVERROR</a>(<a class="macro" href="../../include/asm-generic/errno-base.h.html#25" title="22" data-ref="_M/EINVAL">EINVAL</a>);</td></tr>
+<tr><th id="435">435</th><td>    }</td></tr>
+<tr><th id="436">436</th><td></td></tr>
+<tr><th id="437">437</th><td>    <a class="ref" href="../../include/pthread.h.html#pthread_mutex_lock" title='pthread_mutex_lock' data-ref="pthread_mutex_lock">pthread_mutex_lock</a>(&amp;<a class="local col3 ref" href="#73c" title='c' data-ref="73c">c</a>-&gt;<a class="tu ref" href="#Context::mutex" title='Context::mutex' data-use='a' data-ref="Context::mutex">mutex</a>);</td></tr>
+<tr><th id="438">438</th><td></td></tr>
+<tr><th id="439">439</th><td>    <a class="local col3 ref" href="#73c" title='c' data-ref="73c">c</a>-&gt;<a class="tu ref" href="#Context::seek_request" title='Context::seek_request' data-use='w' data-ref="Context::seek_request">seek_request</a>   = <var>1</var>;</td></tr>
+<tr><th id="440">440</th><td>    <a class="local col3 ref" href="#73c" title='c' data-ref="73c">c</a>-&gt;<a class="tu ref" href="#Context::seek_pos" title='Context::seek_pos' data-use='w' data-ref="Context::seek_pos">seek_pos</a>       = <a class="local col6 ref" href="#76new_logical_pos" title='new_logical_pos' data-ref="76new_logical_pos">new_logical_pos</a>;</td></tr>
+<tr><th id="441">441</th><td>    <a class="local col3 ref" href="#73c" title='c' data-ref="73c">c</a>-&gt;<a class="tu ref" href="#Context::seek_whence" title='Context::seek_whence' data-use='w' data-ref="Context::seek_whence">seek_whence</a>    = <a class="macro" href="../../include/stdio.h.html#140" title="0" data-ref="_M/SEEK_SET">SEEK_SET</a>;</td></tr>
+<tr><th id="442">442</th><td>    <a class="local col3 ref" href="#73c" title='c' data-ref="73c">c</a>-&gt;<a class="tu ref" href="#Context::seek_completed" title='Context::seek_completed' data-use='w' data-ref="Context::seek_completed">seek_completed</a> = <var>0</var>;</td></tr>
+<tr><th id="443">443</th><td>    <a class="local col3 ref" href="#73c" title='c' data-ref="73c">c</a>-&gt;<a class="tu ref" href="#Context::seek_ret" title='Context::seek_ret' data-use='w' data-ref="Context::seek_ret">seek_ret</a>       = <var>0</var>;</td></tr>
+<tr><th id="444">444</th><td></td></tr>
+<tr><th id="445">445</th><td>    <b>while</b> (<var>1</var>) {</td></tr>
+<tr><th id="446">446</th><td>        <b>if</b> (<a class="tu ref" href="#async_check_interrupt" title='async_check_interrupt' data-use='c' data-ref="async_check_interrupt">async_check_interrupt</a>(<a class="local col0 ref" href="#70h" title='h' data-ref="70h">h</a>)) {</td></tr>
+<tr><th id="447">447</th><td>            <a class="local col5 ref" href="#75ret" title='ret' data-ref="75ret">ret</a> = <a class="macro" href="../libavutil/error.h.html#56" title="(-(int)((&apos;E&apos;) | ((&apos;X&apos;) &lt;&lt; 8) | ((&apos;I&apos;) &lt;&lt; 16) | ((unsigned)(&apos;T&apos;) &lt;&lt; 24)))" data-ref="_M/AVERROR_EXIT">AVERROR_EXIT</a>;</td></tr>
+<tr><th id="448">448</th><td>            <b>break</b>;</td></tr>
+<tr><th id="449">449</th><td>        }</td></tr>
+<tr><th id="450">450</th><td>        <b>if</b> (<a class="local col3 ref" href="#73c" title='c' data-ref="73c">c</a>-&gt;<a class="tu ref" href="#Context::seek_completed" title='Context::seek_completed' data-use='r' data-ref="Context::seek_completed">seek_completed</a>) {</td></tr>
+<tr><th id="451">451</th><td>            <b>if</b> (<a class="local col3 ref" href="#73c" title='c' data-ref="73c">c</a>-&gt;<a class="tu ref" href="#Context::seek_ret" title='Context::seek_ret' data-use='r' data-ref="Context::seek_ret">seek_ret</a> &gt;= <var>0</var>)</td></tr>
+<tr><th id="452">452</th><td>                <a class="local col3 ref" href="#73c" title='c' data-ref="73c">c</a>-&gt;<a class="tu ref" href="#Context::logical_pos" title='Context::logical_pos' data-use='w' data-ref="Context::logical_pos">logical_pos</a>  = <a class="local col3 ref" href="#73c" title='c' data-ref="73c">c</a>-&gt;<a class="tu ref" href="#Context::seek_ret" title='Context::seek_ret' data-use='r' data-ref="Context::seek_ret">seek_ret</a>;</td></tr>
+<tr><th id="453">453</th><td>            <a class="local col5 ref" href="#75ret" title='ret' data-ref="75ret">ret</a> = <a class="local col3 ref" href="#73c" title='c' data-ref="73c">c</a>-&gt;<a class="tu ref" href="#Context::seek_ret" title='Context::seek_ret' data-use='r' data-ref="Context::seek_ret">seek_ret</a>;</td></tr>
+<tr><th id="454">454</th><td>            <b>break</b>;</td></tr>
+<tr><th id="455">455</th><td>        }</td></tr>
+<tr><th id="456">456</th><td>        <a class="ref" href="../../include/pthread.h.html#pthread_cond_signal" title='pthread_cond_signal' data-ref="pthread_cond_signal">pthread_cond_signal</a>(&amp;<a class="local col3 ref" href="#73c" title='c' data-ref="73c">c</a>-&gt;<a class="tu ref" href="#Context::cond_wakeup_background" title='Context::cond_wakeup_background' data-use='a' data-ref="Context::cond_wakeup_background">cond_wakeup_background</a>);</td></tr>
+<tr><th id="457">457</th><td>        <a class="ref" href="../../include/pthread.h.html#pthread_cond_wait" title='pthread_cond_wait' data-ref="pthread_cond_wait">pthread_cond_wait</a>(&amp;<a class="local col3 ref" href="#73c" title='c' data-ref="73c">c</a>-&gt;<a class="tu ref" href="#Context::cond_wakeup_main" title='Context::cond_wakeup_main' data-use='a' data-ref="Context::cond_wakeup_main">cond_wakeup_main</a>, &amp;<a class="local col3 ref" href="#73c" title='c' data-ref="73c">c</a>-&gt;<a class="tu ref" href="#Context::mutex" title='Context::mutex' data-use='a' data-ref="Context::mutex">mutex</a>);</td></tr>
+<tr><th id="458">458</th><td>    }</td></tr>
+<tr><th id="459">459</th><td></td></tr>
+<tr><th id="460">460</th><td>    <a class="ref" href="../../include/pthread.h.html#pthread_mutex_unlock" title='pthread_mutex_unlock' data-ref="pthread_mutex_unlock">pthread_mutex_unlock</a>(&amp;<a class="local col3 ref" href="#73c" title='c' data-ref="73c">c</a>-&gt;<a class="tu ref" href="#Context::mutex" title='Context::mutex' data-use='a' data-ref="Context::mutex">mutex</a>);</td></tr>
+<tr><th id="461">461</th><td></td></tr>
+<tr><th id="462">462</th><td>    <b>return</b> <a class="local col5 ref" href="#75ret" title='ret' data-ref="75ret">ret</a>;</td></tr>
+<tr><th id="463">463</th><td>}</td></tr>
+<tr><th id="464">464</th><td></td></tr>
+<tr><th id="465">465</th><td><u>#define <dfn class="macro" id="_M/OFFSET" data-ref="_M/OFFSET">OFFSET</dfn>(x) offsetof(Context, x)</u></td></tr>
+<tr><th id="466">466</th><td><u>#define <dfn class="macro" id="_M/D" data-ref="_M/D">D</dfn> AV_OPT_FLAG_DECODING_PARAM</u></td></tr>
+<tr><th id="467">467</th><td></td></tr>
+<tr><th id="468">468</th><td><em>static</em> <em>const</em> <a class="typedef" href="../libavutil/opt.h.html#AVOption" title='AVOption' data-type='struct AVOption' data-ref="AVOption">AVOption</a> <dfn class="tu decl def" id="options" title='options' data-type='const AVOption [1]' data-ref="options">options</dfn>[] = {</td></tr>
+<tr><th id="469">469</th><td>    {<span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>},</td></tr>
+<tr><th id="470">470</th><td>};</td></tr>
+<tr><th id="471">471</th><td></td></tr>
+<tr><th id="472">472</th><td><u>#undef <a class="macro" href="#466" data-ref="_M/D">D</a></u></td></tr>
+<tr><th id="473">473</th><td><u>#undef <a class="macro" href="#465" data-ref="_M/OFFSET">OFFSET</a></u></td></tr>
+<tr><th id="474">474</th><td></td></tr>
+<tr><th id="475">475</th><td><em>static</em> <em>const</em> <a class="typedef" href="../libavutil/log.h.html#AVClass" title='AVClass' data-type='struct AVClass' data-ref="AVClass">AVClass</a> <dfn class="tu decl def" id="async_context_class" title='async_context_class' data-type='const AVClass' data-ref="async_context_class">async_context_class</dfn> = {</td></tr>
+<tr><th id="476">476</th><td>    .<a class="ref" href="../libavutil/log.h.html#AVClass::class_name" title='AVClass::class_name' data-ref="AVClass::class_name">class_name</a> = <q>"Async"</q>,</td></tr>
+<tr><th id="477">477</th><td>    .<a class="ref" href="../libavutil/log.h.html#AVClass::item_name" title='AVClass::item_name' data-ref="AVClass::item_name">item_name</a>  = <a class="ref" href="../libavutil/log.h.html#av_default_item_name" title='av_default_item_name' data-ref="av_default_item_name">av_default_item_name</a>,</td></tr>
+<tr><th id="478">478</th><td>    .<a class="ref" href="../libavutil/log.h.html#AVClass::option" title='AVClass::option' data-ref="AVClass::option">option</a>     = <a class="tu ref" href="#options" title='options' data-ref="options">options</a>,</td></tr>
+<tr><th id="479">479</th><td>    .<a class="ref" href="../libavutil/log.h.html#AVClass::version" title='AVClass::version' data-ref="AVClass::version">version</a>    = <a class="macro" href="../libavutil/version.h.html#85" title="((55)&lt;&lt;16 | (33)&lt;&lt;8 | (100))" data-ref="_M/LIBAVUTIL_VERSION_INT">LIBAVUTIL_VERSION_INT</a>,</td></tr>
+<tr><th id="480">480</th><td>};</td></tr>
+<tr><th id="481">481</th><td></td></tr>
+<tr><th id="482">482</th><td><em>const</em> <a class="typedef" href="url.h.html#URLProtocol" title='URLProtocol' data-type='struct URLProtocol' data-ref="URLProtocol">URLProtocol</a> <dfn class="decl def" id="ff_async_protocol" title='ff_async_protocol' data-ref="ff_async_protocol">ff_async_protocol</dfn> = {</td></tr>
+<tr><th id="483">483</th><td>    .<a class="ref" href="url.h.html#URLProtocol::name" title='URLProtocol::name' data-ref="URLProtocol::name">name</a>                = <q>"async"</q>,</td></tr>
+<tr><th id="484">484</th><td>    .<a class="ref" href="url.h.html#URLProtocol::url_open2" title='URLProtocol::url_open2' data-ref="URLProtocol::url_open2">url_open2</a>           = <a class="tu ref" href="#async_open" title='async_open' data-ref="async_open">async_open</a>,</td></tr>
+<tr><th id="485">485</th><td>    .<a class="ref" href="url.h.html#URLProtocol::url_read" title='URLProtocol::url_read' data-ref="URLProtocol::url_read">url_read</a>            = <a class="tu ref" href="#async_read" title='async_read' data-ref="async_read">async_read</a>,</td></tr>
+<tr><th id="486">486</th><td>    .<a class="ref" href="url.h.html#URLProtocol::url_seek" title='URLProtocol::url_seek' data-ref="URLProtocol::url_seek">url_seek</a>            = <a class="tu ref" href="#async_seek" title='async_seek' data-ref="async_seek">async_seek</a>,</td></tr>
+<tr><th id="487">487</th><td>    .<a class="ref" href="url.h.html#URLProtocol::url_close" title='URLProtocol::url_close' data-ref="URLProtocol::url_close">url_close</a>           = <a class="tu ref" href="#async_close" title='async_close' data-ref="async_close">async_close</a>,</td></tr>
+<tr><th id="488">488</th><td>    .<a class="ref" href="url.h.html#URLProtocol::priv_data_size" title='URLProtocol::priv_data_size' data-ref="URLProtocol::priv_data_size">priv_data_size</a>      = <b>sizeof</b>(<a class="typedef" href="#Context" title='Context' data-type='struct Context' data-ref="Context">Context</a>),</td></tr>
+<tr><th id="489">489</th><td>    .<a class="ref" href="url.h.html#URLProtocol::priv_data_class" title='URLProtocol::priv_data_class' data-ref="URLProtocol::priv_data_class">priv_data_class</a>     = &amp;<a class="tu ref" href="#async_context_class" title='async_context_class' data-use='a' data-ref="async_context_class">async_context_class</a>,</td></tr>
+<tr><th id="490">490</th><td>};</td></tr>
+<tr><th id="491">491</th><td></td></tr>
+<tr><th id="492">492</th><td><u>#<span data-ppcond="492">if</span> 0</u></td></tr>
+<tr><th id="493">493</th><td></td></tr>
+<tr><th id="494">494</th><td><u>#define TEST_SEEK_POS    (1536)</u></td></tr>
+<tr><th id="495">495</th><td><u>#define TEST_STREAM_SIZE (2048)</u></td></tr>
+<tr><th id="496">496</th><td></td></tr>
+<tr><th id="497">497</th><td><b>typedef</b> <b>struct</b> TestContext {</td></tr>
+<tr><th id="498">498</th><td>    AVClass        *class;</td></tr>
+<tr><th id="499">499</th><td>    int64_t         logical_pos;</td></tr>
+<tr><th id="500">500</th><td>    int64_t         logical_size;</td></tr>
+<tr><th id="501">501</th><td></td></tr>
+<tr><th id="502">502</th><td>    <i>/* options */</i></td></tr>
+<tr><th id="503">503</th><td>    <em>int</em>             opt_read_error;</td></tr>
+<tr><th id="504">504</th><td>} TestContext;</td></tr>
+<tr><th id="505">505</th><td></td></tr>
+<tr><th id="506">506</th><td><em>static</em> <em>int</em> async_test_open(URLContext *h, <em>const</em> <em>char</em> *arg, <em>int</em> flags, AVDictionary **options)</td></tr>
+<tr><th id="507">507</th><td>{</td></tr>
+<tr><th id="508">508</th><td>    TestContext *c = h-&gt;priv_data;</td></tr>
+<tr><th id="509">509</th><td>    c-&gt;logical_pos  = <var>0</var>;</td></tr>
+<tr><th id="510">510</th><td>    c-&gt;logical_size = TEST_STREAM_SIZE;</td></tr>
+<tr><th id="511">511</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="512">512</th><td>}</td></tr>
+<tr><th id="513">513</th><td></td></tr>
+<tr><th id="514">514</th><td><em>static</em> <em>int</em> async_test_close(URLContext *h)</td></tr>
+<tr><th id="515">515</th><td>{</td></tr>
+<tr><th id="516">516</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="517">517</th><td>}</td></tr>
+<tr><th id="518">518</th><td></td></tr>
+<tr><th id="519">519</th><td><em>static</em> <em>int</em> async_test_read(URLContext *h, <em>unsigned</em> <em>char</em> *buf, <em>int</em> size)</td></tr>
+<tr><th id="520">520</th><td>{</td></tr>
+<tr><th id="521">521</th><td>    TestContext *c = h-&gt;priv_data;</td></tr>
+<tr><th id="522">522</th><td>    <em>int</em>          i;</td></tr>
+<tr><th id="523">523</th><td>    <em>int</em>          read_len = <var>0</var>;</td></tr>
+<tr><th id="524">524</th><td></td></tr>
+<tr><th id="525">525</th><td>    <b>if</b> (c-&gt;opt_read_error)</td></tr>
+<tr><th id="526">526</th><td>        <b>return</b> c-&gt;opt_read_error;</td></tr>
+<tr><th id="527">527</th><td></td></tr>
+<tr><th id="528">528</th><td>    <b>if</b> (c-&gt;logical_pos &gt;= c-&gt;logical_size)</td></tr>
+<tr><th id="529">529</th><td>        <b>return</b> AVERROR_EOF;</td></tr>
+<tr><th id="530">530</th><td></td></tr>
+<tr><th id="531">531</th><td>    <b>for</b> (i = <var>0</var>; i &lt; size; ++i) {</td></tr>
+<tr><th id="532">532</th><td>        buf[i] = c-&gt;logical_pos &amp; <var>0xFF</var>;</td></tr>
+<tr><th id="533">533</th><td></td></tr>
+<tr><th id="534">534</th><td>        c-&gt;logical_pos++;</td></tr>
+<tr><th id="535">535</th><td>        read_len++;</td></tr>
+<tr><th id="536">536</th><td></td></tr>
+<tr><th id="537">537</th><td>        <b>if</b> (c-&gt;logical_pos &gt;= c-&gt;logical_size)</td></tr>
+<tr><th id="538">538</th><td>            <b>break</b>;</td></tr>
+<tr><th id="539">539</th><td>    }</td></tr>
+<tr><th id="540">540</th><td></td></tr>
+<tr><th id="541">541</th><td>    <b>return</b> read_len;</td></tr>
+<tr><th id="542">542</th><td>}</td></tr>
+<tr><th id="543">543</th><td></td></tr>
+<tr><th id="544">544</th><td><em>static</em> int64_t async_test_seek(URLContext *h, int64_t pos, <em>int</em> whence)</td></tr>
+<tr><th id="545">545</th><td>{</td></tr>
+<tr><th id="546">546</th><td>    TestContext *c = h-&gt;priv_data;</td></tr>
+<tr><th id="547">547</th><td>    int64_t      new_logical_pos;</td></tr>
+<tr><th id="548">548</th><td></td></tr>
+<tr><th id="549">549</th><td>    <b>if</b> (whence == AVSEEK_SIZE) {</td></tr>
+<tr><th id="550">550</th><td>        <b>return</b> c-&gt;logical_size;</td></tr>
+<tr><th id="551">551</th><td>    } <b>else</b> <b>if</b> (whence == SEEK_CUR) {</td></tr>
+<tr><th id="552">552</th><td>        new_logical_pos = pos + c-&gt;logical_pos;</td></tr>
+<tr><th id="553">553</th><td>    } <b>else</b> <b>if</b> (whence == SEEK_SET){</td></tr>
+<tr><th id="554">554</th><td>        new_logical_pos = pos;</td></tr>
+<tr><th id="555">555</th><td>    } <b>else</b> {</td></tr>
+<tr><th id="556">556</th><td>        <b>return</b> AVERROR(EINVAL);</td></tr>
+<tr><th id="557">557</th><td>    }</td></tr>
+<tr><th id="558">558</th><td>    <b>if</b> (new_logical_pos &lt; <var>0</var>)</td></tr>
+<tr><th id="559">559</th><td>        <b>return</b> AVERROR(EINVAL);</td></tr>
+<tr><th id="560">560</th><td></td></tr>
+<tr><th id="561">561</th><td>    c-&gt;logical_pos = new_logical_pos;</td></tr>
+<tr><th id="562">562</th><td>    <b>return</b> new_logical_pos;</td></tr>
+<tr><th id="563">563</th><td>}</td></tr>
+<tr><th id="564">564</th><td></td></tr>
+<tr><th id="565">565</th><td><u>#define OFFSET(x) offsetof(TestContext, x)</u></td></tr>
+<tr><th id="566">566</th><td><u>#define D AV_OPT_FLAG_DECODING_PARAM</u></td></tr>
+<tr><th id="567">567</th><td></td></tr>
+<tr><th id="568">568</th><td><em>static</em> <em>const</em> AVOption async_test_options[] = {</td></tr>
+<tr><th id="569">569</th><td>    { <q>"async-test-read-error"</q>,      <q>"cause read fail"</q>,</td></tr>
+<tr><th id="570">570</th><td>        OFFSET(opt_read_error),     AV_OPT_TYPE_INT, { .i64 = <var>0</var> }, INT_MIN, INT_MAX, .flags = D },</td></tr>
+<tr><th id="571">571</th><td>    {NULL},</td></tr>
+<tr><th id="572">572</th><td>};</td></tr>
+<tr><th id="573">573</th><td></td></tr>
+<tr><th id="574">574</th><td><u>#undef D</u></td></tr>
+<tr><th id="575">575</th><td><u>#undef OFFSET</u></td></tr>
+<tr><th id="576">576</th><td></td></tr>
+<tr><th id="577">577</th><td><em>static</em> <em>const</em> AVClass async_test_context_class = {</td></tr>
+<tr><th id="578">578</th><td>    .class_name = <q>"Async-Test"</q>,</td></tr>
+<tr><th id="579">579</th><td>    .item_name  = av_default_item_name,</td></tr>
+<tr><th id="580">580</th><td>    .option     = async_test_options,</td></tr>
+<tr><th id="581">581</th><td>    .version    = LIBAVUTIL_VERSION_INT,</td></tr>
+<tr><th id="582">582</th><td>};</td></tr>
+<tr><th id="583">583</th><td></td></tr>
+<tr><th id="584">584</th><td><em>const</em> URLProtocol ff_async_test_protocol = {</td></tr>
+<tr><th id="585">585</th><td>    .name                = <q>"async-test"</q>,</td></tr>
+<tr><th id="586">586</th><td>    .url_open2           = async_test_open,</td></tr>
+<tr><th id="587">587</th><td>    .url_read            = async_test_read,</td></tr>
+<tr><th id="588">588</th><td>    .url_seek            = async_test_seek,</td></tr>
+<tr><th id="589">589</th><td>    .url_close           = async_test_close,</td></tr>
+<tr><th id="590">590</th><td>    .priv_data_size      = <b>sizeof</b>(TestContext),</td></tr>
+<tr><th id="591">591</th><td>    .priv_data_class     = &amp;async_test_context_class,</td></tr>
+<tr><th id="592">592</th><td>};</td></tr>
+<tr><th id="593">593</th><td></td></tr>
+<tr><th id="594">594</th><td><em>int</em> main(<em>void</em>)</td></tr>
+<tr><th id="595">595</th><td>{</td></tr>
+<tr><th id="596">596</th><td>    URLContext   *h = NULL;</td></tr>
+<tr><th id="597">597</th><td>    <em>int</em>           i;</td></tr>
+<tr><th id="598">598</th><td>    <em>int</em>           ret;</td></tr>
+<tr><th id="599">599</th><td>    int64_t       size;</td></tr>
+<tr><th id="600">600</th><td>    int64_t       pos;</td></tr>
+<tr><th id="601">601</th><td>    int64_t       read_len;</td></tr>
+<tr><th id="602">602</th><td>    <em>unsigned</em> <em>char</em> buf[<var>4096</var>];</td></tr>
+<tr><th id="603">603</th><td>    AVDictionary *opts = NULL;</td></tr>
+<tr><th id="604">604</th><td></td></tr>
+<tr><th id="605">605</th><td>    ffurl_register_protocol(&amp;ff_async_protocol);</td></tr>
+<tr><th id="606">606</th><td>    ffurl_register_protocol(&amp;ff_async_test_protocol);</td></tr>
+<tr><th id="607">607</th><td></td></tr>
+<tr><th id="608">608</th><td>    <i>/*</i></td></tr>
+<tr><th id="609">609</th><td><i>     * test normal read</i></td></tr>
+<tr><th id="610">610</th><td><i>     */</i></td></tr>
+<tr><th id="611">611</th><td>    ret = ffurl_open(&amp;h, <q>"async:async-test:"</q>, AVIO_FLAG_READ, NULL, NULL);</td></tr>
+<tr><th id="612">612</th><td>    printf(<q>"open: %d\n"</q>, ret);</td></tr>
+<tr><th id="613">613</th><td></td></tr>
+<tr><th id="614">614</th><td>    size = ffurl_size(h);</td></tr>
+<tr><th id="615">615</th><td>    printf(<q>"size: %"</q>PRId64<q>"\n"</q>, size);</td></tr>
+<tr><th id="616">616</th><td></td></tr>
+<tr><th id="617">617</th><td>    pos = ffurl_seek(h, <var>0</var>, SEEK_CUR);</td></tr>
+<tr><th id="618">618</th><td>    read_len = <var>0</var>;</td></tr>
+<tr><th id="619">619</th><td>    <b>while</b> (<var>1</var>) {</td></tr>
+<tr><th id="620">620</th><td>        ret = ffurl_read(h, buf, <b>sizeof</b>(buf));</td></tr>
+<tr><th id="621">621</th><td>        <b>if</b> (ret == AVERROR_EOF) {</td></tr>
+<tr><th id="622">622</th><td>            printf(<q>"read-error: AVERROR_EOF at %"</q>PRId64<q>"\n"</q>, ffurl_seek(h, <var>0</var>, SEEK_CUR));</td></tr>
+<tr><th id="623">623</th><td>            <b>break</b>;</td></tr>
+<tr><th id="624">624</th><td>        }</td></tr>
+<tr><th id="625">625</th><td>        <b>else</b> <b>if</b> (ret == <var>0</var>)</td></tr>
+<tr><th id="626">626</th><td>            <b>break</b>;</td></tr>
+<tr><th id="627">627</th><td>        <b>else</b> <b>if</b> (ret &lt; <var>0</var>) {</td></tr>
+<tr><th id="628">628</th><td>            printf(<q>"read-error: %d at %"</q>PRId64<q>"\n"</q>, ret, ffurl_seek(h, <var>0</var>, SEEK_CUR));</td></tr>
+<tr><th id="629">629</th><td>            <b>goto</b> fail;</td></tr>
+<tr><th id="630">630</th><td>        } <b>else</b> {</td></tr>
+<tr><th id="631">631</th><td>            <b>for</b> (i = <var>0</var>; i &lt; ret; ++i) {</td></tr>
+<tr><th id="632">632</th><td>                <b>if</b> (buf[i] != (pos &amp; <var>0xFF</var>)) {</td></tr>
+<tr><th id="633">633</th><td>                    printf(<q>"read-mismatch: actual %d, expecting %d, at %"</q>PRId64<q>"\n"</q>,</td></tr>
+<tr><th id="634">634</th><td>                           (<em>int</em>)buf[i], (<em>int</em>)(pos &amp; <var>0xFF</var>), pos);</td></tr>
+<tr><th id="635">635</th><td>                    <b>break</b>;</td></tr>
+<tr><th id="636">636</th><td>                }</td></tr>
+<tr><th id="637">637</th><td>                pos++;</td></tr>
+<tr><th id="638">638</th><td>            }</td></tr>
+<tr><th id="639">639</th><td>        }</td></tr>
+<tr><th id="640">640</th><td></td></tr>
+<tr><th id="641">641</th><td>        read_len += ret;</td></tr>
+<tr><th id="642">642</th><td>    }</td></tr>
+<tr><th id="643">643</th><td>    printf(<q>"read: %"</q>PRId64<q>"\n"</q>, read_len);</td></tr>
+<tr><th id="644">644</th><td></td></tr>
+<tr><th id="645">645</th><td>    <i>/*</i></td></tr>
+<tr><th id="646">646</th><td><i>     * test normal seek</i></td></tr>
+<tr><th id="647">647</th><td><i>     */</i></td></tr>
+<tr><th id="648">648</th><td>    ret = ffurl_read(h, buf, <var>1</var>);</td></tr>
+<tr><th id="649">649</th><td>    printf(<q>"read: %d\n"</q>, ret);</td></tr>
+<tr><th id="650">650</th><td></td></tr>
+<tr><th id="651">651</th><td>    pos = ffurl_seek(h, TEST_SEEK_POS, SEEK_SET);</td></tr>
+<tr><th id="652">652</th><td>    printf(<q>"seek: %"</q>PRId64<q>"\n"</q>, pos);</td></tr>
+<tr><th id="653">653</th><td></td></tr>
+<tr><th id="654">654</th><td>    read_len = <var>0</var>;</td></tr>
+<tr><th id="655">655</th><td>    <b>while</b> (<var>1</var>) {</td></tr>
+<tr><th id="656">656</th><td>        ret = ffurl_read(h, buf, <b>sizeof</b>(buf));</td></tr>
+<tr><th id="657">657</th><td>        <b>if</b> (ret == AVERROR_EOF)</td></tr>
+<tr><th id="658">658</th><td>            <b>break</b>;</td></tr>
+<tr><th id="659">659</th><td>        <b>else</b> <b>if</b> (ret == <var>0</var>)</td></tr>
+<tr><th id="660">660</th><td>            <b>break</b>;</td></tr>
+<tr><th id="661">661</th><td>        <b>else</b> <b>if</b> (ret &lt; <var>0</var>) {</td></tr>
+<tr><th id="662">662</th><td>            printf(<q>"read-error: %d at %"</q>PRId64<q>"\n"</q>, ret, ffurl_seek(h, <var>0</var>, SEEK_CUR));</td></tr>
+<tr><th id="663">663</th><td>            <b>goto</b> fail;</td></tr>
+<tr><th id="664">664</th><td>        } <b>else</b> {</td></tr>
+<tr><th id="665">665</th><td>            <b>for</b> (i = <var>0</var>; i &lt; ret; ++i) {</td></tr>
+<tr><th id="666">666</th><td>                <b>if</b> (buf[i] != (pos &amp; <var>0xFF</var>)) {</td></tr>
+<tr><th id="667">667</th><td>                    printf(<q>"read-mismatch: actual %d, expecting %d, at %"</q>PRId64<q>"\n"</q>,</td></tr>
+<tr><th id="668">668</th><td>                           (<em>int</em>)buf[i], (<em>int</em>)(pos &amp; <var>0xFF</var>), pos);</td></tr>
+<tr><th id="669">669</th><td>                    <b>break</b>;</td></tr>
+<tr><th id="670">670</th><td>                }</td></tr>
+<tr><th id="671">671</th><td>                pos++;</td></tr>
+<tr><th id="672">672</th><td>            }</td></tr>
+<tr><th id="673">673</th><td>        }</td></tr>
+<tr><th id="674">674</th><td></td></tr>
+<tr><th id="675">675</th><td>        read_len += ret;</td></tr>
+<tr><th id="676">676</th><td>    }</td></tr>
+<tr><th id="677">677</th><td>    printf(<q>"read: %"</q>PRId64<q>"\n"</q>, read_len);</td></tr>
+<tr><th id="678">678</th><td></td></tr>
+<tr><th id="679">679</th><td>    ret = ffurl_read(h, buf, <var>1</var>);</td></tr>
+<tr><th id="680">680</th><td>    printf(<q>"read: %d\n"</q>, ret);</td></tr>
+<tr><th id="681">681</th><td></td></tr>
+<tr><th id="682">682</th><td>    <i>/*</i></td></tr>
+<tr><th id="683">683</th><td><i>     * test read error</i></td></tr>
+<tr><th id="684">684</th><td><i>     */</i></td></tr>
+<tr><th id="685">685</th><td>    ffurl_close(h);</td></tr>
+<tr><th id="686">686</th><td>    av_dict_set_int(&amp;opts, <q>"async-test-read-error"</q>, -<var>10000</var>, <var>0</var>);</td></tr>
+<tr><th id="687">687</th><td>    ret = ffurl_open(&amp;h, <q>"async:async-test:"</q>, AVIO_FLAG_READ, NULL, &amp;opts);</td></tr>
+<tr><th id="688">688</th><td>    printf(<q>"open: %d\n"</q>, ret);</td></tr>
+<tr><th id="689">689</th><td></td></tr>
+<tr><th id="690">690</th><td>    ret = ffurl_read(h, buf, <var>1</var>);</td></tr>
+<tr><th id="691">691</th><td>    printf(<q>"read: %d\n"</q>, ret);</td></tr>
+<tr><th id="692">692</th><td></td></tr>
+<tr><th id="693">693</th><td>fail:</td></tr>
+<tr><th id="694">694</th><td>    av_dict_free(&amp;opts);</td></tr>
+<tr><th id="695">695</th><td>    ffurl_close(h);</td></tr>
+<tr><th id="696">696</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="697">697</th><td>}</td></tr>
+<tr><th id="698">698</th><td></td></tr>
+<tr><th id="699">699</th><td><u>#<span data-ppcond="492">endif</span></u></td></tr>
+<tr><th id="700">700</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

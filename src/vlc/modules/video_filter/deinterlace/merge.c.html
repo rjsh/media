@@ -1,0 +1,283 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>merge.c source code [vlc/modules/video_filter/deinterlace/merge.c] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'vlc/modules/video_filter/deinterlace/merge.c'; var root_path = '../../../..'; var data_path = '../../../../../data';</script>
+<script src='../../../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='../../..'>vlc</a>/<a href='../..'>modules</a>/<a href='..'>video_filter</a>/<a href='./'>deinterlace</a>/<a href='merge.c.html'>merge.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*****************************************************************************</i></td></tr>
+<tr><th id="2">2</th><td><i> * merge.c : Merge (line blending) routines for the VLC deinterlacer</i></td></tr>
+<tr><th id="3">3</th><td><i> *****************************************************************************</i></td></tr>
+<tr><th id="4">4</th><td><i> * Copyright (C) 2011 VLC authors and VideoLAN</i></td></tr>
+<tr><th id="5">5</th><td><i> * $Id: 94cdd775ac70a548f23b3efbca65d6259d77ca39 $</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * Author: Sam Hocevar &lt;sam@zoy.org&gt;                      (generic C routine)</i></td></tr>
+<tr><th id="8">8</th><td><i> *         Sigmund Augdal Helberg &lt;sigmunau@videolan.org&gt; (MMXEXT, 3DNow, SSE2)</i></td></tr>
+<tr><th id="9">9</th><td><i> *         Eric Petit &lt;eric.petit@lapsus.org&gt;             (Altivec)</i></td></tr>
+<tr><th id="10">10</th><td><i> *</i></td></tr>
+<tr><th id="11">11</th><td><i> * This program is free software; you can redistribute it and/or modify it</i></td></tr>
+<tr><th id="12">12</th><td><i> * under the terms of the GNU Lesser General Public License as published by</i></td></tr>
+<tr><th id="13">13</th><td><i> * the Free Software Foundation; either version 2.1 of the License, or</i></td></tr>
+<tr><th id="14">14</th><td><i> * (at your option) any later version.</i></td></tr>
+<tr><th id="15">15</th><td><i> *</i></td></tr>
+<tr><th id="16">16</th><td><i> * This program is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="17">17</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="18">18</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</i></td></tr>
+<tr><th id="19">19</th><td><i> * GNU Lesser General Public License for more details.</i></td></tr>
+<tr><th id="20">20</th><td><i> *</i></td></tr>
+<tr><th id="21">21</th><td><i> * You should have received a copy of the GNU Lesser General Public License</i></td></tr>
+<tr><th id="22">22</th><td><i> * along with this program; if not, write to the Free Software Foundation,</i></td></tr>
+<tr><th id="23">23</th><td><i> * Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.</i></td></tr>
+<tr><th id="24">24</th><td><i> *****************************************************************************/</i></td></tr>
+<tr><th id="25">25</th><td></td></tr>
+<tr><th id="26">26</th><td><u>#<span data-ppcond="26">ifdef</span> <span class="macro" data-ref="_M/HAVE_CONFIG_H">HAVE_CONFIG_H</span></u></td></tr>
+<tr><th id="27">27</th><td><u>#   include <a href="../../../config.h.html">"config.h"</a></u></td></tr>
+<tr><th id="28">28</th><td><u>#<span data-ppcond="26">endif</span></u></td></tr>
+<tr><th id="29">29</th><td></td></tr>
+<tr><th id="30">30</th><td><u>#include <a href="../../../../include/stdlib.h.html">&lt;stdlib.h&gt;</a></u></td></tr>
+<tr><th id="31">31</th><td><u>#include &lt;stdint.h&gt;</u></td></tr>
+<tr><th id="32">32</th><td></td></tr>
+<tr><th id="33">33</th><td><u>#include <a href="../../../include/vlc_common.h.html">&lt;vlc_common.h&gt;</a></u></td></tr>
+<tr><th id="34">34</th><td><u>#include <a href="../../../include/vlc_cpu.h.html">&lt;vlc_cpu.h&gt;</a></u></td></tr>
+<tr><th id="35">35</th><td><u>#include <a href="merge.h.html">"merge.h"</a></u></td></tr>
+<tr><th id="36">36</th><td></td></tr>
+<tr><th id="37">37</th><td><u>#<span data-ppcond="37">ifdef</span> <a class="macro" href="../../../config.h.html#32" data-ref="_M/CAN_COMPILE_MMXEXT">CAN_COMPILE_MMXEXT</a></u></td></tr>
+<tr><th id="38">38</th><td><u>#   include <a href="mmx.h.html">"mmx.h"</a></u></td></tr>
+<tr><th id="39">39</th><td><u>#<span data-ppcond="37">endif</span></u></td></tr>
+<tr><th id="40">40</th><td></td></tr>
+<tr><th id="41">41</th><td><u>#<span data-ppcond="41">ifdef</span> <span class="macro" data-ref="_M/HAVE_ALTIVEC_H">HAVE_ALTIVEC_H</span></u></td></tr>
+<tr><th id="42">42</th><td><u>#   include &lt;altivec.h&gt;</u></td></tr>
+<tr><th id="43">43</th><td><u>#<span data-ppcond="41">endif</span></u></td></tr>
+<tr><th id="44">44</th><td></td></tr>
+<tr><th id="45">45</th><td><i>/*****************************************************************************</i></td></tr>
+<tr><th id="46">46</th><td><i> * Merge (line blending) routines</i></td></tr>
+<tr><th id="47">47</th><td><i> *****************************************************************************/</i></td></tr>
+<tr><th id="48">48</th><td></td></tr>
+<tr><th id="49">49</th><td><em>void</em> <dfn class="decl def" id="Merge8BitGeneric" title='Merge8BitGeneric' data-ref="Merge8BitGeneric">Merge8BitGeneric</dfn>( <em>void</em> *<dfn class="local col1 decl" id="1_p_dest" title='_p_dest' data-type='void *' data-ref="1_p_dest">_p_dest</dfn>, <em>const</em> <em>void</em> *<dfn class="local col2 decl" id="2_p_s1" title='_p_s1' data-type='const void *' data-ref="2_p_s1">_p_s1</dfn>,</td></tr>
+<tr><th id="50">50</th><td>                       <em>const</em> <em>void</em> *<dfn class="local col3 decl" id="3_p_s2" title='_p_s2' data-type='const void *' data-ref="3_p_s2">_p_s2</dfn>, <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="local col4 decl" id="4i_bytes" title='i_bytes' data-type='size_t' data-ref="4i_bytes">i_bytes</dfn> )</td></tr>
+<tr><th id="51">51</th><td>{</td></tr>
+<tr><th id="52">52</th><td>    <a class="typedef" href="../../../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col5 decl" id="5p_dest" title='p_dest' data-type='uint8_t *' data-ref="5p_dest">p_dest</dfn> = <a class="local col1 ref" href="#1_p_dest" title='_p_dest' data-ref="1_p_dest">_p_dest</a>;</td></tr>
+<tr><th id="53">53</th><td>    <em>const</em> <a class="typedef" href="../../../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col6 decl" id="6p_s1" title='p_s1' data-type='const uint8_t *' data-ref="6p_s1">p_s1</dfn> = <a class="local col2 ref" href="#2_p_s1" title='_p_s1' data-ref="2_p_s1">_p_s1</a>;</td></tr>
+<tr><th id="54">54</th><td>    <em>const</em> <a class="typedef" href="../../../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col7 decl" id="7p_s2" title='p_s2' data-type='const uint8_t *' data-ref="7p_s2">p_s2</dfn> = <a class="local col3 ref" href="#3_p_s2" title='_p_s2' data-ref="3_p_s2">_p_s2</a>;</td></tr>
+<tr><th id="55">55</th><td></td></tr>
+<tr><th id="56">56</th><td>    <b>for</b>( ; <a class="local col4 ref" href="#4i_bytes" title='i_bytes' data-ref="4i_bytes">i_bytes</a> &gt; <var>0</var>; <a class="local col4 ref" href="#4i_bytes" title='i_bytes' data-ref="4i_bytes">i_bytes</a>-- )</td></tr>
+<tr><th id="57">57</th><td>        *<a class="local col5 ref" href="#5p_dest" title='p_dest' data-ref="5p_dest">p_dest</a>++ = ( *<a class="local col6 ref" href="#6p_s1" title='p_s1' data-ref="6p_s1">p_s1</a>++ + *<a class="local col7 ref" href="#7p_s2" title='p_s2' data-ref="7p_s2">p_s2</a>++ ) &gt;&gt; <var>1</var>;</td></tr>
+<tr><th id="58">58</th><td>}</td></tr>
+<tr><th id="59">59</th><td></td></tr>
+<tr><th id="60">60</th><td><em>void</em> <dfn class="decl def" id="Merge16BitGeneric" title='Merge16BitGeneric' data-ref="Merge16BitGeneric">Merge16BitGeneric</dfn>( <em>void</em> *<dfn class="local col8 decl" id="8_p_dest" title='_p_dest' data-type='void *' data-ref="8_p_dest">_p_dest</dfn>, <em>const</em> <em>void</em> *<dfn class="local col9 decl" id="9_p_s1" title='_p_s1' data-type='const void *' data-ref="9_p_s1">_p_s1</dfn>,</td></tr>
+<tr><th id="61">61</th><td>                        <em>const</em> <em>void</em> *<dfn class="local col0 decl" id="10_p_s2" title='_p_s2' data-type='const void *' data-ref="10_p_s2">_p_s2</dfn>, <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="local col1 decl" id="11i_bytes" title='i_bytes' data-type='size_t' data-ref="11i_bytes">i_bytes</dfn> )</td></tr>
+<tr><th id="62">62</th><td>{</td></tr>
+<tr><th id="63">63</th><td>    <a class="typedef" href="../../../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> *<dfn class="local col2 decl" id="12p_dest" title='p_dest' data-type='uint16_t *' data-ref="12p_dest">p_dest</dfn> = <a class="local col8 ref" href="#8_p_dest" title='_p_dest' data-ref="8_p_dest">_p_dest</a>;</td></tr>
+<tr><th id="64">64</th><td>    <em>const</em> <a class="typedef" href="../../../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> *<dfn class="local col3 decl" id="13p_s1" title='p_s1' data-type='const uint16_t *' data-ref="13p_s1">p_s1</dfn> = <a class="local col9 ref" href="#9_p_s1" title='_p_s1' data-ref="9_p_s1">_p_s1</a>;</td></tr>
+<tr><th id="65">65</th><td>    <em>const</em> <a class="typedef" href="../../../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> *<dfn class="local col4 decl" id="14p_s2" title='p_s2' data-type='const uint16_t *' data-ref="14p_s2">p_s2</dfn> = <a class="local col0 ref" href="#10_p_s2" title='_p_s2' data-ref="10_p_s2">_p_s2</a>;</td></tr>
+<tr><th id="66">66</th><td></td></tr>
+<tr><th id="67">67</th><td>    <b>for</b>( <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="local col5 decl" id="15i_words" title='i_words' data-type='size_t' data-ref="15i_words">i_words</dfn> = <a class="local col1 ref" href="#11i_bytes" title='i_bytes' data-ref="11i_bytes">i_bytes</a> / <var>2</var>; <a class="local col5 ref" href="#15i_words" title='i_words' data-ref="15i_words">i_words</a> &gt; <var>0</var>; <a class="local col5 ref" href="#15i_words" title='i_words' data-ref="15i_words">i_words</a>-- )</td></tr>
+<tr><th id="68">68</th><td>        *<a class="local col2 ref" href="#12p_dest" title='p_dest' data-ref="12p_dest">p_dest</a>++ = ( *<a class="local col3 ref" href="#13p_s1" title='p_s1' data-ref="13p_s1">p_s1</a>++ + *<a class="local col4 ref" href="#14p_s2" title='p_s2' data-ref="14p_s2">p_s2</a>++ ) &gt;&gt; <var>1</var>;</td></tr>
+<tr><th id="69">69</th><td>}</td></tr>
+<tr><th id="70">70</th><td></td></tr>
+<tr><th id="71">71</th><td><u>#<span data-ppcond="71">if</span> defined(<a class="macro" href="../../../config.h.html#32" data-ref="_M/CAN_COMPILE_MMXEXT">CAN_COMPILE_MMXEXT</a>)</u></td></tr>
+<tr><th id="72">72</th><td><a class="macro" href="../../../include/vlc_cpu.h.html#50" title="" data-ref="_M/VLC_MMX">VLC_MMX</a></td></tr>
+<tr><th id="73">73</th><td><em>void</em> <dfn class="decl def" id="MergeMMXEXT" title='MergeMMXEXT' data-ref="MergeMMXEXT">MergeMMXEXT</dfn>( <em>void</em> *<dfn class="local col6 decl" id="16_p_dest" title='_p_dest' data-type='void *' data-ref="16_p_dest">_p_dest</dfn>, <em>const</em> <em>void</em> *<dfn class="local col7 decl" id="17_p_s1" title='_p_s1' data-type='const void *' data-ref="17_p_s1">_p_s1</dfn>, <em>const</em> <em>void</em> *<dfn class="local col8 decl" id="18_p_s2" title='_p_s2' data-type='const void *' data-ref="18_p_s2">_p_s2</dfn>,</td></tr>
+<tr><th id="74">74</th><td>                  <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="local col9 decl" id="19i_bytes" title='i_bytes' data-type='size_t' data-ref="19i_bytes">i_bytes</dfn> )</td></tr>
+<tr><th id="75">75</th><td>{</td></tr>
+<tr><th id="76">76</th><td>    <a class="typedef" href="../../../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col0 decl" id="20p_dest" title='p_dest' data-type='uint8_t *' data-ref="20p_dest">p_dest</dfn> = <a class="local col6 ref" href="#16_p_dest" title='_p_dest' data-ref="16_p_dest">_p_dest</a>;</td></tr>
+<tr><th id="77">77</th><td>    <em>const</em> <a class="typedef" href="../../../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col1 decl" id="21p_s1" title='p_s1' data-type='const uint8_t *' data-ref="21p_s1">p_s1</dfn> = <a class="local col7 ref" href="#17_p_s1" title='_p_s1' data-ref="17_p_s1">_p_s1</a>;</td></tr>
+<tr><th id="78">78</th><td>    <em>const</em> <a class="typedef" href="../../../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col2 decl" id="22p_s2" title='p_s2' data-type='const uint8_t *' data-ref="22p_s2">p_s2</dfn> = <a class="local col8 ref" href="#18_p_s2" title='_p_s2' data-ref="18_p_s2">_p_s2</a>;</td></tr>
+<tr><th id="79">79</th><td></td></tr>
+<tr><th id="80">80</th><td>    <b>for</b>( ; <a class="local col9 ref" href="#19i_bytes" title='i_bytes' data-ref="19i_bytes">i_bytes</a> &gt;= <var>8</var>; <a class="local col9 ref" href="#19i_bytes" title='i_bytes' data-ref="19i_bytes">i_bytes</a> -= <var>8</var> )</td></tr>
+<tr><th id="81">81</th><td>    {</td></tr>
+<tr><th id="82">82</th><td>        <b>__asm__</b>  <em>__volatile__</em>( <q>"movq %2,%%mm1;"</q></td></tr>
+<tr><th id="83">83</th><td>                               <q>"pavgb %1, %%mm1;"</q></td></tr>
+<tr><th id="84">84</th><td>                               <q>"movq %%mm1, %0"</q> :<q>"=m"</q> (*<a class="local col0 ref" href="#20p_dest" title='p_dest' data-ref="20p_dest">p_dest</a>):</td></tr>
+<tr><th id="85">85</th><td>                                                 <q>"m"</q> (*<a class="local col1 ref" href="#21p_s1" title='p_s1' data-ref="21p_s1">p_s1</a>),</td></tr>
+<tr><th id="86">86</th><td>                                                 <q>"m"</q> (*<a class="local col2 ref" href="#22p_s2" title='p_s2' data-ref="22p_s2">p_s2</a>) : <q>"mm1"</q> );</td></tr>
+<tr><th id="87">87</th><td>        <a class="local col0 ref" href="#20p_dest" title='p_dest' data-ref="20p_dest">p_dest</a> += <var>8</var>;</td></tr>
+<tr><th id="88">88</th><td>        <a class="local col1 ref" href="#21p_s1" title='p_s1' data-ref="21p_s1">p_s1</a> += <var>8</var>;</td></tr>
+<tr><th id="89">89</th><td>        <a class="local col2 ref" href="#22p_s2" title='p_s2' data-ref="22p_s2">p_s2</a> += <var>8</var>;</td></tr>
+<tr><th id="90">90</th><td>    }</td></tr>
+<tr><th id="91">91</th><td></td></tr>
+<tr><th id="92">92</th><td>    <b>for</b>( ; <a class="local col9 ref" href="#19i_bytes" title='i_bytes' data-ref="19i_bytes">i_bytes</a> &gt; <var>0</var>; <a class="local col9 ref" href="#19i_bytes" title='i_bytes' data-ref="19i_bytes">i_bytes</a>-- )</td></tr>
+<tr><th id="93">93</th><td>        *<a class="local col0 ref" href="#20p_dest" title='p_dest' data-ref="20p_dest">p_dest</a>++ = ( *<a class="local col1 ref" href="#21p_s1" title='p_s1' data-ref="21p_s1">p_s1</a>++ + *<a class="local col2 ref" href="#22p_s2" title='p_s2' data-ref="22p_s2">p_s2</a>++ ) &gt;&gt; <var>1</var>;</td></tr>
+<tr><th id="94">94</th><td>}</td></tr>
+<tr><th id="95">95</th><td><u>#<span data-ppcond="71">endif</span></u></td></tr>
+<tr><th id="96">96</th><td></td></tr>
+<tr><th id="97">97</th><td><u>#<span data-ppcond="97">if</span> defined(<a class="macro" href="../../../config.h.html#20" data-ref="_M/CAN_COMPILE_3DNOW">CAN_COMPILE_3DNOW</a>)</u></td></tr>
+<tr><th id="98">98</th><td><a class="macro" href="../../../include/vlc_cpu.h.html#50" title="" data-ref="_M/VLC_MMX">VLC_MMX</a></td></tr>
+<tr><th id="99">99</th><td><em>void</em> <dfn class="decl def" id="Merge3DNow" title='Merge3DNow' data-ref="Merge3DNow">Merge3DNow</dfn>( <em>void</em> *<dfn class="local col3 decl" id="23_p_dest" title='_p_dest' data-type='void *' data-ref="23_p_dest">_p_dest</dfn>, <em>const</em> <em>void</em> *<dfn class="local col4 decl" id="24_p_s1" title='_p_s1' data-type='const void *' data-ref="24_p_s1">_p_s1</dfn>, <em>const</em> <em>void</em> *<dfn class="local col5 decl" id="25_p_s2" title='_p_s2' data-type='const void *' data-ref="25_p_s2">_p_s2</dfn>,</td></tr>
+<tr><th id="100">100</th><td>                 <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="local col6 decl" id="26i_bytes" title='i_bytes' data-type='size_t' data-ref="26i_bytes">i_bytes</dfn> )</td></tr>
+<tr><th id="101">101</th><td>{</td></tr>
+<tr><th id="102">102</th><td>    <a class="typedef" href="../../../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col7 decl" id="27p_dest" title='p_dest' data-type='uint8_t *' data-ref="27p_dest">p_dest</dfn> = <a class="local col3 ref" href="#23_p_dest" title='_p_dest' data-ref="23_p_dest">_p_dest</a>;</td></tr>
+<tr><th id="103">103</th><td>    <em>const</em> <a class="typedef" href="../../../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col8 decl" id="28p_s1" title='p_s1' data-type='const uint8_t *' data-ref="28p_s1">p_s1</dfn> = <a class="local col4 ref" href="#24_p_s1" title='_p_s1' data-ref="24_p_s1">_p_s1</a>;</td></tr>
+<tr><th id="104">104</th><td>    <em>const</em> <a class="typedef" href="../../../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col9 decl" id="29p_s2" title='p_s2' data-type='const uint8_t *' data-ref="29p_s2">p_s2</dfn> = <a class="local col5 ref" href="#25_p_s2" title='_p_s2' data-ref="25_p_s2">_p_s2</a>;</td></tr>
+<tr><th id="105">105</th><td></td></tr>
+<tr><th id="106">106</th><td>    <b>for</b>( ; <a class="local col6 ref" href="#26i_bytes" title='i_bytes' data-ref="26i_bytes">i_bytes</a> &gt;= <var>8</var>; <a class="local col6 ref" href="#26i_bytes" title='i_bytes' data-ref="26i_bytes">i_bytes</a> -= <var>8</var> )</td></tr>
+<tr><th id="107">107</th><td>    {</td></tr>
+<tr><th id="108">108</th><td>        <b>__asm__</b>  <em>__volatile__</em>( <q>"movq %2,%%mm1;"</q></td></tr>
+<tr><th id="109">109</th><td>                               <q>"pavgusb %1, %%mm1;"</q></td></tr>
+<tr><th id="110">110</th><td>                               <q>"movq %%mm1, %0"</q> :<q>"=m"</q> (*<a class="local col7 ref" href="#27p_dest" title='p_dest' data-ref="27p_dest">p_dest</a>):</td></tr>
+<tr><th id="111">111</th><td>                                                 <q>"m"</q> (*<a class="local col8 ref" href="#28p_s1" title='p_s1' data-ref="28p_s1">p_s1</a>),</td></tr>
+<tr><th id="112">112</th><td>                                                 <q>"m"</q> (*<a class="local col9 ref" href="#29p_s2" title='p_s2' data-ref="29p_s2">p_s2</a>) : <q>"mm1"</q> );</td></tr>
+<tr><th id="113">113</th><td>        <a class="local col7 ref" href="#27p_dest" title='p_dest' data-ref="27p_dest">p_dest</a> += <var>8</var>;</td></tr>
+<tr><th id="114">114</th><td>        <a class="local col8 ref" href="#28p_s1" title='p_s1' data-ref="28p_s1">p_s1</a> += <var>8</var>;</td></tr>
+<tr><th id="115">115</th><td>        <a class="local col9 ref" href="#29p_s2" title='p_s2' data-ref="29p_s2">p_s2</a> += <var>8</var>;</td></tr>
+<tr><th id="116">116</th><td>    }</td></tr>
+<tr><th id="117">117</th><td></td></tr>
+<tr><th id="118">118</th><td>    <b>for</b>( ; <a class="local col6 ref" href="#26i_bytes" title='i_bytes' data-ref="26i_bytes">i_bytes</a> &gt; <var>0</var>; <a class="local col6 ref" href="#26i_bytes" title='i_bytes' data-ref="26i_bytes">i_bytes</a>-- )</td></tr>
+<tr><th id="119">119</th><td>        *<a class="local col7 ref" href="#27p_dest" title='p_dest' data-ref="27p_dest">p_dest</a>++ = ( *<a class="local col8 ref" href="#28p_s1" title='p_s1' data-ref="28p_s1">p_s1</a>++ + *<a class="local col9 ref" href="#29p_s2" title='p_s2' data-ref="29p_s2">p_s2</a>++ ) &gt;&gt; <var>1</var>;</td></tr>
+<tr><th id="120">120</th><td>}</td></tr>
+<tr><th id="121">121</th><td><u>#<span data-ppcond="97">endif</span></u></td></tr>
+<tr><th id="122">122</th><td></td></tr>
+<tr><th id="123">123</th><td><u>#<span data-ppcond="123">if</span> defined(<a class="macro" href="../../../config.h.html#35" data-ref="_M/CAN_COMPILE_SSE">CAN_COMPILE_SSE</a>)</u></td></tr>
+<tr><th id="124">124</th><td><a class="macro" href="../../../include/vlc_cpu.h.html#63" title="" data-ref="_M/VLC_SSE">VLC_SSE</a></td></tr>
+<tr><th id="125">125</th><td><em>void</em> <dfn class="decl def" id="Merge8BitSSE2" title='Merge8BitSSE2' data-ref="Merge8BitSSE2">Merge8BitSSE2</dfn>( <em>void</em> *<dfn class="local col0 decl" id="30_p_dest" title='_p_dest' data-type='void *' data-ref="30_p_dest">_p_dest</dfn>, <em>const</em> <em>void</em> *<dfn class="local col1 decl" id="31_p_s1" title='_p_s1' data-type='const void *' data-ref="31_p_s1">_p_s1</dfn>, <em>const</em> <em>void</em> *<dfn class="local col2 decl" id="32_p_s2" title='_p_s2' data-type='const void *' data-ref="32_p_s2">_p_s2</dfn>,</td></tr>
+<tr><th id="126">126</th><td>                    <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="local col3 decl" id="33i_bytes" title='i_bytes' data-type='size_t' data-ref="33i_bytes">i_bytes</dfn> )</td></tr>
+<tr><th id="127">127</th><td>{</td></tr>
+<tr><th id="128">128</th><td>    <a class="typedef" href="../../../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col4 decl" id="34p_dest" title='p_dest' data-type='uint8_t *' data-ref="34p_dest">p_dest</dfn> = <a class="local col0 ref" href="#30_p_dest" title='_p_dest' data-ref="30_p_dest">_p_dest</a>;</td></tr>
+<tr><th id="129">129</th><td>    <em>const</em> <a class="typedef" href="../../../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col5 decl" id="35p_s1" title='p_s1' data-type='const uint8_t *' data-ref="35p_s1">p_s1</dfn> = <a class="local col1 ref" href="#31_p_s1" title='_p_s1' data-ref="31_p_s1">_p_s1</a>;</td></tr>
+<tr><th id="130">130</th><td>    <em>const</em> <a class="typedef" href="../../../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col6 decl" id="36p_s2" title='p_s2' data-type='const uint8_t *' data-ref="36p_s2">p_s2</dfn> = <a class="local col2 ref" href="#32_p_s2" title='_p_s2' data-ref="32_p_s2">_p_s2</a>;</td></tr>
+<tr><th id="131">131</th><td></td></tr>
+<tr><th id="132">132</th><td>    <b>for</b>( ; <a class="local col3 ref" href="#33i_bytes" title='i_bytes' data-ref="33i_bytes">i_bytes</a> &gt; <var>0</var> &amp;&amp; ((<a class="typedef" href="../../../../include/stdint.h.html#uintptr_t" title='uintptr_t' data-type='unsigned long' data-ref="uintptr_t">uintptr_t</a>)<a class="local col5 ref" href="#35p_s1" title='p_s1' data-ref="35p_s1">p_s1</a> &amp; <var>15</var>); <a class="local col3 ref" href="#33i_bytes" title='i_bytes' data-ref="33i_bytes">i_bytes</a>-- )</td></tr>
+<tr><th id="133">133</th><td>        *<a class="local col4 ref" href="#34p_dest" title='p_dest' data-ref="34p_dest">p_dest</a>++ = ( *<a class="local col5 ref" href="#35p_s1" title='p_s1' data-ref="35p_s1">p_s1</a>++ + *<a class="local col6 ref" href="#36p_s2" title='p_s2' data-ref="36p_s2">p_s2</a>++ ) &gt;&gt; <var>1</var>;</td></tr>
+<tr><th id="134">134</th><td></td></tr>
+<tr><th id="135">135</th><td>    <b>for</b>( ; <a class="local col3 ref" href="#33i_bytes" title='i_bytes' data-ref="33i_bytes">i_bytes</a> &gt;= <var>16</var>; <a class="local col3 ref" href="#33i_bytes" title='i_bytes' data-ref="33i_bytes">i_bytes</a> -= <var>16</var> )</td></tr>
+<tr><th id="136">136</th><td>    {</td></tr>
+<tr><th id="137">137</th><td>        <b>__asm__</b>  <em>__volatile__</em>( <q>"movdqu %2,%%xmm1;"</q></td></tr>
+<tr><th id="138">138</th><td>                               <q>"pavgb %1, %%xmm1;"</q></td></tr>
+<tr><th id="139">139</th><td>                               <q>"movdqu %%xmm1, %0"</q> :<q>"=m"</q> (*<a class="local col4 ref" href="#34p_dest" title='p_dest' data-ref="34p_dest">p_dest</a>):</td></tr>
+<tr><th id="140">140</th><td>                                                 <q>"m"</q> (*<a class="local col5 ref" href="#35p_s1" title='p_s1' data-ref="35p_s1">p_s1</a>),</td></tr>
+<tr><th id="141">141</th><td>                                                 <q>"m"</q> (*<a class="local col6 ref" href="#36p_s2" title='p_s2' data-ref="36p_s2">p_s2</a>) : <q>"xmm1"</q> );</td></tr>
+<tr><th id="142">142</th><td>        <a class="local col4 ref" href="#34p_dest" title='p_dest' data-ref="34p_dest">p_dest</a> += <var>16</var>;</td></tr>
+<tr><th id="143">143</th><td>        <a class="local col5 ref" href="#35p_s1" title='p_s1' data-ref="35p_s1">p_s1</a> += <var>16</var>;</td></tr>
+<tr><th id="144">144</th><td>        <a class="local col6 ref" href="#36p_s2" title='p_s2' data-ref="36p_s2">p_s2</a> += <var>16</var>;</td></tr>
+<tr><th id="145">145</th><td>    }</td></tr>
+<tr><th id="146">146</th><td></td></tr>
+<tr><th id="147">147</th><td>    <b>for</b>( ; <a class="local col3 ref" href="#33i_bytes" title='i_bytes' data-ref="33i_bytes">i_bytes</a> &gt; <var>0</var>; <a class="local col3 ref" href="#33i_bytes" title='i_bytes' data-ref="33i_bytes">i_bytes</a>-- )</td></tr>
+<tr><th id="148">148</th><td>        *<a class="local col4 ref" href="#34p_dest" title='p_dest' data-ref="34p_dest">p_dest</a>++ = ( *<a class="local col5 ref" href="#35p_s1" title='p_s1' data-ref="35p_s1">p_s1</a>++ + *<a class="local col6 ref" href="#36p_s2" title='p_s2' data-ref="36p_s2">p_s2</a>++ ) &gt;&gt; <var>1</var>;</td></tr>
+<tr><th id="149">149</th><td>}</td></tr>
+<tr><th id="150">150</th><td></td></tr>
+<tr><th id="151">151</th><td><a class="macro" href="../../../include/vlc_cpu.h.html#63" title="" data-ref="_M/VLC_SSE">VLC_SSE</a></td></tr>
+<tr><th id="152">152</th><td><em>void</em> <dfn class="decl def" id="Merge16BitSSE2" title='Merge16BitSSE2' data-ref="Merge16BitSSE2">Merge16BitSSE2</dfn>( <em>void</em> *<dfn class="local col7 decl" id="37_p_dest" title='_p_dest' data-type='void *' data-ref="37_p_dest">_p_dest</dfn>, <em>const</em> <em>void</em> *<dfn class="local col8 decl" id="38_p_s1" title='_p_s1' data-type='const void *' data-ref="38_p_s1">_p_s1</dfn>, <em>const</em> <em>void</em> *<dfn class="local col9 decl" id="39_p_s2" title='_p_s2' data-type='const void *' data-ref="39_p_s2">_p_s2</dfn>,</td></tr>
+<tr><th id="153">153</th><td>                     <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="local col0 decl" id="40i_bytes" title='i_bytes' data-type='size_t' data-ref="40i_bytes">i_bytes</dfn> )</td></tr>
+<tr><th id="154">154</th><td>{</td></tr>
+<tr><th id="155">155</th><td>    <a class="typedef" href="../../../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> *<dfn class="local col1 decl" id="41p_dest" title='p_dest' data-type='uint16_t *' data-ref="41p_dest">p_dest</dfn> = <a class="local col7 ref" href="#37_p_dest" title='_p_dest' data-ref="37_p_dest">_p_dest</a>;</td></tr>
+<tr><th id="156">156</th><td>    <em>const</em> <a class="typedef" href="../../../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> *<dfn class="local col2 decl" id="42p_s1" title='p_s1' data-type='const uint16_t *' data-ref="42p_s1">p_s1</dfn> = <a class="local col8 ref" href="#38_p_s1" title='_p_s1' data-ref="38_p_s1">_p_s1</a>;</td></tr>
+<tr><th id="157">157</th><td>    <em>const</em> <a class="typedef" href="../../../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> *<dfn class="local col3 decl" id="43p_s2" title='p_s2' data-type='const uint16_t *' data-ref="43p_s2">p_s2</dfn> = <a class="local col9 ref" href="#39_p_s2" title='_p_s2' data-ref="39_p_s2">_p_s2</a>;</td></tr>
+<tr><th id="158">158</th><td></td></tr>
+<tr><th id="159">159</th><td>    <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="local col4 decl" id="44i_words" title='i_words' data-type='size_t' data-ref="44i_words">i_words</dfn> = <a class="local col0 ref" href="#40i_bytes" title='i_bytes' data-ref="40i_bytes">i_bytes</a> / <var>2</var>;</td></tr>
+<tr><th id="160">160</th><td>    <b>for</b>( ; <a class="local col4 ref" href="#44i_words" title='i_words' data-ref="44i_words">i_words</a> &gt; <var>0</var> &amp;&amp; ((<a class="typedef" href="../../../../include/stdint.h.html#uintptr_t" title='uintptr_t' data-type='unsigned long' data-ref="uintptr_t">uintptr_t</a>)<a class="local col2 ref" href="#42p_s1" title='p_s1' data-ref="42p_s1">p_s1</a> &amp; <var>15</var>); <a class="local col4 ref" href="#44i_words" title='i_words' data-ref="44i_words">i_words</a>-- )</td></tr>
+<tr><th id="161">161</th><td>        *<a class="local col1 ref" href="#41p_dest" title='p_dest' data-ref="41p_dest">p_dest</a>++ = ( *<a class="local col2 ref" href="#42p_s1" title='p_s1' data-ref="42p_s1">p_s1</a>++ + *<a class="local col3 ref" href="#43p_s2" title='p_s2' data-ref="43p_s2">p_s2</a>++ ) &gt;&gt; <var>1</var>;</td></tr>
+<tr><th id="162">162</th><td></td></tr>
+<tr><th id="163">163</th><td>    <b>for</b>( ; <a class="local col4 ref" href="#44i_words" title='i_words' data-ref="44i_words">i_words</a> &gt;= <var>8</var>; <a class="local col4 ref" href="#44i_words" title='i_words' data-ref="44i_words">i_words</a> -= <var>8</var> )</td></tr>
+<tr><th id="164">164</th><td>    {</td></tr>
+<tr><th id="165">165</th><td>        <b>__asm__</b>  <em>__volatile__</em>( <q>"movdqu %2,%%xmm1;"</q></td></tr>
+<tr><th id="166">166</th><td>                               <q>"pavgw %1, %%xmm1;"</q></td></tr>
+<tr><th id="167">167</th><td>                               <q>"movdqu %%xmm1, %0"</q> :<q>"=m"</q> (*<a class="local col1 ref" href="#41p_dest" title='p_dest' data-ref="41p_dest">p_dest</a>):</td></tr>
+<tr><th id="168">168</th><td>                                                 <q>"m"</q> (*<a class="local col2 ref" href="#42p_s1" title='p_s1' data-ref="42p_s1">p_s1</a>),</td></tr>
+<tr><th id="169">169</th><td>                                                 <q>"m"</q> (*<a class="local col3 ref" href="#43p_s2" title='p_s2' data-ref="43p_s2">p_s2</a>) : <q>"xmm1"</q> );</td></tr>
+<tr><th id="170">170</th><td>        <a class="local col1 ref" href="#41p_dest" title='p_dest' data-ref="41p_dest">p_dest</a> += <var>8</var>;</td></tr>
+<tr><th id="171">171</th><td>        <a class="local col2 ref" href="#42p_s1" title='p_s1' data-ref="42p_s1">p_s1</a> += <var>8</var>;</td></tr>
+<tr><th id="172">172</th><td>        <a class="local col3 ref" href="#43p_s2" title='p_s2' data-ref="43p_s2">p_s2</a> += <var>8</var>;</td></tr>
+<tr><th id="173">173</th><td>    }</td></tr>
+<tr><th id="174">174</th><td></td></tr>
+<tr><th id="175">175</th><td>    <b>for</b>( ; <a class="local col4 ref" href="#44i_words" title='i_words' data-ref="44i_words">i_words</a> &gt; <var>0</var>; <a class="local col4 ref" href="#44i_words" title='i_words' data-ref="44i_words">i_words</a>-- )</td></tr>
+<tr><th id="176">176</th><td>        *<a class="local col1 ref" href="#41p_dest" title='p_dest' data-ref="41p_dest">p_dest</a>++ = ( *<a class="local col2 ref" href="#42p_s1" title='p_s1' data-ref="42p_s1">p_s1</a>++ + *<a class="local col3 ref" href="#43p_s2" title='p_s2' data-ref="43p_s2">p_s2</a>++ ) &gt;&gt; <var>1</var>;</td></tr>
+<tr><th id="177">177</th><td>}</td></tr>
+<tr><th id="178">178</th><td></td></tr>
+<tr><th id="179">179</th><td><u>#<span data-ppcond="123">endif</span></u></td></tr>
+<tr><th id="180">180</th><td></td></tr>
+<tr><th id="181">181</th><td><u>#<span data-ppcond="181">ifdef</span> <span class="macro" data-ref="_M/CAN_COMPILE_C_ALTIVEC">CAN_COMPILE_C_ALTIVEC</span></u></td></tr>
+<tr><th id="182">182</th><td><em>void</em> MergeAltivec( <em>void</em> *_p_dest, <em>const</em> <em>void</em> *_p_s1,</td></tr>
+<tr><th id="183">183</th><td>                   <em>const</em> <em>void</em> *_p_s2, size_t i_bytes )</td></tr>
+<tr><th id="184">184</th><td>{</td></tr>
+<tr><th id="185">185</th><td>    uint8_t *p_dest = _p_dest;</td></tr>
+<tr><th id="186">186</th><td>    <em>const</em> uint8_t *p_s1 = _p_s1;</td></tr>
+<tr><th id="187">187</th><td>    <em>const</em> uint8_t *p_s2 = _p_s2;</td></tr>
+<tr><th id="188">188</th><td>    uint8_t *p_end  = p_dest + i_bytes - <var>15</var>;</td></tr>
+<tr><th id="189">189</th><td></td></tr>
+<tr><th id="190">190</th><td>    <i>/* Use C until the first 16-bytes aligned destination pixel */</i></td></tr>
+<tr><th id="191">191</th><td>    <b>while</b>( (uintptr_t)p_dest &amp; <var>0xF</var> )</td></tr>
+<tr><th id="192">192</th><td>    {</td></tr>
+<tr><th id="193">193</th><td>        *p_dest++ = ( (uint16_t)(*p_s1++) + (uint16_t)(*p_s2++) ) &gt;&gt; <var>1</var>;</td></tr>
+<tr><th id="194">194</th><td>    }</td></tr>
+<tr><th id="195">195</th><td></td></tr>
+<tr><th id="196">196</th><td>    <b>if</b>( ( (<em>int</em>)p_s1 &amp; <var>0xF</var> ) | ( (<em>int</em>)p_s2 &amp; <var>0xF</var> ) )</td></tr>
+<tr><th id="197">197</th><td>    {</td></tr>
+<tr><th id="198">198</th><td>        <i>/* Unaligned source */</i></td></tr>
+<tr><th id="199">199</th><td>        vector <em>unsigned</em> <em>char</em> s1v, s2v, destv;</td></tr>
+<tr><th id="200">200</th><td>        vector <em>unsigned</em> <em>char</em> s1oldv, s2oldv, s1newv, s2newv;</td></tr>
+<tr><th id="201">201</th><td>        vector <em>unsigned</em> <em>char</em> perm1v, perm2v;</td></tr>
+<tr><th id="202">202</th><td></td></tr>
+<tr><th id="203">203</th><td>        perm1v = vec_lvsl( <var>0</var>, p_s1 );</td></tr>
+<tr><th id="204">204</th><td>        perm2v = vec_lvsl( <var>0</var>, p_s2 );</td></tr>
+<tr><th id="205">205</th><td>        s1oldv = vec_ld( <var>0</var>, p_s1 );</td></tr>
+<tr><th id="206">206</th><td>        s2oldv = vec_ld( <var>0</var>, p_s2 );</td></tr>
+<tr><th id="207">207</th><td></td></tr>
+<tr><th id="208">208</th><td>        <b>while</b>( p_dest &lt; p_end )</td></tr>
+<tr><th id="209">209</th><td>        {</td></tr>
+<tr><th id="210">210</th><td>            s1newv = vec_ld( <var>16</var>, p_s1 );</td></tr>
+<tr><th id="211">211</th><td>            s2newv = vec_ld( <var>16</var>, p_s2 );</td></tr>
+<tr><th id="212">212</th><td>            s1v    = vec_perm( s1oldv, s1newv, perm1v );</td></tr>
+<tr><th id="213">213</th><td>            s2v    = vec_perm( s2oldv, s2newv, perm2v );</td></tr>
+<tr><th id="214">214</th><td>            s1oldv = s1newv;</td></tr>
+<tr><th id="215">215</th><td>            s2oldv = s2newv;</td></tr>
+<tr><th id="216">216</th><td>            destv  = vec_avg( s1v, s2v );</td></tr>
+<tr><th id="217">217</th><td>            vec_st( destv, <var>0</var>, p_dest );</td></tr>
+<tr><th id="218">218</th><td></td></tr>
+<tr><th id="219">219</th><td>            p_s1   += <var>16</var>;</td></tr>
+<tr><th id="220">220</th><td>            p_s2   += <var>16</var>;</td></tr>
+<tr><th id="221">221</th><td>            p_dest += <var>16</var>;</td></tr>
+<tr><th id="222">222</th><td>        }</td></tr>
+<tr><th id="223">223</th><td>    }</td></tr>
+<tr><th id="224">224</th><td>    <b>else</b></td></tr>
+<tr><th id="225">225</th><td>    {</td></tr>
+<tr><th id="226">226</th><td>        <i>/* Aligned source */</i></td></tr>
+<tr><th id="227">227</th><td>        vector <em>unsigned</em> <em>char</em> s1v, s2v, destv;</td></tr>
+<tr><th id="228">228</th><td></td></tr>
+<tr><th id="229">229</th><td>        <b>while</b>( p_dest &lt; p_end )</td></tr>
+<tr><th id="230">230</th><td>        {</td></tr>
+<tr><th id="231">231</th><td>            s1v   = vec_ld( <var>0</var>, p_s1 );</td></tr>
+<tr><th id="232">232</th><td>            s2v   = vec_ld( <var>0</var>, p_s2 );</td></tr>
+<tr><th id="233">233</th><td>            destv = vec_avg( s1v, s2v );</td></tr>
+<tr><th id="234">234</th><td>            vec_st( destv, <var>0</var>, p_dest );</td></tr>
+<tr><th id="235">235</th><td></td></tr>
+<tr><th id="236">236</th><td>            p_s1   += <var>16</var>;</td></tr>
+<tr><th id="237">237</th><td>            p_s2   += <var>16</var>;</td></tr>
+<tr><th id="238">238</th><td>            p_dest += <var>16</var>;</td></tr>
+<tr><th id="239">239</th><td>        }</td></tr>
+<tr><th id="240">240</th><td>    }</td></tr>
+<tr><th id="241">241</th><td></td></tr>
+<tr><th id="242">242</th><td>    p_end += <var>15</var>;</td></tr>
+<tr><th id="243">243</th><td></td></tr>
+<tr><th id="244">244</th><td>    <b>while</b>( p_dest &lt; p_end )</td></tr>
+<tr><th id="245">245</th><td>        *p_dest++ = ( *p_s1++ + *p_s2++ ) &gt;&gt; <var>1</var>;</td></tr>
+<tr><th id="246">246</th><td>}</td></tr>
+<tr><th id="247">247</th><td><u>#<span data-ppcond="181">endif</span></u></td></tr>
+<tr><th id="248">248</th><td></td></tr>
+<tr><th id="249">249</th><td><i>/*****************************************************************************</i></td></tr>
+<tr><th id="250">250</th><td><i> * EndMerge routines</i></td></tr>
+<tr><th id="251">251</th><td><i> *****************************************************************************/</i></td></tr>
+<tr><th id="252">252</th><td></td></tr>
+<tr><th id="253">253</th><td><u>#<span data-ppcond="253">if</span> defined(<a class="macro" href="../../../config.h.html#32" data-ref="_M/CAN_COMPILE_MMXEXT">CAN_COMPILE_MMXEXT</a>) || defined(<a class="macro" href="../../../config.h.html#35" data-ref="_M/CAN_COMPILE_SSE">CAN_COMPILE_SSE</a>)</u></td></tr>
+<tr><th id="254">254</th><td><em>void</em> <dfn class="decl def" id="EndMMX" title='EndMMX' data-ref="EndMMX">EndMMX</dfn>( <em>void</em> )</td></tr>
+<tr><th id="255">255</th><td>{</td></tr>
+<tr><th id="256">256</th><td>    <b>__asm__</b> <em>__volatile__</em>( <q>"emms"</q> :: );</td></tr>
+<tr><th id="257">257</th><td>}</td></tr>
+<tr><th id="258">258</th><td><u>#<span data-ppcond="253">endif</span></u></td></tr>
+<tr><th id="259">259</th><td></td></tr>
+<tr><th id="260">260</th><td><u>#<span data-ppcond="260">if</span> defined(<a class="macro" href="../../../config.h.html#20" data-ref="_M/CAN_COMPILE_3DNOW">CAN_COMPILE_3DNOW</a>)</u></td></tr>
+<tr><th id="261">261</th><td><em>void</em> <dfn class="decl def" id="End3DNow" title='End3DNow' data-ref="End3DNow">End3DNow</dfn>( <em>void</em> )</td></tr>
+<tr><th id="262">262</th><td>{</td></tr>
+<tr><th id="263">263</th><td>    <b>__asm__</b> <em>__volatile__</em>( <q>"femms"</q> :: );</td></tr>
+<tr><th id="264">264</th><td>}</td></tr>
+<tr><th id="265">265</th><td><u>#<span data-ppcond="260">endif</span></u></td></tr>
+<tr><th id="266">266</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project vlc revision <em>2.2.0-git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

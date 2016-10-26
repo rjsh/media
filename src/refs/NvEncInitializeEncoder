@@ -1,0 +1,83 @@
+<dec f='ffmpeg/compat/nvenc/nvEncodeAPI.h' l='2163' type='NVENCSTATUS NvEncInitializeEncoder(void * encoder, NV_ENC_INITIALIZE_PARAMS * createEncodeParams)'/>
+<doc f='ffmpeg/compat/nvenc/nvEncodeAPI.h' l='2081'>/**
+ * \brief Initialize the encoder.
+ *
+ * This API must be used to initialize the encoder. The initialization parameter
+ * is passed using \p *createEncodeParams  The client must send the following
+ * fields of the _NV_ENC_INITIALIZE_PARAMS structure with a valid value.
+ * - NV_ENC_INITIALIZE_PARAMS::encodeGUID
+ * - NV_ENC_INITIALIZE_PARAMS::encodeWidth
+ * - NV_ENC_INITIALIZE_PARAMS::encodeHeight
+ *
+ * The client can pass a preset guid directly to the NvEncodeAPI interface using
+ * NV_ENC_INITIALIZE_PARAMS::presetGUID field. If the client doesn&apos;t pass
+ * NV_ENC_INITIALIZE_PARAMS::encodeConfig structure, the codec specific parameters
+ * will be selected based on the preset guid. The preset guid must have been
+ * validated by the client using ::NvEncGetEncodePresetGUIDs() API.
+ * If the client passes a custom ::_NV_ENC_CONFIG structure through
+ * NV_ENC_INITIALIZE_PARAMS::encodeConfig , it will override the codec specific parameters
+ * based on the preset guid. It is recommended that even if the client passes a custom config,
+ * it should also send a preset guid. In this case, the preset guid passed by the client
+ * will not override any of the custom config parameters programmed by the client,
+ * it is only used as a hint by the NvEncodeAPI interface to determine certain encoder parameters
+ * which are not exposed to the client.
+ *
+ * There are two modes of operation for the encoder namely:
+ * - Asynchronous mode
+ * - Synchronous mode
+ *
+ * The client can select asynchronous or synchronous mode by setting the \p
+ * enableEncodeAsync field in ::_NV_ENC_INITIALIZE_PARAMS to 1 or 0 respectively.
+ *\par Asynchronous mode of operation:
+ * The Asynchronous mode can be enabled by setting NV_ENC_INITIALIZE_PARAMS::enableEncodeAsync to 1.
+ * The client operating in asynchronous mode must allocate completion event object
+ * for each output buffer and pass the completion event object in the
+ * ::NvEncEncodePicture() API. The client can create another thread and wait on
+ * the event object to be signalled by NvEncodeAPI interface on completion of the
+ * encoding process for the output frame. This should unblock the main thread from
+ * submitting work to the encoder. When the event is signalled the client can call
+ * NvEncodeAPI interfaces to copy the bitstream data using ::NvEncLockBitstream()
+ * API. This is the preferred mode of operation.
+ *
+ * NOTE: Asynchronous mode is not supported on Linux.
+ *
+ *\par Synchronous mode of operation:
+ * The client can select synchronous mode by setting NV_ENC_INITIALIZE_PARAMS::enableEncodeAsync to 0.
+ * The client working in synchronous mode can work in a single threaded or multi
+ * threaded mode. The client need not allocate any event objects. The client can
+ * only lock the bitstream data after NvEncodeAPI interface has returned
+ * ::NV_ENC_SUCCESS from encode picture. The NvEncodeAPI interface can return
+ * ::NV_ENC_ERR_NEED_MORE_INPUT error code from ::NvEncEncodePicture() API. The
+ * client must not lock the output buffer in such case but should send the next
+ * frame for encoding. The client must keep on calling ::NvEncEncodePicture() API
+ * until it returns ::NV_ENC_SUCCESS. \n
+ * The client must always lock the bitstream data in order in which it has submitted.
+ * This is true for both asynchronous and synchronous mode.
+ *
+ *\par Picture type decision:
+ * If the client is taking the picture type decision and it must disable the picture
+ * type decision module in NvEncodeAPI by setting NV_ENC_INITIALIZE_PARAMS::enablePTD
+ * to 0. In this case the client is  required to send the picture in encoding
+ * order to NvEncodeAPI by doing the re-ordering for B frames. \n
+ * If the client doesn&apos;t want to take the picture type decision it can enable
+ * picture type decision module in the NvEncodeAPI interface by setting
+ * NV_ENC_INITIALIZE_PARAMS::enablePTD to 1 and send the input pictures in display
+ * order.
+ *
+ * \param [in] encoder
+ *   Pointer to the NvEncodeAPI interface.
+ * \param [in] createEncodeParams
+ *   Refer ::_NV_ENC_INITIALIZE_PARAMS for details.
+ *
+ * \return
+ * ::NV_ENC_SUCCESS \n
+ * ::NV_ENC_ERR_INVALID_PTR \n
+ * ::NV_ENC_ERR_INVALID_ENCODERDEVICE \n
+ * ::NV_ENC_ERR_DEVICE_NOT_EXIST \n
+ * ::NV_ENC_ERR_UNSUPPORTED_PARAM \n
+ * ::NV_ENC_ERR_OUT_OF_MEMORY \n
+ * ::NV_ENC_ERR_INVALID_PARAM \n
+ * ::NV_ENC_ERR_INVALID_VERSION \n
+ * ::NV_ENC_ERR_GENERIC \n
+ *
+ */</doc>

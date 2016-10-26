@@ -1,0 +1,373 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>unzip.h source code [vlc/modules/access/zip/unzip/unzip.h] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="tm_unz_s,unz_file_info_s,unz_file_pos_s,unz_global_info_s "/>
+<link rel="stylesheet" href="../../../../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'vlc/modules/access/zip/unzip/unzip.h'; var root_path = '../../../../..'; var data_path = '../../../../../../data';</script>
+<script src='../../../../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='../../../..'>vlc</a>/<a href='../../..'>modules</a>/<a href='../..'>access</a>/<a href='..'>zip</a>/<a href='./'>unzip</a>/<a href='unzip.h.html'>unzip.h</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/* unzip.h -- IO for uncompress .zip files using zlib</i></td></tr>
+<tr><th id="2">2</th><td><i>   Version 1.01e, February 12th, 2005</i></td></tr>
+<tr><th id="3">3</th><td><i></i></td></tr>
+<tr><th id="4">4</th><td><i>   Copyright (C) 1998-2005 Gilles Vollant</i></td></tr>
+<tr><th id="5">5</th><td><i></i></td></tr>
+<tr><th id="6">6</th><td><i>   This unzip package allow extract file from .ZIP file, compatible with PKZip 2.04g</i></td></tr>
+<tr><th id="7">7</th><td><i>     WinZip, InfoZip tools and compatible.</i></td></tr>
+<tr><th id="8">8</th><td><i></i></td></tr>
+<tr><th id="9">9</th><td><i>   Multi volume ZipFile (span) are not supported.</i></td></tr>
+<tr><th id="10">10</th><td><i>   Encryption compatible with pkzip 2.04g only supported</i></td></tr>
+<tr><th id="11">11</th><td><i>   Old compressions used by old PKZip 1.x are not supported</i></td></tr>
+<tr><th id="12">12</th><td><i></i></td></tr>
+<tr><th id="13">13</th><td><i></i></td></tr>
+<tr><th id="14">14</th><td><i>   I WAIT FEEDBACK at mail info@winimage.com</i></td></tr>
+<tr><th id="15">15</th><td><i>   Visit also <a href="http://www.winimage.com/zLibDll/unzip.htm">http://www.winimage.com/zLibDll/unzip.htm</a> for evolution</i></td></tr>
+<tr><th id="16">16</th><td><i></i></td></tr>
+<tr><th id="17">17</th><td><i>   Condition of use and distribution are the same than zlib :</i></td></tr>
+<tr><th id="18">18</th><td><i></i></td></tr>
+<tr><th id="19">19</th><td><i>  This software is provided 'as-is', without any express or implied</i></td></tr>
+<tr><th id="20">20</th><td><i>  warranty.  In no event will the authors be held liable for any damages</i></td></tr>
+<tr><th id="21">21</th><td><i>  arising from the use of this software.</i></td></tr>
+<tr><th id="22">22</th><td><i></i></td></tr>
+<tr><th id="23">23</th><td><i>  Permission is granted to anyone to use this software for any purpose,</i></td></tr>
+<tr><th id="24">24</th><td><i>  including commercial applications, and to alter it and redistribute it</i></td></tr>
+<tr><th id="25">25</th><td><i>  freely, subject to the following restrictions:</i></td></tr>
+<tr><th id="26">26</th><td><i></i></td></tr>
+<tr><th id="27">27</th><td><i>  1. The origin of this software must not be misrepresented; you must not</i></td></tr>
+<tr><th id="28">28</th><td><i>     claim that you wrote the original software. If you use this software</i></td></tr>
+<tr><th id="29">29</th><td><i>     in a product, an acknowledgment in the product documentation would be</i></td></tr>
+<tr><th id="30">30</th><td><i>     appreciated but is not required.</i></td></tr>
+<tr><th id="31">31</th><td><i>  2. Altered source versions must be plainly marked as such, and must not be</i></td></tr>
+<tr><th id="32">32</th><td><i>     misrepresented as being the original software.</i></td></tr>
+<tr><th id="33">33</th><td><i>  3. This notice may not be removed or altered from any source distribution.</i></td></tr>
+<tr><th id="34">34</th><td><i></i></td></tr>
+<tr><th id="35">35</th><td><i></i></td></tr>
+<tr><th id="36">36</th><td><i>*/</i></td></tr>
+<tr><th id="37">37</th><td></td></tr>
+<tr><th id="38">38</th><td><i>/* for more info about .ZIP format, see</i></td></tr>
+<tr><th id="39">39</th><td><i>      <a href="http://www.info-zip.org/pub/infozip/doc/appnote-981119-iz.zip">http://www.info-zip.org/pub/infozip/doc/appnote-981119-iz.zip</a></i></td></tr>
+<tr><th id="40">40</th><td><i>      <a href="http://www.info-zip.org/pub/infozip/doc/">http://www.info-zip.org/pub/infozip/doc/</a></i></td></tr>
+<tr><th id="41">41</th><td><i>   PkWare has also a specification at :</i></td></tr>
+<tr><th id="42">42</th><td><i>      ftp://ftp.pkware.com/probdesc.zip</i></td></tr>
+<tr><th id="43">43</th><td><i>*/</i></td></tr>
+<tr><th id="44">44</th><td></td></tr>
+<tr><th id="45">45</th><td><u>#<span data-ppcond="45">ifndef</span> <span class="macro" data-ref="_M/_unz_H">_unz_H</span></u></td></tr>
+<tr><th id="46">46</th><td><u>#define <dfn class="macro" id="_M/_unz_H" data-ref="_M/_unz_H">_unz_H</dfn></u></td></tr>
+<tr><th id="47">47</th><td></td></tr>
+<tr><th id="48">48</th><td><u>#<span data-ppcond="48">ifdef</span> <span class="macro" data-ref="_M/__cplusplus">__cplusplus</span></u></td></tr>
+<tr><th id="49">49</th><td><b>extern</b> <q>"C"</q> {</td></tr>
+<tr><th id="50">50</th><td><u>#<span data-ppcond="48">endif</span></u></td></tr>
+<tr><th id="51">51</th><td></td></tr>
+<tr><th id="52">52</th><td><u>#<span data-ppcond="52">ifndef</span> <span class="macro" data-ref="_M/_ZLIB_H">_ZLIB_H</span></u></td></tr>
+<tr><th id="53">53</th><td><u>#include <a href="../../../../../include/zlib.h.html">"zlib.h"</a></u></td></tr>
+<tr><th id="54">54</th><td><u>#<span data-ppcond="52">endif</span></u></td></tr>
+<tr><th id="55">55</th><td></td></tr>
+<tr><th id="56">56</th><td><u>#<span data-ppcond="56">ifndef</span> <span class="macro" data-ref="_M/_ZLIBIOAPI_H">_ZLIBIOAPI_H</span></u></td></tr>
+<tr><th id="57">57</th><td><u>#include <a href="ioapi.h.html">"ioapi.h"</a></u></td></tr>
+<tr><th id="58">58</th><td><u>#<span data-ppcond="56">endif</span></u></td></tr>
+<tr><th id="59">59</th><td></td></tr>
+<tr><th id="60">60</th><td><u>#<span data-ppcond="60">if</span> defined(<span class="macro" data-ref="_M/STRICTUNZIP">STRICTUNZIP</span>) || defined(<span class="macro" data-ref="_M/STRICTZIPUNZIP">STRICTZIPUNZIP</span>)</u></td></tr>
+<tr><th id="61">61</th><td><i>/* like the STRICT of _WIN32, we define a pointer that cannot be converted</i></td></tr>
+<tr><th id="62">62</th><td><i>    from (void*) without cast */</i></td></tr>
+<tr><th id="63">63</th><td><b>typedef</b> <b>struct</b> TagunzFile__ { <em>int</em> unused; } unzFile__;</td></tr>
+<tr><th id="64">64</th><td><b>typedef</b> unzFile__ *unzFile;</td></tr>
+<tr><th id="65">65</th><td><u>#<span data-ppcond="60">else</span></u></td></tr>
+<tr><th id="66">66</th><td><b>typedef</b> <a class="typedef" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#voidp" title='voidp' data-type='void *' data-ref="voidp">voidp</a> <dfn class="typedef" id="unzFile" title='unzFile' data-type='voidp' data-ref="unzFile">unzFile</dfn>;</td></tr>
+<tr><th id="67">67</th><td><u>#<span data-ppcond="60">endif</span></u></td></tr>
+<tr><th id="68">68</th><td></td></tr>
+<tr><th id="69">69</th><td></td></tr>
+<tr><th id="70">70</th><td><u>#define <dfn class="macro" id="_M/UNZ_OK" data-ref="_M/UNZ_OK">UNZ_OK</dfn>                          (0)</u></td></tr>
+<tr><th id="71">71</th><td><u>#define <dfn class="macro" id="_M/UNZ_END_OF_LIST_OF_FILE" data-ref="_M/UNZ_END_OF_LIST_OF_FILE">UNZ_END_OF_LIST_OF_FILE</dfn>         (-100)</u></td></tr>
+<tr><th id="72">72</th><td><u>#define <dfn class="macro" id="_M/UNZ_ERRNO" data-ref="_M/UNZ_ERRNO">UNZ_ERRNO</dfn>                       (Z_ERRNO)</u></td></tr>
+<tr><th id="73">73</th><td><u>#define <dfn class="macro" id="_M/UNZ_EOF" data-ref="_M/UNZ_EOF">UNZ_EOF</dfn>                         (0)</u></td></tr>
+<tr><th id="74">74</th><td><u>#define <dfn class="macro" id="_M/UNZ_PARAMERROR" data-ref="_M/UNZ_PARAMERROR">UNZ_PARAMERROR</dfn>                  (-102)</u></td></tr>
+<tr><th id="75">75</th><td><u>#define <dfn class="macro" id="_M/UNZ_BADZIPFILE" data-ref="_M/UNZ_BADZIPFILE">UNZ_BADZIPFILE</dfn>                  (-103)</u></td></tr>
+<tr><th id="76">76</th><td><u>#define <dfn class="macro" id="_M/UNZ_INTERNALERROR" data-ref="_M/UNZ_INTERNALERROR">UNZ_INTERNALERROR</dfn>               (-104)</u></td></tr>
+<tr><th id="77">77</th><td><u>#define <dfn class="macro" id="_M/UNZ_CRCERROR" data-ref="_M/UNZ_CRCERROR">UNZ_CRCERROR</dfn>                    (-105)</u></td></tr>
+<tr><th id="78">78</th><td></td></tr>
+<tr><th id="79">79</th><td><i>/* tm_unz contain date/time info */</i></td></tr>
+<tr><th id="80">80</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="tm_unz_s" title='tm_unz_s' data-ref="tm_unz_s"><a class="type" href="#tm_unz_s" title='tm_unz_s' data-ref="tm_unz_s">tm_unz_s</a></dfn></td></tr>
+<tr><th id="81">81</th><td>{</td></tr>
+<tr><th id="82">82</th><td>    <a class="typedef" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#uInt" title='uInt' data-type='unsigned int' data-ref="uInt">uInt</a> <dfn class="decl" id="tm_unz_s::tm_sec" title='tm_unz_s::tm_sec' data-ref="tm_unz_s::tm_sec">tm_sec</dfn>;            <i>/* seconds after the minute - [0,59] */</i></td></tr>
+<tr><th id="83">83</th><td>    <a class="typedef" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#uInt" title='uInt' data-type='unsigned int' data-ref="uInt">uInt</a> <dfn class="decl" id="tm_unz_s::tm_min" title='tm_unz_s::tm_min' data-ref="tm_unz_s::tm_min">tm_min</dfn>;            <i>/* minutes after the hour - [0,59] */</i></td></tr>
+<tr><th id="84">84</th><td>    <a class="typedef" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#uInt" title='uInt' data-type='unsigned int' data-ref="uInt">uInt</a> <dfn class="decl" id="tm_unz_s::tm_hour" title='tm_unz_s::tm_hour' data-ref="tm_unz_s::tm_hour">tm_hour</dfn>;           <i>/* hours since midnight - [0,23] */</i></td></tr>
+<tr><th id="85">85</th><td>    <a class="typedef" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#uInt" title='uInt' data-type='unsigned int' data-ref="uInt">uInt</a> <dfn class="decl" id="tm_unz_s::tm_mday" title='tm_unz_s::tm_mday' data-ref="tm_unz_s::tm_mday">tm_mday</dfn>;           <i>/* day of the month - [1,31] */</i></td></tr>
+<tr><th id="86">86</th><td>    <a class="typedef" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#uInt" title='uInt' data-type='unsigned int' data-ref="uInt">uInt</a> <dfn class="decl" id="tm_unz_s::tm_mon" title='tm_unz_s::tm_mon' data-ref="tm_unz_s::tm_mon">tm_mon</dfn>;            <i>/* months since January - [0,11] */</i></td></tr>
+<tr><th id="87">87</th><td>    <a class="typedef" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#uInt" title='uInt' data-type='unsigned int' data-ref="uInt">uInt</a> <dfn class="decl" id="tm_unz_s::tm_year" title='tm_unz_s::tm_year' data-ref="tm_unz_s::tm_year">tm_year</dfn>;           <i>/* years - [1980..2044] */</i></td></tr>
+<tr><th id="88">88</th><td>} <dfn class="typedef" id="tm_unz" title='tm_unz' data-type='struct tm_unz_s' data-ref="tm_unz">tm_unz</dfn>;</td></tr>
+<tr><th id="89">89</th><td></td></tr>
+<tr><th id="90">90</th><td><i>/* unz_global_info structure contain global data about the ZIPfile</i></td></tr>
+<tr><th id="91">91</th><td><i>   These data comes from the end of central dir */</i></td></tr>
+<tr><th id="92">92</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="unz_global_info_s" title='unz_global_info_s' data-ref="unz_global_info_s"><a class="type" href="#unz_global_info_s" title='unz_global_info_s' data-ref="unz_global_info_s">unz_global_info_s</a></dfn></td></tr>
+<tr><th id="93">93</th><td>{</td></tr>
+<tr><th id="94">94</th><td>    <a class="typedef" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#uLong" title='uLong' data-type='unsigned long' data-ref="uLong">uLong</a> <dfn class="decl" id="unz_global_info_s::number_entry" title='unz_global_info_s::number_entry' data-ref="unz_global_info_s::number_entry">number_entry</dfn>;         <i>/* total number of entries in</i></td></tr>
+<tr><th id="95">95</th><td><i>                       the central dir on this disk */</i></td></tr>
+<tr><th id="96">96</th><td>    <a class="typedef" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#uLong" title='uLong' data-type='unsigned long' data-ref="uLong">uLong</a> <dfn class="decl" id="unz_global_info_s::size_comment" title='unz_global_info_s::size_comment' data-ref="unz_global_info_s::size_comment">size_comment</dfn>;         <i>/* size of the global comment of the zipfile */</i></td></tr>
+<tr><th id="97">97</th><td>} <dfn class="typedef" id="unz_global_info" title='unz_global_info' data-type='struct unz_global_info_s' data-ref="unz_global_info">unz_global_info</dfn>;</td></tr>
+<tr><th id="98">98</th><td></td></tr>
+<tr><th id="99">99</th><td></td></tr>
+<tr><th id="100">100</th><td><i>/* unz_file_info contain information about a file in the zipfile */</i></td></tr>
+<tr><th id="101">101</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="unz_file_info_s" title='unz_file_info_s' data-ref="unz_file_info_s"><a class="type" href="#unz_file_info_s" title='unz_file_info_s' data-ref="unz_file_info_s">unz_file_info_s</a></dfn></td></tr>
+<tr><th id="102">102</th><td>{</td></tr>
+<tr><th id="103">103</th><td>    <a class="typedef" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#uLong" title='uLong' data-type='unsigned long' data-ref="uLong">uLong</a> <dfn class="decl" id="unz_file_info_s::version" title='unz_file_info_s::version' data-ref="unz_file_info_s::version">version</dfn>;              <i>/* version made by                 2 bytes */</i></td></tr>
+<tr><th id="104">104</th><td>    <a class="typedef" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#uLong" title='uLong' data-type='unsigned long' data-ref="uLong">uLong</a> <dfn class="decl" id="unz_file_info_s::version_needed" title='unz_file_info_s::version_needed' data-ref="unz_file_info_s::version_needed">version_needed</dfn>;       <i>/* version needed to extract       2 bytes */</i></td></tr>
+<tr><th id="105">105</th><td>    <a class="typedef" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#uLong" title='uLong' data-type='unsigned long' data-ref="uLong">uLong</a> <dfn class="decl" id="unz_file_info_s::flag" title='unz_file_info_s::flag' data-ref="unz_file_info_s::flag">flag</dfn>;                 <i>/* general purpose bit flag        2 bytes */</i></td></tr>
+<tr><th id="106">106</th><td>    <a class="typedef" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#uLong" title='uLong' data-type='unsigned long' data-ref="uLong">uLong</a> <dfn class="decl" id="unz_file_info_s::compression_method" title='unz_file_info_s::compression_method' data-ref="unz_file_info_s::compression_method">compression_method</dfn>;   <i>/* compression method              2 bytes */</i></td></tr>
+<tr><th id="107">107</th><td>    <a class="typedef" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#uLong" title='uLong' data-type='unsigned long' data-ref="uLong">uLong</a> <dfn class="decl" id="unz_file_info_s::dosDate" title='unz_file_info_s::dosDate' data-ref="unz_file_info_s::dosDate">dosDate</dfn>;              <i>/* last mod file date in Dos fmt   4 bytes */</i></td></tr>
+<tr><th id="108">108</th><td>    <a class="typedef" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#uLong" title='uLong' data-type='unsigned long' data-ref="uLong">uLong</a> <dfn class="decl" id="unz_file_info_s::crc" title='unz_file_info_s::crc' data-ref="unz_file_info_s::crc">crc</dfn>;                  <i>/* crc-32                          4 bytes */</i></td></tr>
+<tr><th id="109">109</th><td>    <a class="typedef" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#uLong" title='uLong' data-type='unsigned long' data-ref="uLong">uLong</a> <dfn class="decl" id="unz_file_info_s::compressed_size" title='unz_file_info_s::compressed_size' data-ref="unz_file_info_s::compressed_size">compressed_size</dfn>;      <i>/* compressed size                 4 bytes */</i></td></tr>
+<tr><th id="110">110</th><td>    <a class="typedef" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#uLong" title='uLong' data-type='unsigned long' data-ref="uLong">uLong</a> <dfn class="decl" id="unz_file_info_s::uncompressed_size" title='unz_file_info_s::uncompressed_size' data-ref="unz_file_info_s::uncompressed_size">uncompressed_size</dfn>;    <i>/* uncompressed size               4 bytes */</i></td></tr>
+<tr><th id="111">111</th><td>    <a class="typedef" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#uLong" title='uLong' data-type='unsigned long' data-ref="uLong">uLong</a> <dfn class="decl" id="unz_file_info_s::size_filename" title='unz_file_info_s::size_filename' data-ref="unz_file_info_s::size_filename">size_filename</dfn>;        <i>/* filename length                 2 bytes */</i></td></tr>
+<tr><th id="112">112</th><td>    <a class="typedef" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#uLong" title='uLong' data-type='unsigned long' data-ref="uLong">uLong</a> <dfn class="decl" id="unz_file_info_s::size_file_extra" title='unz_file_info_s::size_file_extra' data-ref="unz_file_info_s::size_file_extra">size_file_extra</dfn>;      <i>/* extra field length              2 bytes */</i></td></tr>
+<tr><th id="113">113</th><td>    <a class="typedef" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#uLong" title='uLong' data-type='unsigned long' data-ref="uLong">uLong</a> <dfn class="decl" id="unz_file_info_s::size_file_comment" title='unz_file_info_s::size_file_comment' data-ref="unz_file_info_s::size_file_comment">size_file_comment</dfn>;    <i>/* file comment length             2 bytes */</i></td></tr>
+<tr><th id="114">114</th><td></td></tr>
+<tr><th id="115">115</th><td>    <a class="typedef" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#uLong" title='uLong' data-type='unsigned long' data-ref="uLong">uLong</a> <dfn class="decl" id="unz_file_info_s::disk_num_start" title='unz_file_info_s::disk_num_start' data-ref="unz_file_info_s::disk_num_start">disk_num_start</dfn>;       <i>/* disk number start               2 bytes */</i></td></tr>
+<tr><th id="116">116</th><td>    <a class="typedef" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#uLong" title='uLong' data-type='unsigned long' data-ref="uLong">uLong</a> <dfn class="decl" id="unz_file_info_s::internal_fa" title='unz_file_info_s::internal_fa' data-ref="unz_file_info_s::internal_fa">internal_fa</dfn>;          <i>/* internal file attributes        2 bytes */</i></td></tr>
+<tr><th id="117">117</th><td>    <a class="typedef" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#uLong" title='uLong' data-type='unsigned long' data-ref="uLong">uLong</a> <dfn class="decl" id="unz_file_info_s::external_fa" title='unz_file_info_s::external_fa' data-ref="unz_file_info_s::external_fa">external_fa</dfn>;          <i>/* external file attributes        4 bytes */</i></td></tr>
+<tr><th id="118">118</th><td></td></tr>
+<tr><th id="119">119</th><td>    <a class="typedef" href="#tm_unz" title='tm_unz' data-type='struct tm_unz_s' data-ref="tm_unz">tm_unz</a> <dfn class="decl" id="unz_file_info_s::tmu_date" title='unz_file_info_s::tmu_date' data-ref="unz_file_info_s::tmu_date">tmu_date</dfn>;</td></tr>
+<tr><th id="120">120</th><td>} <dfn class="typedef" id="unz_file_info" title='unz_file_info' data-type='struct unz_file_info_s' data-ref="unz_file_info">unz_file_info</dfn>;</td></tr>
+<tr><th id="121">121</th><td></td></tr>
+<tr><th id="122">122</th><td><b>extern</b> <em>int</em> <a class="macro" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#357" title="" data-ref="_M/ZEXPORT">ZEXPORT</a> <a class="decl" href="unzip.c.html#unzStringFileNameCompare" title='unzStringFileNameCompare' data-ref="unzStringFileNameCompare" id="unzStringFileNameCompare">unzStringFileNameCompare</a> (<em>const</em> <em>char</em>* <dfn class="local col1 decl" id="1fileName1" title='fileName1' data-type='const char *' data-ref="1fileName1">fileName1</dfn>,</td></tr>
+<tr><th id="123">123</th><td>                                             <em>const</em> <em>char</em>* <dfn class="local col2 decl" id="2fileName2" title='fileName2' data-type='const char *' data-ref="2fileName2">fileName2</dfn>,</td></tr>
+<tr><th id="124">124</th><td>                                             <em>int</em> <dfn class="local col3 decl" id="3iCaseSensitivity" title='iCaseSensitivity' data-type='int' data-ref="3iCaseSensitivity">iCaseSensitivity</dfn>);</td></tr>
+<tr><th id="125">125</th><td><i>/*</i></td></tr>
+<tr><th id="126">126</th><td><i>   Compare two filename (fileName1,fileName2).</i></td></tr>
+<tr><th id="127">127</th><td><i>   If iCaseSenisivity = 1, comparision is case sensitivity (like strcmp)</i></td></tr>
+<tr><th id="128">128</th><td><i>   If iCaseSenisivity = 2, comparision is not case sensitivity (like strcmpi</i></td></tr>
+<tr><th id="129">129</th><td><i>                                or strcasecmp)</i></td></tr>
+<tr><th id="130">130</th><td><i>   If iCaseSenisivity = 0, case sensitivity is defaut of your operating system</i></td></tr>
+<tr><th id="131">131</th><td><i>    (like 1 on Unix, 2 on Windows)</i></td></tr>
+<tr><th id="132">132</th><td><i>*/</i></td></tr>
+<tr><th id="133">133</th><td></td></tr>
+<tr><th id="134">134</th><td></td></tr>
+<tr><th id="135">135</th><td><b>extern</b> <a class="typedef" href="#unzFile" title='unzFile' data-type='voidp' data-ref="unzFile">unzFile</a> <a class="macro" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#357" title="" data-ref="_M/ZEXPORT">ZEXPORT</a> <a class="decl" href="unzip.c.html#unzOpen" title='unzOpen' data-ref="unzOpen" id="unzOpen">unzOpen</a> (<em>const</em> <em>char</em> *<dfn class="local col4 decl" id="4path" title='path' data-type='const char *' data-ref="4path">path</dfn>);</td></tr>
+<tr><th id="136">136</th><td><i>/*</i></td></tr>
+<tr><th id="137">137</th><td><i>  Open a Zip file. path contain the full pathname (by example,</i></td></tr>
+<tr><th id="138">138</th><td><i>     on a Windows XP computer "c:\\zlib\\zlib113.zip" or on an Unix computer</i></td></tr>
+<tr><th id="139">139</th><td><i>     "zlib/zlib113.zip".</i></td></tr>
+<tr><th id="140">140</th><td><i>     If the zipfile cannot be opened (file don't exist or in not valid), the</i></td></tr>
+<tr><th id="141">141</th><td><i>       return value is NULL.</i></td></tr>
+<tr><th id="142">142</th><td><i>     Else, the return value is a unzFile Handle, usable with other function</i></td></tr>
+<tr><th id="143">143</th><td><i>       of this unzip package.</i></td></tr>
+<tr><th id="144">144</th><td><i>*/</i></td></tr>
+<tr><th id="145">145</th><td></td></tr>
+<tr><th id="146">146</th><td><b>extern</b> <a class="typedef" href="#unzFile" title='unzFile' data-type='voidp' data-ref="unzFile">unzFile</a> <a class="macro" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#357" title="" data-ref="_M/ZEXPORT">ZEXPORT</a> <a class="decl" href="unzip.c.html#unzOpen2" title='unzOpen2' data-ref="unzOpen2" id="unzOpen2">unzOpen2</a> (<em>const</em> <em>char</em> *<dfn class="local col5 decl" id="5path" title='path' data-type='const char *' data-ref="5path">path</dfn>,</td></tr>
+<tr><th id="147">147</th><td>                                 <a class="typedef" href="ioapi.h.html#zlib_filefunc_def" title='zlib_filefunc_def' data-type='struct zlib_filefunc_def_s' data-ref="zlib_filefunc_def">zlib_filefunc_def</a>* <dfn class="local col6 decl" id="6pzlib_filefunc_def" title='pzlib_filefunc_def' data-type='zlib_filefunc_def *' data-ref="6pzlib_filefunc_def">pzlib_filefunc_def</dfn>);</td></tr>
+<tr><th id="148">148</th><td><i>/*</i></td></tr>
+<tr><th id="149">149</th><td><i>   Open a Zip file, like unzOpen, but provide a set of file low level API</i></td></tr>
+<tr><th id="150">150</th><td><i>      for read/write the zip file (see ioapi.h)</i></td></tr>
+<tr><th id="151">151</th><td><i>*/</i></td></tr>
+<tr><th id="152">152</th><td></td></tr>
+<tr><th id="153">153</th><td><b>extern</b> <em>int</em> <a class="macro" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#357" title="" data-ref="_M/ZEXPORT">ZEXPORT</a> <a class="decl" href="unzip.c.html#unzClose" title='unzClose' data-ref="unzClose" id="unzClose">unzClose</a> (<a class="typedef" href="#unzFile" title='unzFile' data-type='voidp' data-ref="unzFile">unzFile</a> <dfn class="local col7 decl" id="7file" title='file' data-type='unzFile' data-ref="7file">file</dfn>);</td></tr>
+<tr><th id="154">154</th><td><i>/*</i></td></tr>
+<tr><th id="155">155</th><td><i>  Close a ZipFile opened with unzipOpen.</i></td></tr>
+<tr><th id="156">156</th><td><i>  If there is files inside the .Zip opened with unzOpenCurrentFile (see later),</i></td></tr>
+<tr><th id="157">157</th><td><i>    these files MUST be closed with unzipCloseCurrentFile before call unzipClose.</i></td></tr>
+<tr><th id="158">158</th><td><i>  return UNZ_OK if there is no problem. */</i></td></tr>
+<tr><th id="159">159</th><td></td></tr>
+<tr><th id="160">160</th><td><b>extern</b> <em>int</em> <a class="macro" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#357" title="" data-ref="_M/ZEXPORT">ZEXPORT</a> <a class="decl" href="unzip.c.html#unzGetGlobalInfo" title='unzGetGlobalInfo' data-ref="unzGetGlobalInfo" id="unzGetGlobalInfo">unzGetGlobalInfo</a> (<a class="typedef" href="#unzFile" title='unzFile' data-type='voidp' data-ref="unzFile">unzFile</a> <dfn class="local col8 decl" id="8file" title='file' data-type='unzFile' data-ref="8file">file</dfn>,</td></tr>
+<tr><th id="161">161</th><td>                                     <a class="typedef" href="#unz_global_info" title='unz_global_info' data-type='struct unz_global_info_s' data-ref="unz_global_info">unz_global_info</a> *<dfn class="local col9 decl" id="9pglobal_info" title='pglobal_info' data-type='unz_global_info *' data-ref="9pglobal_info">pglobal_info</dfn>);</td></tr>
+<tr><th id="162">162</th><td><i>/*</i></td></tr>
+<tr><th id="163">163</th><td><i>  Write info about the ZipFile in the *pglobal_info structure.</i></td></tr>
+<tr><th id="164">164</th><td><i>  No preparation of the structure is needed</i></td></tr>
+<tr><th id="165">165</th><td><i>  return UNZ_OK if there is no problem. */</i></td></tr>
+<tr><th id="166">166</th><td></td></tr>
+<tr><th id="167">167</th><td></td></tr>
+<tr><th id="168">168</th><td><b>extern</b> <em>int</em> <a class="macro" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#357" title="" data-ref="_M/ZEXPORT">ZEXPORT</a> <a class="decl" href="unzip.c.html#unzGetGlobalComment" title='unzGetGlobalComment' data-ref="unzGetGlobalComment" id="unzGetGlobalComment">unzGetGlobalComment</a> (<a class="typedef" href="#unzFile" title='unzFile' data-type='voidp' data-ref="unzFile">unzFile</a> <dfn class="local col0 decl" id="10file" title='file' data-type='unzFile' data-ref="10file">file</dfn>,</td></tr>
+<tr><th id="169">169</th><td>                                        <em>char</em> *<dfn class="local col1 decl" id="11szComment" title='szComment' data-type='char *' data-ref="11szComment">szComment</dfn>,</td></tr>
+<tr><th id="170">170</th><td>                                        <a class="typedef" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#uLong" title='uLong' data-type='unsigned long' data-ref="uLong">uLong</a> <dfn class="local col2 decl" id="12uSizeBuf" title='uSizeBuf' data-type='uLong' data-ref="12uSizeBuf">uSizeBuf</dfn>);</td></tr>
+<tr><th id="171">171</th><td><i>/*</i></td></tr>
+<tr><th id="172">172</th><td><i>  Get the global comment string of the ZipFile, in the szComment buffer.</i></td></tr>
+<tr><th id="173">173</th><td><i>  uSizeBuf is the size of the szComment buffer.</i></td></tr>
+<tr><th id="174">174</th><td><i>  return the number of byte copied or an error code &lt;0</i></td></tr>
+<tr><th id="175">175</th><td><i>*/</i></td></tr>
+<tr><th id="176">176</th><td></td></tr>
+<tr><th id="177">177</th><td></td></tr>
+<tr><th id="178">178</th><td><i>/***************************************************************************/</i></td></tr>
+<tr><th id="179">179</th><td><i>/* Unzip package allow you browse the directory of the zipfile */</i></td></tr>
+<tr><th id="180">180</th><td></td></tr>
+<tr><th id="181">181</th><td><b>extern</b> <em>int</em> <a class="macro" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#357" title="" data-ref="_M/ZEXPORT">ZEXPORT</a> <a class="decl" href="unzip.c.html#unzGoToFirstFile" title='unzGoToFirstFile' data-ref="unzGoToFirstFile" id="unzGoToFirstFile">unzGoToFirstFile</a> (<a class="typedef" href="#unzFile" title='unzFile' data-type='voidp' data-ref="unzFile">unzFile</a> <dfn class="local col3 decl" id="13file" title='file' data-type='unzFile' data-ref="13file">file</dfn>);</td></tr>
+<tr><th id="182">182</th><td><i>/*</i></td></tr>
+<tr><th id="183">183</th><td><i>  Set the current file of the zipfile to the first file.</i></td></tr>
+<tr><th id="184">184</th><td><i>  return UNZ_OK if there is no problem</i></td></tr>
+<tr><th id="185">185</th><td><i>*/</i></td></tr>
+<tr><th id="186">186</th><td></td></tr>
+<tr><th id="187">187</th><td><b>extern</b> <em>int</em> <a class="macro" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#357" title="" data-ref="_M/ZEXPORT">ZEXPORT</a> <a class="decl" href="unzip.c.html#unzGoToNextFile" title='unzGoToNextFile' data-ref="unzGoToNextFile" id="unzGoToNextFile">unzGoToNextFile</a> (<a class="typedef" href="#unzFile" title='unzFile' data-type='voidp' data-ref="unzFile">unzFile</a> <dfn class="local col4 decl" id="14file" title='file' data-type='unzFile' data-ref="14file">file</dfn>);</td></tr>
+<tr><th id="188">188</th><td><i>/*</i></td></tr>
+<tr><th id="189">189</th><td><i>  Set the current file of the zipfile to the next file.</i></td></tr>
+<tr><th id="190">190</th><td><i>  return UNZ_OK if there is no problem</i></td></tr>
+<tr><th id="191">191</th><td><i>  return UNZ_END_OF_LIST_OF_FILE if the actual file was the latest.</i></td></tr>
+<tr><th id="192">192</th><td><i>*/</i></td></tr>
+<tr><th id="193">193</th><td></td></tr>
+<tr><th id="194">194</th><td><b>extern</b> <em>int</em> <a class="macro" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#357" title="" data-ref="_M/ZEXPORT">ZEXPORT</a> <a class="decl" href="unzip.c.html#unzLocateFile" title='unzLocateFile' data-ref="unzLocateFile" id="unzLocateFile">unzLocateFile</a> (<a class="typedef" href="#unzFile" title='unzFile' data-type='voidp' data-ref="unzFile">unzFile</a> <dfn class="local col5 decl" id="15file" title='file' data-type='unzFile' data-ref="15file">file</dfn>,</td></tr>
+<tr><th id="195">195</th><td>                     <em>const</em> <em>char</em> *<dfn class="local col6 decl" id="16szFileName" title='szFileName' data-type='const char *' data-ref="16szFileName">szFileName</dfn>,</td></tr>
+<tr><th id="196">196</th><td>                     <em>int</em> <dfn class="local col7 decl" id="17iCaseSensitivity" title='iCaseSensitivity' data-type='int' data-ref="17iCaseSensitivity">iCaseSensitivity</dfn>);</td></tr>
+<tr><th id="197">197</th><td><i>/*</i></td></tr>
+<tr><th id="198">198</th><td><i>  Try locate the file szFileName in the zipfile.</i></td></tr>
+<tr><th id="199">199</th><td><i>  For the iCaseSensitivity signification, see unzStringFileNameCompare</i></td></tr>
+<tr><th id="200">200</th><td><i></i></td></tr>
+<tr><th id="201">201</th><td><i>  return value :</i></td></tr>
+<tr><th id="202">202</th><td><i>  UNZ_OK if the file is found. It becomes the current file.</i></td></tr>
+<tr><th id="203">203</th><td><i>  UNZ_END_OF_LIST_OF_FILE if the file is not found</i></td></tr>
+<tr><th id="204">204</th><td><i>*/</i></td></tr>
+<tr><th id="205">205</th><td></td></tr>
+<tr><th id="206">206</th><td></td></tr>
+<tr><th id="207">207</th><td><i>/* ****************************************** */</i></td></tr>
+<tr><th id="208">208</th><td><i>/* Ryan supplied functions */</i></td></tr>
+<tr><th id="209">209</th><td><i>/* unz_file_info contain information about a file in the zipfile */</i></td></tr>
+<tr><th id="210">210</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="unz_file_pos_s" title='unz_file_pos_s' data-ref="unz_file_pos_s"><a class="type" href="#unz_file_pos_s" title='unz_file_pos_s' data-ref="unz_file_pos_s">unz_file_pos_s</a></dfn></td></tr>
+<tr><th id="211">211</th><td>{</td></tr>
+<tr><th id="212">212</th><td>    <a class="typedef" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#uLong" title='uLong' data-type='unsigned long' data-ref="uLong">uLong</a> <dfn class="decl" id="unz_file_pos_s::pos_in_zip_directory" title='unz_file_pos_s::pos_in_zip_directory' data-ref="unz_file_pos_s::pos_in_zip_directory">pos_in_zip_directory</dfn>;   <i>/* offset in zip file directory */</i></td></tr>
+<tr><th id="213">213</th><td>    <a class="typedef" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#uLong" title='uLong' data-type='unsigned long' data-ref="uLong">uLong</a> <dfn class="decl" id="unz_file_pos_s::num_of_file" title='unz_file_pos_s::num_of_file' data-ref="unz_file_pos_s::num_of_file">num_of_file</dfn>;            <i>/* # of file */</i></td></tr>
+<tr><th id="214">214</th><td>} <dfn class="typedef" id="unz_file_pos" title='unz_file_pos' data-type='struct unz_file_pos_s' data-ref="unz_file_pos">unz_file_pos</dfn>;</td></tr>
+<tr><th id="215">215</th><td></td></tr>
+<tr><th id="216">216</th><td><b>extern</b> <em>int</em> <a class="macro" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#357" title="" data-ref="_M/ZEXPORT">ZEXPORT</a> <a class="decl" href="unzip.c.html#unzGetFilePos" title='unzGetFilePos' data-ref="unzGetFilePos" id="unzGetFilePos">unzGetFilePos</a>(</td></tr>
+<tr><th id="217">217</th><td>    <a class="typedef" href="#unzFile" title='unzFile' data-type='voidp' data-ref="unzFile">unzFile</a> <dfn class="local col8 decl" id="18file" title='file' data-type='unzFile' data-ref="18file">file</dfn>,</td></tr>
+<tr><th id="218">218</th><td>    <a class="typedef" href="#unz_file_pos" title='unz_file_pos' data-type='struct unz_file_pos_s' data-ref="unz_file_pos">unz_file_pos</a>* <dfn class="local col9 decl" id="19file_pos" title='file_pos' data-type='unz_file_pos *' data-ref="19file_pos">file_pos</dfn>);</td></tr>
+<tr><th id="219">219</th><td></td></tr>
+<tr><th id="220">220</th><td><b>extern</b> <em>int</em> <a class="macro" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#357" title="" data-ref="_M/ZEXPORT">ZEXPORT</a> <a class="decl" href="unzip.c.html#unzGoToFilePos" title='unzGoToFilePos' data-ref="unzGoToFilePos" id="unzGoToFilePos">unzGoToFilePos</a>(</td></tr>
+<tr><th id="221">221</th><td>    <a class="typedef" href="#unzFile" title='unzFile' data-type='voidp' data-ref="unzFile">unzFile</a> <dfn class="local col0 decl" id="20file" title='file' data-type='unzFile' data-ref="20file">file</dfn>,</td></tr>
+<tr><th id="222">222</th><td>    <a class="typedef" href="#unz_file_pos" title='unz_file_pos' data-type='struct unz_file_pos_s' data-ref="unz_file_pos">unz_file_pos</a>* <dfn class="local col1 decl" id="21file_pos" title='file_pos' data-type='unz_file_pos *' data-ref="21file_pos">file_pos</dfn>);</td></tr>
+<tr><th id="223">223</th><td></td></tr>
+<tr><th id="224">224</th><td><i>/* ****************************************** */</i></td></tr>
+<tr><th id="225">225</th><td></td></tr>
+<tr><th id="226">226</th><td><b>extern</b> <em>int</em> <a class="macro" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#357" title="" data-ref="_M/ZEXPORT">ZEXPORT</a> <a class="decl" href="unzip.c.html#unzGetCurrentFileInfo" title='unzGetCurrentFileInfo' data-ref="unzGetCurrentFileInfo" id="unzGetCurrentFileInfo">unzGetCurrentFileInfo</a> (<a class="typedef" href="#unzFile" title='unzFile' data-type='voidp' data-ref="unzFile">unzFile</a> <dfn class="local col2 decl" id="22file" title='file' data-type='unzFile' data-ref="22file">file</dfn>,</td></tr>
+<tr><th id="227">227</th><td>                         <a class="typedef" href="#unz_file_info" title='unz_file_info' data-type='struct unz_file_info_s' data-ref="unz_file_info">unz_file_info</a> *<dfn class="local col3 decl" id="23pfile_info" title='pfile_info' data-type='unz_file_info *' data-ref="23pfile_info">pfile_info</dfn>,</td></tr>
+<tr><th id="228">228</th><td>                         <em>char</em> *<dfn class="local col4 decl" id="24szFileName" title='szFileName' data-type='char *' data-ref="24szFileName">szFileName</dfn>,</td></tr>
+<tr><th id="229">229</th><td>                         <a class="typedef" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#uLong" title='uLong' data-type='unsigned long' data-ref="uLong">uLong</a> <dfn class="local col5 decl" id="25fileNameBufferSize" title='fileNameBufferSize' data-type='uLong' data-ref="25fileNameBufferSize">fileNameBufferSize</dfn>,</td></tr>
+<tr><th id="230">230</th><td>                         <em>void</em> *<dfn class="local col6 decl" id="26extraField" title='extraField' data-type='void *' data-ref="26extraField">extraField</dfn>,</td></tr>
+<tr><th id="231">231</th><td>                         <a class="typedef" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#uLong" title='uLong' data-type='unsigned long' data-ref="uLong">uLong</a> <dfn class="local col7 decl" id="27extraFieldBufferSize" title='extraFieldBufferSize' data-type='uLong' data-ref="27extraFieldBufferSize">extraFieldBufferSize</dfn>,</td></tr>
+<tr><th id="232">232</th><td>                         <em>char</em> *<dfn class="local col8 decl" id="28szComment" title='szComment' data-type='char *' data-ref="28szComment">szComment</dfn>,</td></tr>
+<tr><th id="233">233</th><td>                         <a class="typedef" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#uLong" title='uLong' data-type='unsigned long' data-ref="uLong">uLong</a> <dfn class="local col9 decl" id="29commentBufferSize" title='commentBufferSize' data-type='uLong' data-ref="29commentBufferSize">commentBufferSize</dfn>);</td></tr>
+<tr><th id="234">234</th><td><i>/*</i></td></tr>
+<tr><th id="235">235</th><td><i>  Get Info about the current file</i></td></tr>
+<tr><th id="236">236</th><td><i>  if pfile_info!=NULL, the *pfile_info structure will contain somes info about</i></td></tr>
+<tr><th id="237">237</th><td><i>        the current file</i></td></tr>
+<tr><th id="238">238</th><td><i>  if szFileName!=NULL, the filemane string will be copied in szFileName</i></td></tr>
+<tr><th id="239">239</th><td><i>            (fileNameBufferSize is the size of the buffer)</i></td></tr>
+<tr><th id="240">240</th><td><i>  if extraField!=NULL, the extra field information will be copied in extraField</i></td></tr>
+<tr><th id="241">241</th><td><i>            (extraFieldBufferSize is the size of the buffer).</i></td></tr>
+<tr><th id="242">242</th><td><i>            This is the Central-header version of the extra field</i></td></tr>
+<tr><th id="243">243</th><td><i>  if szComment!=NULL, the comment string of the file will be copied in szComment</i></td></tr>
+<tr><th id="244">244</th><td><i>            (commentBufferSize is the size of the buffer)</i></td></tr>
+<tr><th id="245">245</th><td><i>*/</i></td></tr>
+<tr><th id="246">246</th><td></td></tr>
+<tr><th id="247">247</th><td><i>/***************************************************************************/</i></td></tr>
+<tr><th id="248">248</th><td><i>/* for reading the content of the current zipfile, you can open it, read data</i></td></tr>
+<tr><th id="249">249</th><td><i>   from it, and close it (you can close it before reading all the file)</i></td></tr>
+<tr><th id="250">250</th><td><i>   */</i></td></tr>
+<tr><th id="251">251</th><td></td></tr>
+<tr><th id="252">252</th><td><b>extern</b> <em>int</em> <a class="macro" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#357" title="" data-ref="_M/ZEXPORT">ZEXPORT</a> <a class="decl" href="unzip.c.html#unzOpenCurrentFile" title='unzOpenCurrentFile' data-ref="unzOpenCurrentFile" id="unzOpenCurrentFile">unzOpenCurrentFile</a> (<a class="typedef" href="#unzFile" title='unzFile' data-type='voidp' data-ref="unzFile">unzFile</a> <dfn class="local col0 decl" id="30file" title='file' data-type='unzFile' data-ref="30file">file</dfn>);</td></tr>
+<tr><th id="253">253</th><td><i>/*</i></td></tr>
+<tr><th id="254">254</th><td><i>  Open for reading data the current file in the zipfile.</i></td></tr>
+<tr><th id="255">255</th><td><i>  If there is no error, the return value is UNZ_OK.</i></td></tr>
+<tr><th id="256">256</th><td><i>*/</i></td></tr>
+<tr><th id="257">257</th><td></td></tr>
+<tr><th id="258">258</th><td><b>extern</b> <em>int</em> <a class="macro" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#357" title="" data-ref="_M/ZEXPORT">ZEXPORT</a> <a class="decl" href="unzip.c.html#unzOpenCurrentFilePassword" title='unzOpenCurrentFilePassword' data-ref="unzOpenCurrentFilePassword" id="unzOpenCurrentFilePassword">unzOpenCurrentFilePassword</a> (<a class="typedef" href="#unzFile" title='unzFile' data-type='voidp' data-ref="unzFile">unzFile</a> <dfn class="local col1 decl" id="31file" title='file' data-type='unzFile' data-ref="31file">file</dfn>,</td></tr>
+<tr><th id="259">259</th><td>                                               <em>const</em> <em>char</em>* <dfn class="local col2 decl" id="32password" title='password' data-type='const char *' data-ref="32password">password</dfn>);</td></tr>
+<tr><th id="260">260</th><td><i>/*</i></td></tr>
+<tr><th id="261">261</th><td><i>  Open for reading data the current file in the zipfile.</i></td></tr>
+<tr><th id="262">262</th><td><i>  password is a crypting password</i></td></tr>
+<tr><th id="263">263</th><td><i>  If there is no error, the return value is UNZ_OK.</i></td></tr>
+<tr><th id="264">264</th><td><i>*/</i></td></tr>
+<tr><th id="265">265</th><td></td></tr>
+<tr><th id="266">266</th><td><b>extern</b> <em>int</em> <a class="macro" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#357" title="" data-ref="_M/ZEXPORT">ZEXPORT</a> <a class="decl" href="unzip.c.html#unzOpenCurrentFile2" title='unzOpenCurrentFile2' data-ref="unzOpenCurrentFile2" id="unzOpenCurrentFile2">unzOpenCurrentFile2</a> (<a class="typedef" href="#unzFile" title='unzFile' data-type='voidp' data-ref="unzFile">unzFile</a> <dfn class="local col3 decl" id="33file" title='file' data-type='unzFile' data-ref="33file">file</dfn>,</td></tr>
+<tr><th id="267">267</th><td>                                        <em>int</em>* <dfn class="local col4 decl" id="34method" title='method' data-type='int *' data-ref="34method">method</dfn>,</td></tr>
+<tr><th id="268">268</th><td>                                        <em>int</em>* <dfn class="local col5 decl" id="35level" title='level' data-type='int *' data-ref="35level">level</dfn>,</td></tr>
+<tr><th id="269">269</th><td>                                        <em>int</em> <dfn class="local col6 decl" id="36raw" title='raw' data-type='int' data-ref="36raw">raw</dfn>);</td></tr>
+<tr><th id="270">270</th><td><i>/*</i></td></tr>
+<tr><th id="271">271</th><td><i>  Same than unzOpenCurrentFile, but open for read raw the file (not uncompress)</i></td></tr>
+<tr><th id="272">272</th><td><i>    if raw==1</i></td></tr>
+<tr><th id="273">273</th><td><i>  *method will receive method of compression, *level will receive level of</i></td></tr>
+<tr><th id="274">274</th><td><i>     compression</i></td></tr>
+<tr><th id="275">275</th><td><i>  note : you can set level parameter as NULL (if you did not want known level,</i></td></tr>
+<tr><th id="276">276</th><td><i>         but you CANNOT set method parameter as NULL</i></td></tr>
+<tr><th id="277">277</th><td><i>*/</i></td></tr>
+<tr><th id="278">278</th><td></td></tr>
+<tr><th id="279">279</th><td><b>extern</b> <em>int</em> <a class="macro" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#357" title="" data-ref="_M/ZEXPORT">ZEXPORT</a> <a class="decl" href="unzip.c.html#unzOpenCurrentFile3" title='unzOpenCurrentFile3' data-ref="unzOpenCurrentFile3" id="unzOpenCurrentFile3">unzOpenCurrentFile3</a> (<a class="typedef" href="#unzFile" title='unzFile' data-type='voidp' data-ref="unzFile">unzFile</a> <dfn class="local col7 decl" id="37file" title='file' data-type='unzFile' data-ref="37file">file</dfn>,</td></tr>
+<tr><th id="280">280</th><td>                                        <em>int</em>* <dfn class="local col8 decl" id="38method" title='method' data-type='int *' data-ref="38method">method</dfn>,</td></tr>
+<tr><th id="281">281</th><td>                                        <em>int</em>* <dfn class="local col9 decl" id="39level" title='level' data-type='int *' data-ref="39level">level</dfn>,</td></tr>
+<tr><th id="282">282</th><td>                                        <em>int</em> <dfn class="local col0 decl" id="40raw" title='raw' data-type='int' data-ref="40raw">raw</dfn>,</td></tr>
+<tr><th id="283">283</th><td>                                        <em>const</em> <em>char</em>* <dfn class="local col1 decl" id="41password" title='password' data-type='const char *' data-ref="41password">password</dfn>);</td></tr>
+<tr><th id="284">284</th><td><i>/*</i></td></tr>
+<tr><th id="285">285</th><td><i>  Same than unzOpenCurrentFile, but open for read raw the file (not uncompress)</i></td></tr>
+<tr><th id="286">286</th><td><i>    if raw==1</i></td></tr>
+<tr><th id="287">287</th><td><i>  *method will receive method of compression, *level will receive level of</i></td></tr>
+<tr><th id="288">288</th><td><i>     compression</i></td></tr>
+<tr><th id="289">289</th><td><i>  note : you can set level parameter as NULL (if you did not want known level,</i></td></tr>
+<tr><th id="290">290</th><td><i>         but you CANNOT set method parameter as NULL</i></td></tr>
+<tr><th id="291">291</th><td><i>*/</i></td></tr>
+<tr><th id="292">292</th><td></td></tr>
+<tr><th id="293">293</th><td></td></tr>
+<tr><th id="294">294</th><td><b>extern</b> <em>int</em> <a class="macro" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#357" title="" data-ref="_M/ZEXPORT">ZEXPORT</a> <a class="decl" href="unzip.c.html#unzCloseCurrentFile" title='unzCloseCurrentFile' data-ref="unzCloseCurrentFile" id="unzCloseCurrentFile">unzCloseCurrentFile</a> (<a class="typedef" href="#unzFile" title='unzFile' data-type='voidp' data-ref="unzFile">unzFile</a> <dfn class="local col2 decl" id="42file" title='file' data-type='unzFile' data-ref="42file">file</dfn>);</td></tr>
+<tr><th id="295">295</th><td><i>/*</i></td></tr>
+<tr><th id="296">296</th><td><i>  Close the file in zip opened with unzOpenCurrentFile</i></td></tr>
+<tr><th id="297">297</th><td><i>  Return UNZ_CRCERROR if all the file was read but the CRC is not good</i></td></tr>
+<tr><th id="298">298</th><td><i>*/</i></td></tr>
+<tr><th id="299">299</th><td></td></tr>
+<tr><th id="300">300</th><td><b>extern</b> <em>int</em> <a class="macro" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#357" title="" data-ref="_M/ZEXPORT">ZEXPORT</a> <a class="decl" href="unzip.c.html#unzReadCurrentFile" title='unzReadCurrentFile' data-ref="unzReadCurrentFile" id="unzReadCurrentFile">unzReadCurrentFile</a> (<a class="typedef" href="#unzFile" title='unzFile' data-type='voidp' data-ref="unzFile">unzFile</a> <dfn class="local col3 decl" id="43file" title='file' data-type='unzFile' data-ref="43file">file</dfn>,</td></tr>
+<tr><th id="301">301</th><td>                      <a class="typedef" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#voidp" title='voidp' data-type='void *' data-ref="voidp">voidp</a> <dfn class="local col4 decl" id="44buf" title='buf' data-type='voidp' data-ref="44buf">buf</dfn>,</td></tr>
+<tr><th id="302">302</th><td>                      <em>unsigned</em> <dfn class="local col5 decl" id="45len" title='len' data-type='unsigned int' data-ref="45len">len</dfn>);</td></tr>
+<tr><th id="303">303</th><td><i>/*</i></td></tr>
+<tr><th id="304">304</th><td><i>  Read bytes from the current file (opened by unzOpenCurrentFile)</i></td></tr>
+<tr><th id="305">305</th><td><i>  buf contain buffer where data must be copied</i></td></tr>
+<tr><th id="306">306</th><td><i>  len the size of buf.</i></td></tr>
+<tr><th id="307">307</th><td><i></i></td></tr>
+<tr><th id="308">308</th><td><i>  return the number of byte copied if somes bytes are copied</i></td></tr>
+<tr><th id="309">309</th><td><i>  return 0 if the end of file was reached</i></td></tr>
+<tr><th id="310">310</th><td><i>  return &lt;0 with error code if there is an error</i></td></tr>
+<tr><th id="311">311</th><td><i>    (UNZ_ERRNO for IO error, or zLib error for uncompress error)</i></td></tr>
+<tr><th id="312">312</th><td><i>*/</i></td></tr>
+<tr><th id="313">313</th><td></td></tr>
+<tr><th id="314">314</th><td><b>extern</b> <a class="macro" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#457" title="off_t" data-ref="_M/z_off_t">z_off_t</a> <a class="macro" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#357" title="" data-ref="_M/ZEXPORT">ZEXPORT</a> <a class="decl" href="unzip.c.html#unztell" title='unztell' data-ref="unztell" id="unztell">unztell</a> (<a class="typedef" href="#unzFile" title='unzFile' data-type='voidp' data-ref="unzFile">unzFile</a> <dfn class="local col6 decl" id="46file" title='file' data-type='unzFile' data-ref="46file">file</dfn>);</td></tr>
+<tr><th id="315">315</th><td><i>/*</i></td></tr>
+<tr><th id="316">316</th><td><i>  Give the current position in uncompressed data</i></td></tr>
+<tr><th id="317">317</th><td><i>*/</i></td></tr>
+<tr><th id="318">318</th><td></td></tr>
+<tr><th id="319">319</th><td><b>extern</b> <em>int</em> <a class="macro" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#357" title="" data-ref="_M/ZEXPORT">ZEXPORT</a> <a class="decl" href="unzip.c.html#unzeof" title='unzeof' data-ref="unzeof" id="unzeof">unzeof</a> (<a class="typedef" href="#unzFile" title='unzFile' data-type='voidp' data-ref="unzFile">unzFile</a> <dfn class="local col7 decl" id="47file" title='file' data-type='unzFile' data-ref="47file">file</dfn>);</td></tr>
+<tr><th id="320">320</th><td><i>/*</i></td></tr>
+<tr><th id="321">321</th><td><i>  return 1 if the end of file was reached, 0 elsewhere</i></td></tr>
+<tr><th id="322">322</th><td><i>*/</i></td></tr>
+<tr><th id="323">323</th><td></td></tr>
+<tr><th id="324">324</th><td><b>extern</b> <em>int</em> <a class="macro" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#357" title="" data-ref="_M/ZEXPORT">ZEXPORT</a> <a class="decl" href="unzip.c.html#unzGetLocalExtrafield" title='unzGetLocalExtrafield' data-ref="unzGetLocalExtrafield" id="unzGetLocalExtrafield">unzGetLocalExtrafield</a> (<a class="typedef" href="#unzFile" title='unzFile' data-type='voidp' data-ref="unzFile">unzFile</a> <dfn class="local col8 decl" id="48file" title='file' data-type='unzFile' data-ref="48file">file</dfn>,</td></tr>
+<tr><th id="325">325</th><td>                                          <a class="typedef" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#voidp" title='voidp' data-type='void *' data-ref="voidp">voidp</a> <dfn class="local col9 decl" id="49buf" title='buf' data-type='voidp' data-ref="49buf">buf</dfn>,</td></tr>
+<tr><th id="326">326</th><td>                                          <em>unsigned</em> <dfn class="local col0 decl" id="50len" title='len' data-type='unsigned int' data-ref="50len">len</dfn>);</td></tr>
+<tr><th id="327">327</th><td><i>/*</i></td></tr>
+<tr><th id="328">328</th><td><i>  Read extra field from the current file (opened by unzOpenCurrentFile)</i></td></tr>
+<tr><th id="329">329</th><td><i>  This is the local-header version of the extra field (sometimes, there is</i></td></tr>
+<tr><th id="330">330</th><td><i>    more info in the local-header version than in the central-header)</i></td></tr>
+<tr><th id="331">331</th><td><i></i></td></tr>
+<tr><th id="332">332</th><td><i>  if buf==NULL, it return the size of the local extra field</i></td></tr>
+<tr><th id="333">333</th><td><i></i></td></tr>
+<tr><th id="334">334</th><td><i>  if buf!=NULL, len is the size of the buffer, the extra header is copied in</i></td></tr>
+<tr><th id="335">335</th><td><i>    buf.</i></td></tr>
+<tr><th id="336">336</th><td><i>  the return value is the number of bytes copied in buf, or (if &lt;0)</i></td></tr>
+<tr><th id="337">337</th><td><i>    the error code</i></td></tr>
+<tr><th id="338">338</th><td><i>*/</i></td></tr>
+<tr><th id="339">339</th><td></td></tr>
+<tr><th id="340">340</th><td><i>/***************************************************************************/</i></td></tr>
+<tr><th id="341">341</th><td></td></tr>
+<tr><th id="342">342</th><td><i>/* Get the current file offset */</i></td></tr>
+<tr><th id="343">343</th><td><b>extern</b> <a class="typedef" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#uLong" title='uLong' data-type='unsigned long' data-ref="uLong">uLong</a> <a class="macro" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#357" title="" data-ref="_M/ZEXPORT">ZEXPORT</a> <a class="decl" href="unzip.c.html#unzGetOffset" title='unzGetOffset' data-ref="unzGetOffset" id="unzGetOffset">unzGetOffset</a> (<a class="typedef" href="#unzFile" title='unzFile' data-type='voidp' data-ref="unzFile">unzFile</a> <dfn class="local col1 decl" id="51file" title='file' data-type='unzFile' data-ref="51file">file</dfn>);</td></tr>
+<tr><th id="344">344</th><td></td></tr>
+<tr><th id="345">345</th><td><i>/* Set the current file offset */</i></td></tr>
+<tr><th id="346">346</th><td><b>extern</b> <em>int</em> <a class="macro" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#357" title="" data-ref="_M/ZEXPORT">ZEXPORT</a> <a class="decl" href="unzip.c.html#unzSetOffset" title='unzSetOffset' data-ref="unzSetOffset" id="unzSetOffset">unzSetOffset</a> (<a class="typedef" href="#unzFile" title='unzFile' data-type='voidp' data-ref="unzFile">unzFile</a> <dfn class="local col2 decl" id="52file" title='file' data-type='unzFile' data-ref="52file">file</dfn>, <a class="typedef" href="../../../../../include/x86_64-linux-gnu/zconf.h.html#uLong" title='uLong' data-type='unsigned long' data-ref="uLong">uLong</a> <dfn class="local col3 decl" id="53pos" title='pos' data-type='uLong' data-ref="53pos">pos</dfn>);</td></tr>
+<tr><th id="347">347</th><td></td></tr>
+<tr><th id="348">348</th><td></td></tr>
+<tr><th id="349">349</th><td></td></tr>
+<tr><th id="350">350</th><td><u>#<span data-ppcond="350">ifdef</span> <span class="macro" data-ref="_M/__cplusplus">__cplusplus</span></u></td></tr>
+<tr><th id="351">351</th><td>}</td></tr>
+<tr><th id="352">352</th><td><u>#<span data-ppcond="350">endif</span></u></td></tr>
+<tr><th id="353">353</th><td></td></tr>
+<tr><th id="354">354</th><td><u>#<span data-ppcond="45">endif</span> /* _unz_H */</u></td></tr>
+<tr><th id="355">355</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated while processing <a href='unzip.c.html'>vlc/modules/access/zip/unzip/unzip.c</a><br/>Generated on <em>2016-Oct-25</em> from project vlc revision <em>2.2.0-git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

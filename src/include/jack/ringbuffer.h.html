@@ -1,0 +1,253 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>ringbuffer.h source code [include/jack/ringbuffer.h] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'include/jack/ringbuffer.h'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>include</a>/<a href='./'>jack</a>/<a href='ringbuffer.h.html'>ringbuffer.h</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i>    Copyright (C) 2000 Paul Davis</i></td></tr>
+<tr><th id="3">3</th><td><i>    Copyright (C) 2003 Rohan Drape</i></td></tr>
+<tr><th id="4">4</th><td><i>    </i></td></tr>
+<tr><th id="5">5</th><td><i>    This program is free software; you can redistribute it and/or modify</i></td></tr>
+<tr><th id="6">6</th><td><i>    it under the terms of the GNU Lesser General Public License as published by</i></td></tr>
+<tr><th id="7">7</th><td><i>    the Free Software Foundation; either version 2.1 of the License, or</i></td></tr>
+<tr><th id="8">8</th><td><i>    (at your option) any later version.</i></td></tr>
+<tr><th id="9">9</th><td><i>    </i></td></tr>
+<tr><th id="10">10</th><td><i>    This program is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="11">11</th><td><i>    but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="12">12</th><td><i>    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the</i></td></tr>
+<tr><th id="13">13</th><td><i>    GNU Lesser General Public License for more details.</i></td></tr>
+<tr><th id="14">14</th><td><i>    </i></td></tr>
+<tr><th id="15">15</th><td><i>    You should have received a copy of the GNU Lesser General Public License</i></td></tr>
+<tr><th id="16">16</th><td><i>    along with this program; if not, write to the Free Software </i></td></tr>
+<tr><th id="17">17</th><td><i>    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.</i></td></tr>
+<tr><th id="18">18</th><td><i></i></td></tr>
+<tr><th id="19">19</th><td><i>*/</i></td></tr>
+<tr><th id="20">20</th><td></td></tr>
+<tr><th id="21">21</th><td><u>#<span data-ppcond="21">ifndef</span> <span class="macro" data-ref="_M/_RINGBUFFER_H">_RINGBUFFER_H</span></u></td></tr>
+<tr><th id="22">22</th><td><u>#define <dfn class="macro" id="_M/_RINGBUFFER_H" data-ref="_M/_RINGBUFFER_H">_RINGBUFFER_H</dfn></u></td></tr>
+<tr><th id="23">23</th><td></td></tr>
+<tr><th id="24">24</th><td><u>#<span data-ppcond="24">ifdef</span> <span class="macro" data-ref="_M/__cplusplus">__cplusplus</span></u></td></tr>
+<tr><th id="25">25</th><td><b>extern</b> <q>"C"</q> {</td></tr>
+<tr><th id="26">26</th><td><u>#<span data-ppcond="24">endif</span></u></td></tr>
+<tr><th id="27">27</th><td></td></tr>
+<tr><th id="28">28</th><td><u>#include <a href="../x86_64-linux-gnu/sys/types.h.html">&lt;sys/types.h&gt;</a></u></td></tr>
+<tr><th id="29">29</th><td></td></tr>
+<tr><th id="30">30</th><td><i class="doc">/**<span class="command"> @file</span> ringbuffer.h</i></td></tr>
+<tr><th id="31">31</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="32">32</th><td><i class="doc"> * A set of library functions to make lock-free ringbuffers available</i></td></tr>
+<tr><th id="33">33</th><td><i class="doc"> * to JACK clients.  The `capture_client.c' (in the example_clients</i></td></tr>
+<tr><th id="34">34</th><td><i class="doc"> * directory) is a fully functioning user of this API.</i></td></tr>
+<tr><th id="35">35</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="36">36</th><td><i class="doc"> * The key attribute of a ringbuffer is that it can be safely accessed</i></td></tr>
+<tr><th id="37">37</th><td><i class="doc"> * by two threads simultaneously -- one reading from the buffer and</i></td></tr>
+<tr><th id="38">38</th><td><i class="doc"> * the other writing to it -- without using any synchronization or</i></td></tr>
+<tr><th id="39">39</th><td><i class="doc"> * mutual exclusion primitives.  For this to work correctly, there can</i></td></tr>
+<tr><th id="40">40</th><td><i class="doc"> * only be a single reader and a single writer thread.  Their</i></td></tr>
+<tr><th id="41">41</th><td><i class="doc"> * identities cannot be interchanged.</i></td></tr>
+<tr><th id="42">42</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="43">43</th><td></td></tr>
+<tr><th id="44">44</th><td><b>typedef</b> <b>struct</b>  </td></tr>
+<tr><th id="45">45</th><td>{</td></tr>
+<tr><th id="46">46</th><td>  <em>char</em>  *<dfn class="decl" id="{anonymous}::buf" title='&lt;anonymous struct&gt;::buf' data-ref="{anonymous}::buf">buf</dfn>;</td></tr>
+<tr><th id="47">47</th><td>  <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="decl" id="{anonymous}::len" title='&lt;anonymous struct&gt;::len' data-ref="{anonymous}::len">len</dfn>;</td></tr>
+<tr><th id="48">48</th><td>} </td></tr>
+<tr><th id="49">49</th><td><dfn class="typedef" id="jack_ringbuffer_data_t" title='jack_ringbuffer_data_t' data-type='struct jack_ringbuffer_data_t' data-ref="jack_ringbuffer_data_t">jack_ringbuffer_data_t</dfn> ;</td></tr>
+<tr><th id="50">50</th><td></td></tr>
+<tr><th id="51">51</th><td><b>typedef</b> <b>struct</b></td></tr>
+<tr><th id="52">52</th><td>{</td></tr>
+<tr><th id="53">53</th><td>  <em>char</em>		 *<dfn class="decl" id="{anonymous}::buf" title='&lt;anonymous struct&gt;::buf' data-ref="{anonymous}::buf">buf</dfn>;</td></tr>
+<tr><th id="54">54</th><td>  <em>volatile</em> <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="decl" id="{anonymous}::write_ptr" title='&lt;anonymous struct&gt;::write_ptr' data-ref="{anonymous}::write_ptr">write_ptr</dfn>;</td></tr>
+<tr><th id="55">55</th><td>  <em>volatile</em> <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="decl" id="{anonymous}::read_ptr" title='&lt;anonymous struct&gt;::read_ptr' data-ref="{anonymous}::read_ptr">read_ptr</dfn>;</td></tr>
+<tr><th id="56">56</th><td>  <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span>	  <dfn class="decl" id="{anonymous}::size" title='&lt;anonymous struct&gt;::size' data-ref="{anonymous}::size">size</dfn>;</td></tr>
+<tr><th id="57">57</th><td>  <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span>	  <dfn class="decl" id="{anonymous}::size_mask" title='&lt;anonymous struct&gt;::size_mask' data-ref="{anonymous}::size_mask">size_mask</dfn>;</td></tr>
+<tr><th id="58">58</th><td>  <em>int</em>		  <dfn class="decl" id="{anonymous}::mlocked" title='&lt;anonymous struct&gt;::mlocked' data-ref="{anonymous}::mlocked">mlocked</dfn>;</td></tr>
+<tr><th id="59">59</th><td>} </td></tr>
+<tr><th id="60">60</th><td><dfn class="typedef" id="jack_ringbuffer_t" title='jack_ringbuffer_t' data-type='struct jack_ringbuffer_t' data-ref="jack_ringbuffer_t">jack_ringbuffer_t</dfn> ;</td></tr>
+<tr><th id="61">61</th><td></td></tr>
+<tr><th id="62">62</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="63">63</th><td><i class="doc"> * Allocates a ringbuffer data structure of a specified size. The</i></td></tr>
+<tr><th id="64">64</th><td><i class="doc"> * caller must arrange for a call to jack_ringbuffer_free() to release</i></td></tr>
+<tr><th id="65">65</th><td><i class="doc"> * the memory associated with the ringbuffer.</i></td></tr>
+<tr><th id="66">66</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="67">67</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">sz</span> the ringbuffer size in bytes.</i></td></tr>
+<tr><th id="68">68</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="69">69</th><td><i class="doc"> * <span class="command">@return</span> a pointer to a new jack_ringbuffer_t, if successful; NULL</i></td></tr>
+<tr><th id="70">70</th><td><i class="doc"> * otherwise.</i></td></tr>
+<tr><th id="71">71</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="72">72</th><td><a class="typedef" href="#jack_ringbuffer_t" title='jack_ringbuffer_t' data-type='struct jack_ringbuffer_t' data-ref="jack_ringbuffer_t">jack_ringbuffer_t</a> *<dfn class="decl" id="jack_ringbuffer_create" title='jack_ringbuffer_create' data-ref="jack_ringbuffer_create">jack_ringbuffer_create</dfn>(<span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="local col3 decl" id="183sz" title='sz' data-type='size_t' data-ref="183sz">sz</dfn>);</td></tr>
+<tr><th id="73">73</th><td></td></tr>
+<tr><th id="74">74</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="75">75</th><td><i class="doc"> * Frees the ringbuffer data structure allocated by an earlier call to</i></td></tr>
+<tr><th id="76">76</th><td><i class="doc"> * jack_ringbuffer_create().</i></td></tr>
+<tr><th id="77">77</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="78">78</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">rb</span> a pointer to the ringbuffer structure.</i></td></tr>
+<tr><th id="79">79</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="80">80</th><td><em>void</em> <dfn class="decl" id="jack_ringbuffer_free" title='jack_ringbuffer_free' data-ref="jack_ringbuffer_free">jack_ringbuffer_free</dfn>(<a class="typedef" href="#jack_ringbuffer_t" title='jack_ringbuffer_t' data-type='struct jack_ringbuffer_t' data-ref="jack_ringbuffer_t">jack_ringbuffer_t</a> *<dfn class="local col4 decl" id="184rb" title='rb' data-type='jack_ringbuffer_t *' data-ref="184rb">rb</dfn>);</td></tr>
+<tr><th id="81">81</th><td></td></tr>
+<tr><th id="82">82</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="83">83</th><td><i class="doc"> * Fill a data structure with a description of the current readable</i></td></tr>
+<tr><th id="84">84</th><td><i class="doc"> * data held in the ringbuffer.  This description is returned in a two</i></td></tr>
+<tr><th id="85">85</th><td><i class="doc"> * element array of jack_ringbuffer_data_t.  Two elements are needed</i></td></tr>
+<tr><th id="86">86</th><td><i class="doc"> * because the data to be read may be split across the end of the</i></td></tr>
+<tr><th id="87">87</th><td><i class="doc"> * ringbuffer.</i></td></tr>
+<tr><th id="88">88</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="89">89</th><td><i class="doc"> * The first element will always contain a valid<span class="command"> @a</span> <span class="arg">len</span> field, which</i></td></tr>
+<tr><th id="90">90</th><td><i class="doc"> * may be zero or greater.  If the<span class="command"> @a</span> <span class="arg">len</span> field is non-zero, then data</i></td></tr>
+<tr><th id="91">91</th><td><i class="doc"> * can be read in a contiguous fashion using the address given in the</i></td></tr>
+<tr><th id="92">92</th><td><i class="doc"> * corresponding<span class="command"> @a</span> <span class="arg">buf</span> field.</i></td></tr>
+<tr><th id="93">93</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="94">94</th><td><i class="doc"> * If the second element has a non-zero<span class="command"> @a</span> <span class="arg">len</span> field, then a second</i></td></tr>
+<tr><th id="95">95</th><td><i class="doc"> * contiguous stretch of data can be read from the address given in</i></td></tr>
+<tr><th id="96">96</th><td><i class="doc"> * its corresponding<span class="command"> @a</span> <span class="arg">buf</span> field.</i></td></tr>
+<tr><th id="97">97</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="98">98</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">rb</span> a pointer to the ringbuffer structure.</i></td></tr>
+<tr><th id="99">99</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">vec</span> a pointer to a 2 element array of jack_ringbuffer_data_t.</i></td></tr>
+<tr><th id="100">100</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="101">101</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="102">102</th><td><em>void</em> <dfn class="decl" id="jack_ringbuffer_get_read_vector" title='jack_ringbuffer_get_read_vector' data-ref="jack_ringbuffer_get_read_vector">jack_ringbuffer_get_read_vector</dfn>(<em>const</em> <a class="typedef" href="#jack_ringbuffer_t" title='jack_ringbuffer_t' data-type='struct jack_ringbuffer_t' data-ref="jack_ringbuffer_t">jack_ringbuffer_t</a> *<dfn class="local col5 decl" id="185rb" title='rb' data-type='const jack_ringbuffer_t *' data-ref="185rb">rb</dfn>,</td></tr>
+<tr><th id="103">103</th><td>				     <a class="typedef" href="#jack_ringbuffer_data_t" title='jack_ringbuffer_data_t' data-type='struct jack_ringbuffer_data_t' data-ref="jack_ringbuffer_data_t">jack_ringbuffer_data_t</a> *<dfn class="local col6 decl" id="186vec" title='vec' data-type='jack_ringbuffer_data_t *' data-ref="186vec">vec</dfn>);</td></tr>
+<tr><th id="104">104</th><td></td></tr>
+<tr><th id="105">105</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="106">106</th><td><i class="doc"> * Fill a data structure with a description of the current writable</i></td></tr>
+<tr><th id="107">107</th><td><i class="doc"> * space in the ringbuffer.  The description is returned in a two</i></td></tr>
+<tr><th id="108">108</th><td><i class="doc"> * element array of jack_ringbuffer_data_t.  Two elements are needed</i></td></tr>
+<tr><th id="109">109</th><td><i class="doc"> * because the space available for writing may be split across the end</i></td></tr>
+<tr><th id="110">110</th><td><i class="doc"> * of the ringbuffer.</i></td></tr>
+<tr><th id="111">111</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="112">112</th><td><i class="doc"> * The first element will always contain a valid<span class="command"> @a</span> <span class="arg">len</span> field, which</i></td></tr>
+<tr><th id="113">113</th><td><i class="doc"> * may be zero or greater.  If the<span class="command"> @a</span> <span class="arg">len</span> field is non-zero, then data</i></td></tr>
+<tr><th id="114">114</th><td><i class="doc"> * can be written in a contiguous fashion using the address given in</i></td></tr>
+<tr><th id="115">115</th><td><i class="doc"> * the corresponding<span class="command"> @a</span> <span class="arg">buf</span> field.</i></td></tr>
+<tr><th id="116">116</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="117">117</th><td><i class="doc"> * If the second element has a non-zero<span class="command"> @a</span> <span class="arg">len</span> field, then a second</i></td></tr>
+<tr><th id="118">118</th><td><i class="doc"> * contiguous stretch of data can be written to the address given in</i></td></tr>
+<tr><th id="119">119</th><td><i class="doc"> * the corresponding<span class="command"> @a</span> <span class="arg">buf</span> field.</i></td></tr>
+<tr><th id="120">120</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="121">121</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">rb</span> a pointer to the ringbuffer structure.</i></td></tr>
+<tr><th id="122">122</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">vec</span> a pointer to a 2 element array of jack_ringbuffer_data_t.</i></td></tr>
+<tr><th id="123">123</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="124">124</th><td><em>void</em> <dfn class="decl" id="jack_ringbuffer_get_write_vector" title='jack_ringbuffer_get_write_vector' data-ref="jack_ringbuffer_get_write_vector">jack_ringbuffer_get_write_vector</dfn>(<em>const</em> <a class="typedef" href="#jack_ringbuffer_t" title='jack_ringbuffer_t' data-type='struct jack_ringbuffer_t' data-ref="jack_ringbuffer_t">jack_ringbuffer_t</a> *<dfn class="local col7 decl" id="187rb" title='rb' data-type='const jack_ringbuffer_t *' data-ref="187rb">rb</dfn>,</td></tr>
+<tr><th id="125">125</th><td>				      <a class="typedef" href="#jack_ringbuffer_data_t" title='jack_ringbuffer_data_t' data-type='struct jack_ringbuffer_data_t' data-ref="jack_ringbuffer_data_t">jack_ringbuffer_data_t</a> *<dfn class="local col8 decl" id="188vec" title='vec' data-type='jack_ringbuffer_data_t *' data-ref="188vec">vec</dfn>);</td></tr>
+<tr><th id="126">126</th><td></td></tr>
+<tr><th id="127">127</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="128">128</th><td><i class="doc"> * Read data from the ringbuffer.</i></td></tr>
+<tr><th id="129">129</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="130">130</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">rb</span> a pointer to the ringbuffer structure.</i></td></tr>
+<tr><th id="131">131</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">dest</span> a pointer to a buffer where data read from the</i></td></tr>
+<tr><th id="132">132</th><td><i class="doc"> * ringbuffer will go.</i></td></tr>
+<tr><th id="133">133</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">cnt</span> the number of bytes to read.</i></td></tr>
+<tr><th id="134">134</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="135">135</th><td><i class="doc"> * <span class="command">@return</span> the number of bytes read, which may range from 0 to cnt.</i></td></tr>
+<tr><th id="136">136</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="137">137</th><td><span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="decl" id="jack_ringbuffer_read" title='jack_ringbuffer_read' data-ref="jack_ringbuffer_read">jack_ringbuffer_read</dfn>(<a class="typedef" href="#jack_ringbuffer_t" title='jack_ringbuffer_t' data-type='struct jack_ringbuffer_t' data-ref="jack_ringbuffer_t">jack_ringbuffer_t</a> *<dfn class="local col9 decl" id="189rb" title='rb' data-type='jack_ringbuffer_t *' data-ref="189rb">rb</dfn>, <em>char</em> *<dfn class="local col0 decl" id="190dest" title='dest' data-type='char *' data-ref="190dest">dest</dfn>, <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="local col1 decl" id="191cnt" title='cnt' data-type='size_t' data-ref="191cnt">cnt</dfn>);</td></tr>
+<tr><th id="138">138</th><td></td></tr>
+<tr><th id="139">139</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="140">140</th><td><i class="doc"> * Read data from the ringbuffer. Opposed to jack_ringbuffer_read()</i></td></tr>
+<tr><th id="141">141</th><td><i class="doc"> * this function does not move the read pointer. Thus it's</i></td></tr>
+<tr><th id="142">142</th><td><i class="doc"> * a convenient way to inspect data in the ringbuffer in a</i></td></tr>
+<tr><th id="143">143</th><td><i class="doc"> * continous fashion. The price is that the data is copied</i></td></tr>
+<tr><th id="144">144</th><td><i class="doc"> * into a user provided buffer. For "raw" non-copy inspection</i></td></tr>
+<tr><th id="145">145</th><td><i class="doc"> * of the data in the ringbuffer use jack_ringbuffer_get_read_vector().</i></td></tr>
+<tr><th id="146">146</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="147">147</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">rb</span> a pointer to the ringbuffer structure.</i></td></tr>
+<tr><th id="148">148</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">dest</span> a pointer to a buffer where data read from the</i></td></tr>
+<tr><th id="149">149</th><td><i class="doc"> * ringbuffer will go.</i></td></tr>
+<tr><th id="150">150</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">cnt</span> the number of bytes to read.</i></td></tr>
+<tr><th id="151">151</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="152">152</th><td><i class="doc"> * <span class="command">@return</span> the number of bytes read, which may range from 0 to cnt.</i></td></tr>
+<tr><th id="153">153</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="154">154</th><td><span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="decl" id="jack_ringbuffer_peek" title='jack_ringbuffer_peek' data-ref="jack_ringbuffer_peek">jack_ringbuffer_peek</dfn>(<a class="typedef" href="#jack_ringbuffer_t" title='jack_ringbuffer_t' data-type='struct jack_ringbuffer_t' data-ref="jack_ringbuffer_t">jack_ringbuffer_t</a> *<dfn class="local col2 decl" id="192rb" title='rb' data-type='jack_ringbuffer_t *' data-ref="192rb">rb</dfn>, <em>char</em> *<dfn class="local col3 decl" id="193dest" title='dest' data-type='char *' data-ref="193dest">dest</dfn>, <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="local col4 decl" id="194cnt" title='cnt' data-type='size_t' data-ref="194cnt">cnt</dfn>);</td></tr>
+<tr><th id="155">155</th><td></td></tr>
+<tr><th id="156">156</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="157">157</th><td><i class="doc"> * Advance the read pointer.</i></td></tr>
+<tr><th id="158">158</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="159">159</th><td><i class="doc"> * After data have been read from the ringbuffer using the pointers</i></td></tr>
+<tr><th id="160">160</th><td><i class="doc"> * returned by jack_ringbuffer_get_read_vector(), use this function to</i></td></tr>
+<tr><th id="161">161</th><td><i class="doc"> * advance the buffer pointers, making that space available for future</i></td></tr>
+<tr><th id="162">162</th><td><i class="doc"> * write operations.</i></td></tr>
+<tr><th id="163">163</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="164">164</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">rb</span> a pointer to the ringbuffer structure.</i></td></tr>
+<tr><th id="165">165</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">cnt</span> the number of bytes read.</i></td></tr>
+<tr><th id="166">166</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="167">167</th><td><em>void</em> <dfn class="decl" id="jack_ringbuffer_read_advance" title='jack_ringbuffer_read_advance' data-ref="jack_ringbuffer_read_advance">jack_ringbuffer_read_advance</dfn>(<a class="typedef" href="#jack_ringbuffer_t" title='jack_ringbuffer_t' data-type='struct jack_ringbuffer_t' data-ref="jack_ringbuffer_t">jack_ringbuffer_t</a> *<dfn class="local col5 decl" id="195rb" title='rb' data-type='jack_ringbuffer_t *' data-ref="195rb">rb</dfn>, <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="local col6 decl" id="196cnt" title='cnt' data-type='size_t' data-ref="196cnt">cnt</dfn>);</td></tr>
+<tr><th id="168">168</th><td></td></tr>
+<tr><th id="169">169</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="170">170</th><td><i class="doc"> * Return the number of bytes available for reading.</i></td></tr>
+<tr><th id="171">171</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="172">172</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">rb</span> a pointer to the ringbuffer structure.</i></td></tr>
+<tr><th id="173">173</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="174">174</th><td><i class="doc"> * <span class="command">@return</span> the number of bytes available to read.</i></td></tr>
+<tr><th id="175">175</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="176">176</th><td><span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="decl" id="jack_ringbuffer_read_space" title='jack_ringbuffer_read_space' data-ref="jack_ringbuffer_read_space">jack_ringbuffer_read_space</dfn>(<em>const</em> <a class="typedef" href="#jack_ringbuffer_t" title='jack_ringbuffer_t' data-type='struct jack_ringbuffer_t' data-ref="jack_ringbuffer_t">jack_ringbuffer_t</a> *<dfn class="local col7 decl" id="197rb" title='rb' data-type='const jack_ringbuffer_t *' data-ref="197rb">rb</dfn>);</td></tr>
+<tr><th id="177">177</th><td></td></tr>
+<tr><th id="178">178</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="179">179</th><td><i class="doc"> * Lock a ringbuffer data block into memory.</i></td></tr>
+<tr><th id="180">180</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="181">181</th><td><i class="doc"> * Uses the mlock() system call.  This is not a realtime operation.</i></td></tr>
+<tr><th id="182">182</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="183">183</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">rb</span> a pointer to the ringbuffer structure.</i></td></tr>
+<tr><th id="184">184</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="185">185</th><td><em>int</em> <dfn class="decl" id="jack_ringbuffer_mlock" title='jack_ringbuffer_mlock' data-ref="jack_ringbuffer_mlock">jack_ringbuffer_mlock</dfn>(<a class="typedef" href="#jack_ringbuffer_t" title='jack_ringbuffer_t' data-type='struct jack_ringbuffer_t' data-ref="jack_ringbuffer_t">jack_ringbuffer_t</a> *<dfn class="local col8 decl" id="198rb" title='rb' data-type='jack_ringbuffer_t *' data-ref="198rb">rb</dfn>);</td></tr>
+<tr><th id="186">186</th><td></td></tr>
+<tr><th id="187">187</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="188">188</th><td><i class="doc"> * Reset the read and write pointers, making an empty buffer.</i></td></tr>
+<tr><th id="189">189</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="190">190</th><td><i class="doc"> * This is not thread safe.</i></td></tr>
+<tr><th id="191">191</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="192">192</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">rb</span> a pointer to the ringbuffer structure.</i></td></tr>
+<tr><th id="193">193</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="194">194</th><td><em>void</em> <dfn class="decl" id="jack_ringbuffer_reset" title='jack_ringbuffer_reset' data-ref="jack_ringbuffer_reset">jack_ringbuffer_reset</dfn>(<a class="typedef" href="#jack_ringbuffer_t" title='jack_ringbuffer_t' data-type='struct jack_ringbuffer_t' data-ref="jack_ringbuffer_t">jack_ringbuffer_t</a> *<dfn class="local col9 decl" id="199rb" title='rb' data-type='jack_ringbuffer_t *' data-ref="199rb">rb</dfn>);</td></tr>
+<tr><th id="195">195</th><td></td></tr>
+<tr><th id="196">196</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="197">197</th><td><i class="doc"> * Write data into the ringbuffer.</i></td></tr>
+<tr><th id="198">198</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="199">199</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">rb</span> a pointer to the ringbuffer structure.</i></td></tr>
+<tr><th id="200">200</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">src</span> a pointer to the data to be written to the ringbuffer.</i></td></tr>
+<tr><th id="201">201</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">cnt</span> the number of bytes to write.</i></td></tr>
+<tr><th id="202">202</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="203">203</th><td><i class="doc"> * <span class="command">@return</span> the number of bytes write, which may range from 0 to cnt</i></td></tr>
+<tr><th id="204">204</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="205">205</th><td><span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="decl" id="jack_ringbuffer_write" title='jack_ringbuffer_write' data-ref="jack_ringbuffer_write">jack_ringbuffer_write</dfn>(<a class="typedef" href="#jack_ringbuffer_t" title='jack_ringbuffer_t' data-type='struct jack_ringbuffer_t' data-ref="jack_ringbuffer_t">jack_ringbuffer_t</a> *<dfn class="local col0 decl" id="200rb" title='rb' data-type='jack_ringbuffer_t *' data-ref="200rb">rb</dfn>, <em>const</em> <em>char</em> *<dfn class="local col1 decl" id="201src" title='src' data-type='const char *' data-ref="201src">src</dfn>,</td></tr>
+<tr><th id="206">206</th><td>			     <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="local col2 decl" id="202cnt" title='cnt' data-type='size_t' data-ref="202cnt">cnt</dfn>);</td></tr>
+<tr><th id="207">207</th><td></td></tr>
+<tr><th id="208">208</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="209">209</th><td><i class="doc"> * Advance the write pointer.</i></td></tr>
+<tr><th id="210">210</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="211">211</th><td><i class="doc"> * After data have been written the ringbuffer using the pointers</i></td></tr>
+<tr><th id="212">212</th><td><i class="doc"> * returned by jack_ringbuffer_get_write_vector(), use this function</i></td></tr>
+<tr><th id="213">213</th><td><i class="doc"> * to advance the buffer pointer, making the data available for future</i></td></tr>
+<tr><th id="214">214</th><td><i class="doc"> * read operations.</i></td></tr>
+<tr><th id="215">215</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="216">216</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">rb</span> a pointer to the ringbuffer structure.</i></td></tr>
+<tr><th id="217">217</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">cnt</span> the number of bytes written.</i></td></tr>
+<tr><th id="218">218</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="219">219</th><td><em>void</em> <dfn class="decl" id="jack_ringbuffer_write_advance" title='jack_ringbuffer_write_advance' data-ref="jack_ringbuffer_write_advance">jack_ringbuffer_write_advance</dfn>(<a class="typedef" href="#jack_ringbuffer_t" title='jack_ringbuffer_t' data-type='struct jack_ringbuffer_t' data-ref="jack_ringbuffer_t">jack_ringbuffer_t</a> *<dfn class="local col3 decl" id="203rb" title='rb' data-type='jack_ringbuffer_t *' data-ref="203rb">rb</dfn>, <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="local col4 decl" id="204cnt" title='cnt' data-type='size_t' data-ref="204cnt">cnt</dfn>);</td></tr>
+<tr><th id="220">220</th><td></td></tr>
+<tr><th id="221">221</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="222">222</th><td><i class="doc"> * Return the number of bytes available for writing.</i></td></tr>
+<tr><th id="223">223</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="224">224</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">rb</span> a pointer to the ringbuffer structure.</i></td></tr>
+<tr><th id="225">225</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="226">226</th><td><i class="doc"> * <span class="command">@return</span> the amount of free space (in bytes) available for writing.</i></td></tr>
+<tr><th id="227">227</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="228">228</th><td><span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="decl" id="jack_ringbuffer_write_space" title='jack_ringbuffer_write_space' data-ref="jack_ringbuffer_write_space">jack_ringbuffer_write_space</dfn>(<em>const</em> <a class="typedef" href="#jack_ringbuffer_t" title='jack_ringbuffer_t' data-type='struct jack_ringbuffer_t' data-ref="jack_ringbuffer_t">jack_ringbuffer_t</a> *<dfn class="local col5 decl" id="205rb" title='rb' data-type='const jack_ringbuffer_t *' data-ref="205rb">rb</dfn>);</td></tr>
+<tr><th id="229">229</th><td></td></tr>
+<tr><th id="230">230</th><td></td></tr>
+<tr><th id="231">231</th><td><u>#<span data-ppcond="231">ifdef</span> <span class="macro" data-ref="_M/__cplusplus">__cplusplus</span></u></td></tr>
+<tr><th id="232">232</th><td>}</td></tr>
+<tr><th id="233">233</th><td><u>#<span data-ppcond="231">endif</span></u></td></tr>
+<tr><th id="234">234</th><td></td></tr>
+<tr><th id="235">235</th><td><u>#<span data-ppcond="21">endif</span></u></td></tr>
+<tr><th id="236">236</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated while processing <a href='../../vlc/modules/access/jack.c.html'>vlc/modules/access/jack.c</a><br/>Generated on <em>2016-Oct-25</em> from project include<br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

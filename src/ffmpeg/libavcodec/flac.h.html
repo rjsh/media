@@ -1,0 +1,172 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>flac.h source code [ffmpeg/libavcodec/flac.h] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="FLACExtradataFormat,FLACFrameInfo,FLACStreaminfo "/>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavcodec/flac.h'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavcodec</a>/<a href='flac.h.html'>flac.h</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * FLAC (Free Lossless Audio Codec) decoder/demuxer common functions</i></td></tr>
+<tr><th id="3">3</th><td><i> * Copyright (c) 2008 Justin Ruggles</i></td></tr>
+<tr><th id="4">4</th><td><i> *</i></td></tr>
+<tr><th id="5">5</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="8">8</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="9">9</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="10">10</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="11">11</th><td><i> *</i></td></tr>
+<tr><th id="12">12</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="13">13</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="14">14</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="15">15</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="16">16</th><td><i> *</i></td></tr>
+<tr><th id="17">17</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="18">18</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="19">19</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="20">20</th><td><i> */</i></td></tr>
+<tr><th id="21">21</th><td></td></tr>
+<tr><th id="22">22</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="23">23</th><td><i class="doc"> *<span class="command"> @file</span></i></td></tr>
+<tr><th id="24">24</th><td><i class="doc"> * FLAC (Free Lossless Audio Codec) decoder/demuxer common functions</i></td></tr>
+<tr><th id="25">25</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="26">26</th><td></td></tr>
+<tr><th id="27">27</th><td><u>#<span data-ppcond="27">ifndef</span> <span class="macro" data-ref="_M/AVCODEC_FLAC_H">AVCODEC_FLAC_H</span></u></td></tr>
+<tr><th id="28">28</th><td><u>#define <dfn class="macro" id="_M/AVCODEC_FLAC_H" data-ref="_M/AVCODEC_FLAC_H">AVCODEC_FLAC_H</dfn></u></td></tr>
+<tr><th id="29">29</th><td></td></tr>
+<tr><th id="30">30</th><td><u>#include <a href="avcodec.h.html">"avcodec.h"</a></u></td></tr>
+<tr><th id="31">31</th><td><u>#include <a href="bytestream.h.html">"bytestream.h"</a></u></td></tr>
+<tr><th id="32">32</th><td><u>#include <a href="get_bits.h.html">"get_bits.h"</a></u></td></tr>
+<tr><th id="33">33</th><td></td></tr>
+<tr><th id="34">34</th><td><u>#define <dfn class="macro" id="_M/FLAC_STREAMINFO_SIZE" data-ref="_M/FLAC_STREAMINFO_SIZE">FLAC_STREAMINFO_SIZE</dfn>   34</u></td></tr>
+<tr><th id="35">35</th><td><u>#define <dfn class="macro" id="_M/FLAC_MAX_CHANNELS" data-ref="_M/FLAC_MAX_CHANNELS">FLAC_MAX_CHANNELS</dfn>       8</u></td></tr>
+<tr><th id="36">36</th><td><u>#define <dfn class="macro" id="_M/FLAC_MIN_BLOCKSIZE" data-ref="_M/FLAC_MIN_BLOCKSIZE">FLAC_MIN_BLOCKSIZE</dfn>     16</u></td></tr>
+<tr><th id="37">37</th><td><u>#define <dfn class="macro" id="_M/FLAC_MAX_BLOCKSIZE" data-ref="_M/FLAC_MAX_BLOCKSIZE">FLAC_MAX_BLOCKSIZE</dfn>  65535</u></td></tr>
+<tr><th id="38">38</th><td><u>#define <dfn class="macro" id="_M/FLAC_MIN_FRAME_SIZE" data-ref="_M/FLAC_MIN_FRAME_SIZE">FLAC_MIN_FRAME_SIZE</dfn>    11</u></td></tr>
+<tr><th id="39">39</th><td></td></tr>
+<tr><th id="40">40</th><td><b>enum</b> {</td></tr>
+<tr><th id="41">41</th><td>    <dfn class="enum" id="::FLAC_CHMODE_INDEPENDENT" title='::FLAC_CHMODE_INDEPENDENT' data-ref="::FLAC_CHMODE_INDEPENDENT">FLAC_CHMODE_INDEPENDENT</dfn> = <var>0</var>,</td></tr>
+<tr><th id="42">42</th><td>    <dfn class="enum" id="::FLAC_CHMODE_LEFT_SIDE" title='::FLAC_CHMODE_LEFT_SIDE' data-ref="::FLAC_CHMODE_LEFT_SIDE">FLAC_CHMODE_LEFT_SIDE</dfn>   = <var>1</var>,</td></tr>
+<tr><th id="43">43</th><td>    <dfn class="enum" id="::FLAC_CHMODE_RIGHT_SIDE" title='::FLAC_CHMODE_RIGHT_SIDE' data-ref="::FLAC_CHMODE_RIGHT_SIDE">FLAC_CHMODE_RIGHT_SIDE</dfn>  = <var>2</var>,</td></tr>
+<tr><th id="44">44</th><td>    <dfn class="enum" id="::FLAC_CHMODE_MID_SIDE" title='::FLAC_CHMODE_MID_SIDE' data-ref="::FLAC_CHMODE_MID_SIDE">FLAC_CHMODE_MID_SIDE</dfn>    = <var>3</var>,</td></tr>
+<tr><th id="45">45</th><td>};</td></tr>
+<tr><th id="46">46</th><td></td></tr>
+<tr><th id="47">47</th><td><b>enum</b> {</td></tr>
+<tr><th id="48">48</th><td>    <dfn class="enum" id="::FLAC_METADATA_TYPE_STREAMINFO" title='::FLAC_METADATA_TYPE_STREAMINFO' data-ref="::FLAC_METADATA_TYPE_STREAMINFO">FLAC_METADATA_TYPE_STREAMINFO</dfn> = <var>0</var>,</td></tr>
+<tr><th id="49">49</th><td>    <dfn class="enum" id="::FLAC_METADATA_TYPE_PADDING" title='::FLAC_METADATA_TYPE_PADDING' data-ref="::FLAC_METADATA_TYPE_PADDING">FLAC_METADATA_TYPE_PADDING</dfn>,</td></tr>
+<tr><th id="50">50</th><td>    <dfn class="enum" id="::FLAC_METADATA_TYPE_APPLICATION" title='::FLAC_METADATA_TYPE_APPLICATION' data-ref="::FLAC_METADATA_TYPE_APPLICATION">FLAC_METADATA_TYPE_APPLICATION</dfn>,</td></tr>
+<tr><th id="51">51</th><td>    <dfn class="enum" id="::FLAC_METADATA_TYPE_SEEKTABLE" title='::FLAC_METADATA_TYPE_SEEKTABLE' data-ref="::FLAC_METADATA_TYPE_SEEKTABLE">FLAC_METADATA_TYPE_SEEKTABLE</dfn>,</td></tr>
+<tr><th id="52">52</th><td>    <dfn class="enum" id="::FLAC_METADATA_TYPE_VORBIS_COMMENT" title='::FLAC_METADATA_TYPE_VORBIS_COMMENT' data-ref="::FLAC_METADATA_TYPE_VORBIS_COMMENT">FLAC_METADATA_TYPE_VORBIS_COMMENT</dfn>,</td></tr>
+<tr><th id="53">53</th><td>    <dfn class="enum" id="::FLAC_METADATA_TYPE_CUESHEET" title='::FLAC_METADATA_TYPE_CUESHEET' data-ref="::FLAC_METADATA_TYPE_CUESHEET">FLAC_METADATA_TYPE_CUESHEET</dfn>,</td></tr>
+<tr><th id="54">54</th><td>    <dfn class="enum" id="::FLAC_METADATA_TYPE_PICTURE" title='::FLAC_METADATA_TYPE_PICTURE' data-ref="::FLAC_METADATA_TYPE_PICTURE">FLAC_METADATA_TYPE_PICTURE</dfn>,</td></tr>
+<tr><th id="55">55</th><td>    <dfn class="enum" id="::FLAC_METADATA_TYPE_INVALID" title='::FLAC_METADATA_TYPE_INVALID' data-ref="::FLAC_METADATA_TYPE_INVALID">FLAC_METADATA_TYPE_INVALID</dfn> = <var>127</var></td></tr>
+<tr><th id="56">56</th><td>};</td></tr>
+<tr><th id="57">57</th><td></td></tr>
+<tr><th id="58">58</th><td><b>enum</b> <dfn class="type def" id="FLACExtradataFormat" title='FLACExtradataFormat' data-ref="FLACExtradataFormat">FLACExtradataFormat</dfn> {</td></tr>
+<tr><th id="59">59</th><td>    <dfn class="enum" id="FLACExtradataFormat::FLAC_EXTRADATA_FORMAT_STREAMINFO" title='FLACExtradataFormat::FLAC_EXTRADATA_FORMAT_STREAMINFO' data-ref="FLACExtradataFormat::FLAC_EXTRADATA_FORMAT_STREAMINFO">FLAC_EXTRADATA_FORMAT_STREAMINFO</dfn>  = <var>0</var>,</td></tr>
+<tr><th id="60">60</th><td>    <dfn class="enum" id="FLACExtradataFormat::FLAC_EXTRADATA_FORMAT_FULL_HEADER" title='FLACExtradataFormat::FLAC_EXTRADATA_FORMAT_FULL_HEADER' data-ref="FLACExtradataFormat::FLAC_EXTRADATA_FORMAT_FULL_HEADER">FLAC_EXTRADATA_FORMAT_FULL_HEADER</dfn> = <var>1</var></td></tr>
+<tr><th id="61">61</th><td>};</td></tr>
+<tr><th id="62">62</th><td></td></tr>
+<tr><th id="63">63</th><td><u>#define <dfn class="macro" id="_M/FLACCOMMONINFO" data-ref="_M/FLACCOMMONINFO">FLACCOMMONINFO</dfn> \</u></td></tr>
+<tr><th id="64">64</th><td><u>    int <dfn class="decl" id="FLACStreaminfo::samplerate" title='FLACStreaminfo::samplerate' data-ref="FLACStreaminfo::samplerate"><dfn class="decl" id="FLACFrameInfo::samplerate" title='FLACFrameInfo::samplerate' data-ref="FLACFrameInfo::samplerate">samplerate</dfn></dfn>;         /**&lt; sample rate                             */\</u></td></tr>
+<tr><th id="65">65</th><td><u>    int <dfn class="decl" id="FLACStreaminfo::channels" title='FLACStreaminfo::channels' data-ref="FLACStreaminfo::channels"><dfn class="decl" id="FLACFrameInfo::channels" title='FLACFrameInfo::channels' data-ref="FLACFrameInfo::channels">channels</dfn></dfn>;           /**&lt; number of channels                      */\</u></td></tr>
+<tr><th id="66">66</th><td><u>    int <dfn class="decl" id="FLACStreaminfo::bps" title='FLACStreaminfo::bps' data-ref="FLACStreaminfo::bps"><dfn class="decl" id="FLACFrameInfo::bps" title='FLACFrameInfo::bps' data-ref="FLACFrameInfo::bps">bps</dfn></dfn>;                /**&lt; bits-per-sample                         */</u>\</td></tr>
+<tr><th id="67">67</th><td></td></tr>
+<tr><th id="68">68</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="69">69</th><td><i class="doc"> * Data needed from the Streaminfo header for use by the raw FLAC demuxer</i></td></tr>
+<tr><th id="70">70</th><td><i class="doc"> * and/or the FLAC decoder.</i></td></tr>
+<tr><th id="71">71</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="72">72</th><td><u>#define <dfn class="macro" id="_M/FLACSTREAMINFO" data-ref="_M/FLACSTREAMINFO">FLACSTREAMINFO</dfn> \</u></td></tr>
+<tr><th id="73">73</th><td><u>    FLACCOMMONINFO \</u></td></tr>
+<tr><th id="74">74</th><td><u>    int <dfn class="decl" id="FLACStreaminfo::max_blocksize" title='FLACStreaminfo::max_blocksize' data-ref="FLACStreaminfo::max_blocksize">max_blocksize</dfn>;      /**&lt; maximum block size, in samples          */\</u></td></tr>
+<tr><th id="75">75</th><td><u>    int <dfn class="decl" id="FLACStreaminfo::max_framesize" title='FLACStreaminfo::max_framesize' data-ref="FLACStreaminfo::max_framesize">max_framesize</dfn>;      /**&lt; maximum frame size, in bytes            */\</u></td></tr>
+<tr><th id="76">76</th><td><u>    <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="decl" id="FLACStreaminfo::samples" title='FLACStreaminfo::samples' data-ref="FLACStreaminfo::samples">samples</dfn>;        /**&lt; total number of samples                 */</u>\</td></tr>
+<tr><th id="77">77</th><td></td></tr>
+<tr><th id="78">78</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="FLACStreaminfo" title='FLACStreaminfo' data-ref="FLACStreaminfo"><a class="type" href="#FLACStreaminfo" title='FLACStreaminfo' data-ref="FLACStreaminfo">FLACStreaminfo</a></dfn> {</td></tr>
+<tr><th id="79">79</th><td>    <a class="macro" href="#72" title="int samplerate; int channels; int bps; int max_blocksize; int max_framesize; int64_t samples;" data-ref="_M/FLACSTREAMINFO">FLACSTREAMINFO</a></td></tr>
+<tr><th id="80">80</th><td>} <dfn class="typedef" id="FLACStreaminfo" title='FLACStreaminfo' data-type='struct FLACStreaminfo' data-ref="FLACStreaminfo">FLACStreaminfo</dfn>;</td></tr>
+<tr><th id="81">81</th><td></td></tr>
+<tr><th id="82">82</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="FLACFrameInfo" title='FLACFrameInfo' data-ref="FLACFrameInfo"><a class="type" href="#FLACFrameInfo" title='FLACFrameInfo' data-ref="FLACFrameInfo">FLACFrameInfo</a></dfn> {</td></tr>
+<tr><th id="83">83</th><td>    <a class="macro" href="#63" title="int samplerate; int channels; int bps;" data-ref="_M/FLACCOMMONINFO">FLACCOMMONINFO</a></td></tr>
+<tr><th id="84">84</th><td>    <em>int</em> <dfn class="decl" id="FLACFrameInfo::blocksize" title='FLACFrameInfo::blocksize' data-ref="FLACFrameInfo::blocksize">blocksize</dfn>;          <i class="doc">/**&lt; block size of the frame                 */</i></td></tr>
+<tr><th id="85">85</th><td>    <em>int</em> <dfn class="decl" id="FLACFrameInfo::ch_mode" title='FLACFrameInfo::ch_mode' data-ref="FLACFrameInfo::ch_mode">ch_mode</dfn>;            <i class="doc">/**&lt; channel decorrelation mode              */</i></td></tr>
+<tr><th id="86">86</th><td>    <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="decl" id="FLACFrameInfo::frame_or_sample_num" title='FLACFrameInfo::frame_or_sample_num' data-ref="FLACFrameInfo::frame_or_sample_num">frame_or_sample_num</dfn>;    <i class="doc">/**&lt; frame number or sample number   */</i></td></tr>
+<tr><th id="87">87</th><td>    <em>int</em> <dfn class="decl" id="FLACFrameInfo::is_var_size" title='FLACFrameInfo::is_var_size' data-ref="FLACFrameInfo::is_var_size">is_var_size</dfn>;                <i class="doc">/**&lt; specifies if the stream uses variable</i></td></tr>
+<tr><th id="88">88</th><td><i class="doc">                                         block sizes or a fixed block size;</i></td></tr>
+<tr><th id="89">89</th><td><i class="doc">                                         also determines the meaning of</i></td></tr>
+<tr><th id="90">90</th><td><i class="doc">                                         frame_or_sample_num             */</i></td></tr>
+<tr><th id="91">91</th><td>} <dfn class="typedef" id="FLACFrameInfo" title='FLACFrameInfo' data-type='struct FLACFrameInfo' data-ref="FLACFrameInfo">FLACFrameInfo</dfn>;</td></tr>
+<tr><th id="92">92</th><td></td></tr>
+<tr><th id="93">93</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="94">94</th><td><i class="doc"> * Parse the Streaminfo metadata block</i></td></tr>
+<tr><th id="95">95</th><td><i class="doc"> * <span class="command">@param</span>[out] <span class="arg">avctx</span>   codec context to set basic stream parameters</i></td></tr>
+<tr><th id="96">96</th><td><i class="doc"> * <span class="command">@param</span>[out] <span class="arg">s</span>       where parsed information is stored</i></td></tr>
+<tr><th id="97">97</th><td><i class="doc"> * <span class="command">@param</span>[in]  <span class="arg">buffer</span>  pointer to start of 34-byte streaminfo data</i></td></tr>
+<tr><th id="98">98</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="99">99</th><td><em>void</em> <a class="decl" href="flac.c.html#ff_flac_parse_streaminfo" title='ff_flac_parse_streaminfo' data-ref="ff_flac_parse_streaminfo" id="ff_flac_parse_streaminfo">ff_flac_parse_streaminfo</a>(<a class="typedef" href="avcodec.h.html#AVCodecContext" title='AVCodecContext' data-type='struct AVCodecContext' data-ref="AVCodecContext">AVCodecContext</a> *<dfn class="local col1 decl" id="1avctx" title='avctx' data-type='AVCodecContext *' data-ref="1avctx">avctx</dfn>, <b>struct</b> <a class="type" href="#FLACStreaminfo" title='FLACStreaminfo' data-ref="FLACStreaminfo">FLACStreaminfo</a> *<dfn class="local col2 decl" id="2s" title='s' data-type='struct FLACStreaminfo *' data-ref="2s">s</dfn>,</td></tr>
+<tr><th id="100">100</th><td>                              <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col3 decl" id="3buffer" title='buffer' data-type='const uint8_t *' data-ref="3buffer">buffer</dfn>);</td></tr>
+<tr><th id="101">101</th><td></td></tr>
+<tr><th id="102">102</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="103">103</th><td><i class="doc"> * Validate the FLAC extradata.</i></td></tr>
+<tr><th id="104">104</th><td><i class="doc"> * <span class="command">@param</span>[in]  <span class="arg">avctx</span> codec context containing the extradata.</i></td></tr>
+<tr><th id="105">105</th><td><i class="doc"> * <span class="command">@param</span>[out] <span class="arg">format</span> extradata format.</i></td></tr>
+<tr><th id="106">106</th><td><i class="doc"> * <span class="command">@param</span>[out] <span class="arg">streaminfo_start</span> pointer to start of 34-byte STREAMINFO data.</i></td></tr>
+<tr><th id="107">107</th><td><i class="doc"> * <span class="command">@return</span> 1 if valid, 0 if not valid.</i></td></tr>
+<tr><th id="108">108</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="109">109</th><td><em>int</em> <a class="decl" href="flac.c.html#ff_flac_is_extradata_valid" title='ff_flac_is_extradata_valid' data-ref="ff_flac_is_extradata_valid" id="ff_flac_is_extradata_valid">ff_flac_is_extradata_valid</a>(<a class="typedef" href="avcodec.h.html#AVCodecContext" title='AVCodecContext' data-type='struct AVCodecContext' data-ref="AVCodecContext">AVCodecContext</a> *<dfn class="local col4 decl" id="4avctx" title='avctx' data-type='AVCodecContext *' data-ref="4avctx">avctx</dfn>,</td></tr>
+<tr><th id="110">110</th><td>                               <b>enum</b> <a class="type" href="#FLACExtradataFormat" title='FLACExtradataFormat' data-ref="FLACExtradataFormat">FLACExtradataFormat</a> *<dfn class="local col5 decl" id="5format" title='format' data-type='enum FLACExtradataFormat *' data-ref="5format">format</dfn>,</td></tr>
+<tr><th id="111">111</th><td>                               <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> **<dfn class="local col6 decl" id="6streaminfo_start" title='streaminfo_start' data-type='uint8_t **' data-ref="6streaminfo_start">streaminfo_start</dfn>);</td></tr>
+<tr><th id="112">112</th><td></td></tr>
+<tr><th id="113">113</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="114">114</th><td><i class="doc"> * Calculate an estimate for the maximum frame size based on verbatim mode.</i></td></tr>
+<tr><th id="115">115</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">blocksize</span> block size, in samples</i></td></tr>
+<tr><th id="116">116</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">ch</span> number of channels</i></td></tr>
+<tr><th id="117">117</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">bps</span> bits-per-sample</i></td></tr>
+<tr><th id="118">118</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="119">119</th><td><em>int</em> <a class="decl" href="flac.c.html#ff_flac_get_max_frame_size" title='ff_flac_get_max_frame_size' data-ref="ff_flac_get_max_frame_size" id="ff_flac_get_max_frame_size">ff_flac_get_max_frame_size</a>(<em>int</em> <dfn class="local col7 decl" id="7blocksize" title='blocksize' data-type='int' data-ref="7blocksize">blocksize</dfn>, <em>int</em> <dfn class="local col8 decl" id="8ch" title='ch' data-type='int' data-ref="8ch">ch</dfn>, <em>int</em> <dfn class="local col9 decl" id="9bps" title='bps' data-type='int' data-ref="9bps">bps</dfn>);</td></tr>
+<tr><th id="120">120</th><td></td></tr>
+<tr><th id="121">121</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="122">122</th><td><i class="doc"> * Validate and decode a frame header.</i></td></tr>
+<tr><th id="123">123</th><td><i class="doc"> * <span class="command">@param</span>      <span class="arg">avctx</span> AVCodecContext to use as av_log() context</i></td></tr>
+<tr><th id="124">124</th><td><i class="doc"> * <span class="command">@param</span>      <span class="arg">gb</span>    GetBitContext from which to read frame header</i></td></tr>
+<tr><th id="125">125</th><td><i class="doc"> * <span class="command">@param</span>[out] <span class="arg">fi</span>    frame information</i></td></tr>
+<tr><th id="126">126</th><td><i class="doc"> * <span class="command">@param</span>      <span class="arg">log_level_offset</span>  log level offset. can be used to silence error messages.</i></td></tr>
+<tr><th id="127">127</th><td><i class="doc"> * <span class="command">@return</span> non-zero on error, 0 if ok</i></td></tr>
+<tr><th id="128">128</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="129">129</th><td><em>int</em> <a class="decl" href="flac.c.html#ff_flac_decode_frame_header" title='ff_flac_decode_frame_header' data-ref="ff_flac_decode_frame_header" id="ff_flac_decode_frame_header">ff_flac_decode_frame_header</a>(<a class="typedef" href="avcodec.h.html#AVCodecContext" title='AVCodecContext' data-type='struct AVCodecContext' data-ref="AVCodecContext">AVCodecContext</a> *<dfn class="local col0 decl" id="10avctx" title='avctx' data-type='AVCodecContext *' data-ref="10avctx">avctx</dfn>, <a class="typedef" href="get_bits.h.html#GetBitContext" title='GetBitContext' data-type='struct GetBitContext' data-ref="GetBitContext">GetBitContext</a> *<dfn class="local col1 decl" id="11gb" title='gb' data-type='GetBitContext *' data-ref="11gb">gb</dfn>,</td></tr>
+<tr><th id="130">130</th><td>                                <a class="typedef" href="#FLACFrameInfo" title='FLACFrameInfo' data-type='struct FLACFrameInfo' data-ref="FLACFrameInfo">FLACFrameInfo</a> *<dfn class="local col2 decl" id="12fi" title='fi' data-type='FLACFrameInfo *' data-ref="12fi">fi</dfn>, <em>int</em> <dfn class="local col3 decl" id="13log_level_offset" title='log_level_offset' data-type='int' data-ref="13log_level_offset">log_level_offset</dfn>);</td></tr>
+<tr><th id="131">131</th><td></td></tr>
+<tr><th id="132">132</th><td><em>void</em> <a class="decl" href="flac.c.html#ff_flac_set_channel_layout" title='ff_flac_set_channel_layout' data-ref="ff_flac_set_channel_layout" id="ff_flac_set_channel_layout">ff_flac_set_channel_layout</a>(<a class="typedef" href="avcodec.h.html#AVCodecContext" title='AVCodecContext' data-type='struct AVCodecContext' data-ref="AVCodecContext">AVCodecContext</a> *<dfn class="local col4 decl" id="14avctx" title='avctx' data-type='AVCodecContext *' data-ref="14avctx">avctx</dfn>);</td></tr>
+<tr><th id="133">133</th><td></td></tr>
+<tr><th id="134">134</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="135">135</th><td><i class="doc"> * Parse the metadata block parameters from the header.</i></td></tr>
+<tr><th id="136">136</th><td><i class="doc"> * <span class="command">@param</span>[in]  <span class="arg">block_header</span> header data, at least 4 bytes</i></td></tr>
+<tr><th id="137">137</th><td><i class="doc"> * <span class="command">@param</span>[out] <span class="arg">last</span> indicator for last metadata block</i></td></tr>
+<tr><th id="138">138</th><td><i class="doc"> * <span class="command">@param</span>[out] <span class="arg">type</span> metadata block type</i></td></tr>
+<tr><th id="139">139</th><td><i class="doc"> * <span class="command">@param</span>[out] <span class="arg">size</span> metadata block size</i></td></tr>
+<tr><th id="140">140</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="141">141</th><td><em>static</em> <a class="macro" href="../libavutil/attributes.h.html#39" title="__attribute__((always_inline)) inline" data-ref="_M/av_always_inline">av_always_inline</a> <em>void</em> <dfn class="decl def" id="flac_parse_block_header" title='flac_parse_block_header' data-ref="flac_parse_block_header">flac_parse_block_header</dfn>(<em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col5 decl" id="15block_header" title='block_header' data-type='const uint8_t *' data-ref="15block_header">block_header</dfn>,</td></tr>
+<tr><th id="142">142</th><td>                                                      <em>int</em> *<dfn class="local col6 decl" id="16last" title='last' data-type='int *' data-ref="16last">last</dfn>, <em>int</em> *<dfn class="local col7 decl" id="17type" title='type' data-type='int *' data-ref="17type">type</dfn>, <em>int</em> *<dfn class="local col8 decl" id="18size" title='size' data-type='int *' data-ref="18size">size</dfn>)</td></tr>
+<tr><th id="143">143</th><td>{</td></tr>
+<tr><th id="144">144</th><td>    <em>int</em> <dfn class="local col9 decl" id="19tmp" title='tmp' data-type='int' data-ref="19tmp">tmp</dfn> = <a class="ref" href="bytestream.h.html#95" title='bytestream_get_byte' data-ref="bytestream_get_byte">bytestream_get_byte</a>(&amp;<a class="local col5 ref" href="#15block_header" title='block_header' data-ref="15block_header">block_header</a>);</td></tr>
+<tr><th id="145">145</th><td>    <b>if</b> (<a class="local col6 ref" href="#16last" title='last' data-ref="16last">last</a>)</td></tr>
+<tr><th id="146">146</th><td>        *<a class="local col6 ref" href="#16last" title='last' data-ref="16last">last</a> = <a class="local col9 ref" href="#19tmp" title='tmp' data-ref="19tmp">tmp</a> &amp; <var>0x80</var>;</td></tr>
+<tr><th id="147">147</th><td>    <b>if</b> (<a class="local col7 ref" href="#17type" title='type' data-ref="17type">type</a>)</td></tr>
+<tr><th id="148">148</th><td>        *<a class="local col7 ref" href="#17type" title='type' data-ref="17type">type</a> = <a class="local col9 ref" href="#19tmp" title='tmp' data-ref="19tmp">tmp</a> &amp; <var>0x7F</var>;</td></tr>
+<tr><th id="149">149</th><td>    <b>if</b> (<a class="local col8 ref" href="#18size" title='size' data-ref="18size">size</a>)</td></tr>
+<tr><th id="150">150</th><td>        *<a class="local col8 ref" href="#18size" title='size' data-ref="18size">size</a> = <a class="ref" href="bytestream.h.html#93" title='bytestream_get_be24' data-ref="bytestream_get_be24">bytestream_get_be24</a>(&amp;<a class="local col5 ref" href="#15block_header" title='block_header' data-ref="15block_header">block_header</a>);</td></tr>
+<tr><th id="151">151</th><td>}</td></tr>
+<tr><th id="152">152</th><td></td></tr>
+<tr><th id="153">153</th><td><u>#<span data-ppcond="27">endif</span> /* AVCODEC_FLAC_H */</u></td></tr>
+<tr><th id="154">154</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated while processing <a href='flac.c.html'>ffmpeg/libavcodec/flac.c</a><br/>Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

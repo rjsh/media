@@ -1,0 +1,96 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>h263dec.c source code [ffmpeg/libavformat/h263dec.c] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavformat/h263dec.c'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavformat</a>/<a href='h263dec.c.html'>h263dec.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * RAW H.263 video demuxer</i></td></tr>
+<tr><th id="3">3</th><td><i> * Copyright (c) 2009 Michael Niedermayer &lt;michaelni@gmx.at&gt;</i></td></tr>
+<tr><th id="4">4</th><td><i> *</i></td></tr>
+<tr><th id="5">5</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="8">8</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="9">9</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="10">10</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="11">11</th><td><i> *</i></td></tr>
+<tr><th id="12">12</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="13">13</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="14">14</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="15">15</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="16">16</th><td><i> *</i></td></tr>
+<tr><th id="17">17</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="18">18</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="19">19</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="20">20</th><td><i> */</i></td></tr>
+<tr><th id="21">21</th><td></td></tr>
+<tr><th id="22">22</th><td><u>#include <a href="avformat.h.html">"avformat.h"</a></u></td></tr>
+<tr><th id="23">23</th><td><u>#include <a href="rawdec.h.html">"rawdec.h"</a></u></td></tr>
+<tr><th id="24">24</th><td></td></tr>
+<tr><th id="25">25</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="h263_probe" title='h263_probe' data-type='int h263_probe(AVProbeData * p)' data-ref="h263_probe">h263_probe</dfn>(<a class="typedef" href="avformat.h.html#AVProbeData" title='AVProbeData' data-type='struct AVProbeData' data-ref="AVProbeData">AVProbeData</a> *<dfn class="local col1 decl" id="1p" title='p' data-type='AVProbeData *' data-ref="1p">p</dfn>)</td></tr>
+<tr><th id="26">26</th><td>{</td></tr>
+<tr><th id="27">27</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint64_t" title='uint64_t' data-type='unsigned long' data-ref="uint64_t">uint64_t</a> <dfn class="local col2 decl" id="2code" title='code' data-type='uint64_t' data-ref="2code">code</dfn>= -<var>1</var>;</td></tr>
+<tr><th id="28">28</th><td>    <em>int</em> <dfn class="local col3 decl" id="3i" title='i' data-type='int' data-ref="3i">i</dfn>;</td></tr>
+<tr><th id="29">29</th><td>    <em>int</em> <dfn class="local col4 decl" id="4valid_psc" title='valid_psc' data-type='int' data-ref="4valid_psc">valid_psc</dfn>=<var>0</var>;</td></tr>
+<tr><th id="30">30</th><td>    <em>int</em> <dfn class="local col5 decl" id="5invalid_psc" title='invalid_psc' data-type='int' data-ref="5invalid_psc">invalid_psc</dfn>=<var>0</var>;</td></tr>
+<tr><th id="31">31</th><td>    <em>int</em> <dfn class="local col6 decl" id="6res_change" title='res_change' data-type='int' data-ref="6res_change">res_change</dfn>=<var>0</var>;</td></tr>
+<tr><th id="32">32</th><td>    <em>int</em> <dfn class="local col7 decl" id="7src_fmt" title='src_fmt' data-type='int' data-ref="7src_fmt">src_fmt</dfn>, <dfn class="local col8 decl" id="8last_src_fmt" title='last_src_fmt' data-type='int' data-ref="8last_src_fmt">last_src_fmt</dfn>=-<var>1</var>;</td></tr>
+<tr><th id="33">33</th><td>    <em>int</em> <dfn class="local col9 decl" id="9last_gn" title='last_gn' data-type='int' data-ref="9last_gn">last_gn</dfn>=<var>0</var>;</td></tr>
+<tr><th id="34">34</th><td>    <em>int</em> <dfn class="local col0 decl" id="10tr" title='tr' data-type='int' data-ref="10tr">tr</dfn>, <dfn class="local col1 decl" id="11last_tr" title='last_tr' data-type='int' data-ref="11last_tr">last_tr</dfn> = -<var>1</var>;</td></tr>
+<tr><th id="35">35</th><td></td></tr>
+<tr><th id="36">36</th><td>    <b>for</b>(<a class="local col3 ref" href="#3i" title='i' data-ref="3i">i</a>=<var>0</var>; <a class="local col3 ref" href="#3i" title='i' data-ref="3i">i</a>&lt;<a class="local col1 ref" href="#1p" title='p' data-ref="1p">p</a>-&gt;<a class="ref" href="avformat.h.html#AVProbeData::buf_size" title='AVProbeData::buf_size' data-ref="AVProbeData::buf_size">buf_size</a>; <a class="local col3 ref" href="#3i" title='i' data-ref="3i">i</a>++){</td></tr>
+<tr><th id="37">37</th><td>        <a class="local col2 ref" href="#2code" title='code' data-ref="2code">code</a> = (<a class="local col2 ref" href="#2code" title='code' data-ref="2code">code</a>&lt;&lt;<var>8</var>) + <a class="local col1 ref" href="#1p" title='p' data-ref="1p">p</a>-&gt;<a class="ref" href="avformat.h.html#AVProbeData::buf" title='AVProbeData::buf' data-ref="AVProbeData::buf">buf</a>[<a class="local col3 ref" href="#3i" title='i' data-ref="3i">i</a>];</td></tr>
+<tr><th id="38">38</th><td>        <b>if</b> ((<a class="local col2 ref" href="#2code" title='code' data-ref="2code">code</a> &amp; <var>0xfffffc000000</var>) == <var>0x80000000</var>) {</td></tr>
+<tr><th id="39">39</th><td>            <a class="local col0 ref" href="#10tr" title='tr' data-ref="10tr">tr</a> = (<a class="local col2 ref" href="#2code" title='code' data-ref="2code">code</a> &gt;&gt; <var>18</var>) &amp; <var>0xFF</var>;</td></tr>
+<tr><th id="40">40</th><td>            <a class="local col7 ref" href="#7src_fmt" title='src_fmt' data-ref="7src_fmt">src_fmt</a>= (<a class="local col2 ref" href="#2code" title='code' data-ref="2code">code</a>&gt;&gt;<var>10</var>)&amp;<var>7</var>;</td></tr>
+<tr><th id="41">41</th><td>            <b>if</b>(   <a class="local col7 ref" href="#7src_fmt" title='src_fmt' data-ref="7src_fmt">src_fmt</a> != <a class="local col8 ref" href="#8last_src_fmt" title='last_src_fmt' data-ref="8last_src_fmt">last_src_fmt</a></td></tr>
+<tr><th id="42">42</th><td>               &amp;&amp; <a class="local col8 ref" href="#8last_src_fmt" title='last_src_fmt' data-ref="8last_src_fmt">last_src_fmt</a>&gt;<var>0</var> &amp;&amp; <a class="local col8 ref" href="#8last_src_fmt" title='last_src_fmt' data-ref="8last_src_fmt">last_src_fmt</a>&lt;<var>6</var></td></tr>
+<tr><th id="43">43</th><td>               &amp;&amp; <a class="local col7 ref" href="#7src_fmt" title='src_fmt' data-ref="7src_fmt">src_fmt</a>&lt;<var>6</var>)</td></tr>
+<tr><th id="44">44</th><td>                <a class="local col6 ref" href="#6res_change" title='res_change' data-ref="6res_change">res_change</a>++;</td></tr>
+<tr><th id="45">45</th><td></td></tr>
+<tr><th id="46">46</th><td>            <b>if</b> (<a class="local col0 ref" href="#10tr" title='tr' data-ref="10tr">tr</a> == <a class="local col1 ref" href="#11last_tr" title='last_tr' data-ref="11last_tr">last_tr</a>) {</td></tr>
+<tr><th id="47">47</th><td>                <a class="local col5 ref" href="#5invalid_psc" title='invalid_psc' data-ref="5invalid_psc">invalid_psc</a>++;</td></tr>
+<tr><th id="48">48</th><td>                <b>continue</b>;</td></tr>
+<tr><th id="49">49</th><td>            }</td></tr>
+<tr><th id="50">50</th><td></td></tr>
+<tr><th id="51">51</th><td>            <b>if</b> (<a class="local col7 ref" href="#7src_fmt" title='src_fmt' data-ref="7src_fmt">src_fmt</a> != <var>7</var> &amp;&amp; !(<a class="local col2 ref" href="#2code" title='code' data-ref="2code">code</a>&amp;(<var>1</var>&lt;&lt;<var>9</var>)) &amp;&amp; (<a class="local col2 ref" href="#2code" title='code' data-ref="2code">code</a>&amp;(<var>1</var>&lt;&lt;<var>5</var>))) {</td></tr>
+<tr><th id="52">52</th><td>                <a class="local col5 ref" href="#5invalid_psc" title='invalid_psc' data-ref="5invalid_psc">invalid_psc</a>++;</td></tr>
+<tr><th id="53">53</th><td>                <b>continue</b>;</td></tr>
+<tr><th id="54">54</th><td>            }</td></tr>
+<tr><th id="55">55</th><td></td></tr>
+<tr><th id="56">56</th><td>            <b>if</b>((<a class="local col2 ref" href="#2code" title='code' data-ref="2code">code</a>&amp;<var>0x30000</var>)==<var>0x20000</var> &amp;&amp; <a class="local col7 ref" href="#7src_fmt" title='src_fmt' data-ref="7src_fmt">src_fmt</a>){</td></tr>
+<tr><th id="57">57</th><td>                <a class="local col4 ref" href="#4valid_psc" title='valid_psc' data-ref="4valid_psc">valid_psc</a>++;</td></tr>
+<tr><th id="58">58</th><td>                <a class="local col9 ref" href="#9last_gn" title='last_gn' data-ref="9last_gn">last_gn</a>=<var>0</var>;</td></tr>
+<tr><th id="59">59</th><td>            }<b>else</b></td></tr>
+<tr><th id="60">60</th><td>                <a class="local col5 ref" href="#5invalid_psc" title='invalid_psc' data-ref="5invalid_psc">invalid_psc</a>++;</td></tr>
+<tr><th id="61">61</th><td>            <a class="local col8 ref" href="#8last_src_fmt" title='last_src_fmt' data-ref="8last_src_fmt">last_src_fmt</a>= <a class="local col7 ref" href="#7src_fmt" title='src_fmt' data-ref="7src_fmt">src_fmt</a>;</td></tr>
+<tr><th id="62">62</th><td>            <a class="local col1 ref" href="#11last_tr" title='last_tr' data-ref="11last_tr">last_tr</a> = <a class="local col0 ref" href="#10tr" title='tr' data-ref="10tr">tr</a>;</td></tr>
+<tr><th id="63">63</th><td>        } <b>else</b> <b>if</b>((<a class="local col2 ref" href="#2code" title='code' data-ref="2code">code</a> &amp; <var>0xffff80000000</var>) == <var>0x80000000</var>) {</td></tr>
+<tr><th id="64">64</th><td>            <em>int</em> <dfn class="local col2 decl" id="12gn" title='gn' data-type='int' data-ref="12gn">gn</dfn>= (<a class="local col2 ref" href="#2code" title='code' data-ref="2code">code</a>&gt;&gt;(<var>31</var>-<var>5</var>)) &amp; <var>0x1F</var>;</td></tr>
+<tr><th id="65">65</th><td>            <b>if</b>(<a class="local col2 ref" href="#12gn" title='gn' data-ref="12gn">gn</a>&lt;<a class="local col9 ref" href="#9last_gn" title='last_gn' data-ref="9last_gn">last_gn</a>){</td></tr>
+<tr><th id="66">66</th><td>                <a class="local col5 ref" href="#5invalid_psc" title='invalid_psc' data-ref="5invalid_psc">invalid_psc</a>++;</td></tr>
+<tr><th id="67">67</th><td>            }<b>else</b></td></tr>
+<tr><th id="68">68</th><td>                <a class="local col9 ref" href="#9last_gn" title='last_gn' data-ref="9last_gn">last_gn</a>= <a class="local col2 ref" href="#12gn" title='gn' data-ref="12gn">gn</a>;</td></tr>
+<tr><th id="69">69</th><td>        }</td></tr>
+<tr><th id="70">70</th><td>    }</td></tr>
+<tr><th id="71">71</th><td>    <b>if</b>(<a class="local col4 ref" href="#4valid_psc" title='valid_psc' data-ref="4valid_psc">valid_psc</a> &gt; <var>2</var>*<a class="local col5 ref" href="#5invalid_psc" title='invalid_psc' data-ref="5invalid_psc">invalid_psc</a> + <var>2</var>*<a class="local col6 ref" href="#6res_change" title='res_change' data-ref="6res_change">res_change</a> + <var>3</var>){</td></tr>
+<tr><th id="72">72</th><td>        <b>return</b> <a class="macro" href="avformat.h.html#471" title="50" data-ref="_M/AVPROBE_SCORE_EXTENSION">AVPROBE_SCORE_EXTENSION</a>;</td></tr>
+<tr><th id="73">73</th><td>    }<b>else</b> <b>if</b>(<a class="local col4 ref" href="#4valid_psc" title='valid_psc' data-ref="4valid_psc">valid_psc</a> &gt; <var>2</var>*<a class="local col5 ref" href="#5invalid_psc" title='invalid_psc' data-ref="5invalid_psc">invalid_psc</a>)</td></tr>
+<tr><th id="74">74</th><td>        <b>return</b> <a class="macro" href="avformat.h.html#471" title="50" data-ref="_M/AVPROBE_SCORE_EXTENSION">AVPROBE_SCORE_EXTENSION</a> / <var>2</var>;</td></tr>
+<tr><th id="75">75</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="76">76</th><td>}</td></tr>
+<tr><th id="77">77</th><td></td></tr>
+<tr><th id="78">78</th><td><a class="macro" href="rawdec.h.html#69" title="static const AVClass h263_demuxer_class = { .class_name = &quot;h263&quot; &quot; demuxer&quot;, .item_name = av_default_item_name, .option = ff_rawvideo_options, .version = ((55)&lt;&lt;16 | (33)&lt;&lt;8 | (100)),};AVInputFormat ff_h263_demuxer = { .name = &quot;h263&quot;, .long_name = &quot;raw H.263&quot;, .read_probe = h263_probe, .read_header = ff_raw_video_read_header, .read_packet = ff_raw_read_partial_packet, .extensions = ((void*)0), .flags = 0x0100, .raw_codec_id = AV_CODEC_ID_H263, .priv_data_size = sizeof(FFRawVideoDemuxerContext), .priv_class = &amp;h263_demuxer_class,};" data-ref="_M/FF_DEF_RAWVIDEO_DEMUXER">FF_DEF_RAWVIDEO_DEMUXER</a>(h263, <q>"raw H.263"</q>, <a class="tu ref" href="#h263_probe" title='h263_probe' data-ref="h263_probe">h263_probe</a>, <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>, <a class="enum" href="../libavcodec/avcodec.h.html#AVCodecID::AV_CODEC_ID_H263" title='AVCodecID::AV_CODEC_ID_H263' data-ref="AVCodecID::AV_CODEC_ID_H263">AV_CODEC_ID_H263</a>)</td></tr>
+<tr><th id="79">79</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

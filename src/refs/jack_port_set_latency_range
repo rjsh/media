@@ -1,0 +1,68 @@
+<dec f='include/jack/jack.h' l='1006' type='void jack_port_set_latency_range(jack_port_t * port, jack_latency_callback_mode_t mode, jack_latency_range_t * range)'/>
+<doc f='include/jack/jack.h' l='939'>/**
+ * set the minimum and maximum latencies defined by 
+ * @a mode for @a port, in frames.
+ *  
+ * See @ref LatencyFunctions for the definition of each latency value.
+ *
+ * This function should ONLY be used inside a latency
+ * callback. The client should determine the current
+ * value of the latency using @ref jack_port_get_latency_range()
+ * (called using the same mode as @a mode)
+ * and then add some number of frames to that reflects
+ * latency added by the client. 
+ * 
+ * How much latency a client adds will vary
+ * dramatically. For most clients, the answer is zero
+ * and there is no reason for them to register a latency
+ * callback and thus they should never call this
+ * function.
+ *
+ * More complex clients that take an input signal,
+ * transform it in some way and output the result but
+ * not during the same process() callback will
+ * generally know a single constant value to add
+ * to the value returned by @ref jack_port_get_latency_range().
+ *
+ * Such clients would register a latency callback (see 
+ * @ref jack_set_latency_callback) and must know what input
+ * ports feed which output ports as part of their
+ * internal state. Their latency callback will update
+ * the ports&apos; latency values appropriately.
+ *
+ * A pseudo-code example will help. The @a mode argument to the latency
+ * callback will determine whether playback or capture
+ * latency is being set. The callback will use 
+ * @ref jack_port_set_latency_range() as follows:
+ * 
+ * \code
+ * jack_latency_range_t range;
+ * if (mode == JackPlaybackLatency) {
+ *  foreach input_port in (all self-registered port) {
+ *   jack_port_get_latency_range (port_feeding_input_port, JackPlaybackLatency, &amp;range);
+ *   range.min += min_delay_added_as_signal_flows_from port_feeding to input_port;
+ *   range.max += max_delay_added_as_signal_flows_from port_feeding to input_port;
+ *   jack_port_set_latency_range (input_port, JackPlaybackLatency, &amp;range);
+ *  }
+ * } else if (mode == JackCaptureLatency) {
+ *  foreach output_port in (all self-registered port) { 
+ *   jack_port_get_latency_range (port_fed_by_output_port, JackCaptureLatency, &amp;range);
+ *   range.min += min_delay_added_as_signal_flows_from_output_port_to_fed_by_port;
+ *   range.max += max_delay_added_as_signal_flows_from_output_port_to_fed_by_port;
+ *   jack_port_set_latency_range (output_port, JackCaptureLatency, &amp;range);
+ *  }
+ * }
+ * \endcode
+ *
+ * In this relatively simple pseudo-code example, it is assumed that
+ * each input port or output is connected to only 1 output or input
+ * port respectively.
+ *
+ * If a port is connected to more than 1 other port, then the 
+ * range.min and range.max values passed to @ref
+ * jack_port_set_latency_range() should reflect the minimum and
+ * maximum values across all connected ports.
+ *
+ * See the description of @ref jack_set_latency_callback for more 
+ * information.
+ */</doc>

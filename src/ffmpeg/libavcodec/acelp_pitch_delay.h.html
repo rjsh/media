@@ -1,0 +1,271 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>acelp_pitch_delay.h source code [ffmpeg/libavcodec/acelp_pitch_delay.h] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavcodec/acelp_pitch_delay.h'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavcodec</a>/<a href='acelp_pitch_delay.h.html'>acelp_pitch_delay.h</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * gain code, gain pitch and pitch delay decoding</i></td></tr>
+<tr><th id="3">3</th><td><i> *</i></td></tr>
+<tr><th id="4">4</th><td><i> * Copyright (c) 2008 Vladimir Voroshilov</i></td></tr>
+<tr><th id="5">5</th><td><i> *</i></td></tr>
+<tr><th id="6">6</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="7">7</th><td><i> *</i></td></tr>
+<tr><th id="8">8</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="9">9</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="10">10</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="11">11</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="12">12</th><td><i> *</i></td></tr>
+<tr><th id="13">13</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="14">14</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="15">15</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="16">16</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="17">17</th><td><i> *</i></td></tr>
+<tr><th id="18">18</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="19">19</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="20">20</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="21">21</th><td><i> */</i></td></tr>
+<tr><th id="22">22</th><td></td></tr>
+<tr><th id="23">23</th><td><u>#<span data-ppcond="23">ifndef</span> <span class="macro" data-ref="_M/AVCODEC_ACELP_PITCH_DELAY_H">AVCODEC_ACELP_PITCH_DELAY_H</span></u></td></tr>
+<tr><th id="24">24</th><td><u>#define <dfn class="macro" id="_M/AVCODEC_ACELP_PITCH_DELAY_H" data-ref="_M/AVCODEC_ACELP_PITCH_DELAY_H">AVCODEC_ACELP_PITCH_DELAY_H</dfn></u></td></tr>
+<tr><th id="25">25</th><td></td></tr>
+<tr><th id="26">26</th><td><u>#include &lt;stdint.h&gt;</u></td></tr>
+<tr><th id="27">27</th><td></td></tr>
+<tr><th id="28">28</th><td><u>#include <a href="audiodsp.h.html">"audiodsp.h"</a></u></td></tr>
+<tr><th id="29">29</th><td></td></tr>
+<tr><th id="30">30</th><td><u>#define <dfn class="macro" id="_M/PITCH_DELAY_MIN" data-ref="_M/PITCH_DELAY_MIN">PITCH_DELAY_MIN</dfn>             20</u></td></tr>
+<tr><th id="31">31</th><td><u>#define <dfn class="macro" id="_M/PITCH_DELAY_MAX" data-ref="_M/PITCH_DELAY_MAX">PITCH_DELAY_MAX</dfn>             143</u></td></tr>
+<tr><th id="32">32</th><td></td></tr>
+<tr><th id="33">33</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="34">34</th><td><i class="doc"> * <span class="command">@brief</span> Decode pitch delay of the first subframe encoded by 8 bits with 1/3</i></td></tr>
+<tr><th id="35">35</th><td><i class="doc"> *        resolution.</i></td></tr>
+<tr><th id="36">36</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">ac_index</span> adaptive codebook index (8 bits)</i></td></tr>
+<tr><th id="37">37</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="38">38</th><td><i class="doc"> * <span class="command">@return</span> pitch delay in 1/3 units</i></td></tr>
+<tr><th id="39">39</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="40">40</th><td><i class="doc"> * Pitch delay is coded:</i></td></tr>
+<tr><th id="41">41</th><td><i class="doc"> *    with 1/3 resolution, 19  &lt; pitch_delay &lt;  85</i></td></tr>
+<tr><th id="42">42</th><td><i class="doc"> *    integers only,       85 &lt;= pitch_delay &lt;= 143</i></td></tr>
+<tr><th id="43">43</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="44">44</th><td><em>int</em> <a class="decl" href="acelp_pitch_delay.c.html#ff_acelp_decode_8bit_to_1st_delay3" title='ff_acelp_decode_8bit_to_1st_delay3' data-ref="ff_acelp_decode_8bit_to_1st_delay3" id="ff_acelp_decode_8bit_to_1st_delay3">ff_acelp_decode_8bit_to_1st_delay3</a>(<em>int</em> <dfn class="local col1 decl" id="1ac_index" title='ac_index' data-type='int' data-ref="1ac_index">ac_index</dfn>);</td></tr>
+<tr><th id="45">45</th><td></td></tr>
+<tr><th id="46">46</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="47">47</th><td><i class="doc"> * <span class="command">@brief</span> Decode pitch delay of the second subframe encoded by 5 or 6 bits</i></td></tr>
+<tr><th id="48">48</th><td><i class="doc"> *        with 1/3 precision.</i></td></tr>
+<tr><th id="49">49</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">ac_index</span> adaptive codebook index (5 or 6 bits)</i></td></tr>
+<tr><th id="50">50</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">pitch_delay_min</span> lower bound (integer) of pitch delay interval</i></td></tr>
+<tr><th id="51">51</th><td><i class="doc"> *                      for second subframe</i></td></tr>
+<tr><th id="52">52</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="53">53</th><td><i class="doc"> * <span class="command">@return</span> pitch delay in 1/3 units</i></td></tr>
+<tr><th id="54">54</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="55">55</th><td><i class="doc"> * Pitch delay is coded:</i></td></tr>
+<tr><th id="56">56</th><td><i class="doc"> *    with 1/3 resolution, -6 &lt; pitch_delay - int(prev_pitch_delay) &lt; 5</i></td></tr>
+<tr><th id="57">57</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="58">58</th><td><i class="doc"> * <span class="command">@remark</span> The routine is used in G.729 @@8k, AMR @@10.2k, AMR @@7.95k,</i></td></tr>
+<tr><th id="59">59</th><td><i class="doc"> *         AMR @@7.4k for the second subframe.</i></td></tr>
+<tr><th id="60">60</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="61">61</th><td><em>int</em> <a class="decl" href="acelp_pitch_delay.c.html#ff_acelp_decode_5_6_bit_to_2nd_delay3" title='ff_acelp_decode_5_6_bit_to_2nd_delay3' data-ref="ff_acelp_decode_5_6_bit_to_2nd_delay3" id="ff_acelp_decode_5_6_bit_to_2nd_delay3">ff_acelp_decode_5_6_bit_to_2nd_delay3</a>(</td></tr>
+<tr><th id="62">62</th><td>        <em>int</em> <dfn class="local col2 decl" id="2ac_index" title='ac_index' data-type='int' data-ref="2ac_index">ac_index</dfn>,</td></tr>
+<tr><th id="63">63</th><td>        <em>int</em> <dfn class="local col3 decl" id="3pitch_delay_min" title='pitch_delay_min' data-type='int' data-ref="3pitch_delay_min">pitch_delay_min</dfn>);</td></tr>
+<tr><th id="64">64</th><td></td></tr>
+<tr><th id="65">65</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="66">66</th><td><i class="doc"> * <span class="command">@brief</span> Decode pitch delay with 1/3 precision.</i></td></tr>
+<tr><th id="67">67</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">ac_index</span> adaptive codebook index (4 bits)</i></td></tr>
+<tr><th id="68">68</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">pitch_delay_min</span> lower bound (integer) of pitch delay interval for</i></td></tr>
+<tr><th id="69">69</th><td><i class="doc"> *                      second subframe</i></td></tr>
+<tr><th id="70">70</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="71">71</th><td><i class="doc"> * <span class="command">@return</span> pitch delay in 1/3 units</i></td></tr>
+<tr><th id="72">72</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="73">73</th><td><i class="doc"> * Pitch delay is coded:</i></td></tr>
+<tr><th id="74">74</th><td><i class="doc"> *    integers only,          -6  &lt; pitch_delay - int(prev_pitch_delay) &lt;= -2</i></td></tr>
+<tr><th id="75">75</th><td><i class="doc"> *    with 1/3 resolution,    -2  &lt; pitch_delay - int(prev_pitch_delay) &lt;  1</i></td></tr>
+<tr><th id="76">76</th><td><i class="doc"> *    integers only,           1 &lt;= pitch_delay - int(prev_pitch_delay) &lt;  5</i></td></tr>
+<tr><th id="77">77</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="78">78</th><td><i class="doc"> * <span class="command">@remark</span> The routine is used in G.729 @@6.4k, AMR @@6.7k, AMR @@5.9k,</i></td></tr>
+<tr><th id="79">79</th><td><i class="doc"> *         AMR @@5.15k, AMR @@4.75k for the second subframe.</i></td></tr>
+<tr><th id="80">80</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="81">81</th><td><em>int</em> <a class="decl" href="acelp_pitch_delay.c.html#ff_acelp_decode_4bit_to_2nd_delay3" title='ff_acelp_decode_4bit_to_2nd_delay3' data-ref="ff_acelp_decode_4bit_to_2nd_delay3" id="ff_acelp_decode_4bit_to_2nd_delay3">ff_acelp_decode_4bit_to_2nd_delay3</a>(</td></tr>
+<tr><th id="82">82</th><td>        <em>int</em> <dfn class="local col4 decl" id="4ac_index" title='ac_index' data-type='int' data-ref="4ac_index">ac_index</dfn>,</td></tr>
+<tr><th id="83">83</th><td>        <em>int</em> <dfn class="local col5 decl" id="5pitch_delay_min" title='pitch_delay_min' data-type='int' data-ref="5pitch_delay_min">pitch_delay_min</dfn>);</td></tr>
+<tr><th id="84">84</th><td></td></tr>
+<tr><th id="85">85</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="86">86</th><td><i class="doc"> * <span class="command">@brief</span> Decode pitch delay of the first subframe encoded by 9 bits</i></td></tr>
+<tr><th id="87">87</th><td><i class="doc"> *        with 1/6 precision.</i></td></tr>
+<tr><th id="88">88</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">ac_index</span> adaptive codebook index (9 bits)</i></td></tr>
+<tr><th id="89">89</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="90">90</th><td><i class="doc"> * <span class="command">@return</span> pitch delay in 1/6 units</i></td></tr>
+<tr><th id="91">91</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="92">92</th><td><i class="doc"> * Pitch delay is coded:</i></td></tr>
+<tr><th id="93">93</th><td><i class="doc"> *    with 1/6 resolution,  17  &lt; pitch_delay &lt;  95</i></td></tr>
+<tr><th id="94">94</th><td><i class="doc"> *    integers only,        95 &lt;= pitch_delay &lt;= 143</i></td></tr>
+<tr><th id="95">95</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="96">96</th><td><i class="doc"> * <span class="command">@remark</span> The routine is used in AMR @@12.2k for the first and third subframes.</i></td></tr>
+<tr><th id="97">97</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="98">98</th><td><em>int</em> <a class="decl" href="acelp_pitch_delay.c.html#ff_acelp_decode_9bit_to_1st_delay6" title='ff_acelp_decode_9bit_to_1st_delay6' data-ref="ff_acelp_decode_9bit_to_1st_delay6" id="ff_acelp_decode_9bit_to_1st_delay6">ff_acelp_decode_9bit_to_1st_delay6</a>(<em>int</em> <dfn class="local col6 decl" id="6ac_index" title='ac_index' data-type='int' data-ref="6ac_index">ac_index</dfn>);</td></tr>
+<tr><th id="99">99</th><td></td></tr>
+<tr><th id="100">100</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="101">101</th><td><i class="doc"> * <span class="command">@brief</span> Decode pitch delay of the second subframe encoded by 6 bits</i></td></tr>
+<tr><th id="102">102</th><td><i class="doc"> *        with 1/6 precision.</i></td></tr>
+<tr><th id="103">103</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">ac_index</span> adaptive codebook index (6 bits)</i></td></tr>
+<tr><th id="104">104</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">pitch_delay_min</span> lower bound (integer) of pitch delay interval for</i></td></tr>
+<tr><th id="105">105</th><td><i class="doc"> *                      second subframe</i></td></tr>
+<tr><th id="106">106</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="107">107</th><td><i class="doc"> * <span class="command">@return</span> pitch delay in 1/6 units</i></td></tr>
+<tr><th id="108">108</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="109">109</th><td><i class="doc"> * Pitch delay is coded:</i></td></tr>
+<tr><th id="110">110</th><td><i class="doc"> *    with 1/6 resolution, -6 &lt; pitch_delay - int(prev_pitch_delay) &lt; 5</i></td></tr>
+<tr><th id="111">111</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="112">112</th><td><i class="doc"> * <span class="command">@remark</span> The routine is used in AMR @@12.2k for the second and fourth subframes.</i></td></tr>
+<tr><th id="113">113</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="114">114</th><td><em>int</em> <a class="decl" href="acelp_pitch_delay.c.html#ff_acelp_decode_6bit_to_2nd_delay6" title='ff_acelp_decode_6bit_to_2nd_delay6' data-ref="ff_acelp_decode_6bit_to_2nd_delay6" id="ff_acelp_decode_6bit_to_2nd_delay6">ff_acelp_decode_6bit_to_2nd_delay6</a>(</td></tr>
+<tr><th id="115">115</th><td>        <em>int</em> <dfn class="local col7 decl" id="7ac_index" title='ac_index' data-type='int' data-ref="7ac_index">ac_index</dfn>,</td></tr>
+<tr><th id="116">116</th><td>        <em>int</em> <dfn class="local col8 decl" id="8pitch_delay_min" title='pitch_delay_min' data-type='int' data-ref="8pitch_delay_min">pitch_delay_min</dfn>);</td></tr>
+<tr><th id="117">117</th><td></td></tr>
+<tr><th id="118">118</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="119">119</th><td><i class="doc"> * <span class="command">@brief</span> Update past quantized energies</i></td></tr>
+<tr><th id="120">120</th><td><i class="doc"> * <span class="command">@param</span>[in,out]  <span class="arg">quant_energy</span>  past quantized energies (5.10)</i></td></tr>
+<tr><th id="121">121</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">gain_corr_factor</span> gain correction factor</i></td></tr>
+<tr><th id="122">122</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">log2_ma_pred_order</span> log2() of MA prediction order</i></td></tr>
+<tr><th id="123">123</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">erasure</span> frame erasure flag</i></td></tr>
+<tr><th id="124">124</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="125">125</th><td><i class="doc"> * If frame erasure flag is not equal to zero, memory is updated with</i></td></tr>
+<tr><th id="126">126</th><td><i class="doc"> * averaged energy, attenuated by 4dB:</i></td></tr>
+<tr><th id="127">127</th><td><i class="doc"> *     max(avg(quant_energy[i])-4, -14), i=0,ma_pred_order</i></td></tr>
+<tr><th id="128">128</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="129">129</th><td><i class="doc"> * In normal mode memory is updated with</i></td></tr>
+<tr><th id="130">130</th><td><i class="doc"> *     Er - Ep = 20 * log10(gain_corr_factor)</i></td></tr>
+<tr><th id="131">131</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="132">132</th><td><i class="doc"> * <span class="command">@remark</span> The routine is used in G.729 and AMR (all modes).</i></td></tr>
+<tr><th id="133">133</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="134">134</th><td><em>void</em> <a class="decl" href="acelp_pitch_delay.c.html#ff_acelp_update_past_gain" title='ff_acelp_update_past_gain' data-ref="ff_acelp_update_past_gain" id="ff_acelp_update_past_gain">ff_acelp_update_past_gain</a>(</td></tr>
+<tr><th id="135">135</th><td>        <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a>* <dfn class="local col9 decl" id="9quant_energy" title='quant_energy' data-type='int16_t *' data-ref="9quant_energy">quant_energy</dfn>,</td></tr>
+<tr><th id="136">136</th><td>        <em>int</em> <dfn class="local col0 decl" id="10gain_corr_factor" title='gain_corr_factor' data-type='int' data-ref="10gain_corr_factor">gain_corr_factor</dfn>,</td></tr>
+<tr><th id="137">137</th><td>        <em>int</em> <dfn class="local col1 decl" id="11log2_ma_pred_order" title='log2_ma_pred_order' data-type='int' data-ref="11log2_ma_pred_order">log2_ma_pred_order</dfn>,</td></tr>
+<tr><th id="138">138</th><td>        <em>int</em> <dfn class="local col2 decl" id="12erasure" title='erasure' data-type='int' data-ref="12erasure">erasure</dfn>);</td></tr>
+<tr><th id="139">139</th><td></td></tr>
+<tr><th id="140">140</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="141">141</th><td><i class="doc"> * <span class="command">@brief</span> Decode the adaptive codebook gain and add</i></td></tr>
+<tr><th id="142">142</th><td><i class="doc"> *        correction (4.1.5 and 3.9.1 of G.729).</i></td></tr>
+<tr><th id="143">143</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">adsp</span> initialized audio DSP context</i></td></tr>
+<tr><th id="144">144</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">gain_corr_factor</span> gain correction factor (2.13)</i></td></tr>
+<tr><th id="145">145</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">fc_v</span> fixed-codebook vector (2.13)</i></td></tr>
+<tr><th id="146">146</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">mr_energy</span> mean innovation energy and fixed-point correction (7.13)</i></td></tr>
+<tr><th id="147">147</th><td><i class="doc"> * <span class="command">@param</span>[in,out]  <span class="arg">quant_energy</span>  past quantized energies (5.10)</i></td></tr>
+<tr><th id="148">148</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">subframe_size</span> length of subframe</i></td></tr>
+<tr><th id="149">149</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="150">150</th><td><i class="doc"> * <span class="command">@return</span> quantized fixed-codebook gain (14.1)</i></td></tr>
+<tr><th id="151">151</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="152">152</th><td><i class="doc"> * The routine implements equations 69, 66 and 71 of the G.729 specification (3.9.1)</i></td></tr>
+<tr><th id="153">153</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="154">154</th><td><i class="doc"> *    Em   - mean innovation energy (dB, constant, depends on decoding algorithm)</i></td></tr>
+<tr><th id="155">155</th><td><i class="doc"> *    Ep   - mean-removed predicted energy (dB)</i></td></tr>
+<tr><th id="156">156</th><td><i class="doc"> *    Er   - mean-removed innovation energy (dB)</i></td></tr>
+<tr><th id="157">157</th><td><i class="doc"> *    Ei   - mean energy of the fixed-codebook contribution (dB)</i></td></tr>
+<tr><th id="158">158</th><td><i class="doc"> *    N    - subframe_size</i></td></tr>
+<tr><th id="159">159</th><td><i class="doc"> *    M    - MA (Moving Average) prediction order</i></td></tr>
+<tr><th id="160">160</th><td><i class="doc"> *    gc   - fixed-codebook gain</i></td></tr>
+<tr><th id="161">161</th><td><i class="doc"> *    gc_p - predicted fixed-codebook gain</i></td></tr>
+<tr><th id="162">162</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="163">163</th><td><i class="doc"> *    Fixed codebook gain is computed using predicted gain gc_p and</i></td></tr>
+<tr><th id="164">164</th><td><i class="doc"> *    correction factor gain_corr_factor as shown below:</i></td></tr>
+<tr><th id="165">165</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="166">166</th><td><i class="doc"> *        gc = gc_p * gain_corr_factor</i></td></tr>
+<tr><th id="167">167</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="168">168</th><td><i class="doc"> *    The predicted fixed codebook gain gc_p is found by predicting</i></td></tr>
+<tr><th id="169">169</th><td><i class="doc"> *    the energy of the fixed-codebook contribution from the energy</i></td></tr>
+<tr><th id="170">170</th><td><i class="doc"> *    of previous fixed-codebook contributions.</i></td></tr>
+<tr><th id="171">171</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="172">172</th><td><i class="doc"> *        mean = 1/N * sum(i,0,N){ fc_v[i] * fc_v[i] }</i></td></tr>
+<tr><th id="173">173</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="174">174</th><td><i class="doc"> *        Ei = 10log(mean)</i></td></tr>
+<tr><th id="175">175</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="176">176</th><td><i class="doc"> *        Er = 10log(1/N * gc^2 * mean) - Em = 20log(gc) + Ei - Em</i></td></tr>
+<tr><th id="177">177</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="178">178</th><td><i class="doc"> *    Replacing Er with Ep and gc with gc_p we will receive:</i></td></tr>
+<tr><th id="179">179</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="180">180</th><td><i class="doc"> *        Ep = 10log(1/N * gc_p^2 * mean) - Em = 20log(gc_p) + Ei - Em</i></td></tr>
+<tr><th id="181">181</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="182">182</th><td><i class="doc"> *    and from above:</i></td></tr>
+<tr><th id="183">183</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="184">184</th><td><i class="doc"> *        gc_p = 10^((Ep - Ei + Em) / 20)</i></td></tr>
+<tr><th id="185">185</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="186">186</th><td><i class="doc"> *    Ep is predicted using past energies and prediction coefficients:</i></td></tr>
+<tr><th id="187">187</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="188">188</th><td><i class="doc"> *        Ep = sum(i,0,M){ ma_prediction_coeff[i] * quant_energy[i] }</i></td></tr>
+<tr><th id="189">189</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="190">190</th><td><i class="doc"> *    gc_p in fixed-point arithmetic is calculated as following:</i></td></tr>
+<tr><th id="191">191</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="192">192</th><td><i class="doc"> *        mean = 1/N * sum(i,0,N){ (fc_v[i] / 2^13) * (fc_v[i] / 2^13) } =</i></td></tr>
+<tr><th id="193">193</th><td><i class="doc"> *        = 1/N * sum(i,0,N) { fc_v[i] * fc_v[i] } / 2^26</i></td></tr>
+<tr><th id="194">194</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="195">195</th><td><i class="doc"> *        Ei = 10log(mean) = -10log(N) - 10log(2^26) +</i></td></tr>
+<tr><th id="196">196</th><td><i class="doc"> *        + 10log(sum(i,0,N) { fc_v[i] * fc_v[i] })</i></td></tr>
+<tr><th id="197">197</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="198">198</th><td><i class="doc"> *        Ep - Ei + Em = Ep + Em + 10log(N) + 10log(2^26) -</i></td></tr>
+<tr><th id="199">199</th><td><i class="doc"> *        - 10log(sum(i,0,N) { fc_v[i] * fc_v[i] }) =</i></td></tr>
+<tr><th id="200">200</th><td><i class="doc"> *        = Ep + mr_energy - 10log(sum(i,0,N) { fc_v[i] * fc_v[i] })</i></td></tr>
+<tr><th id="201">201</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="202">202</th><td><i class="doc"> *        gc_p = 10 ^ ((Ep - Ei + Em) / 20) =</i></td></tr>
+<tr><th id="203">203</th><td><i class="doc"> *        = 2 ^ (3.3219 * (Ep - Ei + Em) / 20) = 2 ^ (0.166 * (Ep - Ei + Em))</i></td></tr>
+<tr><th id="204">204</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="205">205</th><td><i class="doc"> *    where</i></td></tr>
+<tr><th id="206">206</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="207">207</th><td><i class="doc"> *        mr_energy = Em + 10log(N) + 10log(2^26)</i></td></tr>
+<tr><th id="208">208</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="209">209</th><td><i class="doc"> * <span class="command">@remark</span> The routine is used in G.729 and AMR (all modes).</i></td></tr>
+<tr><th id="210">210</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="211">211</th><td><a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> <a class="decl" href="acelp_pitch_delay.c.html#ff_acelp_decode_gain_code" title='ff_acelp_decode_gain_code' data-ref="ff_acelp_decode_gain_code" id="ff_acelp_decode_gain_code">ff_acelp_decode_gain_code</a>(</td></tr>
+<tr><th id="212">212</th><td>    <a class="typedef" href="audiodsp.h.html#AudioDSPContext" title='AudioDSPContext' data-type='struct AudioDSPContext' data-ref="AudioDSPContext">AudioDSPContext</a> *<dfn class="local col3 decl" id="13adsp" title='adsp' data-type='AudioDSPContext *' data-ref="13adsp">adsp</dfn>,</td></tr>
+<tr><th id="213">213</th><td>    <em>int</em> <dfn class="local col4 decl" id="14gain_corr_factor" title='gain_corr_factor' data-type='int' data-ref="14gain_corr_factor">gain_corr_factor</dfn>,</td></tr>
+<tr><th id="214">214</th><td>    <em>const</em> <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a>* <dfn class="local col5 decl" id="15fc_v" title='fc_v' data-type='const int16_t *' data-ref="15fc_v">fc_v</dfn>,</td></tr>
+<tr><th id="215">215</th><td>    <em>int</em> <dfn class="local col6 decl" id="16mr_energy" title='mr_energy' data-type='int' data-ref="16mr_energy">mr_energy</dfn>,</td></tr>
+<tr><th id="216">216</th><td>    <em>const</em> <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a>* <dfn class="local col7 decl" id="17quant_energy" title='quant_energy' data-type='const int16_t *' data-ref="17quant_energy">quant_energy</dfn>,</td></tr>
+<tr><th id="217">217</th><td>    <em>const</em> <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a>* <dfn class="local col8 decl" id="18ma_prediction_coeff" title='ma_prediction_coeff' data-type='const int16_t *' data-ref="18ma_prediction_coeff">ma_prediction_coeff</dfn>,</td></tr>
+<tr><th id="218">218</th><td>    <em>int</em> <dfn class="local col9 decl" id="19subframe_size" title='subframe_size' data-type='int' data-ref="19subframe_size">subframe_size</dfn>,</td></tr>
+<tr><th id="219">219</th><td>    <em>int</em> <dfn class="local col0 decl" id="20max_pred_order" title='max_pred_order' data-type='int' data-ref="20max_pred_order">max_pred_order</dfn>);</td></tr>
+<tr><th id="220">220</th><td></td></tr>
+<tr><th id="221">221</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="222">222</th><td><i class="doc"> * Calculate fixed gain (part of section 6.1.3 of AMR spec)</i></td></tr>
+<tr><th id="223">223</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="224">224</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">fixed_gain_factor</span> gain correction factor</i></td></tr>
+<tr><th id="225">225</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">fixed_mean_energy</span> mean decoded algebraic codebook vector energy</i></td></tr>
+<tr><th id="226">226</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">prediction_error</span> vector of the quantified predictor errors of</i></td></tr>
+<tr><th id="227">227</th><td><i class="doc"> *        the four previous subframes. It is updated by this function.</i></td></tr>
+<tr><th id="228">228</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">energy_mean</span> desired mean innovation energy</i></td></tr>
+<tr><th id="229">229</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">pred_table</span> table of four moving average coefficients</i></td></tr>
+<tr><th id="230">230</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="231">231</th><td><em>float</em> <a class="decl" href="acelp_pitch_delay.c.html#ff_amr_set_fixed_gain" title='ff_amr_set_fixed_gain' data-ref="ff_amr_set_fixed_gain" id="ff_amr_set_fixed_gain">ff_amr_set_fixed_gain</a>(<em>float</em> <dfn class="local col1 decl" id="21fixed_gain_factor" title='fixed_gain_factor' data-type='float' data-ref="21fixed_gain_factor">fixed_gain_factor</dfn>, <em>float</em> <dfn class="local col2 decl" id="22fixed_mean_energy" title='fixed_mean_energy' data-type='float' data-ref="22fixed_mean_energy">fixed_mean_energy</dfn>,</td></tr>
+<tr><th id="232">232</th><td>                            <em>float</em> *<dfn class="local col3 decl" id="23prediction_error" title='prediction_error' data-type='float *' data-ref="23prediction_error">prediction_error</dfn>, <em>float</em> <dfn class="local col4 decl" id="24energy_mean" title='energy_mean' data-type='float' data-ref="24energy_mean">energy_mean</dfn>,</td></tr>
+<tr><th id="233">233</th><td>                            <em>const</em> <em>float</em> *<dfn class="local col5 decl" id="25pred_table" title='pred_table' data-type='const float *' data-ref="25pred_table">pred_table</dfn>);</td></tr>
+<tr><th id="234">234</th><td></td></tr>
+<tr><th id="235">235</th><td></td></tr>
+<tr><th id="236">236</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="237">237</th><td><i class="doc"> * Decode the adaptive codebook index to the integer and fractional parts</i></td></tr>
+<tr><th id="238">238</th><td><i class="doc"> * of the pitch lag for one subframe at 1/3 fractional precision.</i></td></tr>
+<tr><th id="239">239</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="240">240</th><td><i class="doc"> * The choice of pitch lag is described in 3GPP TS 26.090 section 5.6.1.</i></td></tr>
+<tr><th id="241">241</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="242">242</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">lag_int</span>             integer part of pitch lag of the current subframe</i></td></tr>
+<tr><th id="243">243</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">lag_frac</span>            fractional part of pitch lag of the current subframe</i></td></tr>
+<tr><th id="244">244</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">pitch_index</span>         parsed adaptive codebook (pitch) index</i></td></tr>
+<tr><th id="245">245</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">prev_lag_int</span>        integer part of pitch lag for the previous subframe</i></td></tr>
+<tr><th id="246">246</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">subframe</span>            current subframe number</i></td></tr>
+<tr><th id="247">247</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">third_as_first</span>      treat the third frame the same way as the first</i></td></tr>
+<tr><th id="248">248</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="249">249</th><td><em>void</em> <a class="decl" href="acelp_pitch_delay.c.html#ff_decode_pitch_lag" title='ff_decode_pitch_lag' data-ref="ff_decode_pitch_lag" id="ff_decode_pitch_lag">ff_decode_pitch_lag</a>(<em>int</em> *<dfn class="local col6 decl" id="26lag_int" title='lag_int' data-type='int *' data-ref="26lag_int">lag_int</dfn>, <em>int</em> *<dfn class="local col7 decl" id="27lag_frac" title='lag_frac' data-type='int *' data-ref="27lag_frac">lag_frac</dfn>, <em>int</em> <dfn class="local col8 decl" id="28pitch_index" title='pitch_index' data-type='int' data-ref="28pitch_index">pitch_index</dfn>,</td></tr>
+<tr><th id="250">250</th><td>                         <em>const</em> <em>int</em> <dfn class="local col9 decl" id="29prev_lag_int" title='prev_lag_int' data-type='const int' data-ref="29prev_lag_int">prev_lag_int</dfn>, <em>const</em> <em>int</em> <dfn class="local col0 decl" id="30subframe" title='subframe' data-type='const int' data-ref="30subframe">subframe</dfn>,</td></tr>
+<tr><th id="251">251</th><td>                         <em>int</em> <dfn class="local col1 decl" id="31third_as_first" title='third_as_first' data-type='int' data-ref="31third_as_first">third_as_first</dfn>, <em>int</em> <dfn class="local col2 decl" id="32resolution" title='resolution' data-type='int' data-ref="32resolution">resolution</dfn>);</td></tr>
+<tr><th id="252">252</th><td></td></tr>
+<tr><th id="253">253</th><td><u>#<span data-ppcond="23">endif</span> /* AVCODEC_ACELP_PITCH_DELAY_H */</u></td></tr>
+<tr><th id="254">254</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated while processing <a href='acelp_pitch_delay.c.html'>ffmpeg/libavcodec/acelp_pitch_delay.c</a><br/>Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

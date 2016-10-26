@@ -1,0 +1,276 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>mpeg4video.h source code [ffmpeg/libavcodec/mpeg4video.h] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="Mpeg4DecContext "/>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavcodec/mpeg4video.h'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavcodec</a>/<a href='mpeg4video.h.html'>mpeg4video.h</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * MPEG-4 encoder/decoder internal header.</i></td></tr>
+<tr><th id="3">3</th><td><i> * Copyright (c) 2000,2001 Fabrice Bellard</i></td></tr>
+<tr><th id="4">4</th><td><i> * Copyright (c) 2002-2010 Michael Niedermayer &lt;michaelni@gmx.at&gt;</i></td></tr>
+<tr><th id="5">5</th><td><i> *</i></td></tr>
+<tr><th id="6">6</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="7">7</th><td><i> *</i></td></tr>
+<tr><th id="8">8</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="9">9</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="10">10</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="11">11</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="12">12</th><td><i> *</i></td></tr>
+<tr><th id="13">13</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="14">14</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="15">15</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="16">16</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="17">17</th><td><i> *</i></td></tr>
+<tr><th id="18">18</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="19">19</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="20">20</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="21">21</th><td><i> */</i></td></tr>
+<tr><th id="22">22</th><td></td></tr>
+<tr><th id="23">23</th><td><u>#<span data-ppcond="23">ifndef</span> <span class="macro" data-ref="_M/AVCODEC_MPEG4VIDEO_H">AVCODEC_MPEG4VIDEO_H</span></u></td></tr>
+<tr><th id="24">24</th><td><u>#define <dfn class="macro" id="_M/AVCODEC_MPEG4VIDEO_H" data-ref="_M/AVCODEC_MPEG4VIDEO_H">AVCODEC_MPEG4VIDEO_H</dfn></u></td></tr>
+<tr><th id="25">25</th><td></td></tr>
+<tr><th id="26">26</th><td><u>#include &lt;stdint.h&gt;</u></td></tr>
+<tr><th id="27">27</th><td></td></tr>
+<tr><th id="28">28</th><td><u>#include <a href="get_bits.h.html">"get_bits.h"</a></u></td></tr>
+<tr><th id="29">29</th><td><u>#include <a href="mpegvideo.h.html">"mpegvideo.h"</a></u></td></tr>
+<tr><th id="30">30</th><td><u>#include <a href="rl.h.html">"rl.h"</a></u></td></tr>
+<tr><th id="31">31</th><td></td></tr>
+<tr><th id="32">32</th><td><i>// shapes</i></td></tr>
+<tr><th id="33">33</th><td><u>#define <dfn class="macro" id="_M/RECT_SHAPE" data-ref="_M/RECT_SHAPE">RECT_SHAPE</dfn>       0</u></td></tr>
+<tr><th id="34">34</th><td><u>#define <dfn class="macro" id="_M/BIN_SHAPE" data-ref="_M/BIN_SHAPE">BIN_SHAPE</dfn>        1</u></td></tr>
+<tr><th id="35">35</th><td><u>#define <dfn class="macro" id="_M/BIN_ONLY_SHAPE" data-ref="_M/BIN_ONLY_SHAPE">BIN_ONLY_SHAPE</dfn>   2</u></td></tr>
+<tr><th id="36">36</th><td><u>#define <dfn class="macro" id="_M/GRAY_SHAPE" data-ref="_M/GRAY_SHAPE">GRAY_SHAPE</dfn>       3</u></td></tr>
+<tr><th id="37">37</th><td></td></tr>
+<tr><th id="38">38</th><td><u>#define <dfn class="macro" id="_M/SIMPLE_VO_TYPE" data-ref="_M/SIMPLE_VO_TYPE">SIMPLE_VO_TYPE</dfn>           1</u></td></tr>
+<tr><th id="39">39</th><td><u>#define <dfn class="macro" id="_M/CORE_VO_TYPE" data-ref="_M/CORE_VO_TYPE">CORE_VO_TYPE</dfn>             3</u></td></tr>
+<tr><th id="40">40</th><td><u>#define <dfn class="macro" id="_M/MAIN_VO_TYPE" data-ref="_M/MAIN_VO_TYPE">MAIN_VO_TYPE</dfn>             4</u></td></tr>
+<tr><th id="41">41</th><td><u>#define <dfn class="macro" id="_M/NBIT_VO_TYPE" data-ref="_M/NBIT_VO_TYPE">NBIT_VO_TYPE</dfn>             5</u></td></tr>
+<tr><th id="42">42</th><td><u>#define <dfn class="macro" id="_M/ARTS_VO_TYPE" data-ref="_M/ARTS_VO_TYPE">ARTS_VO_TYPE</dfn>            10</u></td></tr>
+<tr><th id="43">43</th><td><u>#define <dfn class="macro" id="_M/ACE_VO_TYPE" data-ref="_M/ACE_VO_TYPE">ACE_VO_TYPE</dfn>             12</u></td></tr>
+<tr><th id="44">44</th><td><u>#define <dfn class="macro" id="_M/ADV_SIMPLE_VO_TYPE" data-ref="_M/ADV_SIMPLE_VO_TYPE">ADV_SIMPLE_VO_TYPE</dfn>      17</u></td></tr>
+<tr><th id="45">45</th><td></td></tr>
+<tr><th id="46">46</th><td><i>// aspect_ratio_info</i></td></tr>
+<tr><th id="47">47</th><td><u>#define <dfn class="macro" id="_M/EXTENDED_PAR" data-ref="_M/EXTENDED_PAR">EXTENDED_PAR</dfn> 15</u></td></tr>
+<tr><th id="48">48</th><td></td></tr>
+<tr><th id="49">49</th><td><i>//vol_sprite_usage / sprite_enable</i></td></tr>
+<tr><th id="50">50</th><td><u>#define <dfn class="macro" id="_M/STATIC_SPRITE" data-ref="_M/STATIC_SPRITE">STATIC_SPRITE</dfn> 1</u></td></tr>
+<tr><th id="51">51</th><td><u>#define <dfn class="macro" id="_M/GMC_SPRITE" data-ref="_M/GMC_SPRITE">GMC_SPRITE</dfn> 2</u></td></tr>
+<tr><th id="52">52</th><td></td></tr>
+<tr><th id="53">53</th><td><u>#define <dfn class="macro" id="_M/MOTION_MARKER" data-ref="_M/MOTION_MARKER">MOTION_MARKER</dfn> 0x1F001</u></td></tr>
+<tr><th id="54">54</th><td><u>#define <dfn class="macro" id="_M/DC_MARKER" data-ref="_M/DC_MARKER">DC_MARKER</dfn>     0x6B001</u></td></tr>
+<tr><th id="55">55</th><td></td></tr>
+<tr><th id="56">56</th><td><u>#define <dfn class="macro" id="_M/VOS_STARTCODE" data-ref="_M/VOS_STARTCODE">VOS_STARTCODE</dfn>        0x1B0</u></td></tr>
+<tr><th id="57">57</th><td><u>#define <dfn class="macro" id="_M/USER_DATA_STARTCODE" data-ref="_M/USER_DATA_STARTCODE">USER_DATA_STARTCODE</dfn>  0x1B2</u></td></tr>
+<tr><th id="58">58</th><td><u>#define <dfn class="macro" id="_M/GOP_STARTCODE" data-ref="_M/GOP_STARTCODE">GOP_STARTCODE</dfn>        0x1B3</u></td></tr>
+<tr><th id="59">59</th><td><u>#define <dfn class="macro" id="_M/VISUAL_OBJ_STARTCODE" data-ref="_M/VISUAL_OBJ_STARTCODE">VISUAL_OBJ_STARTCODE</dfn> 0x1B5</u></td></tr>
+<tr><th id="60">60</th><td><u>#define <dfn class="macro" id="_M/VOP_STARTCODE" data-ref="_M/VOP_STARTCODE">VOP_STARTCODE</dfn>        0x1B6</u></td></tr>
+<tr><th id="61">61</th><td></td></tr>
+<tr><th id="62">62</th><td><i>/* smaller packets likely don't contain a real frame */</i></td></tr>
+<tr><th id="63">63</th><td><u>#define <dfn class="macro" id="_M/MAX_NVOP_SIZE" data-ref="_M/MAX_NVOP_SIZE">MAX_NVOP_SIZE</dfn> 19</u></td></tr>
+<tr><th id="64">64</th><td></td></tr>
+<tr><th id="65">65</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="Mpeg4DecContext" title='Mpeg4DecContext' data-ref="Mpeg4DecContext"><a class="type" href="#Mpeg4DecContext" title='Mpeg4DecContext' data-ref="Mpeg4DecContext">Mpeg4DecContext</a></dfn> {</td></tr>
+<tr><th id="66">66</th><td>    <a class="typedef" href="mpegvideo.h.html#MpegEncContext" title='MpegEncContext' data-type='struct MpegEncContext' data-ref="MpegEncContext">MpegEncContext</a> <dfn class="decl" id="Mpeg4DecContext::m" title='Mpeg4DecContext::m' data-ref="Mpeg4DecContext::m">m</dfn>;</td></tr>
+<tr><th id="67">67</th><td></td></tr>
+<tr><th id="68">68</th><td>    <i class="doc">/// number of bits to represent the fractional part of time</i></td></tr>
+<tr><th id="69">69</th><td>    <em>int</em> <dfn class="decl" id="Mpeg4DecContext::time_increment_bits" title='Mpeg4DecContext::time_increment_bits' data-ref="Mpeg4DecContext::time_increment_bits">time_increment_bits</dfn>;</td></tr>
+<tr><th id="70">70</th><td>    <em>int</em> <dfn class="decl" id="Mpeg4DecContext::shape" title='Mpeg4DecContext::shape' data-ref="Mpeg4DecContext::shape">shape</dfn>;</td></tr>
+<tr><th id="71">71</th><td>    <em>int</em> <dfn class="decl" id="Mpeg4DecContext::vol_sprite_usage" title='Mpeg4DecContext::vol_sprite_usage' data-ref="Mpeg4DecContext::vol_sprite_usage">vol_sprite_usage</dfn>;</td></tr>
+<tr><th id="72">72</th><td>    <em>int</em> <dfn class="decl" id="Mpeg4DecContext::sprite_brightness_change" title='Mpeg4DecContext::sprite_brightness_change' data-ref="Mpeg4DecContext::sprite_brightness_change">sprite_brightness_change</dfn>;</td></tr>
+<tr><th id="73">73</th><td>    <em>int</em> <dfn class="decl" id="Mpeg4DecContext::num_sprite_warping_points" title='Mpeg4DecContext::num_sprite_warping_points' data-ref="Mpeg4DecContext::num_sprite_warping_points">num_sprite_warping_points</dfn>;</td></tr>
+<tr><th id="74">74</th><td>    <i class="doc">/// sprite trajectory points</i></td></tr>
+<tr><th id="75">75</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> <dfn class="decl" id="Mpeg4DecContext::sprite_traj" title='Mpeg4DecContext::sprite_traj' data-ref="Mpeg4DecContext::sprite_traj">sprite_traj</dfn>[<var>4</var>][<var>2</var>];</td></tr>
+<tr><th id="76">76</th><td>    <i class="doc">/// sprite shift [isChroma]</i></td></tr>
+<tr><th id="77">77</th><td>    <em>int</em> <dfn class="decl" id="Mpeg4DecContext::sprite_shift" title='Mpeg4DecContext::sprite_shift' data-ref="Mpeg4DecContext::sprite_shift">sprite_shift</dfn>[<var>2</var>];</td></tr>
+<tr><th id="78">78</th><td></td></tr>
+<tr><th id="79">79</th><td>    <i>// reversible vlc</i></td></tr>
+<tr><th id="80">80</th><td>    <em>int</em> <dfn class="decl" id="Mpeg4DecContext::rvlc" title='Mpeg4DecContext::rvlc' data-ref="Mpeg4DecContext::rvlc">rvlc</dfn>;</td></tr>
+<tr><th id="81">81</th><td>    <i class="doc">/// could this stream contain resync markers</i></td></tr>
+<tr><th id="82">82</th><td>    <em>int</em> <dfn class="decl" id="Mpeg4DecContext::resync_marker" title='Mpeg4DecContext::resync_marker' data-ref="Mpeg4DecContext::resync_marker">resync_marker</dfn>;</td></tr>
+<tr><th id="83">83</th><td>    <i class="doc">/// time distance of first I -&gt; B, used for interlaced B-frames</i></td></tr>
+<tr><th id="84">84</th><td>    <em>int</em> <dfn class="decl" id="Mpeg4DecContext::t_frame" title='Mpeg4DecContext::t_frame' data-ref="Mpeg4DecContext::t_frame">t_frame</dfn>;</td></tr>
+<tr><th id="85">85</th><td></td></tr>
+<tr><th id="86">86</th><td>    <em>int</em> <dfn class="decl" id="Mpeg4DecContext::new_pred" title='Mpeg4DecContext::new_pred' data-ref="Mpeg4DecContext::new_pred">new_pred</dfn>;</td></tr>
+<tr><th id="87">87</th><td>    <em>int</em> <dfn class="decl" id="Mpeg4DecContext::enhancement_type" title='Mpeg4DecContext::enhancement_type' data-ref="Mpeg4DecContext::enhancement_type">enhancement_type</dfn>;</td></tr>
+<tr><th id="88">88</th><td>    <em>int</em> <dfn class="decl" id="Mpeg4DecContext::scalability" title='Mpeg4DecContext::scalability' data-ref="Mpeg4DecContext::scalability">scalability</dfn>;</td></tr>
+<tr><th id="89">89</th><td>    <em>int</em> <dfn class="decl" id="Mpeg4DecContext::use_intra_dc_vlc" title='Mpeg4DecContext::use_intra_dc_vlc' data-ref="Mpeg4DecContext::use_intra_dc_vlc">use_intra_dc_vlc</dfn>;</td></tr>
+<tr><th id="90">90</th><td></td></tr>
+<tr><th id="91">91</th><td>    <i class="doc">/// QP above which the ac VLC should be used for intra dc</i></td></tr>
+<tr><th id="92">92</th><td>    <em>int</em> <dfn class="decl" id="Mpeg4DecContext::intra_dc_threshold" title='Mpeg4DecContext::intra_dc_threshold' data-ref="Mpeg4DecContext::intra_dc_threshold">intra_dc_threshold</dfn>;</td></tr>
+<tr><th id="93">93</th><td></td></tr>
+<tr><th id="94">94</th><td>    <i>/* bug workarounds */</i></td></tr>
+<tr><th id="95">95</th><td>    <em>int</em> <dfn class="decl" id="Mpeg4DecContext::divx_version" title='Mpeg4DecContext::divx_version' data-ref="Mpeg4DecContext::divx_version">divx_version</dfn>;</td></tr>
+<tr><th id="96">96</th><td>    <em>int</em> <dfn class="decl" id="Mpeg4DecContext::divx_build" title='Mpeg4DecContext::divx_build' data-ref="Mpeg4DecContext::divx_build">divx_build</dfn>;</td></tr>
+<tr><th id="97">97</th><td>    <em>int</em> <dfn class="decl" id="Mpeg4DecContext::xvid_build" title='Mpeg4DecContext::xvid_build' data-ref="Mpeg4DecContext::xvid_build">xvid_build</dfn>;</td></tr>
+<tr><th id="98">98</th><td>    <em>int</em> <dfn class="decl" id="Mpeg4DecContext::lavc_build" title='Mpeg4DecContext::lavc_build' data-ref="Mpeg4DecContext::lavc_build">lavc_build</dfn>;</td></tr>
+<tr><th id="99">99</th><td></td></tr>
+<tr><th id="100">100</th><td>    <i class="doc">/// flag for having shown the warning about invalid Divx B-frames</i></td></tr>
+<tr><th id="101">101</th><td>    <em>int</em> <dfn class="decl" id="Mpeg4DecContext::showed_packed_warning" title='Mpeg4DecContext::showed_packed_warning' data-ref="Mpeg4DecContext::showed_packed_warning">showed_packed_warning</dfn>;</td></tr>
+<tr><th id="102">102</th><td>    <i class="doc">/** does the stream contain the low_delay flag,</i></td></tr>
+<tr><th id="103">103</th><td><i class="doc">     *  used to work around buggy encoders. */</i></td></tr>
+<tr><th id="104">104</th><td>    <em>int</em> <dfn class="decl" id="Mpeg4DecContext::vol_control_parameters" title='Mpeg4DecContext::vol_control_parameters' data-ref="Mpeg4DecContext::vol_control_parameters">vol_control_parameters</dfn>;</td></tr>
+<tr><th id="105">105</th><td>    <em>int</em> <dfn class="decl" id="Mpeg4DecContext::cplx_estimation_trash_i" title='Mpeg4DecContext::cplx_estimation_trash_i' data-ref="Mpeg4DecContext::cplx_estimation_trash_i">cplx_estimation_trash_i</dfn>;</td></tr>
+<tr><th id="106">106</th><td>    <em>int</em> <dfn class="decl" id="Mpeg4DecContext::cplx_estimation_trash_p" title='Mpeg4DecContext::cplx_estimation_trash_p' data-ref="Mpeg4DecContext::cplx_estimation_trash_p">cplx_estimation_trash_p</dfn>;</td></tr>
+<tr><th id="107">107</th><td>    <em>int</em> <dfn class="decl" id="Mpeg4DecContext::cplx_estimation_trash_b" title='Mpeg4DecContext::cplx_estimation_trash_b' data-ref="Mpeg4DecContext::cplx_estimation_trash_b">cplx_estimation_trash_b</dfn>;</td></tr>
+<tr><th id="108">108</th><td>} <dfn class="typedef" id="Mpeg4DecContext" title='Mpeg4DecContext' data-type='struct Mpeg4DecContext' data-ref="Mpeg4DecContext">Mpeg4DecContext</dfn>;</td></tr>
+<tr><th id="109">109</th><td></td></tr>
+<tr><th id="110">110</th><td><i>/* dc encoding for MPEG-4 */</i></td></tr>
+<tr><th id="111">111</th><td><b>extern</b> <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="ff_mpeg4_DCtab_lum" title='ff_mpeg4_DCtab_lum' data-ref="ff_mpeg4_DCtab_lum">ff_mpeg4_DCtab_lum</dfn>[<var>13</var>][<var>2</var>];</td></tr>
+<tr><th id="112">112</th><td><b>extern</b> <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="ff_mpeg4_DCtab_chrom" title='ff_mpeg4_DCtab_chrom' data-ref="ff_mpeg4_DCtab_chrom">ff_mpeg4_DCtab_chrom</dfn>[<var>13</var>][<var>2</var>];</td></tr>
+<tr><th id="113">113</th><td></td></tr>
+<tr><th id="114">114</th><td><b>extern</b> <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> <dfn class="decl" id="ff_mpeg4_intra_vlc" title='ff_mpeg4_intra_vlc' data-ref="ff_mpeg4_intra_vlc">ff_mpeg4_intra_vlc</dfn>[<var>103</var>][<var>2</var>];</td></tr>
+<tr><th id="115">115</th><td><b>extern</b> <em>const</em> <a class="typedef" href="../../include/stdint.h.html#int8_t" title='int8_t' data-type='signed char' data-ref="int8_t">int8_t</a> <dfn class="decl" id="ff_mpeg4_intra_level" title='ff_mpeg4_intra_level' data-ref="ff_mpeg4_intra_level">ff_mpeg4_intra_level</dfn>[<var>102</var>];</td></tr>
+<tr><th id="116">116</th><td><b>extern</b> <em>const</em> <a class="typedef" href="../../include/stdint.h.html#int8_t" title='int8_t' data-type='signed char' data-ref="int8_t">int8_t</a> <dfn class="decl" id="ff_mpeg4_intra_run" title='ff_mpeg4_intra_run' data-ref="ff_mpeg4_intra_run">ff_mpeg4_intra_run</dfn>[<var>102</var>];</td></tr>
+<tr><th id="117">117</th><td></td></tr>
+<tr><th id="118">118</th><td><b>extern</b> <a class="typedef" href="rl.h.html#RLTable" title='RLTable' data-type='struct RLTable' data-ref="RLTable">RLTable</a> <dfn class="decl" id="ff_mpeg4_rl_intra" title='ff_mpeg4_rl_intra' data-ref="ff_mpeg4_rl_intra">ff_mpeg4_rl_intra</dfn>;</td></tr>
+<tr><th id="119">119</th><td></td></tr>
+<tr><th id="120">120</th><td><i>/* Note this is identical to the intra rvlc except that it is reordered. */</i></td></tr>
+<tr><th id="121">121</th><td><b>extern</b> <a class="typedef" href="rl.h.html#RLTable" title='RLTable' data-type='struct RLTable' data-ref="RLTable">RLTable</a> <dfn class="decl" id="ff_rvlc_rl_inter" title='ff_rvlc_rl_inter' data-ref="ff_rvlc_rl_inter">ff_rvlc_rl_inter</dfn>;</td></tr>
+<tr><th id="122">122</th><td><b>extern</b> <a class="typedef" href="rl.h.html#RLTable" title='RLTable' data-type='struct RLTable' data-ref="RLTable">RLTable</a> <dfn class="decl" id="ff_rvlc_rl_intra" title='ff_rvlc_rl_intra' data-ref="ff_rvlc_rl_intra">ff_rvlc_rl_intra</dfn>;</td></tr>
+<tr><th id="123">123</th><td></td></tr>
+<tr><th id="124">124</th><td><b>extern</b> <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> <dfn class="decl" id="ff_sprite_trajectory_tab" title='ff_sprite_trajectory_tab' data-ref="ff_sprite_trajectory_tab">ff_sprite_trajectory_tab</dfn>[<var>15</var>][<var>2</var>];</td></tr>
+<tr><th id="125">125</th><td><b>extern</b> <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="ff_mb_type_b_tab" title='ff_mb_type_b_tab' data-ref="ff_mb_type_b_tab">ff_mb_type_b_tab</dfn>[<var>4</var>][<var>2</var>];</td></tr>
+<tr><th id="126">126</th><td></td></tr>
+<tr><th id="127">127</th><td><i>/* these matrixes will be permuted for the idct */</i></td></tr>
+<tr><th id="128">128</th><td><b>extern</b> <em>const</em> <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> <dfn class="decl" id="ff_mpeg4_default_intra_matrix" title='ff_mpeg4_default_intra_matrix' data-ref="ff_mpeg4_default_intra_matrix">ff_mpeg4_default_intra_matrix</dfn>[<var>64</var>];</td></tr>
+<tr><th id="129">129</th><td><b>extern</b> <em>const</em> <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> <dfn class="decl" id="ff_mpeg4_default_non_intra_matrix" title='ff_mpeg4_default_non_intra_matrix' data-ref="ff_mpeg4_default_non_intra_matrix">ff_mpeg4_default_non_intra_matrix</dfn>[<var>64</var>];</td></tr>
+<tr><th id="130">130</th><td></td></tr>
+<tr><th id="131">131</th><td><b>extern</b> <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="ff_mpeg4_y_dc_scale_table" title='ff_mpeg4_y_dc_scale_table' data-ref="ff_mpeg4_y_dc_scale_table">ff_mpeg4_y_dc_scale_table</dfn>[<var>32</var>];</td></tr>
+<tr><th id="132">132</th><td><b>extern</b> <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="ff_mpeg4_c_dc_scale_table" title='ff_mpeg4_c_dc_scale_table' data-ref="ff_mpeg4_c_dc_scale_table">ff_mpeg4_c_dc_scale_table</dfn>[<var>32</var>];</td></tr>
+<tr><th id="133">133</th><td><b>extern</b> <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> <dfn class="decl" id="ff_mpeg4_resync_prefix" title='ff_mpeg4_resync_prefix' data-ref="ff_mpeg4_resync_prefix">ff_mpeg4_resync_prefix</dfn>[<var>8</var>];</td></tr>
+<tr><th id="134">134</th><td></td></tr>
+<tr><th id="135">135</th><td><b>extern</b> <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="ff_mpeg4_dc_threshold" title='ff_mpeg4_dc_threshold' data-ref="ff_mpeg4_dc_threshold">ff_mpeg4_dc_threshold</dfn>[<var>8</var>];</td></tr>
+<tr><th id="136">136</th><td></td></tr>
+<tr><th id="137">137</th><td><em>void</em> <dfn class="decl" id="ff_mpeg4_encode_mb" title='ff_mpeg4_encode_mb' data-ref="ff_mpeg4_encode_mb">ff_mpeg4_encode_mb</dfn>(<a class="typedef" href="mpegvideo.h.html#MpegEncContext" title='MpegEncContext' data-type='struct MpegEncContext' data-ref="MpegEncContext">MpegEncContext</a> *<dfn class="local col1 decl" id="1s" title='s' data-type='MpegEncContext *' data-ref="1s">s</dfn>,</td></tr>
+<tr><th id="138">138</th><td>                        <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> <dfn class="local col2 decl" id="2block" title='block' data-type='int16_t (*)[64]' data-ref="2block">block</dfn>[<var>6</var>][<var>64</var>],</td></tr>
+<tr><th id="139">139</th><td>                        <em>int</em> <dfn class="local col3 decl" id="3motion_x" title='motion_x' data-type='int' data-ref="3motion_x">motion_x</dfn>, <em>int</em> <dfn class="local col4 decl" id="4motion_y" title='motion_y' data-type='int' data-ref="4motion_y">motion_y</dfn>);</td></tr>
+<tr><th id="140">140</th><td><em>void</em> <dfn class="decl" id="ff_mpeg4_pred_ac" title='ff_mpeg4_pred_ac' data-ref="ff_mpeg4_pred_ac">ff_mpeg4_pred_ac</dfn>(<a class="typedef" href="mpegvideo.h.html#MpegEncContext" title='MpegEncContext' data-type='struct MpegEncContext' data-ref="MpegEncContext">MpegEncContext</a> *<dfn class="local col5 decl" id="5s" title='s' data-type='MpegEncContext *' data-ref="5s">s</dfn>, <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> *<dfn class="local col6 decl" id="6block" title='block' data-type='int16_t *' data-ref="6block">block</dfn>, <em>int</em> <dfn class="local col7 decl" id="7n" title='n' data-type='int' data-ref="7n">n</dfn>,</td></tr>
+<tr><th id="141">141</th><td>                      <em>int</em> <dfn class="local col8 decl" id="8dir" title='dir' data-type='int' data-ref="8dir">dir</dfn>);</td></tr>
+<tr><th id="142">142</th><td><em>void</em> <dfn class="decl" id="ff_set_mpeg4_time" title='ff_set_mpeg4_time' data-ref="ff_set_mpeg4_time">ff_set_mpeg4_time</dfn>(<a class="typedef" href="mpegvideo.h.html#MpegEncContext" title='MpegEncContext' data-type='struct MpegEncContext' data-ref="MpegEncContext">MpegEncContext</a> *<dfn class="local col9 decl" id="9s" title='s' data-type='MpegEncContext *' data-ref="9s">s</dfn>);</td></tr>
+<tr><th id="143">143</th><td><em>int</em> <dfn class="decl" id="ff_mpeg4_encode_picture_header" title='ff_mpeg4_encode_picture_header' data-ref="ff_mpeg4_encode_picture_header">ff_mpeg4_encode_picture_header</dfn>(<a class="typedef" href="mpegvideo.h.html#MpegEncContext" title='MpegEncContext' data-type='struct MpegEncContext' data-ref="MpegEncContext">MpegEncContext</a> *<dfn class="local col0 decl" id="10s" title='s' data-type='MpegEncContext *' data-ref="10s">s</dfn>, <em>int</em> <dfn class="local col1 decl" id="11picture_number" title='picture_number' data-type='int' data-ref="11picture_number">picture_number</dfn>);</td></tr>
+<tr><th id="144">144</th><td></td></tr>
+<tr><th id="145">145</th><td><em>int</em> <dfn class="decl" id="ff_mpeg4_decode_picture_header" title='ff_mpeg4_decode_picture_header' data-ref="ff_mpeg4_decode_picture_header">ff_mpeg4_decode_picture_header</dfn>(<a class="typedef" href="#Mpeg4DecContext" title='Mpeg4DecContext' data-type='struct Mpeg4DecContext' data-ref="Mpeg4DecContext">Mpeg4DecContext</a> *<dfn class="local col2 decl" id="12ctx" title='ctx' data-type='Mpeg4DecContext *' data-ref="12ctx">ctx</dfn>, <a class="typedef" href="get_bits.h.html#GetBitContext" title='GetBitContext' data-type='struct GetBitContext' data-ref="GetBitContext">GetBitContext</a> *<dfn class="local col3 decl" id="13gb" title='gb' data-type='GetBitContext *' data-ref="13gb">gb</dfn>);</td></tr>
+<tr><th id="146">146</th><td><em>void</em> <dfn class="decl" id="ff_mpeg4_encode_video_packet_header" title='ff_mpeg4_encode_video_packet_header' data-ref="ff_mpeg4_encode_video_packet_header">ff_mpeg4_encode_video_packet_header</dfn>(<a class="typedef" href="mpegvideo.h.html#MpegEncContext" title='MpegEncContext' data-type='struct MpegEncContext' data-ref="MpegEncContext">MpegEncContext</a> *<dfn class="local col4 decl" id="14s" title='s' data-type='MpegEncContext *' data-ref="14s">s</dfn>);</td></tr>
+<tr><th id="147">147</th><td><em>void</em> <dfn class="decl" id="ff_mpeg4_clean_buffers" title='ff_mpeg4_clean_buffers' data-ref="ff_mpeg4_clean_buffers">ff_mpeg4_clean_buffers</dfn>(<a class="typedef" href="mpegvideo.h.html#MpegEncContext" title='MpegEncContext' data-type='struct MpegEncContext' data-ref="MpegEncContext">MpegEncContext</a> *<dfn class="local col5 decl" id="15s" title='s' data-type='MpegEncContext *' data-ref="15s">s</dfn>);</td></tr>
+<tr><th id="148">148</th><td><em>void</em> <dfn class="decl" id="ff_mpeg4_stuffing" title='ff_mpeg4_stuffing' data-ref="ff_mpeg4_stuffing">ff_mpeg4_stuffing</dfn>(<a class="typedef" href="put_bits.h.html#PutBitContext" title='PutBitContext' data-type='struct PutBitContext' data-ref="PutBitContext">PutBitContext</a> *<dfn class="local col6 decl" id="16pbc" title='pbc' data-type='PutBitContext *' data-ref="16pbc">pbc</dfn>);</td></tr>
+<tr><th id="149">149</th><td><em>void</em> <dfn class="decl" id="ff_mpeg4_init_partitions" title='ff_mpeg4_init_partitions' data-ref="ff_mpeg4_init_partitions">ff_mpeg4_init_partitions</dfn>(<a class="typedef" href="mpegvideo.h.html#MpegEncContext" title='MpegEncContext' data-type='struct MpegEncContext' data-ref="MpegEncContext">MpegEncContext</a> *<dfn class="local col7 decl" id="17s" title='s' data-type='MpegEncContext *' data-ref="17s">s</dfn>);</td></tr>
+<tr><th id="150">150</th><td><em>void</em> <dfn class="decl" id="ff_mpeg4_merge_partitions" title='ff_mpeg4_merge_partitions' data-ref="ff_mpeg4_merge_partitions">ff_mpeg4_merge_partitions</dfn>(<a class="typedef" href="mpegvideo.h.html#MpegEncContext" title='MpegEncContext' data-type='struct MpegEncContext' data-ref="MpegEncContext">MpegEncContext</a> *<dfn class="local col8 decl" id="18s" title='s' data-type='MpegEncContext *' data-ref="18s">s</dfn>);</td></tr>
+<tr><th id="151">151</th><td><em>void</em> <dfn class="decl" id="ff_clean_mpeg4_qscales" title='ff_clean_mpeg4_qscales' data-ref="ff_clean_mpeg4_qscales">ff_clean_mpeg4_qscales</dfn>(<a class="typedef" href="mpegvideo.h.html#MpegEncContext" title='MpegEncContext' data-type='struct MpegEncContext' data-ref="MpegEncContext">MpegEncContext</a> *<dfn class="local col9 decl" id="19s" title='s' data-type='MpegEncContext *' data-ref="19s">s</dfn>);</td></tr>
+<tr><th id="152">152</th><td><em>int</em> <dfn class="decl" id="ff_mpeg4_decode_partitions" title='ff_mpeg4_decode_partitions' data-ref="ff_mpeg4_decode_partitions">ff_mpeg4_decode_partitions</dfn>(<a class="typedef" href="#Mpeg4DecContext" title='Mpeg4DecContext' data-type='struct Mpeg4DecContext' data-ref="Mpeg4DecContext">Mpeg4DecContext</a> *<dfn class="local col0 decl" id="20ctx" title='ctx' data-type='Mpeg4DecContext *' data-ref="20ctx">ctx</dfn>);</td></tr>
+<tr><th id="153">153</th><td><em>int</em> <dfn class="decl" id="ff_mpeg4_get_video_packet_prefix_length" title='ff_mpeg4_get_video_packet_prefix_length' data-ref="ff_mpeg4_get_video_packet_prefix_length">ff_mpeg4_get_video_packet_prefix_length</dfn>(<a class="typedef" href="mpegvideo.h.html#MpegEncContext" title='MpegEncContext' data-type='struct MpegEncContext' data-ref="MpegEncContext">MpegEncContext</a> *<dfn class="local col1 decl" id="21s" title='s' data-type='MpegEncContext *' data-ref="21s">s</dfn>);</td></tr>
+<tr><th id="154">154</th><td><em>int</em> <dfn class="decl" id="ff_mpeg4_decode_video_packet_header" title='ff_mpeg4_decode_video_packet_header' data-ref="ff_mpeg4_decode_video_packet_header">ff_mpeg4_decode_video_packet_header</dfn>(<a class="typedef" href="#Mpeg4DecContext" title='Mpeg4DecContext' data-type='struct Mpeg4DecContext' data-ref="Mpeg4DecContext">Mpeg4DecContext</a> *<dfn class="local col2 decl" id="22ctx" title='ctx' data-type='Mpeg4DecContext *' data-ref="22ctx">ctx</dfn>);</td></tr>
+<tr><th id="155">155</th><td><em>void</em> <dfn class="decl" id="ff_mpeg4_init_direct_mv" title='ff_mpeg4_init_direct_mv' data-ref="ff_mpeg4_init_direct_mv">ff_mpeg4_init_direct_mv</dfn>(<a class="typedef" href="mpegvideo.h.html#MpegEncContext" title='MpegEncContext' data-type='struct MpegEncContext' data-ref="MpegEncContext">MpegEncContext</a> *<dfn class="local col3 decl" id="23s" title='s' data-type='MpegEncContext *' data-ref="23s">s</dfn>);</td></tr>
+<tr><th id="156">156</th><td><em>void</em> <dfn class="decl" id="ff_mpeg4videodec_static_init" title='ff_mpeg4videodec_static_init' data-ref="ff_mpeg4videodec_static_init">ff_mpeg4videodec_static_init</dfn>(<em>void</em>);</td></tr>
+<tr><th id="157">157</th><td><em>int</em> <dfn class="decl" id="ff_mpeg4_workaround_bugs" title='ff_mpeg4_workaround_bugs' data-ref="ff_mpeg4_workaround_bugs">ff_mpeg4_workaround_bugs</dfn>(<a class="typedef" href="avcodec.h.html#AVCodecContext" title='AVCodecContext' data-type='struct AVCodecContext' data-ref="AVCodecContext">AVCodecContext</a> *<dfn class="local col4 decl" id="24avctx" title='avctx' data-type='AVCodecContext *' data-ref="24avctx">avctx</dfn>);</td></tr>
+<tr><th id="158">158</th><td><em>int</em> <dfn class="decl" id="ff_mpeg4_frame_end" title='ff_mpeg4_frame_end' data-ref="ff_mpeg4_frame_end">ff_mpeg4_frame_end</dfn>(<a class="typedef" href="avcodec.h.html#AVCodecContext" title='AVCodecContext' data-type='struct AVCodecContext' data-ref="AVCodecContext">AVCodecContext</a> *<dfn class="local col5 decl" id="25avctx" title='avctx' data-type='AVCodecContext *' data-ref="25avctx">avctx</dfn>, <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col6 decl" id="26buf" title='buf' data-type='const uint8_t *' data-ref="26buf">buf</dfn>, <em>int</em> <dfn class="local col7 decl" id="27buf_size" title='buf_size' data-type='int' data-ref="27buf_size">buf_size</dfn>);</td></tr>
+<tr><th id="159">159</th><td></td></tr>
+<tr><th id="160">160</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="161">161</th><td><i class="doc"> * <span class="command">@return</span> the mb_type</i></td></tr>
+<tr><th id="162">162</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="163">163</th><td><em>int</em> <dfn class="decl" id="ff_mpeg4_set_direct_mv" title='ff_mpeg4_set_direct_mv' data-ref="ff_mpeg4_set_direct_mv">ff_mpeg4_set_direct_mv</dfn>(<a class="typedef" href="mpegvideo.h.html#MpegEncContext" title='MpegEncContext' data-type='struct MpegEncContext' data-ref="MpegEncContext">MpegEncContext</a> *<dfn class="local col8 decl" id="28s" title='s' data-type='MpegEncContext *' data-ref="28s">s</dfn>, <em>int</em> <dfn class="local col9 decl" id="29mx" title='mx' data-type='int' data-ref="29mx">mx</dfn>, <em>int</em> <dfn class="local col0 decl" id="30my" title='my' data-type='int' data-ref="30my">my</dfn>);</td></tr>
+<tr><th id="164">164</th><td></td></tr>
+<tr><th id="165">165</th><td><b>extern</b> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="ff_mpeg4_static_rl_table_store" title='ff_mpeg4_static_rl_table_store' data-ref="ff_mpeg4_static_rl_table_store">ff_mpeg4_static_rl_table_store</dfn>[<var>3</var>][<var>2</var>][<var>2</var> * <a class="macro" href="rl.h.html#35" title="64" data-ref="_M/MAX_RUN">MAX_RUN</a> + <a class="macro" href="rl.h.html#36" title="64" data-ref="_M/MAX_LEVEL">MAX_LEVEL</a> + <var>3</var>];</td></tr>
+<tr><th id="166">166</th><td></td></tr>
+<tr><th id="167">167</th><td><u>#<span data-ppcond="167">if</span> 0 //3IV1 is quite rare and it slows things down a tiny bit</u></td></tr>
+<tr><th id="168">168</th><td><u>#define IS_3IV1 s-&gt;codec_tag == AV_RL32("3IV1")</u></td></tr>
+<tr><th id="169">169</th><td><u>#<span data-ppcond="167">else</span></u></td></tr>
+<tr><th id="170">170</th><td><u>#define <dfn class="macro" id="_M/IS_3IV1" data-ref="_M/IS_3IV1">IS_3IV1</dfn> 0</u></td></tr>
+<tr><th id="171">171</th><td><u>#<span data-ppcond="167">endif</span></u></td></tr>
+<tr><th id="172">172</th><td></td></tr>
+<tr><th id="173">173</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="174">174</th><td><i class="doc"> * Predict the dc.</i></td></tr>
+<tr><th id="175">175</th><td><i class="doc"> * encoding quantized level -&gt; quantized diff</i></td></tr>
+<tr><th id="176">176</th><td><i class="doc"> * decoding quantized diff -&gt; quantized level</i></td></tr>
+<tr><th id="177">177</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">n</span> block index (0-3 are luma, 4-5 are chroma)</i></td></tr>
+<tr><th id="178">178</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">dir_ptr</span> pointer to an integer where the prediction direction will be stored</i></td></tr>
+<tr><th id="179">179</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="180">180</th><td><em>static</em> <b>inline</b> <em>int</em> <dfn class="decl def" id="ff_mpeg4_pred_dc" title='ff_mpeg4_pred_dc' data-ref="ff_mpeg4_pred_dc">ff_mpeg4_pred_dc</dfn>(<a class="typedef" href="mpegvideo.h.html#MpegEncContext" title='MpegEncContext' data-type='struct MpegEncContext' data-ref="MpegEncContext">MpegEncContext</a> *<dfn class="local col1 decl" id="31s" title='s' data-type='MpegEncContext *' data-ref="31s">s</dfn>, <em>int</em> <dfn class="local col2 decl" id="32n" title='n' data-type='int' data-ref="32n">n</dfn>, <em>int</em> <dfn class="local col3 decl" id="33level" title='level' data-type='int' data-ref="33level">level</dfn>,</td></tr>
+<tr><th id="181">181</th><td>                                   <em>int</em> *<dfn class="local col4 decl" id="34dir_ptr" title='dir_ptr' data-type='int *' data-ref="34dir_ptr">dir_ptr</dfn>, <em>int</em> <dfn class="local col5 decl" id="35encoding" title='encoding' data-type='int' data-ref="35encoding">encoding</dfn>)</td></tr>
+<tr><th id="182">182</th><td>{</td></tr>
+<tr><th id="183">183</th><td>    <em>int</em> <dfn class="local col6 decl" id="36a" title='a' data-type='int' data-ref="36a">a</dfn>, <dfn class="local col7 decl" id="37b" title='b' data-type='int' data-ref="37b">b</dfn>, <dfn class="local col8 decl" id="38c" title='c' data-type='int' data-ref="38c">c</dfn>, <dfn class="local col9 decl" id="39wrap" title='wrap' data-type='int' data-ref="39wrap">wrap</dfn>, <dfn class="local col0 decl" id="40pred" title='pred' data-type='int' data-ref="40pred">pred</dfn>, <dfn class="local col1 decl" id="41scale" title='scale' data-type='int' data-ref="41scale">scale</dfn>, <dfn class="local col2 decl" id="42ret" title='ret' data-type='int' data-ref="42ret">ret</dfn>;</td></tr>
+<tr><th id="184">184</th><td>    <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> *<dfn class="local col3 decl" id="43dc_val" title='dc_val' data-type='int16_t *' data-ref="43dc_val">dc_val</dfn>;</td></tr>
+<tr><th id="185">185</th><td></td></tr>
+<tr><th id="186">186</th><td>    <i>/* find prediction */</i></td></tr>
+<tr><th id="187">187</th><td>    <b>if</b> (<a class="local col2 ref" href="#32n" title='n' data-ref="32n">n</a> &lt; <var>4</var>)</td></tr>
+<tr><th id="188">188</th><td>        <a class="local col1 ref" href="#41scale" title='scale' data-ref="41scale">scale</a> = <a class="local col1 ref" href="#31s" title='s' data-ref="31s">s</a>-&gt;<a class="ref" href="mpegvideo.h.html#MpegEncContext::y_dc_scale" title='MpegEncContext::y_dc_scale' data-ref="MpegEncContext::y_dc_scale">y_dc_scale</a>;</td></tr>
+<tr><th id="189">189</th><td>    <b>else</b></td></tr>
+<tr><th id="190">190</th><td>        <a class="local col1 ref" href="#41scale" title='scale' data-ref="41scale">scale</a> = <a class="local col1 ref" href="#31s" title='s' data-ref="31s">s</a>-&gt;<a class="ref" href="mpegvideo.h.html#MpegEncContext::c_dc_scale" title='MpegEncContext::c_dc_scale' data-ref="MpegEncContext::c_dc_scale">c_dc_scale</a>;</td></tr>
+<tr><th id="191">191</th><td>    <b>if</b> (<a class="macro" href="#170" title="0" data-ref="_M/IS_3IV1">IS_3IV1</a>)</td></tr>
+<tr><th id="192">192</th><td>        <a class="local col1 ref" href="#41scale" title='scale' data-ref="41scale">scale</a> = <var>8</var>;</td></tr>
+<tr><th id="193">193</th><td></td></tr>
+<tr><th id="194">194</th><td>    <a class="local col9 ref" href="#39wrap" title='wrap' data-ref="39wrap">wrap</a>   = <a class="local col1 ref" href="#31s" title='s' data-ref="31s">s</a>-&gt;<a class="ref" href="mpegvideo.h.html#MpegEncContext::block_wrap" title='MpegEncContext::block_wrap' data-ref="MpegEncContext::block_wrap">block_wrap</a>[<a class="local col2 ref" href="#32n" title='n' data-ref="32n">n</a>];</td></tr>
+<tr><th id="195">195</th><td>    <a class="local col3 ref" href="#43dc_val" title='dc_val' data-ref="43dc_val">dc_val</a> = <a class="local col1 ref" href="#31s" title='s' data-ref="31s">s</a>-&gt;<a class="ref" href="mpegvideo.h.html#MpegEncContext::dc_val" title='MpegEncContext::dc_val' data-ref="MpegEncContext::dc_val">dc_val</a>[<var>0</var>] + <a class="local col1 ref" href="#31s" title='s' data-ref="31s">s</a>-&gt;<a class="ref" href="mpegvideo.h.html#MpegEncContext::block_index" title='MpegEncContext::block_index' data-ref="MpegEncContext::block_index">block_index</a>[<a class="local col2 ref" href="#32n" title='n' data-ref="32n">n</a>];</td></tr>
+<tr><th id="196">196</th><td></td></tr>
+<tr><th id="197">197</th><td>    <i>/* B C</i></td></tr>
+<tr><th id="198">198</th><td><i>     * A X</i></td></tr>
+<tr><th id="199">199</th><td><i>     */</i></td></tr>
+<tr><th id="200">200</th><td>    <a class="local col6 ref" href="#36a" title='a' data-ref="36a">a</a> = <a class="local col3 ref" href="#43dc_val" title='dc_val' data-ref="43dc_val">dc_val</a>[-<var>1</var>];</td></tr>
+<tr><th id="201">201</th><td>    <a class="local col7 ref" href="#37b" title='b' data-ref="37b">b</a> = <a class="local col3 ref" href="#43dc_val" title='dc_val' data-ref="43dc_val">dc_val</a>[-<var>1</var> - <a class="local col9 ref" href="#39wrap" title='wrap' data-ref="39wrap">wrap</a>];</td></tr>
+<tr><th id="202">202</th><td>    <a class="local col8 ref" href="#38c" title='c' data-ref="38c">c</a> = <a class="local col3 ref" href="#43dc_val" title='dc_val' data-ref="43dc_val">dc_val</a>[-<a class="local col9 ref" href="#39wrap" title='wrap' data-ref="39wrap">wrap</a>];</td></tr>
+<tr><th id="203">203</th><td></td></tr>
+<tr><th id="204">204</th><td>    <i>/* outside slice handling (we can't do that by memset as we need the</i></td></tr>
+<tr><th id="205">205</th><td><i>     * dc for error resilience) */</i></td></tr>
+<tr><th id="206">206</th><td>    <b>if</b> (<a class="local col1 ref" href="#31s" title='s' data-ref="31s">s</a>-&gt;<a class="ref" href="mpegvideo.h.html#MpegEncContext::first_slice_line" title='MpegEncContext::first_slice_line' data-ref="MpegEncContext::first_slice_line">first_slice_line</a> &amp;&amp; <a class="local col2 ref" href="#32n" title='n' data-ref="32n">n</a> != <var>3</var>) {</td></tr>
+<tr><th id="207">207</th><td>        <b>if</b> (<a class="local col2 ref" href="#32n" title='n' data-ref="32n">n</a> != <var>2</var>)</td></tr>
+<tr><th id="208">208</th><td>            <a class="local col7 ref" href="#37b" title='b' data-ref="37b">b</a> = <a class="local col8 ref" href="#38c" title='c' data-ref="38c">c</a> = <var>1024</var>;</td></tr>
+<tr><th id="209">209</th><td>        <b>if</b> (<a class="local col2 ref" href="#32n" title='n' data-ref="32n">n</a> != <var>1</var> &amp;&amp; <a class="local col1 ref" href="#31s" title='s' data-ref="31s">s</a>-&gt;<a class="ref" href="mpegvideo.h.html#MpegEncContext::mb_x" title='MpegEncContext::mb_x' data-ref="MpegEncContext::mb_x">mb_x</a> == <a class="local col1 ref" href="#31s" title='s' data-ref="31s">s</a>-&gt;<a class="ref" href="mpegvideo.h.html#MpegEncContext::resync_mb_x" title='MpegEncContext::resync_mb_x' data-ref="MpegEncContext::resync_mb_x">resync_mb_x</a>)</td></tr>
+<tr><th id="210">210</th><td>            <a class="local col7 ref" href="#37b" title='b' data-ref="37b">b</a> = <a class="local col6 ref" href="#36a" title='a' data-ref="36a">a</a> = <var>1024</var>;</td></tr>
+<tr><th id="211">211</th><td>    }</td></tr>
+<tr><th id="212">212</th><td>    <b>if</b> (<a class="local col1 ref" href="#31s" title='s' data-ref="31s">s</a>-&gt;<a class="ref" href="mpegvideo.h.html#MpegEncContext::mb_x" title='MpegEncContext::mb_x' data-ref="MpegEncContext::mb_x">mb_x</a> == <a class="local col1 ref" href="#31s" title='s' data-ref="31s">s</a>-&gt;<a class="ref" href="mpegvideo.h.html#MpegEncContext::resync_mb_x" title='MpegEncContext::resync_mb_x' data-ref="MpegEncContext::resync_mb_x">resync_mb_x</a> &amp;&amp; <a class="local col1 ref" href="#31s" title='s' data-ref="31s">s</a>-&gt;<a class="ref" href="mpegvideo.h.html#MpegEncContext::mb_y" title='MpegEncContext::mb_y' data-ref="MpegEncContext::mb_y">mb_y</a> == <a class="local col1 ref" href="#31s" title='s' data-ref="31s">s</a>-&gt;<a class="ref" href="mpegvideo.h.html#MpegEncContext::resync_mb_y" title='MpegEncContext::resync_mb_y' data-ref="MpegEncContext::resync_mb_y">resync_mb_y</a> + <var>1</var>) {</td></tr>
+<tr><th id="213">213</th><td>        <b>if</b> (<a class="local col2 ref" href="#32n" title='n' data-ref="32n">n</a> == <var>0</var> || <a class="local col2 ref" href="#32n" title='n' data-ref="32n">n</a> == <var>4</var> || <a class="local col2 ref" href="#32n" title='n' data-ref="32n">n</a> == <var>5</var>)</td></tr>
+<tr><th id="214">214</th><td>            <a class="local col7 ref" href="#37b" title='b' data-ref="37b">b</a> = <var>1024</var>;</td></tr>
+<tr><th id="215">215</th><td>    }</td></tr>
+<tr><th id="216">216</th><td></td></tr>
+<tr><th id="217">217</th><td>    <b>if</b> (<a class="ref" href="../../include/stdlib.h.html#abs" title='abs' data-ref="abs">abs</a>(<a class="local col6 ref" href="#36a" title='a' data-ref="36a">a</a> - <a class="local col7 ref" href="#37b" title='b' data-ref="37b">b</a>) &lt; <a class="ref" href="../../include/stdlib.h.html#abs" title='abs' data-ref="abs">abs</a>(<a class="local col7 ref" href="#37b" title='b' data-ref="37b">b</a> - <a class="local col8 ref" href="#38c" title='c' data-ref="38c">c</a>)) {</td></tr>
+<tr><th id="218">218</th><td>        <a class="local col0 ref" href="#40pred" title='pred' data-ref="40pred">pred</a>     = <a class="local col8 ref" href="#38c" title='c' data-ref="38c">c</a>;</td></tr>
+<tr><th id="219">219</th><td>        *<a class="local col4 ref" href="#34dir_ptr" title='dir_ptr' data-ref="34dir_ptr">dir_ptr</a> = <var>1</var>; <i>/* top */</i></td></tr>
+<tr><th id="220">220</th><td>    } <b>else</b> {</td></tr>
+<tr><th id="221">221</th><td>        <a class="local col0 ref" href="#40pred" title='pred' data-ref="40pred">pred</a>     = <a class="local col6 ref" href="#36a" title='a' data-ref="36a">a</a>;</td></tr>
+<tr><th id="222">222</th><td>        *<a class="local col4 ref" href="#34dir_ptr" title='dir_ptr' data-ref="34dir_ptr">dir_ptr</a> = <var>0</var>; <i>/* left */</i></td></tr>
+<tr><th id="223">223</th><td>    }</td></tr>
+<tr><th id="224">224</th><td>    <i>/* we assume pred is positive */</i></td></tr>
+<tr><th id="225">225</th><td>    <a class="local col0 ref" href="#40pred" title='pred' data-ref="40pred">pred</a> = <a class="macro" href="mathops.h.html#211" title="((uint32_t)((((uint64_t)(pred + (scale &gt;&gt; 1))) * ff_inverse[scale]) &gt;&gt; 32))" data-ref="_M/FASTDIV">FASTDIV</a>((<a class="local col0 ref" href="#40pred" title='pred' data-ref="40pred">pred</a> + (<a class="local col1 ref" href="#41scale" title='scale' data-ref="41scale">scale</a> &gt;&gt; <var>1</var>)), <a class="local col1 ref" href="#41scale" title='scale' data-ref="41scale">scale</a>);</td></tr>
+<tr><th id="226">226</th><td></td></tr>
+<tr><th id="227">227</th><td>    <b>if</b> (<a class="local col5 ref" href="#35encoding" title='encoding' data-ref="35encoding">encoding</a>) {</td></tr>
+<tr><th id="228">228</th><td>        <a class="local col2 ref" href="#42ret" title='ret' data-ref="42ret">ret</a> = <a class="local col3 ref" href="#33level" title='level' data-ref="33level">level</a> - <a class="local col0 ref" href="#40pred" title='pred' data-ref="40pred">pred</a>;</td></tr>
+<tr><th id="229">229</th><td>    } <b>else</b> {</td></tr>
+<tr><th id="230">230</th><td>        <a class="local col3 ref" href="#33level" title='level' data-ref="33level">level</a> += <a class="local col0 ref" href="#40pred" title='pred' data-ref="40pred">pred</a>;</td></tr>
+<tr><th id="231">231</th><td>        <a class="local col2 ref" href="#42ret" title='ret' data-ref="42ret">ret</a>    = <a class="local col3 ref" href="#33level" title='level' data-ref="33level">level</a>;</td></tr>
+<tr><th id="232">232</th><td>    }</td></tr>
+<tr><th id="233">233</th><td>    <a class="local col3 ref" href="#33level" title='level' data-ref="33level">level</a> *= <a class="local col1 ref" href="#41scale" title='scale' data-ref="41scale">scale</a>;</td></tr>
+<tr><th id="234">234</th><td>    <b>if</b> (<a class="local col3 ref" href="#33level" title='level' data-ref="33level">level</a> &amp; (~<var>2047</var>)) {</td></tr>
+<tr><th id="235">235</th><td>        <b>if</b> (!<a class="local col1 ref" href="#31s" title='s' data-ref="31s">s</a>-&gt;<a class="ref" href="mpegvideo.h.html#MpegEncContext::encoding" title='MpegEncContext::encoding' data-ref="MpegEncContext::encoding">encoding</a> &amp;&amp; (<a class="local col1 ref" href="#31s" title='s' data-ref="31s">s</a>-&gt;<a class="ref" href="mpegvideo.h.html#MpegEncContext::avctx" title='MpegEncContext::avctx' data-ref="MpegEncContext::avctx">avctx</a>-&gt;<a class="ref" href="avcodec.h.html#AVCodecContext::err_recognition" title='AVCodecContext::err_recognition' data-ref="AVCodecContext::err_recognition">err_recognition</a> &amp; (<a class="macro" href="avcodec.h.html#2973" title="(1&lt;&lt;1)" data-ref="_M/AV_EF_BITSTREAM">AV_EF_BITSTREAM</a> | <a class="macro" href="avcodec.h.html#2980" title="(1&lt;&lt;18)" data-ref="_M/AV_EF_AGGRESSIVE">AV_EF_AGGRESSIVE</a>))) {</td></tr>
+<tr><th id="236">236</th><td>            <b>if</b> (<a class="local col3 ref" href="#33level" title='level' data-ref="33level">level</a> &lt; <var>0</var>) {</td></tr>
+<tr><th id="237">237</th><td>                <a class="ref" href="../libavutil/log.h.html#av_log" title='av_log' data-ref="av_log">av_log</a>(<a class="local col1 ref" href="#31s" title='s' data-ref="31s">s</a>-&gt;<a class="ref" href="mpegvideo.h.html#MpegEncContext::avctx" title='MpegEncContext::avctx' data-ref="MpegEncContext::avctx">avctx</a>, <a class="macro" href="../libavutil/log.h.html#176" title="16" data-ref="_M/AV_LOG_ERROR">AV_LOG_ERROR</a>,</td></tr>
+<tr><th id="238">238</th><td>                       <q>"dc&lt;0 at %dx%d\n"</q>, <a class="local col1 ref" href="#31s" title='s' data-ref="31s">s</a>-&gt;<a class="ref" href="mpegvideo.h.html#MpegEncContext::mb_x" title='MpegEncContext::mb_x' data-ref="MpegEncContext::mb_x">mb_x</a>, <a class="local col1 ref" href="#31s" title='s' data-ref="31s">s</a>-&gt;<a class="ref" href="mpegvideo.h.html#MpegEncContext::mb_y" title='MpegEncContext::mb_y' data-ref="MpegEncContext::mb_y">mb_y</a>);</td></tr>
+<tr><th id="239">239</th><td>                <b>return</b> -<var>1</var>;</td></tr>
+<tr><th id="240">240</th><td>            }</td></tr>
+<tr><th id="241">241</th><td>            <b>if</b> (<a class="local col3 ref" href="#33level" title='level' data-ref="33level">level</a> &gt; <var>2048</var> + <a class="local col1 ref" href="#41scale" title='scale' data-ref="41scale">scale</a>) {</td></tr>
+<tr><th id="242">242</th><td>                <a class="ref" href="../libavutil/log.h.html#av_log" title='av_log' data-ref="av_log">av_log</a>(<a class="local col1 ref" href="#31s" title='s' data-ref="31s">s</a>-&gt;<a class="ref" href="mpegvideo.h.html#MpegEncContext::avctx" title='MpegEncContext::avctx' data-ref="MpegEncContext::avctx">avctx</a>, <a class="macro" href="../libavutil/log.h.html#176" title="16" data-ref="_M/AV_LOG_ERROR">AV_LOG_ERROR</a>,</td></tr>
+<tr><th id="243">243</th><td>                       <q>"dc overflow at %dx%d\n"</q>, <a class="local col1 ref" href="#31s" title='s' data-ref="31s">s</a>-&gt;<a class="ref" href="mpegvideo.h.html#MpegEncContext::mb_x" title='MpegEncContext::mb_x' data-ref="MpegEncContext::mb_x">mb_x</a>, <a class="local col1 ref" href="#31s" title='s' data-ref="31s">s</a>-&gt;<a class="ref" href="mpegvideo.h.html#MpegEncContext::mb_y" title='MpegEncContext::mb_y' data-ref="MpegEncContext::mb_y">mb_y</a>);</td></tr>
+<tr><th id="244">244</th><td>                <b>return</b> -<var>1</var>;</td></tr>
+<tr><th id="245">245</th><td>            }</td></tr>
+<tr><th id="246">246</th><td>        }</td></tr>
+<tr><th id="247">247</th><td>        <b>if</b> (<a class="local col3 ref" href="#33level" title='level' data-ref="33level">level</a> &lt; <var>0</var>)</td></tr>
+<tr><th id="248">248</th><td>            <a class="local col3 ref" href="#33level" title='level' data-ref="33level">level</a> = <var>0</var>;</td></tr>
+<tr><th id="249">249</th><td>        <b>else</b> <b>if</b> (!(<a class="local col1 ref" href="#31s" title='s' data-ref="31s">s</a>-&gt;<a class="ref" href="mpegvideo.h.html#MpegEncContext::workaround_bugs" title='MpegEncContext::workaround_bugs' data-ref="MpegEncContext::workaround_bugs">workaround_bugs</a> &amp; <a class="macro" href="avcodec.h.html#2878" title="4096" data-ref="_M/FF_BUG_DC_CLIP">FF_BUG_DC_CLIP</a>))</td></tr>
+<tr><th id="250">250</th><td>            <a class="local col3 ref" href="#33level" title='level' data-ref="33level">level</a> = <var>2047</var>;</td></tr>
+<tr><th id="251">251</th><td>    }</td></tr>
+<tr><th id="252">252</th><td>    <a class="local col3 ref" href="#43dc_val" title='dc_val' data-ref="43dc_val">dc_val</a>[<var>0</var>] = <a class="local col3 ref" href="#33level" title='level' data-ref="33level">level</a>;</td></tr>
+<tr><th id="253">253</th><td></td></tr>
+<tr><th id="254">254</th><td>    <b>return</b> <a class="local col2 ref" href="#42ret" title='ret' data-ref="42ret">ret</a>;</td></tr>
+<tr><th id="255">255</th><td>}</td></tr>
+<tr><th id="256">256</th><td></td></tr>
+<tr><th id="257">257</th><td><u>#<span data-ppcond="23">endif</span> /* AVCODEC_MPEG4VIDEO_H */</u></td></tr>
+<tr><th id="258">258</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated while processing <a href='h263.c.html'>ffmpeg/libavcodec/h263.c</a><br/>Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

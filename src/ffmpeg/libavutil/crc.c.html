@@ -1,0 +1,398 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>crc.c source code [ffmpeg/libavutil/crc.c] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavutil/crc.c'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavutil</a>/<a href='crc.c.html'>crc.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * copyright (c) 2006 Michael Niedermayer &lt;michaelni@gmx.at&gt;</i></td></tr>
+<tr><th id="3">3</th><td><i> *</i></td></tr>
+<tr><th id="4">4</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="5">5</th><td><i> *</i></td></tr>
+<tr><th id="6">6</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="7">7</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="8">8</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="9">9</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="10">10</th><td><i> *</i></td></tr>
+<tr><th id="11">11</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="12">12</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="13">13</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="14">14</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="15">15</th><td><i> *</i></td></tr>
+<tr><th id="16">16</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="17">17</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="18">18</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="19">19</th><td><i> */</i></td></tr>
+<tr><th id="20">20</th><td></td></tr>
+<tr><th id="21">21</th><td><u>#include <a href="../config.h.html">"config.h"</a></u></td></tr>
+<tr><th id="22">22</th><td></td></tr>
+<tr><th id="23">23</th><td><u>#include <a href="bswap.h.html">"bswap.h"</a></u></td></tr>
+<tr><th id="24">24</th><td><u>#include <a href="common.h.html">"common.h"</a></u></td></tr>
+<tr><th id="25">25</th><td><u>#include <a href="crc.h.html">"crc.h"</a></u></td></tr>
+<tr><th id="26">26</th><td></td></tr>
+<tr><th id="27">27</th><td><u>#<span data-ppcond="27">if</span> <a class="macro" href="../config.h.html#528" title="0" data-ref="_M/CONFIG_HARDCODED_TABLES">CONFIG_HARDCODED_TABLES</a></u></td></tr>
+<tr><th id="28">28</th><td><em>static</em> <em>const</em> AVCRC av_crc_table[AV_CRC_MAX][<var>257</var>] = {</td></tr>
+<tr><th id="29">29</th><td>    [AV_CRC_8_ATM] = {</td></tr>
+<tr><th id="30">30</th><td>        <var>0x00</var>, <var>0x07</var>, <var>0x0E</var>, <var>0x09</var>, <var>0x1C</var>, <var>0x1B</var>, <var>0x12</var>, <var>0x15</var>, <var>0x38</var>, <var>0x3F</var>, <var>0x36</var>, <var>0x31</var>,</td></tr>
+<tr><th id="31">31</th><td>        <var>0x24</var>, <var>0x23</var>, <var>0x2A</var>, <var>0x2D</var>, <var>0x70</var>, <var>0x77</var>, <var>0x7E</var>, <var>0x79</var>, <var>0x6C</var>, <var>0x6B</var>, <var>0x62</var>, <var>0x65</var>,</td></tr>
+<tr><th id="32">32</th><td>        <var>0x48</var>, <var>0x4F</var>, <var>0x46</var>, <var>0x41</var>, <var>0x54</var>, <var>0x53</var>, <var>0x5A</var>, <var>0x5D</var>, <var>0xE0</var>, <var>0xE7</var>, <var>0xEE</var>, <var>0xE9</var>,</td></tr>
+<tr><th id="33">33</th><td>        <var>0xFC</var>, <var>0xFB</var>, <var>0xF2</var>, <var>0xF5</var>, <var>0xD8</var>, <var>0xDF</var>, <var>0xD6</var>, <var>0xD1</var>, <var>0xC4</var>, <var>0xC3</var>, <var>0xCA</var>, <var>0xCD</var>,</td></tr>
+<tr><th id="34">34</th><td>        <var>0x90</var>, <var>0x97</var>, <var>0x9E</var>, <var>0x99</var>, <var>0x8C</var>, <var>0x8B</var>, <var>0x82</var>, <var>0x85</var>, <var>0xA8</var>, <var>0xAF</var>, <var>0xA6</var>, <var>0xA1</var>,</td></tr>
+<tr><th id="35">35</th><td>        <var>0xB4</var>, <var>0xB3</var>, <var>0xBA</var>, <var>0xBD</var>, <var>0xC7</var>, <var>0xC0</var>, <var>0xC9</var>, <var>0xCE</var>, <var>0xDB</var>, <var>0xDC</var>, <var>0xD5</var>, <var>0xD2</var>,</td></tr>
+<tr><th id="36">36</th><td>        <var>0xFF</var>, <var>0xF8</var>, <var>0xF1</var>, <var>0xF6</var>, <var>0xE3</var>, <var>0xE4</var>, <var>0xED</var>, <var>0xEA</var>, <var>0xB7</var>, <var>0xB0</var>, <var>0xB9</var>, <var>0xBE</var>,</td></tr>
+<tr><th id="37">37</th><td>        <var>0xAB</var>, <var>0xAC</var>, <var>0xA5</var>, <var>0xA2</var>, <var>0x8F</var>, <var>0x88</var>, <var>0x81</var>, <var>0x86</var>, <var>0x93</var>, <var>0x94</var>, <var>0x9D</var>, <var>0x9A</var>,</td></tr>
+<tr><th id="38">38</th><td>        <var>0x27</var>, <var>0x20</var>, <var>0x29</var>, <var>0x2E</var>, <var>0x3B</var>, <var>0x3C</var>, <var>0x35</var>, <var>0x32</var>, <var>0x1F</var>, <var>0x18</var>, <var>0x11</var>, <var>0x16</var>,</td></tr>
+<tr><th id="39">39</th><td>        <var>0x03</var>, <var>0x04</var>, <var>0x0D</var>, <var>0x0A</var>, <var>0x57</var>, <var>0x50</var>, <var>0x59</var>, <var>0x5E</var>, <var>0x4B</var>, <var>0x4C</var>, <var>0x45</var>, <var>0x42</var>,</td></tr>
+<tr><th id="40">40</th><td>        <var>0x6F</var>, <var>0x68</var>, <var>0x61</var>, <var>0x66</var>, <var>0x73</var>, <var>0x74</var>, <var>0x7D</var>, <var>0x7A</var>, <var>0x89</var>, <var>0x8E</var>, <var>0x87</var>, <var>0x80</var>,</td></tr>
+<tr><th id="41">41</th><td>        <var>0x95</var>, <var>0x92</var>, <var>0x9B</var>, <var>0x9C</var>, <var>0xB1</var>, <var>0xB6</var>, <var>0xBF</var>, <var>0xB8</var>, <var>0xAD</var>, <var>0xAA</var>, <var>0xA3</var>, <var>0xA4</var>,</td></tr>
+<tr><th id="42">42</th><td>        <var>0xF9</var>, <var>0xFE</var>, <var>0xF7</var>, <var>0xF0</var>, <var>0xE5</var>, <var>0xE2</var>, <var>0xEB</var>, <var>0xEC</var>, <var>0xC1</var>, <var>0xC6</var>, <var>0xCF</var>, <var>0xC8</var>,</td></tr>
+<tr><th id="43">43</th><td>        <var>0xDD</var>, <var>0xDA</var>, <var>0xD3</var>, <var>0xD4</var>, <var>0x69</var>, <var>0x6E</var>, <var>0x67</var>, <var>0x60</var>, <var>0x75</var>, <var>0x72</var>, <var>0x7B</var>, <var>0x7C</var>,</td></tr>
+<tr><th id="44">44</th><td>        <var>0x51</var>, <var>0x56</var>, <var>0x5F</var>, <var>0x58</var>, <var>0x4D</var>, <var>0x4A</var>, <var>0x43</var>, <var>0x44</var>, <var>0x19</var>, <var>0x1E</var>, <var>0x17</var>, <var>0x10</var>,</td></tr>
+<tr><th id="45">45</th><td>        <var>0x05</var>, <var>0x02</var>, <var>0x0B</var>, <var>0x0C</var>, <var>0x21</var>, <var>0x26</var>, <var>0x2F</var>, <var>0x28</var>, <var>0x3D</var>, <var>0x3A</var>, <var>0x33</var>, <var>0x34</var>,</td></tr>
+<tr><th id="46">46</th><td>        <var>0x4E</var>, <var>0x49</var>, <var>0x40</var>, <var>0x47</var>, <var>0x52</var>, <var>0x55</var>, <var>0x5C</var>, <var>0x5B</var>, <var>0x76</var>, <var>0x71</var>, <var>0x78</var>, <var>0x7F</var>,</td></tr>
+<tr><th id="47">47</th><td>        <var>0x6A</var>, <var>0x6D</var>, <var>0x64</var>, <var>0x63</var>, <var>0x3E</var>, <var>0x39</var>, <var>0x30</var>, <var>0x37</var>, <var>0x22</var>, <var>0x25</var>, <var>0x2C</var>, <var>0x2B</var>,</td></tr>
+<tr><th id="48">48</th><td>        <var>0x06</var>, <var>0x01</var>, <var>0x08</var>, <var>0x0F</var>, <var>0x1A</var>, <var>0x1D</var>, <var>0x14</var>, <var>0x13</var>, <var>0xAE</var>, <var>0xA9</var>, <var>0xA0</var>, <var>0xA7</var>,</td></tr>
+<tr><th id="49">49</th><td>        <var>0xB2</var>, <var>0xB5</var>, <var>0xBC</var>, <var>0xBB</var>, <var>0x96</var>, <var>0x91</var>, <var>0x98</var>, <var>0x9F</var>, <var>0x8A</var>, <var>0x8D</var>, <var>0x84</var>, <var>0x83</var>,</td></tr>
+<tr><th id="50">50</th><td>        <var>0xDE</var>, <var>0xD9</var>, <var>0xD0</var>, <var>0xD7</var>, <var>0xC2</var>, <var>0xC5</var>, <var>0xCC</var>, <var>0xCB</var>, <var>0xE6</var>, <var>0xE1</var>, <var>0xE8</var>, <var>0xEF</var>,</td></tr>
+<tr><th id="51">51</th><td>        <var>0xFA</var>, <var>0xFD</var>, <var>0xF4</var>, <var>0xF3</var>, <var>0x01</var></td></tr>
+<tr><th id="52">52</th><td>    },</td></tr>
+<tr><th id="53">53</th><td>    [AV_CRC_16_ANSI] = {</td></tr>
+<tr><th id="54">54</th><td>        <var>0x0000</var>, <var>0x0580</var>, <var>0x0F80</var>, <var>0x0A00</var>, <var>0x1B80</var>, <var>0x1E00</var>, <var>0x1400</var>, <var>0x1180</var>,</td></tr>
+<tr><th id="55">55</th><td>        <var>0x3380</var>, <var>0x3600</var>, <var>0x3C00</var>, <var>0x3980</var>, <var>0x2800</var>, <var>0x2D80</var>, <var>0x2780</var>, <var>0x2200</var>,</td></tr>
+<tr><th id="56">56</th><td>        <var>0x6380</var>, <var>0x6600</var>, <var>0x6C00</var>, <var>0x6980</var>, <var>0x7800</var>, <var>0x7D80</var>, <var>0x7780</var>, <var>0x7200</var>,</td></tr>
+<tr><th id="57">57</th><td>        <var>0x5000</var>, <var>0x5580</var>, <var>0x5F80</var>, <var>0x5A00</var>, <var>0x4B80</var>, <var>0x4E00</var>, <var>0x4400</var>, <var>0x4180</var>,</td></tr>
+<tr><th id="58">58</th><td>        <var>0xC380</var>, <var>0xC600</var>, <var>0xCC00</var>, <var>0xC980</var>, <var>0xD800</var>, <var>0xDD80</var>, <var>0xD780</var>, <var>0xD200</var>,</td></tr>
+<tr><th id="59">59</th><td>        <var>0xF000</var>, <var>0xF580</var>, <var>0xFF80</var>, <var>0xFA00</var>, <var>0xEB80</var>, <var>0xEE00</var>, <var>0xE400</var>, <var>0xE180</var>,</td></tr>
+<tr><th id="60">60</th><td>        <var>0xA000</var>, <var>0xA580</var>, <var>0xAF80</var>, <var>0xAA00</var>, <var>0xBB80</var>, <var>0xBE00</var>, <var>0xB400</var>, <var>0xB180</var>,</td></tr>
+<tr><th id="61">61</th><td>        <var>0x9380</var>, <var>0x9600</var>, <var>0x9C00</var>, <var>0x9980</var>, <var>0x8800</var>, <var>0x8D80</var>, <var>0x8780</var>, <var>0x8200</var>,</td></tr>
+<tr><th id="62">62</th><td>        <var>0x8381</var>, <var>0x8601</var>, <var>0x8C01</var>, <var>0x8981</var>, <var>0x9801</var>, <var>0x9D81</var>, <var>0x9781</var>, <var>0x9201</var>,</td></tr>
+<tr><th id="63">63</th><td>        <var>0xB001</var>, <var>0xB581</var>, <var>0xBF81</var>, <var>0xBA01</var>, <var>0xAB81</var>, <var>0xAE01</var>, <var>0xA401</var>, <var>0xA181</var>,</td></tr>
+<tr><th id="64">64</th><td>        <var>0xE001</var>, <var>0xE581</var>, <var>0xEF81</var>, <var>0xEA01</var>, <var>0xFB81</var>, <var>0xFE01</var>, <var>0xF401</var>, <var>0xF181</var>,</td></tr>
+<tr><th id="65">65</th><td>        <var>0xD381</var>, <var>0xD601</var>, <var>0xDC01</var>, <var>0xD981</var>, <var>0xC801</var>, <var>0xCD81</var>, <var>0xC781</var>, <var>0xC201</var>,</td></tr>
+<tr><th id="66">66</th><td>        <var>0x4001</var>, <var>0x4581</var>, <var>0x4F81</var>, <var>0x4A01</var>, <var>0x5B81</var>, <var>0x5E01</var>, <var>0x5401</var>, <var>0x5181</var>,</td></tr>
+<tr><th id="67">67</th><td>        <var>0x7381</var>, <var>0x7601</var>, <var>0x7C01</var>, <var>0x7981</var>, <var>0x6801</var>, <var>0x6D81</var>, <var>0x6781</var>, <var>0x6201</var>,</td></tr>
+<tr><th id="68">68</th><td>        <var>0x2381</var>, <var>0x2601</var>, <var>0x2C01</var>, <var>0x2981</var>, <var>0x3801</var>, <var>0x3D81</var>, <var>0x3781</var>, <var>0x3201</var>,</td></tr>
+<tr><th id="69">69</th><td>        <var>0x1001</var>, <var>0x1581</var>, <var>0x1F81</var>, <var>0x1A01</var>, <var>0x0B81</var>, <var>0x0E01</var>, <var>0x0401</var>, <var>0x0181</var>,</td></tr>
+<tr><th id="70">70</th><td>        <var>0x0383</var>, <var>0x0603</var>, <var>0x0C03</var>, <var>0x0983</var>, <var>0x1803</var>, <var>0x1D83</var>, <var>0x1783</var>, <var>0x1203</var>,</td></tr>
+<tr><th id="71">71</th><td>        <var>0x3003</var>, <var>0x3583</var>, <var>0x3F83</var>, <var>0x3A03</var>, <var>0x2B83</var>, <var>0x2E03</var>, <var>0x2403</var>, <var>0x2183</var>,</td></tr>
+<tr><th id="72">72</th><td>        <var>0x6003</var>, <var>0x6583</var>, <var>0x6F83</var>, <var>0x6A03</var>, <var>0x7B83</var>, <var>0x7E03</var>, <var>0x7403</var>, <var>0x7183</var>,</td></tr>
+<tr><th id="73">73</th><td>        <var>0x5383</var>, <var>0x5603</var>, <var>0x5C03</var>, <var>0x5983</var>, <var>0x4803</var>, <var>0x4D83</var>, <var>0x4783</var>, <var>0x4203</var>,</td></tr>
+<tr><th id="74">74</th><td>        <var>0xC003</var>, <var>0xC583</var>, <var>0xCF83</var>, <var>0xCA03</var>, <var>0xDB83</var>, <var>0xDE03</var>, <var>0xD403</var>, <var>0xD183</var>,</td></tr>
+<tr><th id="75">75</th><td>        <var>0xF383</var>, <var>0xF603</var>, <var>0xFC03</var>, <var>0xF983</var>, <var>0xE803</var>, <var>0xED83</var>, <var>0xE783</var>, <var>0xE203</var>,</td></tr>
+<tr><th id="76">76</th><td>        <var>0xA383</var>, <var>0xA603</var>, <var>0xAC03</var>, <var>0xA983</var>, <var>0xB803</var>, <var>0xBD83</var>, <var>0xB783</var>, <var>0xB203</var>,</td></tr>
+<tr><th id="77">77</th><td>        <var>0x9003</var>, <var>0x9583</var>, <var>0x9F83</var>, <var>0x9A03</var>, <var>0x8B83</var>, <var>0x8E03</var>, <var>0x8403</var>, <var>0x8183</var>,</td></tr>
+<tr><th id="78">78</th><td>        <var>0x8002</var>, <var>0x8582</var>, <var>0x8F82</var>, <var>0x8A02</var>, <var>0x9B82</var>, <var>0x9E02</var>, <var>0x9402</var>, <var>0x9182</var>,</td></tr>
+<tr><th id="79">79</th><td>        <var>0xB382</var>, <var>0xB602</var>, <var>0xBC02</var>, <var>0xB982</var>, <var>0xA802</var>, <var>0xAD82</var>, <var>0xA782</var>, <var>0xA202</var>,</td></tr>
+<tr><th id="80">80</th><td>        <var>0xE382</var>, <var>0xE602</var>, <var>0xEC02</var>, <var>0xE982</var>, <var>0xF802</var>, <var>0xFD82</var>, <var>0xF782</var>, <var>0xF202</var>,</td></tr>
+<tr><th id="81">81</th><td>        <var>0xD002</var>, <var>0xD582</var>, <var>0xDF82</var>, <var>0xDA02</var>, <var>0xCB82</var>, <var>0xCE02</var>, <var>0xC402</var>, <var>0xC182</var>,</td></tr>
+<tr><th id="82">82</th><td>        <var>0x4382</var>, <var>0x4602</var>, <var>0x4C02</var>, <var>0x4982</var>, <var>0x5802</var>, <var>0x5D82</var>, <var>0x5782</var>, <var>0x5202</var>,</td></tr>
+<tr><th id="83">83</th><td>        <var>0x7002</var>, <var>0x7582</var>, <var>0x7F82</var>, <var>0x7A02</var>, <var>0x6B82</var>, <var>0x6E02</var>, <var>0x6402</var>, <var>0x6182</var>,</td></tr>
+<tr><th id="84">84</th><td>        <var>0x2002</var>, <var>0x2582</var>, <var>0x2F82</var>, <var>0x2A02</var>, <var>0x3B82</var>, <var>0x3E02</var>, <var>0x3402</var>, <var>0x3182</var>,</td></tr>
+<tr><th id="85">85</th><td>        <var>0x1382</var>, <var>0x1602</var>, <var>0x1C02</var>, <var>0x1982</var>, <var>0x0802</var>, <var>0x0D82</var>, <var>0x0782</var>, <var>0x0202</var>,</td></tr>
+<tr><th id="86">86</th><td>        <var>0x0001</var></td></tr>
+<tr><th id="87">87</th><td>    },</td></tr>
+<tr><th id="88">88</th><td>    [AV_CRC_16_CCITT] = {</td></tr>
+<tr><th id="89">89</th><td>        <var>0x0000</var>, <var>0x2110</var>, <var>0x4220</var>, <var>0x6330</var>, <var>0x8440</var>, <var>0xA550</var>, <var>0xC660</var>, <var>0xE770</var>,</td></tr>
+<tr><th id="90">90</th><td>        <var>0x0881</var>, <var>0x2991</var>, <var>0x4AA1</var>, <var>0x6BB1</var>, <var>0x8CC1</var>, <var>0xADD1</var>, <var>0xCEE1</var>, <var>0xEFF1</var>,</td></tr>
+<tr><th id="91">91</th><td>        <var>0x3112</var>, <var>0x1002</var>, <var>0x7332</var>, <var>0x5222</var>, <var>0xB552</var>, <var>0x9442</var>, <var>0xF772</var>, <var>0xD662</var>,</td></tr>
+<tr><th id="92">92</th><td>        <var>0x3993</var>, <var>0x1883</var>, <var>0x7BB3</var>, <var>0x5AA3</var>, <var>0xBDD3</var>, <var>0x9CC3</var>, <var>0xFFF3</var>, <var>0xDEE3</var>,</td></tr>
+<tr><th id="93">93</th><td>        <var>0x6224</var>, <var>0x4334</var>, <var>0x2004</var>, <var>0x0114</var>, <var>0xE664</var>, <var>0xC774</var>, <var>0xA444</var>, <var>0x8554</var>,</td></tr>
+<tr><th id="94">94</th><td>        <var>0x6AA5</var>, <var>0x4BB5</var>, <var>0x2885</var>, <var>0x0995</var>, <var>0xEEE5</var>, <var>0xCFF5</var>, <var>0xACC5</var>, <var>0x8DD5</var>,</td></tr>
+<tr><th id="95">95</th><td>        <var>0x5336</var>, <var>0x7226</var>, <var>0x1116</var>, <var>0x3006</var>, <var>0xD776</var>, <var>0xF666</var>, <var>0x9556</var>, <var>0xB446</var>,</td></tr>
+<tr><th id="96">96</th><td>        <var>0x5BB7</var>, <var>0x7AA7</var>, <var>0x1997</var>, <var>0x3887</var>, <var>0xDFF7</var>, <var>0xFEE7</var>, <var>0x9DD7</var>, <var>0xBCC7</var>,</td></tr>
+<tr><th id="97">97</th><td>        <var>0xC448</var>, <var>0xE558</var>, <var>0x8668</var>, <var>0xA778</var>, <var>0x4008</var>, <var>0x6118</var>, <var>0x0228</var>, <var>0x2338</var>,</td></tr>
+<tr><th id="98">98</th><td>        <var>0xCCC9</var>, <var>0xEDD9</var>, <var>0x8EE9</var>, <var>0xAFF9</var>, <var>0x4889</var>, <var>0x6999</var>, <var>0x0AA9</var>, <var>0x2BB9</var>,</td></tr>
+<tr><th id="99">99</th><td>        <var>0xF55A</var>, <var>0xD44A</var>, <var>0xB77A</var>, <var>0x966A</var>, <var>0x711A</var>, <var>0x500A</var>, <var>0x333A</var>, <var>0x122A</var>,</td></tr>
+<tr><th id="100">100</th><td>        <var>0xFDDB</var>, <var>0xDCCB</var>, <var>0xBFFB</var>, <var>0x9EEB</var>, <var>0x799B</var>, <var>0x588B</var>, <var>0x3BBB</var>, <var>0x1AAB</var>,</td></tr>
+<tr><th id="101">101</th><td>        <var>0xA66C</var>, <var>0x877C</var>, <var>0xE44C</var>, <var>0xC55C</var>, <var>0x222C</var>, <var>0x033C</var>, <var>0x600C</var>, <var>0x411C</var>,</td></tr>
+<tr><th id="102">102</th><td>        <var>0xAEED</var>, <var>0x8FFD</var>, <var>0xECCD</var>, <var>0xCDDD</var>, <var>0x2AAD</var>, <var>0x0BBD</var>, <var>0x688D</var>, <var>0x499D</var>,</td></tr>
+<tr><th id="103">103</th><td>        <var>0x977E</var>, <var>0xB66E</var>, <var>0xD55E</var>, <var>0xF44E</var>, <var>0x133E</var>, <var>0x322E</var>, <var>0x511E</var>, <var>0x700E</var>,</td></tr>
+<tr><th id="104">104</th><td>        <var>0x9FFF</var>, <var>0xBEEF</var>, <var>0xDDDF</var>, <var>0xFCCF</var>, <var>0x1BBF</var>, <var>0x3AAF</var>, <var>0x599F</var>, <var>0x788F</var>,</td></tr>
+<tr><th id="105">105</th><td>        <var>0x8891</var>, <var>0xA981</var>, <var>0xCAB1</var>, <var>0xEBA1</var>, <var>0x0CD1</var>, <var>0x2DC1</var>, <var>0x4EF1</var>, <var>0x6FE1</var>,</td></tr>
+<tr><th id="106">106</th><td>        <var>0x8010</var>, <var>0xA100</var>, <var>0xC230</var>, <var>0xE320</var>, <var>0x0450</var>, <var>0x2540</var>, <var>0x4670</var>, <var>0x6760</var>,</td></tr>
+<tr><th id="107">107</th><td>        <var>0xB983</var>, <var>0x9893</var>, <var>0xFBA3</var>, <var>0xDAB3</var>, <var>0x3DC3</var>, <var>0x1CD3</var>, <var>0x7FE3</var>, <var>0x5EF3</var>,</td></tr>
+<tr><th id="108">108</th><td>        <var>0xB102</var>, <var>0x9012</var>, <var>0xF322</var>, <var>0xD232</var>, <var>0x3542</var>, <var>0x1452</var>, <var>0x7762</var>, <var>0x5672</var>,</td></tr>
+<tr><th id="109">109</th><td>        <var>0xEAB5</var>, <var>0xCBA5</var>, <var>0xA895</var>, <var>0x8985</var>, <var>0x6EF5</var>, <var>0x4FE5</var>, <var>0x2CD5</var>, <var>0x0DC5</var>,</td></tr>
+<tr><th id="110">110</th><td>        <var>0xE234</var>, <var>0xC324</var>, <var>0xA014</var>, <var>0x8104</var>, <var>0x6674</var>, <var>0x4764</var>, <var>0x2454</var>, <var>0x0544</var>,</td></tr>
+<tr><th id="111">111</th><td>        <var>0xDBA7</var>, <var>0xFAB7</var>, <var>0x9987</var>, <var>0xB897</var>, <var>0x5FE7</var>, <var>0x7EF7</var>, <var>0x1DC7</var>, <var>0x3CD7</var>,</td></tr>
+<tr><th id="112">112</th><td>        <var>0xD326</var>, <var>0xF236</var>, <var>0x9106</var>, <var>0xB016</var>, <var>0x5766</var>, <var>0x7676</var>, <var>0x1546</var>, <var>0x3456</var>,</td></tr>
+<tr><th id="113">113</th><td>        <var>0x4CD9</var>, <var>0x6DC9</var>, <var>0x0EF9</var>, <var>0x2FE9</var>, <var>0xC899</var>, <var>0xE989</var>, <var>0x8AB9</var>, <var>0xABA9</var>,</td></tr>
+<tr><th id="114">114</th><td>        <var>0x4458</var>, <var>0x6548</var>, <var>0x0678</var>, <var>0x2768</var>, <var>0xC018</var>, <var>0xE108</var>, <var>0x8238</var>, <var>0xA328</var>,</td></tr>
+<tr><th id="115">115</th><td>        <var>0x7DCB</var>, <var>0x5CDB</var>, <var>0x3FEB</var>, <var>0x1EFB</var>, <var>0xF98B</var>, <var>0xD89B</var>, <var>0xBBAB</var>, <var>0x9ABB</var>,</td></tr>
+<tr><th id="116">116</th><td>        <var>0x754A</var>, <var>0x545A</var>, <var>0x376A</var>, <var>0x167A</var>, <var>0xF10A</var>, <var>0xD01A</var>, <var>0xB32A</var>, <var>0x923A</var>,</td></tr>
+<tr><th id="117">117</th><td>        <var>0x2EFD</var>, <var>0x0FED</var>, <var>0x6CDD</var>, <var>0x4DCD</var>, <var>0xAABD</var>, <var>0x8BAD</var>, <var>0xE89D</var>, <var>0xC98D</var>,</td></tr>
+<tr><th id="118">118</th><td>        <var>0x267C</var>, <var>0x076C</var>, <var>0x645C</var>, <var>0x454C</var>, <var>0xA23C</var>, <var>0x832C</var>, <var>0xE01C</var>, <var>0xC10C</var>,</td></tr>
+<tr><th id="119">119</th><td>        <var>0x1FEF</var>, <var>0x3EFF</var>, <var>0x5DCF</var>, <var>0x7CDF</var>, <var>0x9BAF</var>, <var>0xBABF</var>, <var>0xD98F</var>, <var>0xF89F</var>,</td></tr>
+<tr><th id="120">120</th><td>        <var>0x176E</var>, <var>0x367E</var>, <var>0x554E</var>, <var>0x745E</var>, <var>0x932E</var>, <var>0xB23E</var>, <var>0xD10E</var>, <var>0xF01E</var>,</td></tr>
+<tr><th id="121">121</th><td>        <var>0x0001</var></td></tr>
+<tr><th id="122">122</th><td>    },</td></tr>
+<tr><th id="123">123</th><td>    [AV_CRC_24_IEEE] = {</td></tr>
+<tr><th id="124">124</th><td>        <var>0x000000</var>, <var>0xFB4C86</var>, <var>0x0DD58A</var>, <var>0xF6990C</var>, <var>0xE1E693</var>, <var>0x1AAA15</var>, <var>0xEC3319</var>,</td></tr>
+<tr><th id="125">125</th><td>        <var>0x177F9F</var>, <var>0x3981A1</var>, <var>0xC2CD27</var>, <var>0x34542B</var>, <var>0xCF18AD</var>, <var>0xD86732</var>, <var>0x232BB4</var>,</td></tr>
+<tr><th id="126">126</th><td>        <var>0xD5B2B8</var>, <var>0x2EFE3E</var>, <var>0x894EC5</var>, <var>0x720243</var>, <var>0x849B4F</var>, <var>0x7FD7C9</var>, <var>0x68A856</var>,</td></tr>
+<tr><th id="127">127</th><td>        <var>0x93E4D0</var>, <var>0x657DDC</var>, <var>0x9E315A</var>, <var>0xB0CF64</var>, <var>0x4B83E2</var>, <var>0xBD1AEE</var>, <var>0x465668</var>,</td></tr>
+<tr><th id="128">128</th><td>        <var>0x5129F7</var>, <var>0xAA6571</var>, <var>0x5CFC7D</var>, <var>0xA7B0FB</var>, <var>0xE9D10C</var>, <var>0x129D8A</var>, <var>0xE40486</var>,</td></tr>
+<tr><th id="129">129</th><td>        <var>0x1F4800</var>, <var>0x08379F</var>, <var>0xF37B19</var>, <var>0x05E215</var>, <var>0xFEAE93</var>, <var>0xD050AD</var>, <var>0x2B1C2B</var>,</td></tr>
+<tr><th id="130">130</th><td>        <var>0xDD8527</var>, <var>0x26C9A1</var>, <var>0x31B63E</var>, <var>0xCAFAB8</var>, <var>0x3C63B4</var>, <var>0xC72F32</var>, <var>0x609FC9</var>,</td></tr>
+<tr><th id="131">131</th><td>        <var>0x9BD34F</var>, <var>0x6D4A43</var>, <var>0x9606C5</var>, <var>0x81795A</var>, <var>0x7A35DC</var>, <var>0x8CACD0</var>, <var>0x77E056</var>,</td></tr>
+<tr><th id="132">132</th><td>        <var>0x591E68</var>, <var>0xA252EE</var>, <var>0x54CBE2</var>, <var>0xAF8764</var>, <var>0xB8F8FB</var>, <var>0x43B47D</var>, <var>0xB52D71</var>,</td></tr>
+<tr><th id="133">133</th><td>        <var>0x4E61F7</var>, <var>0xD2A319</var>, <var>0x29EF9F</var>, <var>0xDF7693</var>, <var>0x243A15</var>, <var>0x33458A</var>, <var>0xC8090C</var>,</td></tr>
+<tr><th id="134">134</th><td>        <var>0x3E9000</var>, <var>0xC5DC86</var>, <var>0xEB22B8</var>, <var>0x106E3E</var>, <var>0xE6F732</var>, <var>0x1DBBB4</var>, <var>0x0AC42B</var>,</td></tr>
+<tr><th id="135">135</th><td>        <var>0xF188AD</var>, <var>0x0711A1</var>, <var>0xFC5D27</var>, <var>0x5BEDDC</var>, <var>0xA0A15A</var>, <var>0x563856</var>, <var>0xAD74D0</var>,</td></tr>
+<tr><th id="136">136</th><td>        <var>0xBA0B4F</var>, <var>0x4147C9</var>, <var>0xB7DEC5</var>, <var>0x4C9243</var>, <var>0x626C7D</var>, <var>0x9920FB</var>, <var>0x6FB9F7</var>,</td></tr>
+<tr><th id="137">137</th><td>        <var>0x94F571</var>, <var>0x838AEE</var>, <var>0x78C668</var>, <var>0x8E5F64</var>, <var>0x7513E2</var>, <var>0x3B7215</var>, <var>0xC03E93</var>,</td></tr>
+<tr><th id="138">138</th><td>        <var>0x36A79F</var>, <var>0xCDEB19</var>, <var>0xDA9486</var>, <var>0x21D800</var>, <var>0xD7410C</var>, <var>0x2C0D8A</var>, <var>0x02F3B4</var>,</td></tr>
+<tr><th id="139">139</th><td>        <var>0xF9BF32</var>, <var>0x0F263E</var>, <var>0xF46AB8</var>, <var>0xE31527</var>, <var>0x1859A1</var>, <var>0xEEC0AD</var>, <var>0x158C2B</var>,</td></tr>
+<tr><th id="140">140</th><td>        <var>0xB23CD0</var>, <var>0x497056</var>, <var>0xBFE95A</var>, <var>0x44A5DC</var>, <var>0x53DA43</var>, <var>0xA896C5</var>, <var>0x5E0FC9</var>,</td></tr>
+<tr><th id="141">141</th><td>        <var>0xA5434F</var>, <var>0x8BBD71</var>, <var>0x70F1F7</var>, <var>0x8668FB</var>, <var>0x7D247D</var>, <var>0x6A5BE2</var>, <var>0x911764</var>,</td></tr>
+<tr><th id="142">142</th><td>        <var>0x678E68</var>, <var>0x9CC2EE</var>, <var>0xA44733</var>, <var>0x5F0BB5</var>, <var>0xA992B9</var>, <var>0x52DE3F</var>, <var>0x45A1A0</var>,</td></tr>
+<tr><th id="143">143</th><td>        <var>0xBEED26</var>, <var>0x48742A</var>, <var>0xB338AC</var>, <var>0x9DC692</var>, <var>0x668A14</var>, <var>0x901318</var>, <var>0x6B5F9E</var>,</td></tr>
+<tr><th id="144">144</th><td>        <var>0x7C2001</var>, <var>0x876C87</var>, <var>0x71F58B</var>, <var>0x8AB90D</var>, <var>0x2D09F6</var>, <var>0xD64570</var>, <var>0x20DC7C</var>,</td></tr>
+<tr><th id="145">145</th><td>        <var>0xDB90FA</var>, <var>0xCCEF65</var>, <var>0x37A3E3</var>, <var>0xC13AEF</var>, <var>0x3A7669</var>, <var>0x148857</var>, <var>0xEFC4D1</var>,</td></tr>
+<tr><th id="146">146</th><td>        <var>0x195DDD</var>, <var>0xE2115B</var>, <var>0xF56EC4</var>, <var>0x0E2242</var>, <var>0xF8BB4E</var>, <var>0x03F7C8</var>, <var>0x4D963F</var>,</td></tr>
+<tr><th id="147">147</th><td>        <var>0xB6DAB9</var>, <var>0x4043B5</var>, <var>0xBB0F33</var>, <var>0xAC70AC</var>, <var>0x573C2A</var>, <var>0xA1A526</var>, <var>0x5AE9A0</var>,</td></tr>
+<tr><th id="148">148</th><td>        <var>0x74179E</var>, <var>0x8F5B18</var>, <var>0x79C214</var>, <var>0x828E92</var>, <var>0x95F10D</var>, <var>0x6EBD8B</var>, <var>0x982487</var>,</td></tr>
+<tr><th id="149">149</th><td>        <var>0x636801</var>, <var>0xC4D8FA</var>, <var>0x3F947C</var>, <var>0xC90D70</var>, <var>0x3241F6</var>, <var>0x253E69</var>, <var>0xDE72EF</var>,</td></tr>
+<tr><th id="150">150</th><td>        <var>0x28EBE3</var>, <var>0xD3A765</var>, <var>0xFD595B</var>, <var>0x0615DD</var>, <var>0xF08CD1</var>, <var>0x0BC057</var>, <var>0x1CBFC8</var>,</td></tr>
+<tr><th id="151">151</th><td>        <var>0xE7F34E</var>, <var>0x116A42</var>, <var>0xEA26C4</var>, <var>0x76E42A</var>, <var>0x8DA8AC</var>, <var>0x7B31A0</var>, <var>0x807D26</var>,</td></tr>
+<tr><th id="152">152</th><td>        <var>0x9702B9</var>, <var>0x6C4E3F</var>, <var>0x9AD733</var>, <var>0x619BB5</var>, <var>0x4F658B</var>, <var>0xB4290D</var>, <var>0x42B001</var>,</td></tr>
+<tr><th id="153">153</th><td>        <var>0xB9FC87</var>, <var>0xAE8318</var>, <var>0x55CF9E</var>, <var>0xA35692</var>, <var>0x581A14</var>, <var>0xFFAAEF</var>, <var>0x04E669</var>,</td></tr>
+<tr><th id="154">154</th><td>        <var>0xF27F65</var>, <var>0x0933E3</var>, <var>0x1E4C7C</var>, <var>0xE500FA</var>, <var>0x1399F6</var>, <var>0xE8D570</var>, <var>0xC62B4E</var>,</td></tr>
+<tr><th id="155">155</th><td>        <var>0x3D67C8</var>, <var>0xCBFEC4</var>, <var>0x30B242</var>, <var>0x27CDDD</var>, <var>0xDC815B</var>, <var>0x2A1857</var>, <var>0xD154D1</var>,</td></tr>
+<tr><th id="156">156</th><td>        <var>0x9F3526</var>, <var>0x6479A0</var>, <var>0x92E0AC</var>, <var>0x69AC2A</var>, <var>0x7ED3B5</var>, <var>0x859F33</var>, <var>0x73063F</var>,</td></tr>
+<tr><th id="157">157</th><td>        <var>0x884AB9</var>, <var>0xA6B487</var>, <var>0x5DF801</var>, <var>0xAB610D</var>, <var>0x502D8B</var>, <var>0x475214</var>, <var>0xBC1E92</var>,</td></tr>
+<tr><th id="158">158</th><td>        <var>0x4A879E</var>, <var>0xB1CB18</var>, <var>0x167BE3</var>, <var>0xED3765</var>, <var>0x1BAE69</var>, <var>0xE0E2EF</var>, <var>0xF79D70</var>,</td></tr>
+<tr><th id="159">159</th><td>        <var>0x0CD1F6</var>, <var>0xFA48FA</var>, <var>0x01047C</var>, <var>0x2FFA42</var>, <var>0xD4B6C4</var>, <var>0x222FC8</var>, <var>0xD9634E</var>,</td></tr>
+<tr><th id="160">160</th><td>        <var>0xCE1CD1</var>, <var>0x355057</var>, <var>0xC3C95B</var>, <var>0x3885DD</var>, <var>0x000001</var>,</td></tr>
+<tr><th id="161">161</th><td>    },</td></tr>
+<tr><th id="162">162</th><td>    [AV_CRC_32_IEEE] = {</td></tr>
+<tr><th id="163">163</th><td>        <var>0x00000000</var>, <var>0xB71DC104</var>, <var>0x6E3B8209</var>, <var>0xD926430D</var>, <var>0xDC760413</var>, <var>0x6B6BC517</var>,</td></tr>
+<tr><th id="164">164</th><td>        <var>0xB24D861A</var>, <var>0x0550471E</var>, <var>0xB8ED0826</var>, <var>0x0FF0C922</var>, <var>0xD6D68A2F</var>, <var>0x61CB4B2B</var>,</td></tr>
+<tr><th id="165">165</th><td>        <var>0x649B0C35</var>, <var>0xD386CD31</var>, <var>0x0AA08E3C</var>, <var>0xBDBD4F38</var>, <var>0x70DB114C</var>, <var>0xC7C6D048</var>,</td></tr>
+<tr><th id="166">166</th><td>        <var>0x1EE09345</var>, <var>0xA9FD5241</var>, <var>0xACAD155F</var>, <var>0x1BB0D45B</var>, <var>0xC2969756</var>, <var>0x758B5652</var>,</td></tr>
+<tr><th id="167">167</th><td>        <var>0xC836196A</var>, <var>0x7F2BD86E</var>, <var>0xA60D9B63</var>, <var>0x11105A67</var>, <var>0x14401D79</var>, <var>0xA35DDC7D</var>,</td></tr>
+<tr><th id="168">168</th><td>        <var>0x7A7B9F70</var>, <var>0xCD665E74</var>, <var>0xE0B62398</var>, <var>0x57ABE29C</var>, <var>0x8E8DA191</var>, <var>0x39906095</var>,</td></tr>
+<tr><th id="169">169</th><td>        <var>0x3CC0278B</var>, <var>0x8BDDE68F</var>, <var>0x52FBA582</var>, <var>0xE5E66486</var>, <var>0x585B2BBE</var>, <var>0xEF46EABA</var>,</td></tr>
+<tr><th id="170">170</th><td>        <var>0x3660A9B7</var>, <var>0x817D68B3</var>, <var>0x842D2FAD</var>, <var>0x3330EEA9</var>, <var>0xEA16ADA4</var>, <var>0x5D0B6CA0</var>,</td></tr>
+<tr><th id="171">171</th><td>        <var>0x906D32D4</var>, <var>0x2770F3D0</var>, <var>0xFE56B0DD</var>, <var>0x494B71D9</var>, <var>0x4C1B36C7</var>, <var>0xFB06F7C3</var>,</td></tr>
+<tr><th id="172">172</th><td>        <var>0x2220B4CE</var>, <var>0x953D75CA</var>, <var>0x28803AF2</var>, <var>0x9F9DFBF6</var>, <var>0x46BBB8FB</var>, <var>0xF1A679FF</var>,</td></tr>
+<tr><th id="173">173</th><td>        <var>0xF4F63EE1</var>, <var>0x43EBFFE5</var>, <var>0x9ACDBCE8</var>, <var>0x2DD07DEC</var>, <var>0x77708634</var>, <var>0xC06D4730</var>,</td></tr>
+<tr><th id="174">174</th><td>        <var>0x194B043D</var>, <var>0xAE56C539</var>, <var>0xAB068227</var>, <var>0x1C1B4323</var>, <var>0xC53D002E</var>, <var>0x7220C12A</var>,</td></tr>
+<tr><th id="175">175</th><td>        <var>0xCF9D8E12</var>, <var>0x78804F16</var>, <var>0xA1A60C1B</var>, <var>0x16BBCD1F</var>, <var>0x13EB8A01</var>, <var>0xA4F64B05</var>,</td></tr>
+<tr><th id="176">176</th><td>        <var>0x7DD00808</var>, <var>0xCACDC90C</var>, <var>0x07AB9778</var>, <var>0xB0B6567C</var>, <var>0x69901571</var>, <var>0xDE8DD475</var>,</td></tr>
+<tr><th id="177">177</th><td>        <var>0xDBDD936B</var>, <var>0x6CC0526F</var>, <var>0xB5E61162</var>, <var>0x02FBD066</var>, <var>0xBF469F5E</var>, <var>0x085B5E5A</var>,</td></tr>
+<tr><th id="178">178</th><td>        <var>0xD17D1D57</var>, <var>0x6660DC53</var>, <var>0x63309B4D</var>, <var>0xD42D5A49</var>, <var>0x0D0B1944</var>, <var>0xBA16D840</var>,</td></tr>
+<tr><th id="179">179</th><td>        <var>0x97C6A5AC</var>, <var>0x20DB64A8</var>, <var>0xF9FD27A5</var>, <var>0x4EE0E6A1</var>, <var>0x4BB0A1BF</var>, <var>0xFCAD60BB</var>,</td></tr>
+<tr><th id="180">180</th><td>        <var>0x258B23B6</var>, <var>0x9296E2B2</var>, <var>0x2F2BAD8A</var>, <var>0x98366C8E</var>, <var>0x41102F83</var>, <var>0xF60DEE87</var>,</td></tr>
+<tr><th id="181">181</th><td>        <var>0xF35DA999</var>, <var>0x4440689D</var>, <var>0x9D662B90</var>, <var>0x2A7BEA94</var>, <var>0xE71DB4E0</var>, <var>0x500075E4</var>,</td></tr>
+<tr><th id="182">182</th><td>        <var>0x892636E9</var>, <var>0x3E3BF7ED</var>, <var>0x3B6BB0F3</var>, <var>0x8C7671F7</var>, <var>0x555032FA</var>, <var>0xE24DF3FE</var>,</td></tr>
+<tr><th id="183">183</th><td>        <var>0x5FF0BCC6</var>, <var>0xE8ED7DC2</var>, <var>0x31CB3ECF</var>, <var>0x86D6FFCB</var>, <var>0x8386B8D5</var>, <var>0x349B79D1</var>,</td></tr>
+<tr><th id="184">184</th><td>        <var>0xEDBD3ADC</var>, <var>0x5AA0FBD8</var>, <var>0xEEE00C69</var>, <var>0x59FDCD6D</var>, <var>0x80DB8E60</var>, <var>0x37C64F64</var>,</td></tr>
+<tr><th id="185">185</th><td>        <var>0x3296087A</var>, <var>0x858BC97E</var>, <var>0x5CAD8A73</var>, <var>0xEBB04B77</var>, <var>0x560D044F</var>, <var>0xE110C54B</var>,</td></tr>
+<tr><th id="186">186</th><td>        <var>0x38368646</var>, <var>0x8F2B4742</var>, <var>0x8A7B005C</var>, <var>0x3D66C158</var>, <var>0xE4408255</var>, <var>0x535D4351</var>,</td></tr>
+<tr><th id="187">187</th><td>        <var>0x9E3B1D25</var>, <var>0x2926DC21</var>, <var>0xF0009F2C</var>, <var>0x471D5E28</var>, <var>0x424D1936</var>, <var>0xF550D832</var>,</td></tr>
+<tr><th id="188">188</th><td>        <var>0x2C769B3F</var>, <var>0x9B6B5A3B</var>, <var>0x26D61503</var>, <var>0x91CBD407</var>, <var>0x48ED970A</var>, <var>0xFFF0560E</var>,</td></tr>
+<tr><th id="189">189</th><td>        <var>0xFAA01110</var>, <var>0x4DBDD014</var>, <var>0x949B9319</var>, <var>0x2386521D</var>, <var>0x0E562FF1</var>, <var>0xB94BEEF5</var>,</td></tr>
+<tr><th id="190">190</th><td>        <var>0x606DADF8</var>, <var>0xD7706CFC</var>, <var>0xD2202BE2</var>, <var>0x653DEAE6</var>, <var>0xBC1BA9EB</var>, <var>0x0B0668EF</var>,</td></tr>
+<tr><th id="191">191</th><td>        <var>0xB6BB27D7</var>, <var>0x01A6E6D3</var>, <var>0xD880A5DE</var>, <var>0x6F9D64DA</var>, <var>0x6ACD23C4</var>, <var>0xDDD0E2C0</var>,</td></tr>
+<tr><th id="192">192</th><td>        <var>0x04F6A1CD</var>, <var>0xB3EB60C9</var>, <var>0x7E8D3EBD</var>, <var>0xC990FFB9</var>, <var>0x10B6BCB4</var>, <var>0xA7AB7DB0</var>,</td></tr>
+<tr><th id="193">193</th><td>        <var>0xA2FB3AAE</var>, <var>0x15E6FBAA</var>, <var>0xCCC0B8A7</var>, <var>0x7BDD79A3</var>, <var>0xC660369B</var>, <var>0x717DF79F</var>,</td></tr>
+<tr><th id="194">194</th><td>        <var>0xA85BB492</var>, <var>0x1F467596</var>, <var>0x1A163288</var>, <var>0xAD0BF38C</var>, <var>0x742DB081</var>, <var>0xC3307185</var>,</td></tr>
+<tr><th id="195">195</th><td>        <var>0x99908A5D</var>, <var>0x2E8D4B59</var>, <var>0xF7AB0854</var>, <var>0x40B6C950</var>, <var>0x45E68E4E</var>, <var>0xF2FB4F4A</var>,</td></tr>
+<tr><th id="196">196</th><td>        <var>0x2BDD0C47</var>, <var>0x9CC0CD43</var>, <var>0x217D827B</var>, <var>0x9660437F</var>, <var>0x4F460072</var>, <var>0xF85BC176</var>,</td></tr>
+<tr><th id="197">197</th><td>        <var>0xFD0B8668</var>, <var>0x4A16476C</var>, <var>0x93300461</var>, <var>0x242DC565</var>, <var>0xE94B9B11</var>, <var>0x5E565A15</var>,</td></tr>
+<tr><th id="198">198</th><td>        <var>0x87701918</var>, <var>0x306DD81C</var>, <var>0x353D9F02</var>, <var>0x82205E06</var>, <var>0x5B061D0B</var>, <var>0xEC1BDC0F</var>,</td></tr>
+<tr><th id="199">199</th><td>        <var>0x51A69337</var>, <var>0xE6BB5233</var>, <var>0x3F9D113E</var>, <var>0x8880D03A</var>, <var>0x8DD09724</var>, <var>0x3ACD5620</var>,</td></tr>
+<tr><th id="200">200</th><td>        <var>0xE3EB152D</var>, <var>0x54F6D429</var>, <var>0x7926A9C5</var>, <var>0xCE3B68C1</var>, <var>0x171D2BCC</var>, <var>0xA000EAC8</var>,</td></tr>
+<tr><th id="201">201</th><td>        <var>0xA550ADD6</var>, <var>0x124D6CD2</var>, <var>0xCB6B2FDF</var>, <var>0x7C76EEDB</var>, <var>0xC1CBA1E3</var>, <var>0x76D660E7</var>,</td></tr>
+<tr><th id="202">202</th><td>        <var>0xAFF023EA</var>, <var>0x18EDE2EE</var>, <var>0x1DBDA5F0</var>, <var>0xAAA064F4</var>, <var>0x738627F9</var>, <var>0xC49BE6FD</var>,</td></tr>
+<tr><th id="203">203</th><td>        <var>0x09FDB889</var>, <var>0xBEE0798D</var>, <var>0x67C63A80</var>, <var>0xD0DBFB84</var>, <var>0xD58BBC9A</var>, <var>0x62967D9E</var>,</td></tr>
+<tr><th id="204">204</th><td>        <var>0xBBB03E93</var>, <var>0x0CADFF97</var>, <var>0xB110B0AF</var>, <var>0x060D71AB</var>, <var>0xDF2B32A6</var>, <var>0x6836F3A2</var>,</td></tr>
+<tr><th id="205">205</th><td>        <var>0x6D66B4BC</var>, <var>0xDA7B75B8</var>, <var>0x035D36B5</var>, <var>0xB440F7B1</var>, <var>0x00000001</var></td></tr>
+<tr><th id="206">206</th><td>    },</td></tr>
+<tr><th id="207">207</th><td>    [AV_CRC_32_IEEE_LE] = {</td></tr>
+<tr><th id="208">208</th><td>        <var>0x00000000</var>, <var>0x77073096</var>, <var>0xEE0E612C</var>, <var>0x990951BA</var>, <var>0x076DC419</var>, <var>0x706AF48F</var>,</td></tr>
+<tr><th id="209">209</th><td>        <var>0xE963A535</var>, <var>0x9E6495A3</var>, <var>0x0EDB8832</var>, <var>0x79DCB8A4</var>, <var>0xE0D5E91E</var>, <var>0x97D2D988</var>,</td></tr>
+<tr><th id="210">210</th><td>        <var>0x09B64C2B</var>, <var>0x7EB17CBD</var>, <var>0xE7B82D07</var>, <var>0x90BF1D91</var>, <var>0x1DB71064</var>, <var>0x6AB020F2</var>,</td></tr>
+<tr><th id="211">211</th><td>        <var>0xF3B97148</var>, <var>0x84BE41DE</var>, <var>0x1ADAD47D</var>, <var>0x6DDDE4EB</var>, <var>0xF4D4B551</var>, <var>0x83D385C7</var>,</td></tr>
+<tr><th id="212">212</th><td>        <var>0x136C9856</var>, <var>0x646BA8C0</var>, <var>0xFD62F97A</var>, <var>0x8A65C9EC</var>, <var>0x14015C4F</var>, <var>0x63066CD9</var>,</td></tr>
+<tr><th id="213">213</th><td>        <var>0xFA0F3D63</var>, <var>0x8D080DF5</var>, <var>0x3B6E20C8</var>, <var>0x4C69105E</var>, <var>0xD56041E4</var>, <var>0xA2677172</var>,</td></tr>
+<tr><th id="214">214</th><td>        <var>0x3C03E4D1</var>, <var>0x4B04D447</var>, <var>0xD20D85FD</var>, <var>0xA50AB56B</var>, <var>0x35B5A8FA</var>, <var>0x42B2986C</var>,</td></tr>
+<tr><th id="215">215</th><td>        <var>0xDBBBC9D6</var>, <var>0xACBCF940</var>, <var>0x32D86CE3</var>, <var>0x45DF5C75</var>, <var>0xDCD60DCF</var>, <var>0xABD13D59</var>,</td></tr>
+<tr><th id="216">216</th><td>        <var>0x26D930AC</var>, <var>0x51DE003A</var>, <var>0xC8D75180</var>, <var>0xBFD06116</var>, <var>0x21B4F4B5</var>, <var>0x56B3C423</var>,</td></tr>
+<tr><th id="217">217</th><td>        <var>0xCFBA9599</var>, <var>0xB8BDA50F</var>, <var>0x2802B89E</var>, <var>0x5F058808</var>, <var>0xC60CD9B2</var>, <var>0xB10BE924</var>,</td></tr>
+<tr><th id="218">218</th><td>        <var>0x2F6F7C87</var>, <var>0x58684C11</var>, <var>0xC1611DAB</var>, <var>0xB6662D3D</var>, <var>0x76DC4190</var>, <var>0x01DB7106</var>,</td></tr>
+<tr><th id="219">219</th><td>        <var>0x98D220BC</var>, <var>0xEFD5102A</var>, <var>0x71B18589</var>, <var>0x06B6B51F</var>, <var>0x9FBFE4A5</var>, <var>0xE8B8D433</var>,</td></tr>
+<tr><th id="220">220</th><td>        <var>0x7807C9A2</var>, <var>0x0F00F934</var>, <var>0x9609A88E</var>, <var>0xE10E9818</var>, <var>0x7F6A0DBB</var>, <var>0x086D3D2D</var>,</td></tr>
+<tr><th id="221">221</th><td>        <var>0x91646C97</var>, <var>0xE6635C01</var>, <var>0x6B6B51F4</var>, <var>0x1C6C6162</var>, <var>0x856530D8</var>, <var>0xF262004E</var>,</td></tr>
+<tr><th id="222">222</th><td>        <var>0x6C0695ED</var>, <var>0x1B01A57B</var>, <var>0x8208F4C1</var>, <var>0xF50FC457</var>, <var>0x65B0D9C6</var>, <var>0x12B7E950</var>,</td></tr>
+<tr><th id="223">223</th><td>        <var>0x8BBEB8EA</var>, <var>0xFCB9887C</var>, <var>0x62DD1DDF</var>, <var>0x15DA2D49</var>, <var>0x8CD37CF3</var>, <var>0xFBD44C65</var>,</td></tr>
+<tr><th id="224">224</th><td>        <var>0x4DB26158</var>, <var>0x3AB551CE</var>, <var>0xA3BC0074</var>, <var>0xD4BB30E2</var>, <var>0x4ADFA541</var>, <var>0x3DD895D7</var>,</td></tr>
+<tr><th id="225">225</th><td>        <var>0xA4D1C46D</var>, <var>0xD3D6F4FB</var>, <var>0x4369E96A</var>, <var>0x346ED9FC</var>, <var>0xAD678846</var>, <var>0xDA60B8D0</var>,</td></tr>
+<tr><th id="226">226</th><td>        <var>0x44042D73</var>, <var>0x33031DE5</var>, <var>0xAA0A4C5F</var>, <var>0xDD0D7CC9</var>, <var>0x5005713C</var>, <var>0x270241AA</var>,</td></tr>
+<tr><th id="227">227</th><td>        <var>0xBE0B1010</var>, <var>0xC90C2086</var>, <var>0x5768B525</var>, <var>0x206F85B3</var>, <var>0xB966D409</var>, <var>0xCE61E49F</var>,</td></tr>
+<tr><th id="228">228</th><td>        <var>0x5EDEF90E</var>, <var>0x29D9C998</var>, <var>0xB0D09822</var>, <var>0xC7D7A8B4</var>, <var>0x59B33D17</var>, <var>0x2EB40D81</var>,</td></tr>
+<tr><th id="229">229</th><td>        <var>0xB7BD5C3B</var>, <var>0xC0BA6CAD</var>, <var>0xEDB88320</var>, <var>0x9ABFB3B6</var>, <var>0x03B6E20C</var>, <var>0x74B1D29A</var>,</td></tr>
+<tr><th id="230">230</th><td>        <var>0xEAD54739</var>, <var>0x9DD277AF</var>, <var>0x04DB2615</var>, <var>0x73DC1683</var>, <var>0xE3630B12</var>, <var>0x94643B84</var>,</td></tr>
+<tr><th id="231">231</th><td>        <var>0x0D6D6A3E</var>, <var>0x7A6A5AA8</var>, <var>0xE40ECF0B</var>, <var>0x9309FF9D</var>, <var>0x0A00AE27</var>, <var>0x7D079EB1</var>,</td></tr>
+<tr><th id="232">232</th><td>        <var>0xF00F9344</var>, <var>0x8708A3D2</var>, <var>0x1E01F268</var>, <var>0x6906C2FE</var>, <var>0xF762575D</var>, <var>0x806567CB</var>,</td></tr>
+<tr><th id="233">233</th><td>        <var>0x196C3671</var>, <var>0x6E6B06E7</var>, <var>0xFED41B76</var>, <var>0x89D32BE0</var>, <var>0x10DA7A5A</var>, <var>0x67DD4ACC</var>,</td></tr>
+<tr><th id="234">234</th><td>        <var>0xF9B9DF6F</var>, <var>0x8EBEEFF9</var>, <var>0x17B7BE43</var>, <var>0x60B08ED5</var>, <var>0xD6D6A3E8</var>, <var>0xA1D1937E</var>,</td></tr>
+<tr><th id="235">235</th><td>        <var>0x38D8C2C4</var>, <var>0x4FDFF252</var>, <var>0xD1BB67F1</var>, <var>0xA6BC5767</var>, <var>0x3FB506DD</var>, <var>0x48B2364B</var>,</td></tr>
+<tr><th id="236">236</th><td>        <var>0xD80D2BDA</var>, <var>0xAF0A1B4C</var>, <var>0x36034AF6</var>, <var>0x41047A60</var>, <var>0xDF60EFC3</var>, <var>0xA867DF55</var>,</td></tr>
+<tr><th id="237">237</th><td>        <var>0x316E8EEF</var>, <var>0x4669BE79</var>, <var>0xCB61B38C</var>, <var>0xBC66831A</var>, <var>0x256FD2A0</var>, <var>0x5268E236</var>,</td></tr>
+<tr><th id="238">238</th><td>        <var>0xCC0C7795</var>, <var>0xBB0B4703</var>, <var>0x220216B9</var>, <var>0x5505262F</var>, <var>0xC5BA3BBE</var>, <var>0xB2BD0B28</var>,</td></tr>
+<tr><th id="239">239</th><td>        <var>0x2BB45A92</var>, <var>0x5CB36A04</var>, <var>0xC2D7FFA7</var>, <var>0xB5D0CF31</var>, <var>0x2CD99E8B</var>, <var>0x5BDEAE1D</var>,</td></tr>
+<tr><th id="240">240</th><td>        <var>0x9B64C2B0</var>, <var>0xEC63F226</var>, <var>0x756AA39C</var>, <var>0x026D930A</var>, <var>0x9C0906A9</var>, <var>0xEB0E363F</var>,</td></tr>
+<tr><th id="241">241</th><td>        <var>0x72076785</var>, <var>0x05005713</var>, <var>0x95BF4A82</var>, <var>0xE2B87A14</var>, <var>0x7BB12BAE</var>, <var>0x0CB61B38</var>,</td></tr>
+<tr><th id="242">242</th><td>        <var>0x92D28E9B</var>, <var>0xE5D5BE0D</var>, <var>0x7CDCEFB7</var>, <var>0x0BDBDF21</var>, <var>0x86D3D2D4</var>, <var>0xF1D4E242</var>,</td></tr>
+<tr><th id="243">243</th><td>        <var>0x68DDB3F8</var>, <var>0x1FDA836E</var>, <var>0x81BE16CD</var>, <var>0xF6B9265B</var>, <var>0x6FB077E1</var>, <var>0x18B74777</var>,</td></tr>
+<tr><th id="244">244</th><td>        <var>0x88085AE6</var>, <var>0xFF0F6A70</var>, <var>0x66063BCA</var>, <var>0x11010B5C</var>, <var>0x8F659EFF</var>, <var>0xF862AE69</var>,</td></tr>
+<tr><th id="245">245</th><td>        <var>0x616BFFD3</var>, <var>0x166CCF45</var>, <var>0xA00AE278</var>, <var>0xD70DD2EE</var>, <var>0x4E048354</var>, <var>0x3903B3C2</var>,</td></tr>
+<tr><th id="246">246</th><td>        <var>0xA7672661</var>, <var>0xD06016F7</var>, <var>0x4969474D</var>, <var>0x3E6E77DB</var>, <var>0xAED16A4A</var>, <var>0xD9D65ADC</var>,</td></tr>
+<tr><th id="247">247</th><td>        <var>0x40DF0B66</var>, <var>0x37D83BF0</var>, <var>0xA9BCAE53</var>, <var>0xDEBB9EC5</var>, <var>0x47B2CF7F</var>, <var>0x30B5FFE9</var>,</td></tr>
+<tr><th id="248">248</th><td>        <var>0xBDBDF21C</var>, <var>0xCABAC28A</var>, <var>0x53B39330</var>, <var>0x24B4A3A6</var>, <var>0xBAD03605</var>, <var>0xCDD70693</var>,</td></tr>
+<tr><th id="249">249</th><td>        <var>0x54DE5729</var>, <var>0x23D967BF</var>, <var>0xB3667A2E</var>, <var>0xC4614AB8</var>, <var>0x5D681B02</var>, <var>0x2A6F2B94</var>,</td></tr>
+<tr><th id="250">250</th><td>        <var>0xB40BBE37</var>, <var>0xC30C8EA1</var>, <var>0x5A05DF1B</var>, <var>0x2D02EF8D</var>, <var>0x00000001</var></td></tr>
+<tr><th id="251">251</th><td>    },</td></tr>
+<tr><th id="252">252</th><td>    [AV_CRC_16_ANSI_LE] = {</td></tr>
+<tr><th id="253">253</th><td>        <var>0x0000</var>, <var>0xC0C1</var>, <var>0xC181</var>, <var>0x0140</var>, <var>0xC301</var>, <var>0x03C0</var>, <var>0x0280</var>, <var>0xC241</var>,</td></tr>
+<tr><th id="254">254</th><td>        <var>0xC601</var>, <var>0x06C0</var>, <var>0x0780</var>, <var>0xC741</var>, <var>0x0500</var>, <var>0xC5C1</var>, <var>0xC481</var>, <var>0x0440</var>,</td></tr>
+<tr><th id="255">255</th><td>        <var>0xCC01</var>, <var>0x0CC0</var>, <var>0x0D80</var>, <var>0xCD41</var>, <var>0x0F00</var>, <var>0xCFC1</var>, <var>0xCE81</var>, <var>0x0E40</var>,</td></tr>
+<tr><th id="256">256</th><td>        <var>0x0A00</var>, <var>0xCAC1</var>, <var>0xCB81</var>, <var>0x0B40</var>, <var>0xC901</var>, <var>0x09C0</var>, <var>0x0880</var>, <var>0xC841</var>,</td></tr>
+<tr><th id="257">257</th><td>        <var>0xD801</var>, <var>0x18C0</var>, <var>0x1980</var>, <var>0xD941</var>, <var>0x1B00</var>, <var>0xDBC1</var>, <var>0xDA81</var>, <var>0x1A40</var>,</td></tr>
+<tr><th id="258">258</th><td>        <var>0x1E00</var>, <var>0xDEC1</var>, <var>0xDF81</var>, <var>0x1F40</var>, <var>0xDD01</var>, <var>0x1DC0</var>, <var>0x1C80</var>, <var>0xDC41</var>,</td></tr>
+<tr><th id="259">259</th><td>        <var>0x1400</var>, <var>0xD4C1</var>, <var>0xD581</var>, <var>0x1540</var>, <var>0xD701</var>, <var>0x17C0</var>, <var>0x1680</var>, <var>0xD641</var>,</td></tr>
+<tr><th id="260">260</th><td>        <var>0xD201</var>, <var>0x12C0</var>, <var>0x1380</var>, <var>0xD341</var>, <var>0x1100</var>, <var>0xD1C1</var>, <var>0xD081</var>, <var>0x1040</var>,</td></tr>
+<tr><th id="261">261</th><td>        <var>0xF001</var>, <var>0x30C0</var>, <var>0x3180</var>, <var>0xF141</var>, <var>0x3300</var>, <var>0xF3C1</var>, <var>0xF281</var>, <var>0x3240</var>,</td></tr>
+<tr><th id="262">262</th><td>        <var>0x3600</var>, <var>0xF6C1</var>, <var>0xF781</var>, <var>0x3740</var>, <var>0xF501</var>, <var>0x35C0</var>, <var>0x3480</var>, <var>0xF441</var>,</td></tr>
+<tr><th id="263">263</th><td>        <var>0x3C00</var>, <var>0xFCC1</var>, <var>0xFD81</var>, <var>0x3D40</var>, <var>0xFF01</var>, <var>0x3FC0</var>, <var>0x3E80</var>, <var>0xFE41</var>,</td></tr>
+<tr><th id="264">264</th><td>        <var>0xFA01</var>, <var>0x3AC0</var>, <var>0x3B80</var>, <var>0xFB41</var>, <var>0x3900</var>, <var>0xF9C1</var>, <var>0xF881</var>, <var>0x3840</var>,</td></tr>
+<tr><th id="265">265</th><td>        <var>0x2800</var>, <var>0xE8C1</var>, <var>0xE981</var>, <var>0x2940</var>, <var>0xEB01</var>, <var>0x2BC0</var>, <var>0x2A80</var>, <var>0xEA41</var>,</td></tr>
+<tr><th id="266">266</th><td>        <var>0xEE01</var>, <var>0x2EC0</var>, <var>0x2F80</var>, <var>0xEF41</var>, <var>0x2D00</var>, <var>0xEDC1</var>, <var>0xEC81</var>, <var>0x2C40</var>,</td></tr>
+<tr><th id="267">267</th><td>        <var>0xE401</var>, <var>0x24C0</var>, <var>0x2580</var>, <var>0xE541</var>, <var>0x2700</var>, <var>0xE7C1</var>, <var>0xE681</var>, <var>0x2640</var>,</td></tr>
+<tr><th id="268">268</th><td>        <var>0x2200</var>, <var>0xE2C1</var>, <var>0xE381</var>, <var>0x2340</var>, <var>0xE101</var>, <var>0x21C0</var>, <var>0x2080</var>, <var>0xE041</var>,</td></tr>
+<tr><th id="269">269</th><td>        <var>0xA001</var>, <var>0x60C0</var>, <var>0x6180</var>, <var>0xA141</var>, <var>0x6300</var>, <var>0xA3C1</var>, <var>0xA281</var>, <var>0x6240</var>,</td></tr>
+<tr><th id="270">270</th><td>        <var>0x6600</var>, <var>0xA6C1</var>, <var>0xA781</var>, <var>0x6740</var>, <var>0xA501</var>, <var>0x65C0</var>, <var>0x6480</var>, <var>0xA441</var>,</td></tr>
+<tr><th id="271">271</th><td>        <var>0x6C00</var>, <var>0xACC1</var>, <var>0xAD81</var>, <var>0x6D40</var>, <var>0xAF01</var>, <var>0x6FC0</var>, <var>0x6E80</var>, <var>0xAE41</var>,</td></tr>
+<tr><th id="272">272</th><td>        <var>0xAA01</var>, <var>0x6AC0</var>, <var>0x6B80</var>, <var>0xAB41</var>, <var>0x6900</var>, <var>0xA9C1</var>, <var>0xA881</var>, <var>0x6840</var>,</td></tr>
+<tr><th id="273">273</th><td>        <var>0x7800</var>, <var>0xB8C1</var>, <var>0xB981</var>, <var>0x7940</var>, <var>0xBB01</var>, <var>0x7BC0</var>, <var>0x7A80</var>, <var>0xBA41</var>,</td></tr>
+<tr><th id="274">274</th><td>        <var>0xBE01</var>, <var>0x7EC0</var>, <var>0x7F80</var>, <var>0xBF41</var>, <var>0x7D00</var>, <var>0xBDC1</var>, <var>0xBC81</var>, <var>0x7C40</var>,</td></tr>
+<tr><th id="275">275</th><td>        <var>0xB401</var>, <var>0x74C0</var>, <var>0x7580</var>, <var>0xB541</var>, <var>0x7700</var>, <var>0xB7C1</var>, <var>0xB681</var>, <var>0x7640</var>,</td></tr>
+<tr><th id="276">276</th><td>        <var>0x7200</var>, <var>0xB2C1</var>, <var>0xB381</var>, <var>0x7340</var>, <var>0xB101</var>, <var>0x71C0</var>, <var>0x7080</var>, <var>0xB041</var>,</td></tr>
+<tr><th id="277">277</th><td>        <var>0x5000</var>, <var>0x90C1</var>, <var>0x9181</var>, <var>0x5140</var>, <var>0x9301</var>, <var>0x53C0</var>, <var>0x5280</var>, <var>0x9241</var>,</td></tr>
+<tr><th id="278">278</th><td>        <var>0x9601</var>, <var>0x56C0</var>, <var>0x5780</var>, <var>0x9741</var>, <var>0x5500</var>, <var>0x95C1</var>, <var>0x9481</var>, <var>0x5440</var>,</td></tr>
+<tr><th id="279">279</th><td>        <var>0x9C01</var>, <var>0x5CC0</var>, <var>0x5D80</var>, <var>0x9D41</var>, <var>0x5F00</var>, <var>0x9FC1</var>, <var>0x9E81</var>, <var>0x5E40</var>,</td></tr>
+<tr><th id="280">280</th><td>        <var>0x5A00</var>, <var>0x9AC1</var>, <var>0x9B81</var>, <var>0x5B40</var>, <var>0x9901</var>, <var>0x59C0</var>, <var>0x5880</var>, <var>0x9841</var>,</td></tr>
+<tr><th id="281">281</th><td>        <var>0x8801</var>, <var>0x48C0</var>, <var>0x4980</var>, <var>0x8941</var>, <var>0x4B00</var>, <var>0x8BC1</var>, <var>0x8A81</var>, <var>0x4A40</var>,</td></tr>
+<tr><th id="282">282</th><td>        <var>0x4E00</var>, <var>0x8EC1</var>, <var>0x8F81</var>, <var>0x4F40</var>, <var>0x8D01</var>, <var>0x4DC0</var>, <var>0x4C80</var>, <var>0x8C41</var>,</td></tr>
+<tr><th id="283">283</th><td>        <var>0x4400</var>, <var>0x84C1</var>, <var>0x8581</var>, <var>0x4540</var>, <var>0x8701</var>, <var>0x47C0</var>, <var>0x4680</var>, <var>0x8641</var>,</td></tr>
+<tr><th id="284">284</th><td>        <var>0x8201</var>, <var>0x42C0</var>, <var>0x4380</var>, <var>0x8341</var>, <var>0x4100</var>, <var>0x81C1</var>, <var>0x8081</var>, <var>0x4040</var>,</td></tr>
+<tr><th id="285">285</th><td>        <var>0x0001</var></td></tr>
+<tr><th id="286">286</th><td>    },</td></tr>
+<tr><th id="287">287</th><td>};</td></tr>
+<tr><th id="288">288</th><td><u>#<span data-ppcond="27">else</span></u></td></tr>
+<tr><th id="289">289</th><td><u>#<span data-ppcond="289">if</span> <a class="macro" href="../config.h.html#533" title="0" data-ref="_M/CONFIG_SMALL">CONFIG_SMALL</a></u></td></tr>
+<tr><th id="290">290</th><td><u>#define CRC_TABLE_SIZE 257</u></td></tr>
+<tr><th id="291">291</th><td><u>#<span data-ppcond="289">else</span></u></td></tr>
+<tr><th id="292">292</th><td><u>#define <dfn class="macro" id="_M/CRC_TABLE_SIZE" data-ref="_M/CRC_TABLE_SIZE">CRC_TABLE_SIZE</dfn> 1024</u></td></tr>
+<tr><th id="293">293</th><td><u>#<span data-ppcond="289">endif</span></u></td></tr>
+<tr><th id="294">294</th><td><em>static</em> <b>struct</b> {</td></tr>
+<tr><th id="295">295</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a>  <dfn class="local col1 decl" id="1le" title='le' data-type='uint8_t' data-ref="1le">le</dfn>;</td></tr>
+<tr><th id="296">296</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a>  <dfn class="local col2 decl" id="2bits" title='bits' data-type='uint8_t' data-ref="2bits">bits</dfn>;</td></tr>
+<tr><th id="297">297</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a> <dfn class="local col3 decl" id="3poly" title='poly' data-type='uint32_t' data-ref="3poly">poly</dfn>;</td></tr>
+<tr><th id="298">298</th><td>} <dfn class="tu decl def" id="av_crc_table_params" title='av_crc_table_params' data-type='struct &lt;anonymous struct at /usr/local/google/home/robertshih/ffmpeg/src/ffmpeg/libavutil/crc.c:294:8&gt; [13]' data-ref="av_crc_table_params">av_crc_table_params</dfn>[<a class="enum" href="crc.h.html#::AV_CRC_MAX" title='::AV_CRC_MAX' data-ref="::AV_CRC_MAX">AV_CRC_MAX</a>] = {</td></tr>
+<tr><th id="299">299</th><td>    [<a class="enum" href="crc.h.html#::AV_CRC_8_ATM" title='::AV_CRC_8_ATM' data-ref="::AV_CRC_8_ATM">AV_CRC_8_ATM</a>]      = { <var>0</var>,  <var>8</var>,       <var>0x07</var> },</td></tr>
+<tr><th id="300">300</th><td>    [<a class="enum" href="crc.h.html#::AV_CRC_16_ANSI" title='::AV_CRC_16_ANSI' data-ref="::AV_CRC_16_ANSI">AV_CRC_16_ANSI</a>]    = { <var>0</var>, <var>16</var>,     <var>0x8005</var> },</td></tr>
+<tr><th id="301">301</th><td>    [<a class="enum" href="crc.h.html#::AV_CRC_16_CCITT" title='::AV_CRC_16_CCITT' data-ref="::AV_CRC_16_CCITT">AV_CRC_16_CCITT</a>]   = { <var>0</var>, <var>16</var>,     <var>0x1021</var> },</td></tr>
+<tr><th id="302">302</th><td>    [<a class="enum" href="crc.h.html#::AV_CRC_24_IEEE" title='::AV_CRC_24_IEEE' data-ref="::AV_CRC_24_IEEE">AV_CRC_24_IEEE</a>]    = { <var>0</var>, <var>24</var>,   <var>0x864CFB</var> },</td></tr>
+<tr><th id="303">303</th><td>    [<a class="enum" href="crc.h.html#::AV_CRC_32_IEEE" title='::AV_CRC_32_IEEE' data-ref="::AV_CRC_32_IEEE">AV_CRC_32_IEEE</a>]    = { <var>0</var>, <var>32</var>, <var>0x04C11DB7</var> },</td></tr>
+<tr><th id="304">304</th><td>    [<a class="enum" href="crc.h.html#::AV_CRC_32_IEEE_LE" title='::AV_CRC_32_IEEE_LE' data-ref="::AV_CRC_32_IEEE_LE">AV_CRC_32_IEEE_LE</a>] = { <var>1</var>, <var>32</var>, <var>0xEDB88320</var> },</td></tr>
+<tr><th id="305">305</th><td>    [<a class="enum" href="crc.h.html#::AV_CRC_16_ANSI_LE" title='::AV_CRC_16_ANSI_LE' data-ref="::AV_CRC_16_ANSI_LE">AV_CRC_16_ANSI_LE</a>] = { <var>1</var>, <var>16</var>,     <var>0xA001</var> },</td></tr>
+<tr><th id="306">306</th><td>};</td></tr>
+<tr><th id="307">307</th><td><em>static</em> <a class="typedef" href="crc.h.html#AVCRC" title='AVCRC' data-type='uint32_t' data-ref="AVCRC">AVCRC</a> <dfn class="tu decl def" id="av_crc_table" title='av_crc_table' data-type='AVCRC [13][1024]' data-ref="av_crc_table">av_crc_table</dfn>[<a class="enum" href="crc.h.html#::AV_CRC_MAX" title='::AV_CRC_MAX' data-ref="::AV_CRC_MAX">AV_CRC_MAX</a>][<a class="macro" href="#292" title="1024" data-ref="_M/CRC_TABLE_SIZE">CRC_TABLE_SIZE</a>];</td></tr>
+<tr><th id="308">308</th><td><u>#<span data-ppcond="27">endif</span></u></td></tr>
+<tr><th id="309">309</th><td></td></tr>
+<tr><th id="310">310</th><td><em>int</em> <dfn class="decl def" id="av_crc_init" title='av_crc_init' data-ref="av_crc_init">av_crc_init</dfn>(<a class="typedef" href="crc.h.html#AVCRC" title='AVCRC' data-type='uint32_t' data-ref="AVCRC">AVCRC</a> *<dfn class="local col4 decl" id="4ctx" title='ctx' data-type='AVCRC *' data-ref="4ctx">ctx</dfn>, <em>int</em> <dfn class="local col5 decl" id="5le" title='le' data-type='int' data-ref="5le">le</dfn>, <em>int</em> <dfn class="local col6 decl" id="6bits" title='bits' data-type='int' data-ref="6bits">bits</dfn>, <a class="typedef" href="../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a> <dfn class="local col7 decl" id="7poly" title='poly' data-type='uint32_t' data-ref="7poly">poly</dfn>, <em>int</em> <dfn class="local col8 decl" id="8ctx_size" title='ctx_size' data-type='int' data-ref="8ctx_size">ctx_size</dfn>)</td></tr>
+<tr><th id="311">311</th><td>{</td></tr>
+<tr><th id="312">312</th><td>    <em>unsigned</em> <dfn class="local col9 decl" id="9i" title='i' data-type='unsigned int' data-ref="9i">i</dfn>, <dfn class="local col0 decl" id="10j" title='j' data-type='unsigned int' data-ref="10j">j</dfn>;</td></tr>
+<tr><th id="313">313</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a> <dfn class="local col1 decl" id="11c" title='c' data-type='uint32_t' data-ref="11c">c</dfn>;</td></tr>
+<tr><th id="314">314</th><td></td></tr>
+<tr><th id="315">315</th><td>    <b>if</b> (<a class="local col6 ref" href="#6bits" title='bits' data-ref="6bits">bits</a> &lt; <var>8</var> || <a class="local col6 ref" href="#6bits" title='bits' data-ref="6bits">bits</a> &gt; <var>32</var> || <a class="local col7 ref" href="#7poly" title='poly' data-ref="7poly">poly</a> &gt;= (<var>1LL</var> &lt;&lt; <a class="local col6 ref" href="#6bits" title='bits' data-ref="6bits">bits</a>))</td></tr>
+<tr><th id="316">316</th><td>        <b>return</b> <a class="macro" href="error.h.html#39" title="(-(22))" data-ref="_M/AVERROR">AVERROR</a>(<a class="macro" href="../../include/asm-generic/errno-base.h.html#25" title="22" data-ref="_M/EINVAL">EINVAL</a>);</td></tr>
+<tr><th id="317">317</th><td>    <b>if</b> (<a class="local col8 ref" href="#8ctx_size" title='ctx_size' data-ref="8ctx_size">ctx_size</a> != <b>sizeof</b>(<a class="typedef" href="crc.h.html#AVCRC" title='AVCRC' data-type='uint32_t' data-ref="AVCRC">AVCRC</a>) * <var>257</var> &amp;&amp; <a class="local col8 ref" href="#8ctx_size" title='ctx_size' data-ref="8ctx_size">ctx_size</a> != <b>sizeof</b>(<a class="typedef" href="crc.h.html#AVCRC" title='AVCRC' data-type='uint32_t' data-ref="AVCRC">AVCRC</a>) * <var>1024</var>)</td></tr>
+<tr><th id="318">318</th><td>        <b>return</b> <a class="macro" href="error.h.html#39" title="(-(22))" data-ref="_M/AVERROR">AVERROR</a>(<a class="macro" href="../../include/asm-generic/errno-base.h.html#25" title="22" data-ref="_M/EINVAL">EINVAL</a>);</td></tr>
+<tr><th id="319">319</th><td></td></tr>
+<tr><th id="320">320</th><td>    <b>for</b> (<a class="local col9 ref" href="#9i" title='i' data-ref="9i">i</a> = <var>0</var>; <a class="local col9 ref" href="#9i" title='i' data-ref="9i">i</a> &lt; <var>256</var>; <a class="local col9 ref" href="#9i" title='i' data-ref="9i">i</a>++) {</td></tr>
+<tr><th id="321">321</th><td>        <b>if</b> (<a class="local col5 ref" href="#5le" title='le' data-ref="5le">le</a>) {</td></tr>
+<tr><th id="322">322</th><td>            <b>for</b> (<a class="local col1 ref" href="#11c" title='c' data-ref="11c">c</a> = <a class="local col9 ref" href="#9i" title='i' data-ref="9i">i</a>, <a class="local col0 ref" href="#10j" title='j' data-ref="10j">j</a> = <var>0</var>; <a class="local col0 ref" href="#10j" title='j' data-ref="10j">j</a> &lt; <var>8</var>; <a class="local col0 ref" href="#10j" title='j' data-ref="10j">j</a>++)</td></tr>
+<tr><th id="323">323</th><td>                <a class="local col1 ref" href="#11c" title='c' data-ref="11c">c</a> = (<a class="local col1 ref" href="#11c" title='c' data-ref="11c">c</a> &gt;&gt; <var>1</var>) ^ (<a class="local col7 ref" href="#7poly" title='poly' data-ref="7poly">poly</a> &amp; (-(<a class="local col1 ref" href="#11c" title='c' data-ref="11c">c</a> &amp; <var>1</var>)));</td></tr>
+<tr><th id="324">324</th><td>            <a class="local col4 ref" href="#4ctx" title='ctx' data-ref="4ctx">ctx</a>[<a class="local col9 ref" href="#9i" title='i' data-ref="9i">i</a>] = <a class="local col1 ref" href="#11c" title='c' data-ref="11c">c</a>;</td></tr>
+<tr><th id="325">325</th><td>        } <b>else</b> {</td></tr>
+<tr><th id="326">326</th><td>            <b>for</b> (<a class="local col1 ref" href="#11c" title='c' data-ref="11c">c</a> = <a class="local col9 ref" href="#9i" title='i' data-ref="9i">i</a> &lt;&lt; <var>24</var>, <a class="local col0 ref" href="#10j" title='j' data-ref="10j">j</a> = <var>0</var>; <a class="local col0 ref" href="#10j" title='j' data-ref="10j">j</a> &lt; <var>8</var>; <a class="local col0 ref" href="#10j" title='j' data-ref="10j">j</a>++)</td></tr>
+<tr><th id="327">327</th><td>                <a class="local col1 ref" href="#11c" title='c' data-ref="11c">c</a> = (<a class="local col1 ref" href="#11c" title='c' data-ref="11c">c</a> &lt;&lt; <var>1</var>) ^ ((<a class="local col7 ref" href="#7poly" title='poly' data-ref="7poly">poly</a> &lt;&lt; (<var>32</var> - <a class="local col6 ref" href="#6bits" title='bits' data-ref="6bits">bits</a>)) &amp; (((<a class="typedef" href="../../include/stdint.h.html#int32_t" title='int32_t' data-type='int' data-ref="int32_t">int32_t</a>) <a class="local col1 ref" href="#11c" title='c' data-ref="11c">c</a>) &gt;&gt; <var>31</var>));</td></tr>
+<tr><th id="328">328</th><td>            <a class="local col4 ref" href="#4ctx" title='ctx' data-ref="4ctx">ctx</a>[<a class="local col9 ref" href="#9i" title='i' data-ref="9i">i</a>] = <a class="macro" href="x86/bswap.h.html#69" title="av_bswap32" data-ref="_M/av_bswap32">av_bswap32</a>(<a class="local col1 ref" href="#11c" title='c' data-ref="11c">c</a>);</td></tr>
+<tr><th id="329">329</th><td>        }</td></tr>
+<tr><th id="330">330</th><td>    }</td></tr>
+<tr><th id="331">331</th><td>    <a class="local col4 ref" href="#4ctx" title='ctx' data-ref="4ctx">ctx</a>[<var>256</var>] = <var>1</var>;</td></tr>
+<tr><th id="332">332</th><td><u>#<span data-ppcond="332">if</span> !<a class="macro" href="../config.h.html#533" title="0" data-ref="_M/CONFIG_SMALL">CONFIG_SMALL</a></u></td></tr>
+<tr><th id="333">333</th><td>    <b>if</b> (<a class="local col8 ref" href="#8ctx_size" title='ctx_size' data-ref="8ctx_size">ctx_size</a> &gt;= <b>sizeof</b>(<a class="typedef" href="crc.h.html#AVCRC" title='AVCRC' data-type='uint32_t' data-ref="AVCRC">AVCRC</a>) * <var>1024</var>)</td></tr>
+<tr><th id="334">334</th><td>        <b>for</b> (<a class="local col9 ref" href="#9i" title='i' data-ref="9i">i</a> = <var>0</var>; <a class="local col9 ref" href="#9i" title='i' data-ref="9i">i</a> &lt; <var>256</var>; <a class="local col9 ref" href="#9i" title='i' data-ref="9i">i</a>++)</td></tr>
+<tr><th id="335">335</th><td>            <b>for</b> (<a class="local col0 ref" href="#10j" title='j' data-ref="10j">j</a> = <var>0</var>; <a class="local col0 ref" href="#10j" title='j' data-ref="10j">j</a> &lt; <var>3</var>; <a class="local col0 ref" href="#10j" title='j' data-ref="10j">j</a>++)</td></tr>
+<tr><th id="336">336</th><td>                <a class="local col4 ref" href="#4ctx" title='ctx' data-ref="4ctx">ctx</a>[<var>256</var> * (<a class="local col0 ref" href="#10j" title='j' data-ref="10j">j</a> + <var>1</var>) + <a class="local col9 ref" href="#9i" title='i' data-ref="9i">i</a>] =</td></tr>
+<tr><th id="337">337</th><td>                    (<a class="local col4 ref" href="#4ctx" title='ctx' data-ref="4ctx">ctx</a>[<var>256</var> * <a class="local col0 ref" href="#10j" title='j' data-ref="10j">j</a> + <a class="local col9 ref" href="#9i" title='i' data-ref="9i">i</a>] &gt;&gt; <var>8</var>) ^ <a class="local col4 ref" href="#4ctx" title='ctx' data-ref="4ctx">ctx</a>[<a class="local col4 ref" href="#4ctx" title='ctx' data-ref="4ctx">ctx</a>[<var>256</var> * <a class="local col0 ref" href="#10j" title='j' data-ref="10j">j</a> + <a class="local col9 ref" href="#9i" title='i' data-ref="9i">i</a>] &amp; <var>0xFF</var>];</td></tr>
+<tr><th id="338">338</th><td><u>#<span data-ppcond="332">endif</span></u></td></tr>
+<tr><th id="339">339</th><td></td></tr>
+<tr><th id="340">340</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="341">341</th><td>}</td></tr>
+<tr><th id="342">342</th><td></td></tr>
+<tr><th id="343">343</th><td><em>const</em> <a class="typedef" href="crc.h.html#AVCRC" title='AVCRC' data-type='uint32_t' data-ref="AVCRC">AVCRC</a> *<dfn class="decl def" id="av_crc_get_table" title='av_crc_get_table' data-ref="av_crc_get_table">av_crc_get_table</dfn>(<a class="typedef" href="crc.h.html#AVCRCId" title='AVCRCId' data-type='enum AVCRCId' data-ref="AVCRCId">AVCRCId</a> <dfn class="local col2 decl" id="12crc_id" title='crc_id' data-type='AVCRCId' data-ref="12crc_id">crc_id</dfn>)</td></tr>
+<tr><th id="344">344</th><td>{</td></tr>
+<tr><th id="345">345</th><td><u>#<span data-ppcond="345">if</span> !<a class="macro" href="../config.h.html#528" title="0" data-ref="_M/CONFIG_HARDCODED_TABLES">CONFIG_HARDCODED_TABLES</a></u></td></tr>
+<tr><th id="346">346</th><td>    <b>if</b> (!<a class="tu ref" href="#av_crc_table" title='av_crc_table' data-use='r' data-ref="av_crc_table">av_crc_table</a>[<a class="local col2 ref" href="#12crc_id" title='crc_id' data-ref="12crc_id">crc_id</a>][<a class="macro" href="common.h.html#100" title="(sizeof(av_crc_table[crc_id]) / sizeof((av_crc_table[crc_id])[0]))" data-ref="_M/FF_ARRAY_ELEMS">FF_ARRAY_ELEMS</a>(<a class="tu ref" href="#av_crc_table" title='av_crc_table' data-use='r' data-ref="av_crc_table">av_crc_table</a>[<a class="local col2 ref" href="#12crc_id" title='crc_id' data-ref="12crc_id">crc_id</a>]) - <var>1</var>])</td></tr>
+<tr><th id="347">347</th><td>        <b>if</b> (<a class="ref" href="#av_crc_init" title='av_crc_init' data-ref="av_crc_init">av_crc_init</a>(<a class="tu ref" href="#av_crc_table" title='av_crc_table' data-use='r' data-ref="av_crc_table">av_crc_table</a>[<a class="local col2 ref" href="#12crc_id" title='crc_id' data-ref="12crc_id">crc_id</a>],</td></tr>
+<tr><th id="348">348</th><td>                        <a class="tu ref" href="#av_crc_table_params" title='av_crc_table_params' data-use='m' data-ref="av_crc_table_params">av_crc_table_params</a>[<a class="local col2 ref" href="#12crc_id" title='crc_id' data-ref="12crc_id">crc_id</a>].<a class="local col1 ref" href="#1le" title='le' data-ref="1le">le</a>,</td></tr>
+<tr><th id="349">349</th><td>                        <a class="tu ref" href="#av_crc_table_params" title='av_crc_table_params' data-use='m' data-ref="av_crc_table_params">av_crc_table_params</a>[<a class="local col2 ref" href="#12crc_id" title='crc_id' data-ref="12crc_id">crc_id</a>].<a class="local col2 ref" href="#2bits" title='bits' data-ref="2bits">bits</a>,</td></tr>
+<tr><th id="350">350</th><td>                        <a class="tu ref" href="#av_crc_table_params" title='av_crc_table_params' data-use='m' data-ref="av_crc_table_params">av_crc_table_params</a>[<a class="local col2 ref" href="#12crc_id" title='crc_id' data-ref="12crc_id">crc_id</a>].<a class="local col3 ref" href="#3poly" title='poly' data-ref="3poly">poly</a>,</td></tr>
+<tr><th id="351">351</th><td>                        <b>sizeof</b>(<a class="tu ref" href="#av_crc_table" title='av_crc_table' data-use='r' data-ref="av_crc_table">av_crc_table</a>[<a class="local col2 ref" href="#12crc_id" title='crc_id' data-ref="12crc_id">crc_id</a>])) &lt; <var>0</var>)</td></tr>
+<tr><th id="352">352</th><td>            <b>return</b> <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="353">353</th><td><u>#<span data-ppcond="345">endif</span></u></td></tr>
+<tr><th id="354">354</th><td>    <b>return</b> <a class="tu ref" href="#av_crc_table" title='av_crc_table' data-use='r' data-ref="av_crc_table">av_crc_table</a>[<a class="local col2 ref" href="#12crc_id" title='crc_id' data-ref="12crc_id">crc_id</a>];</td></tr>
+<tr><th id="355">355</th><td>}</td></tr>
+<tr><th id="356">356</th><td></td></tr>
+<tr><th id="357">357</th><td><a class="typedef" href="../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a> <dfn class="decl def" id="av_crc" title='av_crc' data-ref="av_crc">av_crc</dfn>(<em>const</em> <a class="typedef" href="crc.h.html#AVCRC" title='AVCRC' data-type='uint32_t' data-ref="AVCRC">AVCRC</a> *<dfn class="local col3 decl" id="13ctx" title='ctx' data-type='const AVCRC *' data-ref="13ctx">ctx</dfn>, <a class="typedef" href="../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a> <dfn class="local col4 decl" id="14crc" title='crc' data-type='uint32_t' data-ref="14crc">crc</dfn>,</td></tr>
+<tr><th id="358">358</th><td>                <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col5 decl" id="15buffer" title='buffer' data-type='const uint8_t *' data-ref="15buffer">buffer</dfn>, <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="local col6 decl" id="16length" title='length' data-type='size_t' data-ref="16length">length</dfn>)</td></tr>
+<tr><th id="359">359</th><td>{</td></tr>
+<tr><th id="360">360</th><td>    <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col7 decl" id="17end" title='end' data-type='const uint8_t *' data-ref="17end">end</dfn> = <a class="local col5 ref" href="#15buffer" title='buffer' data-ref="15buffer">buffer</a> + <a class="local col6 ref" href="#16length" title='length' data-ref="16length">length</a>;</td></tr>
+<tr><th id="361">361</th><td></td></tr>
+<tr><th id="362">362</th><td><u>#<span data-ppcond="362">if</span> !<a class="macro" href="../config.h.html#533" title="0" data-ref="_M/CONFIG_SMALL">CONFIG_SMALL</a></u></td></tr>
+<tr><th id="363">363</th><td>    <b>if</b> (!<a class="local col3 ref" href="#13ctx" title='ctx' data-ref="13ctx">ctx</a>[<var>256</var>]) {</td></tr>
+<tr><th id="364">364</th><td>        <b>while</b> (((<a class="typedef" href="../../include/stdint.h.html#intptr_t" title='intptr_t' data-type='long' data-ref="intptr_t">intptr_t</a>) <a class="local col5 ref" href="#15buffer" title='buffer' data-ref="15buffer">buffer</a> &amp; <var>3</var>) &amp;&amp; <a class="local col5 ref" href="#15buffer" title='buffer' data-ref="15buffer">buffer</a> &lt; <a class="local col7 ref" href="#17end" title='end' data-ref="17end">end</a>)</td></tr>
+<tr><th id="365">365</th><td>            <a class="local col4 ref" href="#14crc" title='crc' data-ref="14crc">crc</a> = <a class="local col3 ref" href="#13ctx" title='ctx' data-ref="13ctx">ctx</a>[((<a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a>) <a class="local col4 ref" href="#14crc" title='crc' data-ref="14crc">crc</a>) ^ *<a class="local col5 ref" href="#15buffer" title='buffer' data-ref="15buffer">buffer</a>++] ^ (<a class="local col4 ref" href="#14crc" title='crc' data-ref="14crc">crc</a> &gt;&gt; <var>8</var>);</td></tr>
+<tr><th id="366">366</th><td></td></tr>
+<tr><th id="367">367</th><td>        <b>while</b> (<a class="local col5 ref" href="#15buffer" title='buffer' data-ref="15buffer">buffer</a> &lt; <a class="local col7 ref" href="#17end" title='end' data-ref="17end">end</a> - <var>3</var>) {</td></tr>
+<tr><th id="368">368</th><td>            <a class="local col4 ref" href="#14crc" title='crc' data-ref="14crc">crc</a> ^= <a class="macro" href="bswap.h.html#96" title="(*(const uint32_t *) buffer)" data-ref="_M/av_le2ne32">av_le2ne32</a>(*(<em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a> *) <a class="local col5 ref" href="#15buffer" title='buffer' data-ref="15buffer">buffer</a>); <a class="local col5 ref" href="#15buffer" title='buffer' data-ref="15buffer">buffer</a> += <var>4</var>;</td></tr>
+<tr><th id="369">369</th><td>            <a class="local col4 ref" href="#14crc" title='crc' data-ref="14crc">crc</a> = <a class="local col3 ref" href="#13ctx" title='ctx' data-ref="13ctx">ctx</a>[<var>3</var> * <var>256</var> + ( <a class="local col4 ref" href="#14crc" title='crc' data-ref="14crc">crc</a>        &amp; <var>0xFF</var>)] ^</td></tr>
+<tr><th id="370">370</th><td>                  <a class="local col3 ref" href="#13ctx" title='ctx' data-ref="13ctx">ctx</a>[<var>2</var> * <var>256</var> + ((<a class="local col4 ref" href="#14crc" title='crc' data-ref="14crc">crc</a> &gt;&gt; <var>8</var> ) &amp; <var>0xFF</var>)] ^</td></tr>
+<tr><th id="371">371</th><td>                  <a class="local col3 ref" href="#13ctx" title='ctx' data-ref="13ctx">ctx</a>[<var>1</var> * <var>256</var> + ((<a class="local col4 ref" href="#14crc" title='crc' data-ref="14crc">crc</a> &gt;&gt; <var>16</var>) &amp; <var>0xFF</var>)] ^</td></tr>
+<tr><th id="372">372</th><td>                  <a class="local col3 ref" href="#13ctx" title='ctx' data-ref="13ctx">ctx</a>[<var>0</var> * <var>256</var> + ((<a class="local col4 ref" href="#14crc" title='crc' data-ref="14crc">crc</a> &gt;&gt; <var>24</var>)       )];</td></tr>
+<tr><th id="373">373</th><td>        }</td></tr>
+<tr><th id="374">374</th><td>    }</td></tr>
+<tr><th id="375">375</th><td><u>#<span data-ppcond="362">endif</span></u></td></tr>
+<tr><th id="376">376</th><td>    <b>while</b> (<a class="local col5 ref" href="#15buffer" title='buffer' data-ref="15buffer">buffer</a> &lt; <a class="local col7 ref" href="#17end" title='end' data-ref="17end">end</a>)</td></tr>
+<tr><th id="377">377</th><td>        <a class="local col4 ref" href="#14crc" title='crc' data-ref="14crc">crc</a> = <a class="local col3 ref" href="#13ctx" title='ctx' data-ref="13ctx">ctx</a>[((<a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a>) <a class="local col4 ref" href="#14crc" title='crc' data-ref="14crc">crc</a>) ^ *<a class="local col5 ref" href="#15buffer" title='buffer' data-ref="15buffer">buffer</a>++] ^ (<a class="local col4 ref" href="#14crc" title='crc' data-ref="14crc">crc</a> &gt;&gt; <var>8</var>);</td></tr>
+<tr><th id="378">378</th><td></td></tr>
+<tr><th id="379">379</th><td>    <b>return</b> <a class="local col4 ref" href="#14crc" title='crc' data-ref="14crc">crc</a>;</td></tr>
+<tr><th id="380">380</th><td>}</td></tr>
+<tr><th id="381">381</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

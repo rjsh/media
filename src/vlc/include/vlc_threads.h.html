@@ -1,0 +1,482 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>vlc_threads.h source code [vlc/include/vlc_threads.h] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'vlc/include/vlc_threads.h'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>vlc</a>/<a href='./'>include</a>/<a href='vlc_threads.h.html'>vlc_threads.h</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*****************************************************************************</i></td></tr>
+<tr><th id="2">2</th><td><i> * vlc_threads.h : threads implementation for the VideoLAN client</i></td></tr>
+<tr><th id="3">3</th><td><i> * This header provides portable declarations for mutexes &amp; conditions</i></td></tr>
+<tr><th id="4">4</th><td><i> *****************************************************************************</i></td></tr>
+<tr><th id="5">5</th><td><i> * Copyright (C) 1999, 2002 VLC authors and VideoLAN</i></td></tr>
+<tr><th id="6">6</th><td><i> * Copyright © 2007-2008 Rémi Denis-Courmont</i></td></tr>
+<tr><th id="7">7</th><td><i> *</i></td></tr>
+<tr><th id="8">8</th><td><i> * Authors: Jean-Marc Dressler &lt;polux@via.ecp.fr&gt;</i></td></tr>
+<tr><th id="9">9</th><td><i> *          Samuel Hocevar &lt;sam@via.ecp.fr&gt;</i></td></tr>
+<tr><th id="10">10</th><td><i> *          Gildas Bazin &lt;gbazin@netcourrier.com&gt;</i></td></tr>
+<tr><th id="11">11</th><td><i> *          Christophe Massiot &lt;massiot@via.ecp.fr&gt;</i></td></tr>
+<tr><th id="12">12</th><td><i> *</i></td></tr>
+<tr><th id="13">13</th><td><i> * This program is free software; you can redistribute it and/or modify it</i></td></tr>
+<tr><th id="14">14</th><td><i> * under the terms of the GNU Lesser General Public License as published by</i></td></tr>
+<tr><th id="15">15</th><td><i> * the Free Software Foundation; either version 2.1 of the License, or</i></td></tr>
+<tr><th id="16">16</th><td><i> * (at your option) any later version.</i></td></tr>
+<tr><th id="17">17</th><td><i> *</i></td></tr>
+<tr><th id="18">18</th><td><i> * This program is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="19">19</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="20">20</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</i></td></tr>
+<tr><th id="21">21</th><td><i> * GNU Lesser General Public License for more details.</i></td></tr>
+<tr><th id="22">22</th><td><i> *</i></td></tr>
+<tr><th id="23">23</th><td><i> * You should have received a copy of the GNU Lesser General Public License</i></td></tr>
+<tr><th id="24">24</th><td><i> * along with this program; if not, write to the Free Software Foundation,</i></td></tr>
+<tr><th id="25">25</th><td><i> * Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.</i></td></tr>
+<tr><th id="26">26</th><td><i> *****************************************************************************/</i></td></tr>
+<tr><th id="27">27</th><td></td></tr>
+<tr><th id="28">28</th><td><u>#<span data-ppcond="28">ifndef</span> <span class="macro" data-ref="_M/VLC_THREADS_H_">VLC_THREADS_H_</span></u></td></tr>
+<tr><th id="29">29</th><td><u>#define <dfn class="macro" id="_M/VLC_THREADS_H_" data-ref="_M/VLC_THREADS_H_">VLC_THREADS_H_</dfn></u></td></tr>
+<tr><th id="30">30</th><td></td></tr>
+<tr><th id="31">31</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="32">32</th><td><i class="doc"> *<span class="command"> \file</span></i></td></tr>
+<tr><th id="33">33</th><td><i class="doc"> * This file defines structures and functions for handling threads in vlc</i></td></tr>
+<tr><th id="34">34</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="35">35</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="36">36</th><td></td></tr>
+<tr><th id="37">37</th><td><u>#<span data-ppcond="37">if</span> defined (<span class="macro" data-ref="_M/_WIN32">_WIN32</span>)</u></td></tr>
+<tr><th id="38">38</th><td><u># include &lt;process.h&gt;</u></td></tr>
+<tr><th id="39">39</th><td><u># ifndef ETIMEDOUT</u></td></tr>
+<tr><th id="40">40</th><td><u>#  define ETIMEDOUT 10060 /* This is the value in winsock.h. */</u></td></tr>
+<tr><th id="41">41</th><td><u># endif</u></td></tr>
+<tr><th id="42">42</th><td></td></tr>
+<tr><th id="43">43</th><td><b>typedef</b> <b>struct</b> vlc_thread *vlc_thread_t;</td></tr>
+<tr><th id="44">44</th><td><b>typedef</b> <b>struct</b></td></tr>
+<tr><th id="45">45</th><td>{</td></tr>
+<tr><th id="46">46</th><td>    bool dynamic;</td></tr>
+<tr><th id="47">47</th><td>    <b>union</b></td></tr>
+<tr><th id="48">48</th><td>    {</td></tr>
+<tr><th id="49">49</th><td>        <b>struct</b></td></tr>
+<tr><th id="50">50</th><td>        {</td></tr>
+<tr><th id="51">51</th><td>            bool locked;</td></tr>
+<tr><th id="52">52</th><td>            <em>unsigned</em> <em>long</em> contention;</td></tr>
+<tr><th id="53">53</th><td>        };</td></tr>
+<tr><th id="54">54</th><td>        CRITICAL_SECTION mutex;</td></tr>
+<tr><th id="55">55</th><td>    };</td></tr>
+<tr><th id="56">56</th><td>} vlc_mutex_t;</td></tr>
+<tr><th id="57">57</th><td><u>#define VLC_STATIC_MUTEX { false, { { false, 0 } } }</u></td></tr>
+<tr><th id="58">58</th><td><b>typedef</b> <b>struct</b></td></tr>
+<tr><th id="59">59</th><td>{</td></tr>
+<tr><th id="60">60</th><td>    HANDLE   handle;</td></tr>
+<tr><th id="61">61</th><td>    <em>unsigned</em> clock;</td></tr>
+<tr><th id="62">62</th><td>} vlc_cond_t;</td></tr>
+<tr><th id="63">63</th><td><u>#define VLC_STATIC_COND { 0, 0 }</u></td></tr>
+<tr><th id="64">64</th><td><b>typedef</b> HANDLE vlc_sem_t;</td></tr>
+<tr><th id="65">65</th><td><u>#define LIBVLC_NEED_RWLOCK</u></td></tr>
+<tr><th id="66">66</th><td><b>typedef</b> <b>struct</b> vlc_threadvar *vlc_threadvar_t;</td></tr>
+<tr><th id="67">67</th><td><b>typedef</b> <b>struct</b> vlc_timer *vlc_timer_t;</td></tr>
+<tr><th id="68">68</th><td></td></tr>
+<tr><th id="69">69</th><td><u># define VLC_THREAD_PRIORITY_LOW      0</u></td></tr>
+<tr><th id="70">70</th><td><u># define VLC_THREAD_PRIORITY_INPUT    THREAD_PRIORITY_ABOVE_NORMAL</u></td></tr>
+<tr><th id="71">71</th><td><u># define VLC_THREAD_PRIORITY_AUDIO    THREAD_PRIORITY_HIGHEST</u></td></tr>
+<tr><th id="72">72</th><td><u># define VLC_THREAD_PRIORITY_VIDEO    0</u></td></tr>
+<tr><th id="73">73</th><td><u># define VLC_THREAD_PRIORITY_OUTPUT   THREAD_PRIORITY_ABOVE_NORMAL</u></td></tr>
+<tr><th id="74">74</th><td><u># define VLC_THREAD_PRIORITY_HIGHEST  THREAD_PRIORITY_TIME_CRITICAL</u></td></tr>
+<tr><th id="75">75</th><td></td></tr>
+<tr><th id="76">76</th><td><u>#elif defined (<span class="macro" data-ref="_M/__OS2__">__OS2__</span>)</u></td></tr>
+<tr><th id="77">77</th><td><u># include &lt;errno.h&gt;</u></td></tr>
+<tr><th id="78">78</th><td></td></tr>
+<tr><th id="79">79</th><td><b>typedef</b> <b>struct</b> vlc_thread *vlc_thread_t;</td></tr>
+<tr><th id="80">80</th><td><b>typedef</b> <b>struct</b></td></tr>
+<tr><th id="81">81</th><td>{</td></tr>
+<tr><th id="82">82</th><td>    bool dynamic;</td></tr>
+<tr><th id="83">83</th><td>    <b>union</b></td></tr>
+<tr><th id="84">84</th><td>    {</td></tr>
+<tr><th id="85">85</th><td>        <b>struct</b></td></tr>
+<tr><th id="86">86</th><td>        {</td></tr>
+<tr><th id="87">87</th><td>            bool locked;</td></tr>
+<tr><th id="88">88</th><td>            <em>unsigned</em> <em>long</em> contention;</td></tr>
+<tr><th id="89">89</th><td>        };</td></tr>
+<tr><th id="90">90</th><td>        HMTX hmtx;</td></tr>
+<tr><th id="91">91</th><td>    };</td></tr>
+<tr><th id="92">92</th><td>} vlc_mutex_t;</td></tr>
+<tr><th id="93">93</th><td><u>#define VLC_STATIC_MUTEX { false, { { false, 0 } } }</u></td></tr>
+<tr><th id="94">94</th><td><b>typedef</b> <b>struct</b></td></tr>
+<tr><th id="95">95</th><td>{</td></tr>
+<tr><th id="96">96</th><td>    HEV      hev;</td></tr>
+<tr><th id="97">97</th><td>    <em>unsigned</em> clock;</td></tr>
+<tr><th id="98">98</th><td>} vlc_cond_t;</td></tr>
+<tr><th id="99">99</th><td><u>#define VLC_STATIC_COND { 0, 0 }</u></td></tr>
+<tr><th id="100">100</th><td><u>#define LIBVLC_NEED_SEMAPHORE</u></td></tr>
+<tr><th id="101">101</th><td><u>#define LIBVLC_NEED_RWLOCK</u></td></tr>
+<tr><th id="102">102</th><td><b>typedef</b> <b>struct</b> vlc_threadvar *vlc_threadvar_t;</td></tr>
+<tr><th id="103">103</th><td><b>typedef</b> <b>struct</b> vlc_timer *vlc_timer_t;</td></tr>
+<tr><th id="104">104</th><td></td></tr>
+<tr><th id="105">105</th><td><u># define VLC_THREAD_PRIORITY_LOW      0</u></td></tr>
+<tr><th id="106">106</th><td><u># define VLC_THREAD_PRIORITY_INPUT \</u></td></tr>
+<tr><th id="107">107</th><td><u>                                    MAKESHORT(PRTYD_MAXIMUM / 2, PRTYC_REGULAR)</u></td></tr>
+<tr><th id="108">108</th><td><u># define VLC_THREAD_PRIORITY_AUDIO    MAKESHORT(PRTYD_MAXIMUM, PRTYC_REGULAR)</u></td></tr>
+<tr><th id="109">109</th><td><u># define VLC_THREAD_PRIORITY_VIDEO    0</u></td></tr>
+<tr><th id="110">110</th><td><u># define VLC_THREAD_PRIORITY_OUTPUT \</u></td></tr>
+<tr><th id="111">111</th><td><u>                                    MAKESHORT(PRTYD_MAXIMUM / 2, PRTYC_REGULAR)</u></td></tr>
+<tr><th id="112">112</th><td><u># define VLC_THREAD_PRIORITY_HIGHEST  MAKESHORT(0, PRTYC_TIMECRITICAL)</u></td></tr>
+<tr><th id="113">113</th><td></td></tr>
+<tr><th id="114">114</th><td><u># define pthread_sigmask  sigprocmask</u></td></tr>
+<tr><th id="115">115</th><td></td></tr>
+<tr><th id="116">116</th><td><u>#elif defined (<span class="macro" data-ref="_M/__ANDROID__">__ANDROID__</span>)      /* pthreads subset without pthread_cancel() */</u></td></tr>
+<tr><th id="117">117</th><td><u># include &lt;unistd.h&gt;</u></td></tr>
+<tr><th id="118">118</th><td><u># include &lt;pthread.h&gt;</u></td></tr>
+<tr><th id="119">119</th><td><u># include &lt;poll.h&gt;</u></td></tr>
+<tr><th id="120">120</th><td><u># define LIBVLC_USE_PTHREAD_CLEANUP   1</u></td></tr>
+<tr><th id="121">121</th><td><u># define LIBVLC_NEED_SEMAPHORE</u></td></tr>
+<tr><th id="122">122</th><td><u># define LIBVLC_NEED_RWLOCK</u></td></tr>
+<tr><th id="123">123</th><td></td></tr>
+<tr><th id="124">124</th><td><b>typedef</b> <b>struct</b> vlc_thread *vlc_thread_t;</td></tr>
+<tr><th id="125">125</th><td><b>typedef</b> pthread_mutex_t vlc_mutex_t;</td></tr>
+<tr><th id="126">126</th><td><u>#define VLC_STATIC_MUTEX PTHREAD_MUTEX_INITIALIZER</u></td></tr>
+<tr><th id="127">127</th><td><b>typedef</b> <b>struct</b></td></tr>
+<tr><th id="128">128</th><td>{</td></tr>
+<tr><th id="129">129</th><td>    pthread_cond_t cond;</td></tr>
+<tr><th id="130">130</th><td>    <em>unsigned</em> clock;</td></tr>
+<tr><th id="131">131</th><td>} vlc_cond_t;</td></tr>
+<tr><th id="132">132</th><td><u>#define VLC_STATIC_COND  { PTHREAD_COND_INITIALIZER, CLOCK_REALTIME }</u></td></tr>
+<tr><th id="133">133</th><td></td></tr>
+<tr><th id="134">134</th><td><b>typedef</b> pthread_key_t   vlc_threadvar_t;</td></tr>
+<tr><th id="135">135</th><td><b>typedef</b> <b>struct</b> vlc_timer *vlc_timer_t;</td></tr>
+<tr><th id="136">136</th><td></td></tr>
+<tr><th id="137">137</th><td><u># define VLC_THREAD_PRIORITY_LOW      0</u></td></tr>
+<tr><th id="138">138</th><td><u># define VLC_THREAD_PRIORITY_INPUT    0</u></td></tr>
+<tr><th id="139">139</th><td><u># define VLC_THREAD_PRIORITY_AUDIO    0</u></td></tr>
+<tr><th id="140">140</th><td><u># define VLC_THREAD_PRIORITY_VIDEO    0</u></td></tr>
+<tr><th id="141">141</th><td><u># define VLC_THREAD_PRIORITY_OUTPUT   0</u></td></tr>
+<tr><th id="142">142</th><td><u># define VLC_THREAD_PRIORITY_HIGHEST  0</u></td></tr>
+<tr><th id="143">143</th><td></td></tr>
+<tr><th id="144">144</th><td><u>#elif defined (<span class="macro" data-ref="_M/__APPLE__">__APPLE__</span>)</u></td></tr>
+<tr><th id="145">145</th><td><u># define _APPLE_C_SOURCE    1 /* Proper pthread semantics on OSX */</u></td></tr>
+<tr><th id="146">146</th><td><u># include &lt;unistd.h&gt;</u></td></tr>
+<tr><th id="147">147</th><td><u># include &lt;pthread.h&gt;</u></td></tr>
+<tr><th id="148">148</th><td><i>/* Unnamed POSIX semaphores not supported on Mac OS X */</i></td></tr>
+<tr><th id="149">149</th><td><u># include &lt;mach/semaphore.h&gt;</u></td></tr>
+<tr><th id="150">150</th><td><u># include &lt;mach/task.h&gt;</u></td></tr>
+<tr><th id="151">151</th><td><u># define LIBVLC_USE_PTHREAD           1</u></td></tr>
+<tr><th id="152">152</th><td><u># define LIBVLC_USE_PTHREAD_CLEANUP   1</u></td></tr>
+<tr><th id="153">153</th><td><u># define LIBVLC_USE_PTHREAD_CANCEL    1</u></td></tr>
+<tr><th id="154">154</th><td></td></tr>
+<tr><th id="155">155</th><td><b>typedef</b> pthread_t       vlc_thread_t;</td></tr>
+<tr><th id="156">156</th><td><b>typedef</b> pthread_mutex_t vlc_mutex_t;</td></tr>
+<tr><th id="157">157</th><td><u>#define VLC_STATIC_MUTEX PTHREAD_MUTEX_INITIALIZER</u></td></tr>
+<tr><th id="158">158</th><td><b>typedef</b> <b>struct</b></td></tr>
+<tr><th id="159">159</th><td>{</td></tr>
+<tr><th id="160">160</th><td>    pthread_cond_t cond;</td></tr>
+<tr><th id="161">161</th><td>    <em>unsigned</em> clock;</td></tr>
+<tr><th id="162">162</th><td>} vlc_cond_t;</td></tr>
+<tr><th id="163">163</th><td><u>#define VLC_STATIC_COND  { PTHREAD_COND_INITIALIZER, 0 }</u></td></tr>
+<tr><th id="164">164</th><td><b>typedef</b> semaphore_t     vlc_sem_t;</td></tr>
+<tr><th id="165">165</th><td><b>typedef</b> pthread_rwlock_t vlc_rwlock_t;</td></tr>
+<tr><th id="166">166</th><td><u>#define VLC_STATIC_RWLOCK PTHREAD_RWLOCK_INITIALIZER</u></td></tr>
+<tr><th id="167">167</th><td><b>typedef</b> pthread_key_t   vlc_threadvar_t;</td></tr>
+<tr><th id="168">168</th><td><b>typedef</b> <b>struct</b> vlc_timer *vlc_timer_t;</td></tr>
+<tr><th id="169">169</th><td></td></tr>
+<tr><th id="170">170</th><td><u># define VLC_THREAD_PRIORITY_LOW      0</u></td></tr>
+<tr><th id="171">171</th><td><u># define VLC_THREAD_PRIORITY_INPUT   22</u></td></tr>
+<tr><th id="172">172</th><td><u># define VLC_THREAD_PRIORITY_AUDIO   22</u></td></tr>
+<tr><th id="173">173</th><td><u># define VLC_THREAD_PRIORITY_VIDEO    0</u></td></tr>
+<tr><th id="174">174</th><td><u># define VLC_THREAD_PRIORITY_OUTPUT  22</u></td></tr>
+<tr><th id="175">175</th><td><u># define VLC_THREAD_PRIORITY_HIGHEST 22</u></td></tr>
+<tr><th id="176">176</th><td></td></tr>
+<tr><th id="177">177</th><td><u>#<span data-ppcond="37">else</span> /* POSIX threads */</u></td></tr>
+<tr><th id="178">178</th><td><u># include <a href="../../include/unistd.h.html">&lt;unistd.h&gt;</a> /* _POSIX_SPIN_LOCKS */</u></td></tr>
+<tr><th id="179">179</th><td><u># include <a href="../../include/pthread.h.html">&lt;pthread.h&gt;</a></u></td></tr>
+<tr><th id="180">180</th><td><u># include <a href="../../include/semaphore.h.html">&lt;semaphore.h&gt;</a></u></td></tr>
+<tr><th id="181">181</th><td><u># define <dfn class="macro" id="_M/LIBVLC_USE_PTHREAD" data-ref="_M/LIBVLC_USE_PTHREAD">LIBVLC_USE_PTHREAD</dfn>           1</u></td></tr>
+<tr><th id="182">182</th><td><u># define <dfn class="macro" id="_M/LIBVLC_USE_PTHREAD_CLEANUP" data-ref="_M/LIBVLC_USE_PTHREAD_CLEANUP">LIBVLC_USE_PTHREAD_CLEANUP</dfn>   1</u></td></tr>
+<tr><th id="183">183</th><td><u># define <dfn class="macro" id="_M/LIBVLC_USE_PTHREAD_CANCEL" data-ref="_M/LIBVLC_USE_PTHREAD_CANCEL">LIBVLC_USE_PTHREAD_CANCEL</dfn>    1</u></td></tr>
+<tr><th id="184">184</th><td></td></tr>
+<tr><th id="185">185</th><td><b>typedef</b> <a class="typedef" href="../../include/x86_64-linux-gnu/bits/pthreadtypes.h.html#pthread_t" title='pthread_t' data-type='unsigned long' data-ref="pthread_t">pthread_t</a>       <dfn class="typedef" id="vlc_thread_t" title='vlc_thread_t' data-type='pthread_t' data-ref="vlc_thread_t">vlc_thread_t</dfn>;</td></tr>
+<tr><th id="186">186</th><td><b>typedef</b> <a class="typedef" href="../../include/x86_64-linux-gnu/bits/pthreadtypes.h.html#pthread_mutex_t" title='pthread_mutex_t' data-type='union pthread_mutex_t' data-ref="pthread_mutex_t">pthread_mutex_t</a> <dfn class="typedef" id="vlc_mutex_t" title='vlc_mutex_t' data-type='pthread_mutex_t' data-ref="vlc_mutex_t">vlc_mutex_t</dfn>;</td></tr>
+<tr><th id="187">187</th><td><u>#define <dfn class="macro" id="_M/VLC_STATIC_MUTEX" data-ref="_M/VLC_STATIC_MUTEX">VLC_STATIC_MUTEX</dfn> PTHREAD_MUTEX_INITIALIZER</u></td></tr>
+<tr><th id="188">188</th><td><b>typedef</b> <a class="typedef" href="../../include/x86_64-linux-gnu/bits/pthreadtypes.h.html#pthread_cond_t" title='pthread_cond_t' data-type='union pthread_cond_t' data-ref="pthread_cond_t">pthread_cond_t</a>  <dfn class="typedef" id="vlc_cond_t" title='vlc_cond_t' data-type='pthread_cond_t' data-ref="vlc_cond_t">vlc_cond_t</dfn>;</td></tr>
+<tr><th id="189">189</th><td><u>#define <dfn class="macro" id="_M/VLC_STATIC_COND" data-ref="_M/VLC_STATIC_COND">VLC_STATIC_COND</dfn>  PTHREAD_COND_INITIALIZER</u></td></tr>
+<tr><th id="190">190</th><td><b>typedef</b> <a class="typedef" href="../../include/x86_64-linux-gnu/bits/semaphore.h.html#sem_t" title='sem_t' data-type='union sem_t' data-ref="sem_t">sem_t</a>           <dfn class="typedef" id="vlc_sem_t" title='vlc_sem_t' data-type='sem_t' data-ref="vlc_sem_t">vlc_sem_t</dfn>;</td></tr>
+<tr><th id="191">191</th><td><b>typedef</b> <a class="typedef" href="../../include/x86_64-linux-gnu/bits/pthreadtypes.h.html#pthread_rwlock_t" title='pthread_rwlock_t' data-type='union pthread_rwlock_t' data-ref="pthread_rwlock_t">pthread_rwlock_t</a> <dfn class="typedef" id="vlc_rwlock_t" title='vlc_rwlock_t' data-type='pthread_rwlock_t' data-ref="vlc_rwlock_t">vlc_rwlock_t</dfn>;</td></tr>
+<tr><th id="192">192</th><td><u>#define <dfn class="macro" id="_M/VLC_STATIC_RWLOCK" data-ref="_M/VLC_STATIC_RWLOCK">VLC_STATIC_RWLOCK</dfn> PTHREAD_RWLOCK_INITIALIZER</u></td></tr>
+<tr><th id="193">193</th><td><b>typedef</b> <a class="typedef" href="../../include/x86_64-linux-gnu/bits/pthreadtypes.h.html#pthread_key_t" title='pthread_key_t' data-type='unsigned int' data-ref="pthread_key_t">pthread_key_t</a>   <dfn class="typedef" id="vlc_threadvar_t" title='vlc_threadvar_t' data-type='pthread_key_t' data-ref="vlc_threadvar_t">vlc_threadvar_t</dfn>;</td></tr>
+<tr><th id="194">194</th><td><b>typedef</b> <b>struct</b> <dfn class="type" id="vlc_timer" title='vlc_timer' data-ref="vlc_timer"><a class="type" href="#vlc_timer" title='vlc_timer' data-ref="vlc_timer">vlc_timer</a></dfn> *<dfn class="typedef" id="vlc_timer_t" title='vlc_timer_t' data-type='struct vlc_timer *' data-ref="vlc_timer_t">vlc_timer_t</dfn>;</td></tr>
+<tr><th id="195">195</th><td></td></tr>
+<tr><th id="196">196</th><td><u># define <dfn class="macro" id="_M/VLC_THREAD_PRIORITY_LOW" data-ref="_M/VLC_THREAD_PRIORITY_LOW">VLC_THREAD_PRIORITY_LOW</dfn>      0</u></td></tr>
+<tr><th id="197">197</th><td><u># define <dfn class="macro" id="_M/VLC_THREAD_PRIORITY_INPUT" data-ref="_M/VLC_THREAD_PRIORITY_INPUT">VLC_THREAD_PRIORITY_INPUT</dfn>   10</u></td></tr>
+<tr><th id="198">198</th><td><u># define <dfn class="macro" id="_M/VLC_THREAD_PRIORITY_AUDIO" data-ref="_M/VLC_THREAD_PRIORITY_AUDIO">VLC_THREAD_PRIORITY_AUDIO</dfn>    5</u></td></tr>
+<tr><th id="199">199</th><td><u># define <dfn class="macro" id="_M/VLC_THREAD_PRIORITY_VIDEO" data-ref="_M/VLC_THREAD_PRIORITY_VIDEO">VLC_THREAD_PRIORITY_VIDEO</dfn>    0</u></td></tr>
+<tr><th id="200">200</th><td><u># define <dfn class="macro" id="_M/VLC_THREAD_PRIORITY_OUTPUT" data-ref="_M/VLC_THREAD_PRIORITY_OUTPUT">VLC_THREAD_PRIORITY_OUTPUT</dfn>  15</u></td></tr>
+<tr><th id="201">201</th><td><u># define <dfn class="macro" id="_M/VLC_THREAD_PRIORITY_HIGHEST" data-ref="_M/VLC_THREAD_PRIORITY_HIGHEST">VLC_THREAD_PRIORITY_HIGHEST</dfn> 20</u></td></tr>
+<tr><th id="202">202</th><td></td></tr>
+<tr><th id="203">203</th><td><u>#<span data-ppcond="37">endif</span></u></td></tr>
+<tr><th id="204">204</th><td></td></tr>
+<tr><th id="205">205</th><td><u>#<span data-ppcond="205">ifdef</span> <span class="macro" data-ref="_M/LIBVLC_NEED_SEMAPHORE">LIBVLC_NEED_SEMAPHORE</span></u></td></tr>
+<tr><th id="206">206</th><td><b>typedef</b> <b>struct</b> vlc_sem</td></tr>
+<tr><th id="207">207</th><td>{</td></tr>
+<tr><th id="208">208</th><td>    vlc_mutex_t lock;</td></tr>
+<tr><th id="209">209</th><td>    vlc_cond_t  wait;</td></tr>
+<tr><th id="210">210</th><td>    <em>unsigned</em>    value;</td></tr>
+<tr><th id="211">211</th><td>} vlc_sem_t;</td></tr>
+<tr><th id="212">212</th><td><u>#<span data-ppcond="205">endif</span></u></td></tr>
+<tr><th id="213">213</th><td></td></tr>
+<tr><th id="214">214</th><td><u>#<span data-ppcond="214">ifdef</span> <span class="macro" data-ref="_M/LIBVLC_NEED_RWLOCK">LIBVLC_NEED_RWLOCK</span></u></td></tr>
+<tr><th id="215">215</th><td><b>typedef</b> <b>struct</b> vlc_rwlock</td></tr>
+<tr><th id="216">216</th><td>{</td></tr>
+<tr><th id="217">217</th><td>    vlc_mutex_t   mutex;</td></tr>
+<tr><th id="218">218</th><td>    vlc_cond_t    wait;</td></tr>
+<tr><th id="219">219</th><td>    <em>long</em>          state;</td></tr>
+<tr><th id="220">220</th><td>} vlc_rwlock_t;</td></tr>
+<tr><th id="221">221</th><td><u># define VLC_STATIC_RWLOCK { VLC_STATIC_MUTEX, VLC_STATIC_COND, 0 }</u></td></tr>
+<tr><th id="222">222</th><td><u>#<span data-ppcond="214">endif</span></u></td></tr>
+<tr><th id="223">223</th><td></td></tr>
+<tr><th id="224">224</th><td><i>/*****************************************************************************</i></td></tr>
+<tr><th id="225">225</th><td><i> * Function definitions</i></td></tr>
+<tr><th id="226">226</th><td><i> *****************************************************************************/</i></td></tr>
+<tr><th id="227">227</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>void</em> <dfn class="decl" id="vlc_mutex_init" title='vlc_mutex_init' data-ref="vlc_mutex_init">vlc_mutex_init</dfn>( <a class="typedef" href="#vlc_mutex_t" title='vlc_mutex_t' data-type='pthread_mutex_t' data-ref="vlc_mutex_t">vlc_mutex_t</a> * );</td></tr>
+<tr><th id="228">228</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>void</em> <dfn class="decl" id="vlc_mutex_init_recursive" title='vlc_mutex_init_recursive' data-ref="vlc_mutex_init_recursive">vlc_mutex_init_recursive</dfn>( <a class="typedef" href="#vlc_mutex_t" title='vlc_mutex_t' data-type='pthread_mutex_t' data-ref="vlc_mutex_t">vlc_mutex_t</a> * );</td></tr>
+<tr><th id="229">229</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>void</em> <dfn class="decl" id="vlc_mutex_destroy" title='vlc_mutex_destroy' data-ref="vlc_mutex_destroy">vlc_mutex_destroy</dfn>( <a class="typedef" href="#vlc_mutex_t" title='vlc_mutex_t' data-type='pthread_mutex_t' data-ref="vlc_mutex_t">vlc_mutex_t</a> * );</td></tr>
+<tr><th id="230">230</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>void</em> <dfn class="decl" id="vlc_mutex_lock" title='vlc_mutex_lock' data-ref="vlc_mutex_lock">vlc_mutex_lock</dfn>( <a class="typedef" href="#vlc_mutex_t" title='vlc_mutex_t' data-type='pthread_mutex_t' data-ref="vlc_mutex_t">vlc_mutex_t</a> * );</td></tr>
+<tr><th id="231">231</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>int</em> <dfn class="decl" id="vlc_mutex_trylock" title='vlc_mutex_trylock' data-ref="vlc_mutex_trylock">vlc_mutex_trylock</dfn>( <a class="typedef" href="#vlc_mutex_t" title='vlc_mutex_t' data-type='pthread_mutex_t' data-ref="vlc_mutex_t">vlc_mutex_t</a> * ) <a class="macro" href="vlc_common.h.html#98" title="__attribute__ ((warn_unused_result))" data-ref="_M/VLC_USED">VLC_USED</a>;</td></tr>
+<tr><th id="232">232</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>void</em> <dfn class="decl" id="vlc_mutex_unlock" title='vlc_mutex_unlock' data-ref="vlc_mutex_unlock">vlc_mutex_unlock</dfn>( <a class="typedef" href="#vlc_mutex_t" title='vlc_mutex_t' data-type='pthread_mutex_t' data-ref="vlc_mutex_t">vlc_mutex_t</a> * );</td></tr>
+<tr><th id="233">233</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>void</em> <dfn class="decl" id="vlc_cond_init" title='vlc_cond_init' data-ref="vlc_cond_init">vlc_cond_init</dfn>( <a class="typedef" href="#vlc_cond_t" title='vlc_cond_t' data-type='pthread_cond_t' data-ref="vlc_cond_t">vlc_cond_t</a> * );</td></tr>
+<tr><th id="234">234</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>void</em> <dfn class="decl" id="vlc_cond_init_daytime" title='vlc_cond_init_daytime' data-ref="vlc_cond_init_daytime">vlc_cond_init_daytime</dfn>( <a class="typedef" href="#vlc_cond_t" title='vlc_cond_t' data-type='pthread_cond_t' data-ref="vlc_cond_t">vlc_cond_t</a> * );</td></tr>
+<tr><th id="235">235</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>void</em> <dfn class="decl" id="vlc_cond_destroy" title='vlc_cond_destroy' data-ref="vlc_cond_destroy">vlc_cond_destroy</dfn>( <a class="typedef" href="#vlc_cond_t" title='vlc_cond_t' data-type='pthread_cond_t' data-ref="vlc_cond_t">vlc_cond_t</a> * );</td></tr>
+<tr><th id="236">236</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>void</em> <dfn class="decl" id="vlc_cond_signal" title='vlc_cond_signal' data-ref="vlc_cond_signal">vlc_cond_signal</dfn>(<a class="typedef" href="#vlc_cond_t" title='vlc_cond_t' data-type='pthread_cond_t' data-ref="vlc_cond_t">vlc_cond_t</a> *);</td></tr>
+<tr><th id="237">237</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>void</em> <dfn class="decl" id="vlc_cond_broadcast" title='vlc_cond_broadcast' data-ref="vlc_cond_broadcast">vlc_cond_broadcast</dfn>(<a class="typedef" href="#vlc_cond_t" title='vlc_cond_t' data-type='pthread_cond_t' data-ref="vlc_cond_t">vlc_cond_t</a> *);</td></tr>
+<tr><th id="238">238</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>void</em> <dfn class="decl" id="vlc_cond_wait" title='vlc_cond_wait' data-ref="vlc_cond_wait">vlc_cond_wait</dfn>(<a class="typedef" href="#vlc_cond_t" title='vlc_cond_t' data-type='pthread_cond_t' data-ref="vlc_cond_t">vlc_cond_t</a> *, <a class="typedef" href="#vlc_mutex_t" title='vlc_mutex_t' data-type='pthread_mutex_t' data-ref="vlc_mutex_t">vlc_mutex_t</a> *);</td></tr>
+<tr><th id="239">239</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>int</em> <dfn class="decl" id="vlc_cond_timedwait" title='vlc_cond_timedwait' data-ref="vlc_cond_timedwait">vlc_cond_timedwait</dfn>(<a class="typedef" href="#vlc_cond_t" title='vlc_cond_t' data-type='pthread_cond_t' data-ref="vlc_cond_t">vlc_cond_t</a> *, <a class="typedef" href="#vlc_mutex_t" title='vlc_mutex_t' data-type='pthread_mutex_t' data-ref="vlc_mutex_t">vlc_mutex_t</a> *, <a class="typedef" href="vlc_common.h.html#mtime_t" title='mtime_t' data-type='int64_t' data-ref="mtime_t">mtime_t</a>);</td></tr>
+<tr><th id="240">240</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>void</em> <dfn class="decl" id="vlc_sem_init" title='vlc_sem_init' data-ref="vlc_sem_init">vlc_sem_init</dfn>(<a class="typedef" href="#vlc_sem_t" title='vlc_sem_t' data-type='sem_t' data-ref="vlc_sem_t">vlc_sem_t</a> *, <em>unsigned</em>);</td></tr>
+<tr><th id="241">241</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>void</em> <dfn class="decl" id="vlc_sem_destroy" title='vlc_sem_destroy' data-ref="vlc_sem_destroy">vlc_sem_destroy</dfn>(<a class="typedef" href="#vlc_sem_t" title='vlc_sem_t' data-type='sem_t' data-ref="vlc_sem_t">vlc_sem_t</a> *);</td></tr>
+<tr><th id="242">242</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>int</em> <dfn class="decl" id="vlc_sem_post" title='vlc_sem_post' data-ref="vlc_sem_post">vlc_sem_post</dfn>(<a class="typedef" href="#vlc_sem_t" title='vlc_sem_t' data-type='sem_t' data-ref="vlc_sem_t">vlc_sem_t</a> *);</td></tr>
+<tr><th id="243">243</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>void</em> <dfn class="decl" id="vlc_sem_wait" title='vlc_sem_wait' data-ref="vlc_sem_wait">vlc_sem_wait</dfn>(<a class="typedef" href="#vlc_sem_t" title='vlc_sem_t' data-type='sem_t' data-ref="vlc_sem_t">vlc_sem_t</a> *);</td></tr>
+<tr><th id="244">244</th><td></td></tr>
+<tr><th id="245">245</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>void</em> <dfn class="decl" id="vlc_rwlock_init" title='vlc_rwlock_init' data-ref="vlc_rwlock_init">vlc_rwlock_init</dfn>(<a class="typedef" href="#vlc_rwlock_t" title='vlc_rwlock_t' data-type='pthread_rwlock_t' data-ref="vlc_rwlock_t">vlc_rwlock_t</a> *);</td></tr>
+<tr><th id="246">246</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>void</em> <dfn class="decl" id="vlc_rwlock_destroy" title='vlc_rwlock_destroy' data-ref="vlc_rwlock_destroy">vlc_rwlock_destroy</dfn>(<a class="typedef" href="#vlc_rwlock_t" title='vlc_rwlock_t' data-type='pthread_rwlock_t' data-ref="vlc_rwlock_t">vlc_rwlock_t</a> *);</td></tr>
+<tr><th id="247">247</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>void</em> <dfn class="decl" id="vlc_rwlock_rdlock" title='vlc_rwlock_rdlock' data-ref="vlc_rwlock_rdlock">vlc_rwlock_rdlock</dfn>(<a class="typedef" href="#vlc_rwlock_t" title='vlc_rwlock_t' data-type='pthread_rwlock_t' data-ref="vlc_rwlock_t">vlc_rwlock_t</a> *);</td></tr>
+<tr><th id="248">248</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>void</em> <dfn class="decl" id="vlc_rwlock_wrlock" title='vlc_rwlock_wrlock' data-ref="vlc_rwlock_wrlock">vlc_rwlock_wrlock</dfn>(<a class="typedef" href="#vlc_rwlock_t" title='vlc_rwlock_t' data-type='pthread_rwlock_t' data-ref="vlc_rwlock_t">vlc_rwlock_t</a> *);</td></tr>
+<tr><th id="249">249</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>void</em> <dfn class="decl" id="vlc_rwlock_unlock" title='vlc_rwlock_unlock' data-ref="vlc_rwlock_unlock">vlc_rwlock_unlock</dfn>(<a class="typedef" href="#vlc_rwlock_t" title='vlc_rwlock_t' data-type='pthread_rwlock_t' data-ref="vlc_rwlock_t">vlc_rwlock_t</a> *);</td></tr>
+<tr><th id="250">250</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>int</em> <dfn class="decl" id="vlc_threadvar_create" title='vlc_threadvar_create' data-ref="vlc_threadvar_create">vlc_threadvar_create</dfn>(<a class="typedef" href="#vlc_threadvar_t" title='vlc_threadvar_t' data-type='pthread_key_t' data-ref="vlc_threadvar_t">vlc_threadvar_t</a> * , <em>void</em> (*) (<em>void</em> *) );</td></tr>
+<tr><th id="251">251</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>void</em> <dfn class="decl" id="vlc_threadvar_delete" title='vlc_threadvar_delete' data-ref="vlc_threadvar_delete">vlc_threadvar_delete</dfn>(<a class="typedef" href="#vlc_threadvar_t" title='vlc_threadvar_t' data-type='pthread_key_t' data-ref="vlc_threadvar_t">vlc_threadvar_t</a> *);</td></tr>
+<tr><th id="252">252</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>int</em> <dfn class="decl" id="vlc_threadvar_set" title='vlc_threadvar_set' data-ref="vlc_threadvar_set">vlc_threadvar_set</dfn>(<a class="typedef" href="#vlc_threadvar_t" title='vlc_threadvar_t' data-type='pthread_key_t' data-ref="vlc_threadvar_t">vlc_threadvar_t</a>, <em>void</em> *);</td></tr>
+<tr><th id="253">253</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>void</em> * <dfn class="decl" id="vlc_threadvar_get" title='vlc_threadvar_get' data-ref="vlc_threadvar_get">vlc_threadvar_get</dfn>(<a class="typedef" href="#vlc_threadvar_t" title='vlc_threadvar_t' data-type='pthread_key_t' data-ref="vlc_threadvar_t">vlc_threadvar_t</a>);</td></tr>
+<tr><th id="254">254</th><td></td></tr>
+<tr><th id="255">255</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>int</em> <dfn class="decl" id="vlc_clone" title='vlc_clone' data-ref="vlc_clone">vlc_clone</dfn>(<a class="typedef" href="#vlc_thread_t" title='vlc_thread_t' data-type='pthread_t' data-ref="vlc_thread_t">vlc_thread_t</a> *, <em>void</em> * (*) (<em>void</em> *), <em>void</em> *, <em>int</em>) <a class="macro" href="vlc_common.h.html#98" title="__attribute__ ((warn_unused_result))" data-ref="_M/VLC_USED">VLC_USED</a>;</td></tr>
+<tr><th id="256">256</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>void</em> <dfn class="decl" id="vlc_cancel" title='vlc_cancel' data-ref="vlc_cancel">vlc_cancel</dfn>(<a class="typedef" href="#vlc_thread_t" title='vlc_thread_t' data-type='pthread_t' data-ref="vlc_thread_t">vlc_thread_t</a>);</td></tr>
+<tr><th id="257">257</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>void</em> <dfn class="decl" id="vlc_join" title='vlc_join' data-ref="vlc_join">vlc_join</dfn>(<a class="typedef" href="#vlc_thread_t" title='vlc_thread_t' data-type='pthread_t' data-ref="vlc_thread_t">vlc_thread_t</a>, <em>void</em> **);</td></tr>
+<tr><th id="258">258</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>void</em> <dfn class="decl" id="vlc_control_cancel" title='vlc_control_cancel' data-ref="vlc_control_cancel">vlc_control_cancel</dfn> (<em>int</em> <dfn class="local col2 decl" id="22cmd" title='cmd' data-type='int' data-ref="22cmd">cmd</dfn>, ...);</td></tr>
+<tr><th id="259">259</th><td></td></tr>
+<tr><th id="260">260</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <a class="typedef" href="vlc_common.h.html#mtime_t" title='mtime_t' data-type='int64_t' data-ref="mtime_t">mtime_t</a> <dfn class="decl" id="mdate" title='mdate' data-ref="mdate">mdate</dfn>(<em>void</em>);</td></tr>
+<tr><th id="261">261</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>void</em> <dfn class="decl" id="mwait" title='mwait' data-ref="mwait">mwait</dfn>(<a class="typedef" href="vlc_common.h.html#mtime_t" title='mtime_t' data-type='int64_t' data-ref="mtime_t">mtime_t</a> <dfn class="local col3 decl" id="23deadline" title='deadline' data-type='mtime_t' data-ref="23deadline">deadline</dfn>);</td></tr>
+<tr><th id="262">262</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>void</em> <dfn class="decl" id="msleep" title='msleep' data-ref="msleep">msleep</dfn>(<a class="typedef" href="vlc_common.h.html#mtime_t" title='mtime_t' data-type='int64_t' data-ref="mtime_t">mtime_t</a> <dfn class="local col4 decl" id="24delay" title='delay' data-type='mtime_t' data-ref="24delay">delay</dfn>);</td></tr>
+<tr><th id="263">263</th><td></td></tr>
+<tr><th id="264">264</th><td><u>#define <dfn class="macro" id="_M/VLC_HARD_MIN_SLEEP" data-ref="_M/VLC_HARD_MIN_SLEEP">VLC_HARD_MIN_SLEEP</dfn>   10000 /* 10 milliseconds = 1 tick at 100Hz */</u></td></tr>
+<tr><th id="265">265</th><td><u>#define <dfn class="macro" id="_M/VLC_SOFT_MIN_SLEEP" data-ref="_M/VLC_SOFT_MIN_SLEEP">VLC_SOFT_MIN_SLEEP</dfn> 9000000 /* 9 seconds */</u></td></tr>
+<tr><th id="266">266</th><td></td></tr>
+<tr><th id="267">267</th><td><u>#<span data-ppcond="267">if</span> <a class="macro" href="vlc_common.h.html#60" title="((4 &gt; (4)) || (4 == (4) &amp;&amp; 2 &gt;= (3)))" data-ref="_M/VLC_GCC_VERSION">VLC_GCC_VERSION</a>(4,3)</u></td></tr>
+<tr><th id="268">268</th><td><i>/* Linux has 100, 250, 300 or 1000Hz</i></td></tr>
+<tr><th id="269">269</th><td><i> *</i></td></tr>
+<tr><th id="270">270</th><td><i> * HZ=100 by default on FreeBSD, but some architectures use a 1000Hz timer</i></td></tr>
+<tr><th id="271">271</th><td><i> */</i></td></tr>
+<tr><th id="272">272</th><td></td></tr>
+<tr><th id="273">273</th><td><em>static</em></td></tr>
+<tr><th id="274">274</th><td><b>__attribute__</b>((unused))</td></tr>
+<tr><th id="275">275</th><td><b>__attribute__</b>((noinline))</td></tr>
+<tr><th id="276">276</th><td><b>__attribute__</b>((error(<q>"sorry, cannot sleep for such short a time"</q>)))</td></tr>
+<tr><th id="277">277</th><td>mtime_t impossible_delay( mtime_t delay )</td></tr>
+<tr><th id="278">278</th><td>{</td></tr>
+<tr><th id="279">279</th><td>    (<em>void</em>) delay;</td></tr>
+<tr><th id="280">280</th><td>    <b>return</b> VLC_HARD_MIN_SLEEP;</td></tr>
+<tr><th id="281">281</th><td>}</td></tr>
+<tr><th id="282">282</th><td></td></tr>
+<tr><th id="283">283</th><td><em>static</em></td></tr>
+<tr><th id="284">284</th><td><b>__attribute__</b>((unused))</td></tr>
+<tr><th id="285">285</th><td><b>__attribute__</b>((noinline))</td></tr>
+<tr><th id="286">286</th><td><b>__attribute__</b>((warning(<q>"use proper event handling instead of short delay"</q>)))</td></tr>
+<tr><th id="287">287</th><td>mtime_t harmful_delay( mtime_t delay )</td></tr>
+<tr><th id="288">288</th><td>{</td></tr>
+<tr><th id="289">289</th><td>    <b>return</b> delay;</td></tr>
+<tr><th id="290">290</th><td>}</td></tr>
+<tr><th id="291">291</th><td></td></tr>
+<tr><th id="292">292</th><td><u># define check_delay( d ) \</u></td></tr>
+<tr><th id="293">293</th><td><u>    ((__builtin_constant_p(d &lt; VLC_HARD_MIN_SLEEP) \</u></td></tr>
+<tr><th id="294">294</th><td><u>   &amp;&amp; (d &lt; VLC_HARD_MIN_SLEEP)) \</u></td></tr>
+<tr><th id="295">295</th><td><u>       ? impossible_delay(d) \</u></td></tr>
+<tr><th id="296">296</th><td><u>       : ((__builtin_constant_p(d &lt; VLC_SOFT_MIN_SLEEP) \</u></td></tr>
+<tr><th id="297">297</th><td><u>       &amp;&amp; (d &lt; VLC_SOFT_MIN_SLEEP)) \</u></td></tr>
+<tr><th id="298">298</th><td><u>           ? harmful_delay(d) \</u></td></tr>
+<tr><th id="299">299</th><td><u>           : d))</u></td></tr>
+<tr><th id="300">300</th><td></td></tr>
+<tr><th id="301">301</th><td><em>static</em></td></tr>
+<tr><th id="302">302</th><td><b>__attribute__</b>((unused))</td></tr>
+<tr><th id="303">303</th><td><b>__attribute__</b>((noinline))</td></tr>
+<tr><th id="304">304</th><td><b>__attribute__</b>((error(<q>"deadlines can not be constant"</q>)))</td></tr>
+<tr><th id="305">305</th><td>mtime_t impossible_deadline( mtime_t deadline )</td></tr>
+<tr><th id="306">306</th><td>{</td></tr>
+<tr><th id="307">307</th><td>    <b>return</b> deadline;</td></tr>
+<tr><th id="308">308</th><td>}</td></tr>
+<tr><th id="309">309</th><td></td></tr>
+<tr><th id="310">310</th><td><u># define check_deadline( d ) \</u></td></tr>
+<tr><th id="311">311</th><td><u>    (__builtin_constant_p(d) ? impossible_deadline(d) : d)</u></td></tr>
+<tr><th id="312">312</th><td><u>#<span data-ppcond="267">else</span></u></td></tr>
+<tr><th id="313">313</th><td><u># define <dfn class="macro" id="_M/check_delay" data-ref="_M/check_delay">check_delay</dfn>(d) (d)</u></td></tr>
+<tr><th id="314">314</th><td><u># define <dfn class="macro" id="_M/check_deadline" data-ref="_M/check_deadline">check_deadline</dfn>(d) (d)</u></td></tr>
+<tr><th id="315">315</th><td><u>#<span data-ppcond="267">endif</span></u></td></tr>
+<tr><th id="316">316</th><td></td></tr>
+<tr><th id="317">317</th><td><u>#define <dfn class="macro" id="_M/msleep" data-ref="_M/msleep">msleep</dfn>(d) msleep(check_delay(d))</u></td></tr>
+<tr><th id="318">318</th><td><u>#define <dfn class="macro" id="_M/mwait" data-ref="_M/mwait">mwait</dfn>(d) mwait(check_deadline(d))</u></td></tr>
+<tr><th id="319">319</th><td></td></tr>
+<tr><th id="320">320</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>int</em> <dfn class="decl" id="vlc_timer_create" title='vlc_timer_create' data-ref="vlc_timer_create">vlc_timer_create</dfn>(<a class="typedef" href="#vlc_timer_t" title='vlc_timer_t' data-type='struct vlc_timer *' data-ref="vlc_timer_t">vlc_timer_t</a> *, <em>void</em> (*) (<em>void</em> *), <em>void</em> *) <a class="macro" href="vlc_common.h.html#98" title="__attribute__ ((warn_unused_result))" data-ref="_M/VLC_USED">VLC_USED</a>;</td></tr>
+<tr><th id="321">321</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>void</em> <dfn class="decl" id="vlc_timer_destroy" title='vlc_timer_destroy' data-ref="vlc_timer_destroy">vlc_timer_destroy</dfn>(<a class="typedef" href="#vlc_timer_t" title='vlc_timer_t' data-type='struct vlc_timer *' data-ref="vlc_timer_t">vlc_timer_t</a>);</td></tr>
+<tr><th id="322">322</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>void</em> <dfn class="decl" id="vlc_timer_schedule" title='vlc_timer_schedule' data-ref="vlc_timer_schedule">vlc_timer_schedule</dfn>(<a class="typedef" href="#vlc_timer_t" title='vlc_timer_t' data-type='struct vlc_timer *' data-ref="vlc_timer_t">vlc_timer_t</a>, <span class="macro" title="_Bool" data-ref="_M/bool">bool</span>, <a class="typedef" href="vlc_common.h.html#mtime_t" title='mtime_t' data-type='int64_t' data-ref="mtime_t">mtime_t</a>, <a class="typedef" href="vlc_common.h.html#mtime_t" title='mtime_t' data-type='int64_t' data-ref="mtime_t">mtime_t</a>);</td></tr>
+<tr><th id="323">323</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>unsigned</em> <dfn class="decl" id="vlc_timer_getoverrun" title='vlc_timer_getoverrun' data-ref="vlc_timer_getoverrun">vlc_timer_getoverrun</dfn>(<a class="typedef" href="#vlc_timer_t" title='vlc_timer_t' data-type='struct vlc_timer *' data-ref="vlc_timer_t">vlc_timer_t</a>) <a class="macro" href="vlc_common.h.html#98" title="__attribute__ ((warn_unused_result))" data-ref="_M/VLC_USED">VLC_USED</a>;</td></tr>
+<tr><th id="324">324</th><td></td></tr>
+<tr><th id="325">325</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>unsigned</em> <dfn class="decl" id="vlc_GetCPUCount" title='vlc_GetCPUCount' data-ref="vlc_GetCPUCount">vlc_GetCPUCount</dfn>(<em>void</em>);</td></tr>
+<tr><th id="326">326</th><td></td></tr>
+<tr><th id="327">327</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>int</em> <dfn class="decl" id="vlc_savecancel" title='vlc_savecancel' data-ref="vlc_savecancel">vlc_savecancel</dfn>(<em>void</em>);</td></tr>
+<tr><th id="328">328</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>void</em> <dfn class="decl" id="vlc_restorecancel" title='vlc_restorecancel' data-ref="vlc_restorecancel">vlc_restorecancel</dfn>(<em>int</em> <dfn class="local col5 decl" id="25state" title='state' data-type='int' data-ref="25state">state</dfn>);</td></tr>
+<tr><th id="329">329</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>void</em> <dfn class="decl" id="vlc_testcancel" title='vlc_testcancel' data-ref="vlc_testcancel">vlc_testcancel</dfn>(<em>void</em>);</td></tr>
+<tr><th id="330">330</th><td></td></tr>
+<tr><th id="331">331</th><td><u>#<span data-ppcond="331">if</span> defined (<a class="macro" href="#182" data-ref="_M/LIBVLC_USE_PTHREAD_CLEANUP">LIBVLC_USE_PTHREAD_CLEANUP</a>)</u></td></tr>
+<tr><th id="332">332</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="333">333</th><td><i class="doc"> * Registers a new procedure to run if the thread is cancelled (or otherwise</i></td></tr>
+<tr><th id="334">334</th><td><i class="doc"> * exits prematurely). Any call to vlc_cleanup_push() <span class="tag">&lt;b&gt;</span>must<span class="tag">&lt;/b&gt;</span> paired with a</i></td></tr>
+<tr><th id="335">335</th><td><i class="doc"> * call to either vlc_cleanup_pop() or vlc_cleanup_run(). Branching into or out</i></td></tr>
+<tr><th id="336">336</th><td><i class="doc"> * of the block between these two function calls is not allowed (read: it will</i></td></tr>
+<tr><th id="337">337</th><td><i class="doc"> * likely crash the whole process). If multiple procedures are registered,</i></td></tr>
+<tr><th id="338">338</th><td><i class="doc"> * they are handled in last-in first-out order.</i></td></tr>
+<tr><th id="339">339</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="340">340</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">routine</span> procedure to call if the thread ends</i></td></tr>
+<tr><th id="341">341</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">arg</span> argument for the procedure</i></td></tr>
+<tr><th id="342">342</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="343">343</th><td><u># define <dfn class="macro" id="_M/vlc_cleanup_push" data-ref="_M/vlc_cleanup_push">vlc_cleanup_push</dfn>( routine, arg ) pthread_cleanup_push (routine, arg)</u></td></tr>
+<tr><th id="344">344</th><td></td></tr>
+<tr><th id="345">345</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="346">346</th><td><i class="doc"> * Removes a cleanup procedure that was previously registered with</i></td></tr>
+<tr><th id="347">347</th><td><i class="doc"> * vlc_cleanup_push().</i></td></tr>
+<tr><th id="348">348</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="349">349</th><td><u># define <dfn class="macro" id="_M/vlc_cleanup_pop" data-ref="_M/vlc_cleanup_pop">vlc_cleanup_pop</dfn>( ) pthread_cleanup_pop (0)</u></td></tr>
+<tr><th id="350">350</th><td></td></tr>
+<tr><th id="351">351</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="352">352</th><td><i class="doc"> * Removes a cleanup procedure that was previously registered with</i></td></tr>
+<tr><th id="353">353</th><td><i class="doc"> * vlc_cleanup_push(), and executes it.</i></td></tr>
+<tr><th id="354">354</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="355">355</th><td><u># define <dfn class="macro" id="_M/vlc_cleanup_run" data-ref="_M/vlc_cleanup_run">vlc_cleanup_run</dfn>( ) pthread_cleanup_pop (1)</u></td></tr>
+<tr><th id="356">356</th><td></td></tr>
+<tr><th id="357">357</th><td><u>#<span data-ppcond="331">else</span></u></td></tr>
+<tr><th id="358">358</th><td><b>enum</b></td></tr>
+<tr><th id="359">359</th><td>{</td></tr>
+<tr><th id="360">360</th><td>    VLC_CLEANUP_PUSH,</td></tr>
+<tr><th id="361">361</th><td>    VLC_CLEANUP_POP,</td></tr>
+<tr><th id="362">362</th><td>};</td></tr>
+<tr><th id="363">363</th><td><b>typedef</b> <b>struct</b> vlc_cleanup_t vlc_cleanup_t;</td></tr>
+<tr><th id="364">364</th><td></td></tr>
+<tr><th id="365">365</th><td><b>struct</b> vlc_cleanup_t</td></tr>
+<tr><th id="366">366</th><td>{</td></tr>
+<tr><th id="367">367</th><td>    vlc_cleanup_t *next;</td></tr>
+<tr><th id="368">368</th><td>    <em>void</em>         (*proc) (<em>void</em> *);</td></tr>
+<tr><th id="369">369</th><td>    <em>void</em>          *data;</td></tr>
+<tr><th id="370">370</th><td>};</td></tr>
+<tr><th id="371">371</th><td></td></tr>
+<tr><th id="372">372</th><td><i>/* This macros opens a code block on purpose. This is needed for multiple</i></td></tr>
+<tr><th id="373">373</th><td><i> * calls within a single function. This also prevent Win32 developers from</i></td></tr>
+<tr><th id="374">374</th><td><i> * writing code that would break on POSIX (POSIX opens a block as well). */</i></td></tr>
+<tr><th id="375">375</th><td><u># define vlc_cleanup_push( routine, arg ) \</u></td></tr>
+<tr><th id="376">376</th><td><u>    do { \</u></td></tr>
+<tr><th id="377">377</th><td><u>        vlc_cleanup_t vlc_cleanup_data = { NULL, routine, arg, }; \</u></td></tr>
+<tr><th id="378">378</th><td><u>        vlc_control_cancel (VLC_CLEANUP_PUSH, &amp;vlc_cleanup_data)</u></td></tr>
+<tr><th id="379">379</th><td></td></tr>
+<tr><th id="380">380</th><td><u># define vlc_cleanup_pop( ) \</u></td></tr>
+<tr><th id="381">381</th><td><u>        vlc_control_cancel (VLC_CLEANUP_POP); \</u></td></tr>
+<tr><th id="382">382</th><td><u>    } while (0)</u></td></tr>
+<tr><th id="383">383</th><td></td></tr>
+<tr><th id="384">384</th><td><u># define vlc_cleanup_run( ) \</u></td></tr>
+<tr><th id="385">385</th><td><u>        vlc_control_cancel (VLC_CLEANUP_POP); \</u></td></tr>
+<tr><th id="386">386</th><td><u>        vlc_cleanup_data.proc (vlc_cleanup_data.data); \</u></td></tr>
+<tr><th id="387">387</th><td><u>    } while (0)</u></td></tr>
+<tr><th id="388">388</th><td></td></tr>
+<tr><th id="389">389</th><td><u>#<span data-ppcond="331">endif</span> /* !LIBVLC_USE_PTHREAD_CLEANUP */</u></td></tr>
+<tr><th id="390">390</th><td></td></tr>
+<tr><th id="391">391</th><td><u>#<span data-ppcond="391">ifndef</span> <a class="macro" href="#183" data-ref="_M/LIBVLC_USE_PTHREAD_CANCEL">LIBVLC_USE_PTHREAD_CANCEL</a></u></td></tr>
+<tr><th id="392">392</th><td><i>/* poll() with cancellation */</i></td></tr>
+<tr><th id="393">393</th><td><u># ifdef __OS2__</u></td></tr>
+<tr><th id="394">394</th><td><em>int</em> vlc_poll (<b>struct</b> pollfd *fds, <em>unsigned</em> nfds, <em>int</em> timeout);</td></tr>
+<tr><th id="395">395</th><td><u># else</u></td></tr>
+<tr><th id="396">396</th><td><em>static</em> <b>inline</b> <em>int</em> vlc_poll (<b>struct</b> pollfd *fds, <em>unsigned</em> nfds, <em>int</em> timeout)</td></tr>
+<tr><th id="397">397</th><td>{</td></tr>
+<tr><th id="398">398</th><td>    <em>int</em> val;</td></tr>
+<tr><th id="399">399</th><td></td></tr>
+<tr><th id="400">400</th><td>    <b>do</b></td></tr>
+<tr><th id="401">401</th><td>    {</td></tr>
+<tr><th id="402">402</th><td>        <em>int</em> ugly_timeout = ((<em>unsigned</em>)timeout &gt;= <var>50</var>) ? <var>50</var> : timeout;</td></tr>
+<tr><th id="403">403</th><td>        <b>if</b> (timeout &gt;= <var>0</var>)</td></tr>
+<tr><th id="404">404</th><td>            timeout -= ugly_timeout;</td></tr>
+<tr><th id="405">405</th><td></td></tr>
+<tr><th id="406">406</th><td>        vlc_testcancel ();</td></tr>
+<tr><th id="407">407</th><td>        val = poll (fds, nfds, ugly_timeout);</td></tr>
+<tr><th id="408">408</th><td>    }</td></tr>
+<tr><th id="409">409</th><td>    <b>while</b> (val == <var>0</var> &amp;&amp; timeout != <var>0</var>);</td></tr>
+<tr><th id="410">410</th><td></td></tr>
+<tr><th id="411">411</th><td>    <b>return</b> val;</td></tr>
+<tr><th id="412">412</th><td>}</td></tr>
+<tr><th id="413">413</th><td><u># endif</u></td></tr>
+<tr><th id="414">414</th><td></td></tr>
+<tr><th id="415">415</th><td><u># define poll(u,n,t) vlc_poll(u, n, t)</u></td></tr>
+<tr><th id="416">416</th><td></td></tr>
+<tr><th id="417">417</th><td><u>#<span data-ppcond="391">endif</span> /* LIBVLC_USE_PTHREAD_CANCEL */</u></td></tr>
+<tr><th id="418">418</th><td></td></tr>
+<tr><th id="419">419</th><td><em>static</em> <b>inline</b> <em>void</em> <dfn class="decl def" id="vlc_cleanup_lock" title='vlc_cleanup_lock' data-ref="vlc_cleanup_lock">vlc_cleanup_lock</dfn> (<em>void</em> *<dfn class="local col6 decl" id="26lock" title='lock' data-type='void *' data-ref="26lock">lock</dfn>)</td></tr>
+<tr><th id="420">420</th><td>{</td></tr>
+<tr><th id="421">421</th><td>    <a class="ref" href="#vlc_mutex_unlock" title='vlc_mutex_unlock' data-ref="vlc_mutex_unlock">vlc_mutex_unlock</a> ((<a class="typedef" href="#vlc_mutex_t" title='vlc_mutex_t' data-type='pthread_mutex_t' data-ref="vlc_mutex_t">vlc_mutex_t</a> *)<a class="local col6 ref" href="#26lock" title='lock' data-ref="26lock">lock</a>);</td></tr>
+<tr><th id="422">422</th><td>}</td></tr>
+<tr><th id="423">423</th><td><u>#define <dfn class="macro" id="_M/mutex_cleanup_push" data-ref="_M/mutex_cleanup_push">mutex_cleanup_push</dfn>( lock ) vlc_cleanup_push (vlc_cleanup_lock, lock)</u></td></tr>
+<tr><th id="424">424</th><td></td></tr>
+<tr><th id="425">425</th><td><u>#<span data-ppcond="425">ifdef</span> <span class="macro" data-ref="_M/__cplusplus">__cplusplus</span></u></td></tr>
+<tr><th id="426">426</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="427">427</th><td><i class="doc"> * Helper C++ class to lock a mutex.</i></td></tr>
+<tr><th id="428">428</th><td><i class="doc"> * The mutex is locked when the object is created, and unlocked when the object</i></td></tr>
+<tr><th id="429">429</th><td><i class="doc"> * is destroyed.</i></td></tr>
+<tr><th id="430">430</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="431">431</th><td>class vlc_mutex_locker</td></tr>
+<tr><th id="432">432</th><td>{</td></tr>
+<tr><th id="433">433</th><td>    private:</td></tr>
+<tr><th id="434">434</th><td>        vlc_mutex_t *lock;</td></tr>
+<tr><th id="435">435</th><td>    public:</td></tr>
+<tr><th id="436">436</th><td>        vlc_mutex_locker (vlc_mutex_t *m) : lock (m)</td></tr>
+<tr><th id="437">437</th><td>        {</td></tr>
+<tr><th id="438">438</th><td>            vlc_mutex_lock (lock);</td></tr>
+<tr><th id="439">439</th><td>        }</td></tr>
+<tr><th id="440">440</th><td></td></tr>
+<tr><th id="441">441</th><td>        ~vlc_mutex_locker (<em>void</em>)</td></tr>
+<tr><th id="442">442</th><td>        {</td></tr>
+<tr><th id="443">443</th><td>            vlc_mutex_unlock (lock);</td></tr>
+<tr><th id="444">444</th><td>        }</td></tr>
+<tr><th id="445">445</th><td>};</td></tr>
+<tr><th id="446">446</th><td><u>#<span data-ppcond="425">endif</span></u></td></tr>
+<tr><th id="447">447</th><td></td></tr>
+<tr><th id="448">448</th><td><b>enum</b></td></tr>
+<tr><th id="449">449</th><td>{</td></tr>
+<tr><th id="450">450</th><td>   <dfn class="enum" id="::VLC_AVCODEC_MUTEX" title='::VLC_AVCODEC_MUTEX' data-ref="::VLC_AVCODEC_MUTEX">VLC_AVCODEC_MUTEX</dfn> = <var>0</var>,</td></tr>
+<tr><th id="451">451</th><td>   <dfn class="enum" id="::VLC_GCRYPT_MUTEX" title='::VLC_GCRYPT_MUTEX' data-ref="::VLC_GCRYPT_MUTEX">VLC_GCRYPT_MUTEX</dfn>,</td></tr>
+<tr><th id="452">452</th><td>   <dfn class="enum" id="::VLC_XLIB_MUTEX" title='::VLC_XLIB_MUTEX' data-ref="::VLC_XLIB_MUTEX">VLC_XLIB_MUTEX</dfn>,</td></tr>
+<tr><th id="453">453</th><td>   <dfn class="enum" id="::VLC_MOSAIC_MUTEX" title='::VLC_MOSAIC_MUTEX' data-ref="::VLC_MOSAIC_MUTEX">VLC_MOSAIC_MUTEX</dfn>,</td></tr>
+<tr><th id="454">454</th><td>   <dfn class="enum" id="::VLC_HIGHLIGHT_MUTEX" title='::VLC_HIGHLIGHT_MUTEX' data-ref="::VLC_HIGHLIGHT_MUTEX">VLC_HIGHLIGHT_MUTEX</dfn>,</td></tr>
+<tr><th id="455">455</th><td>   <dfn class="enum" id="::VLC_ATOMIC_MUTEX" title='::VLC_ATOMIC_MUTEX' data-ref="::VLC_ATOMIC_MUTEX">VLC_ATOMIC_MUTEX</dfn>,</td></tr>
+<tr><th id="456">456</th><td>   <i>/* Insert new entry HERE */</i></td></tr>
+<tr><th id="457">457</th><td>   <dfn class="enum" id="::VLC_MAX_MUTEX" title='::VLC_MAX_MUTEX' data-ref="::VLC_MAX_MUTEX">VLC_MAX_MUTEX</dfn></td></tr>
+<tr><th id="458">458</th><td>};</td></tr>
+<tr><th id="459">459</th><td></td></tr>
+<tr><th id="460">460</th><td><a class="macro" href="vlc_common.h.html#137" title=" __attribute__((visibility(&quot;default&quot;)))" data-ref="_M/VLC_API">VLC_API</a> <em>void</em> <dfn class="decl" id="vlc_global_mutex" title='vlc_global_mutex' data-ref="vlc_global_mutex">vlc_global_mutex</dfn>( <em>unsigned</em>, <span class="macro" title="_Bool" data-ref="_M/bool">bool</span> );</td></tr>
+<tr><th id="461">461</th><td><u>#define <dfn class="macro" id="_M/vlc_global_lock" data-ref="_M/vlc_global_lock">vlc_global_lock</dfn>( n ) vlc_global_mutex( n, true )</u></td></tr>
+<tr><th id="462">462</th><td><u>#define <dfn class="macro" id="_M/vlc_global_unlock" data-ref="_M/vlc_global_unlock">vlc_global_unlock</dfn>( n ) vlc_global_mutex( n, false )</u></td></tr>
+<tr><th id="463">463</th><td></td></tr>
+<tr><th id="464">464</th><td><u>#<span data-ppcond="28">endif</span> /* !_VLC_THREADS_H */</u></td></tr>
+<tr><th id="465">465</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated while processing <a href='../lib/audio.c.html'>vlc/lib/audio.c</a><br/>Generated on <em>2016-Oct-25</em> from project vlc revision <em>2.2.0-git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

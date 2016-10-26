@@ -1,0 +1,229 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>ffv1.h source code [ffmpeg/libavcodec/ffv1.h] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="FFV1Context,PlaneContext,VlcState "/>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavcodec/ffv1.h'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavcodec</a>/<a href='ffv1.h.html'>ffv1.h</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * FFV1 codec for libavcodec</i></td></tr>
+<tr><th id="3">3</th><td><i> *</i></td></tr>
+<tr><th id="4">4</th><td><i> * Copyright (c) 2003-2012 Michael Niedermayer &lt;michaelni@gmx.at&gt;</i></td></tr>
+<tr><th id="5">5</th><td><i> *</i></td></tr>
+<tr><th id="6">6</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="7">7</th><td><i> *</i></td></tr>
+<tr><th id="8">8</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="9">9</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="10">10</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="11">11</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="12">12</th><td><i> *</i></td></tr>
+<tr><th id="13">13</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="14">14</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="15">15</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="16">16</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="17">17</th><td><i> *</i></td></tr>
+<tr><th id="18">18</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="19">19</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="20">20</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="21">21</th><td><i> */</i></td></tr>
+<tr><th id="22">22</th><td></td></tr>
+<tr><th id="23">23</th><td><u>#<span data-ppcond="23">ifndef</span> <span class="macro" data-ref="_M/AVCODEC_FFV1_H">AVCODEC_FFV1_H</span></u></td></tr>
+<tr><th id="24">24</th><td><u>#define <dfn class="macro" id="_M/AVCODEC_FFV1_H" data-ref="_M/AVCODEC_FFV1_H">AVCODEC_FFV1_H</dfn></u></td></tr>
+<tr><th id="25">25</th><td></td></tr>
+<tr><th id="26">26</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="27">27</th><td><i class="doc"> *<span class="command"> @file</span></i></td></tr>
+<tr><th id="28">28</th><td><i class="doc"> * FF Video Codec 1 (a lossless codec)</i></td></tr>
+<tr><th id="29">29</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="30">30</th><td></td></tr>
+<tr><th id="31">31</th><td><u>#include <a href="../libavutil/avassert.h.html">"libavutil/avassert.h"</a></u></td></tr>
+<tr><th id="32">32</th><td><u>#include <a href="../libavutil/crc.h.html">"libavutil/crc.h"</a></u></td></tr>
+<tr><th id="33">33</th><td><u>#include <a href="../libavutil/opt.h.html">"libavutil/opt.h"</a></u></td></tr>
+<tr><th id="34">34</th><td><u>#include <a href="../libavutil/imgutils.h.html">"libavutil/imgutils.h"</a></u></td></tr>
+<tr><th id="35">35</th><td><u>#include <a href="../libavutil/pixdesc.h.html">"libavutil/pixdesc.h"</a></u></td></tr>
+<tr><th id="36">36</th><td><u>#include <a href="../libavutil/timer.h.html">"libavutil/timer.h"</a></u></td></tr>
+<tr><th id="37">37</th><td><u>#include <a href="avcodec.h.html">"avcodec.h"</a></u></td></tr>
+<tr><th id="38">38</th><td><u>#include <a href="get_bits.h.html">"get_bits.h"</a></u></td></tr>
+<tr><th id="39">39</th><td><u>#include <a href="internal.h.html">"internal.h"</a></u></td></tr>
+<tr><th id="40">40</th><td><u>#include <a href="mathops.h.html">"mathops.h"</a></u></td></tr>
+<tr><th id="41">41</th><td><u>#include <a href="put_bits.h.html">"put_bits.h"</a></u></td></tr>
+<tr><th id="42">42</th><td><u>#include <a href="rangecoder.h.html">"rangecoder.h"</a></u></td></tr>
+<tr><th id="43">43</th><td><u>#include <a href="thread.h.html">"thread.h"</a></u></td></tr>
+<tr><th id="44">44</th><td></td></tr>
+<tr><th id="45">45</th><td><u>#<span data-ppcond="45">ifdef</span> <span class="macro" data-ref="_M/__INTEL_COMPILER">__INTEL_COMPILER</span></u></td></tr>
+<tr><th id="46">46</th><td><u>#undef av_flatten</u></td></tr>
+<tr><th id="47">47</th><td><u>#define av_flatten</u></td></tr>
+<tr><th id="48">48</th><td><u>#<span data-ppcond="45">endif</span></u></td></tr>
+<tr><th id="49">49</th><td></td></tr>
+<tr><th id="50">50</th><td><u>#define <dfn class="macro" id="_M/MAX_PLANES" data-ref="_M/MAX_PLANES">MAX_PLANES</dfn> 4</u></td></tr>
+<tr><th id="51">51</th><td><u>#define <dfn class="macro" id="_M/CONTEXT_SIZE" data-ref="_M/CONTEXT_SIZE">CONTEXT_SIZE</dfn> 32</u></td></tr>
+<tr><th id="52">52</th><td></td></tr>
+<tr><th id="53">53</th><td><u>#define <dfn class="macro" id="_M/MAX_QUANT_TABLES" data-ref="_M/MAX_QUANT_TABLES">MAX_QUANT_TABLES</dfn> 8</u></td></tr>
+<tr><th id="54">54</th><td><u>#define <dfn class="macro" id="_M/MAX_CONTEXT_INPUTS" data-ref="_M/MAX_CONTEXT_INPUTS">MAX_CONTEXT_INPUTS</dfn> 5</u></td></tr>
+<tr><th id="55">55</th><td></td></tr>
+<tr><th id="56">56</th><td><u>#define <dfn class="macro" id="_M/AC_GOLOMB_RICE" data-ref="_M/AC_GOLOMB_RICE">AC_GOLOMB_RICE</dfn>          0</u></td></tr>
+<tr><th id="57">57</th><td><u>#define <dfn class="macro" id="_M/AC_RANGE_DEFAULT_TAB" data-ref="_M/AC_RANGE_DEFAULT_TAB">AC_RANGE_DEFAULT_TAB</dfn>    1</u></td></tr>
+<tr><th id="58">58</th><td><u>#define <dfn class="macro" id="_M/AC_RANGE_CUSTOM_TAB" data-ref="_M/AC_RANGE_CUSTOM_TAB">AC_RANGE_CUSTOM_TAB</dfn>     2</u></td></tr>
+<tr><th id="59">59</th><td><u>#define <dfn class="macro" id="_M/AC_RANGE_DEFAULT_TAB_FORCE" data-ref="_M/AC_RANGE_DEFAULT_TAB_FORCE">AC_RANGE_DEFAULT_TAB_FORCE</dfn> -2</u></td></tr>
+<tr><th id="60">60</th><td></td></tr>
+<tr><th id="61">61</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="VlcState" title='VlcState' data-ref="VlcState"><a class="type" href="#VlcState" title='VlcState' data-ref="VlcState">VlcState</a></dfn> {</td></tr>
+<tr><th id="62">62</th><td>    <a class="typedef" href="../../include/x86_64-linux-gnu/sys/types.h.html#195" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> <dfn class="decl" id="VlcState::drift" title='VlcState::drift' data-ref="VlcState::drift">drift</dfn>;</td></tr>
+<tr><th id="63">63</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> <dfn class="decl" id="VlcState::error_sum" title='VlcState::error_sum' data-ref="VlcState::error_sum">error_sum</dfn>;</td></tr>
+<tr><th id="64">64</th><td>    <a class="typedef" href="../../include/x86_64-linux-gnu/sys/types.h.html#194" title='int8_t' data-type='signed char' data-ref="int8_t">int8_t</a> <dfn class="decl" id="VlcState::bias" title='VlcState::bias' data-ref="VlcState::bias">bias</dfn>;</td></tr>
+<tr><th id="65">65</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="VlcState::count" title='VlcState::count' data-ref="VlcState::count">count</dfn>;</td></tr>
+<tr><th id="66">66</th><td>} <dfn class="typedef" id="VlcState" title='VlcState' data-type='struct VlcState' data-ref="VlcState">VlcState</dfn>;</td></tr>
+<tr><th id="67">67</th><td></td></tr>
+<tr><th id="68">68</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="PlaneContext" title='PlaneContext' data-ref="PlaneContext"><a class="type" href="#PlaneContext" title='PlaneContext' data-ref="PlaneContext">PlaneContext</a></dfn> {</td></tr>
+<tr><th id="69">69</th><td>    <a class="typedef" href="../../include/x86_64-linux-gnu/sys/types.h.html#195" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> <dfn class="decl" id="PlaneContext::quant_table" title='PlaneContext::quant_table' data-ref="PlaneContext::quant_table">quant_table</dfn>[<a class="macro" href="#54" title="5" data-ref="_M/MAX_CONTEXT_INPUTS">MAX_CONTEXT_INPUTS</a>][<var>256</var>];</td></tr>
+<tr><th id="70">70</th><td>    <em>int</em> <dfn class="decl" id="PlaneContext::quant_table_index" title='PlaneContext::quant_table_index' data-ref="PlaneContext::quant_table_index">quant_table_index</dfn>;</td></tr>
+<tr><th id="71">71</th><td>    <em>int</em> <dfn class="decl" id="PlaneContext::context_count" title='PlaneContext::context_count' data-ref="PlaneContext::context_count">context_count</dfn>;</td></tr>
+<tr><th id="72">72</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> (*<dfn class="decl" id="PlaneContext::state" title='PlaneContext::state' data-ref="PlaneContext::state">state</dfn>)[<a class="macro" href="#51" title="32" data-ref="_M/CONTEXT_SIZE">CONTEXT_SIZE</a>];</td></tr>
+<tr><th id="73">73</th><td>    <a class="typedef" href="#VlcState" title='VlcState' data-type='struct VlcState' data-ref="VlcState">VlcState</a> *<dfn class="decl" id="PlaneContext::vlc_state" title='PlaneContext::vlc_state' data-ref="PlaneContext::vlc_state">vlc_state</dfn>;</td></tr>
+<tr><th id="74">74</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="PlaneContext::interlace_bit_state" title='PlaneContext::interlace_bit_state' data-ref="PlaneContext::interlace_bit_state">interlace_bit_state</dfn>[<var>2</var>];</td></tr>
+<tr><th id="75">75</th><td>} <dfn class="typedef" id="PlaneContext" title='PlaneContext' data-type='struct PlaneContext' data-ref="PlaneContext">PlaneContext</dfn>;</td></tr>
+<tr><th id="76">76</th><td></td></tr>
+<tr><th id="77">77</th><td><u>#define <dfn class="macro" id="_M/MAX_SLICES" data-ref="_M/MAX_SLICES">MAX_SLICES</dfn> 256</u></td></tr>
+<tr><th id="78">78</th><td></td></tr>
+<tr><th id="79">79</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="FFV1Context" title='FFV1Context' data-ref="FFV1Context"><a class="type" href="#FFV1Context" title='FFV1Context' data-ref="FFV1Context">FFV1Context</a></dfn> {</td></tr>
+<tr><th id="80">80</th><td>    <a class="typedef" href="../libavutil/log.h.html#AVClass" title='AVClass' data-type='struct AVClass' data-ref="AVClass">AVClass</a> *<dfn class="decl" id="FFV1Context::class" title='FFV1Context::class' data-ref="FFV1Context::class">class</dfn>;</td></tr>
+<tr><th id="81">81</th><td>    <a class="typedef" href="avcodec.h.html#AVCodecContext" title='AVCodecContext' data-type='struct AVCodecContext' data-ref="AVCodecContext">AVCodecContext</a> *<dfn class="decl" id="FFV1Context::avctx" title='FFV1Context::avctx' data-ref="FFV1Context::avctx">avctx</dfn>;</td></tr>
+<tr><th id="82">82</th><td>    <a class="typedef" href="rangecoder.h.html#RangeCoder" title='RangeCoder' data-type='struct RangeCoder' data-ref="RangeCoder">RangeCoder</a> <dfn class="decl" id="FFV1Context::c" title='FFV1Context::c' data-ref="FFV1Context::c">c</dfn>;</td></tr>
+<tr><th id="83">83</th><td>    <a class="typedef" href="get_bits.h.html#GetBitContext" title='GetBitContext' data-type='struct GetBitContext' data-ref="GetBitContext">GetBitContext</a> <dfn class="decl" id="FFV1Context::gb" title='FFV1Context::gb' data-ref="FFV1Context::gb">gb</dfn>;</td></tr>
+<tr><th id="84">84</th><td>    <a class="typedef" href="put_bits.h.html#PutBitContext" title='PutBitContext' data-type='struct PutBitContext' data-ref="PutBitContext">PutBitContext</a> <dfn class="decl" id="FFV1Context::pb" title='FFV1Context::pb' data-ref="FFV1Context::pb">pb</dfn>;</td></tr>
+<tr><th id="85">85</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint64_t" title='uint64_t' data-type='unsigned long' data-ref="uint64_t">uint64_t</a> <dfn class="decl" id="FFV1Context::rc_stat" title='FFV1Context::rc_stat' data-ref="FFV1Context::rc_stat">rc_stat</dfn>[<var>256</var>][<var>2</var>];</td></tr>
+<tr><th id="86">86</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint64_t" title='uint64_t' data-type='unsigned long' data-ref="uint64_t">uint64_t</a> (*<dfn class="decl" id="FFV1Context::rc_stat2" title='FFV1Context::rc_stat2' data-ref="FFV1Context::rc_stat2">rc_stat2</dfn>[<a class="macro" href="#53" title="8" data-ref="_M/MAX_QUANT_TABLES">MAX_QUANT_TABLES</a>])[<var>32</var>][<var>2</var>];</td></tr>
+<tr><th id="87">87</th><td>    <em>int</em> <dfn class="decl" id="FFV1Context::version" title='FFV1Context::version' data-ref="FFV1Context::version">version</dfn>;</td></tr>
+<tr><th id="88">88</th><td>    <em>int</em> <dfn class="decl" id="FFV1Context::micro_version" title='FFV1Context::micro_version' data-ref="FFV1Context::micro_version">micro_version</dfn>;</td></tr>
+<tr><th id="89">89</th><td>    <em>int</em> <dfn class="decl" id="FFV1Context::width" title='FFV1Context::width' data-ref="FFV1Context::width">width</dfn>, <dfn class="decl" id="FFV1Context::height" title='FFV1Context::height' data-ref="FFV1Context::height">height</dfn>;</td></tr>
+<tr><th id="90">90</th><td>    <em>int</em> <dfn class="decl" id="FFV1Context::chroma_planes" title='FFV1Context::chroma_planes' data-ref="FFV1Context::chroma_planes">chroma_planes</dfn>;</td></tr>
+<tr><th id="91">91</th><td>    <em>int</em> <dfn class="decl" id="FFV1Context::chroma_h_shift" title='FFV1Context::chroma_h_shift' data-ref="FFV1Context::chroma_h_shift">chroma_h_shift</dfn>, <dfn class="decl" id="FFV1Context::chroma_v_shift" title='FFV1Context::chroma_v_shift' data-ref="FFV1Context::chroma_v_shift">chroma_v_shift</dfn>;</td></tr>
+<tr><th id="92">92</th><td>    <em>int</em> <dfn class="decl" id="FFV1Context::transparency" title='FFV1Context::transparency' data-ref="FFV1Context::transparency">transparency</dfn>;</td></tr>
+<tr><th id="93">93</th><td>    <em>int</em> <dfn class="decl" id="FFV1Context::flags" title='FFV1Context::flags' data-ref="FFV1Context::flags">flags</dfn>;</td></tr>
+<tr><th id="94">94</th><td>    <em>int</em> <dfn class="decl" id="FFV1Context::picture_number" title='FFV1Context::picture_number' data-ref="FFV1Context::picture_number">picture_number</dfn>;</td></tr>
+<tr><th id="95">95</th><td>    <em>int</em> <dfn class="decl" id="FFV1Context::key_frame" title='FFV1Context::key_frame' data-ref="FFV1Context::key_frame">key_frame</dfn>;</td></tr>
+<tr><th id="96">96</th><td>    <a class="typedef" href="thread.h.html#ThreadFrame" title='ThreadFrame' data-type='struct ThreadFrame' data-ref="ThreadFrame">ThreadFrame</a> <dfn class="decl" id="FFV1Context::picture" title='FFV1Context::picture' data-ref="FFV1Context::picture">picture</dfn>, <dfn class="decl" id="FFV1Context::last_picture" title='FFV1Context::last_picture' data-ref="FFV1Context::last_picture">last_picture</dfn>;</td></tr>
+<tr><th id="97">97</th><td>    <b>struct</b> <a class="type" href="#FFV1Context" title='FFV1Context' data-ref="FFV1Context">FFV1Context</a> *<dfn class="decl" id="FFV1Context::fsrc" title='FFV1Context::fsrc' data-ref="FFV1Context::fsrc">fsrc</dfn>;</td></tr>
+<tr><th id="98">98</th><td></td></tr>
+<tr><th id="99">99</th><td>    <a class="typedef" href="../libavutil/frame.h.html#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="decl" id="FFV1Context::cur" title='FFV1Context::cur' data-ref="FFV1Context::cur">cur</dfn>;</td></tr>
+<tr><th id="100">100</th><td>    <em>int</em> <dfn class="decl" id="FFV1Context::plane_count" title='FFV1Context::plane_count' data-ref="FFV1Context::plane_count">plane_count</dfn>;</td></tr>
+<tr><th id="101">101</th><td>    <em>int</em> <dfn class="decl" id="FFV1Context::ac" title='FFV1Context::ac' data-ref="FFV1Context::ac">ac</dfn>;                              <i class="doc">///&lt; 1=range coder &lt;-&gt; 0=golomb rice</i></td></tr>
+<tr><th id="102">102</th><td>    <em>int</em> <dfn class="decl" id="FFV1Context::ac_byte_count" title='FFV1Context::ac_byte_count' data-ref="FFV1Context::ac_byte_count">ac_byte_count</dfn>;                   <i class="doc">///&lt; number of bytes used for AC coding</i></td></tr>
+<tr><th id="103">103</th><td>    <a class="typedef" href="#PlaneContext" title='PlaneContext' data-type='struct PlaneContext' data-ref="PlaneContext">PlaneContext</a> <dfn class="decl" id="FFV1Context::plane" title='FFV1Context::plane' data-ref="FFV1Context::plane">plane</dfn>[<a class="macro" href="#50" title="4" data-ref="_M/MAX_PLANES">MAX_PLANES</a>];</td></tr>
+<tr><th id="104">104</th><td>    <a class="typedef" href="../../include/x86_64-linux-gnu/sys/types.h.html#195" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> <dfn class="decl" id="FFV1Context::quant_table" title='FFV1Context::quant_table' data-ref="FFV1Context::quant_table">quant_table</dfn>[<a class="macro" href="#54" title="5" data-ref="_M/MAX_CONTEXT_INPUTS">MAX_CONTEXT_INPUTS</a>][<var>256</var>];</td></tr>
+<tr><th id="105">105</th><td>    <a class="typedef" href="../../include/x86_64-linux-gnu/sys/types.h.html#195" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> <dfn class="decl" id="FFV1Context::quant_tables" title='FFV1Context::quant_tables' data-ref="FFV1Context::quant_tables">quant_tables</dfn>[<a class="macro" href="#53" title="8" data-ref="_M/MAX_QUANT_TABLES">MAX_QUANT_TABLES</a>][<a class="macro" href="#54" title="5" data-ref="_M/MAX_CONTEXT_INPUTS">MAX_CONTEXT_INPUTS</a>][<var>256</var>];</td></tr>
+<tr><th id="106">106</th><td>    <em>int</em> <dfn class="decl" id="FFV1Context::context_count" title='FFV1Context::context_count' data-ref="FFV1Context::context_count">context_count</dfn>[<a class="macro" href="#53" title="8" data-ref="_M/MAX_QUANT_TABLES">MAX_QUANT_TABLES</a>];</td></tr>
+<tr><th id="107">107</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="FFV1Context::state_transition" title='FFV1Context::state_transition' data-ref="FFV1Context::state_transition">state_transition</dfn>[<var>256</var>];</td></tr>
+<tr><th id="108">108</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> (*<dfn class="decl" id="FFV1Context::initial_states" title='FFV1Context::initial_states' data-ref="FFV1Context::initial_states">initial_states</dfn>[<a class="macro" href="#53" title="8" data-ref="_M/MAX_QUANT_TABLES">MAX_QUANT_TABLES</a>])[<var>32</var>];</td></tr>
+<tr><th id="109">109</th><td>    <em>int</em> <dfn class="decl" id="FFV1Context::run_index" title='FFV1Context::run_index' data-ref="FFV1Context::run_index">run_index</dfn>;</td></tr>
+<tr><th id="110">110</th><td>    <em>int</em> <dfn class="decl" id="FFV1Context::colorspace" title='FFV1Context::colorspace' data-ref="FFV1Context::colorspace">colorspace</dfn>;</td></tr>
+<tr><th id="111">111</th><td>    <a class="typedef" href="../../include/x86_64-linux-gnu/sys/types.h.html#195" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> *<dfn class="decl" id="FFV1Context::sample_buffer" title='FFV1Context::sample_buffer' data-ref="FFV1Context::sample_buffer">sample_buffer</dfn>;</td></tr>
+<tr><th id="112">112</th><td>    <a class="typedef" href="../../include/x86_64-linux-gnu/sys/types.h.html#196" title='int32_t' data-type='int' data-ref="int32_t">int32_t</a> *<dfn class="decl" id="FFV1Context::sample_buffer32" title='FFV1Context::sample_buffer32' data-ref="FFV1Context::sample_buffer32">sample_buffer32</dfn>;</td></tr>
+<tr><th id="113">113</th><td></td></tr>
+<tr><th id="114">114</th><td>    <em>int</em> <dfn class="decl" id="FFV1Context::use32bit" title='FFV1Context::use32bit' data-ref="FFV1Context::use32bit">use32bit</dfn>;</td></tr>
+<tr><th id="115">115</th><td></td></tr>
+<tr><th id="116">116</th><td>    <em>int</em> <dfn class="decl" id="FFV1Context::ec" title='FFV1Context::ec' data-ref="FFV1Context::ec">ec</dfn>;</td></tr>
+<tr><th id="117">117</th><td>    <em>int</em> <dfn class="decl" id="FFV1Context::intra" title='FFV1Context::intra' data-ref="FFV1Context::intra">intra</dfn>;</td></tr>
+<tr><th id="118">118</th><td>    <em>int</em> <dfn class="decl" id="FFV1Context::slice_damaged" title='FFV1Context::slice_damaged' data-ref="FFV1Context::slice_damaged">slice_damaged</dfn>;</td></tr>
+<tr><th id="119">119</th><td>    <em>int</em> <dfn class="decl" id="FFV1Context::key_frame_ok" title='FFV1Context::key_frame_ok' data-ref="FFV1Context::key_frame_ok">key_frame_ok</dfn>;</td></tr>
+<tr><th id="120">120</th><td>    <em>int</em> <dfn class="decl" id="FFV1Context::context_model" title='FFV1Context::context_model' data-ref="FFV1Context::context_model">context_model</dfn>;</td></tr>
+<tr><th id="121">121</th><td></td></tr>
+<tr><th id="122">122</th><td>    <em>int</em> <dfn class="decl" id="FFV1Context::bits_per_raw_sample" title='FFV1Context::bits_per_raw_sample' data-ref="FFV1Context::bits_per_raw_sample">bits_per_raw_sample</dfn>;</td></tr>
+<tr><th id="123">123</th><td>    <em>int</em> <dfn class="decl" id="FFV1Context::packed_at_lsb" title='FFV1Context::packed_at_lsb' data-ref="FFV1Context::packed_at_lsb">packed_at_lsb</dfn>;</td></tr>
+<tr><th id="124">124</th><td></td></tr>
+<tr><th id="125">125</th><td>    <em>int</em> <dfn class="decl" id="FFV1Context::gob_count" title='FFV1Context::gob_count' data-ref="FFV1Context::gob_count">gob_count</dfn>;</td></tr>
+<tr><th id="126">126</th><td>    <em>int</em> <dfn class="decl" id="FFV1Context::quant_table_count" title='FFV1Context::quant_table_count' data-ref="FFV1Context::quant_table_count">quant_table_count</dfn>;</td></tr>
+<tr><th id="127">127</th><td></td></tr>
+<tr><th id="128">128</th><td>    <b>struct</b> <a class="type" href="#FFV1Context" title='FFV1Context' data-ref="FFV1Context">FFV1Context</a> *<dfn class="decl" id="FFV1Context::slice_context" title='FFV1Context::slice_context' data-ref="FFV1Context::slice_context">slice_context</dfn>[<a class="macro" href="#77" title="256" data-ref="_M/MAX_SLICES">MAX_SLICES</a>];</td></tr>
+<tr><th id="129">129</th><td>    <em>int</em> <dfn class="decl" id="FFV1Context::slice_count" title='FFV1Context::slice_count' data-ref="FFV1Context::slice_count">slice_count</dfn>;</td></tr>
+<tr><th id="130">130</th><td>    <em>int</em> <dfn class="decl" id="FFV1Context::max_slice_count" title='FFV1Context::max_slice_count' data-ref="FFV1Context::max_slice_count">max_slice_count</dfn>;</td></tr>
+<tr><th id="131">131</th><td>    <em>int</em> <dfn class="decl" id="FFV1Context::num_v_slices" title='FFV1Context::num_v_slices' data-ref="FFV1Context::num_v_slices">num_v_slices</dfn>;</td></tr>
+<tr><th id="132">132</th><td>    <em>int</em> <dfn class="decl" id="FFV1Context::num_h_slices" title='FFV1Context::num_h_slices' data-ref="FFV1Context::num_h_slices">num_h_slices</dfn>;</td></tr>
+<tr><th id="133">133</th><td>    <em>int</em> <dfn class="decl" id="FFV1Context::slice_width" title='FFV1Context::slice_width' data-ref="FFV1Context::slice_width">slice_width</dfn>;</td></tr>
+<tr><th id="134">134</th><td>    <em>int</em> <dfn class="decl" id="FFV1Context::slice_height" title='FFV1Context::slice_height' data-ref="FFV1Context::slice_height">slice_height</dfn>;</td></tr>
+<tr><th id="135">135</th><td>    <em>int</em> <dfn class="decl" id="FFV1Context::slice_x" title='FFV1Context::slice_x' data-ref="FFV1Context::slice_x">slice_x</dfn>;</td></tr>
+<tr><th id="136">136</th><td>    <em>int</em> <dfn class="decl" id="FFV1Context::slice_y" title='FFV1Context::slice_y' data-ref="FFV1Context::slice_y">slice_y</dfn>;</td></tr>
+<tr><th id="137">137</th><td>    <em>int</em> <dfn class="decl" id="FFV1Context::slice_reset_contexts" title='FFV1Context::slice_reset_contexts' data-ref="FFV1Context::slice_reset_contexts">slice_reset_contexts</dfn>;</td></tr>
+<tr><th id="138">138</th><td>    <em>int</em> <dfn class="decl" id="FFV1Context::slice_coding_mode" title='FFV1Context::slice_coding_mode' data-ref="FFV1Context::slice_coding_mode">slice_coding_mode</dfn>;</td></tr>
+<tr><th id="139">139</th><td>    <em>int</em> <dfn class="decl" id="FFV1Context::slice_rct_by_coef" title='FFV1Context::slice_rct_by_coef' data-ref="FFV1Context::slice_rct_by_coef">slice_rct_by_coef</dfn>;</td></tr>
+<tr><th id="140">140</th><td>    <em>int</em> <dfn class="decl" id="FFV1Context::slice_rct_ry_coef" title='FFV1Context::slice_rct_ry_coef' data-ref="FFV1Context::slice_rct_ry_coef">slice_rct_ry_coef</dfn>;</td></tr>
+<tr><th id="141">141</th><td>} <dfn class="typedef" id="FFV1Context" title='FFV1Context' data-type='struct FFV1Context' data-ref="FFV1Context">FFV1Context</dfn>;</td></tr>
+<tr><th id="142">142</th><td></td></tr>
+<tr><th id="143">143</th><td><em>int</em> <a class="decl" href="ffv1.c.html#ff_ffv1_common_init" title='ff_ffv1_common_init' data-ref="ff_ffv1_common_init" id="ff_ffv1_common_init">ff_ffv1_common_init</a>(<a class="typedef" href="avcodec.h.html#AVCodecContext" title='AVCodecContext' data-type='struct AVCodecContext' data-ref="AVCodecContext">AVCodecContext</a> *<dfn class="local col2 decl" id="22avctx" title='avctx' data-type='AVCodecContext *' data-ref="22avctx">avctx</dfn>);</td></tr>
+<tr><th id="144">144</th><td><em>int</em> <a class="decl" href="ffv1.c.html#ff_ffv1_init_slice_state" title='ff_ffv1_init_slice_state' data-ref="ff_ffv1_init_slice_state" id="ff_ffv1_init_slice_state">ff_ffv1_init_slice_state</a>(<a class="typedef" href="#FFV1Context" title='FFV1Context' data-type='struct FFV1Context' data-ref="FFV1Context">FFV1Context</a> *<dfn class="local col3 decl" id="23f" title='f' data-type='FFV1Context *' data-ref="23f">f</dfn>, <a class="typedef" href="#FFV1Context" title='FFV1Context' data-type='struct FFV1Context' data-ref="FFV1Context">FFV1Context</a> *<dfn class="local col4 decl" id="24fs" title='fs' data-type='FFV1Context *' data-ref="24fs">fs</dfn>);</td></tr>
+<tr><th id="145">145</th><td><em>int</em> <a class="decl" href="ffv1.c.html#ff_ffv1_init_slices_state" title='ff_ffv1_init_slices_state' data-ref="ff_ffv1_init_slices_state" id="ff_ffv1_init_slices_state">ff_ffv1_init_slices_state</a>(<a class="typedef" href="#FFV1Context" title='FFV1Context' data-type='struct FFV1Context' data-ref="FFV1Context">FFV1Context</a> *<dfn class="local col5 decl" id="25f" title='f' data-type='FFV1Context *' data-ref="25f">f</dfn>);</td></tr>
+<tr><th id="146">146</th><td><em>int</em> <a class="decl" href="ffv1.c.html#ff_ffv1_init_slice_contexts" title='ff_ffv1_init_slice_contexts' data-ref="ff_ffv1_init_slice_contexts" id="ff_ffv1_init_slice_contexts">ff_ffv1_init_slice_contexts</a>(<a class="typedef" href="#FFV1Context" title='FFV1Context' data-type='struct FFV1Context' data-ref="FFV1Context">FFV1Context</a> *<dfn class="local col6 decl" id="26f" title='f' data-type='FFV1Context *' data-ref="26f">f</dfn>);</td></tr>
+<tr><th id="147">147</th><td><em>int</em> <a class="decl" href="ffv1.c.html#ff_ffv1_allocate_initial_states" title='ff_ffv1_allocate_initial_states' data-ref="ff_ffv1_allocate_initial_states" id="ff_ffv1_allocate_initial_states">ff_ffv1_allocate_initial_states</a>(<a class="typedef" href="#FFV1Context" title='FFV1Context' data-type='struct FFV1Context' data-ref="FFV1Context">FFV1Context</a> *<dfn class="local col7 decl" id="27f" title='f' data-type='FFV1Context *' data-ref="27f">f</dfn>);</td></tr>
+<tr><th id="148">148</th><td><em>void</em> <a class="decl" href="ffv1.c.html#ff_ffv1_clear_slice_state" title='ff_ffv1_clear_slice_state' data-ref="ff_ffv1_clear_slice_state" id="ff_ffv1_clear_slice_state">ff_ffv1_clear_slice_state</a>(<a class="typedef" href="#FFV1Context" title='FFV1Context' data-type='struct FFV1Context' data-ref="FFV1Context">FFV1Context</a> *<dfn class="local col8 decl" id="28f" title='f' data-type='FFV1Context *' data-ref="28f">f</dfn>, <a class="typedef" href="#FFV1Context" title='FFV1Context' data-type='struct FFV1Context' data-ref="FFV1Context">FFV1Context</a> *<dfn class="local col9 decl" id="29fs" title='fs' data-type='FFV1Context *' data-ref="29fs">fs</dfn>);</td></tr>
+<tr><th id="149">149</th><td><em>int</em> <a class="decl" href="ffv1.c.html#ff_ffv1_close" title='ff_ffv1_close' data-ref="ff_ffv1_close" id="ff_ffv1_close">ff_ffv1_close</a>(<a class="typedef" href="avcodec.h.html#AVCodecContext" title='AVCodecContext' data-type='struct AVCodecContext' data-ref="AVCodecContext">AVCodecContext</a> *<dfn class="local col0 decl" id="30avctx" title='avctx' data-type='AVCodecContext *' data-ref="30avctx">avctx</dfn>);</td></tr>
+<tr><th id="150">150</th><td></td></tr>
+<tr><th id="151">151</th><td><em>static</em> <a class="macro" href="../libavutil/attributes.h.html#39" title="__attribute__((always_inline)) inline" data-ref="_M/av_always_inline">av_always_inline</a> <em>int</em> <dfn class="decl def" id="fold" title='fold' data-ref="fold">fold</dfn>(<em>int</em> <dfn class="local col1 decl" id="31diff" title='diff' data-type='int' data-ref="31diff">diff</dfn>, <em>int</em> <dfn class="local col2 decl" id="32bits" title='bits' data-type='int' data-ref="32bits">bits</dfn>)</td></tr>
+<tr><th id="152">152</th><td>{</td></tr>
+<tr><th id="153">153</th><td>    <b>if</b> (<a class="local col2 ref" href="#32bits" title='bits' data-ref="32bits">bits</a> == <var>8</var>)</td></tr>
+<tr><th id="154">154</th><td>        <a class="local col1 ref" href="#31diff" title='diff' data-ref="31diff">diff</a> = (<a class="typedef" href="../../include/x86_64-linux-gnu/sys/types.h.html#194" title='int8_t' data-type='signed char' data-ref="int8_t">int8_t</a>)<a class="local col1 ref" href="#31diff" title='diff' data-ref="31diff">diff</a>;</td></tr>
+<tr><th id="155">155</th><td>    <b>else</b> {</td></tr>
+<tr><th id="156">156</th><td>        <a class="local col1 ref" href="#31diff" title='diff' data-ref="31diff">diff</a> +=  <var>1</var> &lt;&lt; (<a class="local col2 ref" href="#32bits" title='bits' data-ref="32bits">bits</a>  - <var>1</var>);</td></tr>
+<tr><th id="157">157</th><td>        <a class="local col1 ref" href="#31diff" title='diff' data-ref="31diff">diff</a>  = <a class="macro" href="../libavutil/common.h.html#508" title="av_mod_uintp2_c" data-ref="_M/av_mod_uintp2">av_mod_uintp2</a>(<a class="local col1 ref" href="#31diff" title='diff' data-ref="31diff">diff</a>, <a class="local col2 ref" href="#32bits" title='bits' data-ref="32bits">bits</a>);</td></tr>
+<tr><th id="158">158</th><td>        <a class="local col1 ref" href="#31diff" title='diff' data-ref="31diff">diff</a> -=  <var>1</var> &lt;&lt; (<a class="local col2 ref" href="#32bits" title='bits' data-ref="32bits">bits</a>  - <var>1</var>);</td></tr>
+<tr><th id="159">159</th><td>    }</td></tr>
+<tr><th id="160">160</th><td></td></tr>
+<tr><th id="161">161</th><td>    <b>return</b> <a class="local col1 ref" href="#31diff" title='diff' data-ref="31diff">diff</a>;</td></tr>
+<tr><th id="162">162</th><td>}</td></tr>
+<tr><th id="163">163</th><td></td></tr>
+<tr><th id="164">164</th><td><em>static</em> <b>inline</b> <em>void</em> <dfn class="decl def" id="update_vlc_state" title='update_vlc_state' data-ref="update_vlc_state">update_vlc_state</dfn>(<a class="typedef" href="#VlcState" title='VlcState' data-type='struct VlcState' data-ref="VlcState">VlcState</a> *<em>const</em> <dfn class="local col3 decl" id="33state" title='state' data-type='VlcState *const' data-ref="33state">state</dfn>, <em>const</em> <em>int</em> <dfn class="local col4 decl" id="34v" title='v' data-type='const int' data-ref="34v">v</dfn>)</td></tr>
+<tr><th id="165">165</th><td>{</td></tr>
+<tr><th id="166">166</th><td>    <em>int</em> <dfn class="local col5 decl" id="35drift" title='drift' data-type='int' data-ref="35drift">drift</dfn> = <a class="local col3 ref" href="#33state" title='state' data-ref="33state">state</a>-&gt;<a class="ref" href="#VlcState::drift" title='VlcState::drift' data-ref="VlcState::drift">drift</a>;</td></tr>
+<tr><th id="167">167</th><td>    <em>int</em> <dfn class="local col6 decl" id="36count" title='count' data-type='int' data-ref="36count">count</dfn> = <a class="local col3 ref" href="#33state" title='state' data-ref="33state">state</a>-&gt;<a class="ref" href="#VlcState::count" title='VlcState::count' data-ref="VlcState::count">count</a>;</td></tr>
+<tr><th id="168">168</th><td>    <a class="local col3 ref" href="#33state" title='state' data-ref="33state">state</a>-&gt;<a class="ref" href="#VlcState::error_sum" title='VlcState::error_sum' data-ref="VlcState::error_sum">error_sum</a> += <a class="macro" href="../libavutil/common.h.html#72" title="((v) &gt;= 0 ? (v) : (-(v)))" data-ref="_M/FFABS">FFABS</a>(<a class="local col4 ref" href="#34v" title='v' data-ref="34v">v</a>);</td></tr>
+<tr><th id="169">169</th><td>    <a class="local col5 ref" href="#35drift" title='drift' data-ref="35drift">drift</a>            += <a class="local col4 ref" href="#34v" title='v' data-ref="34v">v</a>;</td></tr>
+<tr><th id="170">170</th><td></td></tr>
+<tr><th id="171">171</th><td>    <b>if</b> (<a class="local col6 ref" href="#36count" title='count' data-ref="36count">count</a> == <var>128</var>) { <i>// FIXME: variable</i></td></tr>
+<tr><th id="172">172</th><td>        <a class="local col6 ref" href="#36count" title='count' data-ref="36count">count</a>            &gt;&gt;= <var>1</var>;</td></tr>
+<tr><th id="173">173</th><td>        <a class="local col5 ref" href="#35drift" title='drift' data-ref="35drift">drift</a>            &gt;&gt;= <var>1</var>;</td></tr>
+<tr><th id="174">174</th><td>        <a class="local col3 ref" href="#33state" title='state' data-ref="33state">state</a>-&gt;<a class="ref" href="#VlcState::error_sum" title='VlcState::error_sum' data-ref="VlcState::error_sum">error_sum</a> &gt;&gt;= <var>1</var>;</td></tr>
+<tr><th id="175">175</th><td>    }</td></tr>
+<tr><th id="176">176</th><td>    <a class="local col6 ref" href="#36count" title='count' data-ref="36count">count</a>++;</td></tr>
+<tr><th id="177">177</th><td></td></tr>
+<tr><th id="178">178</th><td>    <b>if</b> (<a class="local col5 ref" href="#35drift" title='drift' data-ref="35drift">drift</a> &lt;= -<a class="local col6 ref" href="#36count" title='count' data-ref="36count">count</a>) {</td></tr>
+<tr><th id="179">179</th><td>        <b>if</b> (<a class="local col3 ref" href="#33state" title='state' data-ref="33state">state</a>-&gt;<a class="ref" href="#VlcState::bias" title='VlcState::bias' data-ref="VlcState::bias">bias</a> &gt; -<var>128</var>)</td></tr>
+<tr><th id="180">180</th><td>            <a class="local col3 ref" href="#33state" title='state' data-ref="33state">state</a>-&gt;<a class="ref" href="#VlcState::bias" title='VlcState::bias' data-ref="VlcState::bias">bias</a>--;</td></tr>
+<tr><th id="181">181</th><td></td></tr>
+<tr><th id="182">182</th><td>        <a class="local col5 ref" href="#35drift" title='drift' data-ref="35drift">drift</a> += <a class="local col6 ref" href="#36count" title='count' data-ref="36count">count</a>;</td></tr>
+<tr><th id="183">183</th><td>        <b>if</b> (<a class="local col5 ref" href="#35drift" title='drift' data-ref="35drift">drift</a> &lt;= -<a class="local col6 ref" href="#36count" title='count' data-ref="36count">count</a>)</td></tr>
+<tr><th id="184">184</th><td>            <a class="local col5 ref" href="#35drift" title='drift' data-ref="35drift">drift</a> = -<a class="local col6 ref" href="#36count" title='count' data-ref="36count">count</a> + <var>1</var>;</td></tr>
+<tr><th id="185">185</th><td>    } <b>else</b> <b>if</b> (<a class="local col5 ref" href="#35drift" title='drift' data-ref="35drift">drift</a> &gt; <var>0</var>) {</td></tr>
+<tr><th id="186">186</th><td>        <b>if</b> (<a class="local col3 ref" href="#33state" title='state' data-ref="33state">state</a>-&gt;<a class="ref" href="#VlcState::bias" title='VlcState::bias' data-ref="VlcState::bias">bias</a> &lt; <var>127</var>)</td></tr>
+<tr><th id="187">187</th><td>            <a class="local col3 ref" href="#33state" title='state' data-ref="33state">state</a>-&gt;<a class="ref" href="#VlcState::bias" title='VlcState::bias' data-ref="VlcState::bias">bias</a>++;</td></tr>
+<tr><th id="188">188</th><td></td></tr>
+<tr><th id="189">189</th><td>        <a class="local col5 ref" href="#35drift" title='drift' data-ref="35drift">drift</a> -= <a class="local col6 ref" href="#36count" title='count' data-ref="36count">count</a>;</td></tr>
+<tr><th id="190">190</th><td>        <b>if</b> (<a class="local col5 ref" href="#35drift" title='drift' data-ref="35drift">drift</a> &gt; <var>0</var>)</td></tr>
+<tr><th id="191">191</th><td>            <a class="local col5 ref" href="#35drift" title='drift' data-ref="35drift">drift</a> = <var>0</var>;</td></tr>
+<tr><th id="192">192</th><td>    }</td></tr>
+<tr><th id="193">193</th><td></td></tr>
+<tr><th id="194">194</th><td>    <a class="local col3 ref" href="#33state" title='state' data-ref="33state">state</a>-&gt;<a class="ref" href="#VlcState::drift" title='VlcState::drift' data-ref="VlcState::drift">drift</a> = <a class="local col5 ref" href="#35drift" title='drift' data-ref="35drift">drift</a>;</td></tr>
+<tr><th id="195">195</th><td>    <a class="local col3 ref" href="#33state" title='state' data-ref="33state">state</a>-&gt;<a class="ref" href="#VlcState::count" title='VlcState::count' data-ref="VlcState::count">count</a> = <a class="local col6 ref" href="#36count" title='count' data-ref="36count">count</a>;</td></tr>
+<tr><th id="196">196</th><td>}</td></tr>
+<tr><th id="197">197</th><td></td></tr>
+<tr><th id="198">198</th><td><u>#define <dfn class="macro" id="_M/TYPE" data-ref="_M/TYPE">TYPE</dfn> int16_t</u></td></tr>
+<tr><th id="199">199</th><td><u>#define <dfn class="macro" id="_M/RENAME" data-ref="_M/RENAME">RENAME</dfn>(name) name</u></td></tr>
+<tr><th id="200">200</th><td><u>#include <a href="ffv1_template.c.html">"ffv1_template.c"</a></u></td></tr>
+<tr><th id="201">201</th><td><u>#undef <a class="macro" href="#198" data-ref="_M/TYPE">TYPE</a></u></td></tr>
+<tr><th id="202">202</th><td><u>#undef <a class="macro" href="#199" data-ref="_M/RENAME">RENAME</a></u></td></tr>
+<tr><th id="203">203</th><td></td></tr>
+<tr><th id="204">204</th><td><u>#define <dfn class="macro" id="_M/TYPE" data-ref="_M/TYPE">TYPE</dfn> int32_t</u></td></tr>
+<tr><th id="205">205</th><td><u>#define <dfn class="macro" id="_M/RENAME" data-ref="_M/RENAME">RENAME</dfn>(name) name ## 32</u></td></tr>
+<tr><th id="206">206</th><td><u>#include <a href="ffv1_template.c.html">"ffv1_template.c"</a></u></td></tr>
+<tr><th id="207">207</th><td><u>#undef <a class="macro" href="#204" data-ref="_M/TYPE">TYPE</a></u></td></tr>
+<tr><th id="208">208</th><td><u>#undef <a class="macro" href="#205" data-ref="_M/RENAME">RENAME</a></u></td></tr>
+<tr><th id="209">209</th><td></td></tr>
+<tr><th id="210">210</th><td><u>#<span data-ppcond="23">endif</span> /* AVCODEC_FFV1_H */</u></td></tr>
+<tr><th id="211">211</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated while processing <a href='ffv1.c.html'>ffmpeg/libavcodec/ffv1.c</a><br/>Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

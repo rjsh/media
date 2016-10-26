@@ -1,0 +1,102 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>huffyuvencdsp.c source code [ffmpeg/libavcodec/huffyuvencdsp.c] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavcodec/huffyuvencdsp.c'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavcodec</a>/<a href='huffyuvencdsp.c.html'>huffyuvencdsp.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="3">3</th><td><i> *</i></td></tr>
+<tr><th id="4">4</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="5">5</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="6">6</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="7">7</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="8">8</th><td><i> *</i></td></tr>
+<tr><th id="9">9</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="10">10</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="11">11</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="12">12</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="13">13</th><td><i> *</i></td></tr>
+<tr><th id="14">14</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="15">15</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="16">16</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="17">17</th><td><i> */</i></td></tr>
+<tr><th id="18">18</th><td></td></tr>
+<tr><th id="19">19</th><td><u>#include <a href="../config.h.html">"config.h"</a></u></td></tr>
+<tr><th id="20">20</th><td><u>#include <a href="../libavutil/attributes.h.html">"libavutil/attributes.h"</a></u></td></tr>
+<tr><th id="21">21</th><td><u>#include <a href="huffyuvencdsp.h.html">"huffyuvencdsp.h"</a></u></td></tr>
+<tr><th id="22">22</th><td><u>#include <a href="mathops.h.html">"mathops.h"</a></u></td></tr>
+<tr><th id="23">23</th><td></td></tr>
+<tr><th id="24">24</th><td><i>// 0x7f7f7f7f or 0x7f7f7f7f7f7f7f7f or whatever, depending on the cpu's native arithmetic size</i></td></tr>
+<tr><th id="25">25</th><td><u>#define <dfn class="macro" id="_M/pb_7f" data-ref="_M/pb_7f">pb_7f</dfn> (~0UL / 255 * 0x7f)</u></td></tr>
+<tr><th id="26">26</th><td><u>#define <dfn class="macro" id="_M/pb_80" data-ref="_M/pb_80">pb_80</dfn> (~0UL / 255 * 0x80)</u></td></tr>
+<tr><th id="27">27</th><td></td></tr>
+<tr><th id="28">28</th><td><em>static</em> <em>void</em> <dfn class="tu decl def" id="diff_bytes_c" title='diff_bytes_c' data-type='void diff_bytes_c(uint8_t * dst, const uint8_t * src1, const uint8_t * src2, intptr_t w)' data-ref="diff_bytes_c">diff_bytes_c</dfn>(<a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col1 decl" id="1dst" title='dst' data-type='uint8_t *' data-ref="1dst">dst</dfn>, <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col2 decl" id="2src1" title='src1' data-type='const uint8_t *' data-ref="2src1">src1</dfn>, <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col3 decl" id="3src2" title='src2' data-type='const uint8_t *' data-ref="3src2">src2</dfn>, <a class="typedef" href="../../include/stdint.h.html#intptr_t" title='intptr_t' data-type='long' data-ref="intptr_t">intptr_t</a> <dfn class="local col4 decl" id="4w" title='w' data-type='intptr_t' data-ref="4w">w</dfn>)</td></tr>
+<tr><th id="29">29</th><td>{</td></tr>
+<tr><th id="30">30</th><td>    <em>long</em> <dfn class="local col5 decl" id="5i" title='i' data-type='long' data-ref="5i">i</dfn>;</td></tr>
+<tr><th id="31">31</th><td></td></tr>
+<tr><th id="32">32</th><td><u>#<span data-ppcond="32">if</span> !<a class="macro" href="../config.h.html#199" title="1" data-ref="_M/HAVE_FAST_UNALIGNED">HAVE_FAST_UNALIGNED</a></u></td></tr>
+<tr><th id="33">33</th><td>    <b>if</b> (((<em>long</em>)src1 | (<em>long</em>)src2) &amp; (<b>sizeof</b>(<em>long</em>) - <var>1</var>)) {</td></tr>
+<tr><th id="34">34</th><td>        <b>for</b> (i = <var>0</var>; i + <var>7</var> &lt; w; i += <var>8</var>) {</td></tr>
+<tr><th id="35">35</th><td>            dst[i + <var>0</var>] = src1[i + <var>0</var>] - src2[i + <var>0</var>];</td></tr>
+<tr><th id="36">36</th><td>            dst[i + <var>1</var>] = src1[i + <var>1</var>] - src2[i + <var>1</var>];</td></tr>
+<tr><th id="37">37</th><td>            dst[i + <var>2</var>] = src1[i + <var>2</var>] - src2[i + <var>2</var>];</td></tr>
+<tr><th id="38">38</th><td>            dst[i + <var>3</var>] = src1[i + <var>3</var>] - src2[i + <var>3</var>];</td></tr>
+<tr><th id="39">39</th><td>            dst[i + <var>4</var>] = src1[i + <var>4</var>] - src2[i + <var>4</var>];</td></tr>
+<tr><th id="40">40</th><td>            dst[i + <var>5</var>] = src1[i + <var>5</var>] - src2[i + <var>5</var>];</td></tr>
+<tr><th id="41">41</th><td>            dst[i + <var>6</var>] = src1[i + <var>6</var>] - src2[i + <var>6</var>];</td></tr>
+<tr><th id="42">42</th><td>            dst[i + <var>7</var>] = src1[i + <var>7</var>] - src2[i + <var>7</var>];</td></tr>
+<tr><th id="43">43</th><td>        }</td></tr>
+<tr><th id="44">44</th><td>    } <b>else</b></td></tr>
+<tr><th id="45">45</th><td><u>#<span data-ppcond="32">endif</span></u></td></tr>
+<tr><th id="46">46</th><td>    <b>for</b> (<a class="local col5 ref" href="#5i" title='i' data-ref="5i">i</a> = <var>0</var>; <a class="local col5 ref" href="#5i" title='i' data-ref="5i">i</a> &lt;= <a class="local col4 ref" href="#4w" title='w' data-ref="4w">w</a> - (<em>int</em>) <b>sizeof</b>(<em>long</em>); <a class="local col5 ref" href="#5i" title='i' data-ref="5i">i</a> += <b>sizeof</b>(<em>long</em>)) {</td></tr>
+<tr><th id="47">47</th><td>        <em>long</em> <dfn class="local col6 decl" id="6a" title='a' data-type='long' data-ref="6a">a</dfn> = *(<em>long</em> *) (<a class="local col2 ref" href="#2src1" title='src1' data-ref="2src1">src1</a> + <a class="local col5 ref" href="#5i" title='i' data-ref="5i">i</a>);</td></tr>
+<tr><th id="48">48</th><td>        <em>long</em> <dfn class="local col7 decl" id="7b" title='b' data-type='long' data-ref="7b">b</dfn> = *(<em>long</em> *) (<a class="local col3 ref" href="#3src2" title='src2' data-ref="3src2">src2</a> + <a class="local col5 ref" href="#5i" title='i' data-ref="5i">i</a>);</td></tr>
+<tr><th id="49">49</th><td>        *(<em>long</em> *) (<a class="local col1 ref" href="#1dst" title='dst' data-ref="1dst">dst</a> + <a class="local col5 ref" href="#5i" title='i' data-ref="5i">i</a>) = ((<a class="local col6 ref" href="#6a" title='a' data-ref="6a">a</a> | <a class="macro" href="#26" title="(~0UL / 255 * 0x80)" data-ref="_M/pb_80">pb_80</a>) - (<a class="local col7 ref" href="#7b" title='b' data-ref="7b">b</a> &amp; <a class="macro" href="#25" title="(~0UL / 255 * 0x7f)" data-ref="_M/pb_7f">pb_7f</a>)) ^</td></tr>
+<tr><th id="50">50</th><td>                              ((<a class="local col6 ref" href="#6a" title='a' data-ref="6a">a</a> ^ <a class="local col7 ref" href="#7b" title='b' data-ref="7b">b</a> ^ <a class="macro" href="#26" title="(~0UL / 255 * 0x80)" data-ref="_M/pb_80">pb_80</a>) &amp; <a class="macro" href="#26" title="(~0UL / 255 * 0x80)" data-ref="_M/pb_80">pb_80</a>);</td></tr>
+<tr><th id="51">51</th><td>    }</td></tr>
+<tr><th id="52">52</th><td>    <b>for</b> (; <a class="local col5 ref" href="#5i" title='i' data-ref="5i">i</a> &lt; <a class="local col4 ref" href="#4w" title='w' data-ref="4w">w</a>; <a class="local col5 ref" href="#5i" title='i' data-ref="5i">i</a>++)</td></tr>
+<tr><th id="53">53</th><td>        <a class="local col1 ref" href="#1dst" title='dst' data-ref="1dst">dst</a>[<a class="local col5 ref" href="#5i" title='i' data-ref="5i">i</a> + <var>0</var>] = <a class="local col2 ref" href="#2src1" title='src1' data-ref="2src1">src1</a>[<a class="local col5 ref" href="#5i" title='i' data-ref="5i">i</a> + <var>0</var>] - <a class="local col3 ref" href="#3src2" title='src2' data-ref="3src2">src2</a>[<a class="local col5 ref" href="#5i" title='i' data-ref="5i">i</a> + <var>0</var>];</td></tr>
+<tr><th id="54">54</th><td>}</td></tr>
+<tr><th id="55">55</th><td></td></tr>
+<tr><th id="56">56</th><td><em>static</em> <em>void</em> <dfn class="tu decl def" id="sub_hfyu_median_pred_c" title='sub_hfyu_median_pred_c' data-type='void sub_hfyu_median_pred_c(uint8_t * dst, const uint8_t * src1, const uint8_t * src2, intptr_t w, int * left, int * left_top)' data-ref="sub_hfyu_median_pred_c">sub_hfyu_median_pred_c</dfn>(<a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col8 decl" id="8dst" title='dst' data-type='uint8_t *' data-ref="8dst">dst</dfn>, <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col9 decl" id="9src1" title='src1' data-type='const uint8_t *' data-ref="9src1">src1</dfn>,</td></tr>
+<tr><th id="57">57</th><td>                                   <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col0 decl" id="10src2" title='src2' data-type='const uint8_t *' data-ref="10src2">src2</dfn>, <a class="typedef" href="../../include/stdint.h.html#intptr_t" title='intptr_t' data-type='long' data-ref="intptr_t">intptr_t</a> <dfn class="local col1 decl" id="11w" title='w' data-type='intptr_t' data-ref="11w">w</dfn>,</td></tr>
+<tr><th id="58">58</th><td>                                   <em>int</em> *<dfn class="local col2 decl" id="12left" title='left' data-type='int *' data-ref="12left">left</dfn>, <em>int</em> *<dfn class="local col3 decl" id="13left_top" title='left_top' data-type='int *' data-ref="13left_top">left_top</dfn>)</td></tr>
+<tr><th id="59">59</th><td>{</td></tr>
+<tr><th id="60">60</th><td>    <em>int</em> <dfn class="local col4 decl" id="14i" title='i' data-type='int' data-ref="14i">i</dfn>;</td></tr>
+<tr><th id="61">61</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="local col5 decl" id="15l" title='l' data-type='uint8_t' data-ref="15l">l</dfn>, <dfn class="local col6 decl" id="16lt" title='lt' data-type='uint8_t' data-ref="16lt">lt</dfn>;</td></tr>
+<tr><th id="62">62</th><td></td></tr>
+<tr><th id="63">63</th><td>    <a class="local col5 ref" href="#15l" title='l' data-ref="15l">l</a>  = *<a class="local col2 ref" href="#12left" title='left' data-ref="12left">left</a>;</td></tr>
+<tr><th id="64">64</th><td>    <a class="local col6 ref" href="#16lt" title='lt' data-ref="16lt">lt</a> = *<a class="local col3 ref" href="#13left_top" title='left_top' data-ref="13left_top">left_top</a>;</td></tr>
+<tr><th id="65">65</th><td></td></tr>
+<tr><th id="66">66</th><td>    <b>for</b> (<a class="local col4 ref" href="#14i" title='i' data-ref="14i">i</a> = <var>0</var>; <a class="local col4 ref" href="#14i" title='i' data-ref="14i">i</a> &lt; <a class="local col1 ref" href="#11w" title='w' data-ref="11w">w</a>; <a class="local col4 ref" href="#14i" title='i' data-ref="14i">i</a>++) {</td></tr>
+<tr><th id="67">67</th><td>        <em>const</em> <em>int</em> <dfn class="local col7 decl" id="17pred" title='pred' data-type='const int' data-ref="17pred">pred</dfn> = <a class="macro" href="x86/mathops.h.html#75" title="mid_pred" data-ref="_M/mid_pred">mid_pred</a>(<a class="local col5 ref" href="#15l" title='l' data-ref="15l">l</a>, <a class="local col9 ref" href="#9src1" title='src1' data-ref="9src1">src1</a>[<a class="local col4 ref" href="#14i" title='i' data-ref="14i">i</a>], (<a class="local col5 ref" href="#15l" title='l' data-ref="15l">l</a> + <a class="local col9 ref" href="#9src1" title='src1' data-ref="9src1">src1</a>[<a class="local col4 ref" href="#14i" title='i' data-ref="14i">i</a>] - <a class="local col6 ref" href="#16lt" title='lt' data-ref="16lt">lt</a>) &amp; <var>0xFF</var>);</td></tr>
+<tr><th id="68">68</th><td>        <a class="local col6 ref" href="#16lt" title='lt' data-ref="16lt">lt</a>     = <a class="local col9 ref" href="#9src1" title='src1' data-ref="9src1">src1</a>[<a class="local col4 ref" href="#14i" title='i' data-ref="14i">i</a>];</td></tr>
+<tr><th id="69">69</th><td>        <a class="local col5 ref" href="#15l" title='l' data-ref="15l">l</a>      = <a class="local col0 ref" href="#10src2" title='src2' data-ref="10src2">src2</a>[<a class="local col4 ref" href="#14i" title='i' data-ref="14i">i</a>];</td></tr>
+<tr><th id="70">70</th><td>        <a class="local col8 ref" href="#8dst" title='dst' data-ref="8dst">dst</a>[<a class="local col4 ref" href="#14i" title='i' data-ref="14i">i</a>] = <a class="local col5 ref" href="#15l" title='l' data-ref="15l">l</a> - <a class="local col7 ref" href="#17pred" title='pred' data-ref="17pred">pred</a>;</td></tr>
+<tr><th id="71">71</th><td>    }</td></tr>
+<tr><th id="72">72</th><td></td></tr>
+<tr><th id="73">73</th><td>    *<a class="local col2 ref" href="#12left" title='left' data-ref="12left">left</a>     = <a class="local col5 ref" href="#15l" title='l' data-ref="15l">l</a>;</td></tr>
+<tr><th id="74">74</th><td>    *<a class="local col3 ref" href="#13left_top" title='left_top' data-ref="13left_top">left_top</a> = <a class="local col6 ref" href="#16lt" title='lt' data-ref="16lt">lt</a>;</td></tr>
+<tr><th id="75">75</th><td>}</td></tr>
+<tr><th id="76">76</th><td></td></tr>
+<tr><th id="77">77</th><td><a class="macro" href="../libavutil/attributes.h.html#84" title="" data-ref="_M/av_cold">av_cold</a> <em>void</em> <dfn class="decl def" id="ff_huffyuvencdsp_init" title='ff_huffyuvencdsp_init' data-ref="ff_huffyuvencdsp_init">ff_huffyuvencdsp_init</dfn>(<a class="typedef" href="huffyuvencdsp.h.html#HuffYUVEncDSPContext" title='HuffYUVEncDSPContext' data-type='struct HuffYUVEncDSPContext' data-ref="HuffYUVEncDSPContext">HuffYUVEncDSPContext</a> *<dfn class="local col8 decl" id="18c" title='c' data-type='HuffYUVEncDSPContext *' data-ref="18c">c</dfn>)</td></tr>
+<tr><th id="78">78</th><td>{</td></tr>
+<tr><th id="79">79</th><td>    <a class="local col8 ref" href="#18c" title='c' data-ref="18c">c</a>-&gt;<a class="ref" href="huffyuvencdsp.h.html#HuffYUVEncDSPContext::diff_bytes" title='HuffYUVEncDSPContext::diff_bytes' data-ref="HuffYUVEncDSPContext::diff_bytes">diff_bytes</a>           = <a class="tu ref" href="#diff_bytes_c" title='diff_bytes_c' data-use='r' data-ref="diff_bytes_c">diff_bytes_c</a>;</td></tr>
+<tr><th id="80">80</th><td>    <a class="local col8 ref" href="#18c" title='c' data-ref="18c">c</a>-&gt;<a class="ref" href="huffyuvencdsp.h.html#HuffYUVEncDSPContext::sub_hfyu_median_pred" title='HuffYUVEncDSPContext::sub_hfyu_median_pred' data-ref="HuffYUVEncDSPContext::sub_hfyu_median_pred">sub_hfyu_median_pred</a> = <a class="tu ref" href="#sub_hfyu_median_pred_c" title='sub_hfyu_median_pred_c' data-use='r' data-ref="sub_hfyu_median_pred_c">sub_hfyu_median_pred_c</a>;</td></tr>
+<tr><th id="81">81</th><td></td></tr>
+<tr><th id="82">82</th><td>    <b>if</b> (<a class="macro" href="../config.h.html#38" title="1" data-ref="_M/ARCH_X86">ARCH_X86</a>)</td></tr>
+<tr><th id="83">83</th><td>        <a class="ref" href="huffyuvencdsp.h.html#ff_huffyuvencdsp_init_x86" title='ff_huffyuvencdsp_init_x86' data-ref="ff_huffyuvencdsp_init_x86">ff_huffyuvencdsp_init_x86</a>(<a class="local col8 ref" href="#18c" title='c' data-ref="18c">c</a>);</td></tr>
+<tr><th id="84">84</th><td>}</td></tr>
+<tr><th id="85">85</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

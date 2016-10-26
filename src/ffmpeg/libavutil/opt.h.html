@@ -1,0 +1,884 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>opt.h source code [ffmpeg/libavutil/opt.h] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="AVOption,AVOptionRange,AVOptionRanges,AVOptionType "/>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavutil/opt.h'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavutil</a>/<a href='opt.h.html'>opt.h</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * AVOptions</i></td></tr>
+<tr><th id="3">3</th><td><i> * copyright (c) 2005 Michael Niedermayer &lt;michaelni@gmx.at&gt;</i></td></tr>
+<tr><th id="4">4</th><td><i> *</i></td></tr>
+<tr><th id="5">5</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="8">8</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="9">9</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="10">10</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="11">11</th><td><i> *</i></td></tr>
+<tr><th id="12">12</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="13">13</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="14">14</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="15">15</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="16">16</th><td><i> *</i></td></tr>
+<tr><th id="17">17</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="18">18</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="19">19</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="20">20</th><td><i> */</i></td></tr>
+<tr><th id="21">21</th><td></td></tr>
+<tr><th id="22">22</th><td><u>#<span data-ppcond="22">ifndef</span> <span class="macro" data-ref="_M/AVUTIL_OPT_H">AVUTIL_OPT_H</span></u></td></tr>
+<tr><th id="23">23</th><td><u>#define <dfn class="macro" id="_M/AVUTIL_OPT_H" data-ref="_M/AVUTIL_OPT_H">AVUTIL_OPT_H</dfn></u></td></tr>
+<tr><th id="24">24</th><td></td></tr>
+<tr><th id="25">25</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="26">26</th><td><i class="doc"> *<span class="command"> @file</span></i></td></tr>
+<tr><th id="27">27</th><td><i class="doc"> * AVOptions</i></td></tr>
+<tr><th id="28">28</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="29">29</th><td></td></tr>
+<tr><th id="30">30</th><td><u>#include <a href="rational.h.html">"rational.h"</a></u></td></tr>
+<tr><th id="31">31</th><td><u>#include <a href="avutil.h.html">"avutil.h"</a></u></td></tr>
+<tr><th id="32">32</th><td><u>#include <a href="dict.h.html">"dict.h"</a></u></td></tr>
+<tr><th id="33">33</th><td><u>#include <a href="log.h.html">"log.h"</a></u></td></tr>
+<tr><th id="34">34</th><td><u>#include <a href="pixfmt.h.html">"pixfmt.h"</a></u></td></tr>
+<tr><th id="35">35</th><td><u>#include <a href="samplefmt.h.html">"samplefmt.h"</a></u></td></tr>
+<tr><th id="36">36</th><td><u>#include <a href="version.h.html">"version.h"</a></u></td></tr>
+<tr><th id="37">37</th><td></td></tr>
+<tr><th id="38">38</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="39">39</th><td><i class="doc"> * <span class="command">@defgroup</span> <span class="verb">avoptions AVOptions</span></i></td></tr>
+<tr><th id="40">40</th><td><i class="doc"> * <span class="command">@ingroup</span> <span class="verb">lavu_data</span></i></td></tr>
+<tr><th id="41">41</th><td><i class="doc"> * @{</i></td></tr>
+<tr><th id="42">42</th><td><i class="doc"> * AVOptions provide a generic system to declare options on arbitrary structs</i></td></tr>
+<tr><th id="43">43</th><td><i class="doc"> * ("objects"). An option can have a help text, a type and a range of possible</i></td></tr>
+<tr><th id="44">44</th><td><i class="doc"> * values. Options may then be enumerated, read and written to.</i></td></tr>
+<tr><th id="45">45</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="46">46</th><td><i class="doc"> * <span class="command">@section</span> <span class="verb">avoptions_implement Implementing AVOptions</span></i></td></tr>
+<tr><th id="47">47</th><td><i class="doc"> * This section describes how to add AVOptions capabilities to a struct.</i></td></tr>
+<tr><th id="48">48</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="49">49</th><td><i class="doc"> * All AVOptions-related information is stored in an AVClass. Therefore</i></td></tr>
+<tr><th id="50">50</th><td><i class="doc"> * the first member of the struct should be a pointer to an AVClass describing it.</i></td></tr>
+<tr><th id="51">51</th><td><i class="doc"> * The option field of the AVClass must be set to a NULL-terminated static array</i></td></tr>
+<tr><th id="52">52</th><td><i class="doc"> * of AVOptions. Each AVOption must have a non-empty name, a type, a default</i></td></tr>
+<tr><th id="53">53</th><td><i class="doc"> * value and for number-type AVOptions also a range of allowed values. It must</i></td></tr>
+<tr><th id="54">54</th><td><i class="doc"> * also declare an offset in bytes from the start of the struct, where the field</i></td></tr>
+<tr><th id="55">55</th><td><i class="doc"> * associated with this AVOption is located. Other fields in the AVOption struct</i></td></tr>
+<tr><th id="56">56</th><td><i class="doc"> * should also be set when applicable, but are not required.</i></td></tr>
+<tr><th id="57">57</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="58">58</th><td><i class="doc"> * The following example illustrates an AVOptions-enabled struct:</i></td></tr>
+<tr><th id="59">59</th><td><i class="doc"> * <span class="command">@code</span></i></td></tr>
+<tr><th id="60">60</th><td><i class="doc"> *<span class="verb"> typedef struct test_struct {</span></i></td></tr>
+<tr><th id="61">61</th><td><i class="doc"><span class="verb"></span> *<span class="verb">     const AVClass *class;</span></i></td></tr>
+<tr><th id="62">62</th><td><i class="doc"><span class="verb"></span> *<span class="verb">     int      int_opt;</span></i></td></tr>
+<tr><th id="63">63</th><td><i class="doc"><span class="verb"></span> *<span class="verb">     char    *str_opt;</span></i></td></tr>
+<tr><th id="64">64</th><td><i class="doc"><span class="verb"></span> *<span class="verb">     uint8_t *bin_opt;</span></i></td></tr>
+<tr><th id="65">65</th><td><i class="doc"><span class="verb"></span> *<span class="verb">     int      bin_len;</span></i></td></tr>
+<tr><th id="66">66</th><td><i class="doc"><span class="verb"></span> *<span class="verb"> } test_struct;</span></i></td></tr>
+<tr><th id="67">67</th><td><i class="doc"><span class="verb"></span> *<span class="verb"></span></i></td></tr>
+<tr><th id="68">68</th><td><i class="doc"><span class="verb"></span> *<span class="verb"> static const AVOption test_options[] = {</span></i></td></tr>
+<tr><th id="69">69</th><td><i class="doc"><span class="verb"></span> *<span class="verb">   { "test_int", "This is a test option of int type.", offsetof(test_struct, int_opt),</span></i></td></tr>
+<tr><th id="70">70</th><td><i class="doc"><span class="verb"></span> *<span class="verb">     AV_OPT_TYPE_INT, { .i64 = -1 }, INT_MIN, INT_MAX },</span></i></td></tr>
+<tr><th id="71">71</th><td><i class="doc"><span class="verb"></span> *<span class="verb">   { "test_str", "This is a test option of string type.", offsetof(test_struct, str_opt),</span></i></td></tr>
+<tr><th id="72">72</th><td><i class="doc"><span class="verb"></span> *<span class="verb">     AV_OPT_TYPE_STRING },</span></i></td></tr>
+<tr><th id="73">73</th><td><i class="doc"><span class="verb"></span> *<span class="verb">   { "test_bin", "This is a test option of binary type.", offsetof(test_struct, bin_opt),</span></i></td></tr>
+<tr><th id="74">74</th><td><i class="doc"><span class="verb"></span> *<span class="verb">     AV_OPT_TYPE_BINARY },</span></i></td></tr>
+<tr><th id="75">75</th><td><i class="doc"><span class="verb"></span> *<span class="verb">   { NULL },</span></i></td></tr>
+<tr><th id="76">76</th><td><i class="doc"><span class="verb"></span> *<span class="verb"> };</span></i></td></tr>
+<tr><th id="77">77</th><td><i class="doc"><span class="verb"></span> *<span class="verb"></span></i></td></tr>
+<tr><th id="78">78</th><td><i class="doc"><span class="verb"></span> *<span class="verb"> static const AVClass test_class = {</span></i></td></tr>
+<tr><th id="79">79</th><td><i class="doc"><span class="verb"></span> *<span class="verb">     .class_name = "test class",</span></i></td></tr>
+<tr><th id="80">80</th><td><i class="doc"><span class="verb"></span> *<span class="verb">     .item_name  = av_default_item_name,</span></i></td></tr>
+<tr><th id="81">81</th><td><i class="doc"><span class="verb"></span> *<span class="verb">     .option     = test_options,</span></i></td></tr>
+<tr><th id="82">82</th><td><i class="doc"><span class="verb"></span> *<span class="verb">     .version    = LIBAVUTIL_VERSION_INT,</span></i></td></tr>
+<tr><th id="83">83</th><td><i class="doc"><span class="verb"></span> *<span class="verb"> };</span></i></td></tr>
+<tr><th id="84">84</th><td><i class="doc"><span class="verb"></span> * @endcode</i></td></tr>
+<tr><th id="85">85</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="86">86</th><td><i class="doc"> * Next, when allocating your struct, you must ensure that the AVClass pointer</i></td></tr>
+<tr><th id="87">87</th><td><i class="doc"> * is set to the correct value. Then, av_opt_set_defaults() can be called to</i></td></tr>
+<tr><th id="88">88</th><td><i class="doc"> * initialize defaults. After that the struct is ready to be used with the</i></td></tr>
+<tr><th id="89">89</th><td><i class="doc"> * AVOptions API.</i></td></tr>
+<tr><th id="90">90</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="91">91</th><td><i class="doc"> * When cleaning up, you may use the av_opt_free() function to automatically</i></td></tr>
+<tr><th id="92">92</th><td><i class="doc"> * free all the allocated string and binary options.</i></td></tr>
+<tr><th id="93">93</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="94">94</th><td><i class="doc"> * Continuing with the above example:</i></td></tr>
+<tr><th id="95">95</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="96">96</th><td><i class="doc"> * <span class="command">@code</span></i></td></tr>
+<tr><th id="97">97</th><td><i class="doc"> *<span class="verb"> test_struct *alloc_test_struct(void)</span></i></td></tr>
+<tr><th id="98">98</th><td><i class="doc"><span class="verb"></span> *<span class="verb"> {</span></i></td></tr>
+<tr><th id="99">99</th><td><i class="doc"><span class="verb"></span> *<span class="verb">     test_struct *ret = av_mallocz(sizeof(*ret));</span></i></td></tr>
+<tr><th id="100">100</th><td><i class="doc"><span class="verb"></span> *<span class="verb">     ret-&gt;class = &amp;test_class;</span></i></td></tr>
+<tr><th id="101">101</th><td><i class="doc"><span class="verb"></span> *<span class="verb">     av_opt_set_defaults(ret);</span></i></td></tr>
+<tr><th id="102">102</th><td><i class="doc"><span class="verb"></span> *<span class="verb">     return ret;</span></i></td></tr>
+<tr><th id="103">103</th><td><i class="doc"><span class="verb"></span> *<span class="verb"> }</span></i></td></tr>
+<tr><th id="104">104</th><td><i class="doc"><span class="verb"></span> *<span class="verb"> void free_test_struct(test_struct **foo)</span></i></td></tr>
+<tr><th id="105">105</th><td><i class="doc"><span class="verb"></span> *<span class="verb"> {</span></i></td></tr>
+<tr><th id="106">106</th><td><i class="doc"><span class="verb"></span> *<span class="verb">     av_opt_free(*foo);</span></i></td></tr>
+<tr><th id="107">107</th><td><i class="doc"><span class="verb"></span> *<span class="verb">     av_freep(foo);</span></i></td></tr>
+<tr><th id="108">108</th><td><i class="doc"><span class="verb"></span> *<span class="verb"> }</span></i></td></tr>
+<tr><th id="109">109</th><td><i class="doc"><span class="verb"></span> * @endcode</i></td></tr>
+<tr><th id="110">110</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="111">111</th><td><i class="doc"> * <span class="command">@subsection</span> <span class="verb">avoptions_implement_nesting Nesting</span></i></td></tr>
+<tr><th id="112">112</th><td><i class="doc"> *      It may happen that an AVOptions-enabled struct contains another</i></td></tr>
+<tr><th id="113">113</th><td><i class="doc"> *      AVOptions-enabled struct as a member (e.g. AVCodecContext in</i></td></tr>
+<tr><th id="114">114</th><td><i class="doc"> *      libavcodec exports generic options, while its priv_data field exports</i></td></tr>
+<tr><th id="115">115</th><td><i class="doc"> *      codec-specific options). In such a case, it is possible to set up the</i></td></tr>
+<tr><th id="116">116</th><td><i class="doc"> *      parent struct to export a child's options. To do that, simply</i></td></tr>
+<tr><th id="117">117</th><td><i class="doc"> *      implement AVClass.child_next() and AVClass.child_class_next() in the</i></td></tr>
+<tr><th id="118">118</th><td><i class="doc"> *      parent struct's AVClass.</i></td></tr>
+<tr><th id="119">119</th><td><i class="doc"> *      Assuming that the test_struct from above now also contains a</i></td></tr>
+<tr><th id="120">120</th><td><i class="doc"> *      child_struct field:</i></td></tr>
+<tr><th id="121">121</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="122">122</th><td><i class="doc"> *      <span class="command">@code</span></i></td></tr>
+<tr><th id="123">123</th><td><i class="doc"> *<span class="verb">      typedef struct child_struct {</span></i></td></tr>
+<tr><th id="124">124</th><td><i class="doc"><span class="verb"></span> *<span class="verb">          AVClass *class;</span></i></td></tr>
+<tr><th id="125">125</th><td><i class="doc"><span class="verb"></span> *<span class="verb">          int flags_opt;</span></i></td></tr>
+<tr><th id="126">126</th><td><i class="doc"><span class="verb"></span> *<span class="verb">      } child_struct;</span></i></td></tr>
+<tr><th id="127">127</th><td><i class="doc"><span class="verb"></span> *<span class="verb">      static const AVOption child_opts[] = {</span></i></td></tr>
+<tr><th id="128">128</th><td><i class="doc"><span class="verb"></span> *<span class="verb">          { "test_flags", "This is a test option of flags type.",</span></i></td></tr>
+<tr><th id="129">129</th><td><i class="doc"><span class="verb"></span> *<span class="verb">            offsetof(child_struct, flags_opt), AV_OPT_TYPE_FLAGS, { .i64 = 0 }, INT_MIN, INT_MAX },</span></i></td></tr>
+<tr><th id="130">130</th><td><i class="doc"><span class="verb"></span> *<span class="verb">          { NULL },</span></i></td></tr>
+<tr><th id="131">131</th><td><i class="doc"><span class="verb"></span> *<span class="verb">      };</span></i></td></tr>
+<tr><th id="132">132</th><td><i class="doc"><span class="verb"></span> *<span class="verb">      static const AVClass child_class = {</span></i></td></tr>
+<tr><th id="133">133</th><td><i class="doc"><span class="verb"></span> *<span class="verb">          .class_name = "child class",</span></i></td></tr>
+<tr><th id="134">134</th><td><i class="doc"><span class="verb"></span> *<span class="verb">          .item_name  = av_default_item_name,</span></i></td></tr>
+<tr><th id="135">135</th><td><i class="doc"><span class="verb"></span> *<span class="verb">          .option     = child_opts,</span></i></td></tr>
+<tr><th id="136">136</th><td><i class="doc"><span class="verb"></span> *<span class="verb">          .version    = LIBAVUTIL_VERSION_INT,</span></i></td></tr>
+<tr><th id="137">137</th><td><i class="doc"><span class="verb"></span> *<span class="verb">      };</span></i></td></tr>
+<tr><th id="138">138</th><td><i class="doc"><span class="verb"></span> *<span class="verb"></span></i></td></tr>
+<tr><th id="139">139</th><td><i class="doc"><span class="verb"></span> *<span class="verb">      void *child_next(void *obj, void *prev)</span></i></td></tr>
+<tr><th id="140">140</th><td><i class="doc"><span class="verb"></span> *<span class="verb">      {</span></i></td></tr>
+<tr><th id="141">141</th><td><i class="doc"><span class="verb"></span> *<span class="verb">          test_struct *t = obj;</span></i></td></tr>
+<tr><th id="142">142</th><td><i class="doc"><span class="verb"></span> *<span class="verb">          if (!prev &amp;&amp; t-&gt;child_struct)</span></i></td></tr>
+<tr><th id="143">143</th><td><i class="doc"><span class="verb"></span> *<span class="verb">              return t-&gt;child_struct;</span></i></td></tr>
+<tr><th id="144">144</th><td><i class="doc"><span class="verb"></span> *<span class="verb">          return NULL</span></i></td></tr>
+<tr><th id="145">145</th><td><i class="doc"><span class="verb"></span> *<span class="verb">      }</span></i></td></tr>
+<tr><th id="146">146</th><td><i class="doc"><span class="verb"></span> *<span class="verb">      const AVClass child_class_next(const AVClass *prev)</span></i></td></tr>
+<tr><th id="147">147</th><td><i class="doc"><span class="verb"></span> *<span class="verb">      {</span></i></td></tr>
+<tr><th id="148">148</th><td><i class="doc"><span class="verb"></span> *<span class="verb">          return prev ? NULL : &amp;child_class;</span></i></td></tr>
+<tr><th id="149">149</th><td><i class="doc"><span class="verb"></span> *<span class="verb">      }</span></i></td></tr>
+<tr><th id="150">150</th><td><i class="doc"><span class="verb"></span> *      @endcode</i></td></tr>
+<tr><th id="151">151</th><td><i class="doc"> *      Putting child_next() and child_class_next() as defined above into</i></td></tr>
+<tr><th id="152">152</th><td><i class="doc"> *      test_class will now make child_struct's options accessible through</i></td></tr>
+<tr><th id="153">153</th><td><i class="doc"> *      test_struct (again, proper setup as described above needs to be done on</i></td></tr>
+<tr><th id="154">154</th><td><i class="doc"> *      child_struct right after it is created).</i></td></tr>
+<tr><th id="155">155</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="156">156</th><td><i class="doc"> *      From the above example it might not be clear why both child_next()</i></td></tr>
+<tr><th id="157">157</th><td><i class="doc"> *      and child_class_next() are needed. The distinction is that child_next()</i></td></tr>
+<tr><th id="158">158</th><td><i class="doc"> *      iterates over actually existing objects, while child_class_next()</i></td></tr>
+<tr><th id="159">159</th><td><i class="doc"> *      iterates over all possible child classes. E.g. if an AVCodecContext</i></td></tr>
+<tr><th id="160">160</th><td><i class="doc"> *      was initialized to use a codec which has private options, then its</i></td></tr>
+<tr><th id="161">161</th><td><i class="doc"> *      child_next() will return AVCodecContext.priv_data and finish</i></td></tr>
+<tr><th id="162">162</th><td><i class="doc"> *      iterating. OTOH child_class_next() on AVCodecContext.av_class will</i></td></tr>
+<tr><th id="163">163</th><td><i class="doc"> *      iterate over all available codecs with private options.</i></td></tr>
+<tr><th id="164">164</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="165">165</th><td><i class="doc"> * <span class="command">@subsection</span> <span class="verb">avoptions_implement_named_constants Named constants</span></i></td></tr>
+<tr><th id="166">166</th><td><i class="doc"> *      It is possible to create named constants for options. Simply set the unit</i></td></tr>
+<tr><th id="167">167</th><td><i class="doc"> *      field of the option the constants should apply to a string and</i></td></tr>
+<tr><th id="168">168</th><td><i class="doc"> *      create the constants themselves as options of type AV_OPT_TYPE_CONST</i></td></tr>
+<tr><th id="169">169</th><td><i class="doc"> *      with their unit field set to the same string.</i></td></tr>
+<tr><th id="170">170</th><td><i class="doc"> *      Their default_val field should contain the value of the named</i></td></tr>
+<tr><th id="171">171</th><td><i class="doc"> *      constant.</i></td></tr>
+<tr><th id="172">172</th><td><i class="doc"> *      For example, to add some named constants for the test_flags option</i></td></tr>
+<tr><th id="173">173</th><td><i class="doc"> *      above, put the following into the child_opts array:</i></td></tr>
+<tr><th id="174">174</th><td><i class="doc"> *      <span class="command">@code</span></i></td></tr>
+<tr><th id="175">175</th><td><i class="doc"> *<span class="verb">      { "test_flags", "This is a test option of flags type.",</span></i></td></tr>
+<tr><th id="176">176</th><td><i class="doc"><span class="verb"></span> *<span class="verb">        offsetof(child_struct, flags_opt), AV_OPT_TYPE_FLAGS, { .i64 = 0 }, INT_MIN, INT_MAX, "test_unit" },</span></i></td></tr>
+<tr><th id="177">177</th><td><i class="doc"><span class="verb"></span> *<span class="verb">      { "flag1", "This is a flag with value 16", 0, AV_OPT_TYPE_CONST, { .i64 = 16 }, 0, 0, "test_unit" },</span></i></td></tr>
+<tr><th id="178">178</th><td><i class="doc"><span class="verb"></span> *      @endcode</i></td></tr>
+<tr><th id="179">179</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="180">180</th><td><i class="doc"> * <span class="command">@section</span> <span class="verb">avoptions_use Using AVOptions</span></i></td></tr>
+<tr><th id="181">181</th><td><i class="doc"> * This section deals with accessing options in an AVOptions-enabled struct.</i></td></tr>
+<tr><th id="182">182</th><td><i class="doc"> * Such structs in FFmpeg are e.g. AVCodecContext in libavcodec or</i></td></tr>
+<tr><th id="183">183</th><td><i class="doc"> * AVFormatContext in libavformat.</i></td></tr>
+<tr><th id="184">184</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="185">185</th><td><i class="doc"> * <span class="command">@subsection</span> <span class="verb">avoptions_use_examine Examining AVOptions</span></i></td></tr>
+<tr><th id="186">186</th><td><i class="doc"> * The basic functions for examining options are av_opt_next(), which iterates</i></td></tr>
+<tr><th id="187">187</th><td><i class="doc"> * over all options defined for one object, and av_opt_find(), which searches</i></td></tr>
+<tr><th id="188">188</th><td><i class="doc"> * for an option with the given name.</i></td></tr>
+<tr><th id="189">189</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="190">190</th><td><i class="doc"> * The situation is more complicated with nesting. An AVOptions-enabled struct</i></td></tr>
+<tr><th id="191">191</th><td><i class="doc"> * may have AVOptions-enabled children. Passing the AV_OPT_SEARCH_CHILDREN flag</i></td></tr>
+<tr><th id="192">192</th><td><i class="doc"> * to av_opt_find() will make the function search children recursively.</i></td></tr>
+<tr><th id="193">193</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="194">194</th><td><i class="doc"> * For enumerating there are basically two cases. The first is when you want to</i></td></tr>
+<tr><th id="195">195</th><td><i class="doc"> * get all options that may potentially exist on the struct and its children</i></td></tr>
+<tr><th id="196">196</th><td><i class="doc"> * (e.g.  when constructing documentation). In that case you should call</i></td></tr>
+<tr><th id="197">197</th><td><i class="doc"> * av_opt_child_class_next() recursively on the parent struct's AVClass.  The</i></td></tr>
+<tr><th id="198">198</th><td><i class="doc"> * second case is when you have an already initialized struct with all its</i></td></tr>
+<tr><th id="199">199</th><td><i class="doc"> * children and you want to get all options that can be actually written or read</i></td></tr>
+<tr><th id="200">200</th><td><i class="doc"> * from it. In that case you should call av_opt_child_next() recursively (and</i></td></tr>
+<tr><th id="201">201</th><td><i class="doc"> * av_opt_next() on each result).</i></td></tr>
+<tr><th id="202">202</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="203">203</th><td><i class="doc"> * <span class="command">@subsection</span> <span class="verb">avoptions_use_get_set Reading and writing AVOptions</span></i></td></tr>
+<tr><th id="204">204</th><td><i class="doc"> * When setting options, you often have a string read directly from the</i></td></tr>
+<tr><th id="205">205</th><td><i class="doc"> * user. In such a case, simply passing it to av_opt_set() is enough. For</i></td></tr>
+<tr><th id="206">206</th><td><i class="doc"> * non-string type options, av_opt_set() will parse the string according to the</i></td></tr>
+<tr><th id="207">207</th><td><i class="doc"> * option type.</i></td></tr>
+<tr><th id="208">208</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="209">209</th><td><i class="doc"> * Similarly av_opt_get() will read any option type and convert it to a string</i></td></tr>
+<tr><th id="210">210</th><td><i class="doc"> * which will be returned. Do not forget that the string is allocated, so you</i></td></tr>
+<tr><th id="211">211</th><td><i class="doc"> * have to free it with av_free().</i></td></tr>
+<tr><th id="212">212</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="213">213</th><td><i class="doc"> * In some cases it may be more convenient to put all options into an</i></td></tr>
+<tr><th id="214">214</th><td><i class="doc"> * AVDictionary and call av_opt_set_dict() on it. A specific case of this</i></td></tr>
+<tr><th id="215">215</th><td><i class="doc"> * are the format/codec open functions in lavf/lavc which take a dictionary</i></td></tr>
+<tr><th id="216">216</th><td><i class="doc"> * filled with option as a parameter. This makes it possible to set some options</i></td></tr>
+<tr><th id="217">217</th><td><i class="doc"> * that cannot be set otherwise, since e.g. the input file format is not known</i></td></tr>
+<tr><th id="218">218</th><td><i class="doc"> * before the file is actually opened.</i></td></tr>
+<tr><th id="219">219</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="220">220</th><td></td></tr>
+<tr><th id="221">221</th><td><b>enum</b> <dfn class="type def" id="AVOptionType" title='AVOptionType' data-ref="AVOptionType">AVOptionType</dfn>{</td></tr>
+<tr><th id="222">222</th><td>    <dfn class="enum" id="AVOptionType::AV_OPT_TYPE_FLAGS" title='AVOptionType::AV_OPT_TYPE_FLAGS' data-ref="AVOptionType::AV_OPT_TYPE_FLAGS">AV_OPT_TYPE_FLAGS</dfn>,</td></tr>
+<tr><th id="223">223</th><td>    <dfn class="enum" id="AVOptionType::AV_OPT_TYPE_INT" title='AVOptionType::AV_OPT_TYPE_INT' data-ref="AVOptionType::AV_OPT_TYPE_INT">AV_OPT_TYPE_INT</dfn>,</td></tr>
+<tr><th id="224">224</th><td>    <dfn class="enum" id="AVOptionType::AV_OPT_TYPE_INT64" title='AVOptionType::AV_OPT_TYPE_INT64' data-ref="AVOptionType::AV_OPT_TYPE_INT64">AV_OPT_TYPE_INT64</dfn>,</td></tr>
+<tr><th id="225">225</th><td>    <dfn class="enum" id="AVOptionType::AV_OPT_TYPE_DOUBLE" title='AVOptionType::AV_OPT_TYPE_DOUBLE' data-ref="AVOptionType::AV_OPT_TYPE_DOUBLE">AV_OPT_TYPE_DOUBLE</dfn>,</td></tr>
+<tr><th id="226">226</th><td>    <dfn class="enum" id="AVOptionType::AV_OPT_TYPE_FLOAT" title='AVOptionType::AV_OPT_TYPE_FLOAT' data-ref="AVOptionType::AV_OPT_TYPE_FLOAT">AV_OPT_TYPE_FLOAT</dfn>,</td></tr>
+<tr><th id="227">227</th><td>    <dfn class="enum" id="AVOptionType::AV_OPT_TYPE_STRING" title='AVOptionType::AV_OPT_TYPE_STRING' data-ref="AVOptionType::AV_OPT_TYPE_STRING">AV_OPT_TYPE_STRING</dfn>,</td></tr>
+<tr><th id="228">228</th><td>    <dfn class="enum" id="AVOptionType::AV_OPT_TYPE_RATIONAL" title='AVOptionType::AV_OPT_TYPE_RATIONAL' data-ref="AVOptionType::AV_OPT_TYPE_RATIONAL">AV_OPT_TYPE_RATIONAL</dfn>,</td></tr>
+<tr><th id="229">229</th><td>    <dfn class="enum" id="AVOptionType::AV_OPT_TYPE_BINARY" title='AVOptionType::AV_OPT_TYPE_BINARY' data-ref="AVOptionType::AV_OPT_TYPE_BINARY">AV_OPT_TYPE_BINARY</dfn>,  <i class="doc">///&lt; offset must point to a pointer immediately followed by an int for the length</i></td></tr>
+<tr><th id="230">230</th><td>    <dfn class="enum" id="AVOptionType::AV_OPT_TYPE_DICT" title='AVOptionType::AV_OPT_TYPE_DICT' data-ref="AVOptionType::AV_OPT_TYPE_DICT">AV_OPT_TYPE_DICT</dfn>,</td></tr>
+<tr><th id="231">231</th><td>    <dfn class="enum" id="AVOptionType::AV_OPT_TYPE_CONST" title='AVOptionType::AV_OPT_TYPE_CONST' data-ref="AVOptionType::AV_OPT_TYPE_CONST">AV_OPT_TYPE_CONST</dfn> = <var>128</var>,</td></tr>
+<tr><th id="232">232</th><td>    <dfn class="enum" id="AVOptionType::AV_OPT_TYPE_IMAGE_SIZE" title='AVOptionType::AV_OPT_TYPE_IMAGE_SIZE' data-ref="AVOptionType::AV_OPT_TYPE_IMAGE_SIZE">AV_OPT_TYPE_IMAGE_SIZE</dfn> = <a class="macro" href="common.h.html#343" title="((&apos;E&apos;) | ((&apos;Z&apos;) &lt;&lt; 8) | ((&apos;I&apos;) &lt;&lt; 16) | ((unsigned)(&apos;S&apos;) &lt;&lt; 24))" data-ref="_M/MKBETAG">MKBETAG</a>(<kbd>'S'</kbd>,<kbd>'I'</kbd>,<kbd>'Z'</kbd>,<kbd>'E'</kbd>), <i class="doc">///&lt; offset must point to two consecutive integers</i></td></tr>
+<tr><th id="233">233</th><td>    <dfn class="enum" id="AVOptionType::AV_OPT_TYPE_PIXEL_FMT" title='AVOptionType::AV_OPT_TYPE_PIXEL_FMT' data-ref="AVOptionType::AV_OPT_TYPE_PIXEL_FMT">AV_OPT_TYPE_PIXEL_FMT</dfn>  = <a class="macro" href="common.h.html#343" title="((&apos;T&apos;) | ((&apos;M&apos;) &lt;&lt; 8) | ((&apos;F&apos;) &lt;&lt; 16) | ((unsigned)(&apos;P&apos;) &lt;&lt; 24))" data-ref="_M/MKBETAG">MKBETAG</a>(<kbd>'P'</kbd>,<kbd>'F'</kbd>,<kbd>'M'</kbd>,<kbd>'T'</kbd>),</td></tr>
+<tr><th id="234">234</th><td>    <dfn class="enum" id="AVOptionType::AV_OPT_TYPE_SAMPLE_FMT" title='AVOptionType::AV_OPT_TYPE_SAMPLE_FMT' data-ref="AVOptionType::AV_OPT_TYPE_SAMPLE_FMT">AV_OPT_TYPE_SAMPLE_FMT</dfn> = <a class="macro" href="common.h.html#343" title="((&apos;T&apos;) | ((&apos;M&apos;) &lt;&lt; 8) | ((&apos;F&apos;) &lt;&lt; 16) | ((unsigned)(&apos;S&apos;) &lt;&lt; 24))" data-ref="_M/MKBETAG">MKBETAG</a>(<kbd>'S'</kbd>,<kbd>'F'</kbd>,<kbd>'M'</kbd>,<kbd>'T'</kbd>),</td></tr>
+<tr><th id="235">235</th><td>    <dfn class="enum" id="AVOptionType::AV_OPT_TYPE_VIDEO_RATE" title='AVOptionType::AV_OPT_TYPE_VIDEO_RATE' data-ref="AVOptionType::AV_OPT_TYPE_VIDEO_RATE">AV_OPT_TYPE_VIDEO_RATE</dfn> = <a class="macro" href="common.h.html#343" title="((&apos;T&apos;) | ((&apos;A&apos;) &lt;&lt; 8) | ((&apos;R&apos;) &lt;&lt; 16) | ((unsigned)(&apos;V&apos;) &lt;&lt; 24))" data-ref="_M/MKBETAG">MKBETAG</a>(<kbd>'V'</kbd>,<kbd>'R'</kbd>,<kbd>'A'</kbd>,<kbd>'T'</kbd>), <i class="doc">///&lt; offset must point to AVRational</i></td></tr>
+<tr><th id="236">236</th><td>    <dfn class="enum" id="AVOptionType::AV_OPT_TYPE_DURATION" title='AVOptionType::AV_OPT_TYPE_DURATION' data-ref="AVOptionType::AV_OPT_TYPE_DURATION">AV_OPT_TYPE_DURATION</dfn>   = <a class="macro" href="common.h.html#343" title="((&apos; &apos;) | ((&apos;R&apos;) &lt;&lt; 8) | ((&apos;U&apos;) &lt;&lt; 16) | ((unsigned)(&apos;D&apos;) &lt;&lt; 24))" data-ref="_M/MKBETAG">MKBETAG</a>(<kbd>'D'</kbd>,<kbd>'U'</kbd>,<kbd>'R'</kbd>,<kbd>' '</kbd>),</td></tr>
+<tr><th id="237">237</th><td>    <dfn class="enum" id="AVOptionType::AV_OPT_TYPE_COLOR" title='AVOptionType::AV_OPT_TYPE_COLOR' data-ref="AVOptionType::AV_OPT_TYPE_COLOR">AV_OPT_TYPE_COLOR</dfn>      = <a class="macro" href="common.h.html#343" title="((&apos;R&apos;) | ((&apos;L&apos;) &lt;&lt; 8) | ((&apos;O&apos;) &lt;&lt; 16) | ((unsigned)(&apos;C&apos;) &lt;&lt; 24))" data-ref="_M/MKBETAG">MKBETAG</a>(<kbd>'C'</kbd>,<kbd>'O'</kbd>,<kbd>'L'</kbd>,<kbd>'R'</kbd>),</td></tr>
+<tr><th id="238">238</th><td>    <dfn class="enum" id="AVOptionType::AV_OPT_TYPE_CHANNEL_LAYOUT" title='AVOptionType::AV_OPT_TYPE_CHANNEL_LAYOUT' data-ref="AVOptionType::AV_OPT_TYPE_CHANNEL_LAYOUT">AV_OPT_TYPE_CHANNEL_LAYOUT</dfn> = <a class="macro" href="common.h.html#343" title="((&apos;A&apos;) | ((&apos;L&apos;) &lt;&lt; 8) | ((&apos;H&apos;) &lt;&lt; 16) | ((unsigned)(&apos;C&apos;) &lt;&lt; 24))" data-ref="_M/MKBETAG">MKBETAG</a>(<kbd>'C'</kbd>,<kbd>'H'</kbd>,<kbd>'L'</kbd>,<kbd>'A'</kbd>),</td></tr>
+<tr><th id="239">239</th><td>    <dfn class="enum" id="AVOptionType::AV_OPT_TYPE_BOOL" title='AVOptionType::AV_OPT_TYPE_BOOL' data-ref="AVOptionType::AV_OPT_TYPE_BOOL">AV_OPT_TYPE_BOOL</dfn>           = <a class="macro" href="common.h.html#343" title="((&apos;L&apos;) | ((&apos;O&apos;) &lt;&lt; 8) | ((&apos;O&apos;) &lt;&lt; 16) | ((unsigned)(&apos;B&apos;) &lt;&lt; 24))" data-ref="_M/MKBETAG">MKBETAG</a>(<kbd>'B'</kbd>,<kbd>'O'</kbd>,<kbd>'O'</kbd>,<kbd>'L'</kbd>),</td></tr>
+<tr><th id="240">240</th><td>};</td></tr>
+<tr><th id="241">241</th><td></td></tr>
+<tr><th id="242">242</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="243">243</th><td><i class="doc"> * AVOption</i></td></tr>
+<tr><th id="244">244</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="245">245</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="AVOption" title='AVOption' data-ref="AVOption"><a class="type" href="#AVOption" title='AVOption' data-ref="AVOption">AVOption</a></dfn> {</td></tr>
+<tr><th id="246">246</th><td>    <em>const</em> <em>char</em> *<dfn class="decl" id="AVOption::name" title='AVOption::name' data-ref="AVOption::name">name</dfn>;</td></tr>
+<tr><th id="247">247</th><td></td></tr>
+<tr><th id="248">248</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="249">249</th><td><i class="doc">     * short English help text</i></td></tr>
+<tr><th id="250">250</th><td><i class="doc">     * <span class="command">@todo</span> What about other languages?</i></td></tr>
+<tr><th id="251">251</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="252">252</th><td>    <em>const</em> <em>char</em> *<dfn class="decl" id="AVOption::help" title='AVOption::help' data-ref="AVOption::help">help</dfn>;</td></tr>
+<tr><th id="253">253</th><td></td></tr>
+<tr><th id="254">254</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="255">255</th><td><i class="doc">     * The offset relative to the context structure where the option</i></td></tr>
+<tr><th id="256">256</th><td><i class="doc">     * value is stored. It should be 0 for named constants.</i></td></tr>
+<tr><th id="257">257</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="258">258</th><td>    <em>int</em> <dfn class="decl" id="AVOption::offset" title='AVOption::offset' data-ref="AVOption::offset">offset</dfn>;</td></tr>
+<tr><th id="259">259</th><td>    <b>enum</b> <a class="type" href="#AVOptionType" title='AVOptionType' data-ref="AVOptionType">AVOptionType</a> <dfn class="decl" id="AVOption::type" title='AVOption::type' data-ref="AVOption::type">type</dfn>;</td></tr>
+<tr><th id="260">260</th><td></td></tr>
+<tr><th id="261">261</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="262">262</th><td><i class="doc">     * the default value for scalar options</i></td></tr>
+<tr><th id="263">263</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="264">264</th><td>    <b>union</b> {</td></tr>
+<tr><th id="265">265</th><td>        <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="decl" id="AVOption::{anonymous}::i64" title='AVOption::&lt;anonymous union&gt;::i64' data-ref="AVOption::{anonymous}::i64">i64</dfn>;</td></tr>
+<tr><th id="266">266</th><td>        <em>double</em> <dfn class="decl" id="AVOption::{anonymous}::dbl" title='AVOption::&lt;anonymous union&gt;::dbl' data-ref="AVOption::{anonymous}::dbl">dbl</dfn>;</td></tr>
+<tr><th id="267">267</th><td>        <em>const</em> <em>char</em> *<dfn class="decl" id="AVOption::{anonymous}::str" title='AVOption::&lt;anonymous union&gt;::str' data-ref="AVOption::{anonymous}::str">str</dfn>;</td></tr>
+<tr><th id="268">268</th><td>        <i>/* TODO those are unused now */</i></td></tr>
+<tr><th id="269">269</th><td>        <a class="typedef" href="rational.h.html#AVRational" title='AVRational' data-type='struct AVRational' data-ref="AVRational">AVRational</a> <dfn class="decl" id="AVOption::{anonymous}::q" title='AVOption::&lt;anonymous union&gt;::q' data-ref="AVOption::{anonymous}::q">q</dfn>;</td></tr>
+<tr><th id="270">270</th><td>    } <dfn class="decl" id="AVOption::default_val" title='AVOption::default_val' data-ref="AVOption::default_val">default_val</dfn>;</td></tr>
+<tr><th id="271">271</th><td>    <em>double</em> <dfn class="decl" id="AVOption::min" title='AVOption::min' data-ref="AVOption::min">min</dfn>;                 <i class="doc">///&lt; minimum valid value for the option</i></td></tr>
+<tr><th id="272">272</th><td>    <em>double</em> <dfn class="decl" id="AVOption::max" title='AVOption::max' data-ref="AVOption::max">max</dfn>;                 <i class="doc">///&lt; maximum valid value for the option</i></td></tr>
+<tr><th id="273">273</th><td></td></tr>
+<tr><th id="274">274</th><td>    <em>int</em> <dfn class="decl" id="AVOption::flags" title='AVOption::flags' data-ref="AVOption::flags">flags</dfn>;</td></tr>
+<tr><th id="275">275</th><td><u>#define <dfn class="macro" id="_M/AV_OPT_FLAG_ENCODING_PARAM" data-ref="_M/AV_OPT_FLAG_ENCODING_PARAM">AV_OPT_FLAG_ENCODING_PARAM</dfn>  1   ///&lt; a generic parameter which can be set by the user for muxing or encoding</u></td></tr>
+<tr><th id="276">276</th><td><u>#define <dfn class="macro" id="_M/AV_OPT_FLAG_DECODING_PARAM" data-ref="_M/AV_OPT_FLAG_DECODING_PARAM">AV_OPT_FLAG_DECODING_PARAM</dfn>  2   ///&lt; a generic parameter which can be set by the user for demuxing or decoding</u></td></tr>
+<tr><th id="277">277</th><td><u>#<span data-ppcond="277">if</span> <a class="macro" href="version.h.html#115" title="(55 &lt; 56)" data-ref="_M/FF_API_OPT_TYPE_METADATA">FF_API_OPT_TYPE_METADATA</a></u></td></tr>
+<tr><th id="278">278</th><td><u>#define <dfn class="macro" id="_M/AV_OPT_FLAG_METADATA" data-ref="_M/AV_OPT_FLAG_METADATA">AV_OPT_FLAG_METADATA</dfn>        4   ///&lt; some data extracted or inserted into the file like title, comment, ...</u></td></tr>
+<tr><th id="279">279</th><td><u>#<span data-ppcond="277">endif</span></u></td></tr>
+<tr><th id="280">280</th><td><u>#define <dfn class="macro" id="_M/AV_OPT_FLAG_AUDIO_PARAM" data-ref="_M/AV_OPT_FLAG_AUDIO_PARAM">AV_OPT_FLAG_AUDIO_PARAM</dfn>     8</u></td></tr>
+<tr><th id="281">281</th><td><u>#define <dfn class="macro" id="_M/AV_OPT_FLAG_VIDEO_PARAM" data-ref="_M/AV_OPT_FLAG_VIDEO_PARAM">AV_OPT_FLAG_VIDEO_PARAM</dfn>     16</u></td></tr>
+<tr><th id="282">282</th><td><u>#define <dfn class="macro" id="_M/AV_OPT_FLAG_SUBTITLE_PARAM" data-ref="_M/AV_OPT_FLAG_SUBTITLE_PARAM">AV_OPT_FLAG_SUBTITLE_PARAM</dfn>  32</u></td></tr>
+<tr><th id="283">283</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="284">284</th><td><i class="doc"> * The option is intended for exporting values to the caller.</i></td></tr>
+<tr><th id="285">285</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="286">286</th><td><u>#define <dfn class="macro" id="_M/AV_OPT_FLAG_EXPORT" data-ref="_M/AV_OPT_FLAG_EXPORT">AV_OPT_FLAG_EXPORT</dfn>          64</u></td></tr>
+<tr><th id="287">287</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="288">288</th><td><i class="doc"> * The option may not be set through the AVOptions API, only read.</i></td></tr>
+<tr><th id="289">289</th><td><i class="doc"> * This flag only makes sense when AV_OPT_FLAG_EXPORT is also set.</i></td></tr>
+<tr><th id="290">290</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="291">291</th><td><u>#define <dfn class="macro" id="_M/AV_OPT_FLAG_READONLY" data-ref="_M/AV_OPT_FLAG_READONLY">AV_OPT_FLAG_READONLY</dfn>        128</u></td></tr>
+<tr><th id="292">292</th><td><u>#define <dfn class="macro" id="_M/AV_OPT_FLAG_FILTERING_PARAM" data-ref="_M/AV_OPT_FLAG_FILTERING_PARAM">AV_OPT_FLAG_FILTERING_PARAM</dfn> (1&lt;&lt;16) ///&lt; a generic parameter which can be set by the user for filtering</u></td></tr>
+<tr><th id="293">293</th><td><i>//FIXME think about enc-audio, ... style flags</i></td></tr>
+<tr><th id="294">294</th><td></td></tr>
+<tr><th id="295">295</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="296">296</th><td><i class="doc">     * The logical unit to which the option belongs. Non-constant</i></td></tr>
+<tr><th id="297">297</th><td><i class="doc">     * options and corresponding named constants share the same</i></td></tr>
+<tr><th id="298">298</th><td><i class="doc">     * unit. May be NULL.</i></td></tr>
+<tr><th id="299">299</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="300">300</th><td>    <em>const</em> <em>char</em> *<dfn class="decl" id="AVOption::unit" title='AVOption::unit' data-ref="AVOption::unit">unit</dfn>;</td></tr>
+<tr><th id="301">301</th><td>} <dfn class="typedef" id="AVOption" title='AVOption' data-type='struct AVOption' data-ref="AVOption">AVOption</dfn>;</td></tr>
+<tr><th id="302">302</th><td></td></tr>
+<tr><th id="303">303</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="304">304</th><td><i class="doc"> * A single allowed range of values, or a single allowed value.</i></td></tr>
+<tr><th id="305">305</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="306">306</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="AVOptionRange" title='AVOptionRange' data-ref="AVOptionRange"><a class="type" href="#AVOptionRange" title='AVOptionRange' data-ref="AVOptionRange">AVOptionRange</a></dfn> {</td></tr>
+<tr><th id="307">307</th><td>    <em>const</em> <em>char</em> *<dfn class="decl" id="AVOptionRange::str" title='AVOptionRange::str' data-ref="AVOptionRange::str">str</dfn>;</td></tr>
+<tr><th id="308">308</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="309">309</th><td><i class="doc">     * Value range.</i></td></tr>
+<tr><th id="310">310</th><td><i class="doc">     * For string ranges this represents the min/max length.</i></td></tr>
+<tr><th id="311">311</th><td><i class="doc">     * For dimensions this represents the min/max pixel count or width/height in multi-component case.</i></td></tr>
+<tr><th id="312">312</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="313">313</th><td>    <em>double</em> <dfn class="decl" id="AVOptionRange::value_min" title='AVOptionRange::value_min' data-ref="AVOptionRange::value_min">value_min</dfn>, <dfn class="decl" id="AVOptionRange::value_max" title='AVOptionRange::value_max' data-ref="AVOptionRange::value_max">value_max</dfn>;</td></tr>
+<tr><th id="314">314</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="315">315</th><td><i class="doc">     * Value's component range.</i></td></tr>
+<tr><th id="316">316</th><td><i class="doc">     * For string this represents the unicode range for chars, 0-127 limits to ASCII.</i></td></tr>
+<tr><th id="317">317</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="318">318</th><td>    <em>double</em> <dfn class="decl" id="AVOptionRange::component_min" title='AVOptionRange::component_min' data-ref="AVOptionRange::component_min">component_min</dfn>, <dfn class="decl" id="AVOptionRange::component_max" title='AVOptionRange::component_max' data-ref="AVOptionRange::component_max">component_max</dfn>;</td></tr>
+<tr><th id="319">319</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="320">320</th><td><i class="doc">     * Range flag.</i></td></tr>
+<tr><th id="321">321</th><td><i class="doc">     * If set to 1 the struct encodes a range, if set to 0 a single value.</i></td></tr>
+<tr><th id="322">322</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="323">323</th><td>    <em>int</em> <dfn class="decl" id="AVOptionRange::is_range" title='AVOptionRange::is_range' data-ref="AVOptionRange::is_range">is_range</dfn>;</td></tr>
+<tr><th id="324">324</th><td>} <dfn class="typedef" id="AVOptionRange" title='AVOptionRange' data-type='struct AVOptionRange' data-ref="AVOptionRange">AVOptionRange</dfn>;</td></tr>
+<tr><th id="325">325</th><td></td></tr>
+<tr><th id="326">326</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="327">327</th><td><i class="doc"> * List of AVOptionRange structs.</i></td></tr>
+<tr><th id="328">328</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="329">329</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="AVOptionRanges" title='AVOptionRanges' data-ref="AVOptionRanges"><a class="type" href="#AVOptionRanges" title='AVOptionRanges' data-ref="AVOptionRanges">AVOptionRanges</a></dfn> {</td></tr>
+<tr><th id="330">330</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="331">331</th><td><i class="doc">     * Array of option ranges.</i></td></tr>
+<tr><th id="332">332</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="333">333</th><td><i class="doc">     * Most of option types use just one component.</i></td></tr>
+<tr><th id="334">334</th><td><i class="doc">     * Following describes multi-component option types:</i></td></tr>
+<tr><th id="335">335</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="336">336</th><td><i class="doc">     * AV_OPT_TYPE_IMAGE_SIZE:</i></td></tr>
+<tr><th id="337">337</th><td><i class="doc">     * component index 0: range of pixel count (width * height).</i></td></tr>
+<tr><th id="338">338</th><td><i class="doc">     * component index 1: range of width.</i></td></tr>
+<tr><th id="339">339</th><td><i class="doc">     * component index 2: range of height.</i></td></tr>
+<tr><th id="340">340</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="341">341</th><td><i class="doc">     * <span class="command">@note</span> To obtain multi-component version of this structure, user must</i></td></tr>
+<tr><th id="342">342</th><td><i class="doc">     *       provide AV_OPT_MULTI_COMPONENT_RANGE to av_opt_query_ranges or</i></td></tr>
+<tr><th id="343">343</th><td><i class="doc">     *       av_opt_query_ranges_default function.</i></td></tr>
+<tr><th id="344">344</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="345">345</th><td><i class="doc">     * Multi-component range can be read as in following example:</i></td></tr>
+<tr><th id="346">346</th><td><i class="doc">     *</i></td></tr>
+<tr><th id="347">347</th><td><i class="doc">     * <span class="command">@code</span></i></td></tr>
+<tr><th id="348">348</th><td><i class="doc">     *<span class="verb"> int range_index, component_index;</span></i></td></tr>
+<tr><th id="349">349</th><td><i class="doc"><span class="verb"></span>     *<span class="verb"> AVOptionRanges *ranges;</span></i></td></tr>
+<tr><th id="350">350</th><td><i class="doc"><span class="verb"></span>     *<span class="verb"> AVOptionRange *range[3]; //may require more than 3 in the future.</span></i></td></tr>
+<tr><th id="351">351</th><td><i class="doc"><span class="verb"></span>     *<span class="verb"> av_opt_query_ranges(&amp;ranges, obj, key, AV_OPT_MULTI_COMPONENT_RANGE);</span></i></td></tr>
+<tr><th id="352">352</th><td><i class="doc"><span class="verb"></span>     *<span class="verb"> for (range_index = 0; range_index &lt; ranges-&gt;nb_ranges; range_index++) {</span></i></td></tr>
+<tr><th id="353">353</th><td><i class="doc"><span class="verb"></span>     *<span class="verb">     for (component_index = 0; component_index &lt; ranges-&gt;nb_components; component_index++)</span></i></td></tr>
+<tr><th id="354">354</th><td><i class="doc"><span class="verb"></span>     *<span class="verb">         range[component_index] = ranges-&gt;range[ranges-&gt;nb_ranges * component_index + range_index];</span></i></td></tr>
+<tr><th id="355">355</th><td><i class="doc"><span class="verb"></span>     *<span class="verb">     //do something with range here.</span></i></td></tr>
+<tr><th id="356">356</th><td><i class="doc"><span class="verb"></span>     *<span class="verb"> }</span></i></td></tr>
+<tr><th id="357">357</th><td><i class="doc"><span class="verb"></span>     *<span class="verb"> av_opt_freep_ranges(&amp;ranges);</span></i></td></tr>
+<tr><th id="358">358</th><td><i class="doc"><span class="verb"></span>     * @endcode</i></td></tr>
+<tr><th id="359">359</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="360">360</th><td>    <a class="typedef" href="#AVOptionRange" title='AVOptionRange' data-type='struct AVOptionRange' data-ref="AVOptionRange">AVOptionRange</a> **<dfn class="decl" id="AVOptionRanges::range" title='AVOptionRanges::range' data-ref="AVOptionRanges::range">range</dfn>;</td></tr>
+<tr><th id="361">361</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="362">362</th><td><i class="doc">     * Number of ranges per component.</i></td></tr>
+<tr><th id="363">363</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="364">364</th><td>    <em>int</em> <dfn class="decl" id="AVOptionRanges::nb_ranges" title='AVOptionRanges::nb_ranges' data-ref="AVOptionRanges::nb_ranges">nb_ranges</dfn>;</td></tr>
+<tr><th id="365">365</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="366">366</th><td><i class="doc">     * Number of componentes.</i></td></tr>
+<tr><th id="367">367</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="368">368</th><td>    <em>int</em> <dfn class="decl" id="AVOptionRanges::nb_components" title='AVOptionRanges::nb_components' data-ref="AVOptionRanges::nb_components">nb_components</dfn>;</td></tr>
+<tr><th id="369">369</th><td>} <dfn class="typedef" id="AVOptionRanges" title='AVOptionRanges' data-type='struct AVOptionRanges' data-ref="AVOptionRanges">AVOptionRanges</dfn>;</td></tr>
+<tr><th id="370">370</th><td></td></tr>
+<tr><th id="371">371</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="372">372</th><td><i class="doc"> * Show the obj options.</i></td></tr>
+<tr><th id="373">373</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="374">374</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">req_flags</span> requested flags for the options to show. Show only the</i></td></tr>
+<tr><th id="375">375</th><td><i class="doc"> * options for which it is opt-&gt;flags &amp; req_flags.</i></td></tr>
+<tr><th id="376">376</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">rej_flags</span> rejected flags for the options to show. Show only the</i></td></tr>
+<tr><th id="377">377</th><td><i class="doc"> * options for which it is !(opt-&gt;flags &amp; req_flags).</i></td></tr>
+<tr><th id="378">378</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">av_log_obj</span> log context to use for showing the options</i></td></tr>
+<tr><th id="379">379</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="380">380</th><td><em>int</em> <dfn class="decl" id="av_opt_show2" title='av_opt_show2' data-ref="av_opt_show2">av_opt_show2</dfn>(<em>void</em> *<dfn class="local col5 decl" id="1115obj" title='obj' data-type='void *' data-ref="1115obj">obj</dfn>, <em>void</em> *<dfn class="local col6 decl" id="1116av_log_obj" title='av_log_obj' data-type='void *' data-ref="1116av_log_obj">av_log_obj</dfn>, <em>int</em> <dfn class="local col7 decl" id="1117req_flags" title='req_flags' data-type='int' data-ref="1117req_flags">req_flags</dfn>, <em>int</em> <dfn class="local col8 decl" id="1118rej_flags" title='rej_flags' data-type='int' data-ref="1118rej_flags">rej_flags</dfn>);</td></tr>
+<tr><th id="381">381</th><td></td></tr>
+<tr><th id="382">382</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="383">383</th><td><i class="doc"> * Set the values of all AVOption fields to their default values.</i></td></tr>
+<tr><th id="384">384</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="385">385</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">s</span> an AVOption-enabled struct (its first member must be a pointer to AVClass)</i></td></tr>
+<tr><th id="386">386</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="387">387</th><td><em>void</em> <dfn class="decl" id="av_opt_set_defaults" title='av_opt_set_defaults' data-ref="av_opt_set_defaults">av_opt_set_defaults</dfn>(<em>void</em> *<dfn class="local col9 decl" id="1119s" title='s' data-type='void *' data-ref="1119s">s</dfn>);</td></tr>
+<tr><th id="388">388</th><td></td></tr>
+<tr><th id="389">389</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="390">390</th><td><i class="doc"> * Set the values of all AVOption fields to their default values. Only these</i></td></tr>
+<tr><th id="391">391</th><td><i class="doc"> * AVOption fields for which (opt-&gt;flags &amp; mask) == flags will have their</i></td></tr>
+<tr><th id="392">392</th><td><i class="doc"> * default applied to s.</i></td></tr>
+<tr><th id="393">393</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="394">394</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">s</span> an AVOption-enabled struct (its first member must be a pointer to AVClass)</i></td></tr>
+<tr><th id="395">395</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">mask</span> combination of AV_OPT_FLAG_*</i></td></tr>
+<tr><th id="396">396</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">flags</span> combination of AV_OPT_FLAG_*</i></td></tr>
+<tr><th id="397">397</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="398">398</th><td><em>void</em> <dfn class="decl" id="av_opt_set_defaults2" title='av_opt_set_defaults2' data-ref="av_opt_set_defaults2">av_opt_set_defaults2</dfn>(<em>void</em> *<dfn class="local col0 decl" id="1120s" title='s' data-type='void *' data-ref="1120s">s</dfn>, <em>int</em> <dfn class="local col1 decl" id="1121mask" title='mask' data-type='int' data-ref="1121mask">mask</dfn>, <em>int</em> <dfn class="local col2 decl" id="1122flags" title='flags' data-type='int' data-ref="1122flags">flags</dfn>);</td></tr>
+<tr><th id="399">399</th><td></td></tr>
+<tr><th id="400">400</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="401">401</th><td><i class="doc"> * Parse the key/value pairs list in opts. For each key/value pair</i></td></tr>
+<tr><th id="402">402</th><td><i class="doc"> * found, stores the value in the field in ctx that is named like the</i></td></tr>
+<tr><th id="403">403</th><td><i class="doc"> * key. ctx must be an AVClass context, storing is done using</i></td></tr>
+<tr><th id="404">404</th><td><i class="doc"> * AVOptions.</i></td></tr>
+<tr><th id="405">405</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="406">406</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">opts</span> options string to parse, may be NULL</i></td></tr>
+<tr><th id="407">407</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">key_val_sep</span> a 0-terminated list of characters used to</i></td></tr>
+<tr><th id="408">408</th><td><i class="doc"> * separate key from value</i></td></tr>
+<tr><th id="409">409</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">pairs_sep</span> a 0-terminated list of characters used to separate</i></td></tr>
+<tr><th id="410">410</th><td><i class="doc"> * two pairs from each other</i></td></tr>
+<tr><th id="411">411</th><td><i class="doc"> * <span class="command">@return</span> the number of successfully set key/value pairs, or a negative</i></td></tr>
+<tr><th id="412">412</th><td><i class="doc"> * value corresponding to an AVERROR code in case of error:</i></td></tr>
+<tr><th id="413">413</th><td><i class="doc"> * AVERROR(EINVAL) if opts cannot be parsed,</i></td></tr>
+<tr><th id="414">414</th><td><i class="doc"> * the error code issued by av_opt_set() if a key/value pair</i></td></tr>
+<tr><th id="415">415</th><td><i class="doc"> * cannot be set</i></td></tr>
+<tr><th id="416">416</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="417">417</th><td><em>int</em> <dfn class="decl" id="av_set_options_string" title='av_set_options_string' data-ref="av_set_options_string">av_set_options_string</dfn>(<em>void</em> *<dfn class="local col3 decl" id="1123ctx" title='ctx' data-type='void *' data-ref="1123ctx">ctx</dfn>, <em>const</em> <em>char</em> *<dfn class="local col4 decl" id="1124opts" title='opts' data-type='const char *' data-ref="1124opts">opts</dfn>,</td></tr>
+<tr><th id="418">418</th><td>                          <em>const</em> <em>char</em> *<dfn class="local col5 decl" id="1125key_val_sep" title='key_val_sep' data-type='const char *' data-ref="1125key_val_sep">key_val_sep</dfn>, <em>const</em> <em>char</em> *<dfn class="local col6 decl" id="1126pairs_sep" title='pairs_sep' data-type='const char *' data-ref="1126pairs_sep">pairs_sep</dfn>);</td></tr>
+<tr><th id="419">419</th><td></td></tr>
+<tr><th id="420">420</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="421">421</th><td><i class="doc"> * Parse the key-value pairs list in opts. For each key=value pair found,</i></td></tr>
+<tr><th id="422">422</th><td><i class="doc"> * set the value of the corresponding option in ctx.</i></td></tr>
+<tr><th id="423">423</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="424">424</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">ctx</span>          the AVClass object to set options on</i></td></tr>
+<tr><th id="425">425</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">opts</span>         the options string, key-value pairs separated by a</i></td></tr>
+<tr><th id="426">426</th><td><i class="doc"> *                     delimiter</i></td></tr>
+<tr><th id="427">427</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">shorthand</span>    a NULL-terminated array of options names for shorthand</i></td></tr>
+<tr><th id="428">428</th><td><i class="doc"> *                     notation: if the first field in opts has no key part,</i></td></tr>
+<tr><th id="429">429</th><td><i class="doc"> *                     the key is taken from the first element of shorthand;</i></td></tr>
+<tr><th id="430">430</th><td><i class="doc"> *                     then again for the second, etc., until either opts is</i></td></tr>
+<tr><th id="431">431</th><td><i class="doc"> *                     finished, shorthand is finished or a named option is</i></td></tr>
+<tr><th id="432">432</th><td><i class="doc"> *                     found; after that, all options must be named</i></td></tr>
+<tr><th id="433">433</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">key_val_sep</span>  a 0-terminated list of characters used to separate</i></td></tr>
+<tr><th id="434">434</th><td><i class="doc"> *                     key from value, for example '='</i></td></tr>
+<tr><th id="435">435</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">pairs_sep</span>    a 0-terminated list of characters used to separate</i></td></tr>
+<tr><th id="436">436</th><td><i class="doc"> *                     two pairs from each other, for example ':' or ','</i></td></tr>
+<tr><th id="437">437</th><td><i class="doc"> * <span class="command">@return</span>  the number of successfully set key=value pairs, or a negative</i></td></tr>
+<tr><th id="438">438</th><td><i class="doc"> *          value corresponding to an AVERROR code in case of error:</i></td></tr>
+<tr><th id="439">439</th><td><i class="doc"> *          AVERROR(EINVAL) if opts cannot be parsed,</i></td></tr>
+<tr><th id="440">440</th><td><i class="doc"> *          the error code issued by av_set_string3() if a key/value pair</i></td></tr>
+<tr><th id="441">441</th><td><i class="doc"> *          cannot be set</i></td></tr>
+<tr><th id="442">442</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="443">443</th><td><i class="doc"> * Options names must use only the following characters: a-z A-Z 0-9 - . / _</i></td></tr>
+<tr><th id="444">444</th><td><i class="doc"> * Separators must use characters distinct from option names and from each</i></td></tr>
+<tr><th id="445">445</th><td><i class="doc"> * other.</i></td></tr>
+<tr><th id="446">446</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="447">447</th><td><em>int</em> <dfn class="decl" id="av_opt_set_from_string" title='av_opt_set_from_string' data-ref="av_opt_set_from_string">av_opt_set_from_string</dfn>(<em>void</em> *<dfn class="local col7 decl" id="1127ctx" title='ctx' data-type='void *' data-ref="1127ctx">ctx</dfn>, <em>const</em> <em>char</em> *<dfn class="local col8 decl" id="1128opts" title='opts' data-type='const char *' data-ref="1128opts">opts</dfn>,</td></tr>
+<tr><th id="448">448</th><td>                           <em>const</em> <em>char</em> *<em>const</em> *<dfn class="local col9 decl" id="1129shorthand" title='shorthand' data-type='const char *const *' data-ref="1129shorthand">shorthand</dfn>,</td></tr>
+<tr><th id="449">449</th><td>                           <em>const</em> <em>char</em> *<dfn class="local col0 decl" id="1130key_val_sep" title='key_val_sep' data-type='const char *' data-ref="1130key_val_sep">key_val_sep</dfn>, <em>const</em> <em>char</em> *<dfn class="local col1 decl" id="1131pairs_sep" title='pairs_sep' data-type='const char *' data-ref="1131pairs_sep">pairs_sep</dfn>);</td></tr>
+<tr><th id="450">450</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="451">451</th><td><i class="doc"> * Free all allocated objects in obj.</i></td></tr>
+<tr><th id="452">452</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="453">453</th><td><em>void</em> <dfn class="decl" id="av_opt_free" title='av_opt_free' data-ref="av_opt_free">av_opt_free</dfn>(<em>void</em> *<dfn class="local col2 decl" id="1132obj" title='obj' data-type='void *' data-ref="1132obj">obj</dfn>);</td></tr>
+<tr><th id="454">454</th><td></td></tr>
+<tr><th id="455">455</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="456">456</th><td><i class="doc"> * Check whether a particular flag is set in a flags field.</i></td></tr>
+<tr><th id="457">457</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="458">458</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">field_name</span> the name of the flag field option</i></td></tr>
+<tr><th id="459">459</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">flag_name</span> the name of the flag to check</i></td></tr>
+<tr><th id="460">460</th><td><i class="doc"> * <span class="command">@return</span> non-zero if the flag is set, zero if the flag isn't set,</i></td></tr>
+<tr><th id="461">461</th><td><i class="doc"> *         isn't of the right type, or the flags field doesn't exist.</i></td></tr>
+<tr><th id="462">462</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="463">463</th><td><em>int</em> <dfn class="decl" id="av_opt_flag_is_set" title='av_opt_flag_is_set' data-ref="av_opt_flag_is_set">av_opt_flag_is_set</dfn>(<em>void</em> *<dfn class="local col3 decl" id="1133obj" title='obj' data-type='void *' data-ref="1133obj">obj</dfn>, <em>const</em> <em>char</em> *<dfn class="local col4 decl" id="1134field_name" title='field_name' data-type='const char *' data-ref="1134field_name">field_name</dfn>, <em>const</em> <em>char</em> *<dfn class="local col5 decl" id="1135flag_name" title='flag_name' data-type='const char *' data-ref="1135flag_name">flag_name</dfn>);</td></tr>
+<tr><th id="464">464</th><td></td></tr>
+<tr><th id="465">465</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="466">466</th><td><i class="doc"> * Set all the options from a given dictionary on an object.</i></td></tr>
+<tr><th id="467">467</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="468">468</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">obj</span> a struct whose first element is a pointer to AVClass</i></td></tr>
+<tr><th id="469">469</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">options</span> options to process. This dictionary will be freed and replaced</i></td></tr>
+<tr><th id="470">470</th><td><i class="doc"> *                by a new one containing all options not found in obj.</i></td></tr>
+<tr><th id="471">471</th><td><i class="doc"> *                Of course this new dictionary needs to be freed by caller</i></td></tr>
+<tr><th id="472">472</th><td><i class="doc"> *                with av_dict_free().</i></td></tr>
+<tr><th id="473">473</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="474">474</th><td><i class="doc"> * <span class="command">@return</span> 0 on success, a negative AVERROR if some option was found in obj,</i></td></tr>
+<tr><th id="475">475</th><td><i class="doc"> *         but could not be set.</i></td></tr>
+<tr><th id="476">476</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="477">477</th><td><i class="doc"> * <span class="command">@see</span> av_dict_copy()</i></td></tr>
+<tr><th id="478">478</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="479">479</th><td><em>int</em> <dfn class="decl" id="av_opt_set_dict" title='av_opt_set_dict' data-ref="av_opt_set_dict">av_opt_set_dict</dfn>(<em>void</em> *<dfn class="local col6 decl" id="1136obj" title='obj' data-type='void *' data-ref="1136obj">obj</dfn>, <b>struct</b> <a class="type" href="dict.h.html#AVDictionary" title='AVDictionary' data-ref="AVDictionary">AVDictionary</a> **<dfn class="local col7 decl" id="1137options" title='options' data-type='struct AVDictionary **' data-ref="1137options">options</dfn>);</td></tr>
+<tr><th id="480">480</th><td></td></tr>
+<tr><th id="481">481</th><td></td></tr>
+<tr><th id="482">482</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="483">483</th><td><i class="doc"> * Set all the options from a given dictionary on an object.</i></td></tr>
+<tr><th id="484">484</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="485">485</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">obj</span> a struct whose first element is a pointer to AVClass</i></td></tr>
+<tr><th id="486">486</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">options</span> options to process. This dictionary will be freed and replaced</i></td></tr>
+<tr><th id="487">487</th><td><i class="doc"> *                by a new one containing all options not found in obj.</i></td></tr>
+<tr><th id="488">488</th><td><i class="doc"> *                Of course this new dictionary needs to be freed by caller</i></td></tr>
+<tr><th id="489">489</th><td><i class="doc"> *                with av_dict_free().</i></td></tr>
+<tr><th id="490">490</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">search_flags</span> A combination of AV_OPT_SEARCH_*.</i></td></tr>
+<tr><th id="491">491</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="492">492</th><td><i class="doc"> * <span class="command">@return</span> 0 on success, a negative AVERROR if some option was found in obj,</i></td></tr>
+<tr><th id="493">493</th><td><i class="doc"> *         but could not be set.</i></td></tr>
+<tr><th id="494">494</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="495">495</th><td><i class="doc"> * <span class="command">@see</span> av_dict_copy()</i></td></tr>
+<tr><th id="496">496</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="497">497</th><td><em>int</em> <dfn class="decl" id="av_opt_set_dict2" title='av_opt_set_dict2' data-ref="av_opt_set_dict2">av_opt_set_dict2</dfn>(<em>void</em> *<dfn class="local col8 decl" id="1138obj" title='obj' data-type='void *' data-ref="1138obj">obj</dfn>, <b>struct</b> <a class="type" href="dict.h.html#AVDictionary" title='AVDictionary' data-ref="AVDictionary">AVDictionary</a> **<dfn class="local col9 decl" id="1139options" title='options' data-type='struct AVDictionary **' data-ref="1139options">options</dfn>, <em>int</em> <dfn class="local col0 decl" id="1140search_flags" title='search_flags' data-type='int' data-ref="1140search_flags">search_flags</dfn>);</td></tr>
+<tr><th id="498">498</th><td></td></tr>
+<tr><th id="499">499</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="500">500</th><td><i class="doc"> * Extract a key-value pair from the beginning of a string.</i></td></tr>
+<tr><th id="501">501</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="502">502</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">ropts</span>        pointer to the options string, will be updated to</i></td></tr>
+<tr><th id="503">503</th><td><i class="doc"> *                     point to the rest of the string (one of the pairs_sep</i></td></tr>
+<tr><th id="504">504</th><td><i class="doc"> *                     or the final NUL)</i></td></tr>
+<tr><th id="505">505</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">key_val_sep</span>  a 0-terminated list of characters used to separate</i></td></tr>
+<tr><th id="506">506</th><td><i class="doc"> *                     key from value, for example '='</i></td></tr>
+<tr><th id="507">507</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">pairs_sep</span>    a 0-terminated list of characters used to separate</i></td></tr>
+<tr><th id="508">508</th><td><i class="doc"> *                     two pairs from each other, for example ':' or ','</i></td></tr>
+<tr><th id="509">509</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">flags</span>        flags; see the AV_OPT_FLAG_* values below</i></td></tr>
+<tr><th id="510">510</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">rkey</span>         parsed key; must be freed using av_free()</i></td></tr>
+<tr><th id="511">511</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">rval</span>         parsed value; must be freed using av_free()</i></td></tr>
+<tr><th id="512">512</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="513">513</th><td><i class="doc"> * <span class="command">@return</span>  &gt;=0 for success, or a negative value corresponding to an</i></td></tr>
+<tr><th id="514">514</th><td><i class="doc"> *          AVERROR code in case of error; in particular:</i></td></tr>
+<tr><th id="515">515</th><td><i class="doc"> *          AVERROR(EINVAL) if no key is present</i></td></tr>
+<tr><th id="516">516</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="517">517</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="518">518</th><td><em>int</em> <dfn class="decl" id="av_opt_get_key_value" title='av_opt_get_key_value' data-ref="av_opt_get_key_value">av_opt_get_key_value</dfn>(<em>const</em> <em>char</em> **<dfn class="local col1 decl" id="1141ropts" title='ropts' data-type='const char **' data-ref="1141ropts">ropts</dfn>,</td></tr>
+<tr><th id="519">519</th><td>                         <em>const</em> <em>char</em> *<dfn class="local col2 decl" id="1142key_val_sep" title='key_val_sep' data-type='const char *' data-ref="1142key_val_sep">key_val_sep</dfn>, <em>const</em> <em>char</em> *<dfn class="local col3 decl" id="1143pairs_sep" title='pairs_sep' data-type='const char *' data-ref="1143pairs_sep">pairs_sep</dfn>,</td></tr>
+<tr><th id="520">520</th><td>                         <em>unsigned</em> <dfn class="local col4 decl" id="1144flags" title='flags' data-type='unsigned int' data-ref="1144flags">flags</dfn>,</td></tr>
+<tr><th id="521">521</th><td>                         <em>char</em> **<dfn class="local col5 decl" id="1145rkey" title='rkey' data-type='char **' data-ref="1145rkey">rkey</dfn>, <em>char</em> **<dfn class="local col6 decl" id="1146rval" title='rval' data-type='char **' data-ref="1146rval">rval</dfn>);</td></tr>
+<tr><th id="522">522</th><td></td></tr>
+<tr><th id="523">523</th><td><b>enum</b> {</td></tr>
+<tr><th id="524">524</th><td></td></tr>
+<tr><th id="525">525</th><td>    <i class="doc">/**</i></td></tr>
+<tr><th id="526">526</th><td><i class="doc">     * Accept to parse a value without a key; the key will then be returned</i></td></tr>
+<tr><th id="527">527</th><td><i class="doc">     * as NULL.</i></td></tr>
+<tr><th id="528">528</th><td><i class="doc">     */</i></td></tr>
+<tr><th id="529">529</th><td>    <dfn class="enum" id="::AV_OPT_FLAG_IMPLICIT_KEY" title='::AV_OPT_FLAG_IMPLICIT_KEY' data-ref="::AV_OPT_FLAG_IMPLICIT_KEY">AV_OPT_FLAG_IMPLICIT_KEY</dfn> = <var>1</var>,</td></tr>
+<tr><th id="530">530</th><td>};</td></tr>
+<tr><th id="531">531</th><td></td></tr>
+<tr><th id="532">532</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="533">533</th><td><i class="doc"> * <span class="command">@defgroup</span> <span class="verb">opt_eval_funcs Evaluating option strings</span></i></td></tr>
+<tr><th id="534">534</th><td><i class="doc"> * @{</i></td></tr>
+<tr><th id="535">535</th><td><i class="doc"> * This group of functions can be used to evaluate option strings</i></td></tr>
+<tr><th id="536">536</th><td><i class="doc"> * and get numbers out of them. They do the same thing as av_opt_set(),</i></td></tr>
+<tr><th id="537">537</th><td><i class="doc"> * except the result is written into the caller-supplied pointer.</i></td></tr>
+<tr><th id="538">538</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="539">539</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">obj</span> a struct whose first element is a pointer to AVClass.</i></td></tr>
+<tr><th id="540">540</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">o</span> an option for which the string is to be evaluated.</i></td></tr>
+<tr><th id="541">541</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">val</span> string to be evaluated.</i></td></tr>
+<tr><th id="542">542</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">*_out</span> value of the string will be written here.</i></td></tr>
+<tr><th id="543">543</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="544">544</th><td><i class="doc"> * <span class="command">@return</span> 0 on success, a negative number on failure.</i></td></tr>
+<tr><th id="545">545</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="546">546</th><td><em>int</em> <dfn class="decl" id="av_opt_eval_flags" title='av_opt_eval_flags' data-ref="av_opt_eval_flags">av_opt_eval_flags</dfn> (<em>void</em> *<dfn class="local col7 decl" id="1147obj" title='obj' data-type='void *' data-ref="1147obj">obj</dfn>, <em>const</em> <a class="typedef" href="#AVOption" title='AVOption' data-type='struct AVOption' data-ref="AVOption">AVOption</a> *<dfn class="local col8 decl" id="1148o" title='o' data-type='const AVOption *' data-ref="1148o">o</dfn>, <em>const</em> <em>char</em> *<dfn class="local col9 decl" id="1149val" title='val' data-type='const char *' data-ref="1149val">val</dfn>, <em>int</em>        *<dfn class="local col0 decl" id="1150flags_out" title='flags_out' data-type='int *' data-ref="1150flags_out">flags_out</dfn>);</td></tr>
+<tr><th id="547">547</th><td><em>int</em> <dfn class="decl" id="av_opt_eval_int" title='av_opt_eval_int' data-ref="av_opt_eval_int">av_opt_eval_int</dfn>   (<em>void</em> *<dfn class="local col1 decl" id="1151obj" title='obj' data-type='void *' data-ref="1151obj">obj</dfn>, <em>const</em> <a class="typedef" href="#AVOption" title='AVOption' data-type='struct AVOption' data-ref="AVOption">AVOption</a> *<dfn class="local col2 decl" id="1152o" title='o' data-type='const AVOption *' data-ref="1152o">o</dfn>, <em>const</em> <em>char</em> *<dfn class="local col3 decl" id="1153val" title='val' data-type='const char *' data-ref="1153val">val</dfn>, <em>int</em>        *<dfn class="local col4 decl" id="1154int_out" title='int_out' data-type='int *' data-ref="1154int_out">int_out</dfn>);</td></tr>
+<tr><th id="548">548</th><td><em>int</em> <dfn class="decl" id="av_opt_eval_int64" title='av_opt_eval_int64' data-ref="av_opt_eval_int64">av_opt_eval_int64</dfn> (<em>void</em> *<dfn class="local col5 decl" id="1155obj" title='obj' data-type='void *' data-ref="1155obj">obj</dfn>, <em>const</em> <a class="typedef" href="#AVOption" title='AVOption' data-type='struct AVOption' data-ref="AVOption">AVOption</a> *<dfn class="local col6 decl" id="1156o" title='o' data-type='const AVOption *' data-ref="1156o">o</dfn>, <em>const</em> <em>char</em> *<dfn class="local col7 decl" id="1157val" title='val' data-type='const char *' data-ref="1157val">val</dfn>, <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a>    *<dfn class="local col8 decl" id="1158int64_out" title='int64_out' data-type='int64_t *' data-ref="1158int64_out">int64_out</dfn>);</td></tr>
+<tr><th id="549">549</th><td><em>int</em> <dfn class="decl" id="av_opt_eval_float" title='av_opt_eval_float' data-ref="av_opt_eval_float">av_opt_eval_float</dfn> (<em>void</em> *<dfn class="local col9 decl" id="1159obj" title='obj' data-type='void *' data-ref="1159obj">obj</dfn>, <em>const</em> <a class="typedef" href="#AVOption" title='AVOption' data-type='struct AVOption' data-ref="AVOption">AVOption</a> *<dfn class="local col0 decl" id="1160o" title='o' data-type='const AVOption *' data-ref="1160o">o</dfn>, <em>const</em> <em>char</em> *<dfn class="local col1 decl" id="1161val" title='val' data-type='const char *' data-ref="1161val">val</dfn>, <em>float</em>      *<dfn class="local col2 decl" id="1162float_out" title='float_out' data-type='float *' data-ref="1162float_out">float_out</dfn>);</td></tr>
+<tr><th id="550">550</th><td><em>int</em> <dfn class="decl" id="av_opt_eval_double" title='av_opt_eval_double' data-ref="av_opt_eval_double">av_opt_eval_double</dfn>(<em>void</em> *<dfn class="local col3 decl" id="1163obj" title='obj' data-type='void *' data-ref="1163obj">obj</dfn>, <em>const</em> <a class="typedef" href="#AVOption" title='AVOption' data-type='struct AVOption' data-ref="AVOption">AVOption</a> *<dfn class="local col4 decl" id="1164o" title='o' data-type='const AVOption *' data-ref="1164o">o</dfn>, <em>const</em> <em>char</em> *<dfn class="local col5 decl" id="1165val" title='val' data-type='const char *' data-ref="1165val">val</dfn>, <em>double</em>     *<dfn class="local col6 decl" id="1166double_out" title='double_out' data-type='double *' data-ref="1166double_out">double_out</dfn>);</td></tr>
+<tr><th id="551">551</th><td><em>int</em> <dfn class="decl" id="av_opt_eval_q" title='av_opt_eval_q' data-ref="av_opt_eval_q">av_opt_eval_q</dfn>     (<em>void</em> *<dfn class="local col7 decl" id="1167obj" title='obj' data-type='void *' data-ref="1167obj">obj</dfn>, <em>const</em> <a class="typedef" href="#AVOption" title='AVOption' data-type='struct AVOption' data-ref="AVOption">AVOption</a> *<dfn class="local col8 decl" id="1168o" title='o' data-type='const AVOption *' data-ref="1168o">o</dfn>, <em>const</em> <em>char</em> *<dfn class="local col9 decl" id="1169val" title='val' data-type='const char *' data-ref="1169val">val</dfn>, <a class="typedef" href="rational.h.html#AVRational" title='AVRational' data-type='struct AVRational' data-ref="AVRational">AVRational</a> *<dfn class="local col0 decl" id="1170q_out" title='q_out' data-type='AVRational *' data-ref="1170q_out">q_out</dfn>);</td></tr>
+<tr><th id="552">552</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="553">553</th><td><i class="doc"> * @}</i></td></tr>
+<tr><th id="554">554</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="555">555</th><td></td></tr>
+<tr><th id="556">556</th><td><u>#define <dfn class="macro" id="_M/AV_OPT_SEARCH_CHILDREN" data-ref="_M/AV_OPT_SEARCH_CHILDREN">AV_OPT_SEARCH_CHILDREN</dfn>   (1 &lt;&lt; 0) /**&lt; Search in possible children of the</u></td></tr>
+<tr><th id="557">557</th><td><u>                                               given object first. */</u></td></tr>
+<tr><th id="558">558</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="559">559</th><td><i class="doc"> *  The obj passed to av_opt_find() is fake -- only a double pointer to AVClass</i></td></tr>
+<tr><th id="560">560</th><td><i class="doc"> *  instead of a required pointer to a struct containing AVClass. This is</i></td></tr>
+<tr><th id="561">561</th><td><i class="doc"> *  useful for searching for options without needing to allocate the corresponding</i></td></tr>
+<tr><th id="562">562</th><td><i class="doc"> *  object.</i></td></tr>
+<tr><th id="563">563</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="564">564</th><td><u>#define <dfn class="macro" id="_M/AV_OPT_SEARCH_FAKE_OBJ" data-ref="_M/AV_OPT_SEARCH_FAKE_OBJ">AV_OPT_SEARCH_FAKE_OBJ</dfn>   (1 &lt;&lt; 1)</u></td></tr>
+<tr><th id="565">565</th><td></td></tr>
+<tr><th id="566">566</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="567">567</th><td><i class="doc"> *  In av_opt_get, return NULL if the option has a pointer type and is set to NULL,</i></td></tr>
+<tr><th id="568">568</th><td><i class="doc"> *  rather than returning an empty string.</i></td></tr>
+<tr><th id="569">569</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="570">570</th><td><u>#define <dfn class="macro" id="_M/AV_OPT_ALLOW_NULL" data-ref="_M/AV_OPT_ALLOW_NULL">AV_OPT_ALLOW_NULL</dfn> (1 &lt;&lt; 2)</u></td></tr>
+<tr><th id="571">571</th><td></td></tr>
+<tr><th id="572">572</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="573">573</th><td><i class="doc"> *  Allows av_opt_query_ranges and av_opt_query_ranges_default to return more than</i></td></tr>
+<tr><th id="574">574</th><td><i class="doc"> *  one component for certain option types.</i></td></tr>
+<tr><th id="575">575</th><td><i class="doc"> *  <span class="command">@see</span> AVOptionRanges for details.</i></td></tr>
+<tr><th id="576">576</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="577">577</th><td><u>#define <dfn class="macro" id="_M/AV_OPT_MULTI_COMPONENT_RANGE" data-ref="_M/AV_OPT_MULTI_COMPONENT_RANGE">AV_OPT_MULTI_COMPONENT_RANGE</dfn> (1 &lt;&lt; 12)</u></td></tr>
+<tr><th id="578">578</th><td></td></tr>
+<tr><th id="579">579</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="580">580</th><td><i class="doc"> * Look for an option in an object. Consider only options which</i></td></tr>
+<tr><th id="581">581</th><td><i class="doc"> * have all the specified flags set.</i></td></tr>
+<tr><th id="582">582</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="583">583</th><td><i class="doc"> * <span class="command">@param</span>[in] <span class="arg">obj</span> A pointer to a struct whose first element is a</i></td></tr>
+<tr><th id="584">584</th><td><i class="doc"> *                pointer to an AVClass.</i></td></tr>
+<tr><th id="585">585</th><td><i class="doc"> *                Alternatively a double pointer to an AVClass, if</i></td></tr>
+<tr><th id="586">586</th><td><i class="doc"> *                AV_OPT_SEARCH_FAKE_OBJ search flag is set.</i></td></tr>
+<tr><th id="587">587</th><td><i class="doc"> * <span class="command">@param</span>[in] <span class="arg">name</span> The name of the option to look for.</i></td></tr>
+<tr><th id="588">588</th><td><i class="doc"> * <span class="command">@param</span>[in] <span class="arg">unit</span> When searching for named constants, name of the unit</i></td></tr>
+<tr><th id="589">589</th><td><i class="doc"> *                 it belongs to.</i></td></tr>
+<tr><th id="590">590</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">opt_flags</span> Find only options with all the specified flags set (AV_OPT_FLAG).</i></td></tr>
+<tr><th id="591">591</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">search_flags</span> A combination of AV_OPT_SEARCH_*.</i></td></tr>
+<tr><th id="592">592</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="593">593</th><td><i class="doc"> * <span class="command">@return</span> A pointer to the option found, or NULL if no option</i></td></tr>
+<tr><th id="594">594</th><td><i class="doc"> *         was found.</i></td></tr>
+<tr><th id="595">595</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="596">596</th><td><i class="doc"> * <span class="command">@note</span> Options found with AV_OPT_SEARCH_CHILDREN flag may not be settable</i></td></tr>
+<tr><th id="597">597</th><td><i class="doc"> * directly with av_opt_set(). Use special calls which take an options</i></td></tr>
+<tr><th id="598">598</th><td><i class="doc"> * AVDictionary (e.g. avformat_open_input()) to set options found with this</i></td></tr>
+<tr><th id="599">599</th><td><i class="doc"> * flag.</i></td></tr>
+<tr><th id="600">600</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="601">601</th><td><em>const</em> <a class="typedef" href="#AVOption" title='AVOption' data-type='struct AVOption' data-ref="AVOption">AVOption</a> *<dfn class="decl" id="av_opt_find" title='av_opt_find' data-ref="av_opt_find">av_opt_find</dfn>(<em>void</em> *<dfn class="local col1 decl" id="1171obj" title='obj' data-type='void *' data-ref="1171obj">obj</dfn>, <em>const</em> <em>char</em> *<dfn class="local col2 decl" id="1172name" title='name' data-type='const char *' data-ref="1172name">name</dfn>, <em>const</em> <em>char</em> *<dfn class="local col3 decl" id="1173unit" title='unit' data-type='const char *' data-ref="1173unit">unit</dfn>,</td></tr>
+<tr><th id="602">602</th><td>                            <em>int</em> <dfn class="local col4 decl" id="1174opt_flags" title='opt_flags' data-type='int' data-ref="1174opt_flags">opt_flags</dfn>, <em>int</em> <dfn class="local col5 decl" id="1175search_flags" title='search_flags' data-type='int' data-ref="1175search_flags">search_flags</dfn>);</td></tr>
+<tr><th id="603">603</th><td></td></tr>
+<tr><th id="604">604</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="605">605</th><td><i class="doc"> * Look for an option in an object. Consider only options which</i></td></tr>
+<tr><th id="606">606</th><td><i class="doc"> * have all the specified flags set.</i></td></tr>
+<tr><th id="607">607</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="608">608</th><td><i class="doc"> * <span class="command">@param</span>[in] <span class="arg">obj</span> A pointer to a struct whose first element is a</i></td></tr>
+<tr><th id="609">609</th><td><i class="doc"> *                pointer to an AVClass.</i></td></tr>
+<tr><th id="610">610</th><td><i class="doc"> *                Alternatively a double pointer to an AVClass, if</i></td></tr>
+<tr><th id="611">611</th><td><i class="doc"> *                AV_OPT_SEARCH_FAKE_OBJ search flag is set.</i></td></tr>
+<tr><th id="612">612</th><td><i class="doc"> * <span class="command">@param</span>[in] <span class="arg">name</span> The name of the option to look for.</i></td></tr>
+<tr><th id="613">613</th><td><i class="doc"> * <span class="command">@param</span>[in] <span class="arg">unit</span> When searching for named constants, name of the unit</i></td></tr>
+<tr><th id="614">614</th><td><i class="doc"> *                 it belongs to.</i></td></tr>
+<tr><th id="615">615</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">opt_flags</span> Find only options with all the specified flags set (AV_OPT_FLAG).</i></td></tr>
+<tr><th id="616">616</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">search_flags</span> A combination of AV_OPT_SEARCH_*.</i></td></tr>
+<tr><th id="617">617</th><td><i class="doc"> * <span class="command">@param</span>[out] <span class="arg">target_obj</span> if non-NULL, an object to which the option belongs will be</i></td></tr>
+<tr><th id="618">618</th><td><i class="doc"> * written here. It may be different from obj if AV_OPT_SEARCH_CHILDREN is present</i></td></tr>
+<tr><th id="619">619</th><td><i class="doc"> * in search_flags. This parameter is ignored if search_flags contain</i></td></tr>
+<tr><th id="620">620</th><td><i class="doc"> * AV_OPT_SEARCH_FAKE_OBJ.</i></td></tr>
+<tr><th id="621">621</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="622">622</th><td><i class="doc"> * <span class="command">@return</span> A pointer to the option found, or NULL if no option</i></td></tr>
+<tr><th id="623">623</th><td><i class="doc"> *         was found.</i></td></tr>
+<tr><th id="624">624</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="625">625</th><td><em>const</em> <a class="typedef" href="#AVOption" title='AVOption' data-type='struct AVOption' data-ref="AVOption">AVOption</a> *<dfn class="decl" id="av_opt_find2" title='av_opt_find2' data-ref="av_opt_find2">av_opt_find2</dfn>(<em>void</em> *<dfn class="local col6 decl" id="1176obj" title='obj' data-type='void *' data-ref="1176obj">obj</dfn>, <em>const</em> <em>char</em> *<dfn class="local col7 decl" id="1177name" title='name' data-type='const char *' data-ref="1177name">name</dfn>, <em>const</em> <em>char</em> *<dfn class="local col8 decl" id="1178unit" title='unit' data-type='const char *' data-ref="1178unit">unit</dfn>,</td></tr>
+<tr><th id="626">626</th><td>                             <em>int</em> <dfn class="local col9 decl" id="1179opt_flags" title='opt_flags' data-type='int' data-ref="1179opt_flags">opt_flags</dfn>, <em>int</em> <dfn class="local col0 decl" id="1180search_flags" title='search_flags' data-type='int' data-ref="1180search_flags">search_flags</dfn>, <em>void</em> **<dfn class="local col1 decl" id="1181target_obj" title='target_obj' data-type='void **' data-ref="1181target_obj">target_obj</dfn>);</td></tr>
+<tr><th id="627">627</th><td></td></tr>
+<tr><th id="628">628</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="629">629</th><td><i class="doc"> * Iterate over all AVOptions belonging to obj.</i></td></tr>
+<tr><th id="630">630</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="631">631</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">obj</span> an AVOptions-enabled struct or a double pointer to an</i></td></tr>
+<tr><th id="632">632</th><td><i class="doc"> *            AVClass describing it.</i></td></tr>
+<tr><th id="633">633</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">prev</span> result of the previous call to av_opt_next() on this object</i></td></tr>
+<tr><th id="634">634</th><td><i class="doc"> *             or NULL</i></td></tr>
+<tr><th id="635">635</th><td><i class="doc"> * <span class="command">@return</span> next AVOption or NULL</i></td></tr>
+<tr><th id="636">636</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="637">637</th><td><em>const</em> <a class="typedef" href="#AVOption" title='AVOption' data-type='struct AVOption' data-ref="AVOption">AVOption</a> *<dfn class="decl" id="av_opt_next" title='av_opt_next' data-ref="av_opt_next">av_opt_next</dfn>(<em>const</em> <em>void</em> *<dfn class="local col2 decl" id="1182obj" title='obj' data-type='const void *' data-ref="1182obj">obj</dfn>, <em>const</em> <a class="typedef" href="#AVOption" title='AVOption' data-type='struct AVOption' data-ref="AVOption">AVOption</a> *<dfn class="local col3 decl" id="1183prev" title='prev' data-type='const AVOption *' data-ref="1183prev">prev</dfn>);</td></tr>
+<tr><th id="638">638</th><td></td></tr>
+<tr><th id="639">639</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="640">640</th><td><i class="doc"> * Iterate over AVOptions-enabled children of obj.</i></td></tr>
+<tr><th id="641">641</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="642">642</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">prev</span> result of a previous call to this function or NULL</i></td></tr>
+<tr><th id="643">643</th><td><i class="doc"> * <span class="command">@return</span> next AVOptions-enabled child or NULL</i></td></tr>
+<tr><th id="644">644</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="645">645</th><td><em>void</em> *<dfn class="decl" id="av_opt_child_next" title='av_opt_child_next' data-ref="av_opt_child_next">av_opt_child_next</dfn>(<em>void</em> *<dfn class="local col4 decl" id="1184obj" title='obj' data-type='void *' data-ref="1184obj">obj</dfn>, <em>void</em> *<dfn class="local col5 decl" id="1185prev" title='prev' data-type='void *' data-ref="1185prev">prev</dfn>);</td></tr>
+<tr><th id="646">646</th><td></td></tr>
+<tr><th id="647">647</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="648">648</th><td><i class="doc"> * Iterate over potential AVOptions-enabled children of parent.</i></td></tr>
+<tr><th id="649">649</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="650">650</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">prev</span> result of a previous call to this function or NULL</i></td></tr>
+<tr><th id="651">651</th><td><i class="doc"> * <span class="command">@return</span> AVClass corresponding to next potential child or NULL</i></td></tr>
+<tr><th id="652">652</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="653">653</th><td><em>const</em> <a class="typedef" href="log.h.html#AVClass" title='AVClass' data-type='struct AVClass' data-ref="AVClass">AVClass</a> *<dfn class="decl" id="av_opt_child_class_next" title='av_opt_child_class_next' data-ref="av_opt_child_class_next">av_opt_child_class_next</dfn>(<em>const</em> <a class="typedef" href="log.h.html#AVClass" title='AVClass' data-type='struct AVClass' data-ref="AVClass">AVClass</a> *<dfn class="local col6 decl" id="1186parent" title='parent' data-type='const AVClass *' data-ref="1186parent">parent</dfn>, <em>const</em> <a class="typedef" href="log.h.html#AVClass" title='AVClass' data-type='struct AVClass' data-ref="AVClass">AVClass</a> *<dfn class="local col7 decl" id="1187prev" title='prev' data-type='const AVClass *' data-ref="1187prev">prev</dfn>);</td></tr>
+<tr><th id="654">654</th><td></td></tr>
+<tr><th id="655">655</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="656">656</th><td><i class="doc"> * <span class="command">@defgroup</span> <span class="verb">opt_set_funcs Option setting functions</span></i></td></tr>
+<tr><th id="657">657</th><td><i class="doc"> * @{</i></td></tr>
+<tr><th id="658">658</th><td><i class="doc"> * Those functions set the field of obj with the given name to value.</i></td></tr>
+<tr><th id="659">659</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="660">660</th><td><i class="doc"> * <span class="command">@param</span>[in] <span class="arg">obj</span> A struct whose first element is a pointer to an AVClass.</i></td></tr>
+<tr><th id="661">661</th><td><i class="doc"> * <span class="command">@param</span>[in] <span class="arg">name</span> the name of the field to set</i></td></tr>
+<tr><th id="662">662</th><td><i class="doc"> * <span class="command">@param</span>[in] <span class="arg">val</span> The value to set. In case of av_opt_set() if the field is not</i></td></tr>
+<tr><th id="663">663</th><td><i class="doc"> * of a string type, then the given string is parsed.</i></td></tr>
+<tr><th id="664">664</th><td><i class="doc"> * SI postfixes and some named scalars are supported.</i></td></tr>
+<tr><th id="665">665</th><td><i class="doc"> * If the field is of a numeric type, it has to be a numeric or named</i></td></tr>
+<tr><th id="666">666</th><td><i class="doc"> * scalar. Behavior with more than one scalar and +- infix operators</i></td></tr>
+<tr><th id="667">667</th><td><i class="doc"> * is undefined.</i></td></tr>
+<tr><th id="668">668</th><td><i class="doc"> * If the field is of a flags type, it has to be a sequence of numeric</i></td></tr>
+<tr><th id="669">669</th><td><i class="doc"> * scalars or named flags separated by '+' or '-'. Prefixing a flag</i></td></tr>
+<tr><th id="670">670</th><td><i class="doc"> * with '+' causes it to be set without affecting the other flags;</i></td></tr>
+<tr><th id="671">671</th><td><i class="doc"> * similarly, '-' unsets a flag.</i></td></tr>
+<tr><th id="672">672</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">search_flags</span> flags passed to av_opt_find2. I.e. if AV_OPT_SEARCH_CHILDREN</i></td></tr>
+<tr><th id="673">673</th><td><i class="doc"> * is passed here, then the option may be set on a child of obj.</i></td></tr>
+<tr><th id="674">674</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="675">675</th><td><i class="doc"> * <span class="command">@return</span> 0 if the value has been set, or an AVERROR code in case of</i></td></tr>
+<tr><th id="676">676</th><td><i class="doc"> * error:</i></td></tr>
+<tr><th id="677">677</th><td><i class="doc"> * AVERROR_OPTION_NOT_FOUND if no matching option exists</i></td></tr>
+<tr><th id="678">678</th><td><i class="doc"> * AVERROR(ERANGE) if the value is out of range</i></td></tr>
+<tr><th id="679">679</th><td><i class="doc"> * AVERROR(EINVAL) if the value is not valid</i></td></tr>
+<tr><th id="680">680</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="681">681</th><td><em>int</em> <dfn class="decl" id="av_opt_set" title='av_opt_set' data-ref="av_opt_set">av_opt_set</dfn>         (<em>void</em> *<dfn class="local col8 decl" id="1188obj" title='obj' data-type='void *' data-ref="1188obj">obj</dfn>, <em>const</em> <em>char</em> *<dfn class="local col9 decl" id="1189name" title='name' data-type='const char *' data-ref="1189name">name</dfn>, <em>const</em> <em>char</em> *<dfn class="local col0 decl" id="1190val" title='val' data-type='const char *' data-ref="1190val">val</dfn>, <em>int</em> <dfn class="local col1 decl" id="1191search_flags" title='search_flags' data-type='int' data-ref="1191search_flags">search_flags</dfn>);</td></tr>
+<tr><th id="682">682</th><td><em>int</em> <dfn class="decl" id="av_opt_set_int" title='av_opt_set_int' data-ref="av_opt_set_int">av_opt_set_int</dfn>     (<em>void</em> *<dfn class="local col2 decl" id="1192obj" title='obj' data-type='void *' data-ref="1192obj">obj</dfn>, <em>const</em> <em>char</em> *<dfn class="local col3 decl" id="1193name" title='name' data-type='const char *' data-ref="1193name">name</dfn>, <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a>     <dfn class="local col4 decl" id="1194val" title='val' data-type='int64_t' data-ref="1194val">val</dfn>, <em>int</em> <dfn class="local col5 decl" id="1195search_flags" title='search_flags' data-type='int' data-ref="1195search_flags">search_flags</dfn>);</td></tr>
+<tr><th id="683">683</th><td><em>int</em> <dfn class="decl" id="av_opt_set_double" title='av_opt_set_double' data-ref="av_opt_set_double">av_opt_set_double</dfn>  (<em>void</em> *<dfn class="local col6 decl" id="1196obj" title='obj' data-type='void *' data-ref="1196obj">obj</dfn>, <em>const</em> <em>char</em> *<dfn class="local col7 decl" id="1197name" title='name' data-type='const char *' data-ref="1197name">name</dfn>, <em>double</em>      <dfn class="local col8 decl" id="1198val" title='val' data-type='double' data-ref="1198val">val</dfn>, <em>int</em> <dfn class="local col9 decl" id="1199search_flags" title='search_flags' data-type='int' data-ref="1199search_flags">search_flags</dfn>);</td></tr>
+<tr><th id="684">684</th><td><em>int</em> <dfn class="decl" id="av_opt_set_q" title='av_opt_set_q' data-ref="av_opt_set_q">av_opt_set_q</dfn>       (<em>void</em> *<dfn class="local col0 decl" id="1200obj" title='obj' data-type='void *' data-ref="1200obj">obj</dfn>, <em>const</em> <em>char</em> *<dfn class="local col1 decl" id="1201name" title='name' data-type='const char *' data-ref="1201name">name</dfn>, <a class="typedef" href="rational.h.html#AVRational" title='AVRational' data-type='struct AVRational' data-ref="AVRational">AVRational</a>  <dfn class="local col2 decl" id="1202val" title='val' data-type='AVRational' data-ref="1202val">val</dfn>, <em>int</em> <dfn class="local col3 decl" id="1203search_flags" title='search_flags' data-type='int' data-ref="1203search_flags">search_flags</dfn>);</td></tr>
+<tr><th id="685">685</th><td><em>int</em> <dfn class="decl" id="av_opt_set_bin" title='av_opt_set_bin' data-ref="av_opt_set_bin">av_opt_set_bin</dfn>     (<em>void</em> *<dfn class="local col4 decl" id="1204obj" title='obj' data-type='void *' data-ref="1204obj">obj</dfn>, <em>const</em> <em>char</em> *<dfn class="local col5 decl" id="1205name" title='name' data-type='const char *' data-ref="1205name">name</dfn>, <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col6 decl" id="1206val" title='val' data-type='const uint8_t *' data-ref="1206val">val</dfn>, <em>int</em> <dfn class="local col7 decl" id="1207size" title='size' data-type='int' data-ref="1207size">size</dfn>, <em>int</em> <dfn class="local col8 decl" id="1208search_flags" title='search_flags' data-type='int' data-ref="1208search_flags">search_flags</dfn>);</td></tr>
+<tr><th id="686">686</th><td><em>int</em> <dfn class="decl" id="av_opt_set_image_size" title='av_opt_set_image_size' data-ref="av_opt_set_image_size">av_opt_set_image_size</dfn>(<em>void</em> *<dfn class="local col9 decl" id="1209obj" title='obj' data-type='void *' data-ref="1209obj">obj</dfn>, <em>const</em> <em>char</em> *<dfn class="local col0 decl" id="1210name" title='name' data-type='const char *' data-ref="1210name">name</dfn>, <em>int</em> <dfn class="local col1 decl" id="1211w" title='w' data-type='int' data-ref="1211w">w</dfn>, <em>int</em> <dfn class="local col2 decl" id="1212h" title='h' data-type='int' data-ref="1212h">h</dfn>, <em>int</em> <dfn class="local col3 decl" id="1213search_flags" title='search_flags' data-type='int' data-ref="1213search_flags">search_flags</dfn>);</td></tr>
+<tr><th id="687">687</th><td><em>int</em> <dfn class="decl" id="av_opt_set_pixel_fmt" title='av_opt_set_pixel_fmt' data-ref="av_opt_set_pixel_fmt">av_opt_set_pixel_fmt</dfn> (<em>void</em> *<dfn class="local col4 decl" id="1214obj" title='obj' data-type='void *' data-ref="1214obj">obj</dfn>, <em>const</em> <em>char</em> *<dfn class="local col5 decl" id="1215name" title='name' data-type='const char *' data-ref="1215name">name</dfn>, <b>enum</b> <a class="type" href="pixfmt.h.html#AVPixelFormat" title='AVPixelFormat' data-ref="AVPixelFormat">AVPixelFormat</a> <dfn class="local col6 decl" id="1216fmt" title='fmt' data-type='enum AVPixelFormat' data-ref="1216fmt">fmt</dfn>, <em>int</em> <dfn class="local col7 decl" id="1217search_flags" title='search_flags' data-type='int' data-ref="1217search_flags">search_flags</dfn>);</td></tr>
+<tr><th id="688">688</th><td><em>int</em> <dfn class="decl" id="av_opt_set_sample_fmt" title='av_opt_set_sample_fmt' data-ref="av_opt_set_sample_fmt">av_opt_set_sample_fmt</dfn>(<em>void</em> *<dfn class="local col8 decl" id="1218obj" title='obj' data-type='void *' data-ref="1218obj">obj</dfn>, <em>const</em> <em>char</em> *<dfn class="local col9 decl" id="1219name" title='name' data-type='const char *' data-ref="1219name">name</dfn>, <b>enum</b> <a class="type" href="samplefmt.h.html#AVSampleFormat" title='AVSampleFormat' data-ref="AVSampleFormat">AVSampleFormat</a> <dfn class="local col0 decl" id="1220fmt" title='fmt' data-type='enum AVSampleFormat' data-ref="1220fmt">fmt</dfn>, <em>int</em> <dfn class="local col1 decl" id="1221search_flags" title='search_flags' data-type='int' data-ref="1221search_flags">search_flags</dfn>);</td></tr>
+<tr><th id="689">689</th><td><em>int</em> <dfn class="decl" id="av_opt_set_video_rate" title='av_opt_set_video_rate' data-ref="av_opt_set_video_rate">av_opt_set_video_rate</dfn>(<em>void</em> *<dfn class="local col2 decl" id="1222obj" title='obj' data-type='void *' data-ref="1222obj">obj</dfn>, <em>const</em> <em>char</em> *<dfn class="local col3 decl" id="1223name" title='name' data-type='const char *' data-ref="1223name">name</dfn>, <a class="typedef" href="rational.h.html#AVRational" title='AVRational' data-type='struct AVRational' data-ref="AVRational">AVRational</a> <dfn class="local col4 decl" id="1224val" title='val' data-type='AVRational' data-ref="1224val">val</dfn>, <em>int</em> <dfn class="local col5 decl" id="1225search_flags" title='search_flags' data-type='int' data-ref="1225search_flags">search_flags</dfn>);</td></tr>
+<tr><th id="690">690</th><td><em>int</em> <dfn class="decl" id="av_opt_set_channel_layout" title='av_opt_set_channel_layout' data-ref="av_opt_set_channel_layout">av_opt_set_channel_layout</dfn>(<em>void</em> *<dfn class="local col6 decl" id="1226obj" title='obj' data-type='void *' data-ref="1226obj">obj</dfn>, <em>const</em> <em>char</em> *<dfn class="local col7 decl" id="1227name" title='name' data-type='const char *' data-ref="1227name">name</dfn>, <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="local col8 decl" id="1228ch_layout" title='ch_layout' data-type='int64_t' data-ref="1228ch_layout">ch_layout</dfn>, <em>int</em> <dfn class="local col9 decl" id="1229search_flags" title='search_flags' data-type='int' data-ref="1229search_flags">search_flags</dfn>);</td></tr>
+<tr><th id="691">691</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="692">692</th><td><i class="doc"> * <span class="command">@note</span> Any old dictionary present is discarded and replaced with a copy of the new one. The</i></td></tr>
+<tr><th id="693">693</th><td><i class="doc"> * caller still owns val is and responsible for freeing it.</i></td></tr>
+<tr><th id="694">694</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="695">695</th><td><em>int</em> <dfn class="decl" id="av_opt_set_dict_val" title='av_opt_set_dict_val' data-ref="av_opt_set_dict_val">av_opt_set_dict_val</dfn>(<em>void</em> *<dfn class="local col0 decl" id="1230obj" title='obj' data-type='void *' data-ref="1230obj">obj</dfn>, <em>const</em> <em>char</em> *<dfn class="local col1 decl" id="1231name" title='name' data-type='const char *' data-ref="1231name">name</dfn>, <em>const</em> <a class="typedef" href="dict.h.html#AVDictionary" title='AVDictionary' data-type='struct AVDictionary' data-ref="AVDictionary">AVDictionary</a> *<dfn class="local col2 decl" id="1232val" title='val' data-type='const AVDictionary *' data-ref="1232val">val</dfn>, <em>int</em> <dfn class="local col3 decl" id="1233search_flags" title='search_flags' data-type='int' data-ref="1233search_flags">search_flags</dfn>);</td></tr>
+<tr><th id="696">696</th><td></td></tr>
+<tr><th id="697">697</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="698">698</th><td><i class="doc"> * Set a binary option to an integer list.</i></td></tr>
+<tr><th id="699">699</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="700">700</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">obj</span>    AVClass object to set options on</i></td></tr>
+<tr><th id="701">701</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">name</span>   name of the binary option</i></td></tr>
+<tr><th id="702">702</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">val</span>    pointer to an integer list (must have the correct type with</i></td></tr>
+<tr><th id="703">703</th><td><i class="doc"> *               regard to the contents of the list)</i></td></tr>
+<tr><th id="704">704</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">term</span>   list terminator (usually 0 or -1)</i></td></tr>
+<tr><th id="705">705</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">flags</span>  search flags</i></td></tr>
+<tr><th id="706">706</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="707">707</th><td><u>#define <dfn class="macro" id="_M/av_opt_set_int_list" data-ref="_M/av_opt_set_int_list">av_opt_set_int_list</dfn>(obj, name, val, term, flags) \</u></td></tr>
+<tr><th id="708">708</th><td><u>    (av_int_list_length(val, term) &gt; INT_MAX / sizeof(*(val)) ? \</u></td></tr>
+<tr><th id="709">709</th><td><u>     AVERROR(EINVAL) : \</u></td></tr>
+<tr><th id="710">710</th><td><u>     av_opt_set_bin(obj, name, (const uint8_t *)(val), \</u></td></tr>
+<tr><th id="711">711</th><td><u>                    av_int_list_length(val, term) * sizeof(*(val)), flags))</u></td></tr>
+<tr><th id="712">712</th><td></td></tr>
+<tr><th id="713">713</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="714">714</th><td><i class="doc"> * @}</i></td></tr>
+<tr><th id="715">715</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="716">716</th><td></td></tr>
+<tr><th id="717">717</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="718">718</th><td><i class="doc"> * <span class="command">@defgroup</span> <span class="verb">opt_get_funcs Option getting functions</span></i></td></tr>
+<tr><th id="719">719</th><td><i class="doc"> * @{</i></td></tr>
+<tr><th id="720">720</th><td><i class="doc"> * Those functions get a value of the option with the given name from an object.</i></td></tr>
+<tr><th id="721">721</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="722">722</th><td><i class="doc"> * <span class="command">@param</span>[in] <span class="arg">obj</span> a struct whose first element is a pointer to an AVClass.</i></td></tr>
+<tr><th id="723">723</th><td><i class="doc"> * <span class="command">@param</span>[in] <span class="arg">name</span> name of the option to get.</i></td></tr>
+<tr><th id="724">724</th><td><i class="doc"> * <span class="command">@param</span>[in] <span class="arg">search_flags</span> flags passed to av_opt_find2. I.e. if AV_OPT_SEARCH_CHILDREN</i></td></tr>
+<tr><th id="725">725</th><td><i class="doc"> * is passed here, then the option may be found in a child of obj.</i></td></tr>
+<tr><th id="726">726</th><td><i class="doc"> * <span class="command">@param</span>[out] <span class="arg">out_val</span> value of the option will be written here</i></td></tr>
+<tr><th id="727">727</th><td><i class="doc"> * <span class="command">@return</span> &gt;=0 on success, a negative error code otherwise</i></td></tr>
+<tr><th id="728">728</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="729">729</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="730">730</th><td><i class="doc"> * <span class="command">@note</span> the returned string will be av_malloc()ed and must be av_free()ed by the caller</i></td></tr>
+<tr><th id="731">731</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="732">732</th><td><i class="doc"> * <span class="command">@note</span> if AV_OPT_ALLOW_NULL is set in search_flags in av_opt_get, and the option has</i></td></tr>
+<tr><th id="733">733</th><td><i class="doc"> * AV_OPT_TYPE_STRING or AV_OPT_TYPE_BINARY and is set to NULL, *out_val will be set</i></td></tr>
+<tr><th id="734">734</th><td><i class="doc"> * to NULL instead of an allocated empty string.</i></td></tr>
+<tr><th id="735">735</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="736">736</th><td><em>int</em> <dfn class="decl" id="av_opt_get" title='av_opt_get' data-ref="av_opt_get">av_opt_get</dfn>         (<em>void</em> *<dfn class="local col4 decl" id="1234obj" title='obj' data-type='void *' data-ref="1234obj">obj</dfn>, <em>const</em> <em>char</em> *<dfn class="local col5 decl" id="1235name" title='name' data-type='const char *' data-ref="1235name">name</dfn>, <em>int</em> <dfn class="local col6 decl" id="1236search_flags" title='search_flags' data-type='int' data-ref="1236search_flags">search_flags</dfn>, <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a>   **<dfn class="local col7 decl" id="1237out_val" title='out_val' data-type='uint8_t **' data-ref="1237out_val">out_val</dfn>);</td></tr>
+<tr><th id="737">737</th><td><em>int</em> <dfn class="decl" id="av_opt_get_int" title='av_opt_get_int' data-ref="av_opt_get_int">av_opt_get_int</dfn>     (<em>void</em> *<dfn class="local col8 decl" id="1238obj" title='obj' data-type='void *' data-ref="1238obj">obj</dfn>, <em>const</em> <em>char</em> *<dfn class="local col9 decl" id="1239name" title='name' data-type='const char *' data-ref="1239name">name</dfn>, <em>int</em> <dfn class="local col0 decl" id="1240search_flags" title='search_flags' data-type='int' data-ref="1240search_flags">search_flags</dfn>, <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a>    *<dfn class="local col1 decl" id="1241out_val" title='out_val' data-type='int64_t *' data-ref="1241out_val">out_val</dfn>);</td></tr>
+<tr><th id="738">738</th><td><em>int</em> <dfn class="decl" id="av_opt_get_double" title='av_opt_get_double' data-ref="av_opt_get_double">av_opt_get_double</dfn>  (<em>void</em> *<dfn class="local col2 decl" id="1242obj" title='obj' data-type='void *' data-ref="1242obj">obj</dfn>, <em>const</em> <em>char</em> *<dfn class="local col3 decl" id="1243name" title='name' data-type='const char *' data-ref="1243name">name</dfn>, <em>int</em> <dfn class="local col4 decl" id="1244search_flags" title='search_flags' data-type='int' data-ref="1244search_flags">search_flags</dfn>, <em>double</em>     *<dfn class="local col5 decl" id="1245out_val" title='out_val' data-type='double *' data-ref="1245out_val">out_val</dfn>);</td></tr>
+<tr><th id="739">739</th><td><em>int</em> <dfn class="decl" id="av_opt_get_q" title='av_opt_get_q' data-ref="av_opt_get_q">av_opt_get_q</dfn>       (<em>void</em> *<dfn class="local col6 decl" id="1246obj" title='obj' data-type='void *' data-ref="1246obj">obj</dfn>, <em>const</em> <em>char</em> *<dfn class="local col7 decl" id="1247name" title='name' data-type='const char *' data-ref="1247name">name</dfn>, <em>int</em> <dfn class="local col8 decl" id="1248search_flags" title='search_flags' data-type='int' data-ref="1248search_flags">search_flags</dfn>, <a class="typedef" href="rational.h.html#AVRational" title='AVRational' data-type='struct AVRational' data-ref="AVRational">AVRational</a> *<dfn class="local col9 decl" id="1249out_val" title='out_val' data-type='AVRational *' data-ref="1249out_val">out_val</dfn>);</td></tr>
+<tr><th id="740">740</th><td><em>int</em> <dfn class="decl" id="av_opt_get_image_size" title='av_opt_get_image_size' data-ref="av_opt_get_image_size">av_opt_get_image_size</dfn>(<em>void</em> *<dfn class="local col0 decl" id="1250obj" title='obj' data-type='void *' data-ref="1250obj">obj</dfn>, <em>const</em> <em>char</em> *<dfn class="local col1 decl" id="1251name" title='name' data-type='const char *' data-ref="1251name">name</dfn>, <em>int</em> <dfn class="local col2 decl" id="1252search_flags" title='search_flags' data-type='int' data-ref="1252search_flags">search_flags</dfn>, <em>int</em> *<dfn class="local col3 decl" id="1253w_out" title='w_out' data-type='int *' data-ref="1253w_out">w_out</dfn>, <em>int</em> *<dfn class="local col4 decl" id="1254h_out" title='h_out' data-type='int *' data-ref="1254h_out">h_out</dfn>);</td></tr>
+<tr><th id="741">741</th><td><em>int</em> <dfn class="decl" id="av_opt_get_pixel_fmt" title='av_opt_get_pixel_fmt' data-ref="av_opt_get_pixel_fmt">av_opt_get_pixel_fmt</dfn> (<em>void</em> *<dfn class="local col5 decl" id="1255obj" title='obj' data-type='void *' data-ref="1255obj">obj</dfn>, <em>const</em> <em>char</em> *<dfn class="local col6 decl" id="1256name" title='name' data-type='const char *' data-ref="1256name">name</dfn>, <em>int</em> <dfn class="local col7 decl" id="1257search_flags" title='search_flags' data-type='int' data-ref="1257search_flags">search_flags</dfn>, <b>enum</b> <a class="type" href="pixfmt.h.html#AVPixelFormat" title='AVPixelFormat' data-ref="AVPixelFormat">AVPixelFormat</a> *<dfn class="local col8 decl" id="1258out_fmt" title='out_fmt' data-type='enum AVPixelFormat *' data-ref="1258out_fmt">out_fmt</dfn>);</td></tr>
+<tr><th id="742">742</th><td><em>int</em> <dfn class="decl" id="av_opt_get_sample_fmt" title='av_opt_get_sample_fmt' data-ref="av_opt_get_sample_fmt">av_opt_get_sample_fmt</dfn>(<em>void</em> *<dfn class="local col9 decl" id="1259obj" title='obj' data-type='void *' data-ref="1259obj">obj</dfn>, <em>const</em> <em>char</em> *<dfn class="local col0 decl" id="1260name" title='name' data-type='const char *' data-ref="1260name">name</dfn>, <em>int</em> <dfn class="local col1 decl" id="1261search_flags" title='search_flags' data-type='int' data-ref="1261search_flags">search_flags</dfn>, <b>enum</b> <a class="type" href="samplefmt.h.html#AVSampleFormat" title='AVSampleFormat' data-ref="AVSampleFormat">AVSampleFormat</a> *<dfn class="local col2 decl" id="1262out_fmt" title='out_fmt' data-type='enum AVSampleFormat *' data-ref="1262out_fmt">out_fmt</dfn>);</td></tr>
+<tr><th id="743">743</th><td><em>int</em> <dfn class="decl" id="av_opt_get_video_rate" title='av_opt_get_video_rate' data-ref="av_opt_get_video_rate">av_opt_get_video_rate</dfn>(<em>void</em> *<dfn class="local col3 decl" id="1263obj" title='obj' data-type='void *' data-ref="1263obj">obj</dfn>, <em>const</em> <em>char</em> *<dfn class="local col4 decl" id="1264name" title='name' data-type='const char *' data-ref="1264name">name</dfn>, <em>int</em> <dfn class="local col5 decl" id="1265search_flags" title='search_flags' data-type='int' data-ref="1265search_flags">search_flags</dfn>, <a class="typedef" href="rational.h.html#AVRational" title='AVRational' data-type='struct AVRational' data-ref="AVRational">AVRational</a> *<dfn class="local col6 decl" id="1266out_val" title='out_val' data-type='AVRational *' data-ref="1266out_val">out_val</dfn>);</td></tr>
+<tr><th id="744">744</th><td><em>int</em> <dfn class="decl" id="av_opt_get_channel_layout" title='av_opt_get_channel_layout' data-ref="av_opt_get_channel_layout">av_opt_get_channel_layout</dfn>(<em>void</em> *<dfn class="local col7 decl" id="1267obj" title='obj' data-type='void *' data-ref="1267obj">obj</dfn>, <em>const</em> <em>char</em> *<dfn class="local col8 decl" id="1268name" title='name' data-type='const char *' data-ref="1268name">name</dfn>, <em>int</em> <dfn class="local col9 decl" id="1269search_flags" title='search_flags' data-type='int' data-ref="1269search_flags">search_flags</dfn>, <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> *<dfn class="local col0 decl" id="1270ch_layout" title='ch_layout' data-type='int64_t *' data-ref="1270ch_layout">ch_layout</dfn>);</td></tr>
+<tr><th id="745">745</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="746">746</th><td><i class="doc"> * <span class="command">@param</span>[out] <span class="arg">out_val</span> The returned dictionary is a copy of the actual value and must</i></td></tr>
+<tr><th id="747">747</th><td><i class="doc"> * be freed with av_dict_free() by the caller</i></td></tr>
+<tr><th id="748">748</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="749">749</th><td><em>int</em> <dfn class="decl" id="av_opt_get_dict_val" title='av_opt_get_dict_val' data-ref="av_opt_get_dict_val">av_opt_get_dict_val</dfn>(<em>void</em> *<dfn class="local col1 decl" id="1271obj" title='obj' data-type='void *' data-ref="1271obj">obj</dfn>, <em>const</em> <em>char</em> *<dfn class="local col2 decl" id="1272name" title='name' data-type='const char *' data-ref="1272name">name</dfn>, <em>int</em> <dfn class="local col3 decl" id="1273search_flags" title='search_flags' data-type='int' data-ref="1273search_flags">search_flags</dfn>, <a class="typedef" href="dict.h.html#AVDictionary" title='AVDictionary' data-type='struct AVDictionary' data-ref="AVDictionary">AVDictionary</a> **<dfn class="local col4 decl" id="1274out_val" title='out_val' data-type='AVDictionary **' data-ref="1274out_val">out_val</dfn>);</td></tr>
+<tr><th id="750">750</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="751">751</th><td><i class="doc"> * @}</i></td></tr>
+<tr><th id="752">752</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="753">753</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="754">754</th><td><i class="doc"> * Gets a pointer to the requested field in a struct.</i></td></tr>
+<tr><th id="755">755</th><td><i class="doc"> * This function allows accessing a struct even when its fields are moved or</i></td></tr>
+<tr><th id="756">756</th><td><i class="doc"> * renamed since the application making the access has been compiled,</i></td></tr>
+<tr><th id="757">757</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="758">758</th><td><i class="doc"> * <span class="command">@returns</span> a pointer to the field, it can be cast to the correct type and read</i></td></tr>
+<tr><th id="759">759</th><td><i class="doc"> *          or written to.</i></td></tr>
+<tr><th id="760">760</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="761">761</th><td><em>void</em> *<dfn class="decl" id="av_opt_ptr" title='av_opt_ptr' data-ref="av_opt_ptr">av_opt_ptr</dfn>(<em>const</em> <a class="typedef" href="log.h.html#AVClass" title='AVClass' data-type='struct AVClass' data-ref="AVClass">AVClass</a> *<dfn class="local col5 decl" id="1275avclass" title='avclass' data-type='const AVClass *' data-ref="1275avclass">avclass</dfn>, <em>void</em> *<dfn class="local col6 decl" id="1276obj" title='obj' data-type='void *' data-ref="1276obj">obj</dfn>, <em>const</em> <em>char</em> *<dfn class="local col7 decl" id="1277name" title='name' data-type='const char *' data-ref="1277name">name</dfn>);</td></tr>
+<tr><th id="762">762</th><td></td></tr>
+<tr><th id="763">763</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="764">764</th><td><i class="doc"> * Free an AVOptionRanges struct and set it to NULL.</i></td></tr>
+<tr><th id="765">765</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="766">766</th><td><em>void</em> <dfn class="decl" id="av_opt_freep_ranges" title='av_opt_freep_ranges' data-ref="av_opt_freep_ranges">av_opt_freep_ranges</dfn>(<a class="typedef" href="#AVOptionRanges" title='AVOptionRanges' data-type='struct AVOptionRanges' data-ref="AVOptionRanges">AVOptionRanges</a> **<dfn class="local col8 decl" id="1278ranges" title='ranges' data-type='AVOptionRanges **' data-ref="1278ranges">ranges</dfn>);</td></tr>
+<tr><th id="767">767</th><td></td></tr>
+<tr><th id="768">768</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="769">769</th><td><i class="doc"> * Get a list of allowed ranges for the given option.</i></td></tr>
+<tr><th id="770">770</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="771">771</th><td><i class="doc"> * The returned list may depend on other fields in obj like for example profile.</i></td></tr>
+<tr><th id="772">772</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="773">773</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">flags</span> is a bitmask of flags, undefined flags should not be set and should be ignored</i></td></tr>
+<tr><th id="774">774</th><td><i class="doc"> *              AV_OPT_SEARCH_FAKE_OBJ indicates that the obj is a double pointer to a AVClass instead of a full instance</i></td></tr>
+<tr><th id="775">775</th><td><i class="doc"> *              AV_OPT_MULTI_COMPONENT_RANGE indicates that function may return more than one component, <span class="command">@see</span> AVOptionRanges</i></td></tr>
+<tr><th id="776">776</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="777">777</th><td><i class="doc"> * The result must be freed with av_opt_freep_ranges.</i></td></tr>
+<tr><th id="778">778</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="779">779</th><td><i class="doc"> * <span class="command">@return</span> number of compontents returned on success, a negative errro code otherwise</i></td></tr>
+<tr><th id="780">780</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="781">781</th><td><em>int</em> <dfn class="decl" id="av_opt_query_ranges" title='av_opt_query_ranges' data-ref="av_opt_query_ranges">av_opt_query_ranges</dfn>(<a class="typedef" href="#AVOptionRanges" title='AVOptionRanges' data-type='struct AVOptionRanges' data-ref="AVOptionRanges">AVOptionRanges</a> **, <em>void</em> *<dfn class="local col9 decl" id="1279obj" title='obj' data-type='void *' data-ref="1279obj">obj</dfn>, <em>const</em> <em>char</em> *<dfn class="local col0 decl" id="1280key" title='key' data-type='const char *' data-ref="1280key">key</dfn>, <em>int</em> <dfn class="local col1 decl" id="1281flags" title='flags' data-type='int' data-ref="1281flags">flags</dfn>);</td></tr>
+<tr><th id="782">782</th><td></td></tr>
+<tr><th id="783">783</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="784">784</th><td><i class="doc"> * Copy options from src object into dest object.</i></td></tr>
+<tr><th id="785">785</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="786">786</th><td><i class="doc"> * Options that require memory allocation (e.g. string or binary) are malloc'ed in dest object.</i></td></tr>
+<tr><th id="787">787</th><td><i class="doc"> * Original memory allocated for such options is freed unless both src and dest options points to the same memory.</i></td></tr>
+<tr><th id="788">788</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="789">789</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">dest</span> Object to copy from</i></td></tr>
+<tr><th id="790">790</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">src</span>  Object to copy into</i></td></tr>
+<tr><th id="791">791</th><td><i class="doc"> * <span class="command">@return</span> 0 on success, negative on error</i></td></tr>
+<tr><th id="792">792</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="793">793</th><td><em>int</em> <dfn class="decl" id="av_opt_copy" title='av_opt_copy' data-ref="av_opt_copy">av_opt_copy</dfn>(<em>void</em> *<dfn class="local col2 decl" id="1282dest" title='dest' data-type='void *' data-ref="1282dest">dest</dfn>, <em>const</em> <em>void</em> *<dfn class="local col3 decl" id="1283src" title='src' data-type='const void *' data-ref="1283src">src</dfn>);</td></tr>
+<tr><th id="794">794</th><td></td></tr>
+<tr><th id="795">795</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="796">796</th><td><i class="doc"> * Get a default list of allowed ranges for the given option.</i></td></tr>
+<tr><th id="797">797</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="798">798</th><td><i class="doc"> * This list is constructed without using the AVClass.query_ranges() callback</i></td></tr>
+<tr><th id="799">799</th><td><i class="doc"> * and can be used as fallback from within the callback.</i></td></tr>
+<tr><th id="800">800</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="801">801</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">flags</span> is a bitmask of flags, undefined flags should not be set and should be ignored</i></td></tr>
+<tr><th id="802">802</th><td><i class="doc"> *              AV_OPT_SEARCH_FAKE_OBJ indicates that the obj is a double pointer to a AVClass instead of a full instance</i></td></tr>
+<tr><th id="803">803</th><td><i class="doc"> *              AV_OPT_MULTI_COMPONENT_RANGE indicates that function may return more than one component, <span class="command">@see</span> AVOptionRanges</i></td></tr>
+<tr><th id="804">804</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="805">805</th><td><i class="doc"> * The result must be freed with av_opt_free_ranges.</i></td></tr>
+<tr><th id="806">806</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="807">807</th><td><i class="doc"> * <span class="command">@return</span> number of compontents returned on success, a negative errro code otherwise</i></td></tr>
+<tr><th id="808">808</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="809">809</th><td><em>int</em> <dfn class="decl" id="av_opt_query_ranges_default" title='av_opt_query_ranges_default' data-ref="av_opt_query_ranges_default">av_opt_query_ranges_default</dfn>(<a class="typedef" href="#AVOptionRanges" title='AVOptionRanges' data-type='struct AVOptionRanges' data-ref="AVOptionRanges">AVOptionRanges</a> **, <em>void</em> *<dfn class="local col4 decl" id="1284obj" title='obj' data-type='void *' data-ref="1284obj">obj</dfn>, <em>const</em> <em>char</em> *<dfn class="local col5 decl" id="1285key" title='key' data-type='const char *' data-ref="1285key">key</dfn>, <em>int</em> <dfn class="local col6 decl" id="1286flags" title='flags' data-type='int' data-ref="1286flags">flags</dfn>);</td></tr>
+<tr><th id="810">810</th><td></td></tr>
+<tr><th id="811">811</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="812">812</th><td><i class="doc"> * Check if given option is set to its default value.</i></td></tr>
+<tr><th id="813">813</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="814">814</th><td><i class="doc"> * Options o must belong to the obj. This function must not be called to check child's options state.</i></td></tr>
+<tr><th id="815">815</th><td><i class="doc"> * <span class="command">@see</span> av_opt_is_set_to_default_by_name().</i></td></tr>
+<tr><th id="816">816</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="817">817</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">obj</span>  AVClass object to check option on</i></td></tr>
+<tr><th id="818">818</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">o</span>    option to be checked</i></td></tr>
+<tr><th id="819">819</th><td><i class="doc"> * <span class="command">@return</span>     &gt;0 when option is set to its default,</i></td></tr>
+<tr><th id="820">820</th><td><i class="doc"> *              0 when option is not set its default,</i></td></tr>
+<tr><th id="821">821</th><td><i class="doc"> *             &lt;0 on error</i></td></tr>
+<tr><th id="822">822</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="823">823</th><td><em>int</em> <dfn class="decl" id="av_opt_is_set_to_default" title='av_opt_is_set_to_default' data-ref="av_opt_is_set_to_default">av_opt_is_set_to_default</dfn>(<em>void</em> *<dfn class="local col7 decl" id="1287obj" title='obj' data-type='void *' data-ref="1287obj">obj</dfn>, <em>const</em> <a class="typedef" href="#AVOption" title='AVOption' data-type='struct AVOption' data-ref="AVOption">AVOption</a> *<dfn class="local col8 decl" id="1288o" title='o' data-type='const AVOption *' data-ref="1288o">o</dfn>);</td></tr>
+<tr><th id="824">824</th><td></td></tr>
+<tr><th id="825">825</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="826">826</th><td><i class="doc"> * Check if given option is set to its default value.</i></td></tr>
+<tr><th id="827">827</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="828">828</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">obj</span>          AVClass object to check option on</i></td></tr>
+<tr><th id="829">829</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">name</span>         option name</i></td></tr>
+<tr><th id="830">830</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">search_flags</span> combination of AV_OPT_SEARCH_*</i></td></tr>
+<tr><th id="831">831</th><td><i class="doc"> * <span class="command">@return</span>             &gt;0 when option is set to its default,</i></td></tr>
+<tr><th id="832">832</th><td><i class="doc"> *                     0 when option is not set its default,</i></td></tr>
+<tr><th id="833">833</th><td><i class="doc"> *                     &lt;0 on error</i></td></tr>
+<tr><th id="834">834</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="835">835</th><td><em>int</em> <dfn class="decl" id="av_opt_is_set_to_default_by_name" title='av_opt_is_set_to_default_by_name' data-ref="av_opt_is_set_to_default_by_name">av_opt_is_set_to_default_by_name</dfn>(<em>void</em> *<dfn class="local col9 decl" id="1289obj" title='obj' data-type='void *' data-ref="1289obj">obj</dfn>, <em>const</em> <em>char</em> *<dfn class="local col0 decl" id="1290name" title='name' data-type='const char *' data-ref="1290name">name</dfn>, <em>int</em> <dfn class="local col1 decl" id="1291search_flags" title='search_flags' data-type='int' data-ref="1291search_flags">search_flags</dfn>);</td></tr>
+<tr><th id="836">836</th><td></td></tr>
+<tr><th id="837">837</th><td></td></tr>
+<tr><th id="838">838</th><td><u>#define <dfn class="macro" id="_M/AV_OPT_SERIALIZE_SKIP_DEFAULTS" data-ref="_M/AV_OPT_SERIALIZE_SKIP_DEFAULTS">AV_OPT_SERIALIZE_SKIP_DEFAULTS</dfn>              0x00000001  ///&lt; Serialize options that are not set to default values only.</u></td></tr>
+<tr><th id="839">839</th><td><u>#define <dfn class="macro" id="_M/AV_OPT_SERIALIZE_OPT_FLAGS_EXACT" data-ref="_M/AV_OPT_SERIALIZE_OPT_FLAGS_EXACT">AV_OPT_SERIALIZE_OPT_FLAGS_EXACT</dfn>            0x00000002  ///&lt; Serialize options that exactly match opt_flags only.</u></td></tr>
+<tr><th id="840">840</th><td></td></tr>
+<tr><th id="841">841</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="842">842</th><td><i class="doc"> * Serialize object's options.</i></td></tr>
+<tr><th id="843">843</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="844">844</th><td><i class="doc"> * Create a string containing object's serialized options.</i></td></tr>
+<tr><th id="845">845</th><td><i class="doc"> * Such string may be passed back to av_opt_set_from_string() in order to restore option values.</i></td></tr>
+<tr><th id="846">846</th><td><i class="doc"> * A key/value or pairs separator occurring in the serialized value or</i></td></tr>
+<tr><th id="847">847</th><td><i class="doc"> * name string are escaped through the av_escape() function.</i></td></tr>
+<tr><th id="848">848</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="849">849</th><td><i class="doc"> * <span class="command">@param</span>[in]  <span class="arg">obj</span>           AVClass object to serialize</i></td></tr>
+<tr><th id="850">850</th><td><i class="doc"> * <span class="command">@param</span>[in]  <span class="arg">opt_flags</span>     serialize options with all the specified flags set (AV_OPT_FLAG)</i></td></tr>
+<tr><th id="851">851</th><td><i class="doc"> * <span class="command">@param</span>[in]  <span class="arg">flags</span>         combination of AV_OPT_SERIALIZE_* flags</i></td></tr>
+<tr><th id="852">852</th><td><i class="doc"> * <span class="command">@param</span>[out] <span class="arg">buffer</span>        Pointer to buffer that will be allocated with string containg serialized options.</i></td></tr>
+<tr><th id="853">853</th><td><i class="doc"> *                           Buffer must be freed by the caller when is no longer needed.</i></td></tr>
+<tr><th id="854">854</th><td><i class="doc"> * <span class="command">@param</span>[in]  <span class="arg">key_val_sep</span>   character used to separate key from value</i></td></tr>
+<tr><th id="855">855</th><td><i class="doc"> * <span class="command">@param</span>[in]  <span class="arg">pairs_sep</span>     character used to separate two pairs from each other</i></td></tr>
+<tr><th id="856">856</th><td><i class="doc"> * <span class="command">@return</span>                   &gt;= 0 on success, negative on error</i></td></tr>
+<tr><th id="857">857</th><td><i class="doc"> * <span class="command">@warning</span> Separators cannot be neither '\\' nor '\0'. They also cannot be the same.</i></td></tr>
+<tr><th id="858">858</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="859">859</th><td><em>int</em> <dfn class="decl" id="av_opt_serialize" title='av_opt_serialize' data-ref="av_opt_serialize">av_opt_serialize</dfn>(<em>void</em> *<dfn class="local col2 decl" id="1292obj" title='obj' data-type='void *' data-ref="1292obj">obj</dfn>, <em>int</em> <dfn class="local col3 decl" id="1293opt_flags" title='opt_flags' data-type='int' data-ref="1293opt_flags">opt_flags</dfn>, <em>int</em> <dfn class="local col4 decl" id="1294flags" title='flags' data-type='int' data-ref="1294flags">flags</dfn>, <em>char</em> **<dfn class="local col5 decl" id="1295buffer" title='buffer' data-type='char **' data-ref="1295buffer">buffer</dfn>,</td></tr>
+<tr><th id="860">860</th><td>                     <em>const</em> <em>char</em> <dfn class="local col6 decl" id="1296key_val_sep" title='key_val_sep' data-type='const char' data-ref="1296key_val_sep">key_val_sep</dfn>, <em>const</em> <em>char</em> <dfn class="local col7 decl" id="1297pairs_sep" title='pairs_sep' data-type='const char' data-ref="1297pairs_sep">pairs_sep</dfn>);</td></tr>
+<tr><th id="861">861</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="862">862</th><td><i class="doc"> * @}</i></td></tr>
+<tr><th id="863">863</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="864">864</th><td></td></tr>
+<tr><th id="865">865</th><td><u>#<span data-ppcond="22">endif</span> /* AVUTIL_OPT_H */</u></td></tr>
+<tr><th id="866">866</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated while processing <a href='../libavdevice/alldevices.c.html'>ffmpeg/libavdevice/alldevices.c</a><br/>Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

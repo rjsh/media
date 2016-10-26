@@ -1,0 +1,92 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>rtpdec_ilbc.c source code [ffmpeg/libavformat/rtpdec_ilbc.c] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavformat/rtpdec_ilbc.c'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavformat</a>/<a href='rtpdec_ilbc.c.html'>rtpdec_ilbc.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * RTP iLBC Depacketizer, RFC 3952</i></td></tr>
+<tr><th id="3">3</th><td><i> * Copyright (c) 2012 Martin Storsjo</i></td></tr>
+<tr><th id="4">4</th><td><i> *</i></td></tr>
+<tr><th id="5">5</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="8">8</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="9">9</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="10">10</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="11">11</th><td><i> *</i></td></tr>
+<tr><th id="12">12</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="13">13</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="14">14</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="15">15</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="16">16</th><td><i> *</i></td></tr>
+<tr><th id="17">17</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="18">18</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="19">19</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="20">20</th><td><i> */</i></td></tr>
+<tr><th id="21">21</th><td></td></tr>
+<tr><th id="22">22</th><td><u>#include <a href="avformat.h.html">"avformat.h"</a></u></td></tr>
+<tr><th id="23">23</th><td><u>#include <a href="rtpdec_formats.h.html">"rtpdec_formats.h"</a></u></td></tr>
+<tr><th id="24">24</th><td><u>#include <a href="../libavutil/avstring.h.html">"libavutil/avstring.h"</a></u></td></tr>
+<tr><th id="25">25</th><td></td></tr>
+<tr><th id="26">26</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="ilbc_parse_fmtp" title='ilbc_parse_fmtp' data-type='int ilbc_parse_fmtp(AVFormatContext * s, AVStream * stream, PayloadContext * data, const char * attr, const char * value)' data-ref="ilbc_parse_fmtp">ilbc_parse_fmtp</dfn>(<a class="typedef" href="avformat.h.html#AVFormatContext" title='AVFormatContext' data-type='struct AVFormatContext' data-ref="AVFormatContext">AVFormatContext</a> *<dfn class="local col1 decl" id="1s" title='s' data-type='AVFormatContext *' data-ref="1s">s</dfn>,</td></tr>
+<tr><th id="27">27</th><td>                           <a class="typedef" href="avformat.h.html#AVStream" title='AVStream' data-type='struct AVStream' data-ref="AVStream">AVStream</a> *<dfn class="local col2 decl" id="2stream" title='stream' data-type='AVStream *' data-ref="2stream">stream</dfn>, <a class="typedef" href="rtpdec.h.html#PayloadContext" title='PayloadContext' data-type='struct PayloadContext' data-ref="PayloadContext">PayloadContext</a> *<dfn class="local col3 decl" id="3data" title='data' data-type='PayloadContext *' data-ref="3data">data</dfn>,</td></tr>
+<tr><th id="28">28</th><td>                           <em>const</em> <em>char</em> *<dfn class="local col4 decl" id="4attr" title='attr' data-type='const char *' data-ref="4attr">attr</dfn>, <em>const</em> <em>char</em> *<dfn class="local col5 decl" id="5value" title='value' data-type='const char *' data-ref="5value">value</dfn>)</td></tr>
+<tr><th id="29">29</th><td>{</td></tr>
+<tr><th id="30">30</th><td>    <b>if</b> (!<a class="ref" href="../../include/string.h.html#strcmp" title='strcmp' data-ref="strcmp">strcmp</a>(<a class="local col4 ref" href="#4attr" title='attr' data-ref="4attr">attr</a>, <q>"mode"</q>)) {</td></tr>
+<tr><th id="31">31</th><td>        <em>int</em> <dfn class="local col6 decl" id="6mode" title='mode' data-type='int' data-ref="6mode">mode</dfn> = <a class="ref" href="../../include/stdlib.h.html#atoi" title='atoi' data-ref="atoi">atoi</a>(<a class="local col5 ref" href="#5value" title='value' data-ref="5value">value</a>);</td></tr>
+<tr><th id="32">32</th><td>        <b>switch</b> (<a class="local col6 ref" href="#6mode" title='mode' data-ref="6mode">mode</a>) {</td></tr>
+<tr><th id="33">33</th><td>        <b>case</b> <var>20</var>:</td></tr>
+<tr><th id="34">34</th><td>            <a class="local col2 ref" href="#2stream" title='stream' data-ref="2stream">stream</a>-&gt;<a class="ref" href="avformat.h.html#AVStream::codecpar" title='AVStream::codecpar' data-ref="AVStream::codecpar">codecpar</a>-&gt;<a class="ref" href="../libavcodec/avcodec.h.html#AVCodecParameters::block_align" title='AVCodecParameters::block_align' data-ref="AVCodecParameters::block_align">block_align</a> = <var>38</var>;</td></tr>
+<tr><th id="35">35</th><td>            <b>break</b>;</td></tr>
+<tr><th id="36">36</th><td>        <b>case</b> <var>30</var>:</td></tr>
+<tr><th id="37">37</th><td>            <a class="local col2 ref" href="#2stream" title='stream' data-ref="2stream">stream</a>-&gt;<a class="ref" href="avformat.h.html#AVStream::codecpar" title='AVStream::codecpar' data-ref="AVStream::codecpar">codecpar</a>-&gt;<a class="ref" href="../libavcodec/avcodec.h.html#AVCodecParameters::block_align" title='AVCodecParameters::block_align' data-ref="AVCodecParameters::block_align">block_align</a> = <var>50</var>;</td></tr>
+<tr><th id="38">38</th><td>            <b>break</b>;</td></tr>
+<tr><th id="39">39</th><td>        <b>default</b>:</td></tr>
+<tr><th id="40">40</th><td>            <a class="ref" href="../libavutil/log.h.html#av_log" title='av_log' data-ref="av_log">av_log</a>(<a class="local col1 ref" href="#1s" title='s' data-ref="1s">s</a>, <a class="macro" href="../libavutil/log.h.html#176" title="16" data-ref="_M/AV_LOG_ERROR">AV_LOG_ERROR</a>, <q>"Unsupported iLBC mode %d\n"</q>, <a class="local col6 ref" href="#6mode" title='mode' data-ref="6mode">mode</a>);</td></tr>
+<tr><th id="41">41</th><td>            <b>return</b> <a class="macro" href="../libavutil/error.h.html#39" title="(-(22))" data-ref="_M/AVERROR">AVERROR</a>(<a class="macro" href="../../include/asm-generic/errno-base.h.html#25" title="22" data-ref="_M/EINVAL">EINVAL</a>);</td></tr>
+<tr><th id="42">42</th><td>        }</td></tr>
+<tr><th id="43">43</th><td>    }</td></tr>
+<tr><th id="44">44</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="45">45</th><td>}</td></tr>
+<tr><th id="46">46</th><td></td></tr>
+<tr><th id="47">47</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="ilbc_parse_sdp_line" title='ilbc_parse_sdp_line' data-type='int ilbc_parse_sdp_line(AVFormatContext * s, int st_index, PayloadContext * data, const char * line)' data-ref="ilbc_parse_sdp_line">ilbc_parse_sdp_line</dfn>(<a class="typedef" href="avformat.h.html#AVFormatContext" title='AVFormatContext' data-type='struct AVFormatContext' data-ref="AVFormatContext">AVFormatContext</a> *<dfn class="local col7 decl" id="7s" title='s' data-type='AVFormatContext *' data-ref="7s">s</dfn>, <em>int</em> <dfn class="local col8 decl" id="8st_index" title='st_index' data-type='int' data-ref="8st_index">st_index</dfn>,</td></tr>
+<tr><th id="48">48</th><td>                               <a class="typedef" href="rtpdec.h.html#PayloadContext" title='PayloadContext' data-type='struct PayloadContext' data-ref="PayloadContext">PayloadContext</a> *<dfn class="local col9 decl" id="9data" title='data' data-type='PayloadContext *' data-ref="9data">data</dfn>, <em>const</em> <em>char</em> *<dfn class="local col0 decl" id="10line" title='line' data-type='const char *' data-ref="10line">line</dfn>)</td></tr>
+<tr><th id="49">49</th><td>{</td></tr>
+<tr><th id="50">50</th><td>    <em>const</em> <em>char</em> *<dfn class="local col1 decl" id="11p" title='p' data-type='const char *' data-ref="11p">p</dfn>;</td></tr>
+<tr><th id="51">51</th><td>    <a class="typedef" href="avformat.h.html#AVStream" title='AVStream' data-type='struct AVStream' data-ref="AVStream">AVStream</a> *<dfn class="local col2 decl" id="12st" title='st' data-type='AVStream *' data-ref="12st">st</dfn>;</td></tr>
+<tr><th id="52">52</th><td></td></tr>
+<tr><th id="53">53</th><td>    <b>if</b> (<a class="local col8 ref" href="#8st_index" title='st_index' data-ref="8st_index">st_index</a> &lt; <var>0</var>)</td></tr>
+<tr><th id="54">54</th><td>        <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="55">55</th><td>    <a class="local col2 ref" href="#12st" title='st' data-ref="12st">st</a> = <a class="local col7 ref" href="#7s" title='s' data-ref="7s">s</a>-&gt;<a class="ref" href="avformat.h.html#AVFormatContext::streams" title='AVFormatContext::streams' data-ref="AVFormatContext::streams">streams</a>[<a class="local col8 ref" href="#8st_index" title='st_index' data-ref="8st_index">st_index</a>];</td></tr>
+<tr><th id="56">56</th><td></td></tr>
+<tr><th id="57">57</th><td>    <b>if</b> (<a class="ref" href="../libavutil/avstring.h.html#av_strstart" title='av_strstart' data-ref="av_strstart">av_strstart</a>(<a class="local col0 ref" href="#10line" title='line' data-ref="10line">line</a>, <q>"fmtp:"</q>, &amp;<a class="local col1 ref" href="#11p" title='p' data-ref="11p">p</a>)) {</td></tr>
+<tr><th id="58">58</th><td>        <em>int</em> <dfn class="local col3 decl" id="13ret" title='ret' data-type='int' data-ref="13ret">ret</dfn> = <a class="ref" href="rtpdec.h.html#ff_parse_fmtp" title='ff_parse_fmtp' data-ref="ff_parse_fmtp">ff_parse_fmtp</a>(<a class="local col7 ref" href="#7s" title='s' data-ref="7s">s</a>, <a class="local col2 ref" href="#12st" title='st' data-ref="12st">st</a>, <a class="local col9 ref" href="#9data" title='data' data-ref="9data">data</a>, <a class="local col1 ref" href="#11p" title='p' data-ref="11p">p</a>, <a class="tu ref" href="#ilbc_parse_fmtp" title='ilbc_parse_fmtp' data-use='r' data-ref="ilbc_parse_fmtp">ilbc_parse_fmtp</a>);</td></tr>
+<tr><th id="59">59</th><td>        <b>if</b> (<a class="local col3 ref" href="#13ret" title='ret' data-ref="13ret">ret</a> &lt; <var>0</var>)</td></tr>
+<tr><th id="60">60</th><td>            <b>return</b> <a class="local col3 ref" href="#13ret" title='ret' data-ref="13ret">ret</a>;</td></tr>
+<tr><th id="61">61</th><td>        <b>if</b> (!<a class="local col2 ref" href="#12st" title='st' data-ref="12st">st</a>-&gt;<a class="ref" href="avformat.h.html#AVStream::codecpar" title='AVStream::codecpar' data-ref="AVStream::codecpar">codecpar</a>-&gt;<a class="ref" href="../libavcodec/avcodec.h.html#AVCodecParameters::block_align" title='AVCodecParameters::block_align' data-ref="AVCodecParameters::block_align">block_align</a>) {</td></tr>
+<tr><th id="62">62</th><td>            <a class="ref" href="../libavutil/log.h.html#av_log" title='av_log' data-ref="av_log">av_log</a>(<a class="local col7 ref" href="#7s" title='s' data-ref="7s">s</a>, <a class="macro" href="../libavutil/log.h.html#176" title="16" data-ref="_M/AV_LOG_ERROR">AV_LOG_ERROR</a>, <q>"No iLBC mode set\n"</q>);</td></tr>
+<tr><th id="63">63</th><td>            <b>return</b> <a class="macro" href="../libavutil/error.h.html#39" title="(-(22))" data-ref="_M/AVERROR">AVERROR</a>(<a class="macro" href="../../include/asm-generic/errno-base.h.html#25" title="22" data-ref="_M/EINVAL">EINVAL</a>);</td></tr>
+<tr><th id="64">64</th><td>        }</td></tr>
+<tr><th id="65">65</th><td>    }</td></tr>
+<tr><th id="66">66</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="67">67</th><td>}</td></tr>
+<tr><th id="68">68</th><td></td></tr>
+<tr><th id="69">69</th><td><a class="typedef" href="rtpdec.h.html#RTPDynamicProtocolHandler" title='RTPDynamicProtocolHandler' data-type='struct RTPDynamicProtocolHandler' data-ref="RTPDynamicProtocolHandler">RTPDynamicProtocolHandler</a> <dfn class="decl def" id="ff_ilbc_dynamic_handler" title='ff_ilbc_dynamic_handler' data-ref="ff_ilbc_dynamic_handler">ff_ilbc_dynamic_handler</dfn> = {</td></tr>
+<tr><th id="70">70</th><td>    .<a class="ref" href="rtpdec.h.html#RTPDynamicProtocolHandler::enc_name" title='RTPDynamicProtocolHandler::enc_name' data-ref="RTPDynamicProtocolHandler::enc_name">enc_name</a>         = <q>"iLBC"</q>,</td></tr>
+<tr><th id="71">71</th><td>    .<a class="ref" href="rtpdec.h.html#RTPDynamicProtocolHandler::codec_type" title='RTPDynamicProtocolHandler::codec_type' data-ref="RTPDynamicProtocolHandler::codec_type">codec_type</a>       = <a class="enum" href="../libavutil/avutil.h.html#AVMediaType::AVMEDIA_TYPE_AUDIO" title='AVMediaType::AVMEDIA_TYPE_AUDIO' data-ref="AVMediaType::AVMEDIA_TYPE_AUDIO">AVMEDIA_TYPE_AUDIO</a>,</td></tr>
+<tr><th id="72">72</th><td>    .<a class="ref" href="rtpdec.h.html#RTPDynamicProtocolHandler::codec_id" title='RTPDynamicProtocolHandler::codec_id' data-ref="RTPDynamicProtocolHandler::codec_id">codec_id</a>         = <a class="enum" href="../libavcodec/avcodec.h.html#AVCodecID::AV_CODEC_ID_ILBC" title='AVCodecID::AV_CODEC_ID_ILBC' data-ref="AVCodecID::AV_CODEC_ID_ILBC">AV_CODEC_ID_ILBC</a>,</td></tr>
+<tr><th id="73">73</th><td>    .<a class="ref" href="rtpdec.h.html#RTPDynamicProtocolHandler::parse_sdp_a_line" title='RTPDynamicProtocolHandler::parse_sdp_a_line' data-ref="RTPDynamicProtocolHandler::parse_sdp_a_line">parse_sdp_a_line</a> = <a class="tu ref" href="#ilbc_parse_sdp_line" title='ilbc_parse_sdp_line' data-use='r' data-ref="ilbc_parse_sdp_line">ilbc_parse_sdp_line</a>,</td></tr>
+<tr><th id="74">74</th><td>};</td></tr>
+<tr><th id="75">75</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

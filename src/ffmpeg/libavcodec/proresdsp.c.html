@@ -1,0 +1,86 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>proresdsp.c source code [ffmpeg/libavcodec/proresdsp.c] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavcodec/proresdsp.c'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavcodec</a>/<a href='proresdsp.c.html'>proresdsp.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * Apple ProRes compatible decoder</i></td></tr>
+<tr><th id="3">3</th><td><i> *</i></td></tr>
+<tr><th id="4">4</th><td><i> * Copyright (c) 2010-2011 Maxim Poliakovski</i></td></tr>
+<tr><th id="5">5</th><td><i> *</i></td></tr>
+<tr><th id="6">6</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="7">7</th><td><i> *</i></td></tr>
+<tr><th id="8">8</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="9">9</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="10">10</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="11">11</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="12">12</th><td><i> *</i></td></tr>
+<tr><th id="13">13</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="14">14</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="15">15</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="16">16</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="17">17</th><td><i> *</i></td></tr>
+<tr><th id="18">18</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="19">19</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="20">20</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="21">21</th><td><i> */</i></td></tr>
+<tr><th id="22">22</th><td></td></tr>
+<tr><th id="23">23</th><td><u>#include <a href="../config.h.html">"config.h"</a></u></td></tr>
+<tr><th id="24">24</th><td><u>#include <a href="../libavutil/attributes.h.html">"libavutil/attributes.h"</a></u></td></tr>
+<tr><th id="25">25</th><td><u>#include <a href="../libavutil/common.h.html">"libavutil/common.h"</a></u></td></tr>
+<tr><th id="26">26</th><td><u>#include <a href="idctdsp.h.html">"idctdsp.h"</a></u></td></tr>
+<tr><th id="27">27</th><td><u>#include <a href="proresdsp.h.html">"proresdsp.h"</a></u></td></tr>
+<tr><th id="28">28</th><td><u>#include <a href="simple_idct.h.html">"simple_idct.h"</a></u></td></tr>
+<tr><th id="29">29</th><td></td></tr>
+<tr><th id="30">30</th><td><u>#define <dfn class="macro" id="_M/BIAS" data-ref="_M/BIAS">BIAS</dfn>     (1 &lt;&lt; (PRORES_BITS_PER_SAMPLE - 1))           ///&lt; bias value for converting signed pixels into unsigned ones</u></td></tr>
+<tr><th id="31">31</th><td><u>#define <dfn class="macro" id="_M/CLIP_MIN" data-ref="_M/CLIP_MIN">CLIP_MIN</dfn> (1 &lt;&lt; (PRORES_BITS_PER_SAMPLE - 8))           ///&lt; minimum value for clipping resulting pixels</u></td></tr>
+<tr><th id="32">32</th><td><u>#define <dfn class="macro" id="_M/CLIP_MAX" data-ref="_M/CLIP_MAX">CLIP_MAX</dfn> (1 &lt;&lt; PRORES_BITS_PER_SAMPLE) - CLIP_MIN - 1  ///&lt; maximum value for clipping resulting pixels</u></td></tr>
+<tr><th id="33">33</th><td></td></tr>
+<tr><th id="34">34</th><td><u>#define <dfn class="macro" id="_M/CLIP" data-ref="_M/CLIP">CLIP</dfn>(x) (av_clip((x), CLIP_MIN, CLIP_MAX))</u></td></tr>
+<tr><th id="35">35</th><td></td></tr>
+<tr><th id="36">36</th><td><i class="doc" data-doc="put_pixels">/**</i></td></tr>
+<tr><th id="37">37</th><td><i class="doc" data-doc="put_pixels"> * Add bias value, clamp and output pixels of a slice</i></td></tr>
+<tr><th id="38">38</th><td><i class="doc" data-doc="put_pixels"> */</i></td></tr>
+<tr><th id="39">39</th><td><em>static</em> <em>void</em> <dfn class="tu decl def" id="put_pixels" title='put_pixels' data-type='void put_pixels(uint16_t * dst, int stride, const int16_t * in)' data-ref="put_pixels">put_pixels</dfn>(<a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> *<dfn class="local col1 decl" id="1dst" title='dst' data-type='uint16_t *' data-ref="1dst">dst</dfn>, <em>int</em> <dfn class="local col2 decl" id="2stride" title='stride' data-type='int' data-ref="2stride">stride</dfn>, <em>const</em> <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> *<dfn class="local col3 decl" id="3in" title='in' data-type='const int16_t *' data-ref="3in">in</dfn>)</td></tr>
+<tr><th id="40">40</th><td>{</td></tr>
+<tr><th id="41">41</th><td>    <em>int</em> <dfn class="local col4 decl" id="4x" title='x' data-type='int' data-ref="4x">x</dfn>, <dfn class="local col5 decl" id="5y" title='y' data-type='int' data-ref="5y">y</dfn>, <dfn class="local col6 decl" id="6src_offset" title='src_offset' data-type='int' data-ref="6src_offset">src_offset</dfn>, <dfn class="local col7 decl" id="7dst_offset" title='dst_offset' data-type='int' data-ref="7dst_offset">dst_offset</dfn>;</td></tr>
+<tr><th id="42">42</th><td></td></tr>
+<tr><th id="43">43</th><td>    <b>for</b> (<a class="local col5 ref" href="#5y" title='y' data-ref="5y">y</a> = <var>0</var>, <a class="local col7 ref" href="#7dst_offset" title='dst_offset' data-ref="7dst_offset">dst_offset</a> = <var>0</var>; <a class="local col5 ref" href="#5y" title='y' data-ref="5y">y</a> &lt; <var>8</var>; <a class="local col5 ref" href="#5y" title='y' data-ref="5y">y</a>++, <a class="local col7 ref" href="#7dst_offset" title='dst_offset' data-ref="7dst_offset">dst_offset</a> += <a class="local col2 ref" href="#2stride" title='stride' data-ref="2stride">stride</a>) {</td></tr>
+<tr><th id="44">44</th><td>        <b>for</b> (<a class="local col4 ref" href="#4x" title='x' data-ref="4x">x</a> = <var>0</var>; <a class="local col4 ref" href="#4x" title='x' data-ref="4x">x</a> &lt; <var>8</var>; <a class="local col4 ref" href="#4x" title='x' data-ref="4x">x</a>++) {</td></tr>
+<tr><th id="45">45</th><td>            <a class="local col6 ref" href="#6src_offset" title='src_offset' data-ref="6src_offset">src_offset</a> = (<a class="local col5 ref" href="#5y" title='y' data-ref="5y">y</a> &lt;&lt; <var>3</var>) + <a class="local col4 ref" href="#4x" title='x' data-ref="4x">x</a>;</td></tr>
+<tr><th id="46">46</th><td></td></tr>
+<tr><th id="47">47</th><td>            <a class="local col1 ref" href="#1dst" title='dst' data-ref="1dst">dst</a>[<a class="local col7 ref" href="#7dst_offset" title='dst_offset' data-ref="7dst_offset">dst_offset</a> + <a class="local col4 ref" href="#4x" title='x' data-ref="4x">x</a>] = <a class="macro" href="#34" title="(av_clip_c((in[src_offset]), (1 &lt;&lt; (10 - 8)), (1 &lt;&lt; 10) - (1 &lt;&lt; (10 - 8)) - 1))" data-ref="_M/CLIP">CLIP</a>(<a class="local col3 ref" href="#3in" title='in' data-ref="3in">in</a>[<a class="local col6 ref" href="#6src_offset" title='src_offset' data-ref="6src_offset">src_offset</a>]);</td></tr>
+<tr><th id="48">48</th><td>        }</td></tr>
+<tr><th id="49">49</th><td>    }</td></tr>
+<tr><th id="50">50</th><td>}</td></tr>
+<tr><th id="51">51</th><td></td></tr>
+<tr><th id="52">52</th><td><em>static</em> <em>void</em> <dfn class="tu decl def" id="prores_idct_put_c" title='prores_idct_put_c' data-type='void prores_idct_put_c(uint16_t * out, int linesize, int16_t * block, const int16_t * qmat)' data-ref="prores_idct_put_c">prores_idct_put_c</dfn>(<a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> *<dfn class="local col8 decl" id="8out" title='out' data-type='uint16_t *' data-ref="8out">out</dfn>, <em>int</em> <dfn class="local col9 decl" id="9linesize" title='linesize' data-type='int' data-ref="9linesize">linesize</dfn>, <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> *<dfn class="local col0 decl" id="10block" title='block' data-type='int16_t *' data-ref="10block">block</dfn>, <em>const</em> <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> *<dfn class="local col1 decl" id="11qmat" title='qmat' data-type='const int16_t *' data-ref="11qmat">qmat</dfn>)</td></tr>
+<tr><th id="53">53</th><td>{</td></tr>
+<tr><th id="54">54</th><td>    <a class="ref" href="simple_idct.h.html#ff_prores_idct" title='ff_prores_idct' data-ref="ff_prores_idct">ff_prores_idct</a>(<a class="local col0 ref" href="#10block" title='block' data-ref="10block">block</a>, <a class="local col1 ref" href="#11qmat" title='qmat' data-ref="11qmat">qmat</a>);</td></tr>
+<tr><th id="55">55</th><td>    <a class="tu ref" href="#put_pixels" title='put_pixels' data-use='c' data-ref="put_pixels">put_pixels</a>(<a class="local col8 ref" href="#8out" title='out' data-ref="8out">out</a>, <a class="local col9 ref" href="#9linesize" title='linesize' data-ref="9linesize">linesize</a> &gt;&gt; <var>1</var>, <a class="local col0 ref" href="#10block" title='block' data-ref="10block">block</a>);</td></tr>
+<tr><th id="56">56</th><td>}</td></tr>
+<tr><th id="57">57</th><td></td></tr>
+<tr><th id="58">58</th><td><a class="macro" href="../libavutil/attributes.h.html#84" title="" data-ref="_M/av_cold">av_cold</a> <em>void</em> <dfn class="decl def" id="ff_proresdsp_init" title='ff_proresdsp_init' data-ref="ff_proresdsp_init">ff_proresdsp_init</dfn>(<a class="typedef" href="proresdsp.h.html#ProresDSPContext" title='ProresDSPContext' data-type='struct ProresDSPContext' data-ref="ProresDSPContext">ProresDSPContext</a> *<dfn class="local col2 decl" id="12dsp" title='dsp' data-type='ProresDSPContext *' data-ref="12dsp">dsp</dfn>, <a class="typedef" href="avcodec.h.html#AVCodecContext" title='AVCodecContext' data-type='struct AVCodecContext' data-ref="AVCodecContext">AVCodecContext</a> *<dfn class="local col3 decl" id="13avctx" title='avctx' data-type='AVCodecContext *' data-ref="13avctx">avctx</dfn>)</td></tr>
+<tr><th id="59">59</th><td>{</td></tr>
+<tr><th id="60">60</th><td>    <a class="local col2 ref" href="#12dsp" title='dsp' data-ref="12dsp">dsp</a>-&gt;<a class="ref" href="proresdsp.h.html#ProresDSPContext::idct_put" title='ProresDSPContext::idct_put' data-ref="ProresDSPContext::idct_put">idct_put</a> = <a class="tu ref" href="#prores_idct_put_c" title='prores_idct_put_c' data-use='r' data-ref="prores_idct_put_c">prores_idct_put_c</a>;</td></tr>
+<tr><th id="61">61</th><td>    <a class="local col2 ref" href="#12dsp" title='dsp' data-ref="12dsp">dsp</a>-&gt;<a class="ref" href="proresdsp.h.html#ProresDSPContext::idct_permutation_type" title='ProresDSPContext::idct_permutation_type' data-ref="ProresDSPContext::idct_permutation_type">idct_permutation_type</a> = <a class="enum" href="idctdsp.h.html#idct_permutation_type::FF_IDCT_PERM_NONE" title='idct_permutation_type::FF_IDCT_PERM_NONE' data-ref="idct_permutation_type::FF_IDCT_PERM_NONE">FF_IDCT_PERM_NONE</a>;</td></tr>
+<tr><th id="62">62</th><td></td></tr>
+<tr><th id="63">63</th><td>    <b>if</b> (<a class="macro" href="../config.h.html#38" title="1" data-ref="_M/ARCH_X86">ARCH_X86</a>)</td></tr>
+<tr><th id="64">64</th><td>        <a class="ref" href="proresdsp.h.html#ff_proresdsp_init_x86" title='ff_proresdsp_init_x86' data-ref="ff_proresdsp_init_x86">ff_proresdsp_init_x86</a>(<a class="local col2 ref" href="#12dsp" title='dsp' data-ref="12dsp">dsp</a>, <a class="local col3 ref" href="#13avctx" title='avctx' data-ref="13avctx">avctx</a>);</td></tr>
+<tr><th id="65">65</th><td></td></tr>
+<tr><th id="66">66</th><td>    <a class="ref" href="idctdsp.h.html#ff_init_scantable_permutation" title='ff_init_scantable_permutation' data-ref="ff_init_scantable_permutation">ff_init_scantable_permutation</a>(<a class="local col2 ref" href="#12dsp" title='dsp' data-ref="12dsp">dsp</a>-&gt;<a class="ref" href="proresdsp.h.html#ProresDSPContext::idct_permutation" title='ProresDSPContext::idct_permutation' data-ref="ProresDSPContext::idct_permutation">idct_permutation</a>,</td></tr>
+<tr><th id="67">67</th><td>                                  <a class="local col2 ref" href="#12dsp" title='dsp' data-ref="12dsp">dsp</a>-&gt;<a class="ref" href="proresdsp.h.html#ProresDSPContext::idct_permutation_type" title='ProresDSPContext::idct_permutation_type' data-ref="ProresDSPContext::idct_permutation_type">idct_permutation_type</a>);</td></tr>
+<tr><th id="68">68</th><td>}</td></tr>
+<tr><th id="69">69</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

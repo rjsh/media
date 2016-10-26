@@ -1,0 +1,224 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>lzo.c source code [ffmpeg/libavutil/lzo.c] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="LZOContext "/>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavutil/lzo.c'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavutil</a>/<a href='lzo.c.html'>lzo.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * LZO 1x decompression</i></td></tr>
+<tr><th id="3">3</th><td><i> * Copyright (c) 2006 Reimar Doeffinger</i></td></tr>
+<tr><th id="4">4</th><td><i> *</i></td></tr>
+<tr><th id="5">5</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="8">8</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="9">9</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="10">10</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="11">11</th><td><i> *</i></td></tr>
+<tr><th id="12">12</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="13">13</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="14">14</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="15">15</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="16">16</th><td><i> *</i></td></tr>
+<tr><th id="17">17</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="18">18</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="19">19</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="20">20</th><td><i> */</i></td></tr>
+<tr><th id="21">21</th><td></td></tr>
+<tr><th id="22">22</th><td><u>#include <a href="../../include/string.h.html">&lt;string.h&gt;</a></u></td></tr>
+<tr><th id="23">23</th><td></td></tr>
+<tr><th id="24">24</th><td><u>#include <a href="avutil.h.html">"avutil.h"</a></u></td></tr>
+<tr><th id="25">25</th><td><u>#include <a href="avassert.h.html">"avassert.h"</a></u></td></tr>
+<tr><th id="26">26</th><td><u>#include <a href="common.h.html">"common.h"</a></u></td></tr>
+<tr><th id="27">27</th><td><u>#include <a href="intreadwrite.h.html">"intreadwrite.h"</a></u></td></tr>
+<tr><th id="28">28</th><td><u>#include <a href="lzo.h.html">"lzo.h"</a></u></td></tr>
+<tr><th id="29">29</th><td></td></tr>
+<tr><th id="30">30</th><td><i class="doc">/// Define if we may write up to 12 bytes beyond the output buffer.</i></td></tr>
+<tr><th id="31">31</th><td><u>#define <dfn class="macro" id="_M/OUTBUF_PADDED" data-ref="_M/OUTBUF_PADDED">OUTBUF_PADDED</dfn> 1</u></td></tr>
+<tr><th id="32">32</th><td><i class="doc">/// Define if we may read up to 8 bytes beyond the input buffer.</i></td></tr>
+<tr><th id="33">33</th><td><u>#define <dfn class="macro" id="_M/INBUF_PADDED" data-ref="_M/INBUF_PADDED">INBUF_PADDED</dfn> 1</u></td></tr>
+<tr><th id="34">34</th><td></td></tr>
+<tr><th id="35">35</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="LZOContext" title='LZOContext' data-ref="LZOContext"><a class="type" href="#LZOContext" title='LZOContext' data-ref="LZOContext">LZOContext</a></dfn> {</td></tr>
+<tr><th id="36">36</th><td>    <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="tu decl" id="LZOContext::in" title='LZOContext::in' data-type='const uint8_t *' data-ref="LZOContext::in">in</dfn>, *<dfn class="tu decl" id="LZOContext::in_end" title='LZOContext::in_end' data-type='const uint8_t *' data-ref="LZOContext::in_end">in_end</dfn>;</td></tr>
+<tr><th id="37">37</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="tu decl" id="LZOContext::out_start" title='LZOContext::out_start' data-type='uint8_t *' data-ref="LZOContext::out_start">out_start</dfn>, *<dfn class="tu decl" id="LZOContext::out" title='LZOContext::out' data-type='uint8_t *' data-ref="LZOContext::out">out</dfn>, *<dfn class="tu decl" id="LZOContext::out_end" title='LZOContext::out_end' data-type='uint8_t *' data-ref="LZOContext::out_end">out_end</dfn>;</td></tr>
+<tr><th id="38">38</th><td>    <em>int</em> <dfn class="tu decl" id="LZOContext::error" title='LZOContext::error' data-type='int' data-ref="LZOContext::error">error</dfn>;</td></tr>
+<tr><th id="39">39</th><td>} <dfn class="typedef" id="LZOContext" title='LZOContext' data-type='struct LZOContext' data-ref="LZOContext">LZOContext</dfn>;</td></tr>
+<tr><th id="40">40</th><td></td></tr>
+<tr><th id="41">41</th><td><i class="doc" data-doc="get_byte">/**</i></td></tr>
+<tr><th id="42">42</th><td><i class="doc" data-doc="get_byte"> * <span class="command">@brief</span> Reads one byte from the input buffer, avoiding an overrun.</i></td></tr>
+<tr><th id="43">43</th><td><i class="doc" data-doc="get_byte"> * <span class="command">@return</span> byte read</i></td></tr>
+<tr><th id="44">44</th><td><i class="doc" data-doc="get_byte"> */</i></td></tr>
+<tr><th id="45">45</th><td><em>static</em> <b>inline</b> <em>int</em> <dfn class="tu decl def" id="get_byte" title='get_byte' data-type='int get_byte(LZOContext * c)' data-ref="get_byte">get_byte</dfn>(<a class="typedef" href="#LZOContext" title='LZOContext' data-type='struct LZOContext' data-ref="LZOContext">LZOContext</a> *<dfn class="local col1 decl" id="1c" title='c' data-type='LZOContext *' data-ref="1c">c</dfn>)</td></tr>
+<tr><th id="46">46</th><td>{</td></tr>
+<tr><th id="47">47</th><td>    <b>if</b> (<a class="local col1 ref" href="#1c" title='c' data-ref="1c">c</a>-&gt;<a class="tu ref" href="#LZOContext::in" title='LZOContext::in' data-use='r' data-ref="LZOContext::in">in</a> &lt; <a class="local col1 ref" href="#1c" title='c' data-ref="1c">c</a>-&gt;<a class="tu ref" href="#LZOContext::in_end" title='LZOContext::in_end' data-use='r' data-ref="LZOContext::in_end">in_end</a>)</td></tr>
+<tr><th id="48">48</th><td>        <b>return</b> *<a class="local col1 ref" href="#1c" title='c' data-ref="1c">c</a>-&gt;<a class="tu ref" href="#LZOContext::in" title='LZOContext::in' data-use='w' data-ref="LZOContext::in">in</a>++;</td></tr>
+<tr><th id="49">49</th><td>    <a class="local col1 ref" href="#1c" title='c' data-ref="1c">c</a>-&gt;<a class="tu ref" href="#LZOContext::error" title='LZOContext::error' data-use='w' data-ref="LZOContext::error">error</a> |= <a class="macro" href="lzo.h.html#37" title="1" data-ref="_M/AV_LZO_INPUT_DEPLETED">AV_LZO_INPUT_DEPLETED</a>;</td></tr>
+<tr><th id="50">50</th><td>    <b>return</b> <var>1</var>;</td></tr>
+<tr><th id="51">51</th><td>}</td></tr>
+<tr><th id="52">52</th><td></td></tr>
+<tr><th id="53">53</th><td><u>#<span data-ppcond="53">ifdef</span> <a class="macro" href="#33" data-ref="_M/INBUF_PADDED">INBUF_PADDED</a></u></td></tr>
+<tr><th id="54">54</th><td><u>#define <dfn class="macro" id="_M/GETB" data-ref="_M/GETB">GETB</dfn>(c) (*(c).<a class="tu ref" href="#LZOContext::in" title='LZOContext::in' data-use='w' data-ref="LZOContext::in">in</a>++)</u></td></tr>
+<tr><th id="55">55</th><td><u>#<span data-ppcond="53">else</span></u></td></tr>
+<tr><th id="56">56</th><td><u>#define GETB(c) get_byte(&amp;(c))</u></td></tr>
+<tr><th id="57">57</th><td><u>#<span data-ppcond="53">endif</span></u></td></tr>
+<tr><th id="58">58</th><td></td></tr>
+<tr><th id="59">59</th><td><i class="doc" data-doc="get_len">/**</i></td></tr>
+<tr><th id="60">60</th><td><i class="doc" data-doc="get_len"> * <span class="command">@brief</span> Decodes a length value in the coding used by lzo.</i></td></tr>
+<tr><th id="61">61</th><td><i class="doc" data-doc="get_len"> * <span class="command">@param</span> <span class="arg">x</span> previous byte value</i></td></tr>
+<tr><th id="62">62</th><td><i class="doc" data-doc="get_len"> * <span class="command">@param</span> <span class="arg">mask</span> bits used from x</i></td></tr>
+<tr><th id="63">63</th><td><i class="doc" data-doc="get_len"> * <span class="command">@return</span> decoded length value</i></td></tr>
+<tr><th id="64">64</th><td><i class="doc" data-doc="get_len"> */</i></td></tr>
+<tr><th id="65">65</th><td><em>static</em> <b>inline</b> <em>int</em> <dfn class="tu decl def" id="get_len" title='get_len' data-type='int get_len(LZOContext * c, int x, int mask)' data-ref="get_len">get_len</dfn>(<a class="typedef" href="#LZOContext" title='LZOContext' data-type='struct LZOContext' data-ref="LZOContext">LZOContext</a> *<dfn class="local col2 decl" id="2c" title='c' data-type='LZOContext *' data-ref="2c">c</dfn>, <em>int</em> <dfn class="local col3 decl" id="3x" title='x' data-type='int' data-ref="3x">x</dfn>, <em>int</em> <dfn class="local col4 decl" id="4mask" title='mask' data-type='int' data-ref="4mask">mask</dfn>)</td></tr>
+<tr><th id="66">66</th><td>{</td></tr>
+<tr><th id="67">67</th><td>    <em>int</em> <dfn class="local col5 decl" id="5cnt" title='cnt' data-type='int' data-ref="5cnt">cnt</dfn> = <a class="local col3 ref" href="#3x" title='x' data-ref="3x">x</a> &amp; <a class="local col4 ref" href="#4mask" title='mask' data-ref="4mask">mask</a>;</td></tr>
+<tr><th id="68">68</th><td>    <b>if</b> (!<a class="local col5 ref" href="#5cnt" title='cnt' data-ref="5cnt">cnt</a>) {</td></tr>
+<tr><th id="69">69</th><td>        <b>while</b> (!(<a class="local col3 ref" href="#3x" title='x' data-ref="3x">x</a> = <a class="tu ref" href="#get_byte" title='get_byte' data-use='c' data-ref="get_byte">get_byte</a>(<a class="local col2 ref" href="#2c" title='c' data-ref="2c">c</a>))) {</td></tr>
+<tr><th id="70">70</th><td>            <b>if</b> (<a class="local col5 ref" href="#5cnt" title='cnt' data-ref="5cnt">cnt</a> &gt;= <span class="macro" title="2147483647" data-ref="_M/INT_MAX">INT_MAX</span> - <var>1000</var>) {</td></tr>
+<tr><th id="71">71</th><td>                <a class="local col2 ref" href="#2c" title='c' data-ref="2c">c</a>-&gt;<a class="tu ref" href="#LZOContext::error" title='LZOContext::error' data-use='w' data-ref="LZOContext::error">error</a> |= <a class="macro" href="lzo.h.html#43" title="8" data-ref="_M/AV_LZO_ERROR">AV_LZO_ERROR</a>;</td></tr>
+<tr><th id="72">72</th><td>                <b>break</b>;</td></tr>
+<tr><th id="73">73</th><td>            }</td></tr>
+<tr><th id="74">74</th><td>            <a class="local col5 ref" href="#5cnt" title='cnt' data-ref="5cnt">cnt</a> += <var>255</var>;</td></tr>
+<tr><th id="75">75</th><td>        }</td></tr>
+<tr><th id="76">76</th><td>        <a class="local col5 ref" href="#5cnt" title='cnt' data-ref="5cnt">cnt</a> += <a class="local col4 ref" href="#4mask" title='mask' data-ref="4mask">mask</a> + <a class="local col3 ref" href="#3x" title='x' data-ref="3x">x</a>;</td></tr>
+<tr><th id="77">77</th><td>    }</td></tr>
+<tr><th id="78">78</th><td>    <b>return</b> <a class="local col5 ref" href="#5cnt" title='cnt' data-ref="5cnt">cnt</a>;</td></tr>
+<tr><th id="79">79</th><td>}</td></tr>
+<tr><th id="80">80</th><td></td></tr>
+<tr><th id="81">81</th><td><i class="doc" data-doc="copy">/**</i></td></tr>
+<tr><th id="82">82</th><td><i class="doc" data-doc="copy"> * <span class="command">@brief</span> Copies bytes from input to output buffer with checking.</i></td></tr>
+<tr><th id="83">83</th><td><i class="doc" data-doc="copy"> * <span class="command">@param</span> <span class="arg">cnt</span> number of bytes to copy, must be &gt;= 0</i></td></tr>
+<tr><th id="84">84</th><td><i class="doc" data-doc="copy"> */</i></td></tr>
+<tr><th id="85">85</th><td><em>static</em> <b>inline</b> <em>void</em> <dfn class="tu decl def" id="copy" title='copy' data-type='void copy(LZOContext * c, int cnt)' data-ref="copy">copy</dfn>(<a class="typedef" href="#LZOContext" title='LZOContext' data-type='struct LZOContext' data-ref="LZOContext">LZOContext</a> *<dfn class="local col6 decl" id="6c" title='c' data-type='LZOContext *' data-ref="6c">c</dfn>, <em>int</em> <dfn class="local col7 decl" id="7cnt" title='cnt' data-type='int' data-ref="7cnt">cnt</dfn>)</td></tr>
+<tr><th id="86">86</th><td>{</td></tr>
+<tr><th id="87">87</th><td>    <em>register</em> <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col8 decl" id="8src" title='src' data-type='const uint8_t *' data-ref="8src">src</dfn> = <a class="local col6 ref" href="#6c" title='c' data-ref="6c">c</a>-&gt;<a class="tu ref" href="#LZOContext::in" title='LZOContext::in' data-use='r' data-ref="LZOContext::in">in</a>;</td></tr>
+<tr><th id="88">88</th><td>    <em>register</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col9 decl" id="9dst" title='dst' data-type='uint8_t *' data-ref="9dst">dst</dfn>       = <a class="local col6 ref" href="#6c" title='c' data-ref="6c">c</a>-&gt;<a class="tu ref" href="#LZOContext::out" title='LZOContext::out' data-use='r' data-ref="LZOContext::out">out</a>;</td></tr>
+<tr><th id="89">89</th><td>    <a class="macro" href="avassert.h.html#37" title="do { if (!(cnt &gt;= 0)) { av_log(((void*)0), 0, &quot;Assertion %s failed at %s:%d\n&quot;, &quot;cnt &gt;= 0&quot;, &quot;/usr/local/google/home/robertshih/ffmpeg/src/ffmpeg/libavutil/lzo.c&quot;, 89); abort(); } } while (0)" data-ref="_M/av_assert0">av_assert0</a>(<a class="local col7 ref" href="#7cnt" title='cnt' data-ref="7cnt">cnt</a> &gt;= <var>0</var>);</td></tr>
+<tr><th id="90">90</th><td>    <b>if</b> (<a class="local col7 ref" href="#7cnt" title='cnt' data-ref="7cnt">cnt</a> &gt; <a class="local col6 ref" href="#6c" title='c' data-ref="6c">c</a>-&gt;<a class="tu ref" href="#LZOContext::in_end" title='LZOContext::in_end' data-use='r' data-ref="LZOContext::in_end">in_end</a> - <a class="local col8 ref" href="#8src" title='src' data-ref="8src">src</a>) {</td></tr>
+<tr><th id="91">91</th><td>        <a class="local col7 ref" href="#7cnt" title='cnt' data-ref="7cnt">cnt</a>       = <a class="macro" href="common.h.html#94" title="((c-&gt;in_end - src) &gt; (0) ? (c-&gt;in_end - src) : (0))" data-ref="_M/FFMAX">FFMAX</a>(<a class="local col6 ref" href="#6c" title='c' data-ref="6c">c</a>-&gt;<a class="tu ref" href="#LZOContext::in_end" title='LZOContext::in_end' data-use='r' data-ref="LZOContext::in_end">in_end</a> - <a class="local col8 ref" href="#8src" title='src' data-ref="8src">src</a>, <var>0</var>);</td></tr>
+<tr><th id="92">92</th><td>        <a class="local col6 ref" href="#6c" title='c' data-ref="6c">c</a>-&gt;<a class="tu ref" href="#LZOContext::error" title='LZOContext::error' data-use='w' data-ref="LZOContext::error">error</a> |= <a class="macro" href="lzo.h.html#37" title="1" data-ref="_M/AV_LZO_INPUT_DEPLETED">AV_LZO_INPUT_DEPLETED</a>;</td></tr>
+<tr><th id="93">93</th><td>    }</td></tr>
+<tr><th id="94">94</th><td>    <b>if</b> (<a class="local col7 ref" href="#7cnt" title='cnt' data-ref="7cnt">cnt</a> &gt; <a class="local col6 ref" href="#6c" title='c' data-ref="6c">c</a>-&gt;<a class="tu ref" href="#LZOContext::out_end" title='LZOContext::out_end' data-use='r' data-ref="LZOContext::out_end">out_end</a> - <a class="local col9 ref" href="#9dst" title='dst' data-ref="9dst">dst</a>) {</td></tr>
+<tr><th id="95">95</th><td>        <a class="local col7 ref" href="#7cnt" title='cnt' data-ref="7cnt">cnt</a>       = <a class="macro" href="common.h.html#94" title="((c-&gt;out_end - dst) &gt; (0) ? (c-&gt;out_end - dst) : (0))" data-ref="_M/FFMAX">FFMAX</a>(<a class="local col6 ref" href="#6c" title='c' data-ref="6c">c</a>-&gt;<a class="tu ref" href="#LZOContext::out_end" title='LZOContext::out_end' data-use='r' data-ref="LZOContext::out_end">out_end</a> - <a class="local col9 ref" href="#9dst" title='dst' data-ref="9dst">dst</a>, <var>0</var>);</td></tr>
+<tr><th id="96">96</th><td>        <a class="local col6 ref" href="#6c" title='c' data-ref="6c">c</a>-&gt;<a class="tu ref" href="#LZOContext::error" title='LZOContext::error' data-use='w' data-ref="LZOContext::error">error</a> |= <a class="macro" href="lzo.h.html#39" title="2" data-ref="_M/AV_LZO_OUTPUT_FULL">AV_LZO_OUTPUT_FULL</a>;</td></tr>
+<tr><th id="97">97</th><td>    }</td></tr>
+<tr><th id="98">98</th><td><u>#<span data-ppcond="98">if</span> defined(<a class="macro" href="#33" data-ref="_M/INBUF_PADDED">INBUF_PADDED</a>) &amp;&amp; defined(<a class="macro" href="#31" data-ref="_M/OUTBUF_PADDED">OUTBUF_PADDED</a>)</u></td></tr>
+<tr><th id="99">99</th><td>    <a class="macro" href="intreadwrite.h.html#557" title="((((union unaligned_32 *) (dst))-&gt;l) = ((((const union unaligned_32 *) (src))-&gt;l)));" data-ref="_M/AV_COPY32U">AV_COPY32U</a>(<a class="local col9 ref" href="#9dst" title='dst' data-ref="9dst">dst</a>, <a class="local col8 ref" href="#8src" title='src' data-ref="8src">src</a>);</td></tr>
+<tr><th id="100">100</th><td>    <a class="local col8 ref" href="#8src" title='src' data-ref="8src">src</a> += <var>4</var>;</td></tr>
+<tr><th id="101">101</th><td>    <a class="local col9 ref" href="#9dst" title='dst' data-ref="9dst">dst</a> += <var>4</var>;</td></tr>
+<tr><th id="102">102</th><td>    <a class="local col7 ref" href="#7cnt" title='cnt' data-ref="7cnt">cnt</a> -= <var>4</var>;</td></tr>
+<tr><th id="103">103</th><td>    <b>if</b> (<a class="local col7 ref" href="#7cnt" title='cnt' data-ref="7cnt">cnt</a> &gt; <var>0</var>)</td></tr>
+<tr><th id="104">104</th><td><u>#<span data-ppcond="98">endif</span></u></td></tr>
+<tr><th id="105">105</th><td>    <a class="ref" href="../../include/string.h.html#memcpy" title='memcpy' data-ref="memcpy">memcpy</a>(<a class="local col9 ref" href="#9dst" title='dst' data-ref="9dst">dst</a>, <a class="local col8 ref" href="#8src" title='src' data-ref="8src">src</a>, <a class="local col7 ref" href="#7cnt" title='cnt' data-ref="7cnt">cnt</a>);</td></tr>
+<tr><th id="106">106</th><td>    <a class="local col6 ref" href="#6c" title='c' data-ref="6c">c</a>-&gt;<a class="tu ref" href="#LZOContext::in" title='LZOContext::in' data-use='w' data-ref="LZOContext::in">in</a>  = <a class="local col8 ref" href="#8src" title='src' data-ref="8src">src</a> + <a class="local col7 ref" href="#7cnt" title='cnt' data-ref="7cnt">cnt</a>;</td></tr>
+<tr><th id="107">107</th><td>    <a class="local col6 ref" href="#6c" title='c' data-ref="6c">c</a>-&gt;<a class="tu ref" href="#LZOContext::out" title='LZOContext::out' data-use='w' data-ref="LZOContext::out">out</a> = <a class="local col9 ref" href="#9dst" title='dst' data-ref="9dst">dst</a> + <a class="local col7 ref" href="#7cnt" title='cnt' data-ref="7cnt">cnt</a>;</td></tr>
+<tr><th id="108">108</th><td>}</td></tr>
+<tr><th id="109">109</th><td></td></tr>
+<tr><th id="110">110</th><td><i class="doc" data-doc="copy_backptr">/**</i></td></tr>
+<tr><th id="111">111</th><td><i class="doc" data-doc="copy_backptr"> * <span class="command">@brief</span> Copies previously decoded bytes to current position.</i></td></tr>
+<tr><th id="112">112</th><td><i class="doc" data-doc="copy_backptr"> * <span class="command">@param</span> <span class="arg">back</span> how many bytes back we start, must be &gt; 0</i></td></tr>
+<tr><th id="113">113</th><td><i class="doc" data-doc="copy_backptr"> * <span class="command">@param</span> <span class="arg">cnt</span> number of bytes to copy, must be &gt; 0</i></td></tr>
+<tr><th id="114">114</th><td><i class="doc" data-doc="copy_backptr"> *</i></td></tr>
+<tr><th id="115">115</th><td><i class="doc" data-doc="copy_backptr"> * cnt &gt; back is valid, this will copy the bytes we just copied,</i></td></tr>
+<tr><th id="116">116</th><td><i class="doc" data-doc="copy_backptr"> * thus creating a repeating pattern with a period length of back.</i></td></tr>
+<tr><th id="117">117</th><td><i class="doc" data-doc="copy_backptr"> */</i></td></tr>
+<tr><th id="118">118</th><td><em>static</em> <b>inline</b> <em>void</em> <dfn class="tu decl def" id="copy_backptr" title='copy_backptr' data-type='void copy_backptr(LZOContext * c, int back, int cnt)' data-ref="copy_backptr">copy_backptr</dfn>(<a class="typedef" href="#LZOContext" title='LZOContext' data-type='struct LZOContext' data-ref="LZOContext">LZOContext</a> *<dfn class="local col0 decl" id="10c" title='c' data-type='LZOContext *' data-ref="10c">c</dfn>, <em>int</em> <dfn class="local col1 decl" id="11back" title='back' data-type='int' data-ref="11back">back</dfn>, <em>int</em> <dfn class="local col2 decl" id="12cnt" title='cnt' data-type='int' data-ref="12cnt">cnt</dfn>)</td></tr>
+<tr><th id="119">119</th><td>{</td></tr>
+<tr><th id="120">120</th><td>    <em>register</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col3 decl" id="13dst" title='dst' data-type='uint8_t *' data-ref="13dst">dst</dfn>       = <a class="local col0 ref" href="#10c" title='c' data-ref="10c">c</a>-&gt;<a class="tu ref" href="#LZOContext::out" title='LZOContext::out' data-use='r' data-ref="LZOContext::out">out</a>;</td></tr>
+<tr><th id="121">121</th><td>    <a class="macro" href="avassert.h.html#37" title="do { if (!(cnt &gt; 0)) { av_log(((void*)0), 0, &quot;Assertion %s failed at %s:%d\n&quot;, &quot;cnt &gt; 0&quot;, &quot;/usr/local/google/home/robertshih/ffmpeg/src/ffmpeg/libavutil/lzo.c&quot;, 121); abort(); } } while (0)" data-ref="_M/av_assert0">av_assert0</a>(<a class="local col2 ref" href="#12cnt" title='cnt' data-ref="12cnt">cnt</a> &gt; <var>0</var>);</td></tr>
+<tr><th id="122">122</th><td>    <b>if</b> (<a class="local col3 ref" href="#13dst" title='dst' data-ref="13dst">dst</a> - <a class="local col0 ref" href="#10c" title='c' data-ref="10c">c</a>-&gt;<a class="tu ref" href="#LZOContext::out_start" title='LZOContext::out_start' data-use='r' data-ref="LZOContext::out_start">out_start</a> &lt; <a class="local col1 ref" href="#11back" title='back' data-ref="11back">back</a>) {</td></tr>
+<tr><th id="123">123</th><td>        <a class="local col0 ref" href="#10c" title='c' data-ref="10c">c</a>-&gt;<a class="tu ref" href="#LZOContext::error" title='LZOContext::error' data-use='w' data-ref="LZOContext::error">error</a> |= <a class="macro" href="lzo.h.html#41" title="4" data-ref="_M/AV_LZO_INVALID_BACKPTR">AV_LZO_INVALID_BACKPTR</a>;</td></tr>
+<tr><th id="124">124</th><td>        <b>return</b>;</td></tr>
+<tr><th id="125">125</th><td>    }</td></tr>
+<tr><th id="126">126</th><td>    <b>if</b> (<a class="local col2 ref" href="#12cnt" title='cnt' data-ref="12cnt">cnt</a> &gt; <a class="local col0 ref" href="#10c" title='c' data-ref="10c">c</a>-&gt;<a class="tu ref" href="#LZOContext::out_end" title='LZOContext::out_end' data-use='r' data-ref="LZOContext::out_end">out_end</a> - <a class="local col3 ref" href="#13dst" title='dst' data-ref="13dst">dst</a>) {</td></tr>
+<tr><th id="127">127</th><td>        <a class="local col2 ref" href="#12cnt" title='cnt' data-ref="12cnt">cnt</a>       = <a class="macro" href="common.h.html#94" title="((c-&gt;out_end - dst) &gt; (0) ? (c-&gt;out_end - dst) : (0))" data-ref="_M/FFMAX">FFMAX</a>(<a class="local col0 ref" href="#10c" title='c' data-ref="10c">c</a>-&gt;<a class="tu ref" href="#LZOContext::out_end" title='LZOContext::out_end' data-use='r' data-ref="LZOContext::out_end">out_end</a> - <a class="local col3 ref" href="#13dst" title='dst' data-ref="13dst">dst</a>, <var>0</var>);</td></tr>
+<tr><th id="128">128</th><td>        <a class="local col0 ref" href="#10c" title='c' data-ref="10c">c</a>-&gt;<a class="tu ref" href="#LZOContext::error" title='LZOContext::error' data-use='w' data-ref="LZOContext::error">error</a> |= <a class="macro" href="lzo.h.html#39" title="2" data-ref="_M/AV_LZO_OUTPUT_FULL">AV_LZO_OUTPUT_FULL</a>;</td></tr>
+<tr><th id="129">129</th><td>    }</td></tr>
+<tr><th id="130">130</th><td>    <a class="ref" href="mem.h.html#av_memcpy_backptr" title='av_memcpy_backptr' data-ref="av_memcpy_backptr">av_memcpy_backptr</a>(<a class="local col3 ref" href="#13dst" title='dst' data-ref="13dst">dst</a>, <a class="local col1 ref" href="#11back" title='back' data-ref="11back">back</a>, <a class="local col2 ref" href="#12cnt" title='cnt' data-ref="12cnt">cnt</a>);</td></tr>
+<tr><th id="131">131</th><td>    <a class="local col0 ref" href="#10c" title='c' data-ref="10c">c</a>-&gt;<a class="tu ref" href="#LZOContext::out" title='LZOContext::out' data-use='w' data-ref="LZOContext::out">out</a> = <a class="local col3 ref" href="#13dst" title='dst' data-ref="13dst">dst</a> + <a class="local col2 ref" href="#12cnt" title='cnt' data-ref="12cnt">cnt</a>;</td></tr>
+<tr><th id="132">132</th><td>}</td></tr>
+<tr><th id="133">133</th><td></td></tr>
+<tr><th id="134">134</th><td><em>int</em> <dfn class="decl def" id="av_lzo1x_decode" title='av_lzo1x_decode' data-ref="av_lzo1x_decode">av_lzo1x_decode</dfn>(<em>void</em> *<dfn class="local col4 decl" id="14out" title='out' data-type='void *' data-ref="14out">out</dfn>, <em>int</em> *<dfn class="local col5 decl" id="15outlen" title='outlen' data-type='int *' data-ref="15outlen">outlen</dfn>, <em>const</em> <em>void</em> *<dfn class="local col6 decl" id="16in" title='in' data-type='const void *' data-ref="16in">in</dfn>, <em>int</em> *<dfn class="local col7 decl" id="17inlen" title='inlen' data-type='int *' data-ref="17inlen">inlen</dfn>)</td></tr>
+<tr><th id="135">135</th><td>{</td></tr>
+<tr><th id="136">136</th><td>    <em>int</em> <dfn class="local col8 decl" id="18state" title='state' data-type='int' data-ref="18state">state</dfn> = <var>0</var>;</td></tr>
+<tr><th id="137">137</th><td>    <em>int</em> <dfn class="local col9 decl" id="19x" title='x' data-type='int' data-ref="19x">x</dfn>;</td></tr>
+<tr><th id="138">138</th><td>    <a class="typedef" href="#LZOContext" title='LZOContext' data-type='struct LZOContext' data-ref="LZOContext">LZOContext</a> <dfn class="local col0 decl" id="20c" title='c' data-type='LZOContext' data-ref="20c">c</dfn>;</td></tr>
+<tr><th id="139">139</th><td>    <b>if</b> (*<a class="local col5 ref" href="#15outlen" title='outlen' data-ref="15outlen">outlen</a> &lt;= <var>0</var> || *<a class="local col7 ref" href="#17inlen" title='inlen' data-ref="17inlen">inlen</a> &lt;= <var>0</var>) {</td></tr>
+<tr><th id="140">140</th><td>        <em>int</em> <dfn class="local col1 decl" id="21res" title='res' data-type='int' data-ref="21res">res</dfn> = <var>0</var>;</td></tr>
+<tr><th id="141">141</th><td>        <b>if</b> (*<a class="local col5 ref" href="#15outlen" title='outlen' data-ref="15outlen">outlen</a> &lt;= <var>0</var>)</td></tr>
+<tr><th id="142">142</th><td>            <a class="local col1 ref" href="#21res" title='res' data-ref="21res">res</a> |= <a class="macro" href="lzo.h.html#39" title="2" data-ref="_M/AV_LZO_OUTPUT_FULL">AV_LZO_OUTPUT_FULL</a>;</td></tr>
+<tr><th id="143">143</th><td>        <b>if</b> (*<a class="local col7 ref" href="#17inlen" title='inlen' data-ref="17inlen">inlen</a> &lt;= <var>0</var>)</td></tr>
+<tr><th id="144">144</th><td>            <a class="local col1 ref" href="#21res" title='res' data-ref="21res">res</a> |= <a class="macro" href="lzo.h.html#37" title="1" data-ref="_M/AV_LZO_INPUT_DEPLETED">AV_LZO_INPUT_DEPLETED</a>;</td></tr>
+<tr><th id="145">145</th><td>        <b>return</b> <a class="local col1 ref" href="#21res" title='res' data-ref="21res">res</a>;</td></tr>
+<tr><th id="146">146</th><td>    }</td></tr>
+<tr><th id="147">147</th><td>    <a class="local col0 ref" href="#20c" title='c' data-ref="20c">c</a>.<a class="tu ref" href="#LZOContext::in" title='LZOContext::in' data-use='w' data-ref="LZOContext::in">in</a>      = <a class="local col6 ref" href="#16in" title='in' data-ref="16in">in</a>;</td></tr>
+<tr><th id="148">148</th><td>    <a class="local col0 ref" href="#20c" title='c' data-ref="20c">c</a>.<a class="tu ref" href="#LZOContext::in_end" title='LZOContext::in_end' data-use='w' data-ref="LZOContext::in_end">in_end</a>  = (<em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *)<a class="local col6 ref" href="#16in" title='in' data-ref="16in">in</a> + *<a class="local col7 ref" href="#17inlen" title='inlen' data-ref="17inlen">inlen</a>;</td></tr>
+<tr><th id="149">149</th><td>    <a class="local col0 ref" href="#20c" title='c' data-ref="20c">c</a>.<a class="tu ref" href="#LZOContext::out" title='LZOContext::out' data-use='w' data-ref="LZOContext::out">out</a>     = <a class="local col0 ref" href="#20c" title='c' data-ref="20c">c</a>.<a class="tu ref" href="#LZOContext::out_start" title='LZOContext::out_start' data-use='w' data-ref="LZOContext::out_start">out_start</a> = <a class="local col4 ref" href="#14out" title='out' data-ref="14out">out</a>;</td></tr>
+<tr><th id="150">150</th><td>    <a class="local col0 ref" href="#20c" title='c' data-ref="20c">c</a>.<a class="tu ref" href="#LZOContext::out_end" title='LZOContext::out_end' data-use='w' data-ref="LZOContext::out_end">out_end</a> = (<a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *)<a class="local col4 ref" href="#14out" title='out' data-ref="14out">out</a> + *<a class="local col5 ref" href="#15outlen" title='outlen' data-ref="15outlen">outlen</a>;</td></tr>
+<tr><th id="151">151</th><td>    <a class="local col0 ref" href="#20c" title='c' data-ref="20c">c</a>.<a class="tu ref" href="#LZOContext::error" title='LZOContext::error' data-use='w' data-ref="LZOContext::error">error</a>   = <var>0</var>;</td></tr>
+<tr><th id="152">152</th><td>    <a class="local col9 ref" href="#19x" title='x' data-ref="19x">x</a>         = <a class="macro" href="#54" title="(*(c).in++)" data-ref="_M/GETB">GETB</a>(<a class="local col0 ref" href="#20c" title='c' data-ref="20c">c</a>);</td></tr>
+<tr><th id="153">153</th><td>    <b>if</b> (<a class="local col9 ref" href="#19x" title='x' data-ref="19x">x</a> &gt; <var>17</var>) {</td></tr>
+<tr><th id="154">154</th><td>        <a class="tu ref" href="#copy" title='copy' data-use='c' data-ref="copy">copy</a>(&amp;<a class="local col0 ref" href="#20c" title='c' data-ref="20c">c</a>, <a class="local col9 ref" href="#19x" title='x' data-ref="19x">x</a> - <var>17</var>);</td></tr>
+<tr><th id="155">155</th><td>        <a class="local col9 ref" href="#19x" title='x' data-ref="19x">x</a> = <a class="macro" href="#54" title="(*(c).in++)" data-ref="_M/GETB">GETB</a>(<a class="local col0 ref" href="#20c" title='c' data-ref="20c">c</a>);</td></tr>
+<tr><th id="156">156</th><td>        <b>if</b> (<a class="local col9 ref" href="#19x" title='x' data-ref="19x">x</a> &lt; <var>16</var>)</td></tr>
+<tr><th id="157">157</th><td>            <a class="local col0 ref" href="#20c" title='c' data-ref="20c">c</a>.<a class="tu ref" href="#LZOContext::error" title='LZOContext::error' data-use='w' data-ref="LZOContext::error">error</a> |= <a class="macro" href="lzo.h.html#43" title="8" data-ref="_M/AV_LZO_ERROR">AV_LZO_ERROR</a>;</td></tr>
+<tr><th id="158">158</th><td>    }</td></tr>
+<tr><th id="159">159</th><td>    <b>if</b> (<a class="local col0 ref" href="#20c" title='c' data-ref="20c">c</a>.<a class="tu ref" href="#LZOContext::in" title='LZOContext::in' data-use='r' data-ref="LZOContext::in">in</a> &gt; <a class="local col0 ref" href="#20c" title='c' data-ref="20c">c</a>.<a class="tu ref" href="#LZOContext::in_end" title='LZOContext::in_end' data-use='r' data-ref="LZOContext::in_end">in_end</a>)</td></tr>
+<tr><th id="160">160</th><td>        <a class="local col0 ref" href="#20c" title='c' data-ref="20c">c</a>.<a class="tu ref" href="#LZOContext::error" title='LZOContext::error' data-use='w' data-ref="LZOContext::error">error</a> |= <a class="macro" href="lzo.h.html#37" title="1" data-ref="_M/AV_LZO_INPUT_DEPLETED">AV_LZO_INPUT_DEPLETED</a>;</td></tr>
+<tr><th id="161">161</th><td>    <b>while</b> (!<a class="local col0 ref" href="#20c" title='c' data-ref="20c">c</a>.<a class="tu ref" href="#LZOContext::error" title='LZOContext::error' data-use='r' data-ref="LZOContext::error">error</a>) {</td></tr>
+<tr><th id="162">162</th><td>        <em>int</em> <dfn class="local col2 decl" id="22cnt" title='cnt' data-type='int' data-ref="22cnt">cnt</dfn>, <dfn class="local col3 decl" id="23back" title='back' data-type='int' data-ref="23back">back</dfn>;</td></tr>
+<tr><th id="163">163</th><td>        <b>if</b> (<a class="local col9 ref" href="#19x" title='x' data-ref="19x">x</a> &gt; <var>15</var>) {</td></tr>
+<tr><th id="164">164</th><td>            <b>if</b> (<a class="local col9 ref" href="#19x" title='x' data-ref="19x">x</a> &gt; <var>63</var>) {</td></tr>
+<tr><th id="165">165</th><td>                <a class="local col2 ref" href="#22cnt" title='cnt' data-ref="22cnt">cnt</a>  = (<a class="local col9 ref" href="#19x" title='x' data-ref="19x">x</a> &gt;&gt; <var>5</var>) - <var>1</var>;</td></tr>
+<tr><th id="166">166</th><td>                <a class="local col3 ref" href="#23back" title='back' data-ref="23back">back</a> = (<a class="macro" href="#54" title="(*(c).in++)" data-ref="_M/GETB">GETB</a>(<a class="local col0 ref" href="#20c" title='c' data-ref="20c">c</a>) &lt;&lt; <var>3</var>) + ((<a class="local col9 ref" href="#19x" title='x' data-ref="19x">x</a> &gt;&gt; <var>2</var>) &amp; <var>7</var>) + <var>1</var>;</td></tr>
+<tr><th id="167">167</th><td>            } <b>else</b> <b>if</b> (<a class="local col9 ref" href="#19x" title='x' data-ref="19x">x</a> &gt; <var>31</var>) {</td></tr>
+<tr><th id="168">168</th><td>                <a class="local col2 ref" href="#22cnt" title='cnt' data-ref="22cnt">cnt</a>  = <a class="tu ref" href="#get_len" title='get_len' data-use='c' data-ref="get_len">get_len</a>(&amp;<a class="local col0 ref" href="#20c" title='c' data-ref="20c">c</a>, <a class="local col9 ref" href="#19x" title='x' data-ref="19x">x</a>, <var>31</var>);</td></tr>
+<tr><th id="169">169</th><td>                <a class="local col9 ref" href="#19x" title='x' data-ref="19x">x</a>    = <a class="macro" href="#54" title="(*(c).in++)" data-ref="_M/GETB">GETB</a>(<a class="local col0 ref" href="#20c" title='c' data-ref="20c">c</a>);</td></tr>
+<tr><th id="170">170</th><td>                <a class="local col3 ref" href="#23back" title='back' data-ref="23back">back</a> = (<a class="macro" href="#54" title="(*(c).in++)" data-ref="_M/GETB">GETB</a>(<a class="local col0 ref" href="#20c" title='c' data-ref="20c">c</a>) &lt;&lt; <var>6</var>) + (<a class="local col9 ref" href="#19x" title='x' data-ref="19x">x</a> &gt;&gt; <var>2</var>) + <var>1</var>;</td></tr>
+<tr><th id="171">171</th><td>            } <b>else</b> {</td></tr>
+<tr><th id="172">172</th><td>                <a class="local col2 ref" href="#22cnt" title='cnt' data-ref="22cnt">cnt</a>   = <a class="tu ref" href="#get_len" title='get_len' data-use='c' data-ref="get_len">get_len</a>(&amp;<a class="local col0 ref" href="#20c" title='c' data-ref="20c">c</a>, <a class="local col9 ref" href="#19x" title='x' data-ref="19x">x</a>, <var>7</var>);</td></tr>
+<tr><th id="173">173</th><td>                <a class="local col3 ref" href="#23back" title='back' data-ref="23back">back</a>  = (<var>1</var> &lt;&lt; <var>14</var>) + ((<a class="local col9 ref" href="#19x" title='x' data-ref="19x">x</a> &amp; <var>8</var>) &lt;&lt; <var>11</var>);</td></tr>
+<tr><th id="174">174</th><td>                <a class="local col9 ref" href="#19x" title='x' data-ref="19x">x</a>     = <a class="macro" href="#54" title="(*(c).in++)" data-ref="_M/GETB">GETB</a>(<a class="local col0 ref" href="#20c" title='c' data-ref="20c">c</a>);</td></tr>
+<tr><th id="175">175</th><td>                <a class="local col3 ref" href="#23back" title='back' data-ref="23back">back</a> += (<a class="macro" href="#54" title="(*(c).in++)" data-ref="_M/GETB">GETB</a>(<a class="local col0 ref" href="#20c" title='c' data-ref="20c">c</a>) &lt;&lt; <var>6</var>) + (<a class="local col9 ref" href="#19x" title='x' data-ref="19x">x</a> &gt;&gt; <var>2</var>);</td></tr>
+<tr><th id="176">176</th><td>                <b>if</b> (<a class="local col3 ref" href="#23back" title='back' data-ref="23back">back</a> == (<var>1</var> &lt;&lt; <var>14</var>)) {</td></tr>
+<tr><th id="177">177</th><td>                    <b>if</b> (<a class="local col2 ref" href="#22cnt" title='cnt' data-ref="22cnt">cnt</a> != <var>1</var>)</td></tr>
+<tr><th id="178">178</th><td>                        <a class="local col0 ref" href="#20c" title='c' data-ref="20c">c</a>.<a class="tu ref" href="#LZOContext::error" title='LZOContext::error' data-use='w' data-ref="LZOContext::error">error</a> |= <a class="macro" href="lzo.h.html#43" title="8" data-ref="_M/AV_LZO_ERROR">AV_LZO_ERROR</a>;</td></tr>
+<tr><th id="179">179</th><td>                    <b>break</b>;</td></tr>
+<tr><th id="180">180</th><td>                }</td></tr>
+<tr><th id="181">181</th><td>            }</td></tr>
+<tr><th id="182">182</th><td>        } <b>else</b> <b>if</b> (!<a class="local col8 ref" href="#18state" title='state' data-ref="18state">state</a>) {</td></tr>
+<tr><th id="183">183</th><td>            <a class="local col2 ref" href="#22cnt" title='cnt' data-ref="22cnt">cnt</a> = <a class="tu ref" href="#get_len" title='get_len' data-use='c' data-ref="get_len">get_len</a>(&amp;<a class="local col0 ref" href="#20c" title='c' data-ref="20c">c</a>, <a class="local col9 ref" href="#19x" title='x' data-ref="19x">x</a>, <var>15</var>);</td></tr>
+<tr><th id="184">184</th><td>            <a class="tu ref" href="#copy" title='copy' data-use='c' data-ref="copy">copy</a>(&amp;<a class="local col0 ref" href="#20c" title='c' data-ref="20c">c</a>, <a class="local col2 ref" href="#22cnt" title='cnt' data-ref="22cnt">cnt</a> + <var>3</var>);</td></tr>
+<tr><th id="185">185</th><td>            <a class="local col9 ref" href="#19x" title='x' data-ref="19x">x</a> = <a class="macro" href="#54" title="(*(c).in++)" data-ref="_M/GETB">GETB</a>(<a class="local col0 ref" href="#20c" title='c' data-ref="20c">c</a>);</td></tr>
+<tr><th id="186">186</th><td>            <b>if</b> (<a class="local col9 ref" href="#19x" title='x' data-ref="19x">x</a> &gt; <var>15</var>)</td></tr>
+<tr><th id="187">187</th><td>                <b>continue</b>;</td></tr>
+<tr><th id="188">188</th><td>            <a class="local col2 ref" href="#22cnt" title='cnt' data-ref="22cnt">cnt</a>  = <var>1</var>;</td></tr>
+<tr><th id="189">189</th><td>            <a class="local col3 ref" href="#23back" title='back' data-ref="23back">back</a> = (<var>1</var> &lt;&lt; <var>11</var>) + (<a class="macro" href="#54" title="(*(c).in++)" data-ref="_M/GETB">GETB</a>(<a class="local col0 ref" href="#20c" title='c' data-ref="20c">c</a>) &lt;&lt; <var>2</var>) + (<a class="local col9 ref" href="#19x" title='x' data-ref="19x">x</a> &gt;&gt; <var>2</var>) + <var>1</var>;</td></tr>
+<tr><th id="190">190</th><td>        } <b>else</b> {</td></tr>
+<tr><th id="191">191</th><td>            <a class="local col2 ref" href="#22cnt" title='cnt' data-ref="22cnt">cnt</a>  = <var>0</var>;</td></tr>
+<tr><th id="192">192</th><td>            <a class="local col3 ref" href="#23back" title='back' data-ref="23back">back</a> = (<a class="macro" href="#54" title="(*(c).in++)" data-ref="_M/GETB">GETB</a>(<a class="local col0 ref" href="#20c" title='c' data-ref="20c">c</a>) &lt;&lt; <var>2</var>) + (<a class="local col9 ref" href="#19x" title='x' data-ref="19x">x</a> &gt;&gt; <var>2</var>) + <var>1</var>;</td></tr>
+<tr><th id="193">193</th><td>        }</td></tr>
+<tr><th id="194">194</th><td>        <a class="tu ref" href="#copy_backptr" title='copy_backptr' data-use='c' data-ref="copy_backptr">copy_backptr</a>(&amp;<a class="local col0 ref" href="#20c" title='c' data-ref="20c">c</a>, <a class="local col3 ref" href="#23back" title='back' data-ref="23back">back</a>, <a class="local col2 ref" href="#22cnt" title='cnt' data-ref="22cnt">cnt</a> + <var>2</var>);</td></tr>
+<tr><th id="195">195</th><td>        <a class="local col8 ref" href="#18state" title='state' data-ref="18state">state</a> =</td></tr>
+<tr><th id="196">196</th><td>        <a class="local col2 ref" href="#22cnt" title='cnt' data-ref="22cnt">cnt</a>   = <a class="local col9 ref" href="#19x" title='x' data-ref="19x">x</a> &amp; <var>3</var>;</td></tr>
+<tr><th id="197">197</th><td>        <a class="tu ref" href="#copy" title='copy' data-use='c' data-ref="copy">copy</a>(&amp;<a class="local col0 ref" href="#20c" title='c' data-ref="20c">c</a>, <a class="local col2 ref" href="#22cnt" title='cnt' data-ref="22cnt">cnt</a>);</td></tr>
+<tr><th id="198">198</th><td>        <a class="local col9 ref" href="#19x" title='x' data-ref="19x">x</a> = <a class="macro" href="#54" title="(*(c).in++)" data-ref="_M/GETB">GETB</a>(<a class="local col0 ref" href="#20c" title='c' data-ref="20c">c</a>);</td></tr>
+<tr><th id="199">199</th><td>    }</td></tr>
+<tr><th id="200">200</th><td>    *<a class="local col7 ref" href="#17inlen" title='inlen' data-ref="17inlen">inlen</a> = <a class="local col0 ref" href="#20c" title='c' data-ref="20c">c</a>.<a class="tu ref" href="#LZOContext::in_end" title='LZOContext::in_end' data-use='r' data-ref="LZOContext::in_end">in_end</a> - <a class="local col0 ref" href="#20c" title='c' data-ref="20c">c</a>.<a class="tu ref" href="#LZOContext::in" title='LZOContext::in' data-use='r' data-ref="LZOContext::in">in</a>;</td></tr>
+<tr><th id="201">201</th><td>    <b>if</b> (<a class="local col0 ref" href="#20c" title='c' data-ref="20c">c</a>.<a class="tu ref" href="#LZOContext::in" title='LZOContext::in' data-use='r' data-ref="LZOContext::in">in</a> &gt; <a class="local col0 ref" href="#20c" title='c' data-ref="20c">c</a>.<a class="tu ref" href="#LZOContext::in_end" title='LZOContext::in_end' data-use='r' data-ref="LZOContext::in_end">in_end</a>)</td></tr>
+<tr><th id="202">202</th><td>        *<a class="local col7 ref" href="#17inlen" title='inlen' data-ref="17inlen">inlen</a> = <var>0</var>;</td></tr>
+<tr><th id="203">203</th><td>    *<a class="local col5 ref" href="#15outlen" title='outlen' data-ref="15outlen">outlen</a> = <a class="local col0 ref" href="#20c" title='c' data-ref="20c">c</a>.<a class="tu ref" href="#LZOContext::out_end" title='LZOContext::out_end' data-use='r' data-ref="LZOContext::out_end">out_end</a> - <a class="local col0 ref" href="#20c" title='c' data-ref="20c">c</a>.<a class="tu ref" href="#LZOContext::out" title='LZOContext::out' data-use='r' data-ref="LZOContext::out">out</a>;</td></tr>
+<tr><th id="204">204</th><td>    <b>return</b> <a class="local col0 ref" href="#20c" title='c' data-ref="20c">c</a>.<a class="tu ref" href="#LZOContext::error" title='LZOContext::error' data-use='r' data-ref="LZOContext::error">error</a>;</td></tr>
+<tr><th id="205">205</th><td>}</td></tr>
+<tr><th id="206">206</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

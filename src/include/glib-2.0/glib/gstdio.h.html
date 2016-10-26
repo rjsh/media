@@ -1,0 +1,189 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>gstdio.h source code [include/glib-2.0/glib/gstdio.h] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'include/glib-2.0/glib/gstdio.h'; var root_path = '../../..'; var data_path = '../../../../data';</script>
+<script src='../../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='../..'>include</a>/<a href='..'>glib-2.0</a>/<a href='./'>glib</a>/<a href='gstdio.h.html'>gstdio.h</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/* gstdio.h - GFilename wrappers for C library functions</i></td></tr>
+<tr><th id="2">2</th><td><i> *</i></td></tr>
+<tr><th id="3">3</th><td><i> * Copyright 2004 Tor Lillqvist</i></td></tr>
+<tr><th id="4">4</th><td><i> *</i></td></tr>
+<tr><th id="5">5</th><td><i> * GLib is free software; you can redistribute it and/or modify it</i></td></tr>
+<tr><th id="6">6</th><td><i> * under the terms of the GNU Lesser General Public License as</i></td></tr>
+<tr><th id="7">7</th><td><i> * published by the Free Software Foundation; either version 2 of the</i></td></tr>
+<tr><th id="8">8</th><td><i> * License, or (at your option) any later version.</i></td></tr>
+<tr><th id="9">9</th><td><i> *</i></td></tr>
+<tr><th id="10">10</th><td><i> * GLib is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="11">11</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="12">12</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="13">13</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="14">14</th><td><i> *</i></td></tr>
+<tr><th id="15">15</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="16">16</th><td><i> * License along with GLib; see the file COPYING.LIB.  If not,</i></td></tr>
+<tr><th id="17">17</th><td><i> * see &lt;<a href="http://www.gnu.org/licenses/">http://www.gnu.org/licenses/</a>&gt;.</i></td></tr>
+<tr><th id="18">18</th><td><i> */</i></td></tr>
+<tr><th id="19">19</th><td></td></tr>
+<tr><th id="20">20</th><td><u>#<span data-ppcond="20">ifndef</span> <span class="macro" data-ref="_M/__G_STDIO_H__">__G_STDIO_H__</span></u></td></tr>
+<tr><th id="21">21</th><td><u>#define <dfn class="macro" id="_M/__G_STDIO_H__" data-ref="_M/__G_STDIO_H__">__G_STDIO_H__</dfn></u></td></tr>
+<tr><th id="22">22</th><td></td></tr>
+<tr><th id="23">23</th><td><u>#include <a href="gprintf.h.html">&lt;glib/gprintf.h&gt;</a></u></td></tr>
+<tr><th id="24">24</th><td></td></tr>
+<tr><th id="25">25</th><td><u>#include <a href="../../x86_64-linux-gnu/sys/stat.h.html">&lt;sys/stat.h&gt;</a></u></td></tr>
+<tr><th id="26">26</th><td></td></tr>
+<tr><th id="27">27</th><td><a class="macro" href="gmacros.h.html#211" title="" data-ref="_M/G_BEGIN_DECLS">G_BEGIN_DECLS</a></td></tr>
+<tr><th id="28">28</th><td></td></tr>
+<tr><th id="29">29</th><td><u>#<span data-ppcond="29">if</span> defined (<span class="macro" data-ref="_M/_MSC_VER">_MSC_VER</span>) &amp;&amp; !defined(<span class="macro" data-ref="_M/_WIN64">_WIN64</span>)</u></td></tr>
+<tr><th id="30">30</th><td></td></tr>
+<tr><th id="31">31</th><td><i>/* Make it clear that we mean the struct with 32-bit st_size and</i></td></tr>
+<tr><th id="32">32</th><td><i> * 32-bit st_*time fields as that is how the 32-bit GLib DLL normally</i></td></tr>
+<tr><th id="33">33</th><td><i> * has been compiled. If you get a compiler warning when calling</i></td></tr>
+<tr><th id="34">34</th><td><i> * g_stat(), do take it seriously and make sure that the type of</i></td></tr>
+<tr><th id="35">35</th><td><i> * struct stat the code in GLib fills in matches the struct the type</i></td></tr>
+<tr><th id="36">36</th><td><i> * of struct stat you pass to g_stat(). To avoid hassle, to get file</i></td></tr>
+<tr><th id="37">37</th><td><i> * attributes just use the GIO API instead which doesn't use struct</i></td></tr>
+<tr><th id="38">38</th><td><i> * stat.</i></td></tr>
+<tr><th id="39">39</th><td><i> *</i></td></tr>
+<tr><th id="40">40</th><td><i> * Sure, it would be nicer to use a struct with 64-bit st_size and</i></td></tr>
+<tr><th id="41">41</th><td><i> * 64-bit st_*time fields, but changing that now would break ABI. And</i></td></tr>
+<tr><th id="42">42</th><td><i> * in MinGW, a plain "struct stat" is the one with 32-bit st_size and</i></td></tr>
+<tr><th id="43">43</th><td><i> * st_*time fields.</i></td></tr>
+<tr><th id="44">44</th><td><i> */</i></td></tr>
+<tr><th id="45">45</th><td></td></tr>
+<tr><th id="46">46</th><td><b>typedef</b> <b>struct</b> _stat32 GStatBuf;</td></tr>
+<tr><th id="47">47</th><td></td></tr>
+<tr><th id="48">48</th><td><u>#<span data-ppcond="29">else</span></u></td></tr>
+<tr><th id="49">49</th><td></td></tr>
+<tr><th id="50">50</th><td><b>typedef</b> <b>struct</b> <a class="type" href="../../x86_64-linux-gnu/bits/stat.h.html#stat" title='stat' data-ref="stat">stat</a> <dfn class="typedef" id="GStatBuf" title='GStatBuf' data-type='struct stat' data-ref="GStatBuf">GStatBuf</dfn>;</td></tr>
+<tr><th id="51">51</th><td></td></tr>
+<tr><th id="52">52</th><td><u>#<span data-ppcond="29">endif</span></u></td></tr>
+<tr><th id="53">53</th><td></td></tr>
+<tr><th id="54">54</th><td><u>#<span data-ppcond="54">if</span> defined(<span class="macro" data-ref="_M/G_OS_UNIX">G_OS_UNIX</span>) &amp;&amp; !defined(<span class="macro" data-ref="_M/G_STDIO_NO_WRAP_ON_UNIX">G_STDIO_NO_WRAP_ON_UNIX</span>)</u></td></tr>
+<tr><th id="55">55</th><td></td></tr>
+<tr><th id="56">56</th><td><i>/* Just pass on to the system functions, so there's no potential for data</i></td></tr>
+<tr><th id="57">57</th><td><i> * format mismatches, especially with large file interfaces. </i></td></tr>
+<tr><th id="58">58</th><td><i> * A few functions can't be handled in this way, since they are not defined</i></td></tr>
+<tr><th id="59">59</th><td><i> * in a portable system header that we could include here.</i></td></tr>
+<tr><th id="60">60</th><td><i> */</i></td></tr>
+<tr><th id="61">61</th><td></td></tr>
+<tr><th id="62">62</th><td><u>#<span data-ppcond="62">ifndef</span> <span class="macro" data-ref="_M/__GTK_DOC_IGNORE__">__GTK_DOC_IGNORE__</span></u></td></tr>
+<tr><th id="63">63</th><td><u>#define <dfn class="macro" id="_M/g_chmod" data-ref="_M/g_chmod">g_chmod</dfn>   chmod</u></td></tr>
+<tr><th id="64">64</th><td><u>#define <dfn class="macro" id="_M/g_open" data-ref="_M/g_open">g_open</dfn>    open</u></td></tr>
+<tr><th id="65">65</th><td><u>#define <dfn class="macro" id="_M/g_creat" data-ref="_M/g_creat">g_creat</dfn>   creat</u></td></tr>
+<tr><th id="66">66</th><td><u>#define <dfn class="macro" id="_M/g_rename" data-ref="_M/g_rename">g_rename</dfn>  rename</u></td></tr>
+<tr><th id="67">67</th><td><u>#define <dfn class="macro" id="_M/g_mkdir" data-ref="_M/g_mkdir">g_mkdir</dfn>   mkdir</u></td></tr>
+<tr><th id="68">68</th><td><u>#define <dfn class="macro" id="_M/g_stat" data-ref="_M/g_stat">g_stat</dfn>    stat</u></td></tr>
+<tr><th id="69">69</th><td><u>#define <dfn class="macro" id="_M/g_lstat" data-ref="_M/g_lstat">g_lstat</dfn>   lstat</u></td></tr>
+<tr><th id="70">70</th><td><u>#define <dfn class="macro" id="_M/g_remove" data-ref="_M/g_remove">g_remove</dfn>  remove</u></td></tr>
+<tr><th id="71">71</th><td><u>#define <dfn class="macro" id="_M/g_fopen" data-ref="_M/g_fopen">g_fopen</dfn>   fopen</u></td></tr>
+<tr><th id="72">72</th><td><u>#define <dfn class="macro" id="_M/g_freopen" data-ref="_M/g_freopen">g_freopen</dfn> freopen</u></td></tr>
+<tr><th id="73">73</th><td><u>#define <dfn class="macro" id="_M/g_utime" data-ref="_M/g_utime">g_utime</dfn>   utime</u></td></tr>
+<tr><th id="74">74</th><td><u>#<span data-ppcond="62">endif</span></u></td></tr>
+<tr><th id="75">75</th><td></td></tr>
+<tr><th id="76">76</th><td><a class="macro" href="gversionmacros.h.html#205" title="extern" data-ref="_M/GLIB_AVAILABLE_IN_ALL">GLIB_AVAILABLE_IN_ALL</a></td></tr>
+<tr><th id="77">77</th><td><em>int</em> <dfn class="decl" id="g_access" title='g_access' data-ref="g_access">g_access</dfn> (<em>const</em> <a class="typedef" href="gtypes.h.html#gchar" title='gchar' data-type='char' data-ref="gchar">gchar</a> *<dfn class="local col8 decl" id="3308filename" title='filename' data-type='const gchar *' data-ref="3308filename">filename</dfn>,</td></tr>
+<tr><th id="78">78</th><td>	      <em>int</em>          <dfn class="local col9 decl" id="3309mode" title='mode' data-type='int' data-ref="3309mode">mode</dfn>);</td></tr>
+<tr><th id="79">79</th><td></td></tr>
+<tr><th id="80">80</th><td><a class="macro" href="gversionmacros.h.html#205" title="extern" data-ref="_M/GLIB_AVAILABLE_IN_ALL">GLIB_AVAILABLE_IN_ALL</a></td></tr>
+<tr><th id="81">81</th><td><em>int</em> <dfn class="decl" id="g_chdir" title='g_chdir' data-ref="g_chdir">g_chdir</dfn>  (<em>const</em> <a class="typedef" href="gtypes.h.html#gchar" title='gchar' data-type='char' data-ref="gchar">gchar</a> *<dfn class="local col0 decl" id="3310path" title='path' data-type='const gchar *' data-ref="3310path">path</dfn>);</td></tr>
+<tr><th id="82">82</th><td></td></tr>
+<tr><th id="83">83</th><td><a class="macro" href="gversionmacros.h.html#205" title="extern" data-ref="_M/GLIB_AVAILABLE_IN_ALL">GLIB_AVAILABLE_IN_ALL</a></td></tr>
+<tr><th id="84">84</th><td><em>int</em> <dfn class="decl" id="g_unlink" title='g_unlink' data-ref="g_unlink">g_unlink</dfn> (<em>const</em> <a class="typedef" href="gtypes.h.html#gchar" title='gchar' data-type='char' data-ref="gchar">gchar</a> *<dfn class="local col1 decl" id="3311filename" title='filename' data-type='const gchar *' data-ref="3311filename">filename</dfn>);</td></tr>
+<tr><th id="85">85</th><td></td></tr>
+<tr><th id="86">86</th><td><a class="macro" href="gversionmacros.h.html#205" title="extern" data-ref="_M/GLIB_AVAILABLE_IN_ALL">GLIB_AVAILABLE_IN_ALL</a></td></tr>
+<tr><th id="87">87</th><td><em>int</em> <dfn class="decl" id="g_rmdir" title='g_rmdir' data-ref="g_rmdir">g_rmdir</dfn>  (<em>const</em> <a class="typedef" href="gtypes.h.html#gchar" title='gchar' data-type='char' data-ref="gchar">gchar</a> *<dfn class="local col2 decl" id="3312filename" title='filename' data-type='const gchar *' data-ref="3312filename">filename</dfn>);</td></tr>
+<tr><th id="88">88</th><td></td></tr>
+<tr><th id="89">89</th><td><u>#<span data-ppcond="54">else</span> /* ! G_OS_UNIX */</u></td></tr>
+<tr><th id="90">90</th><td></td></tr>
+<tr><th id="91">91</th><td><i>/* Wrappers for C library functions that take pathname arguments. On</i></td></tr>
+<tr><th id="92">92</th><td><i> * Unix, the pathname is a file name as it literally is in the file</i></td></tr>
+<tr><th id="93">93</th><td><i> * system. On well-maintained systems with consistent users who know</i></td></tr>
+<tr><th id="94">94</th><td><i> * what they are doing and no exchange of files with others this would</i></td></tr>
+<tr><th id="95">95</th><td><i> * be a well-defined encoding, preferably UTF-8. On Windows, the</i></td></tr>
+<tr><th id="96">96</th><td><i> * pathname is always in UTF-8, even if that is not the on-disk</i></td></tr>
+<tr><th id="97">97</th><td><i> * encoding, and not the encoding accepted by the C library or Win32</i></td></tr>
+<tr><th id="98">98</th><td><i> * API.</i></td></tr>
+<tr><th id="99">99</th><td><i> */</i></td></tr>
+<tr><th id="100">100</th><td></td></tr>
+<tr><th id="101">101</th><td>GLIB_AVAILABLE_IN_ALL</td></tr>
+<tr><th id="102">102</th><td><em>int</em> g_access    (<em>const</em> gchar *filename,</td></tr>
+<tr><th id="103">103</th><td>		 <em>int</em>          mode);</td></tr>
+<tr><th id="104">104</th><td></td></tr>
+<tr><th id="105">105</th><td>GLIB_AVAILABLE_IN_ALL</td></tr>
+<tr><th id="106">106</th><td><em>int</em> g_chmod     (<em>const</em> gchar *filename,</td></tr>
+<tr><th id="107">107</th><td>		 <em>int</em>          mode);</td></tr>
+<tr><th id="108">108</th><td></td></tr>
+<tr><th id="109">109</th><td>GLIB_AVAILABLE_IN_ALL</td></tr>
+<tr><th id="110">110</th><td><em>int</em> g_open      (<em>const</em> gchar *filename,</td></tr>
+<tr><th id="111">111</th><td>                 <em>int</em>          flags,</td></tr>
+<tr><th id="112">112</th><td>                 <em>int</em>          mode);</td></tr>
+<tr><th id="113">113</th><td></td></tr>
+<tr><th id="114">114</th><td>GLIB_AVAILABLE_IN_ALL</td></tr>
+<tr><th id="115">115</th><td><em>int</em> g_creat     (<em>const</em> gchar *filename,</td></tr>
+<tr><th id="116">116</th><td>                 <em>int</em>          mode);</td></tr>
+<tr><th id="117">117</th><td></td></tr>
+<tr><th id="118">118</th><td>GLIB_AVAILABLE_IN_ALL</td></tr>
+<tr><th id="119">119</th><td><em>int</em> g_rename    (<em>const</em> gchar *oldfilename,</td></tr>
+<tr><th id="120">120</th><td>                 <em>const</em> gchar *newfilename);</td></tr>
+<tr><th id="121">121</th><td></td></tr>
+<tr><th id="122">122</th><td>GLIB_AVAILABLE_IN_ALL</td></tr>
+<tr><th id="123">123</th><td><em>int</em> g_mkdir     (<em>const</em> gchar *filename,</td></tr>
+<tr><th id="124">124</th><td>                 <em>int</em>          mode);</td></tr>
+<tr><th id="125">125</th><td></td></tr>
+<tr><th id="126">126</th><td>GLIB_AVAILABLE_IN_ALL</td></tr>
+<tr><th id="127">127</th><td><em>int</em> g_chdir     (<em>const</em> gchar *path);</td></tr>
+<tr><th id="128">128</th><td></td></tr>
+<tr><th id="129">129</th><td>GLIB_AVAILABLE_IN_ALL</td></tr>
+<tr><th id="130">130</th><td><em>int</em> g_stat      (<em>const</em> gchar *filename,</td></tr>
+<tr><th id="131">131</th><td>                 GStatBuf    *buf);</td></tr>
+<tr><th id="132">132</th><td></td></tr>
+<tr><th id="133">133</th><td>GLIB_AVAILABLE_IN_ALL</td></tr>
+<tr><th id="134">134</th><td><em>int</em> g_lstat     (<em>const</em> gchar *filename,</td></tr>
+<tr><th id="135">135</th><td>                 GStatBuf    *buf);</td></tr>
+<tr><th id="136">136</th><td></td></tr>
+<tr><th id="137">137</th><td>GLIB_AVAILABLE_IN_ALL</td></tr>
+<tr><th id="138">138</th><td><em>int</em> g_unlink    (<em>const</em> gchar *filename);</td></tr>
+<tr><th id="139">139</th><td></td></tr>
+<tr><th id="140">140</th><td>GLIB_AVAILABLE_IN_ALL</td></tr>
+<tr><th id="141">141</th><td><em>int</em> g_remove    (<em>const</em> gchar *filename);</td></tr>
+<tr><th id="142">142</th><td></td></tr>
+<tr><th id="143">143</th><td>GLIB_AVAILABLE_IN_ALL</td></tr>
+<tr><th id="144">144</th><td><em>int</em> g_rmdir     (<em>const</em> gchar *filename);</td></tr>
+<tr><th id="145">145</th><td></td></tr>
+<tr><th id="146">146</th><td>GLIB_AVAILABLE_IN_ALL</td></tr>
+<tr><th id="147">147</th><td>FILE *g_fopen   (<em>const</em> gchar *filename,</td></tr>
+<tr><th id="148">148</th><td>                 <em>const</em> gchar *mode);</td></tr>
+<tr><th id="149">149</th><td></td></tr>
+<tr><th id="150">150</th><td>GLIB_AVAILABLE_IN_ALL</td></tr>
+<tr><th id="151">151</th><td>FILE *g_freopen (<em>const</em> gchar *filename,</td></tr>
+<tr><th id="152">152</th><td>                 <em>const</em> gchar *mode,</td></tr>
+<tr><th id="153">153</th><td>                 FILE        *stream);</td></tr>
+<tr><th id="154">154</th><td></td></tr>
+<tr><th id="155">155</th><td><b>struct</b> utimbuf;			<i>/* Don't need the real definition of struct utimbuf when just</i></td></tr>
+<tr><th id="156">156</th><td><i>				 * including this header.</i></td></tr>
+<tr><th id="157">157</th><td><i>				 */</i></td></tr>
+<tr><th id="158">158</th><td></td></tr>
+<tr><th id="159">159</th><td>GLIB_AVAILABLE_IN_ALL</td></tr>
+<tr><th id="160">160</th><td><em>int</em> g_utime     (<em>const</em> gchar    *filename,</td></tr>
+<tr><th id="161">161</th><td>		 <b>struct</b> utimbuf *utb);</td></tr>
+<tr><th id="162">162</th><td></td></tr>
+<tr><th id="163">163</th><td><u>#<span data-ppcond="54">endif</span> /* G_OS_UNIX */</u></td></tr>
+<tr><th id="164">164</th><td></td></tr>
+<tr><th id="165">165</th><td><a class="macro" href="gversionmacros.h.html#290" title="extern" data-ref="_M/GLIB_AVAILABLE_IN_2_36">GLIB_AVAILABLE_IN_2_36</a></td></tr>
+<tr><th id="166">166</th><td><a class="typedef" href="gtypes.h.html#gboolean" title='gboolean' data-type='gint' data-ref="gboolean">gboolean</a> <dfn class="decl" id="g_close" title='g_close' data-ref="g_close">g_close</dfn> (<a class="typedef" href="gtypes.h.html#gint" title='gint' data-type='int' data-ref="gint">gint</a>       <dfn class="local col3 decl" id="3313fd" title='fd' data-type='gint' data-ref="3313fd">fd</dfn>,</td></tr>
+<tr><th id="167">167</th><td>                  <a class="typedef" href="gerror.h.html#GError" title='GError' data-type='struct _GError' data-ref="GError">GError</a>   **<dfn class="local col4 decl" id="3314error" title='error' data-type='GError **' data-ref="3314error">error</dfn>);</td></tr>
+<tr><th id="168">168</th><td></td></tr>
+<tr><th id="169">169</th><td><a class="macro" href="gmacros.h.html#212" title="" data-ref="_M/G_END_DECLS">G_END_DECLS</a></td></tr>
+<tr><th id="170">170</th><td></td></tr>
+<tr><th id="171">171</th><td><u>#<span data-ppcond="20">endif</span> /* __G_STDIO_H__ */</u></td></tr>
+<tr><th id="172">172</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated while processing <a href='../../../vlc/modules/codec/svg.c.html'>vlc/modules/codec/svg.c</a><br/>Generated on <em>2016-Oct-25</em> from project include<br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

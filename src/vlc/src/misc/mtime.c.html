@@ -1,0 +1,282 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>mtime.c source code [vlc/src/misc/mtime.c] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'vlc/src/misc/mtime.c'; var root_path = '../../..'; var data_path = '../../../../data';</script>
+<script src='../../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='../..'>vlc</a>/<a href='..'>src</a>/<a href='./'>misc</a>/<a href='mtime.c.html'>mtime.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*****************************************************************************</i></td></tr>
+<tr><th id="2">2</th><td><i> * mtime.c: high resolution time management functions</i></td></tr>
+<tr><th id="3">3</th><td><i> * Functions are prototyped in vlc_mtime.h.</i></td></tr>
+<tr><th id="4">4</th><td><i> *****************************************************************************</i></td></tr>
+<tr><th id="5">5</th><td><i> * Copyright (C) 1998-2007 VLC authors and VideoLAN</i></td></tr>
+<tr><th id="6">6</th><td><i> * Copyright © 2006-2007 Rémi Denis-Courmont</i></td></tr>
+<tr><th id="7">7</th><td><i> * $Id: 62409edd6b944bc7beb359c5b96f2c9c73e41845 $</i></td></tr>
+<tr><th id="8">8</th><td><i> *</i></td></tr>
+<tr><th id="9">9</th><td><i> * Authors: Vincent Seguin &lt;seguin@via.ecp.fr&gt;</i></td></tr>
+<tr><th id="10">10</th><td><i> *          Rémi Denis-Courmont &lt;rem$videolan,org&gt;</i></td></tr>
+<tr><th id="11">11</th><td><i> *          Gisle Vanem</i></td></tr>
+<tr><th id="12">12</th><td><i> *</i></td></tr>
+<tr><th id="13">13</th><td><i> * This program is free software; you can redistribute it and/or modify it</i></td></tr>
+<tr><th id="14">14</th><td><i> * under the terms of the GNU Lesser General Public License as published by</i></td></tr>
+<tr><th id="15">15</th><td><i> * the Free Software Foundation; either version 2.1 of the License, or</i></td></tr>
+<tr><th id="16">16</th><td><i> * (at your option) any later version.</i></td></tr>
+<tr><th id="17">17</th><td><i> *</i></td></tr>
+<tr><th id="18">18</th><td><i> * This program is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="19">19</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="20">20</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</i></td></tr>
+<tr><th id="21">21</th><td><i> * GNU Lesser General Public License for more details.</i></td></tr>
+<tr><th id="22">22</th><td><i> *</i></td></tr>
+<tr><th id="23">23</th><td><i> * You should have received a copy of the GNU Lesser General Public License</i></td></tr>
+<tr><th id="24">24</th><td><i> * along with this program; if not, write to the Free Software Foundation,</i></td></tr>
+<tr><th id="25">25</th><td><i> * Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.</i></td></tr>
+<tr><th id="26">26</th><td><i> *****************************************************************************/</i></td></tr>
+<tr><th id="27">27</th><td></td></tr>
+<tr><th id="28">28</th><td><i>/*****************************************************************************</i></td></tr>
+<tr><th id="29">29</th><td><i> * Preamble</i></td></tr>
+<tr><th id="30">30</th><td><i> *****************************************************************************/</i></td></tr>
+<tr><th id="31">31</th><td></td></tr>
+<tr><th id="32">32</th><td><u>#<span data-ppcond="32">ifdef</span> <span class="macro" data-ref="_M/HAVE_CONFIG_H">HAVE_CONFIG_H</span></u></td></tr>
+<tr><th id="33">33</th><td><u># include <a href="../../config.h.html">"config.h"</a></u></td></tr>
+<tr><th id="34">34</th><td><u>#<span data-ppcond="32">endif</span></u></td></tr>
+<tr><th id="35">35</th><td></td></tr>
+<tr><th id="36">36</th><td><u>#include <a href="../../include/vlc_common.h.html">&lt;vlc_common.h&gt;</a></u></td></tr>
+<tr><th id="37">37</th><td><u>#include <a href="../../../include/assert.h.html">&lt;assert.h&gt;</a></u></td></tr>
+<tr><th id="38">38</th><td></td></tr>
+<tr><th id="39">39</th><td><u>#include <a href="../../../include/unistd.h.html">&lt;unistd.h&gt;</a></u></td></tr>
+<tr><th id="40">40</th><td><u>#<span data-ppcond="40">if</span> !defined (<a class="macro" href="../../../include/x86_64-linux-gnu/bits/posix_opt.h.html#149" data-ref="_M/_POSIX_TIMERS">_POSIX_TIMERS</a>) || defined (<span class="macro" data-ref="_M/_WIN32">_WIN32</span>)</u></td></tr>
+<tr><th id="41">41</th><td><u># define _POSIX_TIMERS (-1)</u></td></tr>
+<tr><th id="42">42</th><td><u>#<span data-ppcond="40">endif</span></u></td></tr>
+<tr><th id="43">43</th><td><u>#<span data-ppcond="43">if</span> (<a class="macro" href="../../../include/x86_64-linux-gnu/bits/posix_opt.h.html#149" title="200809L" data-ref="_M/_POSIX_TIMERS">_POSIX_TIMERS</a> &gt; 0)</u></td></tr>
+<tr><th id="44">44</th><td><u># include <a href="../../../include/time.h.html">&lt;time.h&gt;</a> /* clock_gettime() */</u></td></tr>
+<tr><th id="45">45</th><td><u>#<span data-ppcond="43">else</span></u></td></tr>
+<tr><th id="46">46</th><td><u># include &lt;sys/time.h&gt;</u></td></tr>
+<tr><th id="47">47</th><td><u>#<span data-ppcond="43">endif</span></u></td></tr>
+<tr><th id="48">48</th><td></td></tr>
+<tr><th id="49">49</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="50">50</th><td><i class="doc"> * Return a date in a readable format</i></td></tr>
+<tr><th id="51">51</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="52">52</th><td><i class="doc"> * This function converts a mtime date into a string.</i></td></tr>
+<tr><th id="53">53</th><td><i class="doc"> * psz_buffer should be a buffer long enough to store the formatted</i></td></tr>
+<tr><th id="54">54</th><td><i class="doc"> * date.</i></td></tr>
+<tr><th id="55">55</th><td><i class="doc"> * <span class="command">\param</span> <span class="arg">date</span> to be converted</i></td></tr>
+<tr><th id="56">56</th><td><i class="doc"> * <span class="command">\param</span> <span class="arg">psz_buffer</span> should be a buffer at least MSTRTIME_MAX_SIZE characters</i></td></tr>
+<tr><th id="57">57</th><td><i class="doc"> * <span class="command">\return</span> psz_buffer is returned so this can be used as printf parameter.</i></td></tr>
+<tr><th id="58">58</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="59">59</th><td><em>char</em> *<dfn class="decl def" id="mstrtime" title='mstrtime' data-ref="mstrtime">mstrtime</dfn>( <em>char</em> *<dfn class="local col1 decl" id="1psz_buffer" title='psz_buffer' data-type='char *' data-ref="1psz_buffer">psz_buffer</dfn>, <a class="typedef" href="../../include/vlc_common.h.html#mtime_t" title='mtime_t' data-type='int64_t' data-ref="mtime_t">mtime_t</a> <dfn class="local col2 decl" id="2date" title='date' data-type='mtime_t' data-ref="2date">date</dfn> )</td></tr>
+<tr><th id="60">60</th><td>{</td></tr>
+<tr><th id="61">61</th><td>    <em>static</em> <em>const</em> <a class="typedef" href="../../include/vlc_common.h.html#mtime_t" title='mtime_t' data-type='int64_t' data-ref="mtime_t">mtime_t</a> <dfn class="local col3 decl" id="3ll1000" title='ll1000' data-type='const mtime_t' data-ref="3ll1000">ll1000</dfn> = <var>1000</var>, <dfn class="local col4 decl" id="4ll60" title='ll60' data-type='const mtime_t' data-ref="4ll60">ll60</dfn> = <var>60</var>, <dfn class="local col5 decl" id="5ll24" title='ll24' data-type='const mtime_t' data-ref="5ll24">ll24</dfn> = <var>24</var>;</td></tr>
+<tr><th id="62">62</th><td></td></tr>
+<tr><th id="63">63</th><td>    <a class="macro" href="../../../include/x86_64-linux-gnu/bits/stdio2.h.html#68" title="__builtin___snprintf_chk (psz_buffer, 22, 2 - 1, __builtin_object_size (psz_buffer, 2 &gt; 1), &quot;%02d:%02d:%02d-%03d.%03d&quot;, (int) (date / (ll1000 * ll1000 * ll60 * ll60) % ll24), (int) (date / (ll1000 * ll1000 * ll60) % ll60), (int) (date / (ll1000 * ll1000) % ll60), (int) (date / ll1000 % ll1000), (int) (date % ll1000))" data-ref="_M/snprintf">snprintf</a>( <a class="local col1 ref" href="#1psz_buffer" title='psz_buffer' data-ref="1psz_buffer">psz_buffer</a>, <a class="macro" href="../../include/vlc_mtime.h.html#52" title="22" data-ref="_M/MSTRTIME_MAX_SIZE">MSTRTIME_MAX_SIZE</a>, <q>"%02d:%02d:%02d-%03d.%03d"</q>,</td></tr>
+<tr><th id="64">64</th><td>             (<em>int</em>) (<a class="local col2 ref" href="#2date" title='date' data-ref="2date">date</a> / (<a class="local col3 ref" href="#3ll1000" title='ll1000' data-ref="3ll1000">ll1000</a> * <a class="local col3 ref" href="#3ll1000" title='ll1000' data-ref="3ll1000">ll1000</a> * <a class="local col4 ref" href="#4ll60" title='ll60' data-ref="4ll60">ll60</a> * <a class="local col4 ref" href="#4ll60" title='ll60' data-ref="4ll60">ll60</a>) % <a class="local col5 ref" href="#5ll24" title='ll24' data-ref="5ll24">ll24</a>),</td></tr>
+<tr><th id="65">65</th><td>             (<em>int</em>) (<a class="local col2 ref" href="#2date" title='date' data-ref="2date">date</a> / (<a class="local col3 ref" href="#3ll1000" title='ll1000' data-ref="3ll1000">ll1000</a> * <a class="local col3 ref" href="#3ll1000" title='ll1000' data-ref="3ll1000">ll1000</a> * <a class="local col4 ref" href="#4ll60" title='ll60' data-ref="4ll60">ll60</a>) % <a class="local col4 ref" href="#4ll60" title='ll60' data-ref="4ll60">ll60</a>),</td></tr>
+<tr><th id="66">66</th><td>             (<em>int</em>) (<a class="local col2 ref" href="#2date" title='date' data-ref="2date">date</a> / (<a class="local col3 ref" href="#3ll1000" title='ll1000' data-ref="3ll1000">ll1000</a> * <a class="local col3 ref" href="#3ll1000" title='ll1000' data-ref="3ll1000">ll1000</a>) % <a class="local col4 ref" href="#4ll60" title='ll60' data-ref="4ll60">ll60</a>),</td></tr>
+<tr><th id="67">67</th><td>             (<em>int</em>) (<a class="local col2 ref" href="#2date" title='date' data-ref="2date">date</a> / <a class="local col3 ref" href="#3ll1000" title='ll1000' data-ref="3ll1000">ll1000</a> % <a class="local col3 ref" href="#3ll1000" title='ll1000' data-ref="3ll1000">ll1000</a>),</td></tr>
+<tr><th id="68">68</th><td>             (<em>int</em>) (<a class="local col2 ref" href="#2date" title='date' data-ref="2date">date</a> % <a class="local col3 ref" href="#3ll1000" title='ll1000' data-ref="3ll1000">ll1000</a>) );</td></tr>
+<tr><th id="69">69</th><td>    <b>return</b>( <a class="local col1 ref" href="#1psz_buffer" title='psz_buffer' data-ref="1psz_buffer">psz_buffer</a> );</td></tr>
+<tr><th id="70">70</th><td>}</td></tr>
+<tr><th id="71">71</th><td></td></tr>
+<tr><th id="72">72</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="73">73</th><td><i class="doc"> * Convert seconds to a time in the format h:mm:ss.</i></td></tr>
+<tr><th id="74">74</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="75">75</th><td><i class="doc"> * This function is provided for any interface function which need to print a</i></td></tr>
+<tr><th id="76">76</th><td><i class="doc"> * time string in the format h:mm:ss</i></td></tr>
+<tr><th id="77">77</th><td><i class="doc"> * date.</i></td></tr>
+<tr><th id="78">78</th><td><i class="doc"> * <span class="command">\param</span> <span class="arg">secs</span>  the date to be converted</i></td></tr>
+<tr><th id="79">79</th><td><i class="doc"> * <span class="command">\param</span> <span class="arg">psz_buffer</span> should be a buffer at least MSTRTIME_MAX_SIZE characters</i></td></tr>
+<tr><th id="80">80</th><td><i class="doc"> * <span class="command">\return</span> psz_buffer is returned so this can be used as printf parameter.</i></td></tr>
+<tr><th id="81">81</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="82">82</th><td><em>char</em> *<dfn class="decl def" id="secstotimestr" title='secstotimestr' data-ref="secstotimestr">secstotimestr</dfn>( <em>char</em> *<dfn class="local col6 decl" id="6psz_buffer" title='psz_buffer' data-type='char *' data-ref="6psz_buffer">psz_buffer</dfn>, <a class="typedef" href="../../../include/x86_64-linux-gnu/sys/types.h.html#196" title='int32_t' data-type='int' data-ref="int32_t">int32_t</a> <dfn class="local col7 decl" id="7i_seconds" title='i_seconds' data-type='int32_t' data-ref="7i_seconds">i_seconds</dfn> )</td></tr>
+<tr><th id="83">83</th><td>{</td></tr>
+<tr><th id="84">84</th><td>    <b>if</b>( <a class="macro" href="../../include/vlc_common.h.html#116" title="__builtin_expect(!!(i_seconds &lt; 0), 0)" data-ref="_M/unlikely">unlikely</a>(<a class="local col7 ref" href="#7i_seconds" title='i_seconds' data-ref="7i_seconds">i_seconds</a> &lt; <var>0</var>) )</td></tr>
+<tr><th id="85">85</th><td>    {</td></tr>
+<tr><th id="86">86</th><td>        <a class="ref" href="#secstotimestr" title='secstotimestr' data-ref="secstotimestr">secstotimestr</a>( <a class="local col6 ref" href="#6psz_buffer" title='psz_buffer' data-ref="6psz_buffer">psz_buffer</a> + <var>1</var>, -<a class="local col7 ref" href="#7i_seconds" title='i_seconds' data-ref="7i_seconds">i_seconds</a> );</td></tr>
+<tr><th id="87">87</th><td>        *<a class="local col6 ref" href="#6psz_buffer" title='psz_buffer' data-ref="6psz_buffer">psz_buffer</a> = <kbd>'-'</kbd>;</td></tr>
+<tr><th id="88">88</th><td>        <b>return</b> <a class="local col6 ref" href="#6psz_buffer" title='psz_buffer' data-ref="6psz_buffer">psz_buffer</a>;</td></tr>
+<tr><th id="89">89</th><td>    }</td></tr>
+<tr><th id="90">90</th><td></td></tr>
+<tr><th id="91">91</th><td>    <a class="typedef" href="../../../include/stdlib.h.html#div_t" title='div_t' data-type='struct div_t' data-ref="div_t">div_t</a> <dfn class="local col8 decl" id="8d" title='d' data-type='div_t' data-ref="8d">d</dfn>;</td></tr>
+<tr><th id="92">92</th><td></td></tr>
+<tr><th id="93">93</th><td>    <a class="local col8 ref" href="#8d" title='d' data-ref="8d">d</a> = <a class="ref" href="../../../include/stdlib.h.html#div" title='div' data-ref="div">div</a>( <a class="local col7 ref" href="#7i_seconds" title='i_seconds' data-ref="7i_seconds">i_seconds</a>, <var>60</var> );</td></tr>
+<tr><th id="94">94</th><td>    <a class="local col7 ref" href="#7i_seconds" title='i_seconds' data-ref="7i_seconds">i_seconds</a> = <a class="local col8 ref" href="#8d" title='d' data-ref="8d">d</a>.<a class="ref" href="../../../include/stdlib.h.html#{anonymous}::rem" title='&lt;anonymous struct&gt;::rem' data-ref="{anonymous}::rem">rem</a>;</td></tr>
+<tr><th id="95">95</th><td>    <a class="local col8 ref" href="#8d" title='d' data-ref="8d">d</a> = <a class="ref" href="../../../include/stdlib.h.html#div" title='div' data-ref="div">div</a>( <a class="local col8 ref" href="#8d" title='d' data-ref="8d">d</a>.<a class="ref" href="../../../include/stdlib.h.html#{anonymous}::quot" title='&lt;anonymous struct&gt;::quot' data-ref="{anonymous}::quot">quot</a>, <var>60</var> );</td></tr>
+<tr><th id="96">96</th><td></td></tr>
+<tr><th id="97">97</th><td>    <b>if</b>( <a class="local col8 ref" href="#8d" title='d' data-ref="8d">d</a>.<a class="ref" href="../../../include/stdlib.h.html#{anonymous}::quot" title='&lt;anonymous struct&gt;::quot' data-ref="{anonymous}::quot">quot</a> )</td></tr>
+<tr><th id="98">98</th><td>        <a class="macro" href="../../../include/x86_64-linux-gnu/bits/stdio2.h.html#68" title="__builtin___snprintf_chk (psz_buffer, 22, 2 - 1, __builtin_object_size (psz_buffer, 2 &gt; 1), &quot;%u:%02u:%02u&quot;, d.quot, d.rem, i_seconds)" data-ref="_M/snprintf">snprintf</a>( <a class="local col6 ref" href="#6psz_buffer" title='psz_buffer' data-ref="6psz_buffer">psz_buffer</a>, <a class="macro" href="../../include/vlc_mtime.h.html#52" title="22" data-ref="_M/MSTRTIME_MAX_SIZE">MSTRTIME_MAX_SIZE</a>, <q>"%u:%02u:%02u"</q>,</td></tr>
+<tr><th id="99">99</th><td>                 <a class="local col8 ref" href="#8d" title='d' data-ref="8d">d</a>.<a class="ref" href="../../../include/stdlib.h.html#{anonymous}::quot" title='&lt;anonymous struct&gt;::quot' data-ref="{anonymous}::quot">quot</a>, <a class="local col8 ref" href="#8d" title='d' data-ref="8d">d</a>.<a class="ref" href="../../../include/stdlib.h.html#{anonymous}::rem" title='&lt;anonymous struct&gt;::rem' data-ref="{anonymous}::rem">rem</a>, <a class="local col7 ref" href="#7i_seconds" title='i_seconds' data-ref="7i_seconds">i_seconds</a> );</td></tr>
+<tr><th id="100">100</th><td>    <b>else</b></td></tr>
+<tr><th id="101">101</th><td>        <a class="macro" href="../../../include/x86_64-linux-gnu/bits/stdio2.h.html#68" title="__builtin___snprintf_chk (psz_buffer, 22, 2 - 1, __builtin_object_size (psz_buffer, 2 &gt; 1), &quot;%02u:%02u&quot;, d.rem, i_seconds)" data-ref="_M/snprintf">snprintf</a>( <a class="local col6 ref" href="#6psz_buffer" title='psz_buffer' data-ref="6psz_buffer">psz_buffer</a>, <a class="macro" href="../../include/vlc_mtime.h.html#52" title="22" data-ref="_M/MSTRTIME_MAX_SIZE">MSTRTIME_MAX_SIZE</a>, <q>"%02u:%02u"</q>,</td></tr>
+<tr><th id="102">102</th><td>                  <a class="local col8 ref" href="#8d" title='d' data-ref="8d">d</a>.<a class="ref" href="../../../include/stdlib.h.html#{anonymous}::rem" title='&lt;anonymous struct&gt;::rem' data-ref="{anonymous}::rem">rem</a>, <a class="local col7 ref" href="#7i_seconds" title='i_seconds' data-ref="7i_seconds">i_seconds</a> );</td></tr>
+<tr><th id="103">103</th><td>    <b>return</b> <a class="local col6 ref" href="#6psz_buffer" title='psz_buffer' data-ref="6psz_buffer">psz_buffer</a>;</td></tr>
+<tr><th id="104">104</th><td>}</td></tr>
+<tr><th id="105">105</th><td></td></tr>
+<tr><th id="106">106</th><td><i>/*</i></td></tr>
+<tr><th id="107">107</th><td><i> * Date management (internal and external)</i></td></tr>
+<tr><th id="108">108</th><td><i> */</i></td></tr>
+<tr><th id="109">109</th><td></td></tr>
+<tr><th id="110">110</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="111">111</th><td><i class="doc"> * Initialize a date_t.</i></td></tr>
+<tr><th id="112">112</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="113">113</th><td><i class="doc"> * <span class="command">\param</span> <span class="arg">date</span> to initialize</i></td></tr>
+<tr><th id="114">114</th><td><i class="doc"> * <span class="command">\param</span> <span class="arg">divider</span> (sample rate) numerator</i></td></tr>
+<tr><th id="115">115</th><td><i class="doc"> * <span class="command">\param</span> <span class="arg">divider</span> (sample rate) denominator</i></td></tr>
+<tr><th id="116">116</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="117">117</th><td></td></tr>
+<tr><th id="118">118</th><td><em>void</em> <dfn class="decl def" id="date_Init" title='date_Init' data-ref="date_Init">date_Init</dfn>( <a class="typedef" href="../../include/vlc_common.h.html#date_t" title='date_t' data-type='struct date_t' data-ref="date_t">date_t</a> *<dfn class="local col9 decl" id="9p_date" title='p_date' data-type='date_t *' data-ref="9p_date">p_date</dfn>, <a class="typedef" href="../../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a> <dfn class="local col0 decl" id="10i_divider_n" title='i_divider_n' data-type='uint32_t' data-ref="10i_divider_n">i_divider_n</dfn>, <a class="typedef" href="../../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a> <dfn class="local col1 decl" id="11i_divider_d" title='i_divider_d' data-type='uint32_t' data-ref="11i_divider_d">i_divider_d</dfn> )</td></tr>
+<tr><th id="119">119</th><td>{</td></tr>
+<tr><th id="120">120</th><td>    <a class="local col9 ref" href="#9p_date" title='p_date' data-ref="9p_date">p_date</a>-&gt;<a class="ref" href="../../include/vlc_mtime.h.html#date_t::date" title='date_t::date' data-ref="date_t::date">date</a> = <var>0</var>;</td></tr>
+<tr><th id="121">121</th><td>    <a class="local col9 ref" href="#9p_date" title='p_date' data-ref="9p_date">p_date</a>-&gt;<a class="ref" href="../../include/vlc_mtime.h.html#date_t::i_divider_num" title='date_t::i_divider_num' data-ref="date_t::i_divider_num">i_divider_num</a> = <a class="local col0 ref" href="#10i_divider_n" title='i_divider_n' data-ref="10i_divider_n">i_divider_n</a>;</td></tr>
+<tr><th id="122">122</th><td>    <a class="local col9 ref" href="#9p_date" title='p_date' data-ref="9p_date">p_date</a>-&gt;<a class="ref" href="../../include/vlc_mtime.h.html#date_t::i_divider_den" title='date_t::i_divider_den' data-ref="date_t::i_divider_den">i_divider_den</a> = <a class="local col1 ref" href="#11i_divider_d" title='i_divider_d' data-ref="11i_divider_d">i_divider_d</a>;</td></tr>
+<tr><th id="123">123</th><td>    <a class="local col9 ref" href="#9p_date" title='p_date' data-ref="9p_date">p_date</a>-&gt;<a class="ref" href="../../include/vlc_mtime.h.html#date_t::i_remainder" title='date_t::i_remainder' data-ref="date_t::i_remainder">i_remainder</a> = <var>0</var>;</td></tr>
+<tr><th id="124">124</th><td>}</td></tr>
+<tr><th id="125">125</th><td></td></tr>
+<tr><th id="126">126</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="127">127</th><td><i class="doc"> * Change a date_t.</i></td></tr>
+<tr><th id="128">128</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="129">129</th><td><i class="doc"> * <span class="command">\param</span> <span class="arg">date</span> to change</i></td></tr>
+<tr><th id="130">130</th><td><i class="doc"> * <span class="command">\param</span> <span class="arg">divider</span> (sample rate) numerator</i></td></tr>
+<tr><th id="131">131</th><td><i class="doc"> * <span class="command">\param</span> <span class="arg">divider</span> (sample rate) denominator</i></td></tr>
+<tr><th id="132">132</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="133">133</th><td></td></tr>
+<tr><th id="134">134</th><td><em>void</em> <dfn class="decl def" id="date_Change" title='date_Change' data-ref="date_Change">date_Change</dfn>( <a class="typedef" href="../../include/vlc_common.h.html#date_t" title='date_t' data-type='struct date_t' data-ref="date_t">date_t</a> *<dfn class="local col2 decl" id="12p_date" title='p_date' data-type='date_t *' data-ref="12p_date">p_date</dfn>, <a class="typedef" href="../../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a> <dfn class="local col3 decl" id="13i_divider_n" title='i_divider_n' data-type='uint32_t' data-ref="13i_divider_n">i_divider_n</dfn>, <a class="typedef" href="../../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a> <dfn class="local col4 decl" id="14i_divider_d" title='i_divider_d' data-type='uint32_t' data-ref="14i_divider_d">i_divider_d</dfn> )</td></tr>
+<tr><th id="135">135</th><td>{</td></tr>
+<tr><th id="136">136</th><td>    <i>/* change time scale of remainder */</i></td></tr>
+<tr><th id="137">137</th><td>    <a class="local col2 ref" href="#12p_date" title='p_date' data-ref="12p_date">p_date</a>-&gt;<a class="ref" href="../../include/vlc_mtime.h.html#date_t::i_remainder" title='date_t::i_remainder' data-ref="date_t::i_remainder">i_remainder</a> = <a class="local col2 ref" href="#12p_date" title='p_date' data-ref="12p_date">p_date</a>-&gt;<a class="ref" href="../../include/vlc_mtime.h.html#date_t::i_remainder" title='date_t::i_remainder' data-ref="date_t::i_remainder">i_remainder</a> * <a class="local col3 ref" href="#13i_divider_n" title='i_divider_n' data-ref="13i_divider_n">i_divider_n</a> / <a class="local col2 ref" href="#12p_date" title='p_date' data-ref="12p_date">p_date</a>-&gt;<a class="ref" href="../../include/vlc_mtime.h.html#date_t::i_divider_num" title='date_t::i_divider_num' data-ref="date_t::i_divider_num">i_divider_num</a>;</td></tr>
+<tr><th id="138">138</th><td>    <a class="local col2 ref" href="#12p_date" title='p_date' data-ref="12p_date">p_date</a>-&gt;<a class="ref" href="../../include/vlc_mtime.h.html#date_t::i_divider_num" title='date_t::i_divider_num' data-ref="date_t::i_divider_num">i_divider_num</a> = <a class="local col3 ref" href="#13i_divider_n" title='i_divider_n' data-ref="13i_divider_n">i_divider_n</a>;</td></tr>
+<tr><th id="139">139</th><td>    <a class="local col2 ref" href="#12p_date" title='p_date' data-ref="12p_date">p_date</a>-&gt;<a class="ref" href="../../include/vlc_mtime.h.html#date_t::i_divider_den" title='date_t::i_divider_den' data-ref="date_t::i_divider_den">i_divider_den</a> = <a class="local col4 ref" href="#14i_divider_d" title='i_divider_d' data-ref="14i_divider_d">i_divider_d</a>;</td></tr>
+<tr><th id="140">140</th><td>}</td></tr>
+<tr><th id="141">141</th><td></td></tr>
+<tr><th id="142">142</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="143">143</th><td><i class="doc"> * Set the date value of a date_t.</i></td></tr>
+<tr><th id="144">144</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="145">145</th><td><i class="doc"> * <span class="command">\param</span> <span class="arg">date</span> to set</i></td></tr>
+<tr><th id="146">146</th><td><i class="doc"> * <span class="command">\param</span> <span class="arg">date</span> value</i></td></tr>
+<tr><th id="147">147</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="148">148</th><td><em>void</em> <dfn class="decl def" id="date_Set" title='date_Set' data-ref="date_Set">date_Set</dfn>( <a class="typedef" href="../../include/vlc_common.h.html#date_t" title='date_t' data-type='struct date_t' data-ref="date_t">date_t</a> *<dfn class="local col5 decl" id="15p_date" title='p_date' data-type='date_t *' data-ref="15p_date">p_date</dfn>, <a class="typedef" href="../../include/vlc_common.h.html#mtime_t" title='mtime_t' data-type='int64_t' data-ref="mtime_t">mtime_t</a> <dfn class="local col6 decl" id="16i_new_date" title='i_new_date' data-type='mtime_t' data-ref="16i_new_date">i_new_date</dfn> )</td></tr>
+<tr><th id="149">149</th><td>{</td></tr>
+<tr><th id="150">150</th><td>    <a class="local col5 ref" href="#15p_date" title='p_date' data-ref="15p_date">p_date</a>-&gt;<a class="ref" href="../../include/vlc_mtime.h.html#date_t::date" title='date_t::date' data-ref="date_t::date">date</a> = <a class="local col6 ref" href="#16i_new_date" title='i_new_date' data-ref="16i_new_date">i_new_date</a>;</td></tr>
+<tr><th id="151">151</th><td>    <a class="local col5 ref" href="#15p_date" title='p_date' data-ref="15p_date">p_date</a>-&gt;<a class="ref" href="../../include/vlc_mtime.h.html#date_t::i_remainder" title='date_t::i_remainder' data-ref="date_t::i_remainder">i_remainder</a> = <var>0</var>;</td></tr>
+<tr><th id="152">152</th><td>}</td></tr>
+<tr><th id="153">153</th><td></td></tr>
+<tr><th id="154">154</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="155">155</th><td><i class="doc"> * Get the date of a date_t</i></td></tr>
+<tr><th id="156">156</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="157">157</th><td><i class="doc"> * <span class="command">\param</span> <span class="arg">date</span> to get</i></td></tr>
+<tr><th id="158">158</th><td><i class="doc"> * <span class="command">\return</span> date value</i></td></tr>
+<tr><th id="159">159</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="160">160</th><td><a class="typedef" href="../../include/vlc_common.h.html#mtime_t" title='mtime_t' data-type='int64_t' data-ref="mtime_t">mtime_t</a> <dfn class="decl def" id="date_Get" title='date_Get' data-ref="date_Get">date_Get</dfn>( <em>const</em> <a class="typedef" href="../../include/vlc_common.h.html#date_t" title='date_t' data-type='struct date_t' data-ref="date_t">date_t</a> *<dfn class="local col7 decl" id="17p_date" title='p_date' data-type='const date_t *' data-ref="17p_date">p_date</dfn> )</td></tr>
+<tr><th id="161">161</th><td>{</td></tr>
+<tr><th id="162">162</th><td>    <b>return</b> <a class="local col7 ref" href="#17p_date" title='p_date' data-ref="17p_date">p_date</a>-&gt;<a class="ref" href="../../include/vlc_mtime.h.html#date_t::date" title='date_t::date' data-ref="date_t::date">date</a>;</td></tr>
+<tr><th id="163">163</th><td>}</td></tr>
+<tr><th id="164">164</th><td></td></tr>
+<tr><th id="165">165</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="166">166</th><td><i class="doc"> * Move forwards or backwards the date of a date_t.</i></td></tr>
+<tr><th id="167">167</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="168">168</th><td><i class="doc"> * <span class="command">\param</span> <span class="arg">date</span> to move</i></td></tr>
+<tr><th id="169">169</th><td><i class="doc"> * <span class="command">\param</span> <span class="arg">difference</span> value</i></td></tr>
+<tr><th id="170">170</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="171">171</th><td><em>void</em> <dfn class="decl def" id="date_Move" title='date_Move' data-ref="date_Move">date_Move</dfn>( <a class="typedef" href="../../include/vlc_common.h.html#date_t" title='date_t' data-type='struct date_t' data-ref="date_t">date_t</a> *<dfn class="local col8 decl" id="18p_date" title='p_date' data-type='date_t *' data-ref="18p_date">p_date</dfn>, <a class="typedef" href="../../include/vlc_common.h.html#mtime_t" title='mtime_t' data-type='int64_t' data-ref="mtime_t">mtime_t</a> <dfn class="local col9 decl" id="19i_difference" title='i_difference' data-type='mtime_t' data-ref="19i_difference">i_difference</dfn> )</td></tr>
+<tr><th id="172">172</th><td>{</td></tr>
+<tr><th id="173">173</th><td>    <a class="local col8 ref" href="#18p_date" title='p_date' data-ref="18p_date">p_date</a>-&gt;<a class="ref" href="../../include/vlc_mtime.h.html#date_t::date" title='date_t::date' data-ref="date_t::date">date</a> += <a class="local col9 ref" href="#19i_difference" title='i_difference' data-ref="19i_difference">i_difference</a>;</td></tr>
+<tr><th id="174">174</th><td>}</td></tr>
+<tr><th id="175">175</th><td></td></tr>
+<tr><th id="176">176</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="177">177</th><td><i class="doc"> * Increment the date and return the result, taking into account</i></td></tr>
+<tr><th id="178">178</th><td><i class="doc"> * rounding errors.</i></td></tr>
+<tr><th id="179">179</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="180">180</th><td><i class="doc"> * <span class="command">\param</span> <span class="arg">date</span> to increment</i></td></tr>
+<tr><th id="181">181</th><td><i class="doc"> * <span class="command">\param</span> <span class="arg">incrementation</span> in number of samples</i></td></tr>
+<tr><th id="182">182</th><td><i class="doc"> * <span class="command">\return</span> date value</i></td></tr>
+<tr><th id="183">183</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="184">184</th><td><a class="typedef" href="../../include/vlc_common.h.html#mtime_t" title='mtime_t' data-type='int64_t' data-ref="mtime_t">mtime_t</a> <dfn class="decl def" id="date_Increment" title='date_Increment' data-ref="date_Increment">date_Increment</dfn>( <a class="typedef" href="../../include/vlc_common.h.html#date_t" title='date_t' data-type='struct date_t' data-ref="date_t">date_t</a> *<dfn class="local col0 decl" id="20p_date" title='p_date' data-type='date_t *' data-ref="20p_date">p_date</dfn>, <a class="typedef" href="../../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a> <dfn class="local col1 decl" id="21i_nb_samples" title='i_nb_samples' data-type='uint32_t' data-ref="21i_nb_samples">i_nb_samples</dfn> )</td></tr>
+<tr><th id="185">185</th><td>{</td></tr>
+<tr><th id="186">186</th><td>    <a class="typedef" href="../../include/vlc_common.h.html#mtime_t" title='mtime_t' data-type='int64_t' data-ref="mtime_t">mtime_t</a> <dfn class="local col2 decl" id="22i_dividend" title='i_dividend' data-type='mtime_t' data-ref="22i_dividend">i_dividend</dfn> = <a class="local col1 ref" href="#21i_nb_samples" title='i_nb_samples' data-ref="21i_nb_samples">i_nb_samples</a> * <a class="macro" href="../../include/vlc_config.h.html#46" title="1000000L" data-ref="_M/CLOCK_FREQ">CLOCK_FREQ</a> * <a class="local col0 ref" href="#20p_date" title='p_date' data-ref="20p_date">p_date</a>-&gt;<a class="ref" href="../../include/vlc_mtime.h.html#date_t::i_divider_den" title='date_t::i_divider_den' data-ref="date_t::i_divider_den">i_divider_den</a>;</td></tr>
+<tr><th id="187">187</th><td>    <a class="typedef" href="../../../include/stdlib.h.html#lldiv_t" title='lldiv_t' data-type='struct lldiv_t' data-ref="lldiv_t">lldiv_t</a> <dfn class="local col3 decl" id="23d" title='d' data-type='lldiv_t' data-ref="23d">d</dfn> = <a class="ref" href="../../../include/stdlib.h.html#lldiv" title='lldiv' data-ref="lldiv">lldiv</a>( <a class="local col2 ref" href="#22i_dividend" title='i_dividend' data-ref="22i_dividend">i_dividend</a>, <a class="local col0 ref" href="#20p_date" title='p_date' data-ref="20p_date">p_date</a>-&gt;<a class="ref" href="../../include/vlc_mtime.h.html#date_t::i_divider_num" title='date_t::i_divider_num' data-ref="date_t::i_divider_num">i_divider_num</a> );</td></tr>
+<tr><th id="188">188</th><td></td></tr>
+<tr><th id="189">189</th><td>    <a class="local col0 ref" href="#20p_date" title='p_date' data-ref="20p_date">p_date</a>-&gt;<a class="ref" href="../../include/vlc_mtime.h.html#date_t::date" title='date_t::date' data-ref="date_t::date">date</a> += <a class="local col3 ref" href="#23d" title='d' data-ref="23d">d</a>.<a class="ref" href="../../../include/stdlib.h.html#{anonymous}::quot" title='&lt;anonymous struct&gt;::quot' data-ref="{anonymous}::quot">quot</a>;</td></tr>
+<tr><th id="190">190</th><td>    <a class="local col0 ref" href="#20p_date" title='p_date' data-ref="20p_date">p_date</a>-&gt;<a class="ref" href="../../include/vlc_mtime.h.html#date_t::i_remainder" title='date_t::i_remainder' data-ref="date_t::i_remainder">i_remainder</a> += (<em>int</em>)<a class="local col3 ref" href="#23d" title='d' data-ref="23d">d</a>.<a class="ref" href="../../../include/stdlib.h.html#{anonymous}::rem" title='&lt;anonymous struct&gt;::rem' data-ref="{anonymous}::rem">rem</a>;</td></tr>
+<tr><th id="191">191</th><td></td></tr>
+<tr><th id="192">192</th><td>    <b>if</b>( <a class="local col0 ref" href="#20p_date" title='p_date' data-ref="20p_date">p_date</a>-&gt;<a class="ref" href="../../include/vlc_mtime.h.html#date_t::i_remainder" title='date_t::i_remainder' data-ref="date_t::i_remainder">i_remainder</a> &gt;= <a class="local col0 ref" href="#20p_date" title='p_date' data-ref="20p_date">p_date</a>-&gt;<a class="ref" href="../../include/vlc_mtime.h.html#date_t::i_divider_num" title='date_t::i_divider_num' data-ref="date_t::i_divider_num">i_divider_num</a> )</td></tr>
+<tr><th id="193">193</th><td>    {</td></tr>
+<tr><th id="194">194</th><td>        <i>/* This is Bresenham algorithm. */</i></td></tr>
+<tr><th id="195">195</th><td>        <a class="macro" href="../../../include/assert.h.html#88" title="((p_date-&gt;i_remainder &lt; 2*p_date-&gt;i_divider_num) ? (void) (0) : __assert_fail (&quot;p_date-&gt;i_remainder &lt; 2*p_date-&gt;i_divider_num&quot;, &quot;/usr/local/google/home/robertshih/git/vlc/src/misc/mtime.c&quot;, 195, __PRETTY_FUNCTION__))" data-ref="_M/assert">assert</a>( <a class="local col0 ref" href="#20p_date" title='p_date' data-ref="20p_date">p_date</a>-&gt;<a class="ref" href="../../include/vlc_mtime.h.html#date_t::i_remainder" title='date_t::i_remainder' data-ref="date_t::i_remainder">i_remainder</a> &lt; <var>2</var>*<a class="local col0 ref" href="#20p_date" title='p_date' data-ref="20p_date">p_date</a>-&gt;<a class="ref" href="../../include/vlc_mtime.h.html#date_t::i_divider_num" title='date_t::i_divider_num' data-ref="date_t::i_divider_num">i_divider_num</a>);</td></tr>
+<tr><th id="196">196</th><td>        <a class="local col0 ref" href="#20p_date" title='p_date' data-ref="20p_date">p_date</a>-&gt;<a class="ref" href="../../include/vlc_mtime.h.html#date_t::date" title='date_t::date' data-ref="date_t::date">date</a> += <var>1</var>;</td></tr>
+<tr><th id="197">197</th><td>        <a class="local col0 ref" href="#20p_date" title='p_date' data-ref="20p_date">p_date</a>-&gt;<a class="ref" href="../../include/vlc_mtime.h.html#date_t::i_remainder" title='date_t::i_remainder' data-ref="date_t::i_remainder">i_remainder</a> -= <a class="local col0 ref" href="#20p_date" title='p_date' data-ref="20p_date">p_date</a>-&gt;<a class="ref" href="../../include/vlc_mtime.h.html#date_t::i_divider_num" title='date_t::i_divider_num' data-ref="date_t::i_divider_num">i_divider_num</a>;</td></tr>
+<tr><th id="198">198</th><td>    }</td></tr>
+<tr><th id="199">199</th><td></td></tr>
+<tr><th id="200">200</th><td>    <b>return</b> <a class="local col0 ref" href="#20p_date" title='p_date' data-ref="20p_date">p_date</a>-&gt;<a class="ref" href="../../include/vlc_mtime.h.html#date_t::date" title='date_t::date' data-ref="date_t::date">date</a>;</td></tr>
+<tr><th id="201">201</th><td>}</td></tr>
+<tr><th id="202">202</th><td></td></tr>
+<tr><th id="203">203</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="204">204</th><td><i class="doc"> * Decrement the date and return the result, taking into account</i></td></tr>
+<tr><th id="205">205</th><td><i class="doc"> * rounding errors.</i></td></tr>
+<tr><th id="206">206</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="207">207</th><td><i class="doc"> * <span class="command">\param</span> <span class="arg">date</span> to decrement</i></td></tr>
+<tr><th id="208">208</th><td><i class="doc"> * <span class="command">\param</span> <span class="arg">decrementation</span> in number of samples</i></td></tr>
+<tr><th id="209">209</th><td><i class="doc"> * <span class="command">\return</span> date value</i></td></tr>
+<tr><th id="210">210</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="211">211</th><td><a class="typedef" href="../../include/vlc_common.h.html#mtime_t" title='mtime_t' data-type='int64_t' data-ref="mtime_t">mtime_t</a> <dfn class="decl def" id="date_Decrement" title='date_Decrement' data-ref="date_Decrement">date_Decrement</dfn>( <a class="typedef" href="../../include/vlc_common.h.html#date_t" title='date_t' data-type='struct date_t' data-ref="date_t">date_t</a> *<dfn class="local col4 decl" id="24p_date" title='p_date' data-type='date_t *' data-ref="24p_date">p_date</dfn>, <a class="typedef" href="../../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a> <dfn class="local col5 decl" id="25i_nb_samples" title='i_nb_samples' data-type='uint32_t' data-ref="25i_nb_samples">i_nb_samples</dfn> )</td></tr>
+<tr><th id="212">212</th><td>{</td></tr>
+<tr><th id="213">213</th><td>    <a class="typedef" href="../../include/vlc_common.h.html#mtime_t" title='mtime_t' data-type='int64_t' data-ref="mtime_t">mtime_t</a> <dfn class="local col6 decl" id="26i_dividend" title='i_dividend' data-type='mtime_t' data-ref="26i_dividend">i_dividend</dfn> = (<a class="typedef" href="../../include/vlc_common.h.html#mtime_t" title='mtime_t' data-type='int64_t' data-ref="mtime_t">mtime_t</a>)<a class="local col5 ref" href="#25i_nb_samples" title='i_nb_samples' data-ref="25i_nb_samples">i_nb_samples</a> * <a class="macro" href="../../include/vlc_config.h.html#46" title="1000000L" data-ref="_M/CLOCK_FREQ">CLOCK_FREQ</a> * <a class="local col4 ref" href="#24p_date" title='p_date' data-ref="24p_date">p_date</a>-&gt;<a class="ref" href="../../include/vlc_mtime.h.html#date_t::i_divider_den" title='date_t::i_divider_den' data-ref="date_t::i_divider_den">i_divider_den</a>;</td></tr>
+<tr><th id="214">214</th><td>    <a class="local col4 ref" href="#24p_date" title='p_date' data-ref="24p_date">p_date</a>-&gt;<a class="ref" href="../../include/vlc_mtime.h.html#date_t::date" title='date_t::date' data-ref="date_t::date">date</a> -= <a class="local col6 ref" href="#26i_dividend" title='i_dividend' data-ref="26i_dividend">i_dividend</a> / <a class="local col4 ref" href="#24p_date" title='p_date' data-ref="24p_date">p_date</a>-&gt;<a class="ref" href="../../include/vlc_mtime.h.html#date_t::i_divider_num" title='date_t::i_divider_num' data-ref="date_t::i_divider_num">i_divider_num</a>;</td></tr>
+<tr><th id="215">215</th><td>    <em>unsigned</em> <dfn class="local col7 decl" id="27i_rem_adjust" title='i_rem_adjust' data-type='unsigned int' data-ref="27i_rem_adjust">i_rem_adjust</dfn> = <a class="local col6 ref" href="#26i_dividend" title='i_dividend' data-ref="26i_dividend">i_dividend</a> % <a class="local col4 ref" href="#24p_date" title='p_date' data-ref="24p_date">p_date</a>-&gt;<a class="ref" href="../../include/vlc_mtime.h.html#date_t::i_divider_num" title='date_t::i_divider_num' data-ref="date_t::i_divider_num">i_divider_num</a>;</td></tr>
+<tr><th id="216">216</th><td></td></tr>
+<tr><th id="217">217</th><td>    <b>if</b>( <a class="local col4 ref" href="#24p_date" title='p_date' data-ref="24p_date">p_date</a>-&gt;<a class="ref" href="../../include/vlc_mtime.h.html#date_t::i_remainder" title='date_t::i_remainder' data-ref="date_t::i_remainder">i_remainder</a> &lt; <a class="local col7 ref" href="#27i_rem_adjust" title='i_rem_adjust' data-ref="27i_rem_adjust">i_rem_adjust</a> )</td></tr>
+<tr><th id="218">218</th><td>    {</td></tr>
+<tr><th id="219">219</th><td>        <i>/* This is Bresenham algorithm. */</i></td></tr>
+<tr><th id="220">220</th><td>        <a class="macro" href="../../../include/assert.h.html#88" title="((p_date-&gt;i_remainder &lt; p_date-&gt;i_divider_num) ? (void) (0) : __assert_fail (&quot;p_date-&gt;i_remainder &lt; p_date-&gt;i_divider_num&quot;, &quot;/usr/local/google/home/robertshih/git/vlc/src/misc/mtime.c&quot;, 220, __PRETTY_FUNCTION__))" data-ref="_M/assert">assert</a>( <a class="local col4 ref" href="#24p_date" title='p_date' data-ref="24p_date">p_date</a>-&gt;<a class="ref" href="../../include/vlc_mtime.h.html#date_t::i_remainder" title='date_t::i_remainder' data-ref="date_t::i_remainder">i_remainder</a> &lt; <a class="local col4 ref" href="#24p_date" title='p_date' data-ref="24p_date">p_date</a>-&gt;<a class="ref" href="../../include/vlc_mtime.h.html#date_t::i_divider_num" title='date_t::i_divider_num' data-ref="date_t::i_divider_num">i_divider_num</a>);</td></tr>
+<tr><th id="221">221</th><td>        <a class="local col4 ref" href="#24p_date" title='p_date' data-ref="24p_date">p_date</a>-&gt;<a class="ref" href="../../include/vlc_mtime.h.html#date_t::date" title='date_t::date' data-ref="date_t::date">date</a> -= <var>1</var>;</td></tr>
+<tr><th id="222">222</th><td>        <a class="local col4 ref" href="#24p_date" title='p_date' data-ref="24p_date">p_date</a>-&gt;<a class="ref" href="../../include/vlc_mtime.h.html#date_t::i_remainder" title='date_t::i_remainder' data-ref="date_t::i_remainder">i_remainder</a> += <a class="local col4 ref" href="#24p_date" title='p_date' data-ref="24p_date">p_date</a>-&gt;<a class="ref" href="../../include/vlc_mtime.h.html#date_t::i_divider_num" title='date_t::i_divider_num' data-ref="date_t::i_divider_num">i_divider_num</a>;</td></tr>
+<tr><th id="223">223</th><td>    }</td></tr>
+<tr><th id="224">224</th><td></td></tr>
+<tr><th id="225">225</th><td>    <a class="local col4 ref" href="#24p_date" title='p_date' data-ref="24p_date">p_date</a>-&gt;<a class="ref" href="../../include/vlc_mtime.h.html#date_t::i_remainder" title='date_t::i_remainder' data-ref="date_t::i_remainder">i_remainder</a> -= <a class="local col7 ref" href="#27i_rem_adjust" title='i_rem_adjust' data-ref="27i_rem_adjust">i_rem_adjust</a>;</td></tr>
+<tr><th id="226">226</th><td></td></tr>
+<tr><th id="227">227</th><td>    <b>return</b> <a class="local col4 ref" href="#24p_date" title='p_date' data-ref="24p_date">p_date</a>-&gt;<a class="ref" href="../../include/vlc_mtime.h.html#date_t::date" title='date_t::date' data-ref="date_t::date">date</a>;</td></tr>
+<tr><th id="228">228</th><td>}</td></tr>
+<tr><th id="229">229</th><td></td></tr>
+<tr><th id="230">230</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="231">231</th><td><i class="doc"> * <span class="command">@return</span> NTP 64-bits timestamp in host byte order.</i></td></tr>
+<tr><th id="232">232</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="233">233</th><td><a class="typedef" href="../../../include/stdint.h.html#uint64_t" title='uint64_t' data-type='unsigned long' data-ref="uint64_t">uint64_t</a> <dfn class="decl def" id="NTPtime64" title='NTPtime64' data-ref="NTPtime64">NTPtime64</dfn> (<em>void</em>)</td></tr>
+<tr><th id="234">234</th><td>{</td></tr>
+<tr><th id="235">235</th><td><u>#<span data-ppcond="235">if</span> (<a class="macro" href="../../../include/x86_64-linux-gnu/bits/posix_opt.h.html#149" title="200809L" data-ref="_M/_POSIX_TIMERS">_POSIX_TIMERS</a> &gt; 0)</u></td></tr>
+<tr><th id="236">236</th><td>    <b>struct</b> <a class="type" href="../../../include/time.h.html#timespec" title='timespec' data-ref="timespec">timespec</a> <dfn class="local col8 decl" id="28ts" title='ts' data-type='struct timespec' data-ref="28ts">ts</dfn>;</td></tr>
+<tr><th id="237">237</th><td></td></tr>
+<tr><th id="238">238</th><td>    <a class="ref" href="../../../include/time.h.html#clock_gettime" title='clock_gettime' data-ref="clock_gettime">clock_gettime</a> (<a class="macro" href="../../../include/x86_64-linux-gnu/bits/time.h.html#61" title="0" data-ref="_M/CLOCK_REALTIME">CLOCK_REALTIME</a>, &amp;<a class="local col8 ref" href="#28ts" title='ts' data-ref="28ts">ts</a>);</td></tr>
+<tr><th id="239">239</th><td><u>#<span data-ppcond="235">else</span></u></td></tr>
+<tr><th id="240">240</th><td>    <b>struct</b> timeval tv;</td></tr>
+<tr><th id="241">241</th><td>    <b>struct</b></td></tr>
+<tr><th id="242">242</th><td>    {</td></tr>
+<tr><th id="243">243</th><td>        uint32_t tv_sec;</td></tr>
+<tr><th id="244">244</th><td>        uint32_t tv_nsec;</td></tr>
+<tr><th id="245">245</th><td>    } ts;</td></tr>
+<tr><th id="246">246</th><td></td></tr>
+<tr><th id="247">247</th><td>    gettimeofday (&amp;tv, NULL);</td></tr>
+<tr><th id="248">248</th><td>    ts.tv_sec = tv.tv_sec;</td></tr>
+<tr><th id="249">249</th><td>    ts.tv_nsec = tv.tv_usec * <var>1000</var>;</td></tr>
+<tr><th id="250">250</th><td><u>#<span data-ppcond="235">endif</span></u></td></tr>
+<tr><th id="251">251</th><td></td></tr>
+<tr><th id="252">252</th><td>    <i>/* Convert nanoseconds to 32-bits fraction (232 picosecond units) */</i></td></tr>
+<tr><th id="253">253</th><td>    <a class="typedef" href="../../../include/stdint.h.html#uint64_t" title='uint64_t' data-type='unsigned long' data-ref="uint64_t">uint64_t</a> <dfn class="local col9 decl" id="29t" title='t' data-type='uint64_t' data-ref="29t">t</dfn> = (<a class="typedef" href="../../../include/stdint.h.html#uint64_t" title='uint64_t' data-type='unsigned long' data-ref="uint64_t">uint64_t</a>)(<a class="local col8 ref" href="#28ts" title='ts' data-ref="28ts">ts</a>.<a class="ref" href="../../../include/time.h.html#timespec::tv_nsec" title='timespec::tv_nsec' data-ref="timespec::tv_nsec">tv_nsec</a>) &lt;&lt; <var>32</var>;</td></tr>
+<tr><th id="254">254</th><td>    <a class="local col9 ref" href="#29t" title='t' data-ref="29t">t</a> /= <var>1000000000</var>;</td></tr>
+<tr><th id="255">255</th><td></td></tr>
+<tr><th id="256">256</th><td></td></tr>
+<tr><th id="257">257</th><td>    <i>/* There is 70 years (incl. 17 leap ones) offset to the Unix Epoch.</i></td></tr>
+<tr><th id="258">258</th><td><i>     * No leap seconds during that period since they were not invented yet.</i></td></tr>
+<tr><th id="259">259</th><td><i>     */</i></td></tr>
+<tr><th id="260">260</th><td>    <a class="macro" href="../../../include/assert.h.html#88" title="((t &lt; 0x100000000) ? (void) (0) : __assert_fail (&quot;t &lt; 0x100000000&quot;, &quot;/usr/local/google/home/robertshih/git/vlc/src/misc/mtime.c&quot;, 260, __PRETTY_FUNCTION__))" data-ref="_M/assert">assert</a> (<a class="local col9 ref" href="#29t" title='t' data-ref="29t">t</a> &lt; <var>0x100000000</var>);</td></tr>
+<tr><th id="261">261</th><td>    <a class="local col9 ref" href="#29t" title='t' data-ref="29t">t</a> |= ((<var>70LL</var> * <var>365</var> + <var>17</var>) * <var>24</var> * <var>60</var> * <var>60</var> + <a class="local col8 ref" href="#28ts" title='ts' data-ref="28ts">ts</a>.<a class="ref" href="../../../include/time.h.html#timespec::tv_sec" title='timespec::tv_sec' data-ref="timespec::tv_sec">tv_sec</a>) &lt;&lt; <var>32</var>;</td></tr>
+<tr><th id="262">262</th><td>    <b>return</b> <a class="local col9 ref" href="#29t" title='t' data-ref="29t">t</a>;</td></tr>
+<tr><th id="263">263</th><td>}</td></tr>
+<tr><th id="264">264</th><td></td></tr>
+<tr><th id="265">265</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project vlc revision <em>2.2.0-git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

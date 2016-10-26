@@ -1,0 +1,192 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>af_earwax.c source code [ffmpeg/libavfilter/af_earwax.c] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavfilter/af_earwax.c'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavfilter</a>/<a href='af_earwax.c.html'>af_earwax.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * Copyright (c) 2011 Mina Nagy Zaki</i></td></tr>
+<tr><th id="3">3</th><td><i> * Copyright (c) 2000 Edward Beingessner And Sundry Contributors.</i></td></tr>
+<tr><th id="4">4</th><td><i> * This source code is freely redistributable and may be used for any purpose.</i></td></tr>
+<tr><th id="5">5</th><td><i> * This copyright notice must be maintained.  Edward Beingessner And Sundry</i></td></tr>
+<tr><th id="6">6</th><td><i> * Contributors are not responsible for the consequences of using this</i></td></tr>
+<tr><th id="7">7</th><td><i> * software.</i></td></tr>
+<tr><th id="8">8</th><td><i> *</i></td></tr>
+<tr><th id="9">9</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="10">10</th><td><i> *</i></td></tr>
+<tr><th id="11">11</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="12">12</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="13">13</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="14">14</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="15">15</th><td><i> *</i></td></tr>
+<tr><th id="16">16</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="17">17</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="18">18</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="19">19</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="20">20</th><td><i> *</i></td></tr>
+<tr><th id="21">21</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="22">22</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="23">23</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="24">24</th><td><i> */</i></td></tr>
+<tr><th id="25">25</th><td></td></tr>
+<tr><th id="26">26</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="27">27</th><td><i class="doc"> *<span class="command"> @file</span></i></td></tr>
+<tr><th id="28">28</th><td><i class="doc"> * Stereo Widening Effect. Adds audio cues to move stereo image in</i></td></tr>
+<tr><th id="29">29</th><td><i class="doc"> * front of the listener. Adapted from the libsox earwax effect.</i></td></tr>
+<tr><th id="30">30</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="31">31</th><td></td></tr>
+<tr><th id="32">32</th><td><u>#include <a href="../libavutil/channel_layout.h.html">"libavutil/channel_layout.h"</a></u></td></tr>
+<tr><th id="33">33</th><td><u>#include <a href="avfilter.h.html">"avfilter.h"</a></u></td></tr>
+<tr><th id="34">34</th><td><u>#include <a href="audio.h.html">"audio.h"</a></u></td></tr>
+<tr><th id="35">35</th><td><u>#include <a href="formats.h.html">"formats.h"</a></u></td></tr>
+<tr><th id="36">36</th><td></td></tr>
+<tr><th id="37">37</th><td><u>#define <dfn class="macro" id="_M/NUMTAPS" data-ref="_M/NUMTAPS">NUMTAPS</dfn> 64</u></td></tr>
+<tr><th id="38">38</th><td></td></tr>
+<tr><th id="39">39</th><td><em>static</em> <em>const</em> <a class="typedef" href="../../include/stdint.h.html#int8_t" title='int8_t' data-type='signed char' data-ref="int8_t">int8_t</a> <dfn class="tu decl def" id="filt" title='filt' data-type='const int8_t [64]' data-ref="filt">filt</dfn>[<a class="macro" href="#37" title="64" data-ref="_M/NUMTAPS">NUMTAPS</a>] = {</td></tr>
+<tr><th id="40">40</th><td><i>/* 30°  330° */</i></td></tr>
+<tr><th id="41">41</th><td>    <var>4</var>,   -<var>6</var>,     <i>/* 32 tap stereo FIR filter. */</i></td></tr>
+<tr><th id="42">42</th><td>    <var>4</var>,  -<var>11</var>,     <i>/* One side filters as if the */</i></td></tr>
+<tr><th id="43">43</th><td>   -<var>1</var>,   -<var>5</var>,     <i>/* signal was from 30 degrees */</i></td></tr>
+<tr><th id="44">44</th><td>    <var>3</var>,    <var>3</var>,     <i>/* from the ear, the other as */</i></td></tr>
+<tr><th id="45">45</th><td>   -<var>2</var>,    <var>5</var>,     <i>/* if 330 degrees. */</i></td></tr>
+<tr><th id="46">46</th><td>   -<var>5</var>,    <var>0</var>,</td></tr>
+<tr><th id="47">47</th><td>    <var>9</var>,    <var>1</var>,</td></tr>
+<tr><th id="48">48</th><td>    <var>6</var>,    <var>3</var>,     <i>/*                         Input                         */</i></td></tr>
+<tr><th id="49">49</th><td>   -<var>4</var>,   -<var>1</var>,     <i>/*                   Left         Right                  */</i></td></tr>
+<tr><th id="50">50</th><td>   -<var>5</var>,   -<var>3</var>,     <i>/*                __________   __________                */</i></td></tr>
+<tr><th id="51">51</th><td>   -<var>2</var>,   -<var>5</var>,     <i>/*               |          | |          |               */</i></td></tr>
+<tr><th id="52">52</th><td>   -<var>7</var>,    <var>1</var>,     <i>/*           .---|  Hh,0(f) | |  Hh,0(f) |---.           */</i></td></tr>
+<tr><th id="53">53</th><td>    <var>6</var>,   -<var>7</var>,     <i>/*          /    |__________| |__________|    \          */</i></td></tr>
+<tr><th id="54">54</th><td>   <var>30</var>,  -<var>29</var>,     <i>/*         /                \ /                \         */</i></td></tr>
+<tr><th id="55">55</th><td>   <var>12</var>,   -<var>3</var>,     <i>/*        /                  X                  \        */</i></td></tr>
+<tr><th id="56">56</th><td>  -<var>11</var>,    <var>4</var>,     <i>/*       /                  / \                  \       */</i></td></tr>
+<tr><th id="57">57</th><td>   -<var>3</var>,    <var>7</var>,     <i>/*  ____V_____   __________V   V__________   _____V____  */</i></td></tr>
+<tr><th id="58">58</th><td>  -<var>20</var>,   <var>23</var>,     <i>/* |          | |          |   |          | |          | */</i></td></tr>
+<tr><th id="59">59</th><td>    <var>2</var>,    <var>0</var>,     <i>/* | Hh,30(f) | | Hh,330(f)|   | Hh,330(f)| | Hh,30(f) | */</i></td></tr>
+<tr><th id="60">60</th><td>    <var>1</var>,   -<var>6</var>,     <i>/* |__________| |__________|   |__________| |__________| */</i></td></tr>
+<tr><th id="61">61</th><td>  -<var>14</var>,   -<var>5</var>,     <i>/*      \     ___      /           \      ___     /      */</i></td></tr>
+<tr><th id="62">62</th><td>   <var>15</var>,  -<var>18</var>,     <i>/*       \   /   \    /    _____    \    /   \   /       */</i></td></tr>
+<tr><th id="63">63</th><td>    <var>6</var>,    <var>7</var>,     <i>/*        `-&gt;| + |&lt;--'    /     \    `--&gt;| + |&lt;-'        */</i></td></tr>
+<tr><th id="64">64</th><td>   <var>15</var>,  -<var>10</var>,     <i>/*           \___/      _/       \_      \___/           */</i></td></tr>
+<tr><th id="65">65</th><td>  -<var>14</var>,   <var>22</var>,     <i>/*               \     / \       / \     /               */</i></td></tr>
+<tr><th id="66">66</th><td>   -<var>7</var>,   -<var>2</var>,     <i>/*                `---&gt;| |       | |&lt;---'                */</i></td></tr>
+<tr><th id="67">67</th><td>   -<var>4</var>,    <var>9</var>,     <i>/*                     \_/       \_/                     */</i></td></tr>
+<tr><th id="68">68</th><td>    <var>6</var>,  -<var>12</var>,     <i>/*                                                       */</i></td></tr>
+<tr><th id="69">69</th><td>    <var>6</var>,   -<var>6</var>,     <i>/*                       Headphones                      */</i></td></tr>
+<tr><th id="70">70</th><td>    <var>0</var>,  -<var>11</var>,</td></tr>
+<tr><th id="71">71</th><td>    <var>0</var>,   -<var>5</var>,</td></tr>
+<tr><th id="72">72</th><td>    <var>4</var>,    <var>0</var>};</td></tr>
+<tr><th id="73">73</th><td></td></tr>
+<tr><th id="74">74</th><td><b>typedef</b> <b>struct</b> {</td></tr>
+<tr><th id="75">75</th><td>    <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> <dfn class="tu decl" id="{anonymous}::taps" title='&lt;anonymous struct&gt;::taps' data-type='int16_t [128]' data-ref="{anonymous}::taps">taps</dfn>[<a class="macro" href="#37" title="64" data-ref="_M/NUMTAPS">NUMTAPS</a> * <var>2</var>];</td></tr>
+<tr><th id="76">76</th><td>} <dfn class="typedef" id="EarwaxContext" title='EarwaxContext' data-type='struct EarwaxContext' data-ref="EarwaxContext">EarwaxContext</dfn>;</td></tr>
+<tr><th id="77">77</th><td></td></tr>
+<tr><th id="78">78</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="query_formats" title='query_formats' data-type='int query_formats(AVFilterContext * ctx)' data-ref="query_formats">query_formats</dfn>(<a class="typedef" href="avfilter.h.html#AVFilterContext" title='AVFilterContext' data-type='struct AVFilterContext' data-ref="AVFilterContext">AVFilterContext</a> *<dfn class="local col1 decl" id="1ctx" title='ctx' data-type='AVFilterContext *' data-ref="1ctx">ctx</dfn>)</td></tr>
+<tr><th id="79">79</th><td>{</td></tr>
+<tr><th id="80">80</th><td>    <em>static</em> <em>const</em> <em>int</em> <dfn class="local col2 decl" id="2sample_rates" title='sample_rates' data-type='const int [2]' data-ref="2sample_rates">sample_rates</dfn>[] = { <var>44100</var>, -<var>1</var> };</td></tr>
+<tr><th id="81">81</th><td>    <em>int</em> <dfn class="local col3 decl" id="3ret" title='ret' data-type='int' data-ref="3ret">ret</dfn>;</td></tr>
+<tr><th id="82">82</th><td></td></tr>
+<tr><th id="83">83</th><td>    <a class="typedef" href="avfilter.h.html#AVFilterFormats" title='AVFilterFormats' data-type='struct AVFilterFormats' data-ref="AVFilterFormats">AVFilterFormats</a> *<dfn class="local col4 decl" id="4formats" title='formats' data-type='AVFilterFormats *' data-ref="4formats">formats</dfn> = <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="84">84</th><td>    <a class="typedef" href="formats.h.html#AVFilterChannelLayouts" title='AVFilterChannelLayouts' data-type='struct AVFilterChannelLayouts' data-ref="AVFilterChannelLayouts">AVFilterChannelLayouts</a> *<dfn class="local col5 decl" id="5layout" title='layout' data-type='AVFilterChannelLayouts *' data-ref="5layout">layout</dfn> = <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="85">85</th><td></td></tr>
+<tr><th id="86">86</th><td>    <b>if</b> ((<a class="local col3 ref" href="#3ret" title='ret' data-ref="3ret">ret</a> = <a class="ref" href="formats.h.html#ff_add_format" title='ff_add_format' data-ref="ff_add_format">ff_add_format</a>                 (&amp;<a class="local col4 ref" href="#4formats" title='formats' data-ref="4formats">formats</a>, <a class="enum" href="../libavutil/samplefmt.h.html#AVSampleFormat::AV_SAMPLE_FMT_S16" title='AVSampleFormat::AV_SAMPLE_FMT_S16' data-ref="AVSampleFormat::AV_SAMPLE_FMT_S16">AV_SAMPLE_FMT_S16</a>                 )) &lt; <var>0</var> ||</td></tr>
+<tr><th id="87">87</th><td>        (<a class="local col3 ref" href="#3ret" title='ret' data-ref="3ret">ret</a> = <a class="ref" href="formats.h.html#ff_set_common_formats" title='ff_set_common_formats' data-ref="ff_set_common_formats">ff_set_common_formats</a>         (<a class="local col1 ref" href="#1ctx" title='ctx' data-ref="1ctx">ctx</a>     , <a class="local col4 ref" href="#4formats" title='formats' data-ref="4formats">formats</a>                           )) &lt; <var>0</var> ||</td></tr>
+<tr><th id="88">88</th><td>        (<a class="local col3 ref" href="#3ret" title='ret' data-ref="3ret">ret</a> = <a class="ref" href="formats.h.html#ff_add_channel_layout" title='ff_add_channel_layout' data-ref="ff_add_channel_layout">ff_add_channel_layout</a>         (&amp;<a class="local col5 ref" href="#5layout" title='layout' data-ref="5layout">layout</a> , <a class="macro" href="../libavutil/channel_layout.h.html#86" title="(0x00000001|0x00000002)" data-ref="_M/AV_CH_LAYOUT_STEREO">AV_CH_LAYOUT_STEREO</a>               )) &lt; <var>0</var> ||</td></tr>
+<tr><th id="89">89</th><td>        (<a class="local col3 ref" href="#3ret" title='ret' data-ref="3ret">ret</a> = <a class="ref" href="formats.h.html#ff_set_common_channel_layouts" title='ff_set_common_channel_layouts' data-ref="ff_set_common_channel_layouts">ff_set_common_channel_layouts</a> (<a class="local col1 ref" href="#1ctx" title='ctx' data-ref="1ctx">ctx</a>     , <a class="local col5 ref" href="#5layout" title='layout' data-ref="5layout">layout</a>                            )) &lt; <var>0</var> ||</td></tr>
+<tr><th id="90">90</th><td>        (<a class="local col3 ref" href="#3ret" title='ret' data-ref="3ret">ret</a> = <a class="ref" href="formats.h.html#ff_set_common_samplerates" title='ff_set_common_samplerates' data-ref="ff_set_common_samplerates">ff_set_common_samplerates</a>     (<a class="local col1 ref" href="#1ctx" title='ctx' data-ref="1ctx">ctx</a>     , <a class="ref" href="formats.h.html#ff_make_format_list" title='ff_make_format_list' data-ref="ff_make_format_list">ff_make_format_list</a>(<a class="local col2 ref" href="#2sample_rates" title='sample_rates' data-ref="2sample_rates">sample_rates</a>) )) &lt; <var>0</var>)</td></tr>
+<tr><th id="91">91</th><td>        <b>return</b> <a class="local col3 ref" href="#3ret" title='ret' data-ref="3ret">ret</a>;</td></tr>
+<tr><th id="92">92</th><td></td></tr>
+<tr><th id="93">93</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="94">94</th><td>}</td></tr>
+<tr><th id="95">95</th><td></td></tr>
+<tr><th id="96">96</th><td><i  data-doc="scalarproduct">//FIXME: replace with DSPContext.scalarproduct_int16</i></td></tr>
+<tr><th id="97">97</th><td><em>static</em> <b>inline</b> <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> *<dfn class="tu decl def" id="scalarproduct" title='scalarproduct' data-type='int16_t * scalarproduct(const int16_t * in, const int16_t * endin, int16_t * out)' data-ref="scalarproduct">scalarproduct</dfn>(<em>const</em> <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> *<dfn class="local col6 decl" id="6in" title='in' data-type='const int16_t *' data-ref="6in">in</dfn>, <em>const</em> <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> *<dfn class="local col7 decl" id="7endin" title='endin' data-type='const int16_t *' data-ref="7endin">endin</dfn>, <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> *<dfn class="local col8 decl" id="8out" title='out' data-type='int16_t *' data-ref="8out">out</dfn>)</td></tr>
+<tr><th id="98">98</th><td>{</td></tr>
+<tr><th id="99">99</th><td>    <a class="typedef" href="../../include/stdint.h.html#int32_t" title='int32_t' data-type='int' data-ref="int32_t">int32_t</a> <dfn class="local col9 decl" id="9sample" title='sample' data-type='int32_t' data-ref="9sample">sample</dfn>;</td></tr>
+<tr><th id="100">100</th><td>    <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> <dfn class="local col0 decl" id="10j" title='j' data-type='int16_t' data-ref="10j">j</dfn>;</td></tr>
+<tr><th id="101">101</th><td></td></tr>
+<tr><th id="102">102</th><td>    <b>while</b> (<a class="local col6 ref" href="#6in" title='in' data-ref="6in">in</a> &lt; <a class="local col7 ref" href="#7endin" title='endin' data-ref="7endin">endin</a>) {</td></tr>
+<tr><th id="103">103</th><td>        <a class="local col9 ref" href="#9sample" title='sample' data-ref="9sample">sample</a> = <var>0</var>;</td></tr>
+<tr><th id="104">104</th><td>        <b>for</b> (<a class="local col0 ref" href="#10j" title='j' data-ref="10j">j</a> = <var>0</var>; <a class="local col0 ref" href="#10j" title='j' data-ref="10j">j</a> &lt; <a class="macro" href="#37" title="64" data-ref="_M/NUMTAPS">NUMTAPS</a>; <a class="local col0 ref" href="#10j" title='j' data-ref="10j">j</a>++)</td></tr>
+<tr><th id="105">105</th><td>            <a class="local col9 ref" href="#9sample" title='sample' data-ref="9sample">sample</a> += <a class="local col6 ref" href="#6in" title='in' data-ref="6in">in</a>[<a class="local col0 ref" href="#10j" title='j' data-ref="10j">j</a>] * <a class="tu ref" href="#filt" title='filt' data-use='r' data-ref="filt">filt</a>[<a class="local col0 ref" href="#10j" title='j' data-ref="10j">j</a>];</td></tr>
+<tr><th id="106">106</th><td>        *<a class="local col8 ref" href="#8out" title='out' data-ref="8out">out</a> = <a class="macro" href="../libavutil/common.h.html#496" title="av_clip_int16_c" data-ref="_M/av_clip_int16">av_clip_int16</a>(<a class="local col9 ref" href="#9sample" title='sample' data-ref="9sample">sample</a> &gt;&gt; <var>6</var>);</td></tr>
+<tr><th id="107">107</th><td>        <a class="local col8 ref" href="#8out" title='out' data-ref="8out">out</a>++;</td></tr>
+<tr><th id="108">108</th><td>        <a class="local col6 ref" href="#6in" title='in' data-ref="6in">in</a>++;</td></tr>
+<tr><th id="109">109</th><td>    }</td></tr>
+<tr><th id="110">110</th><td></td></tr>
+<tr><th id="111">111</th><td>    <b>return</b> <a class="local col8 ref" href="#8out" title='out' data-ref="8out">out</a>;</td></tr>
+<tr><th id="112">112</th><td>}</td></tr>
+<tr><th id="113">113</th><td></td></tr>
+<tr><th id="114">114</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="filter_frame" title='filter_frame' data-type='int filter_frame(AVFilterLink * inlink, AVFrame * insamples)' data-ref="filter_frame">filter_frame</dfn>(<a class="typedef" href="avfilter.h.html#AVFilterLink" title='AVFilterLink' data-type='struct AVFilterLink' data-ref="AVFilterLink">AVFilterLink</a> *<dfn class="local col1 decl" id="11inlink" title='inlink' data-type='AVFilterLink *' data-ref="11inlink">inlink</dfn>, <a class="typedef" href="../libavutil/frame.h.html#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col2 decl" id="12insamples" title='insamples' data-type='AVFrame *' data-ref="12insamples">insamples</dfn>)</td></tr>
+<tr><th id="115">115</th><td>{</td></tr>
+<tr><th id="116">116</th><td>    <a class="typedef" href="avfilter.h.html#AVFilterLink" title='AVFilterLink' data-type='struct AVFilterLink' data-ref="AVFilterLink">AVFilterLink</a> *<dfn class="local col3 decl" id="13outlink" title='outlink' data-type='AVFilterLink *' data-ref="13outlink">outlink</dfn> = <a class="local col1 ref" href="#11inlink" title='inlink' data-ref="11inlink">inlink</a>-&gt;<a class="ref" href="avfilter.h.html#AVFilterLink::dst" title='AVFilterLink::dst' data-ref="AVFilterLink::dst">dst</a>-&gt;<a class="ref" href="avfilter.h.html#AVFilterContext::outputs" title='AVFilterContext::outputs' data-ref="AVFilterContext::outputs">outputs</a>[<var>0</var>];</td></tr>
+<tr><th id="117">117</th><td>    <a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> *<dfn class="local col4 decl" id="14taps" title='taps' data-type='int16_t *' data-ref="14taps">taps</dfn>, *<dfn class="local col5 decl" id="15endin" title='endin' data-type='int16_t *' data-ref="15endin">endin</dfn>, *<dfn class="local col6 decl" id="16in" title='in' data-type='int16_t *' data-ref="16in">in</dfn>, *<dfn class="local col7 decl" id="17out" title='out' data-type='int16_t *' data-ref="17out">out</dfn>;</td></tr>
+<tr><th id="118">118</th><td>    <a class="typedef" href="../libavutil/frame.h.html#AVFrame" title='AVFrame' data-type='struct AVFrame' data-ref="AVFrame">AVFrame</a> *<dfn class="local col8 decl" id="18outsamples" title='outsamples' data-type='AVFrame *' data-ref="18outsamples">outsamples</dfn> = <a class="ref" href="audio.h.html#ff_get_audio_buffer" title='ff_get_audio_buffer' data-ref="ff_get_audio_buffer">ff_get_audio_buffer</a>(<a class="local col1 ref" href="#11inlink" title='inlink' data-ref="11inlink">inlink</a>, <a class="local col2 ref" href="#12insamples" title='insamples' data-ref="12insamples">insamples</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::nb_samples" title='AVFrame::nb_samples' data-ref="AVFrame::nb_samples">nb_samples</a>);</td></tr>
+<tr><th id="119">119</th><td>    <em>int</em> <dfn class="local col9 decl" id="19len" title='len' data-type='int' data-ref="19len">len</dfn>;</td></tr>
+<tr><th id="120">120</th><td></td></tr>
+<tr><th id="121">121</th><td>    <b>if</b> (!<a class="local col8 ref" href="#18outsamples" title='outsamples' data-ref="18outsamples">outsamples</a>) {</td></tr>
+<tr><th id="122">122</th><td>        <a class="ref" href="../libavutil/frame.h.html#av_frame_free" title='av_frame_free' data-ref="av_frame_free">av_frame_free</a>(&amp;<a class="local col2 ref" href="#12insamples" title='insamples' data-ref="12insamples">insamples</a>);</td></tr>
+<tr><th id="123">123</th><td>        <b>return</b> <a class="macro" href="../libavutil/error.h.html#39" title="(-(12))" data-ref="_M/AVERROR">AVERROR</a>(<a class="macro" href="../../include/asm-generic/errno-base.h.html#15" title="12" data-ref="_M/ENOMEM">ENOMEM</a>);</td></tr>
+<tr><th id="124">124</th><td>    }</td></tr>
+<tr><th id="125">125</th><td>    <a class="ref" href="../libavutil/frame.h.html#av_frame_copy_props" title='av_frame_copy_props' data-ref="av_frame_copy_props">av_frame_copy_props</a>(<a class="local col8 ref" href="#18outsamples" title='outsamples' data-ref="18outsamples">outsamples</a>, <a class="local col2 ref" href="#12insamples" title='insamples' data-ref="12insamples">insamples</a>);</td></tr>
+<tr><th id="126">126</th><td></td></tr>
+<tr><th id="127">127</th><td>    <a class="local col4 ref" href="#14taps" title='taps' data-ref="14taps">taps</a>  = ((<a class="typedef" href="#EarwaxContext" title='EarwaxContext' data-type='struct EarwaxContext' data-ref="EarwaxContext">EarwaxContext</a> *)<a class="local col1 ref" href="#11inlink" title='inlink' data-ref="11inlink">inlink</a>-&gt;<a class="ref" href="avfilter.h.html#AVFilterLink::dst" title='AVFilterLink::dst' data-ref="AVFilterLink::dst">dst</a>-&gt;<a class="ref" href="avfilter.h.html#AVFilterContext::priv" title='AVFilterContext::priv' data-ref="AVFilterContext::priv">priv</a>)-&gt;<a class="tu ref" href="#{anonymous}::taps" title='&lt;anonymous struct&gt;::taps' data-use='r' data-ref="{anonymous}::taps">taps</a>;</td></tr>
+<tr><th id="128">128</th><td>    <a class="local col7 ref" href="#17out" title='out' data-ref="17out">out</a>   = (<a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> *)<a class="local col8 ref" href="#18outsamples" title='outsamples' data-ref="18outsamples">outsamples</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::data" title='AVFrame::data' data-ref="AVFrame::data">data</a>[<var>0</var>];</td></tr>
+<tr><th id="129">129</th><td>    <a class="local col6 ref" href="#16in" title='in' data-ref="16in">in</a>    = (<a class="typedef" href="../../include/stdint.h.html#int16_t" title='int16_t' data-type='short' data-ref="int16_t">int16_t</a> *)<a class="local col2 ref" href="#12insamples" title='insamples' data-ref="12insamples">insamples</a> -&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::data" title='AVFrame::data' data-ref="AVFrame::data">data</a>[<var>0</var>];</td></tr>
+<tr><th id="130">130</th><td></td></tr>
+<tr><th id="131">131</th><td>    <a class="local col9 ref" href="#19len" title='len' data-ref="19len">len</a> = <a class="macro" href="../libavutil/common.h.html#96" title="((64) &gt; (2*insamples-&gt;nb_samples) ? (2*insamples-&gt;nb_samples) : (64))" data-ref="_M/FFMIN">FFMIN</a>(<a class="macro" href="#37" title="64" data-ref="_M/NUMTAPS">NUMTAPS</a>, <var>2</var>*<a class="local col2 ref" href="#12insamples" title='insamples' data-ref="12insamples">insamples</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::nb_samples" title='AVFrame::nb_samples' data-ref="AVFrame::nb_samples">nb_samples</a>);</td></tr>
+<tr><th id="132">132</th><td>    <i>// copy part of new input and process with saved input</i></td></tr>
+<tr><th id="133">133</th><td>    <a class="ref" href="../../include/string.h.html#memcpy" title='memcpy' data-ref="memcpy">memcpy</a>(<a class="local col4 ref" href="#14taps" title='taps' data-ref="14taps">taps</a>+<a class="macro" href="#37" title="64" data-ref="_M/NUMTAPS">NUMTAPS</a>, <a class="local col6 ref" href="#16in" title='in' data-ref="16in">in</a>, <a class="local col9 ref" href="#19len" title='len' data-ref="19len">len</a> * <b>sizeof</b>(*<a class="local col4 ref" href="#14taps" title='taps' data-ref="14taps">taps</a>));</td></tr>
+<tr><th id="134">134</th><td>    <a class="local col7 ref" href="#17out" title='out' data-ref="17out">out</a>   = <a class="tu ref" href="#scalarproduct" title='scalarproduct' data-use='c' data-ref="scalarproduct">scalarproduct</a>(<a class="local col4 ref" href="#14taps" title='taps' data-ref="14taps">taps</a>, <a class="local col4 ref" href="#14taps" title='taps' data-ref="14taps">taps</a> + <a class="local col9 ref" href="#19len" title='len' data-ref="19len">len</a>, <a class="local col7 ref" href="#17out" title='out' data-ref="17out">out</a>);</td></tr>
+<tr><th id="135">135</th><td></td></tr>
+<tr><th id="136">136</th><td>    <i>// process current input</i></td></tr>
+<tr><th id="137">137</th><td>    <b>if</b> (<var>2</var>*<a class="local col2 ref" href="#12insamples" title='insamples' data-ref="12insamples">insamples</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::nb_samples" title='AVFrame::nb_samples' data-ref="AVFrame::nb_samples">nb_samples</a> &gt;= <a class="macro" href="#37" title="64" data-ref="_M/NUMTAPS">NUMTAPS</a> ){</td></tr>
+<tr><th id="138">138</th><td>        <a class="local col5 ref" href="#15endin" title='endin' data-ref="15endin">endin</a> = <a class="local col6 ref" href="#16in" title='in' data-ref="16in">in</a> + <a class="local col2 ref" href="#12insamples" title='insamples' data-ref="12insamples">insamples</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::nb_samples" title='AVFrame::nb_samples' data-ref="AVFrame::nb_samples">nb_samples</a> * <var>2</var> - <a class="macro" href="#37" title="64" data-ref="_M/NUMTAPS">NUMTAPS</a>;</td></tr>
+<tr><th id="139">139</th><td>        <a class="tu ref" href="#scalarproduct" title='scalarproduct' data-use='c' data-ref="scalarproduct">scalarproduct</a>(<a class="local col6 ref" href="#16in" title='in' data-ref="16in">in</a>, <a class="local col5 ref" href="#15endin" title='endin' data-ref="15endin">endin</a>, <a class="local col7 ref" href="#17out" title='out' data-ref="17out">out</a>);</td></tr>
+<tr><th id="140">140</th><td></td></tr>
+<tr><th id="141">141</th><td>        <i>// save part of input for next round</i></td></tr>
+<tr><th id="142">142</th><td>        <a class="ref" href="../../include/string.h.html#memcpy" title='memcpy' data-ref="memcpy">memcpy</a>(<a class="local col4 ref" href="#14taps" title='taps' data-ref="14taps">taps</a>, <a class="local col5 ref" href="#15endin" title='endin' data-ref="15endin">endin</a>, <a class="macro" href="#37" title="64" data-ref="_M/NUMTAPS">NUMTAPS</a> * <b>sizeof</b>(*<a class="local col4 ref" href="#14taps" title='taps' data-ref="14taps">taps</a>));</td></tr>
+<tr><th id="143">143</th><td>    } <b>else</b></td></tr>
+<tr><th id="144">144</th><td>        <a class="ref" href="../../include/string.h.html#memmove" title='memmove' data-ref="memmove">memmove</a>(<a class="local col4 ref" href="#14taps" title='taps' data-ref="14taps">taps</a>, <a class="local col4 ref" href="#14taps" title='taps' data-ref="14taps">taps</a> + <var>2</var>*<a class="local col2 ref" href="#12insamples" title='insamples' data-ref="12insamples">insamples</a>-&gt;<a class="ref" href="../libavutil/frame.h.html#AVFrame::nb_samples" title='AVFrame::nb_samples' data-ref="AVFrame::nb_samples">nb_samples</a>, <a class="macro" href="#37" title="64" data-ref="_M/NUMTAPS">NUMTAPS</a> * <b>sizeof</b>(*<a class="local col4 ref" href="#14taps" title='taps' data-ref="14taps">taps</a>));</td></tr>
+<tr><th id="145">145</th><td></td></tr>
+<tr><th id="146">146</th><td>    <a class="ref" href="../libavutil/frame.h.html#av_frame_free" title='av_frame_free' data-ref="av_frame_free">av_frame_free</a>(&amp;<a class="local col2 ref" href="#12insamples" title='insamples' data-ref="12insamples">insamples</a>);</td></tr>
+<tr><th id="147">147</th><td>    <b>return</b> <a class="ref" href="internal.h.html#ff_filter_frame" title='ff_filter_frame' data-ref="ff_filter_frame">ff_filter_frame</a>(<a class="local col3 ref" href="#13outlink" title='outlink' data-ref="13outlink">outlink</a>, <a class="local col8 ref" href="#18outsamples" title='outsamples' data-ref="18outsamples">outsamples</a>);</td></tr>
+<tr><th id="148">148</th><td>}</td></tr>
+<tr><th id="149">149</th><td></td></tr>
+<tr><th id="150">150</th><td><em>static</em> <em>const</em> <a class="typedef" href="avfilter.h.html#AVFilterPad" title='AVFilterPad' data-type='struct AVFilterPad' data-ref="AVFilterPad">AVFilterPad</a> <dfn class="tu decl def" id="earwax_inputs" title='earwax_inputs' data-type='const AVFilterPad [2]' data-ref="earwax_inputs">earwax_inputs</dfn>[] = {</td></tr>
+<tr><th id="151">151</th><td>    {</td></tr>
+<tr><th id="152">152</th><td>        .<a class="ref" href="internal.h.html#AVFilterPad::name" title='AVFilterPad::name' data-ref="AVFilterPad::name">name</a>         = <q>"default"</q>,</td></tr>
+<tr><th id="153">153</th><td>        .<a class="ref" href="internal.h.html#AVFilterPad::type" title='AVFilterPad::type' data-ref="AVFilterPad::type">type</a>         = <a class="enum" href="../libavutil/avutil.h.html#AVMediaType::AVMEDIA_TYPE_AUDIO" title='AVMediaType::AVMEDIA_TYPE_AUDIO' data-ref="AVMediaType::AVMEDIA_TYPE_AUDIO">AVMEDIA_TYPE_AUDIO</a>,</td></tr>
+<tr><th id="154">154</th><td>        .<a class="ref" href="internal.h.html#AVFilterPad::filter_frame" title='AVFilterPad::filter_frame' data-ref="AVFilterPad::filter_frame">filter_frame</a> = <a class="tu ref" href="#filter_frame" title='filter_frame' data-ref="filter_frame">filter_frame</a>,</td></tr>
+<tr><th id="155">155</th><td>    },</td></tr>
+<tr><th id="156">156</th><td>    { <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span> }</td></tr>
+<tr><th id="157">157</th><td>};</td></tr>
+<tr><th id="158">158</th><td></td></tr>
+<tr><th id="159">159</th><td><em>static</em> <em>const</em> <a class="typedef" href="avfilter.h.html#AVFilterPad" title='AVFilterPad' data-type='struct AVFilterPad' data-ref="AVFilterPad">AVFilterPad</a> <dfn class="tu decl def" id="earwax_outputs" title='earwax_outputs' data-type='const AVFilterPad [2]' data-ref="earwax_outputs">earwax_outputs</dfn>[] = {</td></tr>
+<tr><th id="160">160</th><td>    {</td></tr>
+<tr><th id="161">161</th><td>        .<a class="ref" href="internal.h.html#AVFilterPad::name" title='AVFilterPad::name' data-ref="AVFilterPad::name">name</a> = <q>"default"</q>,</td></tr>
+<tr><th id="162">162</th><td>        .<a class="ref" href="internal.h.html#AVFilterPad::type" title='AVFilterPad::type' data-ref="AVFilterPad::type">type</a> = <a class="enum" href="../libavutil/avutil.h.html#AVMediaType::AVMEDIA_TYPE_AUDIO" title='AVMediaType::AVMEDIA_TYPE_AUDIO' data-ref="AVMediaType::AVMEDIA_TYPE_AUDIO">AVMEDIA_TYPE_AUDIO</a>,</td></tr>
+<tr><th id="163">163</th><td>    },</td></tr>
+<tr><th id="164">164</th><td>    { <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span> }</td></tr>
+<tr><th id="165">165</th><td>};</td></tr>
+<tr><th id="166">166</th><td></td></tr>
+<tr><th id="167">167</th><td><a class="typedef" href="avfilter.h.html#AVFilter" title='AVFilter' data-type='struct AVFilter' data-ref="AVFilter">AVFilter</a> <dfn class="decl def" id="ff_af_earwax" title='ff_af_earwax' data-ref="ff_af_earwax">ff_af_earwax</dfn> = {</td></tr>
+<tr><th id="168">168</th><td>    .<a class="ref" href="avfilter.h.html#AVFilter::name" title='AVFilter::name' data-ref="AVFilter::name">name</a>           = <q>"earwax"</q>,</td></tr>
+<tr><th id="169">169</th><td>    .<a class="ref" href="avfilter.h.html#AVFilter::description" title='AVFilter::description' data-ref="AVFilter::description">description</a>    = <a class="macro" href="../libavutil/internal.h.html#176" title="&quot;Widen the stereo image.&quot;" data-ref="_M/NULL_IF_CONFIG_SMALL">NULL_IF_CONFIG_SMALL</a>(<q>"Widen the stereo image."</q>),</td></tr>
+<tr><th id="170">170</th><td>    .<a class="ref" href="avfilter.h.html#AVFilter::query_formats" title='AVFilter::query_formats' data-ref="AVFilter::query_formats">query_formats</a>  = <a class="tu ref" href="#query_formats" title='query_formats' data-ref="query_formats">query_formats</a>,</td></tr>
+<tr><th id="171">171</th><td>    .<a class="ref" href="avfilter.h.html#AVFilter::priv_size" title='AVFilter::priv_size' data-ref="AVFilter::priv_size">priv_size</a>      = <b>sizeof</b>(<a class="typedef" href="#EarwaxContext" title='EarwaxContext' data-type='struct EarwaxContext' data-ref="EarwaxContext">EarwaxContext</a>),</td></tr>
+<tr><th id="172">172</th><td>    .<a class="ref" href="avfilter.h.html#AVFilter::inputs" title='AVFilter::inputs' data-ref="AVFilter::inputs">inputs</a>         = <a class="tu ref" href="#earwax_inputs" title='earwax_inputs' data-ref="earwax_inputs">earwax_inputs</a>,</td></tr>
+<tr><th id="173">173</th><td>    .<a class="ref" href="avfilter.h.html#AVFilter::outputs" title='AVFilter::outputs' data-ref="AVFilter::outputs">outputs</a>        = <a class="tu ref" href="#earwax_outputs" title='earwax_outputs' data-ref="earwax_outputs">earwax_outputs</a>,</td></tr>
+<tr><th id="174">174</th><td>};</td></tr>
+<tr><th id="175">175</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

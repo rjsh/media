@@ -1,0 +1,790 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>theme_loader.cpp source code [vlc/modules/gui/skins2/src/theme_loader.cpp] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'vlc/modules/gui/skins2/src/theme_loader.cpp'; var root_path = '../../../../..'; var data_path = '../../../../../../data';</script>
+<script src='../../../../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='../../../..'>vlc</a>/<a href='../../..'>modules</a>/<a href='../..'>gui</a>/<a href='..'>skins2</a>/<a href='./'>src</a>/<a href='theme_loader.cpp.html'>theme_loader.cpp</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*****************************************************************************</i></td></tr>
+<tr><th id="2">2</th><td><i> * theme_loader.cpp</i></td></tr>
+<tr><th id="3">3</th><td><i> *****************************************************************************</i></td></tr>
+<tr><th id="4">4</th><td><i> * Copyright (C) 2003 the VideoLAN team</i></td></tr>
+<tr><th id="5">5</th><td><i> * $Id: 5783cdaa707222fb95c4247a53d2bcefd12f6322 $</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * Authors: Cyril Deguet     &lt;asmax@via.ecp.fr&gt;</i></td></tr>
+<tr><th id="8">8</th><td><i> *          Olivier Teulière &lt;ipkiss@via.ecp.fr&gt;</i></td></tr>
+<tr><th id="9">9</th><td><i> *</i></td></tr>
+<tr><th id="10">10</th><td><i> * This program is free software; you can redistribute it and/or modify</i></td></tr>
+<tr><th id="11">11</th><td><i> * it under the terms of the GNU General Public License as published by</i></td></tr>
+<tr><th id="12">12</th><td><i> * the Free Software Foundation; either version 2 of the License, or</i></td></tr>
+<tr><th id="13">13</th><td><i> * (at your option) any later version.</i></td></tr>
+<tr><th id="14">14</th><td><i> *</i></td></tr>
+<tr><th id="15">15</th><td><i> * This program is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="16">16</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="17">17</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the</i></td></tr>
+<tr><th id="18">18</th><td><i> * GNU General Public License for more details.</i></td></tr>
+<tr><th id="19">19</th><td><i> *</i></td></tr>
+<tr><th id="20">20</th><td><i> * You should have received a copy of the GNU General Public License</i></td></tr>
+<tr><th id="21">21</th><td><i> * along with this program; if not, write to the Free Software</i></td></tr>
+<tr><th id="22">22</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.</i></td></tr>
+<tr><th id="23">23</th><td><i> *****************************************************************************/</i></td></tr>
+<tr><th id="24">24</th><td></td></tr>
+<tr><th id="25">25</th><td><u>#<span data-ppcond="25">ifdef</span> <span class="macro" data-ref="_M/HAVE_CONFIG_H">HAVE_CONFIG_H</span></u></td></tr>
+<tr><th id="26">26</th><td><u># include <a href="../../../../config.h.html">"config.h"</a></u></td></tr>
+<tr><th id="27">27</th><td><u>#<span data-ppcond="25">endif</span></u></td></tr>
+<tr><th id="28">28</th><td></td></tr>
+<tr><th id="29">29</th><td><u>#include <a href="../../../../../include/fcntl.h.html">&lt;fcntl.h&gt;</a></u></td></tr>
+<tr><th id="30">30</th><td><u>#include <a href="../../../../../include/x86_64-linux-gnu/sys/stat.h.html">&lt;sys/stat.h&gt;</a></u></td></tr>
+<tr><th id="31">31</th><td><u>#include <a href="../../../../../include/unistd.h.html">&lt;unistd.h&gt;</a></u></td></tr>
+<tr><th id="32">32</th><td></td></tr>
+<tr><th id="33">33</th><td><u>#include <a href="../../../../include/vlc_common.h.html">&lt;vlc_common.h&gt;</a></u></td></tr>
+<tr><th id="34">34</th><td><u>#include <a href="../../../../include/vlc_fs.h.html">&lt;vlc_fs.h&gt;</a></u></td></tr>
+<tr><th id="35">35</th><td></td></tr>
+<tr><th id="36">36</th><td><u>#include <a href="theme_loader.hpp.html">"theme_loader.hpp"</a></u></td></tr>
+<tr><th id="37">37</th><td><u>#include <a href="theme.hpp.html">"theme.hpp"</a></u></td></tr>
+<tr><th id="38">38</th><td><u>#include <a href="../parser/builder.hpp.html">"../parser/builder.hpp"</a></u></td></tr>
+<tr><th id="39">39</th><td><u>#include <a href="../parser/skin_parser.hpp.html">"../parser/skin_parser.hpp"</a></u></td></tr>
+<tr><th id="40">40</th><td><u>#include <a href="os_factory.hpp.html">"../src/os_factory.hpp"</a></u></td></tr>
+<tr><th id="41">41</th><td><u>#include <a href="vlcproc.hpp.html">"../src/vlcproc.hpp"</a></u></td></tr>
+<tr><th id="42">42</th><td><u>#include <a href="window_manager.hpp.html">"../src/window_manager.hpp"</a></u></td></tr>
+<tr><th id="43">43</th><td></td></tr>
+<tr><th id="44">44</th><td><u>#<span data-ppcond="44">if</span> defined( <a class="macro" href="../../../../config.h.html#589" data-ref="_M/HAVE_ZLIB_H">HAVE_ZLIB_H</a> )</u></td></tr>
+<tr><th id="45">45</th><td><u>#   include <a href="../../../../../include/zlib.h.html">&lt;zlib.h&gt;</a></u></td></tr>
+<tr><th id="46">46</th><td><u>#   include <a href="../../../../../include/errno.h.html">&lt;errno.h&gt;</a></u></td></tr>
+<tr><th id="47">47</th><td><em>int</em> <a class="decl" href="#_Z15gzopen_frontendPKcii" title='gzopen_frontend' data-ref="_Z15gzopen_frontendPKcii">gzopen_frontend</a> ( <em>const</em> <em>char</em> *<dfn class="local col1 decl" id="1pathname" title='pathname' data-type='const char *' data-ref="1pathname">pathname</dfn>, <em>int</em> <dfn class="local col2 decl" id="2oflags" title='oflags' data-type='int' data-ref="2oflags">oflags</dfn>, <em>int</em> <dfn class="local col3 decl" id="3mode" title='mode' data-type='int' data-ref="3mode">mode</dfn> );</td></tr>
+<tr><th id="48">48</th><td><em>int</em> <a class="decl" href="#_Z16gzclose_frontendi" title='gzclose_frontend' data-ref="_Z16gzclose_frontendi">gzclose_frontend</a>( <em>int</em> );</td></tr>
+<tr><th id="49">49</th><td><em>int</em> <a class="decl" href="#_Z15gzread_frontendiPvm" title='gzread_frontend' data-ref="_Z15gzread_frontendiPvm">gzread_frontend</a> ( <em>int</em>, <em>void</em> *, <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> );</td></tr>
+<tr><th id="50">50</th><td><em>int</em> <a class="decl" href="#_Z16gzwrite_frontendiPKvm" title='gzwrite_frontend' data-ref="_Z16gzwrite_frontendiPKvm">gzwrite_frontend</a>( <em>int</em>, <em>const</em> <em>void</em> *, <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> );</td></tr>
+<tr><th id="51">51</th><td><u>#<span data-ppcond="51">if</span> defined( <a class="macro" href="../../../../config.h.html#308" data-ref="_M/HAVE_LIBTAR_H">HAVE_LIBTAR_H</a> )</u></td></tr>
+<tr><th id="52">52</th><td><u>#   include <a href="../../../../../include/libtar.h.html">&lt;libtar.h&gt;</a></u></td></tr>
+<tr><th id="53">53</th><td><u>#<span data-ppcond="51">else</span></u></td></tr>
+<tr><th id="54">54</th><td><b>typedef</b> gzFile TAR;</td></tr>
+<tr><th id="55">55</th><td><em>int</em> tar_open        ( TAR **t, <em>char</em> *pathname, <em>int</em> oflags );</td></tr>
+<tr><th id="56">56</th><td><em>int</em> tar_extract_all ( TAR *t, <em>char</em> *prefix );</td></tr>
+<tr><th id="57">57</th><td><em>int</em> tar_close       ( TAR *t );</td></tr>
+<tr><th id="58">58</th><td><em>int</em> getoct( <em>char</em> *p, <em>int</em> width );</td></tr>
+<tr><th id="59">59</th><td><u>#<span data-ppcond="51">endif</span></u></td></tr>
+<tr><th id="60">60</th><td><em>int</em> <a class="decl" href="#_Z7makedirPKc" title='makedir' data-ref="_Z7makedirPKc">makedir</a>( <em>const</em> <em>char</em> *<dfn class="local col1 decl" id="91newdir" title='newdir' data-type='const char *' data-ref="91newdir">newdir</dfn> );</td></tr>
+<tr><th id="61">61</th><td><u>#<span data-ppcond="44">endif</span></u></td></tr>
+<tr><th id="62">62</th><td></td></tr>
+<tr><th id="63">63</th><td><u>#define <dfn class="macro" id="_M/DEFAULT_XML_FILE" data-ref="_M/DEFAULT_XML_FILE">DEFAULT_XML_FILE</dfn> <a class="ref fake" href="../../../../../include/c++/4.8/bits/basic_string.h.html#_ZNSt12basic_stringC1EPKT_RKT1_" title='std::basic_string::basic_string&lt;_CharT, _Traits, _Alloc&gt;' data-ref="_ZNSt12basic_stringC1EPKT_RKT1_"></a>"theme.xml"</u></td></tr>
+<tr><th id="64">64</th><td><u>#define <dfn class="macro" id="_M/WINAMP2_XML_FILE" data-ref="_M/WINAMP2_XML_FILE">WINAMP2_XML_FILE</dfn> <a class="ref fake" href="../../../../../include/c++/4.8/bits/basic_string.h.html#_ZNSt12basic_stringC1EPKT_RKT1_" title='std::basic_string::basic_string&lt;_CharT, _Traits, _Alloc&gt;' data-ref="_ZNSt12basic_stringC1EPKT_RKT1_"></a>"winamp2.xml"</u></td></tr>
+<tr><th id="65">65</th><td><u>#define <dfn class="macro" id="_M/ZIP_BUFFER_SIZE" data-ref="_M/ZIP_BUFFER_SIZE">ZIP_BUFFER_SIZE</dfn> 4096</u></td></tr>
+<tr><th id="66">66</th><td></td></tr>
+<tr><th id="67">67</th><td></td></tr>
+<tr><th id="68">68</th><td><em>bool</em> <a class="type" href="theme_loader.hpp.html#ThemeLoader" title='ThemeLoader' data-ref="ThemeLoader">ThemeLoader</a>::<dfn class="decl def" id="_ZN11ThemeLoader4loadERKSs" title='ThemeLoader::load' data-ref="_ZN11ThemeLoader4loadERKSs">load</dfn>( <em>const</em> <a class="typedef" href="../../../../../include/c++/4.8/bits/stringfwd.h.html#std::string" title='std::string' data-type='basic_string&lt;char&gt;' data-ref="std::string">string</a> &amp;<dfn class="local col2 decl" id="92fileName" title='fileName' data-type='const string &amp;' data-ref="92fileName">fileName</dfn> )</td></tr>
+<tr><th id="69">69</th><td>{</td></tr>
+<tr><th id="70">70</th><td>    <a class="typedef" href="../../../../../include/c++/4.8/bits/stringfwd.h.html#std::string" title='std::string' data-type='basic_string&lt;char&gt;' data-ref="std::string">string</a> <dfn class="local col3 decl" id="93path" title='path' data-type='string' data-ref="93path">path</dfn> = <a class="member" href="#_ZN11ThemeLoader11getFilePathERKSs" title='ThemeLoader::getFilePath' data-ref="_ZN11ThemeLoader11getFilePathERKSs">getFilePath</a>( <a class="local col2 ref" href="#92fileName" title='fileName' data-ref="92fileName">fileName</a> );</td></tr>
+<tr><th id="71">71</th><td></td></tr>
+<tr><th id="72">72</th><td>    <i>//Before all, let's see if the file is present</i></td></tr>
+<tr><th id="73">73</th><td>    <b>struct</b> <a class="type" href="../../../../../include/x86_64-linux-gnu/bits/stat.h.html#stat" title='stat' data-ref="stat">stat</a> <a class="ref fake" href="../../../../../include/x86_64-linux-gnu/bits/stat.h.html#46" title='stat::stat' data-ref="_ZN4statC1Ev"></a><dfn class="local col4 decl" id="94p_stat" title='p_stat' data-type='struct stat' data-ref="94p_stat">p_stat</dfn>;</td></tr>
+<tr><th id="74">74</th><td>    <b>if</b>( <a class="ref" href="../../../../include/vlc_fs.h.html#vlc_stat" title='vlc_stat' data-ref="vlc_stat">vlc_stat</a>( <a class="local col2 ref" href="#92fileName" title='fileName' data-ref="92fileName">fileName</a>.<a class="ref" href="../../../../../include/c++/4.8/bits/basic_string.h.html#_ZNKSt12basic_string5c_strEv" title='std::basic_string::c_str' data-ref="_ZNKSt12basic_string5c_strEv">c_str</a>(), &amp;<a class="local col4 ref" href="#94p_stat" title='p_stat' data-ref="94p_stat">p_stat</a> ) )</td></tr>
+<tr><th id="75">75</th><td>        <b>return</b> <b>false</b>;</td></tr>
+<tr><th id="76">76</th><td></td></tr>
+<tr><th id="77">77</th><td>    <i>// First, we try to un-targz the file, and if it fails we hope it's a XML</i></td></tr>
+<tr><th id="78">78</th><td><i>    // file...</i></td></tr>
+<tr><th id="79">79</th><td></td></tr>
+<tr><th id="80">80</th><td><u>#<span data-ppcond="80">if</span> defined( <a class="macro" href="../../../../config.h.html#589" data-ref="_M/HAVE_ZLIB_H">HAVE_ZLIB_H</a> )</u></td></tr>
+<tr><th id="81">81</th><td>    <b>if</b>( ! <a class="member" href="#_ZN11ThemeLoader7extractERKSs" title='ThemeLoader::extract' data-ref="_ZN11ThemeLoader7extractERKSs">extract</a>( <a class="ref" href="skin_common.hpp.html#_ZL9sToLocaleRKSs" title='sToLocale' data-ref="_ZL9sToLocaleRKSs">sToLocale</a>( <a class="local col2 ref" href="#92fileName" title='fileName' data-ref="92fileName">fileName</a> ) ) &amp;&amp; ! <a class="member" href="#_ZN11ThemeLoader5parseERKSsS1_" title='ThemeLoader::parse' data-ref="_ZN11ThemeLoader5parseERKSsS1_">parse</a>( <a class="local col3 ref" href="#93path" title='path' data-ref="93path">path</a>, <a class="local col2 ref" href="#92fileName" title='fileName' data-ref="92fileName">fileName</a> ) )</td></tr>
+<tr><th id="82">82</th><td>        <b>return</b> <b>false</b>;</td></tr>
+<tr><th id="83">83</th><td><u>#<span data-ppcond="80">else</span></u></td></tr>
+<tr><th id="84">84</th><td>    <b>if</b>( ! parse( path, fileName ) )</td></tr>
+<tr><th id="85">85</th><td>        <b>return</b> <b>false</b>;</td></tr>
+<tr><th id="86">86</th><td><u>#<span data-ppcond="80">endif</span></u></td></tr>
+<tr><th id="87">87</th><td></td></tr>
+<tr><th id="88">88</th><td>    <a class="type" href="theme.hpp.html#Theme" title='Theme' data-ref="Theme">Theme</a> *<dfn class="local col5 decl" id="95pNewTheme" title='pNewTheme' data-type='Theme *' data-ref="95pNewTheme">pNewTheme</dfn> = <a class="member" href="skin_common.hpp.html#_ZNK10SkinObject7getIntfEv" title='SkinObject::getIntf' data-ref="_ZNK10SkinObject7getIntfEv">getIntf</a>()-&gt;<a class="ref" href="../../../../include/vlc_interface.h.html#intf_thread_t::p_sys" title='intf_thread_t::p_sys' data-ref="intf_thread_t::p_sys">p_sys</a>-&gt;<a class="ref" href="skin_common.hpp.html#intf_sys_t::p_theme" title='intf_sys_t::p_theme' data-ref="intf_sys_t::p_theme">p_theme</a>;</td></tr>
+<tr><th id="89">89</th><td>    <b>if</b>( !<a class="local col5 ref" href="#95pNewTheme" title='pNewTheme' data-ref="95pNewTheme">pNewTheme</a> )</td></tr>
+<tr><th id="90">90</th><td>        <b>return</b> <b>false</b>;</td></tr>
+<tr><th id="91">91</th><td></td></tr>
+<tr><th id="92">92</th><td>    <i>// Restore the theme configuration</i></td></tr>
+<tr><th id="93">93</th><td>    <a class="member" href="skin_common.hpp.html#_ZNK10SkinObject7getIntfEv" title='SkinObject::getIntf' data-ref="_ZNK10SkinObject7getIntfEv">getIntf</a>()-&gt;<a class="ref" href="../../../../include/vlc_interface.h.html#intf_thread_t::p_sys" title='intf_thread_t::p_sys' data-ref="intf_thread_t::p_sys">p_sys</a>-&gt;<a class="ref" href="skin_common.hpp.html#intf_sys_t::p_theme" title='intf_sys_t::p_theme' data-ref="intf_sys_t::p_theme">p_theme</a>-&gt;<a class="ref" href="theme.hpp.html#_ZN5Theme10loadConfigEv" title='Theme::loadConfig' data-ref="_ZN5Theme10loadConfigEv">loadConfig</a>();</td></tr>
+<tr><th id="94">94</th><td></td></tr>
+<tr><th id="95">95</th><td>    <i>// Retain new loaded skins in config</i></td></tr>
+<tr><th id="96">96</th><td>    <a class="macro" href="../../../../include/vlc_configuration.h.html#147" title="config_PutPsz(((vlc_object_t *)(getIntf()) + 0 * __builtin_offsetof(__typeof__(*(getIntf())), psz_object_type)),&quot;skins2-last&quot;,fileName.c_str())" data-ref="_M/config_PutPsz">config_PutPsz</a>( <a class="member" href="skin_common.hpp.html#_ZNK10SkinObject7getIntfEv" title='SkinObject::getIntf' data-ref="_ZNK10SkinObject7getIntfEv">getIntf</a>(), <q>"skins2-last"</q>, <a class="local col2 ref" href="#92fileName" title='fileName' data-ref="92fileName">fileName</a>.<a class="ref" href="../../../../../include/c++/4.8/bits/basic_string.h.html#_ZNKSt12basic_string5c_strEv" title='std::basic_string::c_str' data-ref="_ZNKSt12basic_string5c_strEv">c_str</a>() );</td></tr>
+<tr><th id="97">97</th><td></td></tr>
+<tr><th id="98">98</th><td>    <b>return</b> <b>true</b>;</td></tr>
+<tr><th id="99">99</th><td>}</td></tr>
+<tr><th id="100">100</th><td></td></tr>
+<tr><th id="101">101</th><td></td></tr>
+<tr><th id="102">102</th><td><u>#<span data-ppcond="102">if</span> defined( <a class="macro" href="../../../../config.h.html#589" data-ref="_M/HAVE_ZLIB_H">HAVE_ZLIB_H</a> )</u></td></tr>
+<tr><th id="103">103</th><td><em>bool</em> <a class="type" href="theme_loader.hpp.html#ThemeLoader" title='ThemeLoader' data-ref="ThemeLoader">ThemeLoader</a>::<dfn class="decl def" id="_ZN11ThemeLoader12extractTarGzERKSsS1_" title='ThemeLoader::extractTarGz' data-ref="_ZN11ThemeLoader12extractTarGzERKSsS1_">extractTarGz</dfn>( <em>const</em> <a class="typedef" href="../../../../../include/c++/4.8/bits/stringfwd.h.html#std::string" title='std::string' data-type='basic_string&lt;char&gt;' data-ref="std::string">string</a> &amp;<dfn class="local col6 decl" id="96tarFile" title='tarFile' data-type='const string &amp;' data-ref="96tarFile">tarFile</dfn>, <em>const</em> <a class="typedef" href="../../../../../include/c++/4.8/bits/stringfwd.h.html#std::string" title='std::string' data-type='basic_string&lt;char&gt;' data-ref="std::string">string</a> &amp;<dfn class="local col7 decl" id="97rootDir" title='rootDir' data-type='const string &amp;' data-ref="97rootDir">rootDir</dfn> )</td></tr>
+<tr><th id="104">104</th><td>{</td></tr>
+<tr><th id="105">105</th><td>    <a class="typedef" href="../../../../../include/libtar.h.html#TAR" title='TAR' data-type='struct TAR' data-ref="TAR">TAR</a> *<dfn class="local col8 decl" id="98t" title='t' data-type='TAR *' data-ref="98t">t</dfn>;</td></tr>
+<tr><th id="106">106</th><td><u>#<span data-ppcond="106">if</span> defined( <a class="macro" href="../../../../config.h.html#308" data-ref="_M/HAVE_LIBTAR_H">HAVE_LIBTAR_H</a> )</u></td></tr>
+<tr><th id="107">107</th><td>    <a class="typedef" href="../../../../../include/libtar.h.html#tartype_t" title='tartype_t' data-type='struct tartype_t' data-ref="tartype_t">tartype_t</a> <dfn class="local col9 decl" id="99gztype" title='gztype' data-type='tartype_t' data-ref="99gztype">gztype</dfn> = { (<a class="typedef" href="../../../../../include/libtar.h.html#openfunc_t" title='openfunc_t' data-type='int (*)(const char *, int, ...)' data-ref="openfunc_t">openfunc_t</a>) <a class="ref" href="#_Z15gzopen_frontendPKcii" title='gzopen_frontend' data-ref="_Z15gzopen_frontendPKcii">gzopen_frontend</a>,</td></tr>
+<tr><th id="108">108</th><td>                         (<a class="typedef" href="../../../../../include/libtar.h.html#closefunc_t" title='closefunc_t' data-type='int (*)(int)' data-ref="closefunc_t">closefunc_t</a>) <a class="ref" href="#_Z16gzclose_frontendi" title='gzclose_frontend' data-ref="_Z16gzclose_frontendi">gzclose_frontend</a>,</td></tr>
+<tr><th id="109">109</th><td>                         (<a class="typedef" href="../../../../../include/libtar.h.html#readfunc_t" title='readfunc_t' data-type='ssize_t (*)(int, void *, size_t)' data-ref="readfunc_t">readfunc_t</a>) <a class="ref" href="#_Z15gzread_frontendiPvm" title='gzread_frontend' data-ref="_Z15gzread_frontendiPvm">gzread_frontend</a>,</td></tr>
+<tr><th id="110">110</th><td>                         (<a class="typedef" href="../../../../../include/libtar.h.html#writefunc_t" title='writefunc_t' data-type='ssize_t (*)(int, const void *, size_t)' data-ref="writefunc_t">writefunc_t</a>) <a class="ref" href="#_Z16gzwrite_frontendiPKvm" title='gzwrite_frontend' data-ref="_Z16gzwrite_frontendiPKvm">gzwrite_frontend</a> };</td></tr>
+<tr><th id="111">111</th><td></td></tr>
+<tr><th id="112">112</th><td>    <b>if</b>( <a class="ref" href="../../../../../include/libtar.h.html#tar_open" title='tar_open' data-ref="tar_open">tar_open</a>( &amp;<a class="local col8 ref" href="#98t" title='t' data-ref="98t">t</a>, (<em>char</em> *)<a class="local col6 ref" href="#96tarFile" title='tarFile' data-ref="96tarFile">tarFile</a>.<a class="ref" href="../../../../../include/c++/4.8/bits/basic_string.h.html#_ZNKSt12basic_string5c_strEv" title='std::basic_string::c_str' data-ref="_ZNKSt12basic_string5c_strEv">c_str</a>(), &amp;<a class="local col9 ref" href="#99gztype" title='gztype' data-ref="99gztype">gztype</a>, <a class="macro" href="../../../../../include/x86_64-linux-gnu/bits/fcntl-linux.h.html#43" title="00" data-ref="_M/O_RDONLY">O_RDONLY</a>, <var>0</var>,</td></tr>
+<tr><th id="113">113</th><td>                  <a class="macro" href="../../../../../include/libtar.h.html#95" title="1" data-ref="_M/TAR_GNU">TAR_GNU</a> ) == -<var>1</var> )</td></tr>
+<tr><th id="114">114</th><td><u>#<span data-ppcond="106">else</span></u></td></tr>
+<tr><th id="115">115</th><td>    <b>if</b>( tar_open( &amp;t, (<em>char</em> *)tarFile.c_str(), O_RDONLY ) == -<var>1</var> )</td></tr>
+<tr><th id="116">116</th><td><u>#<span data-ppcond="106">endif</span></u></td></tr>
+<tr><th id="117">117</th><td>    {</td></tr>
+<tr><th id="118">118</th><td>        <b>return</b> <b>false</b>;</td></tr>
+<tr><th id="119">119</th><td>    }</td></tr>
+<tr><th id="120">120</th><td></td></tr>
+<tr><th id="121">121</th><td>    <b>if</b>( <a class="ref" href="../../../../../include/libtar.h.html#tar_extract_all" title='tar_extract_all' data-ref="tar_extract_all">tar_extract_all</a>( <a class="local col8 ref" href="#98t" title='t' data-ref="98t">t</a>, (<em>char</em> *)<a class="local col7 ref" href="#97rootDir" title='rootDir' data-ref="97rootDir">rootDir</a>.<a class="ref" href="../../../../../include/c++/4.8/bits/basic_string.h.html#_ZNKSt12basic_string5c_strEv" title='std::basic_string::c_str' data-ref="_ZNKSt12basic_string5c_strEv">c_str</a>() ) != <var>0</var> )</td></tr>
+<tr><th id="122">122</th><td>    {</td></tr>
+<tr><th id="123">123</th><td>        <a class="ref" href="../../../../../include/libtar.h.html#tar_close" title='tar_close' data-ref="tar_close">tar_close</a>( <a class="local col8 ref" href="#98t" title='t' data-ref="98t">t</a> );</td></tr>
+<tr><th id="124">124</th><td>        <b>return</b> <b>false</b>;</td></tr>
+<tr><th id="125">125</th><td>    }</td></tr>
+<tr><th id="126">126</th><td></td></tr>
+<tr><th id="127">127</th><td>    <b>if</b>( <a class="ref" href="../../../../../include/libtar.h.html#tar_close" title='tar_close' data-ref="tar_close">tar_close</a>( <a class="local col8 ref" href="#98t" title='t' data-ref="98t">t</a> ) != <var>0</var> )</td></tr>
+<tr><th id="128">128</th><td>    {</td></tr>
+<tr><th id="129">129</th><td>        <b>return</b> <b>false</b>;</td></tr>
+<tr><th id="130">130</th><td>    }</td></tr>
+<tr><th id="131">131</th><td></td></tr>
+<tr><th id="132">132</th><td>    <b>return</b> <b>true</b>;</td></tr>
+<tr><th id="133">133</th><td>}</td></tr>
+<tr><th id="134">134</th><td></td></tr>
+<tr><th id="135">135</th><td></td></tr>
+<tr><th id="136">136</th><td><em>bool</em> <a class="type" href="theme_loader.hpp.html#ThemeLoader" title='ThemeLoader' data-ref="ThemeLoader">ThemeLoader</a>::<dfn class="decl def" id="_ZN11ThemeLoader10extractZipERKSsS1_" title='ThemeLoader::extractZip' data-ref="_ZN11ThemeLoader10extractZipERKSsS1_">extractZip</dfn>( <em>const</em> <a class="typedef" href="../../../../../include/c++/4.8/bits/stringfwd.h.html#std::string" title='std::string' data-type='basic_string&lt;char&gt;' data-ref="std::string">string</a> &amp;<dfn class="local col0 decl" id="100zipFile" title='zipFile' data-type='const string &amp;' data-ref="100zipFile">zipFile</dfn>, <em>const</em> <a class="typedef" href="../../../../../include/c++/4.8/bits/stringfwd.h.html#std::string" title='std::string' data-type='basic_string&lt;char&gt;' data-ref="std::string">string</a> &amp;<dfn class="local col1 decl" id="101rootDir" title='rootDir' data-type='const string &amp;' data-ref="101rootDir">rootDir</dfn> )</td></tr>
+<tr><th id="137">137</th><td>{</td></tr>
+<tr><th id="138">138</th><td>    <em>bool</em> <dfn class="local col2 decl" id="102b_isWsz" title='b_isWsz' data-type='bool' data-ref="102b_isWsz">b_isWsz</dfn> = <a class="ref" href="../../../../../include/string.h.html#strstr" title='strstr' data-ref="strstr">strstr</a>( <a class="local col0 ref" href="#100zipFile" title='zipFile' data-ref="100zipFile">zipFile</a>.<a class="ref" href="../../../../../include/c++/4.8/bits/basic_string.h.html#_ZNKSt12basic_string5c_strEv" title='std::basic_string::c_str' data-ref="_ZNKSt12basic_string5c_strEv">c_str</a>(), <q>".wsz"</q> );</td></tr>
+<tr><th id="139">139</th><td></td></tr>
+<tr><th id="140">140</th><td>    <i>// Try to open the ZIP file</i></td></tr>
+<tr><th id="141">141</th><td>    <a class="typedef" href="../../../access/zip/unzip/unzip.h.html#unzFile" title='unzFile' data-type='voidp' data-ref="unzFile">unzFile</a> <dfn class="local col3 decl" id="103file" title='file' data-type='unzFile' data-ref="103file">file</dfn> = <a class="ref" href="../../../access/zip/unzip/unzip.h.html#unzOpen" title='unzOpen' data-ref="unzOpen">unzOpen</a>( <a class="local col0 ref" href="#100zipFile" title='zipFile' data-ref="100zipFile">zipFile</a>.<a class="ref" href="../../../../../include/c++/4.8/bits/basic_string.h.html#_ZNKSt12basic_string5c_strEv" title='std::basic_string::c_str' data-ref="_ZNKSt12basic_string5c_strEv">c_str</a>() );</td></tr>
+<tr><th id="142">142</th><td>    <a class="typedef" href="../../../access/zip/unzip/unzip.h.html#unz_global_info" title='unz_global_info' data-type='struct unz_global_info_s' data-ref="unz_global_info">unz_global_info</a> <a class="ref fake" href="../../../access/zip/unzip/unzip.h.html#92" title='unz_global_info_s::unz_global_info_s' data-ref="_ZN17unz_global_info_sC1Ev"></a><dfn class="local col4 decl" id="104info" title='info' data-type='unz_global_info' data-ref="104info">info</dfn>;</td></tr>
+<tr><th id="143">143</th><td></td></tr>
+<tr><th id="144">144</th><td>    <b>if</b>( <a class="ref" href="../../../access/zip/unzip/unzip.h.html#unzGetGlobalInfo" title='unzGetGlobalInfo' data-ref="unzGetGlobalInfo">unzGetGlobalInfo</a>( <a class="local col3 ref" href="#103file" title='file' data-ref="103file">file</a>, &amp;<a class="local col4 ref" href="#104info" title='info' data-ref="104info">info</a> ) != <a class="macro" href="../../../access/zip/unzip/unzip.h.html#70" title="(0)" data-ref="_M/UNZ_OK">UNZ_OK</a> )</td></tr>
+<tr><th id="145">145</th><td>    {</td></tr>
+<tr><th id="146">146</th><td>        <b>return</b> <b>false</b>;</td></tr>
+<tr><th id="147">147</th><td>    }</td></tr>
+<tr><th id="148">148</th><td>    <i>// Extract all the files in the archive</i></td></tr>
+<tr><th id="149">149</th><td>    <b>for</b>( <em>unsigned</em> <em>long</em> <dfn class="local col5 decl" id="105i" title='i' data-type='unsigned long' data-ref="105i">i</dfn> = <var>0</var>; <a class="local col5 ref" href="#105i" title='i' data-ref="105i">i</a> &lt; <a class="local col4 ref" href="#104info" title='info' data-ref="104info">info</a>.<a class="ref" href="../../../access/zip/unzip/unzip.h.html#unz_global_info_s::number_entry" title='unz_global_info_s::number_entry' data-ref="unz_global_info_s::number_entry">number_entry</a>; <a class="local col5 ref" href="#105i" title='i' data-ref="105i">i</a>++ )</td></tr>
+<tr><th id="150">150</th><td>    {</td></tr>
+<tr><th id="151">151</th><td>        <b>if</b>( !<a class="member" href="#_ZN11ThemeLoader16extractFileInZipEPvRKSsb" title='ThemeLoader::extractFileInZip' data-ref="_ZN11ThemeLoader16extractFileInZipEPvRKSsb">extractFileInZip</a>( <a class="local col3 ref" href="#103file" title='file' data-ref="103file">file</a>, <a class="local col1 ref" href="#101rootDir" title='rootDir' data-ref="101rootDir">rootDir</a>, <a class="local col2 ref" href="#102b_isWsz" title='b_isWsz' data-ref="102b_isWsz">b_isWsz</a> ) )</td></tr>
+<tr><th id="152">152</th><td>        {</td></tr>
+<tr><th id="153">153</th><td>            <a class="macro" href="../../../../include/vlc_messages.h.html#75" title="vlc_Log( ((vlc_object_t *)(getIntf()) + 0 * __builtin_offsetof(__typeof__(*(getIntf())), psz_object_type)), VLC_MSG_WARN, skins2, &quot;error while unzipping %s&quot;, zipFile.c_str() )" data-ref="_M/msg_Warn">msg_Warn</a>( getIntf(), <q>"error while unzipping %s"</q>,</td></tr>
+<tr><th id="154">154</th><td>                      zipFile.c_str() );</td></tr>
+<tr><th id="155">155</th><td>            <a class="ref" href="../../../access/zip/unzip/unzip.h.html#unzClose" title='unzClose' data-ref="unzClose">unzClose</a>( <a class="local col3 ref" href="#103file" title='file' data-ref="103file">file</a> );</td></tr>
+<tr><th id="156">156</th><td>            <b>return</b> <b>false</b>;</td></tr>
+<tr><th id="157">157</th><td>        }</td></tr>
+<tr><th id="158">158</th><td></td></tr>
+<tr><th id="159">159</th><td>        <b>if</b>( <a class="local col5 ref" href="#105i" title='i' data-ref="105i">i</a> &lt; <a class="local col4 ref" href="#104info" title='info' data-ref="104info">info</a>.<a class="ref" href="../../../access/zip/unzip/unzip.h.html#unz_global_info_s::number_entry" title='unz_global_info_s::number_entry' data-ref="unz_global_info_s::number_entry">number_entry</a> - <var>1</var> )</td></tr>
+<tr><th id="160">160</th><td>        {</td></tr>
+<tr><th id="161">161</th><td>            <i>// Go the next file in the archive</i></td></tr>
+<tr><th id="162">162</th><td>            <b>if</b>( <a class="ref" href="../../../access/zip/unzip/unzip.h.html#unzGoToNextFile" title='unzGoToNextFile' data-ref="unzGoToNextFile">unzGoToNextFile</a>( <a class="local col3 ref" href="#103file" title='file' data-ref="103file">file</a> ) !=<a class="macro" href="../../../access/zip/unzip/unzip.h.html#70" title="(0)" data-ref="_M/UNZ_OK">UNZ_OK</a> )</td></tr>
+<tr><th id="163">163</th><td>            {</td></tr>
+<tr><th id="164">164</th><td>                <a class="macro" href="../../../../include/vlc_messages.h.html#75" title="vlc_Log( ((vlc_object_t *)(getIntf()) + 0 * __builtin_offsetof(__typeof__(*(getIntf())), psz_object_type)), VLC_MSG_WARN, skins2, &quot;error while unzipping %s&quot;, zipFile.c_str() )" data-ref="_M/msg_Warn">msg_Warn</a>( getIntf(), <q>"error while unzipping %s"</q>,</td></tr>
+<tr><th id="165">165</th><td>                          zipFile.c_str() );</td></tr>
+<tr><th id="166">166</th><td>                <a class="ref" href="../../../access/zip/unzip/unzip.h.html#unzClose" title='unzClose' data-ref="unzClose">unzClose</a>( <a class="local col3 ref" href="#103file" title='file' data-ref="103file">file</a> );</td></tr>
+<tr><th id="167">167</th><td>                <b>return</b> <b>false</b>;</td></tr>
+<tr><th id="168">168</th><td>            }</td></tr>
+<tr><th id="169">169</th><td>        }</td></tr>
+<tr><th id="170">170</th><td>    }</td></tr>
+<tr><th id="171">171</th><td>    <a class="ref" href="../../../access/zip/unzip/unzip.h.html#unzClose" title='unzClose' data-ref="unzClose">unzClose</a>( <a class="local col3 ref" href="#103file" title='file' data-ref="103file">file</a> );</td></tr>
+<tr><th id="172">172</th><td>    <b>return</b> <b>true</b>;</td></tr>
+<tr><th id="173">173</th><td>}</td></tr>
+<tr><th id="174">174</th><td></td></tr>
+<tr><th id="175">175</th><td></td></tr>
+<tr><th id="176">176</th><td><em>bool</em> <a class="type" href="theme_loader.hpp.html#ThemeLoader" title='ThemeLoader' data-ref="ThemeLoader">ThemeLoader</a>::<dfn class="decl def" id="_ZN11ThemeLoader16extractFileInZipEPvRKSsb" title='ThemeLoader::extractFileInZip' data-ref="_ZN11ThemeLoader16extractFileInZipEPvRKSsb">extractFileInZip</dfn>( <a class="typedef" href="../../../access/zip/unzip/unzip.h.html#unzFile" title='unzFile' data-type='voidp' data-ref="unzFile">unzFile</a> <dfn class="local col6 decl" id="106file" title='file' data-type='unzFile' data-ref="106file">file</dfn>, <em>const</em> <a class="typedef" href="../../../../../include/c++/4.8/bits/stringfwd.h.html#std::string" title='std::string' data-type='basic_string&lt;char&gt;' data-ref="std::string">string</a> &amp;<dfn class="local col7 decl" id="107rootDir" title='rootDir' data-type='const string &amp;' data-ref="107rootDir">rootDir</dfn>,</td></tr>
+<tr><th id="177">177</th><td>                                    <em>bool</em> <dfn class="local col8 decl" id="108isWsz" title='isWsz' data-type='bool' data-ref="108isWsz">isWsz</dfn> )</td></tr>
+<tr><th id="178">178</th><td>{</td></tr>
+<tr><th id="179">179</th><td>    <i>// Read info for the current file</i></td></tr>
+<tr><th id="180">180</th><td>    <em>char</em> <dfn class="local col9 decl" id="109filenameInZip" title='filenameInZip' data-type='char [256]' data-ref="109filenameInZip">filenameInZip</dfn>[<var>256</var>];</td></tr>
+<tr><th id="181">181</th><td>    <a class="typedef" href="../../../access/zip/unzip/unzip.h.html#unz_file_info" title='unz_file_info' data-type='struct unz_file_info_s' data-ref="unz_file_info">unz_file_info</a> <a class="ref fake" href="../../../access/zip/unzip/unzip.h.html#101" title='unz_file_info_s::unz_file_info_s' data-ref="_ZN15unz_file_info_sC1Ev"></a><dfn class="local col0 decl" id="110fileInfo" title='fileInfo' data-type='unz_file_info' data-ref="110fileInfo">fileInfo</dfn>;</td></tr>
+<tr><th id="182">182</th><td>    <b>if</b>( <a class="ref" href="../../../access/zip/unzip/unzip.h.html#unzGetCurrentFileInfo" title='unzGetCurrentFileInfo' data-ref="unzGetCurrentFileInfo">unzGetCurrentFileInfo</a>( <a class="local col6 ref" href="#106file" title='file' data-ref="106file">file</a>, &amp;<a class="local col0 ref" href="#110fileInfo" title='fileInfo' data-ref="110fileInfo">fileInfo</a>, <a class="local col9 ref" href="#109filenameInZip" title='filenameInZip' data-ref="109filenameInZip">filenameInZip</a>,</td></tr>
+<tr><th id="183">183</th><td>                               <b>sizeof</b>( <a class="local col9 ref" href="#109filenameInZip" title='filenameInZip' data-ref="109filenameInZip">filenameInZip</a>), <span class="macro" title="__null" data-ref="_M/NULL">NULL</span>, <var>0</var>, <span class="macro" title="__null" data-ref="_M/NULL">NULL</span>, <var>0</var> )</td></tr>
+<tr><th id="184">184</th><td>        != <a class="macro" href="../../../access/zip/unzip/unzip.h.html#70" title="(0)" data-ref="_M/UNZ_OK">UNZ_OK</a> )</td></tr>
+<tr><th id="185">185</th><td>    {</td></tr>
+<tr><th id="186">186</th><td>        <b>return</b> <b>false</b>;</td></tr>
+<tr><th id="187">187</th><td>    }</td></tr>
+<tr><th id="188">188</th><td></td></tr>
+<tr><th id="189">189</th><td>    <i>// Convert the file name to lower case, because some winamp skins</i></td></tr>
+<tr><th id="190">190</th><td><i>    // use the wrong case...</i></td></tr>
+<tr><th id="191">191</th><td>    <b>if</b>( <a class="local col8 ref" href="#108isWsz" title='isWsz' data-ref="108isWsz">isWsz</a> )</td></tr>
+<tr><th id="192">192</th><td>        <b>for</b>( <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="local col1 decl" id="111i" title='i' data-type='size_t' data-ref="111i">i</dfn> = <var>0</var>; <a class="local col1 ref" href="#111i" title='i' data-ref="111i">i</a> &lt; <a class="ref" href="../../../../../include/string.h.html#strlen" title='strlen' data-ref="strlen">strlen</a>( <a class="local col9 ref" href="#109filenameInZip" title='filenameInZip' data-ref="109filenameInZip">filenameInZip</a> ); <a class="local col1 ref" href="#111i" title='i' data-ref="111i">i</a>++ )</td></tr>
+<tr><th id="193">193</th><td>            <a class="local col9 ref" href="#109filenameInZip" title='filenameInZip' data-ref="109filenameInZip">filenameInZip</a>[<a class="local col1 ref" href="#111i" title='i' data-ref="111i">i</a>] = <a class="ref" href="../../../../../include/ctype.h.html#tolower" title='tolower' data-ref="tolower">tolower</a>( (<em>unsigned</em> <em>char</em>)<a class="local col9 ref" href="#109filenameInZip" title='filenameInZip' data-ref="109filenameInZip">filenameInZip</a>[<a class="local col1 ref" href="#111i" title='i' data-ref="111i">i</a>] );</td></tr>
+<tr><th id="194">194</th><td></td></tr>
+<tr><th id="195">195</th><td>    <i>// Allocate the buffer</i></td></tr>
+<tr><th id="196">196</th><td>    <em>void</em> *<dfn class="local col2 decl" id="112pBuffer" title='pBuffer' data-type='void *' data-ref="112pBuffer">pBuffer</dfn> = <a class="ref" href="../../../../../include/stdlib.h.html#malloc" title='malloc' data-ref="malloc">malloc</a>( <a class="macro" href="#65" title="4096" data-ref="_M/ZIP_BUFFER_SIZE">ZIP_BUFFER_SIZE</a> );</td></tr>
+<tr><th id="197">197</th><td>    <b>if</b>( !<a class="local col2 ref" href="#112pBuffer" title='pBuffer' data-ref="112pBuffer">pBuffer</a> )</td></tr>
+<tr><th id="198">198</th><td>        <b>return</b> <b>false</b>;</td></tr>
+<tr><th id="199">199</th><td></td></tr>
+<tr><th id="200">200</th><td>    <i>// Get the path of the file</i></td></tr>
+<tr><th id="201">201</th><td>    <a class="type" href="os_factory.hpp.html#OSFactory" title='OSFactory' data-ref="OSFactory">OSFactory</a> *<dfn class="local col3 decl" id="113pOsFactory" title='pOsFactory' data-type='OSFactory *' data-ref="113pOsFactory">pOsFactory</dfn> = <a class="type" href="os_factory.hpp.html#OSFactory" title='OSFactory' data-ref="OSFactory">OSFactory</a>::<a class="ref" href="os_factory.hpp.html#_ZN9OSFactory8instanceEP13intf_thread_t" title='OSFactory::instance' data-ref="_ZN9OSFactory8instanceEP13intf_thread_t">instance</a>( <a class="member" href="skin_common.hpp.html#_ZNK10SkinObject7getIntfEv" title='SkinObject::getIntf' data-ref="_ZNK10SkinObject7getIntfEv">getIntf</a>() );</td></tr>
+<tr><th id="202">202</th><td>    <a class="typedef" href="../../../../../include/c++/4.8/bits/stringfwd.h.html#std::string" title='std::string' data-type='basic_string&lt;char&gt;' data-ref="std::string">string</a> <dfn class="local col4 decl" id="114fullPath" title='fullPath' data-type='string' data-ref="114fullPath">fullPath</dfn> = <a class="local col7 ref" href="#107rootDir" title='rootDir' data-ref="107rootDir">rootDir</a></td></tr>
+<tr><th id="203">203</th><td>        <a class="ref" href="../../../../../include/c++/4.8/bits/basic_string.h.html#_ZStplRKSbIT_T0_T1_ES4_" title='std::operator+' data-ref="_ZStplRKSbIT_T0_T1_ES4_">+</a> <a class="local col3 ref" href="#113pOsFactory" title='pOsFactory' data-ref="113pOsFactory">pOsFactory</a>-&gt;<a class="virtual ref" href="os_factory.hpp.html#_ZNK9OSFactory15getDirSeparatorEv" title='OSFactory::getDirSeparator' data-ref="_ZNK9OSFactory15getDirSeparatorEv">getDirSeparator</a>()</td></tr>
+<tr><th id="204">204</th><td>        <a class="ref" href="../../../../../include/c++/4.8/bits/basic_string.h.html#_ZStplRKSbIT_T0_T1_ES4_" title='std::operator+' data-ref="_ZStplRKSbIT_T0_T1_ES4_">+</a> <a class="member" href="#_ZN11ThemeLoader16fixDirSeparatorsERKSs" title='ThemeLoader::fixDirSeparators' data-ref="_ZN11ThemeLoader16fixDirSeparatorsERKSs">fixDirSeparators</a>( <a class="ref fake" href="../../../../../include/c++/4.8/bits/basic_string.h.html#_ZNSt12basic_stringC1EPKT_RKT1_" title='std::basic_string::basic_string&lt;_CharT, _Traits, _Alloc&gt;' data-ref="_ZNSt12basic_stringC1EPKT_RKT1_"></a><a class="local col9 ref" href="#109filenameInZip" title='filenameInZip' data-ref="109filenameInZip">filenameInZip</a> );</td></tr>
+<tr><th id="205">205</th><td>    <a class="typedef" href="../../../../../include/c++/4.8/bits/stringfwd.h.html#std::string" title='std::string' data-type='basic_string&lt;char&gt;' data-ref="std::string">string</a> <dfn class="local col5 decl" id="115basePath" title='basePath' data-type='string' data-ref="115basePath">basePath</dfn> = <a class="member" href="#_ZN11ThemeLoader11getFilePathERKSs" title='ThemeLoader::getFilePath' data-ref="_ZN11ThemeLoader11getFilePathERKSs">getFilePath</a>( <a class="local col4 ref" href="#114fullPath" title='fullPath' data-ref="114fullPath">fullPath</a> );</td></tr>
+<tr><th id="206">206</th><td></td></tr>
+<tr><th id="207">207</th><td>    <i>// Extract the file if is not a directory</i></td></tr>
+<tr><th id="208">208</th><td>    <b>if</b>( <a class="local col5 ref" href="#115basePath" title='basePath' data-ref="115basePath">basePath</a> <a class="ref" href="../../../../../include/c++/4.8/bits/basic_string.h.html#_ZStneRKSbIT_T0_T1_ES4_" title='std::operator!=' data-ref="_ZStneRKSbIT_T0_T1_ES4_">!=</a> <a class="local col4 ref" href="#114fullPath" title='fullPath' data-ref="114fullPath">fullPath</a> )</td></tr>
+<tr><th id="209">209</th><td>    {</td></tr>
+<tr><th id="210">210</th><td>        <b>if</b>( <a class="ref" href="../../../access/zip/unzip/unzip.h.html#unzOpenCurrentFile" title='unzOpenCurrentFile' data-ref="unzOpenCurrentFile">unzOpenCurrentFile</a>( <a class="local col6 ref" href="#106file" title='file' data-ref="106file">file</a> ) )</td></tr>
+<tr><th id="211">211</th><td>        {</td></tr>
+<tr><th id="212">212</th><td>            <a class="ref" href="../../../../../include/stdlib.h.html#free" title='free' data-ref="free">free</a>( <a class="local col2 ref" href="#112pBuffer" title='pBuffer' data-ref="112pBuffer">pBuffer</a> );</td></tr>
+<tr><th id="213">213</th><td>            <b>return</b> <b>false</b>;</td></tr>
+<tr><th id="214">214</th><td>        }</td></tr>
+<tr><th id="215">215</th><td>        <a class="ref" href="#_Z7makedirPKc" title='makedir' data-ref="_Z7makedirPKc">makedir</a>( <a class="local col5 ref" href="#115basePath" title='basePath' data-ref="115basePath">basePath</a>.<a class="ref" href="../../../../../include/c++/4.8/bits/basic_string.h.html#_ZNKSt12basic_string5c_strEv" title='std::basic_string::c_str' data-ref="_ZNKSt12basic_string5c_strEv">c_str</a>() );</td></tr>
+<tr><th id="216">216</th><td>        <a class="typedef" href="../../../../../include/stdio.h.html#FILE" title='FILE' data-type='struct _IO_FILE' data-ref="FILE">FILE</a> *<dfn class="local col6 decl" id="116fout" title='fout' data-type='FILE *' data-ref="116fout">fout</dfn> = <a class="ref" href="../../../../../include/stdio.h.html#283" title='fopen' data-ref="fopen64">fopen</a>( <a class="local col4 ref" href="#114fullPath" title='fullPath' data-ref="114fullPath">fullPath</a>.<a class="ref" href="../../../../../include/c++/4.8/bits/basic_string.h.html#_ZNKSt12basic_string5c_strEv" title='std::basic_string::c_str' data-ref="_ZNKSt12basic_string5c_strEv">c_str</a>(), <q>"wb"</q> );</td></tr>
+<tr><th id="217">217</th><td>        <b>if</b>( <a class="local col6 ref" href="#116fout" title='fout' data-ref="116fout">fout</a> == <span class="macro" title="__null" data-ref="_M/NULL">NULL</span> )</td></tr>
+<tr><th id="218">218</th><td>        {</td></tr>
+<tr><th id="219">219</th><td>            <a class="macro" href="../../../../include/vlc_messages.h.html#73" title="vlc_Log( ((vlc_object_t *)(getIntf()) + 0 * __builtin_offsetof(__typeof__(*(getIntf())), psz_object_type)), VLC_MSG_ERR, skins2, &quot;error opening %s&quot;, fullPath.c_str() )" data-ref="_M/msg_Err">msg_Err</a>( getIntf(), <q>"error opening %s"</q>, fullPath.c_str() );</td></tr>
+<tr><th id="220">220</th><td>            <a class="ref" href="../../../../../include/stdlib.h.html#free" title='free' data-ref="free">free</a>( <a class="local col2 ref" href="#112pBuffer" title='pBuffer' data-ref="112pBuffer">pBuffer</a> );</td></tr>
+<tr><th id="221">221</th><td>            <b>return</b> <b>false</b>;</td></tr>
+<tr><th id="222">222</th><td>        }</td></tr>
+<tr><th id="223">223</th><td></td></tr>
+<tr><th id="224">224</th><td>        <i>// Extract the current file</i></td></tr>
+<tr><th id="225">225</th><td>        <em>int</em> <dfn class="local col7 decl" id="117n" title='n' data-type='int' data-ref="117n">n</dfn>;</td></tr>
+<tr><th id="226">226</th><td>        <b>do</b></td></tr>
+<tr><th id="227">227</th><td>        {</td></tr>
+<tr><th id="228">228</th><td>            <a class="local col7 ref" href="#117n" title='n' data-ref="117n">n</a> = <a class="ref" href="../../../access/zip/unzip/unzip.h.html#unzReadCurrentFile" title='unzReadCurrentFile' data-ref="unzReadCurrentFile">unzReadCurrentFile</a>( <a class="local col6 ref" href="#106file" title='file' data-ref="106file">file</a>, <a class="local col2 ref" href="#112pBuffer" title='pBuffer' data-ref="112pBuffer">pBuffer</a>, <a class="macro" href="#65" title="4096" data-ref="_M/ZIP_BUFFER_SIZE">ZIP_BUFFER_SIZE</a> );</td></tr>
+<tr><th id="229">229</th><td>            <b>if</b>( <a class="local col7 ref" href="#117n" title='n' data-ref="117n">n</a> &lt; <var>0</var> )</td></tr>
+<tr><th id="230">230</th><td>            {</td></tr>
+<tr><th id="231">231</th><td>                <a class="macro" href="../../../../include/vlc_messages.h.html#73" title="vlc_Log( ((vlc_object_t *)(getIntf()) + 0 * __builtin_offsetof(__typeof__(*(getIntf())), psz_object_type)), VLC_MSG_ERR, skins2, &quot;error while reading zip file&quot; )" data-ref="_M/msg_Err">msg_Err</a>( getIntf(), <q>"error while reading zip file"</q> );</td></tr>
+<tr><th id="232">232</th><td>                <a class="ref" href="../../../../../include/stdio.h.html#fclose" title='fclose' data-ref="fclose">fclose</a>(<a class="local col6 ref" href="#116fout" title='fout' data-ref="116fout">fout</a>);</td></tr>
+<tr><th id="233">233</th><td>                <a class="ref" href="../../../../../include/stdlib.h.html#free" title='free' data-ref="free">free</a>( <a class="local col2 ref" href="#112pBuffer" title='pBuffer' data-ref="112pBuffer">pBuffer</a> );</td></tr>
+<tr><th id="234">234</th><td>                <b>return</b> <b>false</b>;</td></tr>
+<tr><th id="235">235</th><td>            }</td></tr>
+<tr><th id="236">236</th><td>            <b>else</b> <b>if</b>( <a class="local col7 ref" href="#117n" title='n' data-ref="117n">n</a> &gt; <var>0</var> )</td></tr>
+<tr><th id="237">237</th><td>            {</td></tr>
+<tr><th id="238">238</th><td>                <b>if</b>( <a class="ref" href="../../../../../include/stdio.h.html#fwrite" title='fwrite' data-ref="fwrite">fwrite</a>( <a class="local col2 ref" href="#112pBuffer" title='pBuffer' data-ref="112pBuffer">pBuffer</a>, <a class="local col7 ref" href="#117n" title='n' data-ref="117n">n</a> , <var>1</var>, <a class="local col6 ref" href="#116fout" title='fout' data-ref="116fout">fout</a>) != <var>1</var> )</td></tr>
+<tr><th id="239">239</th><td>                {</td></tr>
+<tr><th id="240">240</th><td>                    <a class="macro" href="../../../../include/vlc_messages.h.html#73" title="vlc_Log( ((vlc_object_t *)(getIntf()) + 0 * __builtin_offsetof(__typeof__(*(getIntf())), psz_object_type)), VLC_MSG_ERR, skins2, &quot;error while writing %s&quot;, fullPath.c_str() )" data-ref="_M/msg_Err">msg_Err</a>( getIntf(), <q>"error while writing %s"</q>,</td></tr>
+<tr><th id="241">241</th><td>                             fullPath.c_str() );</td></tr>
+<tr><th id="242">242</th><td>                    <a class="ref" href="../../../../../include/stdio.h.html#fclose" title='fclose' data-ref="fclose">fclose</a>(<a class="local col6 ref" href="#116fout" title='fout' data-ref="116fout">fout</a>);</td></tr>
+<tr><th id="243">243</th><td>                    <a class="ref" href="../../../../../include/stdlib.h.html#free" title='free' data-ref="free">free</a>( <a class="local col2 ref" href="#112pBuffer" title='pBuffer' data-ref="112pBuffer">pBuffer</a> );</td></tr>
+<tr><th id="244">244</th><td>                    <b>return</b> <b>false</b>;</td></tr>
+<tr><th id="245">245</th><td>                }</td></tr>
+<tr><th id="246">246</th><td>            }</td></tr>
+<tr><th id="247">247</th><td>        } <b>while</b>( <a class="local col7 ref" href="#117n" title='n' data-ref="117n">n</a> &gt; <var>0</var> );</td></tr>
+<tr><th id="248">248</th><td></td></tr>
+<tr><th id="249">249</th><td>        <a class="ref" href="../../../../../include/stdio.h.html#fclose" title='fclose' data-ref="fclose">fclose</a>(<a class="local col6 ref" href="#116fout" title='fout' data-ref="116fout">fout</a>);</td></tr>
+<tr><th id="250">250</th><td></td></tr>
+<tr><th id="251">251</th><td>        <b>if</b>( <a class="ref" href="../../../access/zip/unzip/unzip.h.html#unzCloseCurrentFile" title='unzCloseCurrentFile' data-ref="unzCloseCurrentFile">unzCloseCurrentFile</a>( <a class="local col6 ref" href="#106file" title='file' data-ref="106file">file</a> ) != <a class="macro" href="../../../access/zip/unzip/unzip.h.html#70" title="(0)" data-ref="_M/UNZ_OK">UNZ_OK</a> )</td></tr>
+<tr><th id="252">252</th><td>        {</td></tr>
+<tr><th id="253">253</th><td>            <a class="ref" href="../../../../../include/stdlib.h.html#free" title='free' data-ref="free">free</a>( <a class="local col2 ref" href="#112pBuffer" title='pBuffer' data-ref="112pBuffer">pBuffer</a> );</td></tr>
+<tr><th id="254">254</th><td>            <b>return</b> <b>false</b>;</td></tr>
+<tr><th id="255">255</th><td>        }</td></tr>
+<tr><th id="256">256</th><td>    }</td></tr>
+<tr><th id="257">257</th><td></td></tr>
+<tr><th id="258">258</th><td>    <a class="ref" href="../../../../../include/stdlib.h.html#free" title='free' data-ref="free">free</a>( <a class="local col2 ref" href="#112pBuffer" title='pBuffer' data-ref="112pBuffer">pBuffer</a> );</td></tr>
+<tr><th id="259">259</th><td>    <b>return</b> <b>true</b>;</td></tr>
+<tr><th id="260">260</th><td>}</td></tr>
+<tr><th id="261">261</th><td></td></tr>
+<tr><th id="262">262</th><td></td></tr>
+<tr><th id="263">263</th><td><em>bool</em> <a class="type" href="theme_loader.hpp.html#ThemeLoader" title='ThemeLoader' data-ref="ThemeLoader">ThemeLoader</a>::<dfn class="decl def" id="_ZN11ThemeLoader7extractERKSs" title='ThemeLoader::extract' data-ref="_ZN11ThemeLoader7extractERKSs">extract</dfn>( <em>const</em> <a class="typedef" href="../../../../../include/c++/4.8/bits/stringfwd.h.html#std::string" title='std::string' data-type='basic_string&lt;char&gt;' data-ref="std::string">string</a> &amp;<dfn class="local col8 decl" id="118fileName" title='fileName' data-type='const string &amp;' data-ref="118fileName">fileName</dfn> )</td></tr>
+<tr><th id="264">264</th><td>{</td></tr>
+<tr><th id="265">265</th><td>    <em>bool</em> <dfn class="local col9 decl" id="119result" title='result' data-type='bool' data-ref="119result">result</dfn> = <b>true</b>;</td></tr>
+<tr><th id="266">266</th><td>    <em>char</em> *<dfn class="local col0 decl" id="120tmpdir" title='tmpdir' data-type='char *' data-ref="120tmpdir">tmpdir</dfn> = <a class="ref" href="../../../../../include/stdio.h.html#tempnam" title='tempnam' data-ref="tempnam">tempnam</a>( <span class="macro" title="__null" data-ref="_M/NULL">NULL</span>, <q>"vlt"</q> );</td></tr>
+<tr><th id="267">267</th><td>    <a class="typedef" href="../../../../../include/c++/4.8/bits/stringfwd.h.html#std::string" title='std::string' data-type='basic_string&lt;char&gt;' data-ref="std::string">string</a> <dfn class="local col1 decl" id="121tempPath" title='tempPath' data-type='string' data-ref="121tempPath">tempPath</dfn> = <a class="ref" href="skin_common.hpp.html#_ZL11sFromLocaleRKSs" title='sFromLocale' data-ref="_ZL11sFromLocaleRKSs">sFromLocale</a>( <a class="ref fake" href="../../../../../include/c++/4.8/bits/basic_string.h.html#_ZNSt12basic_stringC1EPKT_RKT1_" title='std::basic_string::basic_string&lt;_CharT, _Traits, _Alloc&gt;' data-ref="_ZNSt12basic_stringC1EPKT_RKT1_"></a><a class="local col0 ref" href="#120tmpdir" title='tmpdir' data-ref="120tmpdir">tmpdir</a> );</td></tr>
+<tr><th id="268">268</th><td>    <a class="ref" href="../../../../../include/stdlib.h.html#free" title='free' data-ref="free">free</a>( <a class="local col0 ref" href="#120tmpdir" title='tmpdir' data-ref="120tmpdir">tmpdir</a> );</td></tr>
+<tr><th id="269">269</th><td></td></tr>
+<tr><th id="270">270</th><td>    <i>// Extract the file in a temporary directory</i></td></tr>
+<tr><th id="271">271</th><td>    <b>if</b>( ! <a class="member" href="#_ZN11ThemeLoader12extractTarGzERKSsS1_" title='ThemeLoader::extractTarGz' data-ref="_ZN11ThemeLoader12extractTarGzERKSsS1_">extractTarGz</a>( <a class="local col8 ref" href="#118fileName" title='fileName' data-ref="118fileName">fileName</a>, <a class="local col1 ref" href="#121tempPath" title='tempPath' data-ref="121tempPath">tempPath</a> ) &amp;&amp;</td></tr>
+<tr><th id="272">272</th><td>        ! <a class="member" href="#_ZN11ThemeLoader10extractZipERKSsS1_" title='ThemeLoader::extractZip' data-ref="_ZN11ThemeLoader10extractZipERKSsS1_">extractZip</a>( <a class="local col8 ref" href="#118fileName" title='fileName' data-ref="118fileName">fileName</a>, <a class="local col1 ref" href="#121tempPath" title='tempPath' data-ref="121tempPath">tempPath</a> ) )</td></tr>
+<tr><th id="273">273</th><td>    {</td></tr>
+<tr><th id="274">274</th><td>        <a class="member" href="#_ZN11ThemeLoader15deleteTempFilesERKSs" title='ThemeLoader::deleteTempFiles' data-ref="_ZN11ThemeLoader15deleteTempFilesERKSs">deleteTempFiles</a>( <a class="local col1 ref" href="#121tempPath" title='tempPath' data-ref="121tempPath">tempPath</a> );</td></tr>
+<tr><th id="275">275</th><td>        <b>return</b> <b>false</b>;</td></tr>
+<tr><th id="276">276</th><td>    }</td></tr>
+<tr><th id="277">277</th><td></td></tr>
+<tr><th id="278">278</th><td>    <a class="typedef" href="../../../../../include/c++/4.8/bits/stringfwd.h.html#std::string" title='std::string' data-type='basic_string&lt;char&gt;' data-ref="std::string">string</a> <a class="ref fake" href="../../../../../include/c++/4.8/bits/basic_string.h.html#_ZNSt12basic_stringC1Ev" title='std::basic_string::basic_string&lt;_CharT, _Traits, _Alloc&gt;' data-ref="_ZNSt12basic_stringC1Ev"></a><dfn class="local col2 decl" id="122path" title='path' data-type='string' data-ref="122path">path</dfn>;</td></tr>
+<tr><th id="279">279</th><td>    <a class="typedef" href="../../../../../include/c++/4.8/bits/stringfwd.h.html#std::string" title='std::string' data-type='basic_string&lt;char&gt;' data-ref="std::string">string</a> <a class="ref fake" href="../../../../../include/c++/4.8/bits/basic_string.h.html#_ZNSt12basic_stringC1Ev" title='std::basic_string::basic_string&lt;_CharT, _Traits, _Alloc&gt;' data-ref="_ZNSt12basic_stringC1Ev"></a><dfn class="local col3 decl" id="123xmlFile" title='xmlFile' data-type='string' data-ref="123xmlFile">xmlFile</dfn>;</td></tr>
+<tr><th id="280">280</th><td>    <a class="type" href="os_factory.hpp.html#OSFactory" title='OSFactory' data-ref="OSFactory">OSFactory</a> *<dfn class="local col4 decl" id="124pOsFactory" title='pOsFactory' data-type='OSFactory *' data-ref="124pOsFactory">pOsFactory</dfn> = <a class="type" href="os_factory.hpp.html#OSFactory" title='OSFactory' data-ref="OSFactory">OSFactory</a>::<a class="ref" href="os_factory.hpp.html#_ZN9OSFactory8instanceEP13intf_thread_t" title='OSFactory::instance' data-ref="_ZN9OSFactory8instanceEP13intf_thread_t">instance</a>( <a class="member" href="skin_common.hpp.html#_ZNK10SkinObject7getIntfEv" title='SkinObject::getIntf' data-ref="_ZNK10SkinObject7getIntfEv">getIntf</a>() );</td></tr>
+<tr><th id="281">281</th><td>    <i>// Find the XML file in the theme</i></td></tr>
+<tr><th id="282">282</th><td>    <b>if</b>( <a class="member" href="#_ZN11ThemeLoader8findFileERKSsS1_RSs" title='ThemeLoader::findFile' data-ref="_ZN11ThemeLoader8findFileERKSsS1_RSs">findFile</a>( <a class="local col1 ref" href="#121tempPath" title='tempPath' data-ref="121tempPath">tempPath</a>, <a class="macro" href="#63" title="&quot;theme.xml&quot;" data-ref="_M/DEFAULT_XML_FILE">DEFAULT_XML_FILE</a>, <span class='refarg'><a class="local col3 ref" href="#123xmlFile" title='xmlFile' data-ref="123xmlFile">xmlFile</a></span> ) )</td></tr>
+<tr><th id="283">283</th><td>    {</td></tr>
+<tr><th id="284">284</th><td>        <a class="local col2 ref" href="#122path" title='path' data-ref="122path">path</a> <a class="ref" href="../../../../../include/c++/4.8/bits/basic_string.h.html#_ZNSt12basic_stringaSERKSbIT_T0_T1_E" title='std::basic_string::operator=' data-ref="_ZNSt12basic_stringaSERKSbIT_T0_T1_E">=</a> <a class="member" href="#_ZN11ThemeLoader11getFilePathERKSs" title='ThemeLoader::getFilePath' data-ref="_ZN11ThemeLoader11getFilePathERKSs">getFilePath</a>( <a class="local col3 ref" href="#123xmlFile" title='xmlFile' data-ref="123xmlFile">xmlFile</a> );</td></tr>
+<tr><th id="285">285</th><td>    }</td></tr>
+<tr><th id="286">286</th><td>    <b>else</b></td></tr>
+<tr><th id="287">287</th><td>    {</td></tr>
+<tr><th id="288">288</th><td>        <i>// No XML file, check if it is a winamp2 skin</i></td></tr>
+<tr><th id="289">289</th><td>        <a class="typedef" href="../../../../../include/c++/4.8/bits/stringfwd.h.html#std::string" title='std::string' data-type='basic_string&lt;char&gt;' data-ref="std::string">string</a> <a class="ref fake" href="../../../../../include/c++/4.8/bits/basic_string.h.html#_ZNSt12basic_stringC1Ev" title='std::basic_string::basic_string&lt;_CharT, _Traits, _Alloc&gt;' data-ref="_ZNSt12basic_stringC1Ev"></a><dfn class="local col5 decl" id="125mainBmp" title='mainBmp' data-type='string' data-ref="125mainBmp">mainBmp</dfn>;</td></tr>
+<tr><th id="290">290</th><td>        <b>if</b>( <a class="member" href="#_ZN11ThemeLoader8findFileERKSsS1_RSs" title='ThemeLoader::findFile' data-ref="_ZN11ThemeLoader8findFileERKSsS1_RSs">findFile</a>( <a class="local col1 ref" href="#121tempPath" title='tempPath' data-ref="121tempPath">tempPath</a>, <a class="ref fake" href="../../../../../include/c++/4.8/bits/basic_string.h.html#_ZNSt12basic_stringC1EPKT_RKT1_" title='std::basic_string::basic_string&lt;_CharT, _Traits, _Alloc&gt;' data-ref="_ZNSt12basic_stringC1EPKT_RKT1_"></a><q>"main.bmp"</q>, <span class='refarg'><a class="local col5 ref" href="#125mainBmp" title='mainBmp' data-ref="125mainBmp">mainBmp</a></span> ) )</td></tr>
+<tr><th id="291">291</th><td>        {</td></tr>
+<tr><th id="292">292</th><td>            <a class="macro" href="../../../../include/vlc_messages.h.html#77" title="vlc_Log( ((vlc_object_t *)(getIntf()) + 0 * __builtin_offsetof(__typeof__(*(getIntf())), psz_object_type)), VLC_MSG_DBG, skins2, &quot;trying to load a winamp2 skin&quot; )" data-ref="_M/msg_Dbg">msg_Dbg</a>( getIntf(), <q>"trying to load a winamp2 skin"</q> );</td></tr>
+<tr><th id="293">293</th><td>            <a class="local col2 ref" href="#122path" title='path' data-ref="122path">path</a> <a class="ref" href="../../../../../include/c++/4.8/bits/basic_string.h.html#_ZNSt12basic_stringaSERKSbIT_T0_T1_E" title='std::basic_string::operator=' data-ref="_ZNSt12basic_stringaSERKSbIT_T0_T1_E">=</a> <a class="member" href="#_ZN11ThemeLoader11getFilePathERKSs" title='ThemeLoader::getFilePath' data-ref="_ZN11ThemeLoader11getFilePathERKSs">getFilePath</a>( <a class="local col5 ref" href="#125mainBmp" title='mainBmp' data-ref="125mainBmp">mainBmp</a> );</td></tr>
+<tr><th id="294">294</th><td></td></tr>
+<tr><th id="295">295</th><td>            <i>// Look for winamp2.xml in the resource path</i></td></tr>
+<tr><th id="296">296</th><td>            <a class="type" href="../../../../../include/c++/4.8/bits/stl_list.h.html#std::list" title='std::list' data-ref="std::list">list</a>&lt;<a class="typedef" href="../../../../../include/c++/4.8/bits/stringfwd.h.html#std::string" title='std::string' data-type='basic_string&lt;char&gt;' data-ref="std::string">string</a>&gt; <dfn class="local col6 decl" id="126resPath" title='resPath' data-type='list&lt;string&gt;' data-ref="126resPath">resPath</dfn> = <a class="ref fake" href="../../../../../include/c++/4.8/bits/stl_list.h.html#_ZNSt4listC1ERKSt4listIT_T0_E" title='std::list::list&lt;_Tp, _Alloc&gt;' data-ref="_ZNSt4listC1ERKSt4listIT_T0_E"></a><a class="local col4 ref" href="#124pOsFactory" title='pOsFactory' data-ref="124pOsFactory">pOsFactory</a>-&gt;<a class="virtual ref" href="os_factory.hpp.html#_ZNK9OSFactory15getResourcePathEv" title='OSFactory::getResourcePath' data-ref="_ZNK9OSFactory15getResourcePathEv">getResourcePath</a>();</td></tr>
+<tr><th id="297">297</th><td>            <a class="type" href="../../../../../include/c++/4.8/bits/stl_list.h.html#std::list" title='std::list' data-ref="std::list">list</a>&lt;<a class="typedef" href="../../../../../include/c++/4.8/bits/stringfwd.h.html#std::string" title='std::string' data-type='basic_string&lt;char&gt;' data-ref="std::string">string</a>&gt;::<a class="typedef" href="../../../../../include/c++/4.8/bits/stl_list.h.html#std::list{std::basic_string{char},std::allocator{std::basic_string{char}}}::const_iterator" title='std::list&lt;std::basic_string&lt;char&gt;, std::allocator&lt;std::basic_string&lt;char&gt; &gt; &gt;::const_iterator' data-type='_List_const_iterator&lt;std::basic_string&lt;char&gt; &gt;' data-ref="std::list{std::basic_string{char},std::allocator{std::basic_string{char}}}::const_iterator">const_iterator</a> <a class="ref fake" href="../../../../../include/c++/4.8/bits/stl_list.h.html#_ZNSt20_List_const_iteratorC1Ev" title='std::_List_const_iterator::_List_const_iterator&lt;_Tp&gt;' data-ref="_ZNSt20_List_const_iteratorC1Ev"></a><dfn class="local col7 decl" id="127it" title='it' data-type='list&lt;string&gt;::const_iterator' data-ref="127it">it</dfn>;</td></tr>
+<tr><th id="298">298</th><td>            <b>for</b>( <a class="local col7 ref" href="#127it" title='it' data-ref="127it">it</a> <a class="ref" href="../../../../../include/c++/4.8/bits/stl_list.h.html#200" title='std::_List_const_iterator&lt;std::basic_string&lt;char&gt; &gt;::operator=' data-ref="_ZNSt20_List_const_iteratorISsEaSERKS0_">=</a> <a class="ref fake" href="../../../../../include/c++/4.8/bits/stl_list.h.html#_ZNSt20_List_const_iteratorC1ERKSt14_List_iteratorIT_E" title='std::_List_const_iterator::_List_const_iterator&lt;_Tp&gt;' data-ref="_ZNSt20_List_const_iteratorC1ERKSt14_List_iteratorIT_E"></a><a class="local col6 ref" href="#126resPath" title='resPath' data-ref="126resPath">resPath</a>.<a class="ref" href="../../../../../include/c++/4.8/bits/stl_list.h.html#_ZNSt4list5beginEv" title='std::list::begin' data-ref="_ZNSt4list5beginEv">begin</a>(); <a class="local col7 ref" href="#127it" title='it' data-ref="127it">it</a> <a class="ref" href="../../../../../include/c++/4.8/bits/stl_list.h.html#_ZNKSt20_List_const_iteratorneERKSt20_List_const_iteratorIT_E" title='std::_List_const_iterator::operator!=' data-ref="_ZNKSt20_List_const_iteratorneERKSt20_List_const_iteratorIT_E">!=</a> <a class="ref fake" href="../../../../../include/c++/4.8/bits/stl_list.h.html#_ZNSt20_List_const_iteratorC1ERKSt14_List_iteratorIT_E" title='std::_List_const_iterator::_List_const_iterator&lt;_Tp&gt;' data-ref="_ZNSt20_List_const_iteratorC1ERKSt14_List_iteratorIT_E"></a><a class="local col6 ref" href="#126resPath" title='resPath' data-ref="126resPath">resPath</a>.<a class="ref" href="../../../../../include/c++/4.8/bits/stl_list.h.html#_ZNSt4list3endEv" title='std::list::end' data-ref="_ZNSt4list3endEv">end</a>(); <a class="ref" href="../../../../../include/c++/4.8/bits/stl_list.h.html#_ZNSt20_List_const_iteratorppEv" title='std::_List_const_iterator::operator++' data-ref="_ZNSt20_List_const_iteratorppEv">++</a><a class="local col7 ref" href="#127it" title='it' data-ref="127it">it</a> )</td></tr>
+<tr><th id="299">299</th><td>            {</td></tr>
+<tr><th id="300">300</th><td>                <b>if</b>( <a class="member" href="#_ZN11ThemeLoader8findFileERKSsS1_RSs" title='ThemeLoader::findFile' data-ref="_ZN11ThemeLoader8findFileERKSsS1_RSs">findFile</a>( <a class="ref" href="../../../../../include/c++/4.8/bits/stl_list.h.html#_ZNKSt20_List_const_iteratordeEv" title='std::_List_const_iterator::operator*' data-ref="_ZNKSt20_List_const_iteratordeEv">*</a><a class="local col7 ref" href="#127it" title='it' data-ref="127it">it</a>, <a class="macro" href="#64" title="&quot;winamp2.xml&quot;" data-ref="_M/WINAMP2_XML_FILE">WINAMP2_XML_FILE</a>, <span class='refarg'><a class="local col3 ref" href="#123xmlFile" title='xmlFile' data-ref="123xmlFile">xmlFile</a></span> ) )</td></tr>
+<tr><th id="301">301</th><td>                    <b>break</b>;</td></tr>
+<tr><th id="302">302</th><td>            }</td></tr>
+<tr><th id="303">303</th><td>        }</td></tr>
+<tr><th id="304">304</th><td>    }</td></tr>
+<tr><th id="305">305</th><td></td></tr>
+<tr><th id="306">306</th><td>    <b>if</b>( !<a class="local col3 ref" href="#123xmlFile" title='xmlFile' data-ref="123xmlFile">xmlFile</a>.<a class="ref" href="../../../../../include/c++/4.8/bits/basic_string.h.html#_ZNKSt12basic_string5emptyEv" title='std::basic_string::empty' data-ref="_ZNKSt12basic_string5emptyEv">empty</a>() )</td></tr>
+<tr><th id="307">307</th><td>    {</td></tr>
+<tr><th id="308">308</th><td>        <i>// Parse the XML file</i></td></tr>
+<tr><th id="309">309</th><td>        <b>if</b> (! <a class="member" href="#_ZN11ThemeLoader5parseERKSsS1_" title='ThemeLoader::parse' data-ref="_ZN11ThemeLoader5parseERKSsS1_">parse</a>( <a class="local col2 ref" href="#122path" title='path' data-ref="122path">path</a>, <a class="local col3 ref" href="#123xmlFile" title='xmlFile' data-ref="123xmlFile">xmlFile</a> ) )</td></tr>
+<tr><th id="310">310</th><td>        {</td></tr>
+<tr><th id="311">311</th><td>            <a class="macro" href="../../../../include/vlc_messages.h.html#73" title="vlc_Log( ((vlc_object_t *)(getIntf()) + 0 * __builtin_offsetof(__typeof__(*(getIntf())), psz_object_type)), VLC_MSG_ERR, skins2, &quot;error while parsing %s&quot;, xmlFile.c_str() )" data-ref="_M/msg_Err">msg_Err</a>( getIntf(), <q>"error while parsing %s"</q>, xmlFile.c_str() );</td></tr>
+<tr><th id="312">312</th><td>            <a class="local col9 ref" href="#119result" title='result' data-ref="119result">result</a> = <b>false</b>;</td></tr>
+<tr><th id="313">313</th><td>        }</td></tr>
+<tr><th id="314">314</th><td>    }</td></tr>
+<tr><th id="315">315</th><td>    <b>else</b></td></tr>
+<tr><th id="316">316</th><td>    {</td></tr>
+<tr><th id="317">317</th><td>        <a class="macro" href="../../../../include/vlc_messages.h.html#73" title="vlc_Log( ((vlc_object_t *)(getIntf()) + 0 * __builtin_offsetof(__typeof__(*(getIntf())), psz_object_type)), VLC_MSG_ERR, skins2, &quot;no XML found in theme %s&quot;, fileName.c_str() )" data-ref="_M/msg_Err">msg_Err</a>( getIntf(), <q>"no XML found in theme %s"</q>, fileName.c_str() );</td></tr>
+<tr><th id="318">318</th><td>        <a class="local col9 ref" href="#119result" title='result' data-ref="119result">result</a> = <b>false</b>;</td></tr>
+<tr><th id="319">319</th><td>    }</td></tr>
+<tr><th id="320">320</th><td></td></tr>
+<tr><th id="321">321</th><td>    <i>// Clean-up</i></td></tr>
+<tr><th id="322">322</th><td>    <a class="member" href="#_ZN11ThemeLoader15deleteTempFilesERKSs" title='ThemeLoader::deleteTempFiles' data-ref="_ZN11ThemeLoader15deleteTempFilesERKSs">deleteTempFiles</a>( <a class="local col1 ref" href="#121tempPath" title='tempPath' data-ref="121tempPath">tempPath</a> );</td></tr>
+<tr><th id="323">323</th><td>    <b>return</b> <a class="local col9 ref" href="#119result" title='result' data-ref="119result">result</a>;</td></tr>
+<tr><th id="324">324</th><td>}</td></tr>
+<tr><th id="325">325</th><td></td></tr>
+<tr><th id="326">326</th><td></td></tr>
+<tr><th id="327">327</th><td><em>void</em> <a class="type" href="theme_loader.hpp.html#ThemeLoader" title='ThemeLoader' data-ref="ThemeLoader">ThemeLoader</a>::<dfn class="decl def" id="_ZN11ThemeLoader15deleteTempFilesERKSs" title='ThemeLoader::deleteTempFiles' data-ref="_ZN11ThemeLoader15deleteTempFilesERKSs">deleteTempFiles</dfn>( <em>const</em> <a class="typedef" href="../../../../../include/c++/4.8/bits/stringfwd.h.html#std::string" title='std::string' data-type='basic_string&lt;char&gt;' data-ref="std::string">string</a> &amp;<dfn class="local col8 decl" id="128path" title='path' data-type='const string &amp;' data-ref="128path">path</dfn> )</td></tr>
+<tr><th id="328">328</th><td>{</td></tr>
+<tr><th id="329">329</th><td>    <a class="type" href="os_factory.hpp.html#OSFactory" title='OSFactory' data-ref="OSFactory">OSFactory</a>::<a class="ref" href="os_factory.hpp.html#_ZN9OSFactory8instanceEP13intf_thread_t" title='OSFactory::instance' data-ref="_ZN9OSFactory8instanceEP13intf_thread_t">instance</a>( <a class="member" href="skin_common.hpp.html#_ZNK10SkinObject7getIntfEv" title='SkinObject::getIntf' data-ref="_ZNK10SkinObject7getIntfEv">getIntf</a>() )-&gt;<a class="virtual ref" href="os_factory.hpp.html#_ZN9OSFactory5rmDirERKSs" title='OSFactory::rmDir' data-ref="_ZN9OSFactory5rmDirERKSs">rmDir</a>( <a class="local col8 ref" href="#128path" title='path' data-ref="128path">path</a> );</td></tr>
+<tr><th id="330">330</th><td>}</td></tr>
+<tr><th id="331">331</th><td><u>#<span data-ppcond="102">endif</span> // HAVE_ZLIB_H</u></td></tr>
+<tr><th id="332">332</th><td></td></tr>
+<tr><th id="333">333</th><td></td></tr>
+<tr><th id="334">334</th><td><em>bool</em> <a class="type" href="theme_loader.hpp.html#ThemeLoader" title='ThemeLoader' data-ref="ThemeLoader">ThemeLoader</a>::<dfn class="decl def" id="_ZN11ThemeLoader5parseERKSsS1_" title='ThemeLoader::parse' data-ref="_ZN11ThemeLoader5parseERKSsS1_">parse</dfn>( <em>const</em> <a class="typedef" href="../../../../../include/c++/4.8/bits/stringfwd.h.html#std::string" title='std::string' data-type='basic_string&lt;char&gt;' data-ref="std::string">string</a> &amp;<dfn class="local col9 decl" id="129path" title='path' data-type='const string &amp;' data-ref="129path">path</dfn>, <em>const</em> <a class="typedef" href="../../../../../include/c++/4.8/bits/stringfwd.h.html#std::string" title='std::string' data-type='basic_string&lt;char&gt;' data-ref="std::string">string</a> &amp;<dfn class="local col0 decl" id="130xmlFile" title='xmlFile' data-type='const string &amp;' data-ref="130xmlFile">xmlFile</dfn> )</td></tr>
+<tr><th id="335">335</th><td>{</td></tr>
+<tr><th id="336">336</th><td>    <i>// File loaded</i></td></tr>
+<tr><th id="337">337</th><td>    <a class="macro" href="../../../../include/vlc_messages.h.html#77" title="vlc_Log( ((vlc_object_t *)(getIntf()) + 0 * __builtin_offsetof(__typeof__(*(getIntf())), psz_object_type)), VLC_MSG_DBG, skins2, &quot;using skin file: %s&quot;, xmlFile.c_str() )" data-ref="_M/msg_Dbg">msg_Dbg</a>( getIntf(), <q>"using skin file: %s"</q>, xmlFile.c_str() );</td></tr>
+<tr><th id="338">338</th><td></td></tr>
+<tr><th id="339">339</th><td>    <i>// Start the parser</i></td></tr>
+<tr><th id="340">340</th><td>    <a class="type" href="../parser/skin_parser.hpp.html#SkinParser" title='SkinParser' data-ref="SkinParser">SkinParser</a> <dfn class="local col1 decl" id="131parser" title='parser' data-type='SkinParser' data-ref="131parser">parser</dfn><a class="ref" href="../parser/skin_parser.hpp.html#_ZN10SkinParserC1EP13intf_thread_tRKSsS3_P11BuilderData" title='SkinParser::SkinParser' data-ref="_ZN10SkinParserC1EP13intf_thread_tRKSsS3_P11BuilderData">(</a> <a class="member" href="skin_common.hpp.html#_ZNK10SkinObject7getIntfEv" title='SkinObject::getIntf' data-ref="_ZNK10SkinObject7getIntfEv">getIntf</a>(), <a class="local col0 ref" href="#130xmlFile" title='xmlFile' data-ref="130xmlFile">xmlFile</a>, <a class="local col9 ref" href="#129path" title='path' data-ref="129path">path</a> );</td></tr>
+<tr><th id="341">341</th><td>    <b>if</b>( ! <a class="local col1 ref" href="#131parser" title='parser' data-ref="131parser">parser</a>.<a class="ref" href="../parser/xmlparser.hpp.html#_ZN9XMLParser5parseEv" title='XMLParser::parse' data-ref="_ZN9XMLParser5parseEv">parse</a>() )</td></tr>
+<tr><th id="342">342</th><td>        <b>return</b> <b>false</b>;</td></tr>
+<tr><th id="343">343</th><td></td></tr>
+<tr><th id="344">344</th><td>    <i>// Build and store the theme</i></td></tr>
+<tr><th id="345">345</th><td>    <a class="type" href="../parser/builder.hpp.html#Builder" title='Builder' data-ref="Builder">Builder</a> <dfn class="local col2 decl" id="132builder" title='builder' data-type='Builder' data-ref="132builder">builder</dfn><a class="ref" href="../parser/builder.hpp.html#_ZN7BuilderC1EP13intf_thread_tRK11BuilderDataRKSs" title='Builder::Builder' data-ref="_ZN7BuilderC1EP13intf_thread_tRK11BuilderDataRKSs">(</a> <a class="member" href="skin_common.hpp.html#_ZNK10SkinObject7getIntfEv" title='SkinObject::getIntf' data-ref="_ZNK10SkinObject7getIntfEv">getIntf</a>(), <a class="local col1 ref" href="#131parser" title='parser' data-ref="131parser">parser</a>.<a class="ref" href="../parser/skin_parser.hpp.html#_ZNK10SkinParser7getDataEv" title='SkinParser::getData' data-ref="_ZNK10SkinParser7getDataEv">getData</a>(), <a class="local col9 ref" href="#129path" title='path' data-ref="129path">path</a> );</td></tr>
+<tr><th id="346">346</th><td>    <a class="member" href="skin_common.hpp.html#_ZNK10SkinObject7getIntfEv" title='SkinObject::getIntf' data-ref="_ZNK10SkinObject7getIntfEv">getIntf</a>()-&gt;<a class="ref" href="../../../../include/vlc_interface.h.html#intf_thread_t::p_sys" title='intf_thread_t::p_sys' data-ref="intf_thread_t::p_sys">p_sys</a>-&gt;<a class="ref" href="skin_common.hpp.html#intf_sys_t::p_theme" title='intf_sys_t::p_theme' data-ref="intf_sys_t::p_theme">p_theme</a> = <a class="local col2 ref" href="#132builder" title='builder' data-ref="132builder">builder</a>.<a class="ref" href="../parser/builder.hpp.html#_ZN7Builder5buildEv" title='Builder::build' data-ref="_ZN7Builder5buildEv">build</a>();</td></tr>
+<tr><th id="347">347</th><td></td></tr>
+<tr><th id="348">348</th><td>    <b>return</b> <b>true</b>;</td></tr>
+<tr><th id="349">349</th><td>}</td></tr>
+<tr><th id="350">350</th><td></td></tr>
+<tr><th id="351">351</th><td></td></tr>
+<tr><th id="352">352</th><td><a class="typedef" href="../../../../../include/c++/4.8/bits/stringfwd.h.html#std::string" title='std::string' data-type='basic_string&lt;char&gt;' data-ref="std::string">string</a> <a class="type" href="theme_loader.hpp.html#ThemeLoader" title='ThemeLoader' data-ref="ThemeLoader">ThemeLoader</a>::<dfn class="decl def" id="_ZN11ThemeLoader11getFilePathERKSs" title='ThemeLoader::getFilePath' data-ref="_ZN11ThemeLoader11getFilePathERKSs">getFilePath</dfn>( <em>const</em> <a class="typedef" href="../../../../../include/c++/4.8/bits/stringfwd.h.html#std::string" title='std::string' data-type='basic_string&lt;char&gt;' data-ref="std::string">string</a> &amp;<dfn class="local col3 decl" id="133rFullPath" title='rFullPath' data-type='const string &amp;' data-ref="133rFullPath">rFullPath</dfn> )</td></tr>
+<tr><th id="353">353</th><td>{</td></tr>
+<tr><th id="354">354</th><td>    <a class="type" href="os_factory.hpp.html#OSFactory" title='OSFactory' data-ref="OSFactory">OSFactory</a> *<dfn class="local col4 decl" id="134pOsFactory" title='pOsFactory' data-type='OSFactory *' data-ref="134pOsFactory">pOsFactory</dfn> = <a class="type" href="os_factory.hpp.html#OSFactory" title='OSFactory' data-ref="OSFactory">OSFactory</a>::<a class="ref" href="os_factory.hpp.html#_ZN9OSFactory8instanceEP13intf_thread_t" title='OSFactory::instance' data-ref="_ZN9OSFactory8instanceEP13intf_thread_t">instance</a>( <a class="member" href="skin_common.hpp.html#_ZNK10SkinObject7getIntfEv" title='SkinObject::getIntf' data-ref="_ZNK10SkinObject7getIntfEv">getIntf</a>() );</td></tr>
+<tr><th id="355">355</th><td>    <em>const</em> <a class="typedef" href="../../../../../include/c++/4.8/bits/stringfwd.h.html#std::string" title='std::string' data-type='basic_string&lt;char&gt;' data-ref="std::string">string</a> &amp;<dfn class="local col5 decl" id="135sep" title='sep' data-type='const string &amp;' data-ref="135sep">sep</dfn> = <a class="local col4 ref" href="#134pOsFactory" title='pOsFactory' data-ref="134pOsFactory">pOsFactory</a>-&gt;<a class="virtual ref" href="os_factory.hpp.html#_ZNK9OSFactory15getDirSeparatorEv" title='OSFactory::getDirSeparator' data-ref="_ZNK9OSFactory15getDirSeparatorEv">getDirSeparator</a>();</td></tr>
+<tr><th id="356">356</th><td>    <i>// Find the last separator ('/' or '\')</i></td></tr>
+<tr><th id="357">357</th><td>    <a class="typedef" href="../../../../../include/c++/4.8/bits/stringfwd.h.html#std::string" title='std::string' data-type='basic_string&lt;char&gt;' data-ref="std::string">string</a>::<a class="typedef" href="../../../../../include/c++/4.8/bits/basic_string.h.html#std::basic_string{char,std::char_traits{char},std::allocator{char}}::size_type" title='std::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;::size_type' data-type='typename _CharT_alloc_type::size_type' data-ref="std::basic_string{char,std::char_traits{char},std::allocator{char}}::size_type">size_type</a> <dfn class="local col6 decl" id="136p" title='p' data-type='string::size_type' data-ref="136p">p</dfn> = <a class="local col3 ref" href="#133rFullPath" title='rFullPath' data-ref="133rFullPath">rFullPath</a>.<a class="ref" href="../../../../../include/c++/4.8/bits/basic_string.h.html#_ZNKSt12basic_string5rfindERKSbIT_T0_T1_ENS2_6rebindIS0_E5other9size_typeE" title='std::basic_string::rfind' data-ref="_ZNKSt12basic_string5rfindERKSbIT_T0_T1_ENS2_6rebindIS0_E5other9size_typeE">rfind</a>( <a class="local col5 ref" href="#135sep" title='sep' data-ref="135sep">sep</a>, <a class="local col3 ref" href="#133rFullPath" title='rFullPath' data-ref="133rFullPath">rFullPath</a>.<a class="ref" href="../../../../../include/c++/4.8/bits/basic_string.h.html#_ZNKSt12basic_string4sizeEv" title='std::basic_string::size' data-ref="_ZNKSt12basic_string4sizeEv">size</a>() );</td></tr>
+<tr><th id="358">358</th><td>    <a class="typedef" href="../../../../../include/c++/4.8/bits/stringfwd.h.html#std::string" title='std::string' data-type='basic_string&lt;char&gt;' data-ref="std::string">string</a> <a class="ref fake" href="../../../../../include/c++/4.8/bits/basic_string.h.html#_ZNSt12basic_stringC1Ev" title='std::basic_string::basic_string&lt;_CharT, _Traits, _Alloc&gt;' data-ref="_ZNSt12basic_stringC1Ev"></a><dfn class="local col7 decl" id="137basePath" title='basePath' data-type='string' data-ref="137basePath">basePath</dfn>;</td></tr>
+<tr><th id="359">359</th><td>    <b>if</b>( <a class="local col6 ref" href="#136p" title='p' data-ref="136p">p</a> != <a class="typedef" href="../../../../../include/c++/4.8/bits/stringfwd.h.html#std::string" title='std::string' data-type='basic_string&lt;char&gt;' data-ref="std::string">string</a>::<a class="ref" href="../../../../../include/c++/4.8/bits/basic_string.h.html#_ZNSt12basic_string4nposE" title='std::basic_string::npos' data-ref="_ZNSt12basic_string4nposE">npos</a> )</td></tr>
+<tr><th id="360">360</th><td>    {</td></tr>
+<tr><th id="361">361</th><td>        <b>if</b>( <a class="local col6 ref" href="#136p" title='p' data-ref="136p">p</a> &lt; <a class="local col3 ref" href="#133rFullPath" title='rFullPath' data-ref="133rFullPath">rFullPath</a>.<a class="ref" href="../../../../../include/c++/4.8/bits/basic_string.h.html#_ZNKSt12basic_string4sizeEv" title='std::basic_string::size' data-ref="_ZNKSt12basic_string4sizeEv">size</a>() - <var>1</var>)</td></tr>
+<tr><th id="362">362</th><td>        {</td></tr>
+<tr><th id="363">363</th><td>            <a class="local col7 ref" href="#137basePath" title='basePath' data-ref="137basePath">basePath</a> <a class="ref" href="../../../../../include/c++/4.8/bits/basic_string.h.html#_ZNSt12basic_stringaSERKSbIT_T0_T1_E" title='std::basic_string::operator=' data-ref="_ZNSt12basic_stringaSERKSbIT_T0_T1_E">=</a> <a class="local col3 ref" href="#133rFullPath" title='rFullPath' data-ref="133rFullPath">rFullPath</a>.<a class="ref" href="../../../../../include/c++/4.8/bits/basic_string.h.html#_ZNKSt12basic_string6substrENT1_6rebindIT_E5other9size_typeES3_" title='std::basic_string::substr' data-ref="_ZNKSt12basic_string6substrENT1_6rebindIT_E5other9size_typeES3_">substr</a>( <var>0</var>, <a class="local col6 ref" href="#136p" title='p' data-ref="136p">p</a> );</td></tr>
+<tr><th id="364">364</th><td>        }</td></tr>
+<tr><th id="365">365</th><td>        <b>else</b></td></tr>
+<tr><th id="366">366</th><td>        {</td></tr>
+<tr><th id="367">367</th><td>            <a class="local col7 ref" href="#137basePath" title='basePath' data-ref="137basePath">basePath</a> <a class="ref" href="../../../../../include/c++/4.8/bits/basic_string.h.html#_ZNSt12basic_stringaSERKSbIT_T0_T1_E" title='std::basic_string::operator=' data-ref="_ZNSt12basic_stringaSERKSbIT_T0_T1_E">=</a> <a class="local col3 ref" href="#133rFullPath" title='rFullPath' data-ref="133rFullPath">rFullPath</a>;</td></tr>
+<tr><th id="368">368</th><td>        }</td></tr>
+<tr><th id="369">369</th><td>    }</td></tr>
+<tr><th id="370">370</th><td>    <b>return</b> <a class="local col7 ref" href="#137basePath" title='basePath' data-ref="137basePath">basePath</a>;</td></tr>
+<tr><th id="371">371</th><td>}</td></tr>
+<tr><th id="372">372</th><td></td></tr>
+<tr><th id="373">373</th><td></td></tr>
+<tr><th id="374">374</th><td><a class="typedef" href="../../../../../include/c++/4.8/bits/stringfwd.h.html#std::string" title='std::string' data-type='basic_string&lt;char&gt;' data-ref="std::string">string</a> <a class="type" href="theme_loader.hpp.html#ThemeLoader" title='ThemeLoader' data-ref="ThemeLoader">ThemeLoader</a>::<dfn class="decl def" id="_ZN11ThemeLoader16fixDirSeparatorsERKSs" title='ThemeLoader::fixDirSeparators' data-ref="_ZN11ThemeLoader16fixDirSeparatorsERKSs">fixDirSeparators</dfn>( <em>const</em> <a class="typedef" href="../../../../../include/c++/4.8/bits/stringfwd.h.html#std::string" title='std::string' data-type='basic_string&lt;char&gt;' data-ref="std::string">string</a> &amp;<dfn class="local col8 decl" id="138rPath" title='rPath' data-type='const string &amp;' data-ref="138rPath">rPath</dfn> )</td></tr>
+<tr><th id="375">375</th><td>{</td></tr>
+<tr><th id="376">376</th><td>    <a class="type" href="os_factory.hpp.html#OSFactory" title='OSFactory' data-ref="OSFactory">OSFactory</a> *<dfn class="local col9 decl" id="139pOsFactory" title='pOsFactory' data-type='OSFactory *' data-ref="139pOsFactory">pOsFactory</dfn> = <a class="type" href="os_factory.hpp.html#OSFactory" title='OSFactory' data-ref="OSFactory">OSFactory</a>::<a class="ref" href="os_factory.hpp.html#_ZN9OSFactory8instanceEP13intf_thread_t" title='OSFactory::instance' data-ref="_ZN9OSFactory8instanceEP13intf_thread_t">instance</a>( <a class="member" href="skin_common.hpp.html#_ZNK10SkinObject7getIntfEv" title='SkinObject::getIntf' data-ref="_ZNK10SkinObject7getIntfEv">getIntf</a>() );</td></tr>
+<tr><th id="377">377</th><td>    <em>const</em> <a class="typedef" href="../../../../../include/c++/4.8/bits/stringfwd.h.html#std::string" title='std::string' data-type='basic_string&lt;char&gt;' data-ref="std::string">string</a> &amp;<dfn class="local col0 decl" id="140sep" title='sep' data-type='const string &amp;' data-ref="140sep">sep</dfn> = <a class="local col9 ref" href="#139pOsFactory" title='pOsFactory' data-ref="139pOsFactory">pOsFactory</a>-&gt;<a class="virtual ref" href="os_factory.hpp.html#_ZNK9OSFactory15getDirSeparatorEv" title='OSFactory::getDirSeparator' data-ref="_ZNK9OSFactory15getDirSeparatorEv">getDirSeparator</a>();</td></tr>
+<tr><th id="378">378</th><td>    <a class="typedef" href="../../../../../include/c++/4.8/bits/stringfwd.h.html#std::string" title='std::string' data-type='basic_string&lt;char&gt;' data-ref="std::string">string</a>::<a class="typedef" href="../../../../../include/c++/4.8/bits/basic_string.h.html#std::basic_string{char,std::char_traits{char},std::allocator{char}}::size_type" title='std::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;::size_type' data-type='typename _CharT_alloc_type::size_type' data-ref="std::basic_string{char,std::char_traits{char},std::allocator{char}}::size_type">size_type</a> <dfn class="local col1 decl" id="141p" title='p' data-type='string::size_type' data-ref="141p">p</dfn> = <a class="local col8 ref" href="#138rPath" title='rPath' data-ref="138rPath">rPath</a>.<a class="ref" href="../../../../../include/c++/4.8/bits/basic_string.h.html#_ZNKSt12basic_string4findEPKT_NT1_6rebindIS0_E5other9size_typeE" title='std::basic_string::find' data-ref="_ZNKSt12basic_string4findEPKT_NT1_6rebindIS0_E5other9size_typeE">find</a>( <q>"/"</q>, <var>0</var> );</td></tr>
+<tr><th id="379">379</th><td>    <a class="typedef" href="../../../../../include/c++/4.8/bits/stringfwd.h.html#std::string" title='std::string' data-type='basic_string&lt;char&gt;' data-ref="std::string">string</a> <dfn class="local col2 decl" id="142newPath" title='newPath' data-type='string' data-ref="142newPath">newPath</dfn> = <a class="ref fake" href="../../../../../include/c++/4.8/bits/basic_string.h.html#_ZNSt12basic_stringC1ERKSbIT_T0_T1_E" title='std::basic_string::basic_string&lt;_CharT, _Traits, _Alloc&gt;' data-ref="_ZNSt12basic_stringC1ERKSbIT_T0_T1_E"></a><a class="local col8 ref" href="#138rPath" title='rPath' data-ref="138rPath">rPath</a>;</td></tr>
+<tr><th id="380">380</th><td>    <b>while</b>( <a class="local col1 ref" href="#141p" title='p' data-ref="141p">p</a> != <a class="typedef" href="../../../../../include/c++/4.8/bits/stringfwd.h.html#std::string" title='std::string' data-type='basic_string&lt;char&gt;' data-ref="std::string">string</a>::<a class="ref" href="../../../../../include/c++/4.8/bits/basic_string.h.html#_ZNSt12basic_string4nposE" title='std::basic_string::npos' data-ref="_ZNSt12basic_string4nposE">npos</a> )</td></tr>
+<tr><th id="381">381</th><td>    {</td></tr>
+<tr><th id="382">382</th><td>        <a class="local col2 ref" href="#142newPath" title='newPath' data-ref="142newPath">newPath</a> <a class="ref" href="../../../../../include/c++/4.8/bits/basic_string.h.html#_ZNSt12basic_stringaSERKSbIT_T0_T1_E" title='std::basic_string::operator=' data-ref="_ZNSt12basic_stringaSERKSbIT_T0_T1_E">=</a> <a class="local col2 ref" href="#142newPath" title='newPath' data-ref="142newPath">newPath</a>.<a class="ref" href="../../../../../include/c++/4.8/bits/basic_string.h.html#_ZNSt12basic_string7replaceENT1_6rebindIT_E5other9size_typeES3_RKSbIS2_T0_S0_E" title='std::basic_string::replace' data-ref="_ZNSt12basic_string7replaceENT1_6rebindIT_E5other9size_typeES3_RKSbIS2_T0_S0_E">replace</a>( <a class="local col1 ref" href="#141p" title='p' data-ref="141p">p</a>, <var>1</var>, <a class="local col0 ref" href="#140sep" title='sep' data-ref="140sep">sep</a> );</td></tr>
+<tr><th id="383">383</th><td>        <a class="local col1 ref" href="#141p" title='p' data-ref="141p">p</a> = <a class="local col2 ref" href="#142newPath" title='newPath' data-ref="142newPath">newPath</a>.<a class="ref" href="../../../../../include/c++/4.8/bits/basic_string.h.html#_ZNKSt12basic_string4findEPKT_NT1_6rebindIS0_E5other9size_typeE" title='std::basic_string::find' data-ref="_ZNKSt12basic_string4findEPKT_NT1_6rebindIS0_E5other9size_typeE">find</a>( <q>"/"</q>, <a class="local col1 ref" href="#141p" title='p' data-ref="141p">p</a> + <var>1</var> );</td></tr>
+<tr><th id="384">384</th><td>    }</td></tr>
+<tr><th id="385">385</th><td>    <b>return</b> <a class="local col2 ref" href="#142newPath" title='newPath' data-ref="142newPath">newPath</a>;</td></tr>
+<tr><th id="386">386</th><td>}</td></tr>
+<tr><th id="387">387</th><td></td></tr>
+<tr><th id="388">388</th><td></td></tr>
+<tr><th id="389">389</th><td><em>bool</em> <a class="type" href="theme_loader.hpp.html#ThemeLoader" title='ThemeLoader' data-ref="ThemeLoader">ThemeLoader</a>::<dfn class="decl def" id="_ZN11ThemeLoader8findFileERKSsS1_RSs" title='ThemeLoader::findFile' data-ref="_ZN11ThemeLoader8findFileERKSsS1_RSs">findFile</dfn>( <em>const</em> <a class="typedef" href="../../../../../include/c++/4.8/bits/stringfwd.h.html#std::string" title='std::string' data-type='basic_string&lt;char&gt;' data-ref="std::string">string</a> &amp;<dfn class="local col3 decl" id="143rootDir" title='rootDir' data-type='const string &amp;' data-ref="143rootDir">rootDir</dfn>, <em>const</em> <a class="typedef" href="../../../../../include/c++/4.8/bits/stringfwd.h.html#std::string" title='std::string' data-type='basic_string&lt;char&gt;' data-ref="std::string">string</a> &amp;<dfn class="local col4 decl" id="144rFileName" title='rFileName' data-type='const string &amp;' data-ref="144rFileName">rFileName</dfn>,</td></tr>
+<tr><th id="390">390</th><td>                            <a class="typedef" href="../../../../../include/c++/4.8/bits/stringfwd.h.html#std::string" title='std::string' data-type='basic_string&lt;char&gt;' data-ref="std::string">string</a> &amp;<dfn class="local col5 decl" id="145themeFilePath" title='themeFilePath' data-type='string &amp;' data-ref="145themeFilePath">themeFilePath</dfn> )</td></tr>
+<tr><th id="391">391</th><td>{</td></tr>
+<tr><th id="392">392</th><td>    <i>// Path separator</i></td></tr>
+<tr><th id="393">393</th><td>    <em>const</em> <a class="typedef" href="../../../../../include/c++/4.8/bits/stringfwd.h.html#std::string" title='std::string' data-type='basic_string&lt;char&gt;' data-ref="std::string">string</a> &amp;<dfn class="local col6 decl" id="146sep" title='sep' data-type='const string &amp;' data-ref="146sep">sep</dfn> = <a class="type" href="os_factory.hpp.html#OSFactory" title='OSFactory' data-ref="OSFactory">OSFactory</a>::<a class="ref" href="os_factory.hpp.html#_ZN9OSFactory8instanceEP13intf_thread_t" title='OSFactory::instance' data-ref="_ZN9OSFactory8instanceEP13intf_thread_t">instance</a>( <a class="member" href="skin_common.hpp.html#_ZNK10SkinObject7getIntfEv" title='SkinObject::getIntf' data-ref="_ZNK10SkinObject7getIntfEv">getIntf</a>() )-&gt;<a class="virtual ref" href="os_factory.hpp.html#_ZNK9OSFactory15getDirSeparatorEv" title='OSFactory::getDirSeparator' data-ref="_ZNK9OSFactory15getDirSeparatorEv">getDirSeparator</a>();</td></tr>
+<tr><th id="394">394</th><td></td></tr>
+<tr><th id="395">395</th><td>    <em>const</em> <em>char</em> *<dfn class="local col7 decl" id="147pszDirContent" title='pszDirContent' data-type='const char *' data-ref="147pszDirContent">pszDirContent</dfn>;</td></tr>
+<tr><th id="396">396</th><td></td></tr>
+<tr><th id="397">397</th><td>    <i>// Open the dir</i></td></tr>
+<tr><th id="398">398</th><td>    <a class="typedef" href="../../../../../include/dirent.h.html#DIR" title='DIR' data-type='struct __dirstream' data-ref="DIR">DIR</a> *<dfn class="local col8 decl" id="148pCurrDir" title='pCurrDir' data-type='DIR *' data-ref="148pCurrDir">pCurrDir</dfn> = <a class="ref" href="../../../../include/vlc_fs.h.html#vlc_opendir" title='vlc_opendir' data-ref="vlc_opendir">vlc_opendir</a>( <a class="local col3 ref" href="#143rootDir" title='rootDir' data-ref="143rootDir">rootDir</a>.<a class="ref" href="../../../../../include/c++/4.8/bits/basic_string.h.html#_ZNKSt12basic_string5c_strEv" title='std::basic_string::c_str' data-ref="_ZNKSt12basic_string5c_strEv">c_str</a>() );</td></tr>
+<tr><th id="399">399</th><td></td></tr>
+<tr><th id="400">400</th><td>    <b>if</b>( <a class="local col8 ref" href="#148pCurrDir" title='pCurrDir' data-ref="148pCurrDir">pCurrDir</a> == <span class="macro" title="__null" data-ref="_M/NULL">NULL</span> )</td></tr>
+<tr><th id="401">401</th><td>    {</td></tr>
+<tr><th id="402">402</th><td>        <i>// An error occurred</i></td></tr>
+<tr><th id="403">403</th><td>        <a class="macro" href="../../../../include/vlc_messages.h.html#77" title="vlc_Log( ((vlc_object_t *)(getIntf()) + 0 * __builtin_offsetof(__typeof__(*(getIntf())), psz_object_type)), VLC_MSG_DBG, skins2, &quot;cannot open directory %s&quot;, rootDir.c_str() )" data-ref="_M/msg_Dbg">msg_Dbg</a>( getIntf(), <q>"cannot open directory %s"</q>, rootDir.c_str() );</td></tr>
+<tr><th id="404">404</th><td>        <b>return</b> <b>false</b>;</td></tr>
+<tr><th id="405">405</th><td>    }</td></tr>
+<tr><th id="406">406</th><td></td></tr>
+<tr><th id="407">407</th><td>    <i>// While we still have entries in the directory</i></td></tr>
+<tr><th id="408">408</th><td>    <b>while</b>( ( <a class="local col7 ref" href="#147pszDirContent" title='pszDirContent' data-ref="147pszDirContent">pszDirContent</a> = <a class="ref" href="../../../../include/vlc_fs.h.html#vlc_readdir" title='vlc_readdir' data-ref="vlc_readdir">vlc_readdir</a>( <a class="local col8 ref" href="#148pCurrDir" title='pCurrDir' data-ref="148pCurrDir">pCurrDir</a> ) ) != <span class="macro" title="__null" data-ref="_M/NULL">NULL</span> )</td></tr>
+<tr><th id="409">409</th><td>    {</td></tr>
+<tr><th id="410">410</th><td>        <a class="typedef" href="../../../../../include/c++/4.8/bits/stringfwd.h.html#std::string" title='std::string' data-type='basic_string&lt;char&gt;' data-ref="std::string">string</a> <dfn class="local col9 decl" id="149newURI" title='newURI' data-type='string' data-ref="149newURI">newURI</dfn> = <a class="local col3 ref" href="#143rootDir" title='rootDir' data-ref="143rootDir">rootDir</a> <a class="ref" href="../../../../../include/c++/4.8/bits/basic_string.h.html#_ZStplRKSbIT_T0_T1_ES4_" title='std::operator+' data-ref="_ZStplRKSbIT_T0_T1_ES4_">+</a> <a class="local col6 ref" href="#146sep" title='sep' data-ref="146sep">sep</a> <a class="ref" href="../../../../../include/c++/4.8/bits/basic_string.h.html#_ZStplRKSbIT_T0_T1_EPKS_" title='std::operator+' data-ref="_ZStplRKSbIT_T0_T1_EPKS_">+</a> <a class="local col7 ref" href="#147pszDirContent" title='pszDirContent' data-ref="147pszDirContent">pszDirContent</a>;</td></tr>
+<tr><th id="411">411</th><td></td></tr>
+<tr><th id="412">412</th><td>        <i>// Skip . and ..</i></td></tr>
+<tr><th id="413">413</th><td>        <b>if</b>( <a class="typedef" href="../../../../../include/c++/4.8/bits/stringfwd.h.html#std::string" title='std::string' data-type='basic_string&lt;char&gt;' data-ref="std::string"><a class="ref" href="../../../../../include/c++/4.8/bits/basic_string.h.html#_ZNSt12basic_stringC1EPKT_RKT1_" title='std::basic_string::basic_string&lt;_CharT, _Traits, _Alloc&gt;' data-ref="_ZNSt12basic_stringC1EPKT_RKT1_">string</a></a>( <a class="local col7 ref" href="#147pszDirContent" title='pszDirContent' data-ref="147pszDirContent">pszDirContent</a> ) <a class="ref" href="../../../../../include/c++/4.8/bits/basic_string.h.html#_ZStneRKSbIT_T0_T1_EPKS_" title='std::operator!=' data-ref="_ZStneRKSbIT_T0_T1_EPKS_">!=</a> <q>"."</q> &amp;&amp;</td></tr>
+<tr><th id="414">414</th><td>            <a class="typedef" href="../../../../../include/c++/4.8/bits/stringfwd.h.html#std::string" title='std::string' data-type='basic_string&lt;char&gt;' data-ref="std::string"><a class="ref" href="../../../../../include/c++/4.8/bits/basic_string.h.html#_ZNSt12basic_stringC1EPKT_RKT1_" title='std::basic_string::basic_string&lt;_CharT, _Traits, _Alloc&gt;' data-ref="_ZNSt12basic_stringC1EPKT_RKT1_">string</a></a>( <a class="local col7 ref" href="#147pszDirContent" title='pszDirContent' data-ref="147pszDirContent">pszDirContent</a> ) <a class="ref" href="../../../../../include/c++/4.8/bits/basic_string.h.html#_ZStneRKSbIT_T0_T1_EPKS_" title='std::operator!=' data-ref="_ZStneRKSbIT_T0_T1_EPKS_">!=</a> <q>".."</q> )</td></tr>
+<tr><th id="415">415</th><td>        {</td></tr>
+<tr><th id="416">416</th><td><u>#<span data-ppcond="416">if</span> defined( <a class="macro" href="../../../../../include/x86_64-linux-gnu/sys/stat.h.html#129" data-ref="_M/S_ISDIR">S_ISDIR</a> )</u></td></tr>
+<tr><th id="417">417</th><td>            <b>struct</b> <a class="type" href="../../../../../include/x86_64-linux-gnu/bits/stat.h.html#stat" title='stat' data-ref="stat">stat</a> <a class="ref fake" href="../../../../../include/x86_64-linux-gnu/bits/stat.h.html#46" title='stat::stat' data-ref="_ZN4statC1Ev"></a><dfn class="local col0 decl" id="150stat_data" title='stat_data' data-type='struct stat' data-ref="150stat_data">stat_data</dfn>;</td></tr>
+<tr><th id="418">418</th><td></td></tr>
+<tr><th id="419">419</th><td>            <b>if</b>( ( <a class="ref" href="../../../../include/vlc_fs.h.html#vlc_stat" title='vlc_stat' data-ref="vlc_stat">vlc_stat</a>( <a class="local col9 ref" href="#149newURI" title='newURI' data-ref="149newURI">newURI</a>.<a class="ref" href="../../../../../include/c++/4.8/bits/basic_string.h.html#_ZNKSt12basic_string5c_strEv" title='std::basic_string::c_str' data-ref="_ZNKSt12basic_string5c_strEv">c_str</a>(), &amp;<a class="local col0 ref" href="#150stat_data" title='stat_data' data-ref="150stat_data">stat_data</a> ) == <var>0</var> )</td></tr>
+<tr><th id="420">420</th><td>             &amp;&amp; <a class="macro" href="../../../../../include/x86_64-linux-gnu/sys/stat.h.html#129" title="((((stat_data.st_mode)) &amp; 0170000) == (0040000))" data-ref="_M/S_ISDIR">S_ISDIR</a>(<a class="local col0 ref" href="#150stat_data" title='stat_data' data-ref="150stat_data">stat_data</a>.<a class="ref" href="../../../../../include/x86_64-linux-gnu/bits/stat.h.html#stat::st_mode" title='stat::st_mode' data-ref="stat::st_mode">st_mode</a>) )</td></tr>
+<tr><th id="421">421</th><td><u>#<span data-ppcond="416">elif</span> defined( DT_DIR )</u></td></tr>
+<tr><th id="422">422</th><td>            <b>if</b>( pDirContent-&gt;d_type &amp; DT_DIR )</td></tr>
+<tr><th id="423">423</th><td><u>#else</u></td></tr>
+<tr><th id="424">424</th><td>            <b>if</b>( <var>0</var> )</td></tr>
+<tr><th id="425">425</th><td><u>#<span data-ppcond="416">endif</span></u></td></tr>
+<tr><th id="426">426</th><td>            {</td></tr>
+<tr><th id="427">427</th><td>                <i>// Can we find the file in this subdirectory?</i></td></tr>
+<tr><th id="428">428</th><td>                <b>if</b>( <a class="member" href="#_ZN11ThemeLoader8findFileERKSsS1_RSs" title='ThemeLoader::findFile' data-ref="_ZN11ThemeLoader8findFileERKSsS1_RSs">findFile</a>( <a class="local col9 ref" href="#149newURI" title='newURI' data-ref="149newURI">newURI</a>, <a class="local col4 ref" href="#144rFileName" title='rFileName' data-ref="144rFileName">rFileName</a>, <span class='refarg'><a class="local col5 ref" href="#145themeFilePath" title='themeFilePath' data-ref="145themeFilePath">themeFilePath</a></span> ) )</td></tr>
+<tr><th id="429">429</th><td>                {</td></tr>
+<tr><th id="430">430</th><td>                    <a class="ref" href="../../../../../include/dirent.h.html#closedir" title='closedir' data-ref="closedir">closedir</a>( <a class="local col8 ref" href="#148pCurrDir" title='pCurrDir' data-ref="148pCurrDir">pCurrDir</a> );</td></tr>
+<tr><th id="431">431</th><td>                    <b>return</b> <b>true</b>;</td></tr>
+<tr><th id="432">432</th><td>                }</td></tr>
+<tr><th id="433">433</th><td>            }</td></tr>
+<tr><th id="434">434</th><td>            <b>else</b></td></tr>
+<tr><th id="435">435</th><td>            {</td></tr>
+<tr><th id="436">436</th><td>                <i>// Found the theme file?</i></td></tr>
+<tr><th id="437">437</th><td>                <b>if</b>( <a class="local col4 ref" href="#144rFileName" title='rFileName' data-ref="144rFileName">rFileName</a> <a class="ref" href="../../../../../include/c++/4.8/bits/basic_string.h.html#_ZSteqRKSbIT_St11char_traitsIS_ESaIS_EES5_" title='std::operator==' data-ref="_ZSteqRKSbIT_St11char_traitsIS_ESaIS_EES5_">==</a> <a class="typedef" href="../../../../../include/c++/4.8/bits/stringfwd.h.html#std::string" title='std::string' data-type='basic_string&lt;char&gt;' data-ref="std::string"><a class="ref" href="../../../../../include/c++/4.8/bits/basic_string.h.html#_ZNSt12basic_stringC1EPKT_RKT1_" title='std::basic_string::basic_string&lt;_CharT, _Traits, _Alloc&gt;' data-ref="_ZNSt12basic_stringC1EPKT_RKT1_">string</a></a>( <a class="local col7 ref" href="#147pszDirContent" title='pszDirContent' data-ref="147pszDirContent">pszDirContent</a> ) )</td></tr>
+<tr><th id="438">438</th><td>                {</td></tr>
+<tr><th id="439">439</th><td>                    <a class="local col5 ref" href="#145themeFilePath" title='themeFilePath' data-ref="145themeFilePath">themeFilePath</a> <a class="ref" href="../../../../../include/c++/4.8/bits/basic_string.h.html#_ZNSt12basic_stringaSERKSbIT_T0_T1_E" title='std::basic_string::operator=' data-ref="_ZNSt12basic_stringaSERKSbIT_T0_T1_E">=</a> <a class="local col9 ref" href="#149newURI" title='newURI' data-ref="149newURI">newURI</a>;</td></tr>
+<tr><th id="440">440</th><td>                    <a class="ref" href="../../../../../include/dirent.h.html#closedir" title='closedir' data-ref="closedir">closedir</a>( <a class="local col8 ref" href="#148pCurrDir" title='pCurrDir' data-ref="148pCurrDir">pCurrDir</a> );</td></tr>
+<tr><th id="441">441</th><td>                    <b>return</b> <b>true</b>;</td></tr>
+<tr><th id="442">442</th><td>                }</td></tr>
+<tr><th id="443">443</th><td>            }</td></tr>
+<tr><th id="444">444</th><td>        }</td></tr>
+<tr><th id="445">445</th><td>    }</td></tr>
+<tr><th id="446">446</th><td></td></tr>
+<tr><th id="447">447</th><td>    <a class="ref" href="../../../../../include/dirent.h.html#closedir" title='closedir' data-ref="closedir">closedir</a>( <a class="local col8 ref" href="#148pCurrDir" title='pCurrDir' data-ref="148pCurrDir">pCurrDir</a> );</td></tr>
+<tr><th id="448">448</th><td>    <b>return</b> <b>false</b>;</td></tr>
+<tr><th id="449">449</th><td>}</td></tr>
+<tr><th id="450">450</th><td></td></tr>
+<tr><th id="451">451</th><td></td></tr>
+<tr><th id="452">452</th><td><u>#<span data-ppcond="452">if</span> !defined( <a class="macro" href="../../../../config.h.html#308" data-ref="_M/HAVE_LIBTAR_H">HAVE_LIBTAR_H</a> ) &amp;&amp; defined( <a class="macro" href="../../../../config.h.html#589" data-ref="_M/HAVE_ZLIB_H">HAVE_ZLIB_H</a> )</u></td></tr>
+<tr><th id="453">453</th><td></td></tr>
+<tr><th id="454">454</th><td><i>/* Values used in typeflag field */</i></td></tr>
+<tr><th id="455">455</th><td><u>#define REGTYPE  '0'            /* regular file */</u></td></tr>
+<tr><th id="456">456</th><td><u>#define AREGTYPE '\0'           /* regular file */</u></td></tr>
+<tr><th id="457">457</th><td><u>#define DIRTYPE  '5'            /* directory */</u></td></tr>
+<tr><th id="458">458</th><td></td></tr>
+<tr><th id="459">459</th><td><u>#define BLOCKSIZE 512</u></td></tr>
+<tr><th id="460">460</th><td></td></tr>
+<tr><th id="461">461</th><td><b>struct</b> tar_header</td></tr>
+<tr><th id="462">462</th><td>{                               <i>/* byte offset */</i></td></tr>
+<tr><th id="463">463</th><td>    <em>char</em> name[<var>100</var>];             <i>/*   0 */</i></td></tr>
+<tr><th id="464">464</th><td>    <em>char</em> mode[<var>8</var>];               <i>/* 100 */</i></td></tr>
+<tr><th id="465">465</th><td>    <em>char</em> uid[<var>8</var>];                <i>/* 108 */</i></td></tr>
+<tr><th id="466">466</th><td>    <em>char</em> gid[<var>8</var>];                <i>/* 116 */</i></td></tr>
+<tr><th id="467">467</th><td>    <em>char</em> size[<var>12</var>];              <i>/* 124 */</i></td></tr>
+<tr><th id="468">468</th><td>    <em>char</em> mtime[<var>12</var>];             <i>/* 136 */</i></td></tr>
+<tr><th id="469">469</th><td>    <em>char</em> chksum[<var>8</var>];             <i>/* 148 */</i></td></tr>
+<tr><th id="470">470</th><td>    <em>char</em> typeflag;              <i>/* 156 */</i></td></tr>
+<tr><th id="471">471</th><td>    <em>char</em> linkname[<var>100</var>];         <i>/* 157 */</i></td></tr>
+<tr><th id="472">472</th><td>    <em>char</em> magic[<var>6</var>];              <i>/* 257 */</i></td></tr>
+<tr><th id="473">473</th><td>    <em>char</em> version[<var>2</var>];            <i>/* 263 */</i></td></tr>
+<tr><th id="474">474</th><td>    <em>char</em> uname[<var>32</var>];             <i>/* 265 */</i></td></tr>
+<tr><th id="475">475</th><td>    <em>char</em> gname[<var>32</var>];             <i>/* 297 */</i></td></tr>
+<tr><th id="476">476</th><td>    <em>char</em> devmajor[<var>8</var>];           <i>/* 329 */</i></td></tr>
+<tr><th id="477">477</th><td>    <em>char</em> devminor[<var>8</var>];           <i>/* 337 */</i></td></tr>
+<tr><th id="478">478</th><td>    <em>char</em> prefix[<var>155</var>];           <i>/* 345 */</i></td></tr>
+<tr><th id="479">479</th><td>                                <i>/* 500 */</i></td></tr>
+<tr><th id="480">480</th><td>};</td></tr>
+<tr><th id="481">481</th><td></td></tr>
+<tr><th id="482">482</th><td></td></tr>
+<tr><th id="483">483</th><td><b>union</b> tar_buffer {</td></tr>
+<tr><th id="484">484</th><td>    <em>char</em>              buffer[BLOCKSIZE];</td></tr>
+<tr><th id="485">485</th><td>    <b>struct</b> tar_header header;</td></tr>
+<tr><th id="486">486</th><td>};</td></tr>
+<tr><th id="487">487</th><td></td></tr>
+<tr><th id="488">488</th><td></td></tr>
+<tr><th id="489">489</th><td></td></tr>
+<tr><th id="490">490</th><td><em>int</em> tar_open( TAR **t, <em>char</em> *pathname, <em>int</em> oflags )</td></tr>
+<tr><th id="491">491</th><td>{</td></tr>
+<tr><th id="492">492</th><td>    (<em>void</em>)oflags;</td></tr>
+<tr><th id="493">493</th><td></td></tr>
+<tr><th id="494">494</th><td>    gzFile f = gzopen( pathname, <q>"rb"</q> );</td></tr>
+<tr><th id="495">495</th><td>    <b>if</b>( f == NULL )</td></tr>
+<tr><th id="496">496</th><td>    {</td></tr>
+<tr><th id="497">497</th><td>        fprintf( stderr, <q>"Couldn't gzopen %s\n"</q>, pathname );</td></tr>
+<tr><th id="498">498</th><td>        <b>return</b> -<var>1</var>;</td></tr>
+<tr><th id="499">499</th><td>    }</td></tr>
+<tr><th id="500">500</th><td></td></tr>
+<tr><th id="501">501</th><td>    *t = (gzFile *)malloc( <b>sizeof</b>(gzFile) );</td></tr>
+<tr><th id="502">502</th><td>    **t = f;</td></tr>
+<tr><th id="503">503</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="504">504</th><td>}</td></tr>
+<tr><th id="505">505</th><td></td></tr>
+<tr><th id="506">506</th><td></td></tr>
+<tr><th id="507">507</th><td><em>int</em> tar_extract_all( TAR *t, <em>char</em> *prefix )</td></tr>
+<tr><th id="508">508</th><td>{</td></tr>
+<tr><th id="509">509</th><td>    <b>union</b> tar_buffer buffer;</td></tr>
+<tr><th id="510">510</th><td>    <em>int</em>   len, err, getheader = <var>1</var>, remaining = <var>0</var>;</td></tr>
+<tr><th id="511">511</th><td>    FILE  *outfile = NULL;</td></tr>
+<tr><th id="512">512</th><td>    <em>char</em>  fname[BLOCKSIZE + PATH_MAX];</td></tr>
+<tr><th id="513">513</th><td></td></tr>
+<tr><th id="514">514</th><td>    <b>while</b>( <var>1</var> )</td></tr>
+<tr><th id="515">515</th><td>    {</td></tr>
+<tr><th id="516">516</th><td>        len = gzread( *t, &amp;buffer, BLOCKSIZE );</td></tr>
+<tr><th id="517">517</th><td>        <b>if</b>( len &lt; <var>0</var> )</td></tr>
+<tr><th id="518">518</th><td>        {</td></tr>
+<tr><th id="519">519</th><td>            fprintf( stderr, <q>"%s\n"</q>, gzerror(*t, &amp;err) );</td></tr>
+<tr><th id="520">520</th><td>        }</td></tr>
+<tr><th id="521">521</th><td></td></tr>
+<tr><th id="522">522</th><td>        <i>/*</i></td></tr>
+<tr><th id="523">523</th><td><i>         * Always expect complete blocks to process</i></td></tr>
+<tr><th id="524">524</th><td><i>         * the tar information.</i></td></tr>
+<tr><th id="525">525</th><td><i>         */</i></td></tr>
+<tr><th id="526">526</th><td>        <b>if</b>( len != <var>0</var> &amp;&amp; len != BLOCKSIZE )</td></tr>
+<tr><th id="527">527</th><td>        {</td></tr>
+<tr><th id="528">528</th><td>            fprintf( stderr, <q>"gzread: incomplete block read\n"</q> );</td></tr>
+<tr><th id="529">529</th><td>            <b>return</b> -<var>1</var>;</td></tr>
+<tr><th id="530">530</th><td>        }</td></tr>
+<tr><th id="531">531</th><td></td></tr>
+<tr><th id="532">532</th><td>        <i>/*</i></td></tr>
+<tr><th id="533">533</th><td><i>         * If we have to get a tar header</i></td></tr>
+<tr><th id="534">534</th><td><i>         */</i></td></tr>
+<tr><th id="535">535</th><td>        <b>if</b>( getheader == <var>1</var> )</td></tr>
+<tr><th id="536">536</th><td>        {</td></tr>
+<tr><th id="537">537</th><td>            <i>/*</i></td></tr>
+<tr><th id="538">538</th><td><i>             * If we met the end of the tar</i></td></tr>
+<tr><th id="539">539</th><td><i>             * or the end-of-tar block, we are done</i></td></tr>
+<tr><th id="540">540</th><td><i>             */</i></td></tr>
+<tr><th id="541">541</th><td>            <b>if</b>( (len == <var>0</var>) || (buffer.header.name[<var>0</var>] == <var>0</var>) )</td></tr>
+<tr><th id="542">542</th><td>            {</td></tr>
+<tr><th id="543">543</th><td>                <b>break</b>;</td></tr>
+<tr><th id="544">544</th><td>            }</td></tr>
+<tr><th id="545">545</th><td></td></tr>
+<tr><th id="546">546</th><td>            sprintf( fname, <q>"%s/%s"</q>, prefix, buffer.header.name );</td></tr>
+<tr><th id="547">547</th><td></td></tr>
+<tr><th id="548">548</th><td>            <i>/* Check magic value in header */</i></td></tr>
+<tr><th id="549">549</th><td>            <b>if</b>( strncmp( buffer.header.magic, <q>"GNUtar"</q>, <var>6</var> ) &amp;&amp;</td></tr>
+<tr><th id="550">550</th><td>                strncmp( buffer.header.magic, <q>"ustar"</q>, <var>5</var> ) )</td></tr>
+<tr><th id="551">551</th><td>            {</td></tr>
+<tr><th id="552">552</th><td>                <i>//fprintf(stderr, "not a tar file\n");</i></td></tr>
+<tr><th id="553">553</th><td>                <b>return</b> -<var>1</var>;</td></tr>
+<tr><th id="554">554</th><td>            }</td></tr>
+<tr><th id="555">555</th><td></td></tr>
+<tr><th id="556">556</th><td>            <b>switch</b>( buffer.header.typeflag )</td></tr>
+<tr><th id="557">557</th><td>            {</td></tr>
+<tr><th id="558">558</th><td>            <b>case</b> DIRTYPE:</td></tr>
+<tr><th id="559">559</th><td>                makedir( fname );</td></tr>
+<tr><th id="560">560</th><td>                <b>break</b>;</td></tr>
+<tr><th id="561">561</th><td>            <b>case</b> REGTYPE:</td></tr>
+<tr><th id="562">562</th><td>            <b>case</b> AREGTYPE:</td></tr>
+<tr><th id="563">563</th><td>                remaining = getoct( buffer.header.size, <var>12</var> );</td></tr>
+<tr><th id="564">564</th><td>                <b>if</b>( !remaining ) outfile = NULL; <b>else</b></td></tr>
+<tr><th id="565">565</th><td>                {</td></tr>
+<tr><th id="566">566</th><td>                    outfile = fopen( fname, <q>"wb"</q> );</td></tr>
+<tr><th id="567">567</th><td>                    <b>if</b>( outfile == NULL )</td></tr>
+<tr><th id="568">568</th><td>                    {</td></tr>
+<tr><th id="569">569</th><td>                        <i>/* try creating directory */</i></td></tr>
+<tr><th id="570">570</th><td>                        <em>char</em> *p = strrchr( fname, <kbd>'/'</kbd> );</td></tr>
+<tr><th id="571">571</th><td>                        <b>if</b>( p != NULL )</td></tr>
+<tr><th id="572">572</th><td>                        {</td></tr>
+<tr><th id="573">573</th><td>                            *p = <kbd>'\0'</kbd>;</td></tr>
+<tr><th id="574">574</th><td>                            makedir( fname );</td></tr>
+<tr><th id="575">575</th><td>                            *p = <kbd>'/'</kbd>;</td></tr>
+<tr><th id="576">576</th><td>                            outfile = fopen( fname, <q>"wb"</q> );</td></tr>
+<tr><th id="577">577</th><td>                            <b>if</b>( !outfile )</td></tr>
+<tr><th id="578">578</th><td>                            {</td></tr>
+<tr><th id="579">579</th><td>                                fprintf( stderr, <q>"tar couldn't create %s\n"</q>,</td></tr>
+<tr><th id="580">580</th><td>                                         fname );</td></tr>
+<tr><th id="581">581</th><td>                            }</td></tr>
+<tr><th id="582">582</th><td>                        }</td></tr>
+<tr><th id="583">583</th><td>                    }</td></tr>
+<tr><th id="584">584</th><td>                }</td></tr>
+<tr><th id="585">585</th><td></td></tr>
+<tr><th id="586">586</th><td>                <i>/*</i></td></tr>
+<tr><th id="587">587</th><td><i>                 * could have no contents</i></td></tr>
+<tr><th id="588">588</th><td><i>                 */</i></td></tr>
+<tr><th id="589">589</th><td>                getheader = (remaining) ? <var>0</var> : <var>1</var>;</td></tr>
+<tr><th id="590">590</th><td>                <b>break</b>;</td></tr>
+<tr><th id="591">591</th><td>            <b>default</b>:</td></tr>
+<tr><th id="592">592</th><td>                <b>break</b>;</td></tr>
+<tr><th id="593">593</th><td>            }</td></tr>
+<tr><th id="594">594</th><td>        }</td></tr>
+<tr><th id="595">595</th><td>        <b>else</b></td></tr>
+<tr><th id="596">596</th><td>        {</td></tr>
+<tr><th id="597">597</th><td>            <em>unsigned</em> <em>int</em> bytes = (remaining &gt; BLOCKSIZE)?BLOCKSIZE:remaining;</td></tr>
+<tr><th id="598">598</th><td></td></tr>
+<tr><th id="599">599</th><td>            <b>if</b>( outfile != NULL )</td></tr>
+<tr><th id="600">600</th><td>            {</td></tr>
+<tr><th id="601">601</th><td>                <b>if</b>( fwrite( &amp;buffer, <b>sizeof</b>(<em>char</em>), bytes, outfile ) != bytes )</td></tr>
+<tr><th id="602">602</th><td>                {</td></tr>
+<tr><th id="603">603</th><td>                    fprintf( stderr, <q>"error writing %s skipping...\n"</q>, fname );</td></tr>
+<tr><th id="604">604</th><td>                    fclose( outfile );</td></tr>
+<tr><th id="605">605</th><td>                    outfile = NULL;</td></tr>
+<tr><th id="606">606</th><td>                    unlink( fname );</td></tr>
+<tr><th id="607">607</th><td>                }</td></tr>
+<tr><th id="608">608</th><td>            }</td></tr>
+<tr><th id="609">609</th><td>            remaining -= bytes;</td></tr>
+<tr><th id="610">610</th><td>            <b>if</b>( remaining == <var>0</var> )</td></tr>
+<tr><th id="611">611</th><td>            {</td></tr>
+<tr><th id="612">612</th><td>                getheader = <var>1</var>;</td></tr>
+<tr><th id="613">613</th><td>                <b>if</b>( outfile != NULL )</td></tr>
+<tr><th id="614">614</th><td>                {</td></tr>
+<tr><th id="615">615</th><td>                    fclose(outfile);</td></tr>
+<tr><th id="616">616</th><td>                    outfile = NULL;</td></tr>
+<tr><th id="617">617</th><td>                }</td></tr>
+<tr><th id="618">618</th><td>            }</td></tr>
+<tr><th id="619">619</th><td>        }</td></tr>
+<tr><th id="620">620</th><td>    }</td></tr>
+<tr><th id="621">621</th><td></td></tr>
+<tr><th id="622">622</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="623">623</th><td>}</td></tr>
+<tr><th id="624">624</th><td></td></tr>
+<tr><th id="625">625</th><td></td></tr>
+<tr><th id="626">626</th><td><em>int</em> tar_close( TAR *t )</td></tr>
+<tr><th id="627">627</th><td>{</td></tr>
+<tr><th id="628">628</th><td>    <b>if</b>( gzclose( *t ) != Z_OK ) fprintf( stderr, <q>"failed gzclose\n"</q> );</td></tr>
+<tr><th id="629">629</th><td>    free( t );</td></tr>
+<tr><th id="630">630</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="631">631</th><td>}</td></tr>
+<tr><th id="632">632</th><td></td></tr>
+<tr><th id="633">633</th><td></td></tr>
+<tr><th id="634">634</th><td><i>/* helper functions */</i></td></tr>
+<tr><th id="635">635</th><td><em>int</em> getoct( <em>char</em> *p, <em>int</em> width )</td></tr>
+<tr><th id="636">636</th><td>{</td></tr>
+<tr><th id="637">637</th><td>    <em>int</em> result = <var>0</var>;</td></tr>
+<tr><th id="638">638</th><td>    <em>char</em> c;</td></tr>
+<tr><th id="639">639</th><td></td></tr>
+<tr><th id="640">640</th><td>    <b>while</b>( width-- )</td></tr>
+<tr><th id="641">641</th><td>    {</td></tr>
+<tr><th id="642">642</th><td>        c = *p++;</td></tr>
+<tr><th id="643">643</th><td>        <b>if</b>( c == <kbd>' '</kbd> )</td></tr>
+<tr><th id="644">644</th><td>            <b>continue</b>;</td></tr>
+<tr><th id="645">645</th><td>        <b>if</b>( c == <var>0</var> )</td></tr>
+<tr><th id="646">646</th><td>            <b>break</b>;</td></tr>
+<tr><th id="647">647</th><td>        result = result * <var>8</var> + (c - <kbd>'0'</kbd>);</td></tr>
+<tr><th id="648">648</th><td>    }</td></tr>
+<tr><th id="649">649</th><td>    <b>return</b> result;</td></tr>
+<tr><th id="650">650</th><td>}</td></tr>
+<tr><th id="651">651</th><td></td></tr>
+<tr><th id="652">652</th><td><u>#<span data-ppcond="452">endif</span></u></td></tr>
+<tr><th id="653">653</th><td></td></tr>
+<tr><th id="654">654</th><td><i>/* Recursive make directory</i></td></tr>
+<tr><th id="655">655</th><td><i> * Abort if you get an ENOENT errno somewhere in the middle</i></td></tr>
+<tr><th id="656">656</th><td><i> * e.g. ignore error "mkdir on existing directory"</i></td></tr>
+<tr><th id="657">657</th><td><i> *</i></td></tr>
+<tr><th id="658">658</th><td><i> * return 1 if OK, 0 on error</i></td></tr>
+<tr><th id="659">659</th><td><i> */</i></td></tr>
+<tr><th id="660">660</th><td><em>int</em> <dfn class="decl def" id="_Z7makedirPKc" title='makedir' data-ref="_Z7makedirPKc">makedir</dfn>( <em>const</em> <em>char</em> *<dfn class="local col1 decl" id="151newdir" title='newdir' data-type='const char *' data-ref="151newdir">newdir</dfn> )</td></tr>
+<tr><th id="661">661</th><td>{</td></tr>
+<tr><th id="662">662</th><td>    <em>char</em> *<dfn class="local col2 decl" id="152p" title='p' data-type='char *' data-ref="152p">p</dfn>, *<dfn class="local col3 decl" id="153buffer" title='buffer' data-type='char *' data-ref="153buffer">buffer</dfn> = <a class="ref" href="../../../../../include/string.h.html#strdup" title='strdup' data-ref="strdup">strdup</a>( <a class="local col1 ref" href="#151newdir" title='newdir' data-ref="151newdir">newdir</a> );</td></tr>
+<tr><th id="663">663</th><td>    <em>int</em>  <dfn class="local col4 decl" id="154len" title='len' data-type='int' data-ref="154len">len</dfn> = <a class="ref" href="../../../../../include/string.h.html#strlen" title='strlen' data-ref="strlen">strlen</a>( <a class="local col3 ref" href="#153buffer" title='buffer' data-ref="153buffer">buffer</a> );</td></tr>
+<tr><th id="664">664</th><td></td></tr>
+<tr><th id="665">665</th><td>    <b>if</b>( <a class="local col4 ref" href="#154len" title='len' data-ref="154len">len</a> &lt;= <var>0</var> )</td></tr>
+<tr><th id="666">666</th><td>    {</td></tr>
+<tr><th id="667">667</th><td>        <a class="ref" href="../../../../../include/stdlib.h.html#free" title='free' data-ref="free">free</a>( <a class="local col3 ref" href="#153buffer" title='buffer' data-ref="153buffer">buffer</a> );</td></tr>
+<tr><th id="668">668</th><td>        <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="669">669</th><td>    }</td></tr>
+<tr><th id="670">670</th><td></td></tr>
+<tr><th id="671">671</th><td>    <b>if</b>( <a class="local col3 ref" href="#153buffer" title='buffer' data-ref="153buffer">buffer</a>[<a class="local col4 ref" href="#154len" title='len' data-ref="154len">len</a>-<var>1</var>] == <kbd>'/'</kbd> )</td></tr>
+<tr><th id="672">672</th><td>    {</td></tr>
+<tr><th id="673">673</th><td>        <a class="local col3 ref" href="#153buffer" title='buffer' data-ref="153buffer">buffer</a>[<a class="local col4 ref" href="#154len" title='len' data-ref="154len">len</a>-<var>1</var>] = <kbd>'\0'</kbd>;</td></tr>
+<tr><th id="674">674</th><td>    }</td></tr>
+<tr><th id="675">675</th><td></td></tr>
+<tr><th id="676">676</th><td>    <b>if</b>( <a class="ref" href="../../../../include/vlc_fs.h.html#vlc_mkdir" title='vlc_mkdir' data-ref="vlc_mkdir">vlc_mkdir</a>( <a class="local col3 ref" href="#153buffer" title='buffer' data-ref="153buffer">buffer</a>, <var>0775</var> ) == <var>0</var> )</td></tr>
+<tr><th id="677">677</th><td>    {</td></tr>
+<tr><th id="678">678</th><td>        <a class="ref" href="../../../../../include/stdlib.h.html#free" title='free' data-ref="free">free</a>( <a class="local col3 ref" href="#153buffer" title='buffer' data-ref="153buffer">buffer</a> );</td></tr>
+<tr><th id="679">679</th><td>        <b>return</b> <var>1</var>;</td></tr>
+<tr><th id="680">680</th><td>    }</td></tr>
+<tr><th id="681">681</th><td></td></tr>
+<tr><th id="682">682</th><td>    <a class="local col2 ref" href="#152p" title='p' data-ref="152p">p</a> = <a class="local col3 ref" href="#153buffer" title='buffer' data-ref="153buffer">buffer</a> + <var>1</var>;</td></tr>
+<tr><th id="683">683</th><td>    <b>while</b>( <var>1</var> )</td></tr>
+<tr><th id="684">684</th><td>    {</td></tr>
+<tr><th id="685">685</th><td>        <em>char</em> <dfn class="local col5 decl" id="155hold" title='hold' data-type='char' data-ref="155hold">hold</dfn>;</td></tr>
+<tr><th id="686">686</th><td></td></tr>
+<tr><th id="687">687</th><td>        <b>while</b>( *<a class="local col2 ref" href="#152p" title='p' data-ref="152p">p</a> &amp;&amp; *<a class="local col2 ref" href="#152p" title='p' data-ref="152p">p</a> != <kbd>'\\'</kbd> &amp;&amp; *<a class="local col2 ref" href="#152p" title='p' data-ref="152p">p</a> != <kbd>'/'</kbd> ) <a class="local col2 ref" href="#152p" title='p' data-ref="152p">p</a>++;</td></tr>
+<tr><th id="688">688</th><td>        <a class="local col5 ref" href="#155hold" title='hold' data-ref="155hold">hold</a> = *<a class="local col2 ref" href="#152p" title='p' data-ref="152p">p</a>;</td></tr>
+<tr><th id="689">689</th><td>        *<a class="local col2 ref" href="#152p" title='p' data-ref="152p">p</a> = <var>0</var>;</td></tr>
+<tr><th id="690">690</th><td>        <b>if</b>( ( <a class="ref" href="../../../../include/vlc_fs.h.html#vlc_mkdir" title='vlc_mkdir' data-ref="vlc_mkdir">vlc_mkdir</a>( <a class="local col3 ref" href="#153buffer" title='buffer' data-ref="153buffer">buffer</a>, <var>0775</var> ) == -<var>1</var> ) &amp;&amp; ( <a class="macro" href="../../../../../include/x86_64-linux-gnu/bits/errno.h.html#54" title="(*__errno_location ())" data-ref="_M/errno">errno</a> == <a class="macro" href="../../../../../include/asm-generic/errno-base.h.html#5" title="2" data-ref="_M/ENOENT">ENOENT</a> ) )</td></tr>
+<tr><th id="691">691</th><td>        {</td></tr>
+<tr><th id="692">692</th><td>            <a class="ref" href="../../../../../include/stdio.h.html#fprintf" title='fprintf' data-ref="fprintf">fprintf</a>( <a class="macro" href="../../../../../include/stdio.h.html#174" title="stderr" data-ref="_M/stderr">stderr</a>, <q>"couldn't create directory %s\n"</q>, <a class="local col3 ref" href="#153buffer" title='buffer' data-ref="153buffer">buffer</a> );</td></tr>
+<tr><th id="693">693</th><td>            <a class="ref" href="../../../../../include/stdlib.h.html#free" title='free' data-ref="free">free</a>( <a class="local col3 ref" href="#153buffer" title='buffer' data-ref="153buffer">buffer</a> );</td></tr>
+<tr><th id="694">694</th><td>            <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="695">695</th><td>        }</td></tr>
+<tr><th id="696">696</th><td>        <b>if</b>( <a class="local col5 ref" href="#155hold" title='hold' data-ref="155hold">hold</a> == <var>0</var> ) <b>break</b>;</td></tr>
+<tr><th id="697">697</th><td>        *<a class="local col2 ref" href="#152p" title='p' data-ref="152p">p</a>++ = <a class="local col5 ref" href="#155hold" title='hold' data-ref="155hold">hold</a>;</td></tr>
+<tr><th id="698">698</th><td>    }</td></tr>
+<tr><th id="699">699</th><td>    <a class="ref" href="../../../../../include/stdlib.h.html#free" title='free' data-ref="free">free</a>( <a class="local col3 ref" href="#153buffer" title='buffer' data-ref="153buffer">buffer</a> );</td></tr>
+<tr><th id="700">700</th><td>    <b>return</b> <var>1</var>;</td></tr>
+<tr><th id="701">701</th><td>}</td></tr>
+<tr><th id="702">702</th><td></td></tr>
+<tr><th id="703">703</th><td><u>#<span data-ppcond="703">ifdef</span> <a class="macro" href="../../../../config.h.html#589" data-ref="_M/HAVE_ZLIB_H">HAVE_ZLIB_H</a></u></td></tr>
+<tr><th id="704">704</th><td></td></tr>
+<tr><th id="705">705</th><td><em>static</em> <em>int</em> <dfn class="tu decl def" id="_ZL11currentGzFd" title='currentGzFd' data-type='int' data-ref="_ZL11currentGzFd">currentGzFd</dfn> = -<var>1</var>;</td></tr>
+<tr><th id="706">706</th><td><em>static</em> <em>void</em> * <dfn class="tu decl def" id="_ZL11currentGzVp" title='currentGzVp' data-type='void *' data-ref="_ZL11currentGzVp">currentGzVp</dfn> = <span class="macro" title="__null" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="707">707</th><td></td></tr>
+<tr><th id="708">708</th><td><em>int</em> <dfn class="decl def" id="_Z15gzopen_frontendPKcii" title='gzopen_frontend' data-ref="_Z15gzopen_frontendPKcii">gzopen_frontend</dfn>( <em>const</em> <em>char</em> *<dfn class="local col6 decl" id="156pathname" title='pathname' data-type='const char *' data-ref="156pathname">pathname</dfn>, <em>int</em> <dfn class="local col7 decl" id="157oflags" title='oflags' data-type='int' data-ref="157oflags">oflags</dfn>, <em>int</em> <dfn class="local col8 decl" id="158mode" title='mode' data-type='int' data-ref="158mode">mode</dfn> )</td></tr>
+<tr><th id="709">709</th><td>{</td></tr>
+<tr><th id="710">710</th><td>    (<em>void</em>)<a class="local col8 ref" href="#158mode" title='mode' data-ref="158mode">mode</a>;</td></tr>
+<tr><th id="711">711</th><td></td></tr>
+<tr><th id="712">712</th><td>    <em>const</em> <em>char</em> *<dfn class="local col9 decl" id="159gzflags" title='gzflags' data-type='const char *' data-ref="159gzflags">gzflags</dfn>;</td></tr>
+<tr><th id="713">713</th><td>    <a class="typedef" href="../../../../../include/zlib.h.html#gzFile" title='gzFile' data-type='struct gzFile_s *' data-ref="gzFile">gzFile</a> <dfn class="local col0 decl" id="160gzf" title='gzf' data-type='gzFile' data-ref="160gzf">gzf</dfn>;</td></tr>
+<tr><th id="714">714</th><td></td></tr>
+<tr><th id="715">715</th><td>    <b>switch</b>( <a class="local col7 ref" href="#157oflags" title='oflags' data-ref="157oflags">oflags</a> )</td></tr>
+<tr><th id="716">716</th><td>    {</td></tr>
+<tr><th id="717">717</th><td>    <b>case</b> <a class="macro" href="../../../../../include/x86_64-linux-gnu/bits/fcntl-linux.h.html#44" title="01" data-ref="_M/O_WRONLY">O_WRONLY</a>:</td></tr>
+<tr><th id="718">718</th><td>        <a class="local col9 ref" href="#159gzflags" title='gzflags' data-ref="159gzflags">gzflags</a> = <q>"wb"</q>;</td></tr>
+<tr><th id="719">719</th><td>        <b>break</b>;</td></tr>
+<tr><th id="720">720</th><td>    <b>case</b> <a class="macro" href="../../../../../include/x86_64-linux-gnu/bits/fcntl-linux.h.html#43" title="00" data-ref="_M/O_RDONLY">O_RDONLY</a>:</td></tr>
+<tr><th id="721">721</th><td>        <a class="local col9 ref" href="#159gzflags" title='gzflags' data-ref="159gzflags">gzflags</a> = <q>"rb"</q>;</td></tr>
+<tr><th id="722">722</th><td>        <b>break</b>;</td></tr>
+<tr><th id="723">723</th><td>    <b>case</b> <a class="macro" href="../../../../../include/x86_64-linux-gnu/bits/fcntl-linux.h.html#45" title="02" data-ref="_M/O_RDWR">O_RDWR</a>:</td></tr>
+<tr><th id="724">724</th><td>    <b>default</b>:</td></tr>
+<tr><th id="725">725</th><td>        <a class="macro" href="../../../../../include/x86_64-linux-gnu/bits/errno.h.html#54" title="(*__errno_location ())" data-ref="_M/errno">errno</a> = <a class="macro" href="../../../../../include/asm-generic/errno-base.h.html#25" title="22" data-ref="_M/EINVAL">EINVAL</a>;</td></tr>
+<tr><th id="726">726</th><td>        <b>return</b> -<var>1</var>;</td></tr>
+<tr><th id="727">727</th><td>    }</td></tr>
+<tr><th id="728">728</th><td></td></tr>
+<tr><th id="729">729</th><td>    <a class="local col0 ref" href="#160gzf" title='gzf' data-ref="160gzf">gzf</a> = <a class="macro" href="../../../../../include/zlib.h.html#1709" title="gzopen64" data-ref="_M/gzopen">gzopen</a>( <a class="local col6 ref" href="#156pathname" title='pathname' data-ref="156pathname">pathname</a>, <a class="local col9 ref" href="#159gzflags" title='gzflags' data-ref="159gzflags">gzflags</a> );</td></tr>
+<tr><th id="730">730</th><td>    <b>if</b>( !<a class="local col0 ref" href="#160gzf" title='gzf' data-ref="160gzf">gzf</a> )</td></tr>
+<tr><th id="731">731</th><td>    {</td></tr>
+<tr><th id="732">732</th><td>        <a class="macro" href="../../../../../include/x86_64-linux-gnu/bits/errno.h.html#54" title="(*__errno_location ())" data-ref="_M/errno">errno</a> = <a class="macro" href="../../../../../include/asm-generic/errno-base.h.html#15" title="12" data-ref="_M/ENOMEM">ENOMEM</a>;</td></tr>
+<tr><th id="733">733</th><td>        <b>return</b> -<var>1</var>;</td></tr>
+<tr><th id="734">734</th><td>    }</td></tr>
+<tr><th id="735">735</th><td></td></tr>
+<tr><th id="736">736</th><td>    <i class="doc">/** Hum ... */</i></td></tr>
+<tr><th id="737">737</th><td>    <a class="tu ref" href="#_ZL11currentGzFd" title='currentGzFd' data-use='w' data-ref="_ZL11currentGzFd">currentGzFd</a> = <var>42</var>;</td></tr>
+<tr><th id="738">738</th><td>    <a class="tu ref" href="#_ZL11currentGzVp" title='currentGzVp' data-use='w' data-ref="_ZL11currentGzVp">currentGzVp</a> = <a class="local col0 ref" href="#160gzf" title='gzf' data-ref="160gzf">gzf</a>;</td></tr>
+<tr><th id="739">739</th><td></td></tr>
+<tr><th id="740">740</th><td>    <b>return</b> <a class="tu ref" href="#_ZL11currentGzFd" title='currentGzFd' data-use='r' data-ref="_ZL11currentGzFd">currentGzFd</a>;</td></tr>
+<tr><th id="741">741</th><td>}</td></tr>
+<tr><th id="742">742</th><td></td></tr>
+<tr><th id="743">743</th><td><em>int</em> <dfn class="decl def" id="_Z16gzclose_frontendi" title='gzclose_frontend' data-ref="_Z16gzclose_frontendi">gzclose_frontend</dfn>( <em>int</em> <dfn class="local col1 decl" id="161fd" title='fd' data-type='int' data-ref="161fd">fd</dfn> )</td></tr>
+<tr><th id="744">744</th><td>{</td></tr>
+<tr><th id="745">745</th><td>    <b>if</b>( <a class="tu ref" href="#_ZL11currentGzVp" title='currentGzVp' data-use='r' data-ref="_ZL11currentGzVp">currentGzVp</a> != <span class="macro" title="__null" data-ref="_M/NULL">NULL</span> &amp;&amp; <a class="local col1 ref" href="#161fd" title='fd' data-ref="161fd">fd</a> != -<var>1</var> )</td></tr>
+<tr><th id="746">746</th><td>    {</td></tr>
+<tr><th id="747">747</th><td>        <em>void</em> *<dfn class="local col2 decl" id="162toClose" title='toClose' data-type='void *' data-ref="162toClose">toClose</dfn> = <a class="tu ref" href="#_ZL11currentGzVp" title='currentGzVp' data-use='r' data-ref="_ZL11currentGzVp">currentGzVp</a>;</td></tr>
+<tr><th id="748">748</th><td>        <a class="tu ref" href="#_ZL11currentGzVp" title='currentGzVp' data-use='w' data-ref="_ZL11currentGzVp">currentGzVp</a> = <span class="macro" title="__null" data-ref="_M/NULL">NULL</span>;  <a class="tu ref" href="#_ZL11currentGzFd" title='currentGzFd' data-use='w' data-ref="_ZL11currentGzFd">currentGzFd</a> = -<var>1</var>;</td></tr>
+<tr><th id="749">749</th><td>        <b>return</b> <a class="ref" href="../../../../../include/zlib.h.html#gzclose" title='gzclose' data-ref="gzclose">gzclose</a>( (<a class="typedef" href="../../../../../include/zlib.h.html#gzFile" title='gzFile' data-type='struct gzFile_s *' data-ref="gzFile">gzFile</a>) <a class="local col2 ref" href="#162toClose" title='toClose' data-ref="162toClose">toClose</a> );</td></tr>
+<tr><th id="750">750</th><td>    }</td></tr>
+<tr><th id="751">751</th><td>    <b>return</b> -<var>1</var>;</td></tr>
+<tr><th id="752">752</th><td>}</td></tr>
+<tr><th id="753">753</th><td></td></tr>
+<tr><th id="754">754</th><td><em>int</em> <dfn class="decl def" id="_Z15gzread_frontendiPvm" title='gzread_frontend' data-ref="_Z15gzread_frontendiPvm">gzread_frontend</dfn>( <em>int</em> <dfn class="local col3 decl" id="163fd" title='fd' data-type='int' data-ref="163fd">fd</dfn>, <em>void</em> *<dfn class="local col4 decl" id="164p_buffer" title='p_buffer' data-type='void *' data-ref="164p_buffer">p_buffer</dfn>, <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="local col5 decl" id="165i_length" title='i_length' data-type='size_t' data-ref="165i_length">i_length</dfn> )</td></tr>
+<tr><th id="755">755</th><td>{</td></tr>
+<tr><th id="756">756</th><td>    <b>if</b>( <a class="tu ref" href="#_ZL11currentGzVp" title='currentGzVp' data-use='r' data-ref="_ZL11currentGzVp">currentGzVp</a> != <span class="macro" title="__null" data-ref="_M/NULL">NULL</span> &amp;&amp; <a class="local col3 ref" href="#163fd" title='fd' data-ref="163fd">fd</a> != -<var>1</var> )</td></tr>
+<tr><th id="757">757</th><td>    {</td></tr>
+<tr><th id="758">758</th><td>        <b>return</b> <a class="ref" href="../../../../../include/zlib.h.html#gzread" title='gzread' data-ref="gzread">gzread</a>( (<a class="typedef" href="../../../../../include/zlib.h.html#gzFile" title='gzFile' data-type='struct gzFile_s *' data-ref="gzFile">gzFile</a>) <a class="tu ref" href="#_ZL11currentGzVp" title='currentGzVp' data-use='r' data-ref="_ZL11currentGzVp">currentGzVp</a>, <a class="local col4 ref" href="#164p_buffer" title='p_buffer' data-ref="164p_buffer">p_buffer</a>, <a class="local col5 ref" href="#165i_length" title='i_length' data-ref="165i_length">i_length</a> );</td></tr>
+<tr><th id="759">759</th><td>    }</td></tr>
+<tr><th id="760">760</th><td>    <b>return</b> -<var>1</var>;</td></tr>
+<tr><th id="761">761</th><td>}</td></tr>
+<tr><th id="762">762</th><td></td></tr>
+<tr><th id="763">763</th><td><em>int</em> <dfn class="decl def" id="_Z16gzwrite_frontendiPKvm" title='gzwrite_frontend' data-ref="_Z16gzwrite_frontendiPKvm">gzwrite_frontend</dfn>( <em>int</em> <dfn class="local col6 decl" id="166fd" title='fd' data-type='int' data-ref="166fd">fd</dfn>, <em>const</em> <em>void</em> * <dfn class="local col7 decl" id="167p_buffer" title='p_buffer' data-type='const void *' data-ref="167p_buffer">p_buffer</dfn>, <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="local col8 decl" id="168i_length" title='i_length' data-type='size_t' data-ref="168i_length">i_length</dfn> )</td></tr>
+<tr><th id="764">764</th><td>{</td></tr>
+<tr><th id="765">765</th><td>    <b>if</b>( <a class="tu ref" href="#_ZL11currentGzVp" title='currentGzVp' data-use='r' data-ref="_ZL11currentGzVp">currentGzVp</a> != <span class="macro" title="__null" data-ref="_M/NULL">NULL</span> &amp;&amp; <a class="local col6 ref" href="#166fd" title='fd' data-ref="166fd">fd</a> != -<var>1</var> )</td></tr>
+<tr><th id="766">766</th><td>    {</td></tr>
+<tr><th id="767">767</th><td>        <b>return</b> <a class="ref" href="../../../../../include/zlib.h.html#gzwrite" title='gzwrite' data-ref="gzwrite">gzwrite</a>( (<a class="typedef" href="../../../../../include/zlib.h.html#gzFile" title='gzFile' data-type='struct gzFile_s *' data-ref="gzFile">gzFile</a>) <a class="tu ref" href="#_ZL11currentGzVp" title='currentGzVp' data-use='r' data-ref="_ZL11currentGzVp">currentGzVp</a>, <b>const_cast</b>&lt;<em>void</em>*&gt;(<a class="local col7 ref" href="#167p_buffer" title='p_buffer' data-ref="167p_buffer">p_buffer</a>), <a class="local col8 ref" href="#168i_length" title='i_length' data-ref="168i_length">i_length</a> );</td></tr>
+<tr><th id="768">768</th><td>    }</td></tr>
+<tr><th id="769">769</th><td>    <b>return</b> -<var>1</var>;</td></tr>
+<tr><th id="770">770</th><td>}</td></tr>
+<tr><th id="771">771</th><td></td></tr>
+<tr><th id="772">772</th><td><u>#<span data-ppcond="703">endif</span></u></td></tr>
+<tr><th id="773">773</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project vlc revision <em>2.2.0-git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

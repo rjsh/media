@@ -1,0 +1,310 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>jpeg2000.h source code [ffmpeg/libavcodec/jpeg2000.h] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="Jpeg2000Band,Jpeg2000Cblk,Jpeg2000CodingStyle,Jpeg2000Component,Jpeg2000Markers,Jpeg2000Pass,Jpeg2000Prec,Jpeg2000QuantStyle,Jpeg2000Quantsty,Jpeg2000ResLevel,Jpeg2000T1Context,Jpeg2000TgtNode "/>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavcodec/jpeg2000.h'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavcodec</a>/<a href='jpeg2000.h.html'>jpeg2000.h</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * JPEG 2000 common defines, structures and functions</i></td></tr>
+<tr><th id="3">3</th><td><i> * Copyright (c) 2007 Kamil Nowosad</i></td></tr>
+<tr><th id="4">4</th><td><i> * Copyright (c) 2013 Nicolas Bertrand &lt;nicoinattendu@gmail.com&gt;</i></td></tr>
+<tr><th id="5">5</th><td><i> *</i></td></tr>
+<tr><th id="6">6</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="7">7</th><td><i> *</i></td></tr>
+<tr><th id="8">8</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="9">9</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="10">10</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="11">11</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="12">12</th><td><i> *</i></td></tr>
+<tr><th id="13">13</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="14">14</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="15">15</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="16">16</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="17">17</th><td><i> *</i></td></tr>
+<tr><th id="18">18</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="19">19</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="20">20</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="21">21</th><td><i> */</i></td></tr>
+<tr><th id="22">22</th><td></td></tr>
+<tr><th id="23">23</th><td><u>#<span data-ppcond="23">ifndef</span> <span class="macro" data-ref="_M/AVCODEC_JPEG2000_H">AVCODEC_JPEG2000_H</span></u></td></tr>
+<tr><th id="24">24</th><td><u>#define <dfn class="macro" id="_M/AVCODEC_JPEG2000_H" data-ref="_M/AVCODEC_JPEG2000_H">AVCODEC_JPEG2000_H</dfn></u></td></tr>
+<tr><th id="25">25</th><td></td></tr>
+<tr><th id="26">26</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="27">27</th><td><i class="doc"> *<span class="command"> @file</span></i></td></tr>
+<tr><th id="28">28</th><td><i class="doc"> * JPEG 2000 structures and defines common</i></td></tr>
+<tr><th id="29">29</th><td><i class="doc"> * to encoder and decoder</i></td></tr>
+<tr><th id="30">30</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="31">31</th><td></td></tr>
+<tr><th id="32">32</th><td><u>#include &lt;stdint.h&gt;</u></td></tr>
+<tr><th id="33">33</th><td></td></tr>
+<tr><th id="34">34</th><td><u>#include <a href="avcodec.h.html">"avcodec.h"</a></u></td></tr>
+<tr><th id="35">35</th><td><u>#include <a href="mqc.h.html">"mqc.h"</a></u></td></tr>
+<tr><th id="36">36</th><td><u>#include <a href="jpeg2000dwt.h.html">"jpeg2000dwt.h"</a></u></td></tr>
+<tr><th id="37">37</th><td></td></tr>
+<tr><th id="38">38</th><td><b>enum</b> <dfn class="type def" id="Jpeg2000Markers" title='Jpeg2000Markers' data-ref="Jpeg2000Markers">Jpeg2000Markers</dfn> {</td></tr>
+<tr><th id="39">39</th><td>    <dfn class="enum" id="Jpeg2000Markers::JPEG2000_SOC" title='Jpeg2000Markers::JPEG2000_SOC' data-ref="Jpeg2000Markers::JPEG2000_SOC">JPEG2000_SOC</dfn> = <var>0xff4f</var>, <i>// start of codestream</i></td></tr>
+<tr><th id="40">40</th><td>    <dfn class="enum" id="Jpeg2000Markers::JPEG2000_SIZ" title='Jpeg2000Markers::JPEG2000_SIZ' data-ref="Jpeg2000Markers::JPEG2000_SIZ">JPEG2000_SIZ</dfn> = <var>0xff51</var>, <i>// image and tile size</i></td></tr>
+<tr><th id="41">41</th><td>    <dfn class="enum" id="Jpeg2000Markers::JPEG2000_COD" title='Jpeg2000Markers::JPEG2000_COD' data-ref="Jpeg2000Markers::JPEG2000_COD">JPEG2000_COD</dfn>,          <i>// coding style default</i></td></tr>
+<tr><th id="42">42</th><td>    <dfn class="enum" id="Jpeg2000Markers::JPEG2000_COC" title='Jpeg2000Markers::JPEG2000_COC' data-ref="Jpeg2000Markers::JPEG2000_COC">JPEG2000_COC</dfn>,          <i>// coding style component</i></td></tr>
+<tr><th id="43">43</th><td>    <dfn class="enum" id="Jpeg2000Markers::JPEG2000_TLM" title='Jpeg2000Markers::JPEG2000_TLM' data-ref="Jpeg2000Markers::JPEG2000_TLM">JPEG2000_TLM</dfn> = <var>0xff55</var>, <i>// packed packet headers, tile-part header</i></td></tr>
+<tr><th id="44">44</th><td>    <dfn class="enum" id="Jpeg2000Markers::JPEG2000_PLM" title='Jpeg2000Markers::JPEG2000_PLM' data-ref="Jpeg2000Markers::JPEG2000_PLM">JPEG2000_PLM</dfn> = <var>0xff57</var>, <i>// tile-part lengths</i></td></tr>
+<tr><th id="45">45</th><td>    <dfn class="enum" id="Jpeg2000Markers::JPEG2000_PLT" title='Jpeg2000Markers::JPEG2000_PLT' data-ref="Jpeg2000Markers::JPEG2000_PLT">JPEG2000_PLT</dfn>,          <i>// packet length, main header</i></td></tr>
+<tr><th id="46">46</th><td>    <dfn class="enum" id="Jpeg2000Markers::JPEG2000_QCD" title='Jpeg2000Markers::JPEG2000_QCD' data-ref="Jpeg2000Markers::JPEG2000_QCD">JPEG2000_QCD</dfn> = <var>0xff5c</var>, <i>// quantization default</i></td></tr>
+<tr><th id="47">47</th><td>    <dfn class="enum" id="Jpeg2000Markers::JPEG2000_QCC" title='Jpeg2000Markers::JPEG2000_QCC' data-ref="Jpeg2000Markers::JPEG2000_QCC">JPEG2000_QCC</dfn>,          <i>// quantization component</i></td></tr>
+<tr><th id="48">48</th><td>    <dfn class="enum" id="Jpeg2000Markers::JPEG2000_RGN" title='Jpeg2000Markers::JPEG2000_RGN' data-ref="Jpeg2000Markers::JPEG2000_RGN">JPEG2000_RGN</dfn>,          <i>// region of interest</i></td></tr>
+<tr><th id="49">49</th><td>    <dfn class="enum" id="Jpeg2000Markers::JPEG2000_POC" title='Jpeg2000Markers::JPEG2000_POC' data-ref="Jpeg2000Markers::JPEG2000_POC">JPEG2000_POC</dfn>,          <i>// progression order change</i></td></tr>
+<tr><th id="50">50</th><td>    <dfn class="enum" id="Jpeg2000Markers::JPEG2000_PPM" title='Jpeg2000Markers::JPEG2000_PPM' data-ref="Jpeg2000Markers::JPEG2000_PPM">JPEG2000_PPM</dfn>,          <i>// packet length, tile-part header</i></td></tr>
+<tr><th id="51">51</th><td>    <dfn class="enum" id="Jpeg2000Markers::JPEG2000_PPT" title='Jpeg2000Markers::JPEG2000_PPT' data-ref="Jpeg2000Markers::JPEG2000_PPT">JPEG2000_PPT</dfn>,          <i>// packed packet headers, main header</i></td></tr>
+<tr><th id="52">52</th><td>    <dfn class="enum" id="Jpeg2000Markers::JPEG2000_CRG" title='Jpeg2000Markers::JPEG2000_CRG' data-ref="Jpeg2000Markers::JPEG2000_CRG">JPEG2000_CRG</dfn> = <var>0xff63</var>, <i>// component registration</i></td></tr>
+<tr><th id="53">53</th><td>    <dfn class="enum" id="Jpeg2000Markers::JPEG2000_COM" title='Jpeg2000Markers::JPEG2000_COM' data-ref="Jpeg2000Markers::JPEG2000_COM">JPEG2000_COM</dfn>,          <i>// comment</i></td></tr>
+<tr><th id="54">54</th><td>    <dfn class="enum" id="Jpeg2000Markers::JPEG2000_SOT" title='Jpeg2000Markers::JPEG2000_SOT' data-ref="Jpeg2000Markers::JPEG2000_SOT">JPEG2000_SOT</dfn> = <var>0xff90</var>, <i>// start of tile-part</i></td></tr>
+<tr><th id="55">55</th><td>    <dfn class="enum" id="Jpeg2000Markers::JPEG2000_SOP" title='Jpeg2000Markers::JPEG2000_SOP' data-ref="Jpeg2000Markers::JPEG2000_SOP">JPEG2000_SOP</dfn>,          <i>// start of packet</i></td></tr>
+<tr><th id="56">56</th><td>    <dfn class="enum" id="Jpeg2000Markers::JPEG2000_EPH" title='Jpeg2000Markers::JPEG2000_EPH' data-ref="Jpeg2000Markers::JPEG2000_EPH">JPEG2000_EPH</dfn>,          <i>// end of packet header</i></td></tr>
+<tr><th id="57">57</th><td>    <dfn class="enum" id="Jpeg2000Markers::JPEG2000_SOD" title='Jpeg2000Markers::JPEG2000_SOD' data-ref="Jpeg2000Markers::JPEG2000_SOD">JPEG2000_SOD</dfn>,          <i>// start of data</i></td></tr>
+<tr><th id="58">58</th><td>    <dfn class="enum" id="Jpeg2000Markers::JPEG2000_EOC" title='Jpeg2000Markers::JPEG2000_EOC' data-ref="Jpeg2000Markers::JPEG2000_EOC">JPEG2000_EOC</dfn> = <var>0xffd9</var>, <i>// end of codestream</i></td></tr>
+<tr><th id="59">59</th><td>};</td></tr>
+<tr><th id="60">60</th><td></td></tr>
+<tr><th id="61">61</th><td><u>#define <dfn class="macro" id="_M/JPEG2000_SOP_FIXED_BYTES" data-ref="_M/JPEG2000_SOP_FIXED_BYTES">JPEG2000_SOP_FIXED_BYTES</dfn> 0xFF910004</u></td></tr>
+<tr><th id="62">62</th><td><u>#define <dfn class="macro" id="_M/JPEG2000_SOP_BYTE_LENGTH" data-ref="_M/JPEG2000_SOP_BYTE_LENGTH">JPEG2000_SOP_BYTE_LENGTH</dfn> 6</u></td></tr>
+<tr><th id="63">63</th><td></td></tr>
+<tr><th id="64">64</th><td><b>enum</b> <dfn class="type def" id="Jpeg2000Quantsty" title='Jpeg2000Quantsty' data-ref="Jpeg2000Quantsty">Jpeg2000Quantsty</dfn> { <i>// quantization style</i></td></tr>
+<tr><th id="65">65</th><td>    <dfn class="enum" id="Jpeg2000Quantsty::JPEG2000_QSTY_NONE" title='Jpeg2000Quantsty::JPEG2000_QSTY_NONE' data-ref="Jpeg2000Quantsty::JPEG2000_QSTY_NONE">JPEG2000_QSTY_NONE</dfn>, <i>// no quantization</i></td></tr>
+<tr><th id="66">66</th><td>    <dfn class="enum" id="Jpeg2000Quantsty::JPEG2000_QSTY_SI" title='Jpeg2000Quantsty::JPEG2000_QSTY_SI' data-ref="Jpeg2000Quantsty::JPEG2000_QSTY_SI">JPEG2000_QSTY_SI</dfn>,   <i>// scalar derived</i></td></tr>
+<tr><th id="67">67</th><td>    <dfn class="enum" id="Jpeg2000Quantsty::JPEG2000_QSTY_SE" title='Jpeg2000Quantsty::JPEG2000_QSTY_SE' data-ref="Jpeg2000Quantsty::JPEG2000_QSTY_SE">JPEG2000_QSTY_SE</dfn>    <i>// scalar expounded</i></td></tr>
+<tr><th id="68">68</th><td>};</td></tr>
+<tr><th id="69">69</th><td></td></tr>
+<tr><th id="70">70</th><td><u>#define <dfn class="macro" id="_M/JPEG2000_MAX_DECLEVELS" data-ref="_M/JPEG2000_MAX_DECLEVELS">JPEG2000_MAX_DECLEVELS</dfn> 33</u></td></tr>
+<tr><th id="71">71</th><td><u>#define <dfn class="macro" id="_M/JPEG2000_MAX_RESLEVELS" data-ref="_M/JPEG2000_MAX_RESLEVELS">JPEG2000_MAX_RESLEVELS</dfn> (JPEG2000_MAX_DECLEVELS + 1)</u></td></tr>
+<tr><th id="72">72</th><td></td></tr>
+<tr><th id="73">73</th><td><u>#define <dfn class="macro" id="_M/JPEG2000_MAX_PASSES" data-ref="_M/JPEG2000_MAX_PASSES">JPEG2000_MAX_PASSES</dfn> 100</u></td></tr>
+<tr><th id="74">74</th><td></td></tr>
+<tr><th id="75">75</th><td><i>// T1 flags</i></td></tr>
+<tr><th id="76">76</th><td><i>// flags determining significance of neighbor coefficients</i></td></tr>
+<tr><th id="77">77</th><td><u>#define <dfn class="macro" id="_M/JPEG2000_T1_SIG_N" data-ref="_M/JPEG2000_T1_SIG_N">JPEG2000_T1_SIG_N</dfn>  0x0001</u></td></tr>
+<tr><th id="78">78</th><td><u>#define <dfn class="macro" id="_M/JPEG2000_T1_SIG_E" data-ref="_M/JPEG2000_T1_SIG_E">JPEG2000_T1_SIG_E</dfn>  0x0002</u></td></tr>
+<tr><th id="79">79</th><td><u>#define <dfn class="macro" id="_M/JPEG2000_T1_SIG_W" data-ref="_M/JPEG2000_T1_SIG_W">JPEG2000_T1_SIG_W</dfn>  0x0004</u></td></tr>
+<tr><th id="80">80</th><td><u>#define <dfn class="macro" id="_M/JPEG2000_T1_SIG_S" data-ref="_M/JPEG2000_T1_SIG_S">JPEG2000_T1_SIG_S</dfn>  0x0008</u></td></tr>
+<tr><th id="81">81</th><td><u>#define <dfn class="macro" id="_M/JPEG2000_T1_SIG_NE" data-ref="_M/JPEG2000_T1_SIG_NE">JPEG2000_T1_SIG_NE</dfn> 0x0010</u></td></tr>
+<tr><th id="82">82</th><td><u>#define <dfn class="macro" id="_M/JPEG2000_T1_SIG_NW" data-ref="_M/JPEG2000_T1_SIG_NW">JPEG2000_T1_SIG_NW</dfn> 0x0020</u></td></tr>
+<tr><th id="83">83</th><td><u>#define <dfn class="macro" id="_M/JPEG2000_T1_SIG_SE" data-ref="_M/JPEG2000_T1_SIG_SE">JPEG2000_T1_SIG_SE</dfn> 0x0040</u></td></tr>
+<tr><th id="84">84</th><td><u>#define <dfn class="macro" id="_M/JPEG2000_T1_SIG_SW" data-ref="_M/JPEG2000_T1_SIG_SW">JPEG2000_T1_SIG_SW</dfn> 0x0080</u></td></tr>
+<tr><th id="85">85</th><td><u>#define <dfn class="macro" id="_M/JPEG2000_T1_SIG_NB" data-ref="_M/JPEG2000_T1_SIG_NB">JPEG2000_T1_SIG_NB</dfn> (JPEG2000_T1_SIG_N  | JPEG2000_T1_SIG_E  |   \</u></td></tr>
+<tr><th id="86">86</th><td><u>                            JPEG2000_T1_SIG_S  | JPEG2000_T1_SIG_W  |   \</u></td></tr>
+<tr><th id="87">87</th><td><u>                            JPEG2000_T1_SIG_NE | JPEG2000_T1_SIG_NW |   \</u></td></tr>
+<tr><th id="88">88</th><td><u>                            JPEG2000_T1_SIG_SE | JPEG2000_T1_SIG_SW)</u></td></tr>
+<tr><th id="89">89</th><td><i>// flags determining sign bit of neighbor coefficients</i></td></tr>
+<tr><th id="90">90</th><td><u>#define <dfn class="macro" id="_M/JPEG2000_T1_SGN_N" data-ref="_M/JPEG2000_T1_SGN_N">JPEG2000_T1_SGN_N</dfn>  0x0100</u></td></tr>
+<tr><th id="91">91</th><td><u>#define <dfn class="macro" id="_M/JPEG2000_T1_SGN_S" data-ref="_M/JPEG2000_T1_SGN_S">JPEG2000_T1_SGN_S</dfn>  0x0200</u></td></tr>
+<tr><th id="92">92</th><td><u>#define <dfn class="macro" id="_M/JPEG2000_T1_SGN_W" data-ref="_M/JPEG2000_T1_SGN_W">JPEG2000_T1_SGN_W</dfn>  0x0400</u></td></tr>
+<tr><th id="93">93</th><td><u>#define <dfn class="macro" id="_M/JPEG2000_T1_SGN_E" data-ref="_M/JPEG2000_T1_SGN_E">JPEG2000_T1_SGN_E</dfn>  0x0800</u></td></tr>
+<tr><th id="94">94</th><td></td></tr>
+<tr><th id="95">95</th><td><u>#define <dfn class="macro" id="_M/JPEG2000_T1_VIS" data-ref="_M/JPEG2000_T1_VIS">JPEG2000_T1_VIS</dfn>    0x1000</u></td></tr>
+<tr><th id="96">96</th><td><u>#define <dfn class="macro" id="_M/JPEG2000_T1_SIG" data-ref="_M/JPEG2000_T1_SIG">JPEG2000_T1_SIG</dfn>    0x2000</u></td></tr>
+<tr><th id="97">97</th><td><u>#define <dfn class="macro" id="_M/JPEG2000_T1_REF" data-ref="_M/JPEG2000_T1_REF">JPEG2000_T1_REF</dfn>    0x4000</u></td></tr>
+<tr><th id="98">98</th><td></td></tr>
+<tr><th id="99">99</th><td><u>#define <dfn class="macro" id="_M/JPEG2000_T1_SGN" data-ref="_M/JPEG2000_T1_SGN">JPEG2000_T1_SGN</dfn>    0x8000</u></td></tr>
+<tr><th id="100">100</th><td></td></tr>
+<tr><th id="101">101</th><td><i>// Codeblock coding styles</i></td></tr>
+<tr><th id="102">102</th><td><u>#define <dfn class="macro" id="_M/JPEG2000_CBLK_BYPASS" data-ref="_M/JPEG2000_CBLK_BYPASS">JPEG2000_CBLK_BYPASS</dfn>    0x01 // Selective arithmetic coding bypass</u></td></tr>
+<tr><th id="103">103</th><td><u>#define <dfn class="macro" id="_M/JPEG2000_CBLK_RESET" data-ref="_M/JPEG2000_CBLK_RESET">JPEG2000_CBLK_RESET</dfn>     0x02 // Reset context probabilities</u></td></tr>
+<tr><th id="104">104</th><td><u>#define <dfn class="macro" id="_M/JPEG2000_CBLK_TERMALL" data-ref="_M/JPEG2000_CBLK_TERMALL">JPEG2000_CBLK_TERMALL</dfn>   0x04 // Terminate after each coding pass</u></td></tr>
+<tr><th id="105">105</th><td><u>#define <dfn class="macro" id="_M/JPEG2000_CBLK_VSC" data-ref="_M/JPEG2000_CBLK_VSC">JPEG2000_CBLK_VSC</dfn>       0x08 // Vertical stripe causal context formation</u></td></tr>
+<tr><th id="106">106</th><td><u>#define <dfn class="macro" id="_M/JPEG2000_CBLK_PREDTERM" data-ref="_M/JPEG2000_CBLK_PREDTERM">JPEG2000_CBLK_PREDTERM</dfn>  0x10 // Predictable termination</u></td></tr>
+<tr><th id="107">107</th><td><u>#define <dfn class="macro" id="_M/JPEG2000_CBLK_SEGSYM" data-ref="_M/JPEG2000_CBLK_SEGSYM">JPEG2000_CBLK_SEGSYM</dfn>    0x20 // Segmentation symbols present</u></td></tr>
+<tr><th id="108">108</th><td></td></tr>
+<tr><th id="109">109</th><td><i>// Coding styles</i></td></tr>
+<tr><th id="110">110</th><td><u>#define <dfn class="macro" id="_M/JPEG2000_CSTY_PREC" data-ref="_M/JPEG2000_CSTY_PREC">JPEG2000_CSTY_PREC</dfn>      0x01 // Precincts defined in coding style</u></td></tr>
+<tr><th id="111">111</th><td><u>#define <dfn class="macro" id="_M/JPEG2000_CSTY_SOP" data-ref="_M/JPEG2000_CSTY_SOP">JPEG2000_CSTY_SOP</dfn>       0x02 // SOP marker present</u></td></tr>
+<tr><th id="112">112</th><td><u>#define <dfn class="macro" id="_M/JPEG2000_CSTY_EPH" data-ref="_M/JPEG2000_CSTY_EPH">JPEG2000_CSTY_EPH</dfn>       0x04 // EPH marker present</u></td></tr>
+<tr><th id="113">113</th><td></td></tr>
+<tr><th id="114">114</th><td><i>// Progression orders</i></td></tr>
+<tr><th id="115">115</th><td><u>#define <dfn class="macro" id="_M/JPEG2000_PGOD_LRCP" data-ref="_M/JPEG2000_PGOD_LRCP">JPEG2000_PGOD_LRCP</dfn>      0x00  // Layer-resolution level-component-position progression</u></td></tr>
+<tr><th id="116">116</th><td><u>#define <dfn class="macro" id="_M/JPEG2000_PGOD_RLCP" data-ref="_M/JPEG2000_PGOD_RLCP">JPEG2000_PGOD_RLCP</dfn>      0x01  // Resolution level-layer-component-position progression</u></td></tr>
+<tr><th id="117">117</th><td><u>#define <dfn class="macro" id="_M/JPEG2000_PGOD_RPCL" data-ref="_M/JPEG2000_PGOD_RPCL">JPEG2000_PGOD_RPCL</dfn>      0x02  // Resolution level-position-component-layer progression</u></td></tr>
+<tr><th id="118">118</th><td><u>#define <dfn class="macro" id="_M/JPEG2000_PGOD_PCRL" data-ref="_M/JPEG2000_PGOD_PCRL">JPEG2000_PGOD_PCRL</dfn>      0x03  // Position-component-resolution level-layer progression</u></td></tr>
+<tr><th id="119">119</th><td><u>#define <dfn class="macro" id="_M/JPEG2000_PGOD_CPRL" data-ref="_M/JPEG2000_PGOD_CPRL">JPEG2000_PGOD_CPRL</dfn>      0x04  // Component-position-resolution level-layer progression</u></td></tr>
+<tr><th id="120">120</th><td></td></tr>
+<tr><th id="121">121</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="Jpeg2000T1Context" title='Jpeg2000T1Context' data-ref="Jpeg2000T1Context"><a class="type" href="#Jpeg2000T1Context" title='Jpeg2000T1Context' data-ref="Jpeg2000T1Context">Jpeg2000T1Context</a></dfn> {</td></tr>
+<tr><th id="122">122</th><td>    <em>int</em> <dfn class="decl" id="Jpeg2000T1Context::data" title='Jpeg2000T1Context::data' data-ref="Jpeg2000T1Context::data">data</dfn>[<var>6144</var>];</td></tr>
+<tr><th id="123">123</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> <dfn class="decl" id="Jpeg2000T1Context::flags" title='Jpeg2000T1Context::flags' data-ref="Jpeg2000T1Context::flags">flags</dfn>[<var>6156</var>];</td></tr>
+<tr><th id="124">124</th><td>    <a class="typedef" href="mqc.h.html#MqcState" title='MqcState' data-type='struct MqcState' data-ref="MqcState">MqcState</a> <dfn class="decl" id="Jpeg2000T1Context::mqc" title='Jpeg2000T1Context::mqc' data-ref="Jpeg2000T1Context::mqc">mqc</dfn>;</td></tr>
+<tr><th id="125">125</th><td>    <em>int</em> <dfn class="decl" id="Jpeg2000T1Context::stride" title='Jpeg2000T1Context::stride' data-ref="Jpeg2000T1Context::stride">stride</dfn>;</td></tr>
+<tr><th id="126">126</th><td>} <dfn class="typedef" id="Jpeg2000T1Context" title='Jpeg2000T1Context' data-type='struct Jpeg2000T1Context' data-ref="Jpeg2000T1Context">Jpeg2000T1Context</dfn>;</td></tr>
+<tr><th id="127">127</th><td></td></tr>
+<tr><th id="128">128</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="Jpeg2000TgtNode" title='Jpeg2000TgtNode' data-ref="Jpeg2000TgtNode"><a class="type" href="#Jpeg2000TgtNode" title='Jpeg2000TgtNode' data-ref="Jpeg2000TgtNode">Jpeg2000TgtNode</a></dfn> {</td></tr>
+<tr><th id="129">129</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="Jpeg2000TgtNode::val" title='Jpeg2000TgtNode::val' data-ref="Jpeg2000TgtNode::val">val</dfn>;</td></tr>
+<tr><th id="130">130</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="Jpeg2000TgtNode::vis" title='Jpeg2000TgtNode::vis' data-ref="Jpeg2000TgtNode::vis">vis</dfn>;</td></tr>
+<tr><th id="131">131</th><td>    <b>struct</b> <a class="type" href="#Jpeg2000TgtNode" title='Jpeg2000TgtNode' data-ref="Jpeg2000TgtNode">Jpeg2000TgtNode</a> *<dfn class="decl" id="Jpeg2000TgtNode::parent" title='Jpeg2000TgtNode::parent' data-ref="Jpeg2000TgtNode::parent">parent</dfn>;</td></tr>
+<tr><th id="132">132</th><td>} <dfn class="typedef" id="Jpeg2000TgtNode" title='Jpeg2000TgtNode' data-type='struct Jpeg2000TgtNode' data-ref="Jpeg2000TgtNode">Jpeg2000TgtNode</dfn>;</td></tr>
+<tr><th id="133">133</th><td></td></tr>
+<tr><th id="134">134</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="Jpeg2000CodingStyle" title='Jpeg2000CodingStyle' data-ref="Jpeg2000CodingStyle"><a class="type" href="#Jpeg2000CodingStyle" title='Jpeg2000CodingStyle' data-ref="Jpeg2000CodingStyle">Jpeg2000CodingStyle</a></dfn> {</td></tr>
+<tr><th id="135">135</th><td>    <em>int</em> <dfn class="decl" id="Jpeg2000CodingStyle::nreslevels" title='Jpeg2000CodingStyle::nreslevels' data-ref="Jpeg2000CodingStyle::nreslevels">nreslevels</dfn>;           <i>// number of resolution levels</i></td></tr>
+<tr><th id="136">136</th><td>    <em>int</em> <dfn class="decl" id="Jpeg2000CodingStyle::nreslevels2decode" title='Jpeg2000CodingStyle::nreslevels2decode' data-ref="Jpeg2000CodingStyle::nreslevels2decode">nreslevels2decode</dfn>;    <i>// number of resolution levels to decode</i></td></tr>
+<tr><th id="137">137</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="Jpeg2000CodingStyle::log2_cblk_width" title='Jpeg2000CodingStyle::log2_cblk_width' data-ref="Jpeg2000CodingStyle::log2_cblk_width">log2_cblk_width</dfn>,</td></tr>
+<tr><th id="138">138</th><td>            <dfn class="decl" id="Jpeg2000CodingStyle::log2_cblk_height" title='Jpeg2000CodingStyle::log2_cblk_height' data-ref="Jpeg2000CodingStyle::log2_cblk_height">log2_cblk_height</dfn>; <i>// exponent of codeblock size</i></td></tr>
+<tr><th id="139">139</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="Jpeg2000CodingStyle::transform" title='Jpeg2000CodingStyle::transform' data-ref="Jpeg2000CodingStyle::transform">transform</dfn>;        <i>// DWT type</i></td></tr>
+<tr><th id="140">140</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="Jpeg2000CodingStyle::csty" title='Jpeg2000CodingStyle::csty' data-ref="Jpeg2000CodingStyle::csty">csty</dfn>;             <i>// coding style</i></td></tr>
+<tr><th id="141">141</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="Jpeg2000CodingStyle::nlayers" title='Jpeg2000CodingStyle::nlayers' data-ref="Jpeg2000CodingStyle::nlayers">nlayers</dfn>;          <i>// number of layers</i></td></tr>
+<tr><th id="142">142</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="Jpeg2000CodingStyle::mct" title='Jpeg2000CodingStyle::mct' data-ref="Jpeg2000CodingStyle::mct">mct</dfn>;              <i>// multiple component transformation</i></td></tr>
+<tr><th id="143">143</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="Jpeg2000CodingStyle::cblk_style" title='Jpeg2000CodingStyle::cblk_style' data-ref="Jpeg2000CodingStyle::cblk_style">cblk_style</dfn>;       <i>// codeblock coding style</i></td></tr>
+<tr><th id="144">144</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="Jpeg2000CodingStyle::prog_order" title='Jpeg2000CodingStyle::prog_order' data-ref="Jpeg2000CodingStyle::prog_order">prog_order</dfn>;       <i>// progression order</i></td></tr>
+<tr><th id="145">145</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="Jpeg2000CodingStyle::log2_prec_widths" title='Jpeg2000CodingStyle::log2_prec_widths' data-ref="Jpeg2000CodingStyle::log2_prec_widths">log2_prec_widths</dfn>[<a class="macro" href="#71" title="(33 + 1)" data-ref="_M/JPEG2000_MAX_RESLEVELS">JPEG2000_MAX_RESLEVELS</a>];  <i>// precincts size according resolution levels</i></td></tr>
+<tr><th id="146">146</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="Jpeg2000CodingStyle::log2_prec_heights" title='Jpeg2000CodingStyle::log2_prec_heights' data-ref="Jpeg2000CodingStyle::log2_prec_heights">log2_prec_heights</dfn>[<a class="macro" href="#71" title="(33 + 1)" data-ref="_M/JPEG2000_MAX_RESLEVELS">JPEG2000_MAX_RESLEVELS</a>]; <i>// TODO: initialize prec_size array with 0?</i></td></tr>
+<tr><th id="147">147</th><td>} <dfn class="typedef" id="Jpeg2000CodingStyle" title='Jpeg2000CodingStyle' data-type='struct Jpeg2000CodingStyle' data-ref="Jpeg2000CodingStyle">Jpeg2000CodingStyle</dfn>;</td></tr>
+<tr><th id="148">148</th><td></td></tr>
+<tr><th id="149">149</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="Jpeg2000QuantStyle" title='Jpeg2000QuantStyle' data-ref="Jpeg2000QuantStyle"><a class="type" href="#Jpeg2000QuantStyle" title='Jpeg2000QuantStyle' data-ref="Jpeg2000QuantStyle">Jpeg2000QuantStyle</a></dfn> {</td></tr>
+<tr><th id="150">150</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="Jpeg2000QuantStyle::expn" title='Jpeg2000QuantStyle::expn' data-ref="Jpeg2000QuantStyle::expn">expn</dfn>[<a class="macro" href="#70" title="33" data-ref="_M/JPEG2000_MAX_DECLEVELS">JPEG2000_MAX_DECLEVELS</a> * <var>3</var>];  <i>// quantization exponent</i></td></tr>
+<tr><th id="151">151</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> <dfn class="decl" id="Jpeg2000QuantStyle::mant" title='Jpeg2000QuantStyle::mant' data-ref="Jpeg2000QuantStyle::mant">mant</dfn>[<a class="macro" href="#70" title="33" data-ref="_M/JPEG2000_MAX_DECLEVELS">JPEG2000_MAX_DECLEVELS</a> * <var>3</var>]; <i>// quantization mantissa</i></td></tr>
+<tr><th id="152">152</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="Jpeg2000QuantStyle::quantsty" title='Jpeg2000QuantStyle::quantsty' data-ref="Jpeg2000QuantStyle::quantsty">quantsty</dfn>;      <i>// quantization style</i></td></tr>
+<tr><th id="153">153</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="Jpeg2000QuantStyle::nguardbits" title='Jpeg2000QuantStyle::nguardbits' data-ref="Jpeg2000QuantStyle::nguardbits">nguardbits</dfn>;    <i>// number of guard bits</i></td></tr>
+<tr><th id="154">154</th><td>} <dfn class="typedef" id="Jpeg2000QuantStyle" title='Jpeg2000QuantStyle' data-type='struct Jpeg2000QuantStyle' data-ref="Jpeg2000QuantStyle">Jpeg2000QuantStyle</dfn>;</td></tr>
+<tr><th id="155">155</th><td></td></tr>
+<tr><th id="156">156</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="Jpeg2000Pass" title='Jpeg2000Pass' data-ref="Jpeg2000Pass"><a class="type" href="#Jpeg2000Pass" title='Jpeg2000Pass' data-ref="Jpeg2000Pass">Jpeg2000Pass</a></dfn> {</td></tr>
+<tr><th id="157">157</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> <dfn class="decl" id="Jpeg2000Pass::rate" title='Jpeg2000Pass::rate' data-ref="Jpeg2000Pass::rate">rate</dfn>;</td></tr>
+<tr><th id="158">158</th><td>    <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="decl" id="Jpeg2000Pass::disto" title='Jpeg2000Pass::disto' data-ref="Jpeg2000Pass::disto">disto</dfn>;</td></tr>
+<tr><th id="159">159</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="Jpeg2000Pass::flushed" title='Jpeg2000Pass::flushed' data-ref="Jpeg2000Pass::flushed">flushed</dfn>[<var>4</var>];</td></tr>
+<tr><th id="160">160</th><td>    <em>int</em> <dfn class="decl" id="Jpeg2000Pass::flushed_len" title='Jpeg2000Pass::flushed_len' data-ref="Jpeg2000Pass::flushed_len">flushed_len</dfn>;</td></tr>
+<tr><th id="161">161</th><td>} <dfn class="typedef" id="Jpeg2000Pass" title='Jpeg2000Pass' data-type='struct Jpeg2000Pass' data-ref="Jpeg2000Pass">Jpeg2000Pass</dfn>;</td></tr>
+<tr><th id="162">162</th><td></td></tr>
+<tr><th id="163">163</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="Jpeg2000Cblk" title='Jpeg2000Cblk' data-ref="Jpeg2000Cblk"><a class="type" href="#Jpeg2000Cblk" title='Jpeg2000Cblk' data-ref="Jpeg2000Cblk">Jpeg2000Cblk</a></dfn> {</td></tr>
+<tr><th id="164">164</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="Jpeg2000Cblk::npasses" title='Jpeg2000Cblk::npasses' data-ref="Jpeg2000Cblk::npasses">npasses</dfn>;</td></tr>
+<tr><th id="165">165</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="Jpeg2000Cblk::ninclpasses" title='Jpeg2000Cblk::ninclpasses' data-ref="Jpeg2000Cblk::ninclpasses">ninclpasses</dfn>; <i>// number coding of passes included in codestream</i></td></tr>
+<tr><th id="166">166</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="Jpeg2000Cblk::nonzerobits" title='Jpeg2000Cblk::nonzerobits' data-ref="Jpeg2000Cblk::nonzerobits">nonzerobits</dfn>;</td></tr>
+<tr><th id="167">167</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> <dfn class="decl" id="Jpeg2000Cblk::length" title='Jpeg2000Cblk::length' data-ref="Jpeg2000Cblk::length">length</dfn>;</td></tr>
+<tr><th id="168">168</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> <dfn class="decl" id="Jpeg2000Cblk::lengthinc" title='Jpeg2000Cblk::lengthinc' data-ref="Jpeg2000Cblk::lengthinc">lengthinc</dfn>[<a class="macro" href="#73" title="100" data-ref="_M/JPEG2000_MAX_PASSES">JPEG2000_MAX_PASSES</a>];</td></tr>
+<tr><th id="169">169</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="Jpeg2000Cblk::nb_lengthinc" title='Jpeg2000Cblk::nb_lengthinc' data-ref="Jpeg2000Cblk::nb_lengthinc">nb_lengthinc</dfn>;</td></tr>
+<tr><th id="170">170</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="Jpeg2000Cblk::lblock" title='Jpeg2000Cblk::lblock' data-ref="Jpeg2000Cblk::lblock">lblock</dfn>;</td></tr>
+<tr><th id="171">171</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="Jpeg2000Cblk::zero" title='Jpeg2000Cblk::zero' data-ref="Jpeg2000Cblk::zero">zero</dfn>;</td></tr>
+<tr><th id="172">172</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="Jpeg2000Cblk::data" title='Jpeg2000Cblk::data' data-ref="Jpeg2000Cblk::data">data</dfn>[<var>8192</var>];</td></tr>
+<tr><th id="173">173</th><td>    <em>int</em> <dfn class="decl" id="Jpeg2000Cblk::nb_terminations" title='Jpeg2000Cblk::nb_terminations' data-ref="Jpeg2000Cblk::nb_terminations">nb_terminations</dfn>;</td></tr>
+<tr><th id="174">174</th><td>    <em>int</em> <dfn class="decl" id="Jpeg2000Cblk::nb_terminationsinc" title='Jpeg2000Cblk::nb_terminationsinc' data-ref="Jpeg2000Cblk::nb_terminationsinc">nb_terminationsinc</dfn>;</td></tr>
+<tr><th id="175">175</th><td>    <em>int</em> <dfn class="decl" id="Jpeg2000Cblk::data_start" title='Jpeg2000Cblk::data_start' data-ref="Jpeg2000Cblk::data_start">data_start</dfn>[<a class="macro" href="#73" title="100" data-ref="_M/JPEG2000_MAX_PASSES">JPEG2000_MAX_PASSES</a>];</td></tr>
+<tr><th id="176">176</th><td>    <a class="typedef" href="#Jpeg2000Pass" title='Jpeg2000Pass' data-type='struct Jpeg2000Pass' data-ref="Jpeg2000Pass">Jpeg2000Pass</a> <dfn class="decl" id="Jpeg2000Cblk::passes" title='Jpeg2000Cblk::passes' data-ref="Jpeg2000Cblk::passes">passes</dfn>[<a class="macro" href="#73" title="100" data-ref="_M/JPEG2000_MAX_PASSES">JPEG2000_MAX_PASSES</a>];</td></tr>
+<tr><th id="177">177</th><td>    <em>int</em> <dfn class="decl" id="Jpeg2000Cblk::coord" title='Jpeg2000Cblk::coord' data-ref="Jpeg2000Cblk::coord">coord</dfn>[<var>2</var>][<var>2</var>]; <i>// border coordinates {{x0, x1}, {y0, y1}}</i></td></tr>
+<tr><th id="178">178</th><td>} <dfn class="typedef" id="Jpeg2000Cblk" title='Jpeg2000Cblk' data-type='struct Jpeg2000Cblk' data-ref="Jpeg2000Cblk">Jpeg2000Cblk</dfn>; <i>// code block</i></td></tr>
+<tr><th id="179">179</th><td></td></tr>
+<tr><th id="180">180</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="Jpeg2000Prec" title='Jpeg2000Prec' data-ref="Jpeg2000Prec"><a class="type" href="#Jpeg2000Prec" title='Jpeg2000Prec' data-ref="Jpeg2000Prec">Jpeg2000Prec</a></dfn> {</td></tr>
+<tr><th id="181">181</th><td>    <em>int</em> <dfn class="decl" id="Jpeg2000Prec::nb_codeblocks_width" title='Jpeg2000Prec::nb_codeblocks_width' data-ref="Jpeg2000Prec::nb_codeblocks_width">nb_codeblocks_width</dfn>;</td></tr>
+<tr><th id="182">182</th><td>    <em>int</em> <dfn class="decl" id="Jpeg2000Prec::nb_codeblocks_height" title='Jpeg2000Prec::nb_codeblocks_height' data-ref="Jpeg2000Prec::nb_codeblocks_height">nb_codeblocks_height</dfn>;</td></tr>
+<tr><th id="183">183</th><td>    <a class="typedef" href="#Jpeg2000TgtNode" title='Jpeg2000TgtNode' data-type='struct Jpeg2000TgtNode' data-ref="Jpeg2000TgtNode">Jpeg2000TgtNode</a> *<dfn class="decl" id="Jpeg2000Prec::zerobits" title='Jpeg2000Prec::zerobits' data-ref="Jpeg2000Prec::zerobits">zerobits</dfn>;</td></tr>
+<tr><th id="184">184</th><td>    <a class="typedef" href="#Jpeg2000TgtNode" title='Jpeg2000TgtNode' data-type='struct Jpeg2000TgtNode' data-ref="Jpeg2000TgtNode">Jpeg2000TgtNode</a> *<dfn class="decl" id="Jpeg2000Prec::cblkincl" title='Jpeg2000Prec::cblkincl' data-ref="Jpeg2000Prec::cblkincl">cblkincl</dfn>;</td></tr>
+<tr><th id="185">185</th><td>    <a class="typedef" href="#Jpeg2000Cblk" title='Jpeg2000Cblk' data-type='struct Jpeg2000Cblk' data-ref="Jpeg2000Cblk">Jpeg2000Cblk</a> *<dfn class="decl" id="Jpeg2000Prec::cblk" title='Jpeg2000Prec::cblk' data-ref="Jpeg2000Prec::cblk">cblk</dfn>;</td></tr>
+<tr><th id="186">186</th><td>    <em>int</em> <dfn class="decl" id="Jpeg2000Prec::decoded_layers" title='Jpeg2000Prec::decoded_layers' data-ref="Jpeg2000Prec::decoded_layers">decoded_layers</dfn>;</td></tr>
+<tr><th id="187">187</th><td>    <em>int</em> <dfn class="decl" id="Jpeg2000Prec::coord" title='Jpeg2000Prec::coord' data-ref="Jpeg2000Prec::coord">coord</dfn>[<var>2</var>][<var>2</var>]; <i>// border coordinates {{x0, x1}, {y0, y1}}</i></td></tr>
+<tr><th id="188">188</th><td>} <dfn class="typedef" id="Jpeg2000Prec" title='Jpeg2000Prec' data-type='struct Jpeg2000Prec' data-ref="Jpeg2000Prec">Jpeg2000Prec</dfn>; <i>// precinct</i></td></tr>
+<tr><th id="189">189</th><td></td></tr>
+<tr><th id="190">190</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="Jpeg2000Band" title='Jpeg2000Band' data-ref="Jpeg2000Band"><a class="type" href="#Jpeg2000Band" title='Jpeg2000Band' data-ref="Jpeg2000Band">Jpeg2000Band</a></dfn> {</td></tr>
+<tr><th id="191">191</th><td>    <em>int</em> <dfn class="decl" id="Jpeg2000Band::coord" title='Jpeg2000Band::coord' data-ref="Jpeg2000Band::coord">coord</dfn>[<var>2</var>][<var>2</var>]; <i>// border coordinates {{x0, x1}, {y0, y1}}</i></td></tr>
+<tr><th id="192">192</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint16_t" title='uint16_t' data-type='unsigned short' data-ref="uint16_t">uint16_t</a> <dfn class="decl" id="Jpeg2000Band::log2_cblk_width" title='Jpeg2000Band::log2_cblk_width' data-ref="Jpeg2000Band::log2_cblk_width">log2_cblk_width</dfn>, <dfn class="decl" id="Jpeg2000Band::log2_cblk_height" title='Jpeg2000Band::log2_cblk_height' data-ref="Jpeg2000Band::log2_cblk_height">log2_cblk_height</dfn>;</td></tr>
+<tr><th id="193">193</th><td>    <em>int</em> <dfn class="decl" id="Jpeg2000Band::i_stepsize" title='Jpeg2000Band::i_stepsize' data-ref="Jpeg2000Band::i_stepsize">i_stepsize</dfn>; <i>// quantization stepsize</i></td></tr>
+<tr><th id="194">194</th><td>    <em>float</em> <dfn class="decl" id="Jpeg2000Band::f_stepsize" title='Jpeg2000Band::f_stepsize' data-ref="Jpeg2000Band::f_stepsize">f_stepsize</dfn>; <i>// quantization stepsize</i></td></tr>
+<tr><th id="195">195</th><td>    <a class="typedef" href="#Jpeg2000Prec" title='Jpeg2000Prec' data-type='struct Jpeg2000Prec' data-ref="Jpeg2000Prec">Jpeg2000Prec</a> *<dfn class="decl" id="Jpeg2000Band::prec" title='Jpeg2000Band::prec' data-ref="Jpeg2000Band::prec">prec</dfn>;</td></tr>
+<tr><th id="196">196</th><td>} <dfn class="typedef" id="Jpeg2000Band" title='Jpeg2000Band' data-type='struct Jpeg2000Band' data-ref="Jpeg2000Band">Jpeg2000Band</dfn>; <i>// subband</i></td></tr>
+<tr><th id="197">197</th><td></td></tr>
+<tr><th id="198">198</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="Jpeg2000ResLevel" title='Jpeg2000ResLevel' data-ref="Jpeg2000ResLevel"><a class="type" href="#Jpeg2000ResLevel" title='Jpeg2000ResLevel' data-ref="Jpeg2000ResLevel">Jpeg2000ResLevel</a></dfn> {</td></tr>
+<tr><th id="199">199</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="Jpeg2000ResLevel::nbands" title='Jpeg2000ResLevel::nbands' data-ref="Jpeg2000ResLevel::nbands">nbands</dfn>;</td></tr>
+<tr><th id="200">200</th><td>    <em>int</em> <dfn class="decl" id="Jpeg2000ResLevel::coord" title='Jpeg2000ResLevel::coord' data-ref="Jpeg2000ResLevel::coord">coord</dfn>[<var>2</var>][<var>2</var>]; <i>// border coordinates {{x0, x1}, {y0, y1}}</i></td></tr>
+<tr><th id="201">201</th><td>    <em>int</em> <dfn class="decl" id="Jpeg2000ResLevel::num_precincts_x" title='Jpeg2000ResLevel::num_precincts_x' data-ref="Jpeg2000ResLevel::num_precincts_x">num_precincts_x</dfn>, <dfn class="decl" id="Jpeg2000ResLevel::num_precincts_y" title='Jpeg2000ResLevel::num_precincts_y' data-ref="Jpeg2000ResLevel::num_precincts_y">num_precincts_y</dfn>; <i>// number of precincts in x/y direction</i></td></tr>
+<tr><th id="202">202</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="Jpeg2000ResLevel::log2_prec_width" title='Jpeg2000ResLevel::log2_prec_width' data-ref="Jpeg2000ResLevel::log2_prec_width">log2_prec_width</dfn>, <dfn class="decl" id="Jpeg2000ResLevel::log2_prec_height" title='Jpeg2000ResLevel::log2_prec_height' data-ref="Jpeg2000ResLevel::log2_prec_height">log2_prec_height</dfn>; <i>// exponent of precinct size</i></td></tr>
+<tr><th id="203">203</th><td>    <a class="typedef" href="#Jpeg2000Band" title='Jpeg2000Band' data-type='struct Jpeg2000Band' data-ref="Jpeg2000Band">Jpeg2000Band</a> *<dfn class="decl" id="Jpeg2000ResLevel::band" title='Jpeg2000ResLevel::band' data-ref="Jpeg2000ResLevel::band">band</dfn>;</td></tr>
+<tr><th id="204">204</th><td>} <dfn class="typedef" id="Jpeg2000ResLevel" title='Jpeg2000ResLevel' data-type='struct Jpeg2000ResLevel' data-ref="Jpeg2000ResLevel">Jpeg2000ResLevel</dfn>; <i>// resolution level</i></td></tr>
+<tr><th id="205">205</th><td></td></tr>
+<tr><th id="206">206</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="Jpeg2000Component" title='Jpeg2000Component' data-ref="Jpeg2000Component"><a class="type" href="#Jpeg2000Component" title='Jpeg2000Component' data-ref="Jpeg2000Component">Jpeg2000Component</a></dfn> {</td></tr>
+<tr><th id="207">207</th><td>    <a class="typedef" href="#Jpeg2000ResLevel" title='Jpeg2000ResLevel' data-type='struct Jpeg2000ResLevel' data-ref="Jpeg2000ResLevel">Jpeg2000ResLevel</a> *<dfn class="decl" id="Jpeg2000Component::reslevel" title='Jpeg2000Component::reslevel' data-ref="Jpeg2000Component::reslevel">reslevel</dfn>;</td></tr>
+<tr><th id="208">208</th><td>    <a class="typedef" href="jpeg2000dwt.h.html#DWTContext" title='DWTContext' data-type='struct DWTContext' data-ref="DWTContext">DWTContext</a> <dfn class="decl" id="Jpeg2000Component::dwt" title='Jpeg2000Component::dwt' data-ref="Jpeg2000Component::dwt">dwt</dfn>;</td></tr>
+<tr><th id="209">209</th><td>    <em>float</em> *<dfn class="decl" id="Jpeg2000Component::f_data" title='Jpeg2000Component::f_data' data-ref="Jpeg2000Component::f_data">f_data</dfn>;</td></tr>
+<tr><th id="210">210</th><td>    <em>int</em> *<dfn class="decl" id="Jpeg2000Component::i_data" title='Jpeg2000Component::i_data' data-ref="Jpeg2000Component::i_data">i_data</dfn>;</td></tr>
+<tr><th id="211">211</th><td>    <em>int</em> <dfn class="decl" id="Jpeg2000Component::coord" title='Jpeg2000Component::coord' data-ref="Jpeg2000Component::coord">coord</dfn>[<var>2</var>][<var>2</var>];   <i>// border coordinates {{x0, x1}, {y0, y1}} -- can be reduced with lowres option</i></td></tr>
+<tr><th id="212">212</th><td>    <em>int</em> <dfn class="decl" id="Jpeg2000Component::coord_o" title='Jpeg2000Component::coord_o' data-ref="Jpeg2000Component::coord_o">coord_o</dfn>[<var>2</var>][<var>2</var>]; <i>// border coordinates {{x0, x1}, {y0, y1}} -- original values from jpeg2000 headers</i></td></tr>
+<tr><th id="213">213</th><td>} <dfn class="typedef" id="Jpeg2000Component" title='Jpeg2000Component' data-type='struct Jpeg2000Component' data-ref="Jpeg2000Component">Jpeg2000Component</dfn>;</td></tr>
+<tr><th id="214">214</th><td></td></tr>
+<tr><th id="215">215</th><td><i>/* misc tools */</i></td></tr>
+<tr><th id="216">216</th><td><em>static</em> <b>inline</b> <em>int</em> <dfn class="decl def" id="ff_jpeg2000_ceildivpow2" title='ff_jpeg2000_ceildivpow2' data-ref="ff_jpeg2000_ceildivpow2">ff_jpeg2000_ceildivpow2</dfn>(<em>int</em> <dfn class="local col7 decl" id="27a" title='a' data-type='int' data-ref="27a">a</dfn>, <em>int</em> <dfn class="local col8 decl" id="28b" title='b' data-type='int' data-ref="28b">b</dfn>)</td></tr>
+<tr><th id="217">217</th><td>{</td></tr>
+<tr><th id="218">218</th><td>    <b>return</b> -(((<a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a>)(-<a class="local col7 ref" href="#27a" title='a' data-ref="27a">a</a>)) &gt;&gt; <a class="local col8 ref" href="#28b" title='b' data-ref="28b">b</a>);</td></tr>
+<tr><th id="219">219</th><td>}</td></tr>
+<tr><th id="220">220</th><td></td></tr>
+<tr><th id="221">221</th><td><em>static</em> <b>inline</b> <em>int</em> <dfn class="decl def" id="ff_jpeg2000_ceildiv" title='ff_jpeg2000_ceildiv' data-ref="ff_jpeg2000_ceildiv">ff_jpeg2000_ceildiv</dfn>(<em>int</em> <dfn class="local col9 decl" id="29a" title='a' data-type='int' data-ref="29a">a</dfn>, <em>int</em> <dfn class="local col0 decl" id="30b" title='b' data-type='int' data-ref="30b">b</dfn>)</td></tr>
+<tr><th id="222">222</th><td>{</td></tr>
+<tr><th id="223">223</th><td>    <b>return</b> (<a class="local col9 ref" href="#29a" title='a' data-ref="29a">a</a> + <a class="local col0 ref" href="#30b" title='b' data-ref="30b">b</a> - <var>1</var>) / <a class="local col0 ref" href="#30b" title='b' data-ref="30b">b</a>;</td></tr>
+<tr><th id="224">224</th><td>}</td></tr>
+<tr><th id="225">225</th><td></td></tr>
+<tr><th id="226">226</th><td><i>/* TIER-1 routines */</i></td></tr>
+<tr><th id="227">227</th><td></td></tr>
+<tr><th id="228">228</th><td><i>/* Set up lookup tables used in TIER-1. */</i></td></tr>
+<tr><th id="229">229</th><td><em>void</em> <dfn class="decl" id="ff_jpeg2000_init_tier1_luts" title='ff_jpeg2000_init_tier1_luts' data-ref="ff_jpeg2000_init_tier1_luts">ff_jpeg2000_init_tier1_luts</dfn>(<em>void</em>);</td></tr>
+<tr><th id="230">230</th><td></td></tr>
+<tr><th id="231">231</th><td><i>/* Update significance of a coefficient at current position (x,y) and</i></td></tr>
+<tr><th id="232">232</th><td><i> * for neighbors. */</i></td></tr>
+<tr><th id="233">233</th><td><em>void</em> <dfn class="decl" id="ff_jpeg2000_set_significance" title='ff_jpeg2000_set_significance' data-ref="ff_jpeg2000_set_significance">ff_jpeg2000_set_significance</dfn>(<a class="typedef" href="#Jpeg2000T1Context" title='Jpeg2000T1Context' data-type='struct Jpeg2000T1Context' data-ref="Jpeg2000T1Context">Jpeg2000T1Context</a> *<dfn class="local col1 decl" id="31t1" title='t1' data-type='Jpeg2000T1Context *' data-ref="31t1">t1</dfn>,</td></tr>
+<tr><th id="234">234</th><td>                                  <em>int</em> <dfn class="local col2 decl" id="32x" title='x' data-type='int' data-ref="32x">x</dfn>, <em>int</em> <dfn class="local col3 decl" id="33y" title='y' data-type='int' data-ref="33y">y</dfn>, <em>int</em> <dfn class="local col4 decl" id="34negative" title='negative' data-type='int' data-ref="34negative">negative</dfn>);</td></tr>
+<tr><th id="235">235</th><td></td></tr>
+<tr><th id="236">236</th><td><b>extern</b> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="ff_jpeg2000_sigctxno_lut" title='ff_jpeg2000_sigctxno_lut' data-ref="ff_jpeg2000_sigctxno_lut">ff_jpeg2000_sigctxno_lut</dfn>[<var>256</var>][<var>4</var>];</td></tr>
+<tr><th id="237">237</th><td></td></tr>
+<tr><th id="238">238</th><td><i>/* Get context label (number in range[0..8]) of a coefficient for significance</i></td></tr>
+<tr><th id="239">239</th><td><i> * propagation and cleanup coding passes. */</i></td></tr>
+<tr><th id="240">240</th><td><em>static</em> <b>inline</b> <em>int</em> <dfn class="decl def" id="ff_jpeg2000_getsigctxno" title='ff_jpeg2000_getsigctxno' data-ref="ff_jpeg2000_getsigctxno">ff_jpeg2000_getsigctxno</dfn>(<em>int</em> <dfn class="local col5 decl" id="35flag" title='flag' data-type='int' data-ref="35flag">flag</dfn>, <em>int</em> <dfn class="local col6 decl" id="36bandno" title='bandno' data-type='int' data-ref="36bandno">bandno</dfn>)</td></tr>
+<tr><th id="241">241</th><td>{</td></tr>
+<tr><th id="242">242</th><td>    <b>return</b> <a class="ref" href="#ff_jpeg2000_sigctxno_lut" title='ff_jpeg2000_sigctxno_lut' data-ref="ff_jpeg2000_sigctxno_lut">ff_jpeg2000_sigctxno_lut</a>[<a class="local col5 ref" href="#35flag" title='flag' data-ref="35flag">flag</a> &amp; <var>255</var>][<a class="local col6 ref" href="#36bandno" title='bandno' data-ref="36bandno">bandno</a>];</td></tr>
+<tr><th id="243">243</th><td>}</td></tr>
+<tr><th id="244">244</th><td></td></tr>
+<tr><th id="245">245</th><td><em>static</em> <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl def" id="refctxno_lut" title='refctxno_lut' data-ref="refctxno_lut">refctxno_lut</dfn>[<var>2</var>][<var>2</var>] = { { <var>14</var>, <var>15</var> }, { <var>16</var>, <var>16</var> } };</td></tr>
+<tr><th id="246">246</th><td></td></tr>
+<tr><th id="247">247</th><td><i>/* Get context label (number in range[14..16]) of a coefficient for magnitude</i></td></tr>
+<tr><th id="248">248</th><td><i> * refinement pass. */</i></td></tr>
+<tr><th id="249">249</th><td><em>static</em> <b>inline</b> <em>int</em> <dfn class="decl def" id="ff_jpeg2000_getrefctxno" title='ff_jpeg2000_getrefctxno' data-ref="ff_jpeg2000_getrefctxno">ff_jpeg2000_getrefctxno</dfn>(<em>int</em> <dfn class="local col7 decl" id="37flag" title='flag' data-type='int' data-ref="37flag">flag</dfn>)</td></tr>
+<tr><th id="250">250</th><td>{</td></tr>
+<tr><th id="251">251</th><td>    <b>return</b> <a class="ref" href="#refctxno_lut" title='refctxno_lut' data-ref="refctxno_lut">refctxno_lut</a>[(<a class="local col7 ref" href="#37flag" title='flag' data-ref="37flag">flag</a> &gt;&gt; <var>14</var>) &amp; <var>1</var>][(<a class="local col7 ref" href="#37flag" title='flag' data-ref="37flag">flag</a> &amp; <var>255</var>) != <var>0</var>];</td></tr>
+<tr><th id="252">252</th><td>}</td></tr>
+<tr><th id="253">253</th><td></td></tr>
+<tr><th id="254">254</th><td><b>extern</b> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="ff_jpeg2000_sgnctxno_lut" title='ff_jpeg2000_sgnctxno_lut' data-ref="ff_jpeg2000_sgnctxno_lut">ff_jpeg2000_sgnctxno_lut</dfn>[<var>16</var>][<var>16</var>];</td></tr>
+<tr><th id="255">255</th><td><b>extern</b> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> <dfn class="decl" id="ff_jpeg2000_xorbit_lut" title='ff_jpeg2000_xorbit_lut' data-ref="ff_jpeg2000_xorbit_lut">ff_jpeg2000_xorbit_lut</dfn>[<var>16</var>][<var>16</var>];</td></tr>
+<tr><th id="256">256</th><td></td></tr>
+<tr><th id="257">257</th><td><i>/* Get context label (number in range[9..13]) for sign decoding. */</i></td></tr>
+<tr><th id="258">258</th><td><em>static</em> <b>inline</b> <em>int</em> <dfn class="decl def" id="ff_jpeg2000_getsgnctxno" title='ff_jpeg2000_getsgnctxno' data-ref="ff_jpeg2000_getsgnctxno">ff_jpeg2000_getsgnctxno</dfn>(<em>int</em> <dfn class="local col8 decl" id="38flag" title='flag' data-type='int' data-ref="38flag">flag</dfn>, <em>int</em> *<dfn class="local col9 decl" id="39xorbit" title='xorbit' data-type='int *' data-ref="39xorbit">xorbit</dfn>)</td></tr>
+<tr><th id="259">259</th><td>{</td></tr>
+<tr><th id="260">260</th><td>    *<a class="local col9 ref" href="#39xorbit" title='xorbit' data-ref="39xorbit">xorbit</a> = <a class="ref" href="#ff_jpeg2000_xorbit_lut" title='ff_jpeg2000_xorbit_lut' data-ref="ff_jpeg2000_xorbit_lut">ff_jpeg2000_xorbit_lut</a>[<a class="local col8 ref" href="#38flag" title='flag' data-ref="38flag">flag</a> &amp; <var>15</var>][(<a class="local col8 ref" href="#38flag" title='flag' data-ref="38flag">flag</a> &gt;&gt; <var>8</var>) &amp; <var>15</var>];</td></tr>
+<tr><th id="261">261</th><td>    <b>return</b> <a class="ref" href="#ff_jpeg2000_sgnctxno_lut" title='ff_jpeg2000_sgnctxno_lut' data-ref="ff_jpeg2000_sgnctxno_lut">ff_jpeg2000_sgnctxno_lut</a>[<a class="local col8 ref" href="#38flag" title='flag' data-ref="38flag">flag</a> &amp; <var>15</var>][(<a class="local col8 ref" href="#38flag" title='flag' data-ref="38flag">flag</a> &gt;&gt; <var>8</var>) &amp; <var>15</var>];</td></tr>
+<tr><th id="262">262</th><td>}</td></tr>
+<tr><th id="263">263</th><td></td></tr>
+<tr><th id="264">264</th><td><em>int</em> <dfn class="decl" id="ff_jpeg2000_init_component" title='ff_jpeg2000_init_component' data-ref="ff_jpeg2000_init_component">ff_jpeg2000_init_component</dfn>(<a class="typedef" href="#Jpeg2000Component" title='Jpeg2000Component' data-type='struct Jpeg2000Component' data-ref="Jpeg2000Component">Jpeg2000Component</a> *<dfn class="local col0 decl" id="40comp" title='comp' data-type='Jpeg2000Component *' data-ref="40comp">comp</dfn>,</td></tr>
+<tr><th id="265">265</th><td>                               <a class="typedef" href="#Jpeg2000CodingStyle" title='Jpeg2000CodingStyle' data-type='struct Jpeg2000CodingStyle' data-ref="Jpeg2000CodingStyle">Jpeg2000CodingStyle</a> *<dfn class="local col1 decl" id="41codsty" title='codsty' data-type='Jpeg2000CodingStyle *' data-ref="41codsty">codsty</dfn>,</td></tr>
+<tr><th id="266">266</th><td>                               <a class="typedef" href="#Jpeg2000QuantStyle" title='Jpeg2000QuantStyle' data-type='struct Jpeg2000QuantStyle' data-ref="Jpeg2000QuantStyle">Jpeg2000QuantStyle</a> *<dfn class="local col2 decl" id="42qntsty" title='qntsty' data-type='Jpeg2000QuantStyle *' data-ref="42qntsty">qntsty</dfn>,</td></tr>
+<tr><th id="267">267</th><td>                               <em>int</em> <dfn class="local col3 decl" id="43cbps" title='cbps' data-type='int' data-ref="43cbps">cbps</dfn>, <em>int</em> <dfn class="local col4 decl" id="44dx" title='dx' data-type='int' data-ref="44dx">dx</dfn>, <em>int</em> <dfn class="local col5 decl" id="45dy" title='dy' data-type='int' data-ref="45dy">dy</dfn>,</td></tr>
+<tr><th id="268">268</th><td>                               <a class="typedef" href="avcodec.h.html#AVCodecContext" title='AVCodecContext' data-type='struct AVCodecContext' data-ref="AVCodecContext">AVCodecContext</a> *<dfn class="local col6 decl" id="46ctx" title='ctx' data-type='AVCodecContext *' data-ref="46ctx">ctx</dfn>);</td></tr>
+<tr><th id="269">269</th><td></td></tr>
+<tr><th id="270">270</th><td><em>void</em> <dfn class="decl" id="ff_jpeg2000_reinit" title='ff_jpeg2000_reinit' data-ref="ff_jpeg2000_reinit">ff_jpeg2000_reinit</dfn>(<a class="typedef" href="#Jpeg2000Component" title='Jpeg2000Component' data-type='struct Jpeg2000Component' data-ref="Jpeg2000Component">Jpeg2000Component</a> *<dfn class="local col7 decl" id="47comp" title='comp' data-type='Jpeg2000Component *' data-ref="47comp">comp</dfn>, <a class="typedef" href="#Jpeg2000CodingStyle" title='Jpeg2000CodingStyle' data-type='struct Jpeg2000CodingStyle' data-ref="Jpeg2000CodingStyle">Jpeg2000CodingStyle</a> *<dfn class="local col8 decl" id="48codsty" title='codsty' data-type='Jpeg2000CodingStyle *' data-ref="48codsty">codsty</dfn>);</td></tr>
+<tr><th id="271">271</th><td></td></tr>
+<tr><th id="272">272</th><td><em>void</em> <dfn class="decl" id="ff_jpeg2000_cleanup" title='ff_jpeg2000_cleanup' data-ref="ff_jpeg2000_cleanup">ff_jpeg2000_cleanup</dfn>(<a class="typedef" href="#Jpeg2000Component" title='Jpeg2000Component' data-type='struct Jpeg2000Component' data-ref="Jpeg2000Component">Jpeg2000Component</a> *<dfn class="local col9 decl" id="49comp" title='comp' data-type='Jpeg2000Component *' data-ref="49comp">comp</dfn>, <a class="typedef" href="#Jpeg2000CodingStyle" title='Jpeg2000CodingStyle' data-type='struct Jpeg2000CodingStyle' data-ref="Jpeg2000CodingStyle">Jpeg2000CodingStyle</a> *<dfn class="local col0 decl" id="50codsty" title='codsty' data-type='Jpeg2000CodingStyle *' data-ref="50codsty">codsty</dfn>);</td></tr>
+<tr><th id="273">273</th><td></td></tr>
+<tr><th id="274">274</th><td><em>static</em> <b>inline</b> <em>int</em> <dfn class="decl def" id="needs_termination" title='needs_termination' data-ref="needs_termination">needs_termination</dfn>(<em>int</em> <dfn class="local col1 decl" id="51style" title='style' data-type='int' data-ref="51style">style</dfn>, <em>int</em> <dfn class="local col2 decl" id="52passno" title='passno' data-type='int' data-ref="52passno">passno</dfn>) {</td></tr>
+<tr><th id="275">275</th><td>    <b>if</b> (<a class="local col1 ref" href="#51style" title='style' data-ref="51style">style</a> &amp; <a class="macro" href="#102" title="0x01" data-ref="_M/JPEG2000_CBLK_BYPASS">JPEG2000_CBLK_BYPASS</a>) {</td></tr>
+<tr><th id="276">276</th><td>        <em>int</em> <dfn class="local col3 decl" id="53type" title='type' data-type='int' data-ref="53type">type</dfn> = <a class="local col2 ref" href="#52passno" title='passno' data-ref="52passno">passno</a> % <var>3</var>;</td></tr>
+<tr><th id="277">277</th><td>        <a class="local col2 ref" href="#52passno" title='passno' data-ref="52passno">passno</a> /= <var>3</var>;</td></tr>
+<tr><th id="278">278</th><td>        <b>if</b> (<a class="local col3 ref" href="#53type" title='type' data-ref="53type">type</a> == <var>0</var> &amp;&amp; <a class="local col2 ref" href="#52passno" title='passno' data-ref="52passno">passno</a> &gt; <var>2</var>)</td></tr>
+<tr><th id="279">279</th><td>            <b>return</b> <var>2</var>;</td></tr>
+<tr><th id="280">280</th><td>        <b>if</b> (<a class="local col3 ref" href="#53type" title='type' data-ref="53type">type</a> == <var>2</var> &amp;&amp; <a class="local col2 ref" href="#52passno" title='passno' data-ref="52passno">passno</a> &gt; <var>2</var>)</td></tr>
+<tr><th id="281">281</th><td>            <b>return</b> <var>1</var>;</td></tr>
+<tr><th id="282">282</th><td>        <b>if</b> (<a class="local col1 ref" href="#51style" title='style' data-ref="51style">style</a> &amp; <a class="macro" href="#104" title="0x04" data-ref="_M/JPEG2000_CBLK_TERMALL">JPEG2000_CBLK_TERMALL</a>) {</td></tr>
+<tr><th id="283">283</th><td>            <b>return</b> <a class="local col2 ref" href="#52passno" title='passno' data-ref="52passno">passno</a> &gt; <var>2</var> ? <var>2</var> : <var>1</var>;</td></tr>
+<tr><th id="284">284</th><td>        }</td></tr>
+<tr><th id="285">285</th><td>    }</td></tr>
+<tr><th id="286">286</th><td>    <b>if</b> (<a class="local col1 ref" href="#51style" title='style' data-ref="51style">style</a> &amp; <a class="macro" href="#104" title="0x04" data-ref="_M/JPEG2000_CBLK_TERMALL">JPEG2000_CBLK_TERMALL</a>)</td></tr>
+<tr><th id="287">287</th><td>        <b>return</b> <var>1</var>;</td></tr>
+<tr><th id="288">288</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="289">289</th><td>}</td></tr>
+<tr><th id="290">290</th><td></td></tr>
+<tr><th id="291">291</th><td><u>#<span data-ppcond="23">endif</span> /* AVCODEC_JPEG2000_H */</u></td></tr>
+<tr><th id="292">292</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated while processing <a href='j2kenc.c.html'>ffmpeg/libavcodec/j2kenc.c</a><br/>Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

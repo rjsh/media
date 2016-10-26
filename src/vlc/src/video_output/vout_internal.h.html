@@ -1,0 +1,190 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>vout_internal.h source code [vlc/src/video_output/vout_internal.h] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="vout_thread_sys_t "/>
+<link rel="stylesheet" href="../../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'vlc/src/video_output/vout_internal.h'; var root_path = '../../..'; var data_path = '../../../../data';</script>
+<script src='../../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='../..'>vlc</a>/<a href='..'>src</a>/<a href='./'>video_output</a>/<a href='vout_internal.h.html'>vout_internal.h</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*****************************************************************************</i></td></tr>
+<tr><th id="2">2</th><td><i> * vout_internal.h : Internal vout definitions</i></td></tr>
+<tr><th id="3">3</th><td><i> *****************************************************************************</i></td></tr>
+<tr><th id="4">4</th><td><i> * Copyright (C) 2008 VLC authors and VideoLAN</i></td></tr>
+<tr><th id="5">5</th><td><i> * Copyright (C) 2008 Laurent Aimar</i></td></tr>
+<tr><th id="6">6</th><td><i> * $Id: f6ad26981072c03ee7e17b305fc1eac756bfba73 $</i></td></tr>
+<tr><th id="7">7</th><td><i> *</i></td></tr>
+<tr><th id="8">8</th><td><i> * Authors: Laurent Aimar &lt; fenrir _AT_ videolan _DOT_ org &gt;</i></td></tr>
+<tr><th id="9">9</th><td><i> *</i></td></tr>
+<tr><th id="10">10</th><td><i> * This program is free software; you can redistribute it and/or modify it</i></td></tr>
+<tr><th id="11">11</th><td><i> * under the terms of the GNU Lesser General Public License as published by</i></td></tr>
+<tr><th id="12">12</th><td><i> * the Free Software Foundation; either version 2.1 of the License, or</i></td></tr>
+<tr><th id="13">13</th><td><i> * (at your option) any later version.</i></td></tr>
+<tr><th id="14">14</th><td><i> *</i></td></tr>
+<tr><th id="15">15</th><td><i> * This program is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="16">16</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="17">17</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</i></td></tr>
+<tr><th id="18">18</th><td><i> * GNU Lesser General Public License for more details.</i></td></tr>
+<tr><th id="19">19</th><td><i> *</i></td></tr>
+<tr><th id="20">20</th><td><i> * You should have received a copy of the GNU Lesser General Public License</i></td></tr>
+<tr><th id="21">21</th><td><i> * along with this program; if not, write to the Free Software Foundation,</i></td></tr>
+<tr><th id="22">22</th><td><i> * Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.</i></td></tr>
+<tr><th id="23">23</th><td><i> *****************************************************************************/</i></td></tr>
+<tr><th id="24">24</th><td></td></tr>
+<tr><th id="25">25</th><td><u>#<span data-ppcond="25">ifndef</span> <span class="macro" data-ref="_M/LIBVLC_VOUT_INTERNAL_H">LIBVLC_VOUT_INTERNAL_H</span></u></td></tr>
+<tr><th id="26">26</th><td><u>#define <dfn class="macro" id="_M/LIBVLC_VOUT_INTERNAL_H" data-ref="_M/LIBVLC_VOUT_INTERNAL_H">LIBVLC_VOUT_INTERNAL_H</dfn> 1</u></td></tr>
+<tr><th id="27">27</th><td></td></tr>
+<tr><th id="28">28</th><td><u>#include <a href="../../include/vlc_picture_fifo.h.html">&lt;vlc_picture_fifo.h&gt;</a></u></td></tr>
+<tr><th id="29">29</th><td><u>#include <a href="../../include/vlc_picture_pool.h.html">&lt;vlc_picture_pool.h&gt;</a></u></td></tr>
+<tr><th id="30">30</th><td><u>#include <a href="../../include/vlc_vout_display.h.html">&lt;vlc_vout_display.h&gt;</a></u></td></tr>
+<tr><th id="31">31</th><td><u>#include <a href="../../include/vlc_vout_wrapper.h.html">&lt;vlc_vout_wrapper.h&gt;</a></u></td></tr>
+<tr><th id="32">32</th><td><u>#include <a href="vout_control.h.html">"vout_control.h"</a></u></td></tr>
+<tr><th id="33">33</th><td><u>#include <a href="control.h.html">"control.h"</a></u></td></tr>
+<tr><th id="34">34</th><td><u>#include <a href="snapshot.h.html">"snapshot.h"</a></u></td></tr>
+<tr><th id="35">35</th><td><u>#include <a href="statistic.h.html">"statistic.h"</a></u></td></tr>
+<tr><th id="36">36</th><td><u>#include <a href="chrono.h.html">"chrono.h"</a></u></td></tr>
+<tr><th id="37">37</th><td></td></tr>
+<tr><th id="38">38</th><td><i>/* It should be high enough to absorbe jitter due to difficult picture(s)</i></td></tr>
+<tr><th id="39">39</th><td><i> * to decode but not too high as memory is not that cheap.</i></td></tr>
+<tr><th id="40">40</th><td><i> *</i></td></tr>
+<tr><th id="41">41</th><td><i> * It can be made lower at compilation time if needed, but performance</i></td></tr>
+<tr><th id="42">42</th><td><i> * may be degraded.</i></td></tr>
+<tr><th id="43">43</th><td><i> */</i></td></tr>
+<tr><th id="44">44</th><td><u>#define <dfn class="macro" id="_M/VOUT_MAX_PICTURES" data-ref="_M/VOUT_MAX_PICTURES">VOUT_MAX_PICTURES</dfn> (20)</u></td></tr>
+<tr><th id="45">45</th><td></td></tr>
+<tr><th id="46">46</th><td><i>/* */</i></td></tr>
+<tr><th id="47">47</th><td><b>struct</b> <dfn class="type def" id="vout_thread_sys_t" title='vout_thread_sys_t' data-ref="vout_thread_sys_t">vout_thread_sys_t</dfn></td></tr>
+<tr><th id="48">48</th><td>{</td></tr>
+<tr><th id="49">49</th><td>    <i>/* Splitter module if used */</i></td></tr>
+<tr><th id="50">50</th><td>    <em>char</em>            *<dfn class="decl" id="vout_thread_sys_t::splitter_name" title='vout_thread_sys_t::splitter_name' data-ref="vout_thread_sys_t::splitter_name">splitter_name</dfn>;</td></tr>
+<tr><th id="51">51</th><td></td></tr>
+<tr><th id="52">52</th><td>    <i>/* Input thread for dvd menu interactions */</i></td></tr>
+<tr><th id="53">53</th><td>    <a class="typedef" href="../../include/vlc_common.h.html#vlc_object_t" title='vlc_object_t' data-type='struct vlc_object_t' data-ref="vlc_object_t">vlc_object_t</a>    *<dfn class="decl" id="vout_thread_sys_t::input" title='vout_thread_sys_t::input' data-ref="vout_thread_sys_t::input">input</dfn>;</td></tr>
+<tr><th id="54">54</th><td></td></tr>
+<tr><th id="55">55</th><td>    <i>/* */</i></td></tr>
+<tr><th id="56">56</th><td>    <a class="typedef" href="../../include/vlc_common.h.html#video_format_t" title='video_format_t' data-type='struct video_format_t' data-ref="video_format_t">video_format_t</a>  <dfn class="decl" id="vout_thread_sys_t::original" title='vout_thread_sys_t::original' data-ref="vout_thread_sys_t::original">original</dfn>;   <i>/* Original format ie coming from the decoder */</i></td></tr>
+<tr><th id="57">57</th><td>    <em>unsigned</em>        <dfn class="decl" id="vout_thread_sys_t::dpb_size" title='vout_thread_sys_t::dpb_size' data-ref="vout_thread_sys_t::dpb_size">dpb_size</dfn>;</td></tr>
+<tr><th id="58">58</th><td></td></tr>
+<tr><th id="59">59</th><td>    <i>/* Snapshot interface */</i></td></tr>
+<tr><th id="60">60</th><td>    <a class="typedef" href="snapshot.h.html#vout_snapshot_t" title='vout_snapshot_t' data-type='struct vout_snapshot_t' data-ref="vout_snapshot_t">vout_snapshot_t</a> <dfn class="decl" id="vout_thread_sys_t::snapshot" title='vout_thread_sys_t::snapshot' data-ref="vout_thread_sys_t::snapshot">snapshot</dfn>;</td></tr>
+<tr><th id="61">61</th><td></td></tr>
+<tr><th id="62">62</th><td>    <i>/* Statistics */</i></td></tr>
+<tr><th id="63">63</th><td>    <a class="typedef" href="statistic.h.html#vout_statistic_t" title='vout_statistic_t' data-type='struct vout_statistic_t' data-ref="vout_statistic_t">vout_statistic_t</a> <dfn class="decl" id="vout_thread_sys_t::statistic" title='vout_thread_sys_t::statistic' data-ref="vout_thread_sys_t::statistic">statistic</dfn>;</td></tr>
+<tr><th id="64">64</th><td></td></tr>
+<tr><th id="65">65</th><td>    <i>/* Subpicture unit */</i></td></tr>
+<tr><th id="66">66</th><td>    <a class="typedef" href="../../include/vlc_threads.h.html#vlc_mutex_t" title='vlc_mutex_t' data-type='pthread_mutex_t' data-ref="vlc_mutex_t">vlc_mutex_t</a>     <dfn class="decl" id="vout_thread_sys_t::spu_lock" title='vout_thread_sys_t::spu_lock' data-ref="vout_thread_sys_t::spu_lock">spu_lock</dfn>;</td></tr>
+<tr><th id="67">67</th><td>    <a class="typedef" href="../../include/vlc_common.h.html#spu_t" title='spu_t' data-type='struct spu_t' data-ref="spu_t">spu_t</a>           *<dfn class="decl" id="vout_thread_sys_t::spu" title='vout_thread_sys_t::spu' data-ref="vout_thread_sys_t::spu">spu</dfn>;</td></tr>
+<tr><th id="68">68</th><td>    <a class="typedef" href="../../include/vlc_common.h.html#vlc_fourcc_t" title='vlc_fourcc_t' data-type='uint32_t' data-ref="vlc_fourcc_t">vlc_fourcc_t</a>    <dfn class="decl" id="vout_thread_sys_t::spu_blend_chroma" title='vout_thread_sys_t::spu_blend_chroma' data-ref="vout_thread_sys_t::spu_blend_chroma">spu_blend_chroma</dfn>;</td></tr>
+<tr><th id="69">69</th><td>    <a class="typedef" href="../../include/vlc_common.h.html#filter_t" title='filter_t' data-type='struct filter_t' data-ref="filter_t">filter_t</a>        *<dfn class="decl" id="vout_thread_sys_t::spu_blend" title='vout_thread_sys_t::spu_blend' data-ref="vout_thread_sys_t::spu_blend">spu_blend</dfn>;</td></tr>
+<tr><th id="70">70</th><td></td></tr>
+<tr><th id="71">71</th><td>    <i>/* Video output window */</i></td></tr>
+<tr><th id="72">72</th><td>    <b>struct</b> {</td></tr>
+<tr><th id="73">73</th><td>        <span class="macro" title="_Bool" data-ref="_M/bool">bool</span>              <dfn class="decl" id="vout_thread_sys_t::{anonymous}::is_unused" title='vout_thread_sys_t::&lt;anonymous struct&gt;::is_unused' data-ref="vout_thread_sys_t::{anonymous}::is_unused">is_unused</dfn>;</td></tr>
+<tr><th id="74">74</th><td>        <a class="typedef" href="../../include/vlc_vout_window.h.html#vout_window_cfg_t" title='vout_window_cfg_t' data-type='struct vout_window_cfg_t' data-ref="vout_window_cfg_t">vout_window_cfg_t</a> <dfn class="decl" id="vout_thread_sys_t::{anonymous}::cfg" title='vout_thread_sys_t::&lt;anonymous struct&gt;::cfg' data-ref="vout_thread_sys_t::{anonymous}::cfg">cfg</dfn>;</td></tr>
+<tr><th id="75">75</th><td>        <a class="typedef" href="../../include/vlc_vout_window.h.html#vout_window_t" title='vout_window_t' data-type='struct vout_window_t' data-ref="vout_window_t">vout_window_t</a>     *<dfn class="decl" id="vout_thread_sys_t::{anonymous}::object" title='vout_thread_sys_t::&lt;anonymous struct&gt;::object' data-ref="vout_thread_sys_t::{anonymous}::object">object</dfn>;</td></tr>
+<tr><th id="76">76</th><td>    } <dfn class="decl" id="vout_thread_sys_t::window" title='vout_thread_sys_t::window' data-ref="vout_thread_sys_t::window">window</dfn>;</td></tr>
+<tr><th id="77">77</th><td></td></tr>
+<tr><th id="78">78</th><td>    <i>/* Thread &amp; synchronization */</i></td></tr>
+<tr><th id="79">79</th><td>    <a class="typedef" href="../../include/vlc_threads.h.html#vlc_thread_t" title='vlc_thread_t' data-type='pthread_t' data-ref="vlc_thread_t">vlc_thread_t</a>    <dfn class="decl" id="vout_thread_sys_t::thread" title='vout_thread_sys_t::thread' data-ref="vout_thread_sys_t::thread">thread</dfn>;</td></tr>
+<tr><th id="80">80</th><td>    <span class="macro" title="_Bool" data-ref="_M/bool">bool</span>            <dfn class="decl" id="vout_thread_sys_t::dead" title='vout_thread_sys_t::dead' data-ref="vout_thread_sys_t::dead">dead</dfn>;</td></tr>
+<tr><th id="81">81</th><td>    <a class="typedef" href="control.h.html#vout_control_t" title='vout_control_t' data-type='struct vout_control_t' data-ref="vout_control_t">vout_control_t</a>  <dfn class="decl" id="vout_thread_sys_t::control" title='vout_thread_sys_t::control' data-ref="vout_thread_sys_t::control">control</dfn>;</td></tr>
+<tr><th id="82">82</th><td></td></tr>
+<tr><th id="83">83</th><td>    <i>/* */</i></td></tr>
+<tr><th id="84">84</th><td>    <b>struct</b> {</td></tr>
+<tr><th id="85">85</th><td>        <em>char</em>           *<dfn class="decl" id="vout_thread_sys_t::{anonymous}::title" title='vout_thread_sys_t::&lt;anonymous struct&gt;::title' data-ref="vout_thread_sys_t::{anonymous}::title">title</dfn>;</td></tr>
+<tr><th id="86">86</th><td>        <a class="typedef" href="../../include/vlc_vout_display.h.html#vout_display_t" title='vout_display_t' data-type='struct vout_display_t' data-ref="vout_display_t">vout_display_t</a> *<dfn class="decl" id="vout_thread_sys_t::{anonymous}::vd" title='vout_thread_sys_t::&lt;anonymous struct&gt;::vd' data-ref="vout_thread_sys_t::{anonymous}::vd">vd</dfn>;</td></tr>
+<tr><th id="87">87</th><td>        <span class="macro" title="_Bool" data-ref="_M/bool">bool</span>           <dfn class="decl" id="vout_thread_sys_t::{anonymous}::use_dr" title='vout_thread_sys_t::&lt;anonymous struct&gt;::use_dr' data-ref="vout_thread_sys_t::{anonymous}::use_dr">use_dr</dfn>;</td></tr>
+<tr><th id="88">88</th><td>        <a class="typedef" href="../../include/vlc_common.h.html#picture_t" title='picture_t' data-type='struct picture_t' data-ref="picture_t">picture_t</a>      *<dfn class="decl" id="vout_thread_sys_t::{anonymous}::filtered" title='vout_thread_sys_t::&lt;anonymous struct&gt;::filtered' data-ref="vout_thread_sys_t::{anonymous}::filtered">filtered</dfn>;</td></tr>
+<tr><th id="89">89</th><td>    } <dfn class="decl" id="vout_thread_sys_t::display" title='vout_thread_sys_t::display' data-ref="vout_thread_sys_t::display">display</dfn>;</td></tr>
+<tr><th id="90">90</th><td></td></tr>
+<tr><th id="91">91</th><td>    <b>struct</b> {</td></tr>
+<tr><th id="92">92</th><td>        <a class="typedef" href="../../include/vlc_common.h.html#mtime_t" title='mtime_t' data-type='int64_t' data-ref="mtime_t">mtime_t</a>     <dfn class="decl" id="vout_thread_sys_t::{anonymous}::date" title='vout_thread_sys_t::&lt;anonymous struct&gt;::date' data-ref="vout_thread_sys_t::{anonymous}::date">date</dfn>;</td></tr>
+<tr><th id="93">93</th><td>        <a class="typedef" href="../../include/vlc_common.h.html#mtime_t" title='mtime_t' data-type='int64_t' data-ref="mtime_t">mtime_t</a>     <dfn class="decl" id="vout_thread_sys_t::{anonymous}::timestamp" title='vout_thread_sys_t::&lt;anonymous struct&gt;::timestamp' data-ref="vout_thread_sys_t::{anonymous}::timestamp">timestamp</dfn>;</td></tr>
+<tr><th id="94">94</th><td>        <span class="macro" title="_Bool" data-ref="_M/bool">bool</span>        <dfn class="decl" id="vout_thread_sys_t::{anonymous}::is_interlaced" title='vout_thread_sys_t::&lt;anonymous struct&gt;::is_interlaced' data-ref="vout_thread_sys_t::{anonymous}::is_interlaced">is_interlaced</dfn>;</td></tr>
+<tr><th id="95">95</th><td>        <a class="typedef" href="../../include/vlc_common.h.html#picture_t" title='picture_t' data-type='struct picture_t' data-ref="picture_t">picture_t</a>   *<dfn class="decl" id="vout_thread_sys_t::{anonymous}::decoded" title='vout_thread_sys_t::&lt;anonymous struct&gt;::decoded' data-ref="vout_thread_sys_t::{anonymous}::decoded">decoded</dfn>;</td></tr>
+<tr><th id="96">96</th><td>        <a class="typedef" href="../../include/vlc_common.h.html#picture_t" title='picture_t' data-type='struct picture_t' data-ref="picture_t">picture_t</a>   *<dfn class="decl" id="vout_thread_sys_t::{anonymous}::current" title='vout_thread_sys_t::&lt;anonymous struct&gt;::current' data-ref="vout_thread_sys_t::{anonymous}::current">current</dfn>;</td></tr>
+<tr><th id="97">97</th><td>        <a class="typedef" href="../../include/vlc_common.h.html#picture_t" title='picture_t' data-type='struct picture_t' data-ref="picture_t">picture_t</a>   *<dfn class="decl" id="vout_thread_sys_t::{anonymous}::next" title='vout_thread_sys_t::&lt;anonymous struct&gt;::next' data-ref="vout_thread_sys_t::{anonymous}::next">next</dfn>;</td></tr>
+<tr><th id="98">98</th><td>    } <dfn class="decl" id="vout_thread_sys_t::displayed" title='vout_thread_sys_t::displayed' data-ref="vout_thread_sys_t::displayed">displayed</dfn>;</td></tr>
+<tr><th id="99">99</th><td></td></tr>
+<tr><th id="100">100</th><td>    <b>struct</b> {</td></tr>
+<tr><th id="101">101</th><td>        <a class="typedef" href="../../include/vlc_common.h.html#mtime_t" title='mtime_t' data-type='int64_t' data-ref="mtime_t">mtime_t</a>     <dfn class="decl" id="vout_thread_sys_t::{anonymous}::last" title='vout_thread_sys_t::&lt;anonymous struct&gt;::last' data-ref="vout_thread_sys_t::{anonymous}::last">last</dfn>;</td></tr>
+<tr><th id="102">102</th><td>        <a class="typedef" href="../../include/vlc_common.h.html#mtime_t" title='mtime_t' data-type='int64_t' data-ref="mtime_t">mtime_t</a>     <dfn class="decl" id="vout_thread_sys_t::{anonymous}::timestamp" title='vout_thread_sys_t::&lt;anonymous struct&gt;::timestamp' data-ref="vout_thread_sys_t::{anonymous}::timestamp">timestamp</dfn>;</td></tr>
+<tr><th id="103">103</th><td>    } <dfn class="decl" id="vout_thread_sys_t::step" title='vout_thread_sys_t::step' data-ref="vout_thread_sys_t::step">step</dfn>;</td></tr>
+<tr><th id="104">104</th><td></td></tr>
+<tr><th id="105">105</th><td>    <b>struct</b> {</td></tr>
+<tr><th id="106">106</th><td>        <span class="macro" title="_Bool" data-ref="_M/bool">bool</span>        <dfn class="decl" id="vout_thread_sys_t::{anonymous}::is_on" title='vout_thread_sys_t::&lt;anonymous struct&gt;::is_on' data-ref="vout_thread_sys_t::{anonymous}::is_on">is_on</dfn>;</td></tr>
+<tr><th id="107">107</th><td>        <a class="typedef" href="../../include/vlc_common.h.html#mtime_t" title='mtime_t' data-type='int64_t' data-ref="mtime_t">mtime_t</a>     <dfn class="decl" id="vout_thread_sys_t::{anonymous}::date" title='vout_thread_sys_t::&lt;anonymous struct&gt;::date' data-ref="vout_thread_sys_t::{anonymous}::date">date</dfn>;</td></tr>
+<tr><th id="108">108</th><td>    } <dfn class="decl" id="vout_thread_sys_t::pause" title='vout_thread_sys_t::pause' data-ref="vout_thread_sys_t::pause">pause</dfn>;</td></tr>
+<tr><th id="109">109</th><td></td></tr>
+<tr><th id="110">110</th><td>    <i>/* OSD title configuration */</i></td></tr>
+<tr><th id="111">111</th><td>    <b>struct</b> {</td></tr>
+<tr><th id="112">112</th><td>        <span class="macro" title="_Bool" data-ref="_M/bool">bool</span>        <dfn class="decl" id="vout_thread_sys_t::{anonymous}::show" title='vout_thread_sys_t::&lt;anonymous struct&gt;::show' data-ref="vout_thread_sys_t::{anonymous}::show">show</dfn>;</td></tr>
+<tr><th id="113">113</th><td>        <a class="typedef" href="../../include/vlc_common.h.html#mtime_t" title='mtime_t' data-type='int64_t' data-ref="mtime_t">mtime_t</a>     <dfn class="decl" id="vout_thread_sys_t::{anonymous}::timeout" title='vout_thread_sys_t::&lt;anonymous struct&gt;::timeout' data-ref="vout_thread_sys_t::{anonymous}::timeout">timeout</dfn>;</td></tr>
+<tr><th id="114">114</th><td>        <em>int</em>         <dfn class="decl" id="vout_thread_sys_t::{anonymous}::position" title='vout_thread_sys_t::&lt;anonymous struct&gt;::position' data-ref="vout_thread_sys_t::{anonymous}::position">position</dfn>;</td></tr>
+<tr><th id="115">115</th><td>    } <dfn class="decl" id="vout_thread_sys_t::title" title='vout_thread_sys_t::title' data-ref="vout_thread_sys_t::title">title</dfn>;</td></tr>
+<tr><th id="116">116</th><td></td></tr>
+<tr><th id="117">117</th><td>    <i>/* */</i></td></tr>
+<tr><th id="118">118</th><td>    <span class="macro" title="_Bool" data-ref="_M/bool">bool</span>            <dfn class="decl" id="vout_thread_sys_t::is_late_dropped" title='vout_thread_sys_t::is_late_dropped' data-ref="vout_thread_sys_t::is_late_dropped">is_late_dropped</dfn>;</td></tr>
+<tr><th id="119">119</th><td></td></tr>
+<tr><th id="120">120</th><td>    <i>/* Video filter2 chain */</i></td></tr>
+<tr><th id="121">121</th><td>    <b>struct</b> {</td></tr>
+<tr><th id="122">122</th><td>        <a class="typedef" href="../../include/vlc_threads.h.html#vlc_mutex_t" title='vlc_mutex_t' data-type='pthread_mutex_t' data-ref="vlc_mutex_t">vlc_mutex_t</a>     <dfn class="decl" id="vout_thread_sys_t::{anonymous}::lock" title='vout_thread_sys_t::&lt;anonymous struct&gt;::lock' data-ref="vout_thread_sys_t::{anonymous}::lock">lock</dfn>;</td></tr>
+<tr><th id="123">123</th><td>        <em>char</em>            *<dfn class="decl" id="vout_thread_sys_t::{anonymous}::configuration" title='vout_thread_sys_t::&lt;anonymous struct&gt;::configuration' data-ref="vout_thread_sys_t::{anonymous}::configuration">configuration</dfn>;</td></tr>
+<tr><th id="124">124</th><td>        <a class="typedef" href="../../include/vlc_common.h.html#video_format_t" title='video_format_t' data-type='struct video_format_t' data-ref="video_format_t">video_format_t</a>  <dfn class="decl" id="vout_thread_sys_t::{anonymous}::format" title='vout_thread_sys_t::&lt;anonymous struct&gt;::format' data-ref="vout_thread_sys_t::{anonymous}::format">format</dfn>;</td></tr>
+<tr><th id="125">125</th><td>        <a class="typedef" href="../../include/vlc_filter.h.html#filter_chain_t" title='filter_chain_t' data-type='struct filter_chain_t' data-ref="filter_chain_t">filter_chain_t</a>  *<dfn class="decl" id="vout_thread_sys_t::{anonymous}::chain_static" title='vout_thread_sys_t::&lt;anonymous struct&gt;::chain_static' data-ref="vout_thread_sys_t::{anonymous}::chain_static">chain_static</dfn>;</td></tr>
+<tr><th id="126">126</th><td>        <a class="typedef" href="../../include/vlc_filter.h.html#filter_chain_t" title='filter_chain_t' data-type='struct filter_chain_t' data-ref="filter_chain_t">filter_chain_t</a>  *<dfn class="decl" id="vout_thread_sys_t::{anonymous}::chain_interactive" title='vout_thread_sys_t::&lt;anonymous struct&gt;::chain_interactive' data-ref="vout_thread_sys_t::{anonymous}::chain_interactive">chain_interactive</dfn>;</td></tr>
+<tr><th id="127">127</th><td>    } <dfn class="decl" id="vout_thread_sys_t::filter" title='vout_thread_sys_t::filter' data-ref="vout_thread_sys_t::filter">filter</dfn>;</td></tr>
+<tr><th id="128">128</th><td></td></tr>
+<tr><th id="129">129</th><td>    <i>/* */</i></td></tr>
+<tr><th id="130">130</th><td>    <a class="typedef" href="../../include/vlc_mouse.h.html#vlc_mouse_t" title='vlc_mouse_t' data-type='struct vlc_mouse_t' data-ref="vlc_mouse_t">vlc_mouse_t</a>     <dfn class="decl" id="vout_thread_sys_t::mouse" title='vout_thread_sys_t::mouse' data-ref="vout_thread_sys_t::mouse">mouse</dfn>;</td></tr>
+<tr><th id="131">131</th><td></td></tr>
+<tr><th id="132">132</th><td>    <i>/* */</i></td></tr>
+<tr><th id="133">133</th><td>    <a class="typedef" href="../../include/vlc_threads.h.html#vlc_mutex_t" title='vlc_mutex_t' data-type='pthread_mutex_t' data-ref="vlc_mutex_t">vlc_mutex_t</a>     <dfn class="decl" id="vout_thread_sys_t::picture_lock" title='vout_thread_sys_t::picture_lock' data-ref="vout_thread_sys_t::picture_lock">picture_lock</dfn>;                 <i class="doc">/**&lt; picture heap lock */</i></td></tr>
+<tr><th id="134">134</th><td>    <a class="typedef" href="../../include/vlc_picture_pool.h.html#picture_pool_t" title='picture_pool_t' data-type='struct picture_pool_t' data-ref="picture_pool_t">picture_pool_t</a>  *<dfn class="decl" id="vout_thread_sys_t::private_pool" title='vout_thread_sys_t::private_pool' data-ref="vout_thread_sys_t::private_pool">private_pool</dfn>;</td></tr>
+<tr><th id="135">135</th><td>    <a class="typedef" href="../../include/vlc_picture_pool.h.html#picture_pool_t" title='picture_pool_t' data-type='struct picture_pool_t' data-ref="picture_pool_t">picture_pool_t</a>  *<dfn class="decl" id="vout_thread_sys_t::display_pool" title='vout_thread_sys_t::display_pool' data-ref="vout_thread_sys_t::display_pool">display_pool</dfn>;</td></tr>
+<tr><th id="136">136</th><td>    <a class="typedef" href="../../include/vlc_picture_pool.h.html#picture_pool_t" title='picture_pool_t' data-type='struct picture_pool_t' data-ref="picture_pool_t">picture_pool_t</a>  *<dfn class="decl" id="vout_thread_sys_t::decoder_pool" title='vout_thread_sys_t::decoder_pool' data-ref="vout_thread_sys_t::decoder_pool">decoder_pool</dfn>;</td></tr>
+<tr><th id="137">137</th><td>    <a class="typedef" href="../../include/vlc_picture_fifo.h.html#picture_fifo_t" title='picture_fifo_t' data-type='struct picture_fifo_t' data-ref="picture_fifo_t">picture_fifo_t</a>  *<dfn class="decl" id="vout_thread_sys_t::decoder_fifo" title='vout_thread_sys_t::decoder_fifo' data-ref="vout_thread_sys_t::decoder_fifo">decoder_fifo</dfn>;</td></tr>
+<tr><th id="138">138</th><td>    <a class="typedef" href="chrono.h.html#vout_chrono_t" title='vout_chrono_t' data-type='struct vout_chrono_t' data-ref="vout_chrono_t">vout_chrono_t</a>   <dfn class="decl" id="vout_thread_sys_t::render" title='vout_thread_sys_t::render' data-ref="vout_thread_sys_t::render">render</dfn>;           <i class="doc">/**&lt; picture render time estimator */</i></td></tr>
+<tr><th id="139">139</th><td>};</td></tr>
+<tr><th id="140">140</th><td></td></tr>
+<tr><th id="141">141</th><td><i>/* TODO to move them to vlc_vout.h */</i></td></tr>
+<tr><th id="142">142</th><td><em>void</em> <dfn class="decl" id="vout_ControlChangeFullscreen" title='vout_ControlChangeFullscreen' data-ref="vout_ControlChangeFullscreen">vout_ControlChangeFullscreen</dfn>(<a class="typedef" href="../../include/vlc_common.h.html#vout_thread_t" title='vout_thread_t' data-type='struct vout_thread_t' data-ref="vout_thread_t">vout_thread_t</a> *, <span class="macro" title="_Bool" data-ref="_M/bool">bool</span> <dfn class="local col8 decl" id="348fullscreen" title='fullscreen' data-type='_Bool' data-ref="348fullscreen">fullscreen</dfn>);</td></tr>
+<tr><th id="143">143</th><td><em>void</em> <dfn class="decl" id="vout_ControlChangeWindowState" title='vout_ControlChangeWindowState' data-ref="vout_ControlChangeWindowState">vout_ControlChangeWindowState</dfn>(<a class="typedef" href="../../include/vlc_common.h.html#vout_thread_t" title='vout_thread_t' data-type='struct vout_thread_t' data-ref="vout_thread_t">vout_thread_t</a> *, <em>unsigned</em> <dfn class="local col9 decl" id="349state" title='state' data-type='unsigned int' data-ref="349state">state</dfn>);</td></tr>
+<tr><th id="144">144</th><td><em>void</em> <dfn class="decl" id="vout_ControlChangeDisplayFilled" title='vout_ControlChangeDisplayFilled' data-ref="vout_ControlChangeDisplayFilled">vout_ControlChangeDisplayFilled</dfn>(<a class="typedef" href="../../include/vlc_common.h.html#vout_thread_t" title='vout_thread_t' data-type='struct vout_thread_t' data-ref="vout_thread_t">vout_thread_t</a> *, <span class="macro" title="_Bool" data-ref="_M/bool">bool</span> <dfn class="local col0 decl" id="350is_filled" title='is_filled' data-type='_Bool' data-ref="350is_filled">is_filled</dfn>);</td></tr>
+<tr><th id="145">145</th><td><em>void</em> <dfn class="decl" id="vout_ControlChangeZoom" title='vout_ControlChangeZoom' data-ref="vout_ControlChangeZoom">vout_ControlChangeZoom</dfn>(<a class="typedef" href="../../include/vlc_common.h.html#vout_thread_t" title='vout_thread_t' data-type='struct vout_thread_t' data-ref="vout_thread_t">vout_thread_t</a> *, <em>int</em> <dfn class="local col1 decl" id="351num" title='num' data-type='int' data-ref="351num">num</dfn>, <em>int</em> <dfn class="local col2 decl" id="352den" title='den' data-type='int' data-ref="352den">den</dfn>);</td></tr>
+<tr><th id="146">146</th><td><em>void</em> <dfn class="decl" id="vout_ControlChangeSampleAspectRatio" title='vout_ControlChangeSampleAspectRatio' data-ref="vout_ControlChangeSampleAspectRatio">vout_ControlChangeSampleAspectRatio</dfn>(<a class="typedef" href="../../include/vlc_common.h.html#vout_thread_t" title='vout_thread_t' data-type='struct vout_thread_t' data-ref="vout_thread_t">vout_thread_t</a> *, <em>unsigned</em> <dfn class="local col3 decl" id="353num" title='num' data-type='unsigned int' data-ref="353num">num</dfn>, <em>unsigned</em> <dfn class="local col4 decl" id="354den" title='den' data-type='unsigned int' data-ref="354den">den</dfn>);</td></tr>
+<tr><th id="147">147</th><td><em>void</em> <dfn class="decl" id="vout_ControlChangeCropRatio" title='vout_ControlChangeCropRatio' data-ref="vout_ControlChangeCropRatio">vout_ControlChangeCropRatio</dfn>(<a class="typedef" href="../../include/vlc_common.h.html#vout_thread_t" title='vout_thread_t' data-type='struct vout_thread_t' data-ref="vout_thread_t">vout_thread_t</a> *, <em>unsigned</em> <dfn class="local col5 decl" id="355num" title='num' data-type='unsigned int' data-ref="355num">num</dfn>, <em>unsigned</em> <dfn class="local col6 decl" id="356den" title='den' data-type='unsigned int' data-ref="356den">den</dfn>);</td></tr>
+<tr><th id="148">148</th><td><em>void</em> <dfn class="decl" id="vout_ControlChangeCropWindow" title='vout_ControlChangeCropWindow' data-ref="vout_ControlChangeCropWindow">vout_ControlChangeCropWindow</dfn>(<a class="typedef" href="../../include/vlc_common.h.html#vout_thread_t" title='vout_thread_t' data-type='struct vout_thread_t' data-ref="vout_thread_t">vout_thread_t</a> *, <em>int</em> <dfn class="local col7 decl" id="357x" title='x' data-type='int' data-ref="357x">x</dfn>, <em>int</em> <dfn class="local col8 decl" id="358y" title='y' data-type='int' data-ref="358y">y</dfn>, <em>int</em> <dfn class="local col9 decl" id="359width" title='width' data-type='int' data-ref="359width">width</dfn>, <em>int</em> <dfn class="local col0 decl" id="360height" title='height' data-type='int' data-ref="360height">height</dfn>);</td></tr>
+<tr><th id="149">149</th><td><em>void</em> <dfn class="decl" id="vout_ControlChangeCropBorder" title='vout_ControlChangeCropBorder' data-ref="vout_ControlChangeCropBorder">vout_ControlChangeCropBorder</dfn>(<a class="typedef" href="../../include/vlc_common.h.html#vout_thread_t" title='vout_thread_t' data-type='struct vout_thread_t' data-ref="vout_thread_t">vout_thread_t</a> *, <em>int</em> <dfn class="local col1 decl" id="361left" title='left' data-type='int' data-ref="361left">left</dfn>, <em>int</em> <dfn class="local col2 decl" id="362top" title='top' data-type='int' data-ref="362top">top</dfn>, <em>int</em> <dfn class="local col3 decl" id="363right" title='right' data-type='int' data-ref="363right">right</dfn>, <em>int</em> <dfn class="local col4 decl" id="364bottom" title='bottom' data-type='int' data-ref="364bottom">bottom</dfn>);</td></tr>
+<tr><th id="150">150</th><td><em>void</em> <dfn class="decl" id="vout_ControlChangeFilters" title='vout_ControlChangeFilters' data-ref="vout_ControlChangeFilters">vout_ControlChangeFilters</dfn>(<a class="typedef" href="../../include/vlc_common.h.html#vout_thread_t" title='vout_thread_t' data-type='struct vout_thread_t' data-ref="vout_thread_t">vout_thread_t</a> *, <em>const</em> <em>char</em> *);</td></tr>
+<tr><th id="151">151</th><td><em>void</em> <dfn class="decl" id="vout_ControlChangeSubSources" title='vout_ControlChangeSubSources' data-ref="vout_ControlChangeSubSources">vout_ControlChangeSubSources</dfn>(<a class="typedef" href="../../include/vlc_common.h.html#vout_thread_t" title='vout_thread_t' data-type='struct vout_thread_t' data-ref="vout_thread_t">vout_thread_t</a> *, <em>const</em> <em>char</em> *);</td></tr>
+<tr><th id="152">152</th><td><em>void</em> <dfn class="decl" id="vout_ControlChangeSubFilters" title='vout_ControlChangeSubFilters' data-ref="vout_ControlChangeSubFilters">vout_ControlChangeSubFilters</dfn>(<a class="typedef" href="../../include/vlc_common.h.html#vout_thread_t" title='vout_thread_t' data-type='struct vout_thread_t' data-ref="vout_thread_t">vout_thread_t</a> *, <em>const</em> <em>char</em> *);</td></tr>
+<tr><th id="153">153</th><td><em>void</em> <dfn class="decl" id="vout_ControlChangeSubMargin" title='vout_ControlChangeSubMargin' data-ref="vout_ControlChangeSubMargin">vout_ControlChangeSubMargin</dfn>(<a class="typedef" href="../../include/vlc_common.h.html#vout_thread_t" title='vout_thread_t' data-type='struct vout_thread_t' data-ref="vout_thread_t">vout_thread_t</a> *, <em>int</em>);</td></tr>
+<tr><th id="154">154</th><td></td></tr>
+<tr><th id="155">155</th><td><i>/* */</i></td></tr>
+<tr><th id="156">156</th><td><em>void</em> <dfn class="decl" id="vout_IntfInit" title='vout_IntfInit' data-ref="vout_IntfInit">vout_IntfInit</dfn>( <a class="typedef" href="../../include/vlc_common.h.html#vout_thread_t" title='vout_thread_t' data-type='struct vout_thread_t' data-ref="vout_thread_t">vout_thread_t</a> * );</td></tr>
+<tr><th id="157">157</th><td><em>void</em> <dfn class="decl" id="vout_IntfReinit" title='vout_IntfReinit' data-ref="vout_IntfReinit">vout_IntfReinit</dfn>( <a class="typedef" href="../../include/vlc_common.h.html#vout_thread_t" title='vout_thread_t' data-type='struct vout_thread_t' data-ref="vout_thread_t">vout_thread_t</a> * );</td></tr>
+<tr><th id="158">158</th><td></td></tr>
+<tr><th id="159">159</th><td><i>/* */</i></td></tr>
+<tr><th id="160">160</th><td><em>int</em>  <dfn class="decl" id="vout_OpenWrapper" title='vout_OpenWrapper' data-ref="vout_OpenWrapper">vout_OpenWrapper</dfn> (<a class="typedef" href="../../include/vlc_common.h.html#vout_thread_t" title='vout_thread_t' data-type='struct vout_thread_t' data-ref="vout_thread_t">vout_thread_t</a> *, <em>const</em> <em>char</em> *, <em>const</em> <a class="typedef" href="../../include/vlc_vout_wrapper.h.html#vout_display_state_t" title='vout_display_state_t' data-type='struct vout_display_state_t' data-ref="vout_display_state_t">vout_display_state_t</a> *);</td></tr>
+<tr><th id="161">161</th><td><em>void</em> <dfn class="decl" id="vout_CloseWrapper" title='vout_CloseWrapper' data-ref="vout_CloseWrapper">vout_CloseWrapper</dfn>(<a class="typedef" href="../../include/vlc_common.h.html#vout_thread_t" title='vout_thread_t' data-type='struct vout_thread_t' data-ref="vout_thread_t">vout_thread_t</a> *, <a class="typedef" href="../../include/vlc_vout_wrapper.h.html#vout_display_state_t" title='vout_display_state_t' data-type='struct vout_display_state_t' data-ref="vout_display_state_t">vout_display_state_t</a> *);</td></tr>
+<tr><th id="162">162</th><td><em>int</em>  <dfn class="decl" id="vout_InitWrapper" title='vout_InitWrapper' data-ref="vout_InitWrapper">vout_InitWrapper</dfn>(<a class="typedef" href="../../include/vlc_common.h.html#vout_thread_t" title='vout_thread_t' data-type='struct vout_thread_t' data-ref="vout_thread_t">vout_thread_t</a> *);</td></tr>
+<tr><th id="163">163</th><td><em>void</em> <dfn class="decl" id="vout_EndWrapper" title='vout_EndWrapper' data-ref="vout_EndWrapper">vout_EndWrapper</dfn>(<a class="typedef" href="../../include/vlc_common.h.html#vout_thread_t" title='vout_thread_t' data-type='struct vout_thread_t' data-ref="vout_thread_t">vout_thread_t</a> *);</td></tr>
+<tr><th id="164">164</th><td><em>void</em> <dfn class="decl" id="vout_ManageWrapper" title='vout_ManageWrapper' data-ref="vout_ManageWrapper">vout_ManageWrapper</dfn>(<a class="typedef" href="../../include/vlc_common.h.html#vout_thread_t" title='vout_thread_t' data-type='struct vout_thread_t' data-ref="vout_thread_t">vout_thread_t</a> *);</td></tr>
+<tr><th id="165">165</th><td></td></tr>
+<tr><th id="166">166</th><td><i>/* */</i></td></tr>
+<tr><th id="167">167</th><td><em>int</em> <dfn class="decl" id="spu_ProcessMouse" title='spu_ProcessMouse' data-ref="spu_ProcessMouse">spu_ProcessMouse</dfn>(<a class="typedef" href="../../include/vlc_common.h.html#spu_t" title='spu_t' data-type='struct spu_t' data-ref="spu_t">spu_t</a> *, <em>const</em> <a class="typedef" href="../../include/vlc_mouse.h.html#vlc_mouse_t" title='vlc_mouse_t' data-type='struct vlc_mouse_t' data-ref="vlc_mouse_t">vlc_mouse_t</a> *, <em>const</em> <a class="typedef" href="../../include/vlc_common.h.html#video_format_t" title='video_format_t' data-type='struct video_format_t' data-ref="video_format_t">video_format_t</a> *);</td></tr>
+<tr><th id="168">168</th><td><em>void</em> <dfn class="decl" id="spu_Attach" title='spu_Attach' data-ref="spu_Attach">spu_Attach</dfn>( <a class="typedef" href="../../include/vlc_common.h.html#spu_t" title='spu_t' data-type='struct spu_t' data-ref="spu_t">spu_t</a> *, <a class="typedef" href="../../include/vlc_common.h.html#vlc_object_t" title='vlc_object_t' data-type='struct vlc_object_t' data-ref="vlc_object_t">vlc_object_t</a> *<dfn class="local col5 decl" id="365input" title='input' data-type='vlc_object_t *' data-ref="365input">input</dfn>, <span class="macro" title="_Bool" data-ref="_M/bool">bool</span> );</td></tr>
+<tr><th id="169">169</th><td><em>void</em> <dfn class="decl" id="spu_ChangeMargin" title='spu_ChangeMargin' data-ref="spu_ChangeMargin">spu_ChangeMargin</dfn>(<a class="typedef" href="../../include/vlc_common.h.html#spu_t" title='spu_t' data-type='struct spu_t' data-ref="spu_t">spu_t</a> *, <em>int</em>);</td></tr>
+<tr><th id="170">170</th><td></td></tr>
+<tr><th id="171">171</th><td><u>#<span data-ppcond="25">endif</span></u></td></tr>
+<tr><th id="172">172</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated while processing <a href='display.c.html'>vlc/src/video_output/display.c</a><br/>Generated on <em>2016-Oct-25</em> from project vlc revision <em>2.2.0-git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

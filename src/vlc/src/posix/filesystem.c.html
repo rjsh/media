@@ -1,0 +1,382 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>filesystem.c source code [vlc/src/posix/filesystem.c] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'vlc/src/posix/filesystem.c'; var root_path = '../../..'; var data_path = '../../../../data';</script>
+<script src='../../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='../..'>vlc</a>/<a href='..'>src</a>/<a href='./'>posix</a>/<a href='filesystem.c.html'>filesystem.c</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*****************************************************************************</i></td></tr>
+<tr><th id="2">2</th><td><i> * filesystem.c: POSIX file system helpers</i></td></tr>
+<tr><th id="3">3</th><td><i> *****************************************************************************</i></td></tr>
+<tr><th id="4">4</th><td><i> * Copyright (C) 2005-2006 VLC authors and VideoLAN</i></td></tr>
+<tr><th id="5">5</th><td><i> * Copyright © 2005-2008 Rémi Denis-Courmont</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * Authors: Rémi Denis-Courmont &lt;rem # videolan.org&gt;</i></td></tr>
+<tr><th id="8">8</th><td><i> *</i></td></tr>
+<tr><th id="9">9</th><td><i> * This program is free software; you can redistribute it and/or modify it</i></td></tr>
+<tr><th id="10">10</th><td><i> * under the terms of the GNU Lesser General Public License as published by</i></td></tr>
+<tr><th id="11">11</th><td><i> * the Free Software Foundation; either version 2.1 of the License, or</i></td></tr>
+<tr><th id="12">12</th><td><i> * (at your option) any later version.</i></td></tr>
+<tr><th id="13">13</th><td><i> *</i></td></tr>
+<tr><th id="14">14</th><td><i> * This program is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="15">15</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="16">16</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the</i></td></tr>
+<tr><th id="17">17</th><td><i> * GNU Lesser General Public License for more details.</i></td></tr>
+<tr><th id="18">18</th><td><i> *</i></td></tr>
+<tr><th id="19">19</th><td><i> * You should have received a copy of the GNU Lesser General Public License</i></td></tr>
+<tr><th id="20">20</th><td><i> * along with this program; if not, write to the Free Software Foundation,</i></td></tr>
+<tr><th id="21">21</th><td><i> * Inc., 51 Franklin Street, Fifth Floor, Boston MA 02110-1301, USA.</i></td></tr>
+<tr><th id="22">22</th><td><i> *****************************************************************************/</i></td></tr>
+<tr><th id="23">23</th><td></td></tr>
+<tr><th id="24">24</th><td><u>#<span data-ppcond="24">ifdef</span> <span class="macro" data-ref="_M/HAVE_CONFIG_H">HAVE_CONFIG_H</span></u></td></tr>
+<tr><th id="25">25</th><td><u># include <a href="../../config.h.html">"config.h"</a></u></td></tr>
+<tr><th id="26">26</th><td><u>#<span data-ppcond="24">endif</span></u></td></tr>
+<tr><th id="27">27</th><td></td></tr>
+<tr><th id="28">28</th><td><u>#include <a href="../../../include/assert.h.html">&lt;assert.h&gt;</a></u></td></tr>
+<tr><th id="29">29</th><td></td></tr>
+<tr><th id="30">30</th><td><u>#include <a href="../../../include/stdio.h.html">&lt;stdio.h&gt;</a></u></td></tr>
+<tr><th id="31">31</th><td><u>#include &lt;limits.h&gt; /* NAME_MAX */</u></td></tr>
+<tr><th id="32">32</th><td><u>#include <a href="../../../include/errno.h.html">&lt;errno.h&gt;</a></u></td></tr>
+<tr><th id="33">33</th><td></td></tr>
+<tr><th id="34">34</th><td><u>#include <a href="../../../include/x86_64-linux-gnu/sys/types.h.html">&lt;sys/types.h&gt;</a></u></td></tr>
+<tr><th id="35">35</th><td><u>#include <a href="../../../include/unistd.h.html">&lt;unistd.h&gt;</a></u></td></tr>
+<tr><th id="36">36</th><td><u>#include <a href="../../../include/fcntl.h.html">&lt;fcntl.h&gt;</a></u></td></tr>
+<tr><th id="37">37</th><td><u>#include <a href="../../../include/x86_64-linux-gnu/sys/stat.h.html">&lt;sys/stat.h&gt;</a></u></td></tr>
+<tr><th id="38">38</th><td><u>#<span data-ppcond="38">ifndef</span> <a class="macro" href="../../config.h.html#338" data-ref="_M/HAVE_LSTAT">HAVE_LSTAT</a></u></td></tr>
+<tr><th id="39">39</th><td><u># define lstat(a, b) stat(a, b)</u></td></tr>
+<tr><th id="40">40</th><td><u>#<span data-ppcond="38">endif</span></u></td></tr>
+<tr><th id="41">41</th><td><u>#include <a href="../../../include/dirent.h.html">&lt;dirent.h&gt;</a></u></td></tr>
+<tr><th id="42">42</th><td><u>#include <a href="../../../include/x86_64-linux-gnu/sys/socket.h.html">&lt;sys/socket.h&gt;</a></u></td></tr>
+<tr><th id="43">43</th><td></td></tr>
+<tr><th id="44">44</th><td><u>#include <a href="../../include/vlc_common.h.html">&lt;vlc_common.h&gt;</a></u></td></tr>
+<tr><th id="45">45</th><td><u>#include <a href="../../include/vlc_fs.h.html">&lt;vlc_fs.h&gt;</a></u></td></tr>
+<tr><th id="46">46</th><td><u>#include <a href="../libvlc.h.html">"libvlc.h"</a> /* vlc_mkdir */</u></td></tr>
+<tr><th id="47">47</th><td></td></tr>
+<tr><th id="48">48</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="49">49</th><td><i class="doc"> * Opens a system file handle.</i></td></tr>
+<tr><th id="50">50</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="51">51</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">filename</span> file path to open (with UTF-8 encoding)</i></td></tr>
+<tr><th id="52">52</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">flags</span> open() flags, see the C library open() documentation</i></td></tr>
+<tr><th id="53">53</th><td><i class="doc"> * <span class="command">@return</span> a file handle on success, -1 on error (see errno).</i></td></tr>
+<tr><th id="54">54</th><td><i class="doc"> * <span class="command">@note</span> Contrary to standard open(), this function returns file handles</i></td></tr>
+<tr><th id="55">55</th><td><i class="doc"> * with the close-on-exec flag enabled.</i></td></tr>
+<tr><th id="56">56</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="57">57</th><td><em>int</em> <dfn class="decl def" id="vlc_open" title='vlc_open' data-ref="vlc_open">vlc_open</dfn> (<em>const</em> <em>char</em> *<dfn class="local col1 decl" id="1filename" title='filename' data-type='const char *' data-ref="1filename">filename</dfn>, <em>int</em> <dfn class="local col2 decl" id="2flags" title='flags' data-type='int' data-ref="2flags">flags</dfn>, ...)</td></tr>
+<tr><th id="58">58</th><td>{</td></tr>
+<tr><th id="59">59</th><td>    <em>unsigned</em> <em>int</em> <dfn class="local col3 decl" id="3mode" title='mode' data-type='unsigned int' data-ref="3mode">mode</dfn> = <var>0</var>;</td></tr>
+<tr><th id="60">60</th><td>    <span class='typedef' title='va_list' data-type='__gnuc_va_list' data-ref="va_list">va_list</span> <dfn class="local col4 decl" id="4ap" title='ap' data-type='va_list' data-ref="4ap">ap</dfn>;</td></tr>
+<tr><th id="61">61</th><td></td></tr>
+<tr><th id="62">62</th><td>    <span class="macro" title="__builtin_va_start(ap, flags)" data-ref="_M/va_start">va_start</span> (<a class="local col4 ref" href="#4ap" title='ap' data-ref="4ap">ap</a>, <a class="local col2 ref" href="#2flags" title='flags' data-ref="2flags">flags</a>);</td></tr>
+<tr><th id="63">63</th><td>    <b>if</b> (<a class="local col2 ref" href="#2flags" title='flags' data-ref="2flags">flags</a> &amp; <a class="macro" href="../../../include/x86_64-linux-gnu/bits/fcntl-linux.h.html#47" title="0100" data-ref="_M/O_CREAT">O_CREAT</a>)</td></tr>
+<tr><th id="64">64</th><td>        <a class="local col3 ref" href="#3mode" title='mode' data-ref="3mode">mode</a> = <span class="macro" title="__builtin_va_arg(ap, unsigned int)" data-ref="_M/va_arg">va_arg</span> (<a class="local col4 ref" href="#4ap" title='ap' data-ref="4ap">ap</a>, <em>unsigned</em> <em>int</em>);</td></tr>
+<tr><th id="65">65</th><td>    <span class="macro" title="__builtin_va_end(ap)" data-ref="_M/va_end">va_end</span> (<a class="local col4 ref" href="#4ap" title='ap' data-ref="4ap">ap</a>);</td></tr>
+<tr><th id="66">66</th><td></td></tr>
+<tr><th id="67">67</th><td><u>#<span data-ppcond="67">ifdef</span> <a class="macro" href="../../../include/x86_64-linux-gnu/bits/fcntl-linux.h.html#127" data-ref="_M/O_CLOEXEC">O_CLOEXEC</a></u></td></tr>
+<tr><th id="68">68</th><td>    <a class="local col2 ref" href="#2flags" title='flags' data-ref="2flags">flags</a> |= <a class="macro" href="../../../include/x86_64-linux-gnu/bits/fcntl-linux.h.html#127" title="02000000" data-ref="_M/O_CLOEXEC">O_CLOEXEC</a>;</td></tr>
+<tr><th id="69">69</th><td><u>#<span data-ppcond="67">endif</span></u></td></tr>
+<tr><th id="70">70</th><td></td></tr>
+<tr><th id="71">71</th><td>    <em>int</em> <dfn class="local col5 decl" id="5fd" title='fd' data-type='int' data-ref="5fd">fd</dfn> = <a class="ref" href="../../../include/fcntl.h.html#149" title='open' data-ref="open64">open</a> (<a class="local col1 ref" href="#1filename" title='filename' data-ref="1filename">filename</a>, <a class="local col2 ref" href="#2flags" title='flags' data-ref="2flags">flags</a>, <a class="local col3 ref" href="#3mode" title='mode' data-ref="3mode">mode</a>);</td></tr>
+<tr><th id="72">72</th><td>    <b>if</b> (<a class="local col5 ref" href="#5fd" title='fd' data-ref="5fd">fd</a> != -<var>1</var>)</td></tr>
+<tr><th id="73">73</th><td>        <a class="ref" href="../../../include/fcntl.h.html#fcntl" title='fcntl' data-ref="fcntl">fcntl</a> (<a class="local col5 ref" href="#5fd" title='fd' data-ref="5fd">fd</a>, <a class="macro" href="../../../include/x86_64-linux-gnu/bits/fcntl-linux.h.html#152" title="2" data-ref="_M/F_SETFD">F_SETFD</a>, <a class="macro" href="../../../include/x86_64-linux-gnu/bits/fcntl-linux.h.html#195" title="1" data-ref="_M/FD_CLOEXEC">FD_CLOEXEC</a>);</td></tr>
+<tr><th id="74">74</th><td>    <b>return</b> <a class="local col5 ref" href="#5fd" title='fd' data-ref="5fd">fd</a>;</td></tr>
+<tr><th id="75">75</th><td>}</td></tr>
+<tr><th id="76">76</th><td></td></tr>
+<tr><th id="77">77</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="78">78</th><td><i class="doc"> * Opens a system file handle relative to an existing directory handle.</i></td></tr>
+<tr><th id="79">79</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="80">80</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">dir</span> directory file descriptor</i></td></tr>
+<tr><th id="81">81</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">filename</span> file path to open (with UTF-8 encoding)</i></td></tr>
+<tr><th id="82">82</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">flags</span> open() flags, see the C library open() documentation</i></td></tr>
+<tr><th id="83">83</th><td><i class="doc"> * <span class="command">@return</span> a file handle on success, -1 on error (see errno).</i></td></tr>
+<tr><th id="84">84</th><td><i class="doc"> * <span class="command">@note</span> Contrary to standard open(), this function returns file handles</i></td></tr>
+<tr><th id="85">85</th><td><i class="doc"> * with the close-on-exec flag enabled.</i></td></tr>
+<tr><th id="86">86</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="87">87</th><td><em>int</em> <dfn class="decl def" id="vlc_openat" title='vlc_openat' data-ref="vlc_openat">vlc_openat</dfn> (<em>int</em> <dfn class="local col6 decl" id="6dir" title='dir' data-type='int' data-ref="6dir">dir</dfn>, <em>const</em> <em>char</em> *<dfn class="local col7 decl" id="7filename" title='filename' data-type='const char *' data-ref="7filename">filename</dfn>, <em>int</em> <dfn class="local col8 decl" id="8flags" title='flags' data-type='int' data-ref="8flags">flags</dfn>, ...)</td></tr>
+<tr><th id="88">88</th><td>{</td></tr>
+<tr><th id="89">89</th><td>    <em>unsigned</em> <em>int</em> <dfn class="local col9 decl" id="9mode" title='mode' data-type='unsigned int' data-ref="9mode">mode</dfn> = <var>0</var>;</td></tr>
+<tr><th id="90">90</th><td>    <span class='typedef' title='va_list' data-type='__gnuc_va_list' data-ref="va_list">va_list</span> <dfn class="local col0 decl" id="10ap" title='ap' data-type='va_list' data-ref="10ap">ap</dfn>;</td></tr>
+<tr><th id="91">91</th><td></td></tr>
+<tr><th id="92">92</th><td>    <span class="macro" title="__builtin_va_start(ap, flags)" data-ref="_M/va_start">va_start</span> (<a class="local col0 ref" href="#10ap" title='ap' data-ref="10ap">ap</a>, <a class="local col8 ref" href="#8flags" title='flags' data-ref="8flags">flags</a>);</td></tr>
+<tr><th id="93">93</th><td>    <b>if</b> (<a class="local col8 ref" href="#8flags" title='flags' data-ref="8flags">flags</a> &amp; <a class="macro" href="../../../include/x86_64-linux-gnu/bits/fcntl-linux.h.html#47" title="0100" data-ref="_M/O_CREAT">O_CREAT</a>)</td></tr>
+<tr><th id="94">94</th><td>        <a class="local col9 ref" href="#9mode" title='mode' data-ref="9mode">mode</a> = <span class="macro" title="__builtin_va_arg(ap, unsigned int)" data-ref="_M/va_arg">va_arg</span> (<a class="local col0 ref" href="#10ap" title='ap' data-ref="10ap">ap</a>, <em>unsigned</em> <em>int</em>);</td></tr>
+<tr><th id="95">95</th><td>    <span class="macro" title="__builtin_va_end(ap)" data-ref="_M/va_end">va_end</span> (<a class="local col0 ref" href="#10ap" title='ap' data-ref="10ap">ap</a>);</td></tr>
+<tr><th id="96">96</th><td></td></tr>
+<tr><th id="97">97</th><td><u>#<span data-ppcond="97">ifdef</span> <a class="macro" href="../../../include/x86_64-linux-gnu/bits/fcntl-linux.h.html#127" data-ref="_M/O_CLOEXEC">O_CLOEXEC</a></u></td></tr>
+<tr><th id="98">98</th><td>    <a class="local col8 ref" href="#8flags" title='flags' data-ref="8flags">flags</a> |= <a class="macro" href="../../../include/x86_64-linux-gnu/bits/fcntl-linux.h.html#127" title="02000000" data-ref="_M/O_CLOEXEC">O_CLOEXEC</a>;</td></tr>
+<tr><th id="99">99</th><td><u>#<span data-ppcond="97">endif</span></u></td></tr>
+<tr><th id="100">100</th><td></td></tr>
+<tr><th id="101">101</th><td><u>#<span data-ppcond="101">ifdef</span> <a class="macro" href="../../config.h.html#389" data-ref="_M/HAVE_OPENAT">HAVE_OPENAT</a></u></td></tr>
+<tr><th id="102">102</th><td>    <em>int</em> <dfn class="local col1 decl" id="11fd" title='fd' data-type='int' data-ref="11fd">fd</dfn> = <a class="ref" href="../../../include/fcntl.h.html#174" title='openat' data-ref="openat64">openat</a> (<a class="local col6 ref" href="#6dir" title='dir' data-ref="6dir">dir</a>, <a class="local col7 ref" href="#7filename" title='filename' data-ref="7filename">filename</a>, <a class="local col8 ref" href="#8flags" title='flags' data-ref="8flags">flags</a>, <a class="local col9 ref" href="#9mode" title='mode' data-ref="9mode">mode</a>);</td></tr>
+<tr><th id="103">103</th><td>    <b>if</b> (<a class="local col1 ref" href="#11fd" title='fd' data-ref="11fd">fd</a> != -<var>1</var>)</td></tr>
+<tr><th id="104">104</th><td>        <a class="ref" href="../../../include/fcntl.h.html#fcntl" title='fcntl' data-ref="fcntl">fcntl</a> (<a class="local col1 ref" href="#11fd" title='fd' data-ref="11fd">fd</a>, <a class="macro" href="../../../include/x86_64-linux-gnu/bits/fcntl-linux.h.html#152" title="2" data-ref="_M/F_SETFD">F_SETFD</a>, <a class="macro" href="../../../include/x86_64-linux-gnu/bits/fcntl-linux.h.html#195" title="1" data-ref="_M/FD_CLOEXEC">FD_CLOEXEC</a>);</td></tr>
+<tr><th id="105">105</th><td><u>#<span data-ppcond="101">else</span></u></td></tr>
+<tr><th id="106">106</th><td>	VLC_UNUSED (dir);</td></tr>
+<tr><th id="107">107</th><td>	VLC_UNUSED (filename);</td></tr>
+<tr><th id="108">108</th><td>	VLC_UNUSED (mode);</td></tr>
+<tr><th id="109">109</th><td></td></tr>
+<tr><th id="110">110</th><td>    <em>int</em> fd = -<var>1</var>;</td></tr>
+<tr><th id="111">111</th><td>    errno = ENOSYS;</td></tr>
+<tr><th id="112">112</th><td><u>#<span data-ppcond="101">endif</span></u></td></tr>
+<tr><th id="113">113</th><td>    <b>return</b> <a class="local col1 ref" href="#11fd" title='fd' data-ref="11fd">fd</a>;</td></tr>
+<tr><th id="114">114</th><td>}</td></tr>
+<tr><th id="115">115</th><td></td></tr>
+<tr><th id="116">116</th><td></td></tr>
+<tr><th id="117">117</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="118">118</th><td><i class="doc"> * Creates a directory using UTF-8 paths.</i></td></tr>
+<tr><th id="119">119</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="120">120</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">dirname</span> a UTF-8 string with the name of the directory that you</i></td></tr>
+<tr><th id="121">121</th><td><i class="doc"> *        want to create.</i></td></tr>
+<tr><th id="122">122</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">mode</span> directory permissions</i></td></tr>
+<tr><th id="123">123</th><td><i class="doc"> * <span class="command">@return</span> 0 on success, -1 on error (see errno).</i></td></tr>
+<tr><th id="124">124</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="125">125</th><td><em>int</em> <dfn class="decl def" id="vlc_mkdir" title='vlc_mkdir' data-ref="vlc_mkdir">vlc_mkdir</dfn> (<em>const</em> <em>char</em> *<dfn class="local col2 decl" id="12dirname" title='dirname' data-type='const char *' data-ref="12dirname">dirname</dfn>, <a class="typedef" href="../../../include/x86_64-linux-gnu/sys/types.h.html#mode_t" title='mode_t' data-type='__mode_t' data-ref="mode_t">mode_t</a> <dfn class="local col3 decl" id="13mode" title='mode' data-type='mode_t' data-ref="13mode">mode</dfn>)</td></tr>
+<tr><th id="126">126</th><td>{</td></tr>
+<tr><th id="127">127</th><td>    <b>return</b> <a class="ref" href="../../../include/x86_64-linux-gnu/sys/stat.h.html#mkdir" title='mkdir' data-ref="mkdir">mkdir</a> (<a class="local col2 ref" href="#12dirname" title='dirname' data-ref="12dirname">dirname</a>, <a class="local col3 ref" href="#13mode" title='mode' data-ref="13mode">mode</a>);</td></tr>
+<tr><th id="128">128</th><td>}</td></tr>
+<tr><th id="129">129</th><td></td></tr>
+<tr><th id="130">130</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="131">131</th><td><i class="doc"> * Opens a DIR pointer.</i></td></tr>
+<tr><th id="132">132</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="133">133</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">dirname</span> UTF-8 representation of the directory name</i></td></tr>
+<tr><th id="134">134</th><td><i class="doc"> * <span class="command">@return</span> a pointer to the DIR struct, or NULL in case of error.</i></td></tr>
+<tr><th id="135">135</th><td><i class="doc"> * Release with standard closedir().</i></td></tr>
+<tr><th id="136">136</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="137">137</th><td><a class="typedef" href="../../../include/dirent.h.html#DIR" title='DIR' data-type='struct __dirstream' data-ref="DIR">DIR</a> *<dfn class="decl def" id="vlc_opendir" title='vlc_opendir' data-ref="vlc_opendir">vlc_opendir</dfn> (<em>const</em> <em>char</em> *<dfn class="local col4 decl" id="14dirname" title='dirname' data-type='const char *' data-ref="14dirname">dirname</dfn>)</td></tr>
+<tr><th id="138">138</th><td>{</td></tr>
+<tr><th id="139">139</th><td>    <b>return</b> <a class="ref" href="../../../include/dirent.h.html#opendir" title='opendir' data-ref="opendir">opendir</a> (<a class="local col4 ref" href="#14dirname" title='dirname' data-ref="14dirname">dirname</a>);</td></tr>
+<tr><th id="140">140</th><td>}</td></tr>
+<tr><th id="141">141</th><td></td></tr>
+<tr><th id="142">142</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="143">143</th><td><i class="doc"> * Reads the next file name from an open directory.</i></td></tr>
+<tr><th id="144">144</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="145">145</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">dir</span> directory handle as returned by vlc_opendir()</i></td></tr>
+<tr><th id="146">146</th><td><i class="doc"> *            (must not be used by another thread concurrently)</i></td></tr>
+<tr><th id="147">147</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="148">148</th><td><i class="doc"> * <span class="command">@return</span> a UTF-8 string of the directory entry. The string is valid until</i></td></tr>
+<tr><th id="149">149</th><td><i class="doc"> * the next call to vlc_readdir() or closedir() on the handle.</i></td></tr>
+<tr><th id="150">150</th><td><i class="doc"> * If there are no more entries in the directory, NULL is returned.</i></td></tr>
+<tr><th id="151">151</th><td><i class="doc"> * If an error occurs, errno is set and NULL is returned.</i></td></tr>
+<tr><th id="152">152</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="153">153</th><td><em>char</em> *<dfn class="decl def" id="vlc_readdir" title='vlc_readdir' data-ref="vlc_readdir">vlc_readdir</dfn>( <a class="typedef" href="../../../include/dirent.h.html#DIR" title='DIR' data-type='struct __dirstream' data-ref="DIR">DIR</a> *<dfn class="local col5 decl" id="15dir" title='dir' data-type='DIR *' data-ref="15dir">dir</dfn> )</td></tr>
+<tr><th id="154">154</th><td>{</td></tr>
+<tr><th id="155">155</th><td>    <b>struct</b> <a class="type" href="../../../include/x86_64-linux-gnu/bits/dirent.h.html#dirent" title='dirent' data-ref="dirent">dirent</a> *<dfn class="local col6 decl" id="16ent" title='ent' data-type='struct dirent *' data-ref="16ent">ent</dfn> = <a class="ref" href="../../../include/dirent.h.html#165" title='readdir' data-ref="readdir64">readdir</a> (<a class="local col5 ref" href="#15dir" title='dir' data-ref="15dir">dir</a>);</td></tr>
+<tr><th id="156">156</th><td>    <b>return</b> (<a class="local col6 ref" href="#16ent" title='ent' data-ref="16ent">ent</a> != <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>) ? <a class="local col6 ref" href="#16ent" title='ent' data-ref="16ent">ent</a>-&gt;<a class="ref" href="../../../include/x86_64-linux-gnu/bits/dirent.h.html#dirent::d_name" title='dirent::d_name' data-ref="dirent::d_name">d_name</a> : <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="157">157</th><td>}</td></tr>
+<tr><th id="158">158</th><td></td></tr>
+<tr><th id="159">159</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="160">160</th><td><i class="doc"> * Finds file/inode information, as stat().</i></td></tr>
+<tr><th id="161">161</th><td><i class="doc"> * Consider using fstat() instead, if possible.</i></td></tr>
+<tr><th id="162">162</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="163">163</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">filename</span> UTF-8 file path</i></td></tr>
+<tr><th id="164">164</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="165">165</th><td><em>int</em> <dfn class="decl def" id="vlc_stat" title='vlc_stat' data-ref="vlc_stat">vlc_stat</dfn> (<em>const</em> <em>char</em> *<dfn class="local col7 decl" id="17filename" title='filename' data-type='const char *' data-ref="17filename">filename</dfn>, <b>struct</b> <a class="type" href="../../../include/x86_64-linux-gnu/bits/stat.h.html#stat" title='stat' data-ref="stat">stat</a> *<dfn class="local col8 decl" id="18buf" title='buf' data-type='struct stat *' data-ref="18buf">buf</dfn>)</td></tr>
+<tr><th id="166">166</th><td>{</td></tr>
+<tr><th id="167">167</th><td>    <b>return</b> <a class="ref" href="../../../include/x86_64-linux-gnu/sys/stat.h.html#217" title='stat' data-ref="stat64">stat</a> (<a class="local col7 ref" href="#17filename" title='filename' data-ref="17filename">filename</a>, <a class="local col8 ref" href="#18buf" title='buf' data-ref="18buf">buf</a>);</td></tr>
+<tr><th id="168">168</th><td>}</td></tr>
+<tr><th id="169">169</th><td></td></tr>
+<tr><th id="170">170</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="171">171</th><td><i class="doc"> * Finds file/inode information, as lstat().</i></td></tr>
+<tr><th id="172">172</th><td><i class="doc"> * Consider using fstat() instead, if possible.</i></td></tr>
+<tr><th id="173">173</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="174">174</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">filename</span> UTF-8 file path</i></td></tr>
+<tr><th id="175">175</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="176">176</th><td><em>int</em> <dfn class="decl def" id="vlc_lstat" title='vlc_lstat' data-ref="vlc_lstat">vlc_lstat</dfn> (<em>const</em> <em>char</em> *<dfn class="local col9 decl" id="19filename" title='filename' data-type='const char *' data-ref="19filename">filename</dfn>, <b>struct</b> <a class="type" href="../../../include/x86_64-linux-gnu/bits/stat.h.html#stat" title='stat' data-ref="stat">stat</a> *<dfn class="local col0 decl" id="20buf" title='buf' data-type='struct stat *' data-ref="20buf">buf</dfn>)</td></tr>
+<tr><th id="177">177</th><td>{</td></tr>
+<tr><th id="178">178</th><td>    <b>return</b> <a class="ref" href="../../../include/x86_64-linux-gnu/sys/stat.h.html#267" title='lstat' data-ref="lstat64">lstat</a> (<a class="local col9 ref" href="#19filename" title='filename' data-ref="19filename">filename</a>, <a class="local col0 ref" href="#20buf" title='buf' data-ref="20buf">buf</a>);</td></tr>
+<tr><th id="179">179</th><td>}</td></tr>
+<tr><th id="180">180</th><td></td></tr>
+<tr><th id="181">181</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="182">182</th><td><i class="doc"> * Removes a file.</i></td></tr>
+<tr><th id="183">183</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="184">184</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">filename</span> a UTF-8 string with the name of the file you want to delete.</i></td></tr>
+<tr><th id="185">185</th><td><i class="doc"> * <span class="command">@return</span> A 0 return value indicates success. A -1 return value indicates an</i></td></tr>
+<tr><th id="186">186</th><td><i class="doc"> *        error, and an error code is stored in errno</i></td></tr>
+<tr><th id="187">187</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="188">188</th><td><em>int</em> <dfn class="decl def" id="vlc_unlink" title='vlc_unlink' data-ref="vlc_unlink">vlc_unlink</dfn> (<em>const</em> <em>char</em> *<dfn class="local col1 decl" id="21filename" title='filename' data-type='const char *' data-ref="21filename">filename</dfn>)</td></tr>
+<tr><th id="189">189</th><td>{</td></tr>
+<tr><th id="190">190</th><td>    <b>return</b> <a class="ref" href="../../../include/unistd.h.html#unlink" title='unlink' data-ref="unlink">unlink</a> (<a class="local col1 ref" href="#21filename" title='filename' data-ref="21filename">filename</a>);</td></tr>
+<tr><th id="191">191</th><td>}</td></tr>
+<tr><th id="192">192</th><td></td></tr>
+<tr><th id="193">193</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="194">194</th><td><i class="doc"> * Moves a file atomically. This only works within a single file system.</i></td></tr>
+<tr><th id="195">195</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="196">196</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">oldpath</span> path to the file before the move</i></td></tr>
+<tr><th id="197">197</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">newpath</span> intended path to the file after the move</i></td></tr>
+<tr><th id="198">198</th><td><i class="doc"> * <span class="command">@return</span> A 0 return value indicates success. A -1 return value indicates an</i></td></tr>
+<tr><th id="199">199</th><td><i class="doc"> *        error, and an error code is stored in errno</i></td></tr>
+<tr><th id="200">200</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="201">201</th><td><em>int</em> <dfn class="decl def" id="vlc_rename" title='vlc_rename' data-ref="vlc_rename">vlc_rename</dfn> (<em>const</em> <em>char</em> *<dfn class="local col2 decl" id="22oldpath" title='oldpath' data-type='const char *' data-ref="22oldpath">oldpath</dfn>, <em>const</em> <em>char</em> *<dfn class="local col3 decl" id="23newpath" title='newpath' data-type='const char *' data-ref="23newpath">newpath</dfn>)</td></tr>
+<tr><th id="202">202</th><td>{</td></tr>
+<tr><th id="203">203</th><td>    <b>return</b> <a class="ref" href="../../../include/stdio.h.html#rename" title='rename' data-ref="rename">rename</a> (<a class="local col2 ref" href="#22oldpath" title='oldpath' data-ref="22oldpath">oldpath</a>, <a class="local col3 ref" href="#23newpath" title='newpath' data-ref="23newpath">newpath</a>);</td></tr>
+<tr><th id="204">204</th><td>}</td></tr>
+<tr><th id="205">205</th><td></td></tr>
+<tr><th id="206">206</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="207">207</th><td><i class="doc"> * Determines the current working directory.</i></td></tr>
+<tr><th id="208">208</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="209">209</th><td><i class="doc"> * <span class="command">@return</span> the current working directory (must be free()'d)</i></td></tr>
+<tr><th id="210">210</th><td><i class="doc"> *         or NULL on error</i></td></tr>
+<tr><th id="211">211</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="212">212</th><td><em>char</em> *<dfn class="decl def" id="vlc_getcwd" title='vlc_getcwd' data-ref="vlc_getcwd">vlc_getcwd</dfn> (<em>void</em>)</td></tr>
+<tr><th id="213">213</th><td>{</td></tr>
+<tr><th id="214">214</th><td>    <i>/* Try $PWD */</i></td></tr>
+<tr><th id="215">215</th><td>    <em>const</em> <em>char</em> *<dfn class="local col4 decl" id="24pwd" title='pwd' data-type='const char *' data-ref="24pwd">pwd</dfn> = <a class="ref" href="../../../include/stdlib.h.html#getenv" title='getenv' data-ref="getenv">getenv</a> (<q>"PWD"</q>);</td></tr>
+<tr><th id="216">216</th><td>    <b>if</b> (<a class="local col4 ref" href="#24pwd" title='pwd' data-ref="24pwd">pwd</a> != <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>)</td></tr>
+<tr><th id="217">217</th><td>    {</td></tr>
+<tr><th id="218">218</th><td>        <b>struct</b> <a class="type" href="../../../include/x86_64-linux-gnu/bits/stat.h.html#stat" title='stat' data-ref="stat">stat</a> <dfn class="local col5 decl" id="25s1" title='s1' data-type='struct stat' data-ref="25s1">s1</dfn>, <dfn class="local col6 decl" id="26s2" title='s2' data-type='struct stat' data-ref="26s2">s2</dfn>;</td></tr>
+<tr><th id="219">219</th><td>        <i>/* Make sure $PWD is correct */</i></td></tr>
+<tr><th id="220">220</th><td>        <b>if</b> (<a class="ref" href="../../../include/x86_64-linux-gnu/sys/stat.h.html#217" title='stat' data-ref="stat64">stat</a> (<a class="local col4 ref" href="#24pwd" title='pwd' data-ref="24pwd">pwd</a>, &amp;<a class="local col5 ref" href="#25s1" title='s1' data-ref="25s1">s1</a>) == <var>0</var> &amp;&amp; <a class="ref" href="../../../include/x86_64-linux-gnu/sys/stat.h.html#217" title='stat' data-ref="stat64">stat</a> (<q>"."</q>, &amp;<a class="local col6 ref" href="#26s2" title='s2' data-ref="26s2">s2</a>) == <var>0</var></td></tr>
+<tr><th id="221">221</th><td>         &amp;&amp; <a class="local col5 ref" href="#25s1" title='s1' data-ref="25s1">s1</a>.<a class="ref" href="../../../include/x86_64-linux-gnu/bits/stat.h.html#stat::st_dev" title='stat::st_dev' data-ref="stat::st_dev">st_dev</a> == <a class="local col6 ref" href="#26s2" title='s2' data-ref="26s2">s2</a>.<a class="ref" href="../../../include/x86_64-linux-gnu/bits/stat.h.html#stat::st_dev" title='stat::st_dev' data-ref="stat::st_dev">st_dev</a> &amp;&amp; <a class="local col5 ref" href="#25s1" title='s1' data-ref="25s1">s1</a>.<a class="ref" href="../../../include/x86_64-linux-gnu/bits/stat.h.html#stat::st_ino" title='stat::st_ino' data-ref="stat::st_ino">st_ino</a> == <a class="local col6 ref" href="#26s2" title='s2' data-ref="26s2">s2</a>.<a class="ref" href="../../../include/x86_64-linux-gnu/bits/stat.h.html#stat::st_ino" title='stat::st_ino' data-ref="stat::st_ino">st_ino</a>)</td></tr>
+<tr><th id="222">222</th><td>            <b>return</b> <a class="macro" href="../../../include/x86_64-linux-gnu/bits/string2.h.html#1291" title="(__extension__ (__builtin_constant_p (pwd) &amp;&amp; ((size_t)(const void *)((pwd) + 1) - (size_t)(const void *)(pwd) == 1) ? (((const char *) (pwd))[0] == &apos;\0&apos; ? (char *) calloc ((size_t) 1, (size_t) 1) : ({ size_t __len = strlen (pwd) + 1; char *__retval = (char *) malloc (__len); if (__retval != ((void*)0)) __retval = (char *) memcpy (__retval, pwd, __len); __retval; })) : __strdup (pwd)))" data-ref="_M/strdup">strdup</a> (<a class="local col4 ref" href="#24pwd" title='pwd' data-ref="24pwd">pwd</a>);</td></tr>
+<tr><th id="223">223</th><td>    }</td></tr>
+<tr><th id="224">224</th><td></td></tr>
+<tr><th id="225">225</th><td>    <i>/* Otherwise iterate getcwd() until the buffer is big enough */</i></td></tr>
+<tr><th id="226">226</th><td>    <em>long</em> <dfn class="local col7 decl" id="27path_max" title='path_max' data-type='long' data-ref="27path_max">path_max</dfn> = <a class="ref" href="../../../include/unistd.h.html#pathconf" title='pathconf' data-ref="pathconf">pathconf</a> (<q>"."</q>, <a class="macro" href="../../../include/x86_64-linux-gnu/bits/confname.h.html#35" title="_PC_PATH_MAX" data-ref="_M/_PC_PATH_MAX">_PC_PATH_MAX</a>);</td></tr>
+<tr><th id="227">227</th><td>    <span class='typedef' title='size_t' data-type='unsigned long' data-ref="size_t">size_t</span> <dfn class="local col8 decl" id="28size" title='size' data-type='size_t' data-ref="28size">size</dfn> = (<a class="local col7 ref" href="#27path_max" title='path_max' data-ref="27path_max">path_max</a> == -<var>1</var> || <a class="local col7 ref" href="#27path_max" title='path_max' data-ref="27path_max">path_max</a> &gt; <var>4096</var>) ? <var>4096</var> : <a class="local col7 ref" href="#27path_max" title='path_max' data-ref="27path_max">path_max</a>;</td></tr>
+<tr><th id="228">228</th><td></td></tr>
+<tr><th id="229">229</th><td>    <b>for</b> (;; <a class="local col8 ref" href="#28size" title='size' data-ref="28size">size</a> *= <var>2</var>)</td></tr>
+<tr><th id="230">230</th><td>    {</td></tr>
+<tr><th id="231">231</th><td>        <em>char</em> *<dfn class="local col9 decl" id="29buf" title='buf' data-type='char *' data-ref="29buf">buf</dfn> = <a class="ref" href="../../../include/stdlib.h.html#malloc" title='malloc' data-ref="malloc">malloc</a> (<a class="local col8 ref" href="#28size" title='size' data-ref="28size">size</a>);</td></tr>
+<tr><th id="232">232</th><td>        <b>if</b> (<a class="macro" href="../../include/vlc_common.h.html#116" title="__builtin_expect(!!(buf == ((void*)0)), 0)" data-ref="_M/unlikely">unlikely</a>(<a class="local col9 ref" href="#29buf" title='buf' data-ref="29buf">buf</a> == <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>))</td></tr>
+<tr><th id="233">233</th><td>            <b>break</b>;</td></tr>
+<tr><th id="234">234</th><td></td></tr>
+<tr><th id="235">235</th><td>        <b>if</b> (<a class="ref" href="../../../include/unistd.h.html#getcwd" title='getcwd' data-ref="getcwd">getcwd</a> (<a class="local col9 ref" href="#29buf" title='buf' data-ref="29buf">buf</a>, <a class="local col8 ref" href="#28size" title='size' data-ref="28size">size</a>) != <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>)</td></tr>
+<tr><th id="236">236</th><td>            <b>return</b> <a class="local col9 ref" href="#29buf" title='buf' data-ref="29buf">buf</a>;</td></tr>
+<tr><th id="237">237</th><td>        <a class="ref" href="../../../include/stdlib.h.html#free" title='free' data-ref="free">free</a> (<a class="local col9 ref" href="#29buf" title='buf' data-ref="29buf">buf</a>);</td></tr>
+<tr><th id="238">238</th><td></td></tr>
+<tr><th id="239">239</th><td>        <b>if</b> (<a class="macro" href="../../../include/x86_64-linux-gnu/bits/errno.h.html#54" title="(*__errno_location ())" data-ref="_M/errno">errno</a> != <a class="macro" href="../../../include/asm-generic/errno-base.h.html#37" title="34" data-ref="_M/ERANGE">ERANGE</a>)</td></tr>
+<tr><th id="240">240</th><td>            <b>break</b>;</td></tr>
+<tr><th id="241">241</th><td>    }</td></tr>
+<tr><th id="242">242</th><td>    <b>return</b> <span class="macro" title="((void*)0)" data-ref="_M/NULL">NULL</span>;</td></tr>
+<tr><th id="243">243</th><td>}</td></tr>
+<tr><th id="244">244</th><td></td></tr>
+<tr><th id="245">245</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="246">246</th><td><i class="doc"> * Duplicates a file descriptor. The new file descriptor has the close-on-exec</i></td></tr>
+<tr><th id="247">247</th><td><i class="doc"> * descriptor flag set.</i></td></tr>
+<tr><th id="248">248</th><td><i class="doc"> * <span class="command">@return</span> a new file descriptor or -1</i></td></tr>
+<tr><th id="249">249</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="250">250</th><td><em>int</em> <dfn class="decl def" id="vlc_dup" title='vlc_dup' data-ref="vlc_dup">vlc_dup</dfn> (<em>int</em> <dfn class="local col0 decl" id="30oldfd" title='oldfd' data-type='int' data-ref="30oldfd">oldfd</dfn>)</td></tr>
+<tr><th id="251">251</th><td>{</td></tr>
+<tr><th id="252">252</th><td>    <em>int</em> <dfn class="local col1 decl" id="31newfd" title='newfd' data-type='int' data-ref="31newfd">newfd</dfn>;</td></tr>
+<tr><th id="253">253</th><td></td></tr>
+<tr><th id="254">254</th><td><u>#<span data-ppcond="254">ifdef</span> <a class="macro" href="../../../include/x86_64-linux-gnu/bits/fcntl-linux.h.html#190" data-ref="_M/F_DUPFD_CLOEXEC">F_DUPFD_CLOEXEC</a></u></td></tr>
+<tr><th id="255">255</th><td>    <a class="local col1 ref" href="#31newfd" title='newfd' data-ref="31newfd">newfd</a> = <a class="ref" href="../../../include/fcntl.h.html#fcntl" title='fcntl' data-ref="fcntl">fcntl</a> (<a class="local col0 ref" href="#30oldfd" title='oldfd' data-ref="30oldfd">oldfd</a>, <a class="macro" href="../../../include/x86_64-linux-gnu/bits/fcntl-linux.h.html#190" title="1030" data-ref="_M/F_DUPFD_CLOEXEC">F_DUPFD_CLOEXEC</a>, <var>0</var>);</td></tr>
+<tr><th id="256">256</th><td>    <b>if</b> (<a class="macro" href="../../include/vlc_common.h.html#116" title="__builtin_expect(!!(newfd == -1 &amp;&amp; (*__errno_location ()) == 22), 0)" data-ref="_M/unlikely">unlikely</a>(<a class="local col1 ref" href="#31newfd" title='newfd' data-ref="31newfd">newfd</a> == -<var>1</var> &amp;&amp; <a class="macro" href="../../../include/x86_64-linux-gnu/bits/errno.h.html#54" title="(*__errno_location ())" data-ref="_M/errno">errno</a> == <a class="macro" href="../../../include/asm-generic/errno-base.h.html#25" title="22" data-ref="_M/EINVAL">EINVAL</a>))</td></tr>
+<tr><th id="257">257</th><td><u>#<span data-ppcond="254">endif</span></u></td></tr>
+<tr><th id="258">258</th><td>    {</td></tr>
+<tr><th id="259">259</th><td>        <a class="local col1 ref" href="#31newfd" title='newfd' data-ref="31newfd">newfd</a> = <a class="ref" href="../../../include/unistd.h.html#dup" title='dup' data-ref="dup">dup</a> (<a class="local col0 ref" href="#30oldfd" title='oldfd' data-ref="30oldfd">oldfd</a>);</td></tr>
+<tr><th id="260">260</th><td>        <b>if</b> (<a class="macro" href="../../include/vlc_common.h.html#115" title="__builtin_expect(!!(newfd != -1), 1)" data-ref="_M/likely">likely</a>(<a class="local col1 ref" href="#31newfd" title='newfd' data-ref="31newfd">newfd</a> != -<var>1</var>))</td></tr>
+<tr><th id="261">261</th><td>            <a class="ref" href="../../../include/fcntl.h.html#fcntl" title='fcntl' data-ref="fcntl">fcntl</a> (<a class="local col1 ref" href="#31newfd" title='newfd' data-ref="31newfd">newfd</a>, <a class="macro" href="../../../include/x86_64-linux-gnu/bits/fcntl-linux.h.html#152" title="2" data-ref="_M/F_SETFD">F_SETFD</a>, <a class="macro" href="../../../include/x86_64-linux-gnu/bits/fcntl-linux.h.html#195" title="1" data-ref="_M/FD_CLOEXEC">FD_CLOEXEC</a>);</td></tr>
+<tr><th id="262">262</th><td>    }</td></tr>
+<tr><th id="263">263</th><td>    <b>return</b> <a class="local col1 ref" href="#31newfd" title='newfd' data-ref="31newfd">newfd</a>;</td></tr>
+<tr><th id="264">264</th><td>}</td></tr>
+<tr><th id="265">265</th><td></td></tr>
+<tr><th id="266">266</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="267">267</th><td><i class="doc"> * Creates a pipe (see "man pipe" for further reference).</i></td></tr>
+<tr><th id="268">268</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="269">269</th><td><em>int</em> <dfn class="decl def" id="vlc_pipe" title='vlc_pipe' data-ref="vlc_pipe">vlc_pipe</dfn> (<em>int</em> <dfn class="local col2 decl" id="32fds" title='fds' data-type='int *' data-ref="32fds">fds</dfn>[<var>2</var>])</td></tr>
+<tr><th id="270">270</th><td>{</td></tr>
+<tr><th id="271">271</th><td><u>#<span data-ppcond="271">ifdef</span> <a class="macro" href="../../config.h.html#392" data-ref="_M/HAVE_PIPE2">HAVE_PIPE2</a></u></td></tr>
+<tr><th id="272">272</th><td>    <b>if</b> (<a class="ref" href="../../../include/unistd.h.html#pipe2" title='pipe2' data-ref="pipe2">pipe2</a> (<a class="local col2 ref" href="#32fds" title='fds' data-ref="32fds">fds</a>, <a class="macro" href="../../../include/x86_64-linux-gnu/bits/fcntl-linux.h.html#127" title="02000000" data-ref="_M/O_CLOEXEC">O_CLOEXEC</a>) == <var>0</var>)</td></tr>
+<tr><th id="273">273</th><td>        <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="274">274</th><td>    <b>if</b> (<a class="macro" href="../../../include/x86_64-linux-gnu/bits/errno.h.html#54" title="(*__errno_location ())" data-ref="_M/errno">errno</a> != <a class="macro" href="../../../include/asm-generic/errno.h.html#9" title="38" data-ref="_M/ENOSYS">ENOSYS</a>)</td></tr>
+<tr><th id="275">275</th><td>        <b>return</b> -<var>1</var>;</td></tr>
+<tr><th id="276">276</th><td><u>#<span data-ppcond="271">endif</span></u></td></tr>
+<tr><th id="277">277</th><td></td></tr>
+<tr><th id="278">278</th><td>    <b>if</b> (<a class="ref" href="../../../include/unistd.h.html#pipe" title='pipe' data-ref="pipe">pipe</a> (<a class="local col2 ref" href="#32fds" title='fds' data-ref="32fds">fds</a>))</td></tr>
+<tr><th id="279">279</th><td>        <b>return</b> -<var>1</var>;</td></tr>
+<tr><th id="280">280</th><td></td></tr>
+<tr><th id="281">281</th><td>    <a class="ref" href="../../../include/fcntl.h.html#fcntl" title='fcntl' data-ref="fcntl">fcntl</a> (<a class="local col2 ref" href="#32fds" title='fds' data-ref="32fds">fds</a>[<var>0</var>], <a class="macro" href="../../../include/x86_64-linux-gnu/bits/fcntl-linux.h.html#152" title="2" data-ref="_M/F_SETFD">F_SETFD</a>, <a class="macro" href="../../../include/x86_64-linux-gnu/bits/fcntl-linux.h.html#195" title="1" data-ref="_M/FD_CLOEXEC">FD_CLOEXEC</a>);</td></tr>
+<tr><th id="282">282</th><td>    <a class="ref" href="../../../include/fcntl.h.html#fcntl" title='fcntl' data-ref="fcntl">fcntl</a> (<a class="local col2 ref" href="#32fds" title='fds' data-ref="32fds">fds</a>[<var>1</var>], <a class="macro" href="../../../include/x86_64-linux-gnu/bits/fcntl-linux.h.html#152" title="2" data-ref="_M/F_SETFD">F_SETFD</a>, <a class="macro" href="../../../include/x86_64-linux-gnu/bits/fcntl-linux.h.html#195" title="1" data-ref="_M/FD_CLOEXEC">FD_CLOEXEC</a>);</td></tr>
+<tr><th id="283">283</th><td>    <b>return</b> <var>0</var>;</td></tr>
+<tr><th id="284">284</th><td>}</td></tr>
+<tr><th id="285">285</th><td></td></tr>
+<tr><th id="286">286</th><td><u>#include <a href="../../include/vlc_network.h.html">&lt;vlc_network.h&gt;</a></u></td></tr>
+<tr><th id="287">287</th><td></td></tr>
+<tr><th id="288">288</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="289">289</th><td><i class="doc"> * Creates a socket file descriptor. The new file descriptor has the</i></td></tr>
+<tr><th id="290">290</th><td><i class="doc"> * close-on-exec flag set.</i></td></tr>
+<tr><th id="291">291</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">pf</span> protocol family</i></td></tr>
+<tr><th id="292">292</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">type</span> socket type</i></td></tr>
+<tr><th id="293">293</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">proto</span> network protocol</i></td></tr>
+<tr><th id="294">294</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">nonblock</span> true to create a non-blocking socket</i></td></tr>
+<tr><th id="295">295</th><td><i class="doc"> * <span class="command">@return</span> a new file descriptor or -1</i></td></tr>
+<tr><th id="296">296</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="297">297</th><td><em>int</em> <dfn class="decl def" id="vlc_socket" title='vlc_socket' data-ref="vlc_socket">vlc_socket</dfn> (<em>int</em> <dfn class="local col3 decl" id="33pf" title='pf' data-type='int' data-ref="33pf">pf</dfn>, <em>int</em> <dfn class="local col4 decl" id="34type" title='type' data-type='int' data-ref="34type">type</dfn>, <em>int</em> <dfn class="local col5 decl" id="35proto" title='proto' data-type='int' data-ref="35proto">proto</dfn>, <span class="macro" title="_Bool" data-ref="_M/bool">bool</span> <dfn class="local col6 decl" id="36nonblock" title='nonblock' data-type='_Bool' data-ref="36nonblock">nonblock</dfn>)</td></tr>
+<tr><th id="298">298</th><td>{</td></tr>
+<tr><th id="299">299</th><td>    <em>int</em> <dfn class="local col7 decl" id="37fd" title='fd' data-type='int' data-ref="37fd">fd</dfn>;</td></tr>
+<tr><th id="300">300</th><td></td></tr>
+<tr><th id="301">301</th><td><u>#<span data-ppcond="301">ifdef</span> <a class="macro" href="../../../include/x86_64-linux-gnu/bits/socket_type.h.html#51" data-ref="_M/SOCK_CLOEXEC">SOCK_CLOEXEC</a></u></td></tr>
+<tr><th id="302">302</th><td>    <a class="local col4 ref" href="#34type" title='type' data-ref="34type">type</a> |= <a class="macro" href="../../../include/x86_64-linux-gnu/bits/socket_type.h.html#51" title="SOCK_CLOEXEC" data-ref="_M/SOCK_CLOEXEC">SOCK_CLOEXEC</a>;</td></tr>
+<tr><th id="303">303</th><td>    <b>if</b> (<a class="local col6 ref" href="#36nonblock" title='nonblock' data-ref="36nonblock">nonblock</a>)</td></tr>
+<tr><th id="304">304</th><td>        <a class="local col4 ref" href="#34type" title='type' data-ref="34type">type</a> |= <a class="macro" href="../../../include/x86_64-linux-gnu/bits/socket_type.h.html#54" title="SOCK_NONBLOCK" data-ref="_M/SOCK_NONBLOCK">SOCK_NONBLOCK</a>;</td></tr>
+<tr><th id="305">305</th><td>    <a class="local col7 ref" href="#37fd" title='fd' data-ref="37fd">fd</a> = <a class="ref" href="../../../include/x86_64-linux-gnu/sys/socket.h.html#socket" title='socket' data-ref="socket">socket</a> (<a class="local col3 ref" href="#33pf" title='pf' data-ref="33pf">pf</a>, <a class="local col4 ref" href="#34type" title='type' data-ref="34type">type</a>, <a class="local col5 ref" href="#35proto" title='proto' data-ref="35proto">proto</a>);</td></tr>
+<tr><th id="306">306</th><td>    <b>if</b> (<a class="local col7 ref" href="#37fd" title='fd' data-ref="37fd">fd</a> != -<var>1</var> || <a class="macro" href="../../../include/x86_64-linux-gnu/bits/errno.h.html#54" title="(*__errno_location ())" data-ref="_M/errno">errno</a> != <a class="macro" href="../../../include/asm-generic/errno-base.h.html#25" title="22" data-ref="_M/EINVAL">EINVAL</a>)</td></tr>
+<tr><th id="307">307</th><td>        <b>return</b> <a class="local col7 ref" href="#37fd" title='fd' data-ref="37fd">fd</a>;</td></tr>
+<tr><th id="308">308</th><td></td></tr>
+<tr><th id="309">309</th><td>    <a class="local col4 ref" href="#34type" title='type' data-ref="34type">type</a> &amp;= ~(<a class="macro" href="../../../include/x86_64-linux-gnu/bits/socket_type.h.html#51" title="SOCK_CLOEXEC" data-ref="_M/SOCK_CLOEXEC">SOCK_CLOEXEC</a>|<a class="macro" href="../../../include/x86_64-linux-gnu/bits/socket_type.h.html#54" title="SOCK_NONBLOCK" data-ref="_M/SOCK_NONBLOCK">SOCK_NONBLOCK</a>);</td></tr>
+<tr><th id="310">310</th><td><u>#<span data-ppcond="301">endif</span></u></td></tr>
+<tr><th id="311">311</th><td></td></tr>
+<tr><th id="312">312</th><td>    <a class="local col7 ref" href="#37fd" title='fd' data-ref="37fd">fd</a> = <a class="ref" href="../../../include/x86_64-linux-gnu/sys/socket.h.html#socket" title='socket' data-ref="socket">socket</a> (<a class="local col3 ref" href="#33pf" title='pf' data-ref="33pf">pf</a>, <a class="local col4 ref" href="#34type" title='type' data-ref="34type">type</a>, <a class="local col5 ref" href="#35proto" title='proto' data-ref="35proto">proto</a>);</td></tr>
+<tr><th id="313">313</th><td>    <b>if</b> (<a class="local col7 ref" href="#37fd" title='fd' data-ref="37fd">fd</a> == -<var>1</var>)</td></tr>
+<tr><th id="314">314</th><td>        <b>return</b> -<var>1</var>;</td></tr>
+<tr><th id="315">315</th><td></td></tr>
+<tr><th id="316">316</th><td>    <a class="ref" href="../../../include/fcntl.h.html#fcntl" title='fcntl' data-ref="fcntl">fcntl</a> (<a class="local col7 ref" href="#37fd" title='fd' data-ref="37fd">fd</a>, <a class="macro" href="../../../include/x86_64-linux-gnu/bits/fcntl-linux.h.html#152" title="2" data-ref="_M/F_SETFD">F_SETFD</a>, <a class="macro" href="../../../include/x86_64-linux-gnu/bits/fcntl-linux.h.html#195" title="1" data-ref="_M/FD_CLOEXEC">FD_CLOEXEC</a>);</td></tr>
+<tr><th id="317">317</th><td>    <b>if</b> (<a class="local col6 ref" href="#36nonblock" title='nonblock' data-ref="36nonblock">nonblock</a>)</td></tr>
+<tr><th id="318">318</th><td>        <a class="ref" href="../../../include/fcntl.h.html#fcntl" title='fcntl' data-ref="fcntl">fcntl</a> (<a class="local col7 ref" href="#37fd" title='fd' data-ref="37fd">fd</a>, <a class="macro" href="../../../include/x86_64-linux-gnu/bits/fcntl-linux.h.html#154" title="4" data-ref="_M/F_SETFL">F_SETFL</a>, <a class="ref" href="../../../include/fcntl.h.html#fcntl" title='fcntl' data-ref="fcntl">fcntl</a> (<a class="local col7 ref" href="#37fd" title='fd' data-ref="37fd">fd</a>, <a class="macro" href="../../../include/x86_64-linux-gnu/bits/fcntl-linux.h.html#153" title="3" data-ref="_M/F_GETFL">F_GETFL</a>, <var>0</var>) | <a class="macro" href="../../../include/x86_64-linux-gnu/bits/fcntl-linux.h.html#62" title="04000" data-ref="_M/O_NONBLOCK">O_NONBLOCK</a>);</td></tr>
+<tr><th id="319">319</th><td>    <b>return</b> <a class="local col7 ref" href="#37fd" title='fd' data-ref="37fd">fd</a>;</td></tr>
+<tr><th id="320">320</th><td>}</td></tr>
+<tr><th id="321">321</th><td></td></tr>
+<tr><th id="322">322</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="323">323</th><td><i class="doc"> * Accepts an inbound connection request on a listening socket.</i></td></tr>
+<tr><th id="324">324</th><td><i class="doc"> * The new file descriptor has the close-on-exec flag set.</i></td></tr>
+<tr><th id="325">325</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">lfd</span> listening socket file descriptor</i></td></tr>
+<tr><th id="326">326</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">addr</span> pointer to the peer address or NULL [OUT]</i></td></tr>
+<tr><th id="327">327</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">alen</span> pointer to the length of the peer address or NULL [OUT]</i></td></tr>
+<tr><th id="328">328</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">nonblock</span> whether to put the new socket in non-blocking mode</i></td></tr>
+<tr><th id="329">329</th><td><i class="doc"> * <span class="command">@return</span> a new file descriptor, or -1 on error.</i></td></tr>
+<tr><th id="330">330</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="331">331</th><td><em>int</em> <dfn class="decl def" id="vlc_accept" title='vlc_accept' data-ref="vlc_accept">vlc_accept</dfn> (<em>int</em> <dfn class="local col8 decl" id="38lfd" title='lfd' data-type='int' data-ref="38lfd">lfd</dfn>, <b>struct</b> <a class="type" href="../../../include/x86_64-linux-gnu/bits/socket.h.html#sockaddr" title='sockaddr' data-ref="sockaddr">sockaddr</a> *<dfn class="local col9 decl" id="39addr" title='addr' data-type='struct sockaddr *' data-ref="39addr">addr</dfn>, <a class="typedef" href="../../../include/unistd.h.html#socklen_t" title='socklen_t' data-type='__socklen_t' data-ref="socklen_t">socklen_t</a> *<dfn class="local col0 decl" id="40alen" title='alen' data-type='socklen_t *' data-ref="40alen">alen</dfn>, <span class="macro" title="_Bool" data-ref="_M/bool">bool</span> <dfn class="local col1 decl" id="41nonblock" title='nonblock' data-type='_Bool' data-ref="41nonblock">nonblock</dfn>)</td></tr>
+<tr><th id="332">332</th><td>{</td></tr>
+<tr><th id="333">333</th><td><u>#<span data-ppcond="333">ifdef</span> <a class="macro" href="../../config.h.html#99" data-ref="_M/HAVE_ACCEPT4">HAVE_ACCEPT4</a></u></td></tr>
+<tr><th id="334">334</th><td>    <em>int</em> <dfn class="local col2 decl" id="42flags" title='flags' data-type='int' data-ref="42flags">flags</dfn> = <a class="macro" href="../../../include/x86_64-linux-gnu/bits/socket_type.h.html#51" title="SOCK_CLOEXEC" data-ref="_M/SOCK_CLOEXEC">SOCK_CLOEXEC</a>;</td></tr>
+<tr><th id="335">335</th><td>    <b>if</b> (<a class="local col1 ref" href="#41nonblock" title='nonblock' data-ref="41nonblock">nonblock</a>)</td></tr>
+<tr><th id="336">336</th><td>        <a class="local col2 ref" href="#42flags" title='flags' data-ref="42flags">flags</a> |= <a class="macro" href="../../../include/x86_64-linux-gnu/bits/socket_type.h.html#54" title="SOCK_NONBLOCK" data-ref="_M/SOCK_NONBLOCK">SOCK_NONBLOCK</a>;</td></tr>
+<tr><th id="337">337</th><td></td></tr>
+<tr><th id="338">338</th><td>    <b>do</b></td></tr>
+<tr><th id="339">339</th><td>    {</td></tr>
+<tr><th id="340">340</th><td>        <em>int</em> <dfn class="local col3 decl" id="43fd" title='fd' data-type='int' data-ref="43fd">fd</dfn> = <a class="ref" href="../../../include/x86_64-linux-gnu/sys/socket.h.html#accept4" title='accept4' data-ref="accept4">accept4</a> (<a class="local col8 ref" href="#38lfd" title='lfd' data-ref="38lfd">lfd</a>, <a class="local col9 ref" href="#39addr" title='addr' data-ref="39addr">addr</a>, <a class="local col0 ref" href="#40alen" title='alen' data-ref="40alen">alen</a>, <a class="local col2 ref" href="#42flags" title='flags' data-ref="42flags">flags</a>);</td></tr>
+<tr><th id="341">341</th><td>        <b>if</b> (<a class="local col3 ref" href="#43fd" title='fd' data-ref="43fd">fd</a> != -<var>1</var>)</td></tr>
+<tr><th id="342">342</th><td>            <b>return</b> <a class="local col3 ref" href="#43fd" title='fd' data-ref="43fd">fd</a>;</td></tr>
+<tr><th id="343">343</th><td>    }</td></tr>
+<tr><th id="344">344</th><td>    <b>while</b> (<a class="macro" href="../../../include/x86_64-linux-gnu/bits/errno.h.html#54" title="(*__errno_location ())" data-ref="_M/errno">errno</a> == <a class="macro" href="../../../include/asm-generic/errno-base.h.html#7" title="4" data-ref="_M/EINTR">EINTR</a>);</td></tr>
+<tr><th id="345">345</th><td></td></tr>
+<tr><th id="346">346</th><td>    <b>if</b> (<a class="macro" href="../../../include/x86_64-linux-gnu/bits/errno.h.html#54" title="(*__errno_location ())" data-ref="_M/errno">errno</a> != <a class="macro" href="../../../include/asm-generic/errno.h.html#9" title="38" data-ref="_M/ENOSYS">ENOSYS</a>)</td></tr>
+<tr><th id="347">347</th><td>        <b>return</b> -<var>1</var>;</td></tr>
+<tr><th id="348">348</th><td><u>#<span data-ppcond="333">endif</span></u></td></tr>
+<tr><th id="349">349</th><td></td></tr>
+<tr><th id="350">350</th><td>    <b>do</b></td></tr>
+<tr><th id="351">351</th><td>    {</td></tr>
+<tr><th id="352">352</th><td>        <em>int</em> <dfn class="local col4 decl" id="44fd" title='fd' data-type='int' data-ref="44fd">fd</dfn> = <a class="ref" href="../../../include/x86_64-linux-gnu/sys/socket.h.html#accept" title='accept' data-ref="accept">accept</a> (<a class="local col8 ref" href="#38lfd" title='lfd' data-ref="38lfd">lfd</a>, <a class="local col9 ref" href="#39addr" title='addr' data-ref="39addr">addr</a>, <a class="local col0 ref" href="#40alen" title='alen' data-ref="40alen">alen</a>);</td></tr>
+<tr><th id="353">353</th><td>        <b>if</b> (<a class="local col4 ref" href="#44fd" title='fd' data-ref="44fd">fd</a> != -<var>1</var>)</td></tr>
+<tr><th id="354">354</th><td>        {</td></tr>
+<tr><th id="355">355</th><td>            <a class="ref" href="../../../include/fcntl.h.html#fcntl" title='fcntl' data-ref="fcntl">fcntl</a> (<a class="local col4 ref" href="#44fd" title='fd' data-ref="44fd">fd</a>, <a class="macro" href="../../../include/x86_64-linux-gnu/bits/fcntl-linux.h.html#152" title="2" data-ref="_M/F_SETFD">F_SETFD</a>, <a class="macro" href="../../../include/x86_64-linux-gnu/bits/fcntl-linux.h.html#195" title="1" data-ref="_M/FD_CLOEXEC">FD_CLOEXEC</a>);</td></tr>
+<tr><th id="356">356</th><td>            <b>if</b> (<a class="local col1 ref" href="#41nonblock" title='nonblock' data-ref="41nonblock">nonblock</a>)</td></tr>
+<tr><th id="357">357</th><td>                <a class="ref" href="../../../include/fcntl.h.html#fcntl" title='fcntl' data-ref="fcntl">fcntl</a> (<a class="local col4 ref" href="#44fd" title='fd' data-ref="44fd">fd</a>, <a class="macro" href="../../../include/x86_64-linux-gnu/bits/fcntl-linux.h.html#154" title="4" data-ref="_M/F_SETFL">F_SETFL</a>, <a class="ref" href="../../../include/fcntl.h.html#fcntl" title='fcntl' data-ref="fcntl">fcntl</a> (<a class="local col4 ref" href="#44fd" title='fd' data-ref="44fd">fd</a>, <a class="macro" href="../../../include/x86_64-linux-gnu/bits/fcntl-linux.h.html#153" title="3" data-ref="_M/F_GETFL">F_GETFL</a>, <var>0</var>) | <a class="macro" href="../../../include/x86_64-linux-gnu/bits/fcntl-linux.h.html#62" title="04000" data-ref="_M/O_NONBLOCK">O_NONBLOCK</a>);</td></tr>
+<tr><th id="358">358</th><td>            <b>return</b> <a class="local col4 ref" href="#44fd" title='fd' data-ref="44fd">fd</a>;</td></tr>
+<tr><th id="359">359</th><td>        }</td></tr>
+<tr><th id="360">360</th><td>    }</td></tr>
+<tr><th id="361">361</th><td>    <b>while</b> (<a class="macro" href="../../../include/x86_64-linux-gnu/bits/errno.h.html#54" title="(*__errno_location ())" data-ref="_M/errno">errno</a> == <a class="macro" href="../../../include/asm-generic/errno-base.h.html#7" title="4" data-ref="_M/EINTR">EINTR</a>);</td></tr>
+<tr><th id="362">362</th><td></td></tr>
+<tr><th id="363">363</th><td>    <b>return</b> -<var>1</var>;</td></tr>
+<tr><th id="364">364</th><td>}</td></tr>
+<tr><th id="365">365</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated on <em>2016-Oct-25</em> from project vlc revision <em>2.2.0-git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

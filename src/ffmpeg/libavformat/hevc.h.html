@@ -1,0 +1,116 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>hevc.h source code [ffmpeg/libavformat/hevc.h] - Woboq Code Browser</title>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavformat/hevc.h'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavformat</a>/<a href='hevc.h.html'>hevc.h</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * Copyright (c) 2014 Tim Walker &lt;tdskywalker@gmail.com&gt;</i></td></tr>
+<tr><th id="3">3</th><td><i> *</i></td></tr>
+<tr><th id="4">4</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="5">5</th><td><i> *</i></td></tr>
+<tr><th id="6">6</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="7">7</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="8">8</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="9">9</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="10">10</th><td><i> *</i></td></tr>
+<tr><th id="11">11</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="12">12</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="13">13</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="14">14</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="15">15</th><td><i> *</i></td></tr>
+<tr><th id="16">16</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="17">17</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="18">18</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="19">19</th><td><i> */</i></td></tr>
+<tr><th id="20">20</th><td></td></tr>
+<tr><th id="21">21</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="22">22</th><td><i class="doc"> *<span class="command"> @file</span></i></td></tr>
+<tr><th id="23">23</th><td><i class="doc"> * internal header for HEVC (de)muxer utilities</i></td></tr>
+<tr><th id="24">24</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="25">25</th><td></td></tr>
+<tr><th id="26">26</th><td><u>#<span data-ppcond="26">ifndef</span> <span class="macro" data-ref="_M/AVFORMAT_HEVC_H">AVFORMAT_HEVC_H</span></u></td></tr>
+<tr><th id="27">27</th><td><u>#define <dfn class="macro" id="_M/AVFORMAT_HEVC_H" data-ref="_M/AVFORMAT_HEVC_H">AVFORMAT_HEVC_H</dfn></u></td></tr>
+<tr><th id="28">28</th><td></td></tr>
+<tr><th id="29">29</th><td><u>#include &lt;stdint.h&gt;</u></td></tr>
+<tr><th id="30">30</th><td><u>#include <a href="avio.h.html">"avio.h"</a></u></td></tr>
+<tr><th id="31">31</th><td></td></tr>
+<tr><th id="32">32</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="33">33</th><td><i class="doc"> * Writes Annex B formatted HEVC NAL units to the provided AVIOContext.</i></td></tr>
+<tr><th id="34">34</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="35">35</th><td><i class="doc"> * The NAL units are converted to an MP4-compatible format (start code prefixes</i></td></tr>
+<tr><th id="36">36</th><td><i class="doc"> * are replaced by 4-byte size fields, as per ISO/IEC 14496-15).</i></td></tr>
+<tr><th id="37">37</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="38">38</th><td><i class="doc"> * If filter_ps is non-zero, any HEVC parameter sets found in the input will be</i></td></tr>
+<tr><th id="39">39</th><td><i class="doc"> * discarded, and *ps_count will be set to the number of discarded PS NAL units.</i></td></tr>
+<tr><th id="40">40</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="41">41</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">pb</span> address of the AVIOContext where the data shall be written</i></td></tr>
+<tr><th id="42">42</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">buf_in</span> address of the buffer holding the input data</i></td></tr>
+<tr><th id="43">43</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">size</span> size (in bytes) of the input buffer</i></td></tr>
+<tr><th id="44">44</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">filter_ps</span> whether to write parameter set NAL units to the output (0)</i></td></tr>
+<tr><th id="45">45</th><td><i class="doc"> *        or to discard them (non-zero)</i></td></tr>
+<tr><th id="46">46</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">ps_count</span> address of the variable where the number of discarded</i></td></tr>
+<tr><th id="47">47</th><td><i class="doc"> *        parameter set NAL units shall be written, may be NULL</i></td></tr>
+<tr><th id="48">48</th><td><i class="doc"> * <span class="command">@return</span> the amount (in bytes) of data written in case of success, a negative</i></td></tr>
+<tr><th id="49">49</th><td><i class="doc"> *         value corresponding to an AVERROR code in case of failure</i></td></tr>
+<tr><th id="50">50</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="51">51</th><td><em>int</em> <a class="decl" href="hevc.c.html#ff_hevc_annexb2mp4" title='ff_hevc_annexb2mp4' data-ref="ff_hevc_annexb2mp4" id="ff_hevc_annexb2mp4">ff_hevc_annexb2mp4</a>(<a class="typedef" href="avio.h.html#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> *<dfn class="local col1 decl" id="1pb" title='pb' data-type='AVIOContext *' data-ref="1pb">pb</dfn>, <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col2 decl" id="2buf_in" title='buf_in' data-type='const uint8_t *' data-ref="2buf_in">buf_in</dfn>,</td></tr>
+<tr><th id="52">52</th><td>                       <em>int</em> <dfn class="local col3 decl" id="3size" title='size' data-type='int' data-ref="3size">size</dfn>, <em>int</em> <dfn class="local col4 decl" id="4filter_ps" title='filter_ps' data-type='int' data-ref="4filter_ps">filter_ps</dfn>, <em>int</em> *<dfn class="local col5 decl" id="5ps_count" title='ps_count' data-type='int *' data-ref="5ps_count">ps_count</dfn>);</td></tr>
+<tr><th id="53">53</th><td></td></tr>
+<tr><th id="54">54</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="55">55</th><td><i class="doc"> * Writes Annex B formatted HEVC NAL units to a data buffer.</i></td></tr>
+<tr><th id="56">56</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="57">57</th><td><i class="doc"> * The NAL units are converted to an MP4-compatible format (start code prefixes</i></td></tr>
+<tr><th id="58">58</th><td><i class="doc"> * are replaced by 4-byte size fields, as per ISO/IEC 14496-15).</i></td></tr>
+<tr><th id="59">59</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="60">60</th><td><i class="doc"> * If filter_ps is non-zero, any HEVC parameter sets found in the input will be</i></td></tr>
+<tr><th id="61">61</th><td><i class="doc"> * discarded, and *ps_count will be set to the number of discarded PS NAL units.</i></td></tr>
+<tr><th id="62">62</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="63">63</th><td><i class="doc"> * On output, *size holds the size (in bytes) of the output data buffer.</i></td></tr>
+<tr><th id="64">64</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="65">65</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">buf_in</span> address of the buffer holding the input data</i></td></tr>
+<tr><th id="66">66</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">size</span> address of the variable holding the size (in bytes) of the input</i></td></tr>
+<tr><th id="67">67</th><td><i class="doc"> *        buffer (on input) and of the output buffer (on output)</i></td></tr>
+<tr><th id="68">68</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">buf_out</span> address of the variable holding the address of the output</i></td></tr>
+<tr><th id="69">69</th><td><i class="doc"> *        buffer</i></td></tr>
+<tr><th id="70">70</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">filter_ps</span> whether to write parameter set NAL units to the output (0)</i></td></tr>
+<tr><th id="71">71</th><td><i class="doc"> *        or to discard them (non-zero)</i></td></tr>
+<tr><th id="72">72</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">ps_count</span> address of the variable where the number of discarded</i></td></tr>
+<tr><th id="73">73</th><td><i class="doc"> *        parameter set NAL units shall be written, may be NULL</i></td></tr>
+<tr><th id="74">74</th><td><i class="doc"> * <span class="command">@return</span> the amount (in bytes) of data written in case of success, a negative</i></td></tr>
+<tr><th id="75">75</th><td><i class="doc"> *         value corresponding to an AVERROR code in case of failure</i></td></tr>
+<tr><th id="76">76</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="77">77</th><td><em>int</em> <a class="decl" href="hevc.c.html#ff_hevc_annexb2mp4_buf" title='ff_hevc_annexb2mp4_buf' data-ref="ff_hevc_annexb2mp4_buf" id="ff_hevc_annexb2mp4_buf">ff_hevc_annexb2mp4_buf</a>(<em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col6 decl" id="6buf_in" title='buf_in' data-type='const uint8_t *' data-ref="6buf_in">buf_in</dfn>, <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> **<dfn class="local col7 decl" id="7buf_out" title='buf_out' data-type='uint8_t **' data-ref="7buf_out">buf_out</dfn>,</td></tr>
+<tr><th id="78">78</th><td>                           <em>int</em> *<dfn class="local col8 decl" id="8size" title='size' data-type='int *' data-ref="8size">size</dfn>, <em>int</em> <dfn class="local col9 decl" id="9filter_ps" title='filter_ps' data-type='int' data-ref="9filter_ps">filter_ps</dfn>, <em>int</em> *<dfn class="local col0 decl" id="10ps_count" title='ps_count' data-type='int *' data-ref="10ps_count">ps_count</dfn>);</td></tr>
+<tr><th id="79">79</th><td></td></tr>
+<tr><th id="80">80</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="81">81</th><td><i class="doc"> * Writes HEVC extradata (parameter sets, declarative SEI NAL units) to the</i></td></tr>
+<tr><th id="82">82</th><td><i class="doc"> * provided AVIOContext.</i></td></tr>
+<tr><th id="83">83</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="84">84</th><td><i class="doc"> * If the extradata is Annex B format, it gets converted to hvcC format before</i></td></tr>
+<tr><th id="85">85</th><td><i class="doc"> * writing.</i></td></tr>
+<tr><th id="86">86</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="87">87</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">pb</span> address of the AVIOContext where the hvcC shall be written</i></td></tr>
+<tr><th id="88">88</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">data</span> address of the buffer holding the data needed to write the hvcC</i></td></tr>
+<tr><th id="89">89</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">size</span> size (in bytes) of the data buffer</i></td></tr>
+<tr><th id="90">90</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">ps_array_completeness</span> whether all parameter sets are in the hvcC (1)</i></td></tr>
+<tr><th id="91">91</th><td><i class="doc"> *        or there may be additional parameter sets in the bitstream (0)</i></td></tr>
+<tr><th id="92">92</th><td><i class="doc"> * <span class="command">@return</span> &gt;=0 in case of success, a negative value corresponding to an AVERROR</i></td></tr>
+<tr><th id="93">93</th><td><i class="doc"> *         code in case of failure</i></td></tr>
+<tr><th id="94">94</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="95">95</th><td><em>int</em> <a class="decl" href="hevc.c.html#ff_isom_write_hvcc" title='ff_isom_write_hvcc' data-ref="ff_isom_write_hvcc" id="ff_isom_write_hvcc">ff_isom_write_hvcc</a>(<a class="typedef" href="avio.h.html#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> *<dfn class="local col1 decl" id="11pb" title='pb' data-type='AVIOContext *' data-ref="11pb">pb</dfn>, <em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col2 decl" id="12data" title='data' data-type='const uint8_t *' data-ref="12data">data</dfn>,</td></tr>
+<tr><th id="96">96</th><td>                       <em>int</em> <dfn class="local col3 decl" id="13size" title='size' data-type='int' data-ref="13size">size</dfn>, <em>int</em> <dfn class="local col4 decl" id="14ps_array_completeness" title='ps_array_completeness' data-type='int' data-ref="14ps_array_completeness">ps_array_completeness</dfn>);</td></tr>
+<tr><th id="97">97</th><td></td></tr>
+<tr><th id="98">98</th><td><u>#<span data-ppcond="26">endif</span> /* AVFORMAT_HEVC_H */</u></td></tr>
+<tr><th id="99">99</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated while processing <a href='hevc.c.html'>ffmpeg/libavformat/hevc.c</a><br/>Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>

@@ -1,0 +1,204 @@
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>id3v2.h source code [ffmpeg/libavformat/id3v2.h] - Woboq Code Browser</title>
+<meta name="woboq:interestingDefinitions" content="ID3v2EncContext,ID3v2Encoding,ID3v2ExtraMeta,ID3v2ExtraMetaAPIC,ID3v2ExtraMetaGEOB,ID3v2ExtraMetaPRIV "/>
+<link rel="stylesheet" href="../../../data/qtcreator.css" title="QtCreator"/>
+<link rel="alternate stylesheet" href="../../../data/kdevelop.css" title="KDevelop"/>
+<script type="text/javascript" src="../../../data/jquery/jquery.min.js"></script>
+<script type="text/javascript" src="../../../data/jquery/jquery-ui.min.js"></script>
+<script>var file = 'ffmpeg/libavformat/id3v2.h'; var root_path = '../..'; var data_path = '../../../data';</script>
+<script src='../../../data/codebrowser.js'></script>
+</head>
+<body><div id='header'><h1 id='breadcrumb'><span>Browse the source code of </span><a href='..'>ffmpeg</a>/<a href='./'>libavformat</a>/<a href='id3v2.h.html'>id3v2.h</a></h1></div>
+<hr/><div id='content'><table class="code">
+<tr><th id="1">1</th><td><i>/*</i></td></tr>
+<tr><th id="2">2</th><td><i> * ID3v2 header parser</i></td></tr>
+<tr><th id="3">3</th><td><i> * Copyright (c) 2003 Fabrice Bellard</i></td></tr>
+<tr><th id="4">4</th><td><i> *</i></td></tr>
+<tr><th id="5">5</th><td><i> * This file is part of FFmpeg.</i></td></tr>
+<tr><th id="6">6</th><td><i> *</i></td></tr>
+<tr><th id="7">7</th><td><i> * FFmpeg is free software; you can redistribute it and/or</i></td></tr>
+<tr><th id="8">8</th><td><i> * modify it under the terms of the GNU Lesser General Public</i></td></tr>
+<tr><th id="9">9</th><td><i> * License as published by the Free Software Foundation; either</i></td></tr>
+<tr><th id="10">10</th><td><i> * version 2.1 of the License, or (at your option) any later version.</i></td></tr>
+<tr><th id="11">11</th><td><i> *</i></td></tr>
+<tr><th id="12">12</th><td><i> * FFmpeg is distributed in the hope that it will be useful,</i></td></tr>
+<tr><th id="13">13</th><td><i> * but WITHOUT ANY WARRANTY; without even the implied warranty of</i></td></tr>
+<tr><th id="14">14</th><td><i> * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</i></td></tr>
+<tr><th id="15">15</th><td><i> * Lesser General Public License for more details.</i></td></tr>
+<tr><th id="16">16</th><td><i> *</i></td></tr>
+<tr><th id="17">17</th><td><i> * You should have received a copy of the GNU Lesser General Public</i></td></tr>
+<tr><th id="18">18</th><td><i> * License along with FFmpeg; if not, write to the Free Software</i></td></tr>
+<tr><th id="19">19</th><td><i> * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA</i></td></tr>
+<tr><th id="20">20</th><td><i> */</i></td></tr>
+<tr><th id="21">21</th><td></td></tr>
+<tr><th id="22">22</th><td><u>#<span data-ppcond="22">ifndef</span> <span class="macro" data-ref="_M/AVFORMAT_ID3V2_H">AVFORMAT_ID3V2_H</span></u></td></tr>
+<tr><th id="23">23</th><td><u>#define <dfn class="macro" id="_M/AVFORMAT_ID3V2_H" data-ref="_M/AVFORMAT_ID3V2_H">AVFORMAT_ID3V2_H</dfn></u></td></tr>
+<tr><th id="24">24</th><td></td></tr>
+<tr><th id="25">25</th><td><u>#include &lt;stdint.h&gt;</u></td></tr>
+<tr><th id="26">26</th><td><u>#include <a href="avformat.h.html">"avformat.h"</a></u></td></tr>
+<tr><th id="27">27</th><td><u>#include <a href="internal.h.html">"internal.h"</a></u></td></tr>
+<tr><th id="28">28</th><td><u>#include <a href="metadata.h.html">"metadata.h"</a></u></td></tr>
+<tr><th id="29">29</th><td></td></tr>
+<tr><th id="30">30</th><td><u>#define <dfn class="macro" id="_M/ID3v2_HEADER_SIZE" data-ref="_M/ID3v2_HEADER_SIZE">ID3v2_HEADER_SIZE</dfn> 10</u></td></tr>
+<tr><th id="31">31</th><td></td></tr>
+<tr><th id="32">32</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="33">33</th><td><i class="doc"> * Default magic bytes for ID3v2 header: "ID3"</i></td></tr>
+<tr><th id="34">34</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="35">35</th><td><u>#define <dfn class="macro" id="_M/ID3v2_DEFAULT_MAGIC" data-ref="_M/ID3v2_DEFAULT_MAGIC">ID3v2_DEFAULT_MAGIC</dfn> "ID3"</u></td></tr>
+<tr><th id="36">36</th><td></td></tr>
+<tr><th id="37">37</th><td><u>#define <dfn class="macro" id="_M/ID3v2_FLAG_DATALEN" data-ref="_M/ID3v2_FLAG_DATALEN">ID3v2_FLAG_DATALEN</dfn>     0x0001</u></td></tr>
+<tr><th id="38">38</th><td><u>#define <dfn class="macro" id="_M/ID3v2_FLAG_UNSYNCH" data-ref="_M/ID3v2_FLAG_UNSYNCH">ID3v2_FLAG_UNSYNCH</dfn>     0x0002</u></td></tr>
+<tr><th id="39">39</th><td><u>#define <dfn class="macro" id="_M/ID3v2_FLAG_ENCRYPTION" data-ref="_M/ID3v2_FLAG_ENCRYPTION">ID3v2_FLAG_ENCRYPTION</dfn>  0x0004</u></td></tr>
+<tr><th id="40">40</th><td><u>#define <dfn class="macro" id="_M/ID3v2_FLAG_COMPRESSION" data-ref="_M/ID3v2_FLAG_COMPRESSION">ID3v2_FLAG_COMPRESSION</dfn> 0x0008</u></td></tr>
+<tr><th id="41">41</th><td></td></tr>
+<tr><th id="42">42</th><td><b>enum</b> <dfn class="type def" id="ID3v2Encoding" title='ID3v2Encoding' data-ref="ID3v2Encoding">ID3v2Encoding</dfn> {</td></tr>
+<tr><th id="43">43</th><td>    <dfn class="enum" id="ID3v2Encoding::ID3v2_ENCODING_ISO8859" title='ID3v2Encoding::ID3v2_ENCODING_ISO8859' data-ref="ID3v2Encoding::ID3v2_ENCODING_ISO8859">ID3v2_ENCODING_ISO8859</dfn>  = <var>0</var>,</td></tr>
+<tr><th id="44">44</th><td>    <dfn class="enum" id="ID3v2Encoding::ID3v2_ENCODING_UTF16BOM" title='ID3v2Encoding::ID3v2_ENCODING_UTF16BOM' data-ref="ID3v2Encoding::ID3v2_ENCODING_UTF16BOM">ID3v2_ENCODING_UTF16BOM</dfn> = <var>1</var>,</td></tr>
+<tr><th id="45">45</th><td>    <dfn class="enum" id="ID3v2Encoding::ID3v2_ENCODING_UTF16BE" title='ID3v2Encoding::ID3v2_ENCODING_UTF16BE' data-ref="ID3v2Encoding::ID3v2_ENCODING_UTF16BE">ID3v2_ENCODING_UTF16BE</dfn>  = <var>2</var>,</td></tr>
+<tr><th id="46">46</th><td>    <dfn class="enum" id="ID3v2Encoding::ID3v2_ENCODING_UTF8" title='ID3v2Encoding::ID3v2_ENCODING_UTF8' data-ref="ID3v2Encoding::ID3v2_ENCODING_UTF8">ID3v2_ENCODING_UTF8</dfn>     = <var>3</var>,</td></tr>
+<tr><th id="47">47</th><td>};</td></tr>
+<tr><th id="48">48</th><td></td></tr>
+<tr><th id="49">49</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="ID3v2EncContext" title='ID3v2EncContext' data-ref="ID3v2EncContext"><a class="type" href="#ID3v2EncContext" title='ID3v2EncContext' data-ref="ID3v2EncContext">ID3v2EncContext</a></dfn> {</td></tr>
+<tr><th id="50">50</th><td>    <em>int</em>      <dfn class="decl" id="ID3v2EncContext::version" title='ID3v2EncContext::version' data-ref="ID3v2EncContext::version">version</dfn>;       <i class="doc">///&lt; ID3v2 minor version, either 3 or 4</i></td></tr>
+<tr><th id="51">51</th><td>    <a class="typedef" href="../../include/stdint.h.html#int64_t" title='int64_t' data-type='long' data-ref="int64_t">int64_t</a> <dfn class="decl" id="ID3v2EncContext::size_pos" title='ID3v2EncContext::size_pos' data-ref="ID3v2EncContext::size_pos">size_pos</dfn>;       <i class="doc">///&lt; offset of the tag total size</i></td></tr>
+<tr><th id="52">52</th><td>    <em>int</em>          <dfn class="decl" id="ID3v2EncContext::len" title='ID3v2EncContext::len' data-ref="ID3v2EncContext::len">len</dfn>;       <i class="doc">///&lt; size of the tag written so far</i></td></tr>
+<tr><th id="53">53</th><td>} <dfn class="typedef" id="ID3v2EncContext" title='ID3v2EncContext' data-type='struct ID3v2EncContext' data-ref="ID3v2EncContext">ID3v2EncContext</dfn>;</td></tr>
+<tr><th id="54">54</th><td></td></tr>
+<tr><th id="55">55</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="ID3v2ExtraMeta" title='ID3v2ExtraMeta' data-ref="ID3v2ExtraMeta"><a class="type" href="#ID3v2ExtraMeta" title='ID3v2ExtraMeta' data-ref="ID3v2ExtraMeta">ID3v2ExtraMeta</a></dfn> {</td></tr>
+<tr><th id="56">56</th><td>    <em>const</em> <em>char</em> *<dfn class="decl" id="ID3v2ExtraMeta::tag" title='ID3v2ExtraMeta::tag' data-ref="ID3v2ExtraMeta::tag">tag</dfn>;</td></tr>
+<tr><th id="57">57</th><td>    <em>void</em> *<dfn class="decl" id="ID3v2ExtraMeta::data" title='ID3v2ExtraMeta::data' data-ref="ID3v2ExtraMeta::data">data</dfn>;</td></tr>
+<tr><th id="58">58</th><td>    <b>struct</b> <a class="type" href="#ID3v2ExtraMeta" title='ID3v2ExtraMeta' data-ref="ID3v2ExtraMeta">ID3v2ExtraMeta</a> *<dfn class="decl" id="ID3v2ExtraMeta::next" title='ID3v2ExtraMeta::next' data-ref="ID3v2ExtraMeta::next">next</dfn>;</td></tr>
+<tr><th id="59">59</th><td>} <dfn class="typedef" id="ID3v2ExtraMeta" title='ID3v2ExtraMeta' data-type='struct ID3v2ExtraMeta' data-ref="ID3v2ExtraMeta">ID3v2ExtraMeta</dfn>;</td></tr>
+<tr><th id="60">60</th><td></td></tr>
+<tr><th id="61">61</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="ID3v2ExtraMetaGEOB" title='ID3v2ExtraMetaGEOB' data-ref="ID3v2ExtraMetaGEOB"><a class="type" href="#ID3v2ExtraMetaGEOB" title='ID3v2ExtraMetaGEOB' data-ref="ID3v2ExtraMetaGEOB">ID3v2ExtraMetaGEOB</a></dfn> {</td></tr>
+<tr><th id="62">62</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a> <dfn class="decl" id="ID3v2ExtraMetaGEOB::datasize" title='ID3v2ExtraMetaGEOB::datasize' data-ref="ID3v2ExtraMetaGEOB::datasize">datasize</dfn>;</td></tr>
+<tr><th id="63">63</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="decl" id="ID3v2ExtraMetaGEOB::mime_type" title='ID3v2ExtraMetaGEOB::mime_type' data-ref="ID3v2ExtraMetaGEOB::mime_type">mime_type</dfn>;</td></tr>
+<tr><th id="64">64</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="decl" id="ID3v2ExtraMetaGEOB::file_name" title='ID3v2ExtraMetaGEOB::file_name' data-ref="ID3v2ExtraMetaGEOB::file_name">file_name</dfn>;</td></tr>
+<tr><th id="65">65</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="decl" id="ID3v2ExtraMetaGEOB::description" title='ID3v2ExtraMetaGEOB::description' data-ref="ID3v2ExtraMetaGEOB::description">description</dfn>;</td></tr>
+<tr><th id="66">66</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="decl" id="ID3v2ExtraMetaGEOB::data" title='ID3v2ExtraMetaGEOB::data' data-ref="ID3v2ExtraMetaGEOB::data">data</dfn>;</td></tr>
+<tr><th id="67">67</th><td>} <dfn class="typedef" id="ID3v2ExtraMetaGEOB" title='ID3v2ExtraMetaGEOB' data-type='struct ID3v2ExtraMetaGEOB' data-ref="ID3v2ExtraMetaGEOB">ID3v2ExtraMetaGEOB</dfn>;</td></tr>
+<tr><th id="68">68</th><td></td></tr>
+<tr><th id="69">69</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="ID3v2ExtraMetaAPIC" title='ID3v2ExtraMetaAPIC' data-ref="ID3v2ExtraMetaAPIC"><a class="type" href="#ID3v2ExtraMetaAPIC" title='ID3v2ExtraMetaAPIC' data-ref="ID3v2ExtraMetaAPIC">ID3v2ExtraMetaAPIC</a></dfn> {</td></tr>
+<tr><th id="70">70</th><td>    <a class="typedef" href="../libavutil/buffer.h.html#AVBufferRef" title='AVBufferRef' data-type='struct AVBufferRef' data-ref="AVBufferRef">AVBufferRef</a> *<dfn class="decl" id="ID3v2ExtraMetaAPIC::buf" title='ID3v2ExtraMetaAPIC::buf' data-ref="ID3v2ExtraMetaAPIC::buf">buf</dfn>;</td></tr>
+<tr><th id="71">71</th><td>    <em>const</em> <em>char</em>  *<dfn class="decl" id="ID3v2ExtraMetaAPIC::type" title='ID3v2ExtraMetaAPIC::type' data-ref="ID3v2ExtraMetaAPIC::type">type</dfn>;</td></tr>
+<tr><th id="72">72</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a>     *<dfn class="decl" id="ID3v2ExtraMetaAPIC::description" title='ID3v2ExtraMetaAPIC::description' data-ref="ID3v2ExtraMetaAPIC::description">description</dfn>;</td></tr>
+<tr><th id="73">73</th><td>    <b>enum</b> <a class="type" href="../libavcodec/avcodec.h.html#AVCodecID" title='AVCodecID' data-ref="AVCodecID">AVCodecID</a> <dfn class="decl" id="ID3v2ExtraMetaAPIC::id" title='ID3v2ExtraMetaAPIC::id' data-ref="ID3v2ExtraMetaAPIC::id">id</dfn>;</td></tr>
+<tr><th id="74">74</th><td>} <dfn class="typedef" id="ID3v2ExtraMetaAPIC" title='ID3v2ExtraMetaAPIC' data-type='struct ID3v2ExtraMetaAPIC' data-ref="ID3v2ExtraMetaAPIC">ID3v2ExtraMetaAPIC</dfn>;</td></tr>
+<tr><th id="75">75</th><td></td></tr>
+<tr><th id="76">76</th><td><b>typedef</b> <b>struct</b> <dfn class="type def" id="ID3v2ExtraMetaPRIV" title='ID3v2ExtraMetaPRIV' data-ref="ID3v2ExtraMetaPRIV"><a class="type" href="#ID3v2ExtraMetaPRIV" title='ID3v2ExtraMetaPRIV' data-ref="ID3v2ExtraMetaPRIV">ID3v2ExtraMetaPRIV</a></dfn> {</td></tr>
+<tr><th id="77">77</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="decl" id="ID3v2ExtraMetaPRIV::owner" title='ID3v2ExtraMetaPRIV::owner' data-ref="ID3v2ExtraMetaPRIV::owner">owner</dfn>;</td></tr>
+<tr><th id="78">78</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="decl" id="ID3v2ExtraMetaPRIV::data" title='ID3v2ExtraMetaPRIV::data' data-ref="ID3v2ExtraMetaPRIV::data">data</dfn>;</td></tr>
+<tr><th id="79">79</th><td>    <a class="typedef" href="../../include/stdint.h.html#uint32_t" title='uint32_t' data-type='unsigned int' data-ref="uint32_t">uint32_t</a> <dfn class="decl" id="ID3v2ExtraMetaPRIV::datasize" title='ID3v2ExtraMetaPRIV::datasize' data-ref="ID3v2ExtraMetaPRIV::datasize">datasize</dfn>;</td></tr>
+<tr><th id="80">80</th><td>} <dfn class="typedef" id="ID3v2ExtraMetaPRIV" title='ID3v2ExtraMetaPRIV' data-type='struct ID3v2ExtraMetaPRIV' data-ref="ID3v2ExtraMetaPRIV">ID3v2ExtraMetaPRIV</dfn>;</td></tr>
+<tr><th id="81">81</th><td></td></tr>
+<tr><th id="82">82</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="83">83</th><td><i class="doc"> * Detect ID3v2 Header.</i></td></tr>
+<tr><th id="84">84</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">buf</span>   must be ID3v2_HEADER_SIZE byte long</i></td></tr>
+<tr><th id="85">85</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">magic</span> magic bytes to identify the header.</i></td></tr>
+<tr><th id="86">86</th><td><i class="doc"> * If in doubt, use ID3v2_DEFAULT_MAGIC.</i></td></tr>
+<tr><th id="87">87</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="88">88</th><td><em>int</em> <dfn class="decl" id="ff_id3v2_match" title='ff_id3v2_match' data-ref="ff_id3v2_match">ff_id3v2_match</dfn>(<em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col1 decl" id="1buf" title='buf' data-type='const uint8_t *' data-ref="1buf">buf</dfn>, <em>const</em> <em>char</em> *<dfn class="local col2 decl" id="2magic" title='magic' data-type='const char *' data-ref="2magic">magic</dfn>);</td></tr>
+<tr><th id="89">89</th><td></td></tr>
+<tr><th id="90">90</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="91">91</th><td><i class="doc"> * Get the length of an ID3v2 tag.</i></td></tr>
+<tr><th id="92">92</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">buf</span> must be ID3v2_HEADER_SIZE bytes long and point to the start of an</i></td></tr>
+<tr><th id="93">93</th><td><i class="doc"> * already detected ID3v2 tag</i></td></tr>
+<tr><th id="94">94</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="95">95</th><td><em>int</em> <dfn class="decl" id="ff_id3v2_tag_len" title='ff_id3v2_tag_len' data-ref="ff_id3v2_tag_len">ff_id3v2_tag_len</dfn>(<em>const</em> <a class="typedef" href="../../include/stdint.h.html#uint8_t" title='uint8_t' data-type='unsigned char' data-ref="uint8_t">uint8_t</a> *<dfn class="local col3 decl" id="3buf" title='buf' data-type='const uint8_t *' data-ref="3buf">buf</dfn>);</td></tr>
+<tr><th id="96">96</th><td></td></tr>
+<tr><th id="97">97</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="98">98</th><td><i class="doc"> * Read an ID3v2 tag into specified dictionary and retrieve supported extra metadata.</i></td></tr>
+<tr><th id="99">99</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="100">100</th><td><i class="doc"> * Chapters are not currently read by this variant.</i></td></tr>
+<tr><th id="101">101</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="102">102</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">metadata</span> Parsed metadata is stored here</i></td></tr>
+<tr><th id="103">103</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">extra_meta</span> If not NULL, extra metadata is parsed into a list of</i></td></tr>
+<tr><th id="104">104</th><td><i class="doc"> * ID3v2ExtraMeta structs and *extra_meta points to the head of the list</i></td></tr>
+<tr><th id="105">105</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="106">106</th><td><em>void</em> <dfn class="decl" id="ff_id3v2_read_dict" title='ff_id3v2_read_dict' data-ref="ff_id3v2_read_dict">ff_id3v2_read_dict</dfn>(<a class="typedef" href="avio.h.html#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> *<dfn class="local col4 decl" id="4pb" title='pb' data-type='AVIOContext *' data-ref="4pb">pb</dfn>, <a class="typedef" href="../libavutil/dict.h.html#AVDictionary" title='AVDictionary' data-type='struct AVDictionary' data-ref="AVDictionary">AVDictionary</a> **<dfn class="local col5 decl" id="5metadata" title='metadata' data-type='AVDictionary **' data-ref="5metadata">metadata</dfn>, <em>const</em> <em>char</em> *<dfn class="local col6 decl" id="6magic" title='magic' data-type='const char *' data-ref="6magic">magic</dfn>, <a class="typedef" href="#ID3v2ExtraMeta" title='ID3v2ExtraMeta' data-type='struct ID3v2ExtraMeta' data-ref="ID3v2ExtraMeta">ID3v2ExtraMeta</a> **<dfn class="local col7 decl" id="7extra_meta" title='extra_meta' data-type='ID3v2ExtraMeta **' data-ref="7extra_meta">extra_meta</dfn>);</td></tr>
+<tr><th id="107">107</th><td></td></tr>
+<tr><th id="108">108</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="109">109</th><td><i class="doc"> * Read an ID3v2 tag, including supported extra metadata and chapters.</i></td></tr>
+<tr><th id="110">110</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="111">111</th><td><i class="doc"> * Data is read from and stored to AVFormatContext.</i></td></tr>
+<tr><th id="112">112</th><td><i class="doc"> *</i></td></tr>
+<tr><th id="113">113</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">extra_meta</span> If not NULL, extra metadata is parsed into a list of</i></td></tr>
+<tr><th id="114">114</th><td><i class="doc"> * ID3v2ExtraMeta structs and *extra_meta points to the head of the list</i></td></tr>
+<tr><th id="115">115</th><td><i class="doc"> * <span class="command">@param</span>[opt] <span class="arg">max_search_search</span> restrict ID3 magic number search (bytes from start)</i></td></tr>
+<tr><th id="116">116</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="117">117</th><td><em>void</em> <dfn class="decl" id="ff_id3v2_read" title='ff_id3v2_read' data-ref="ff_id3v2_read">ff_id3v2_read</dfn>(<a class="typedef" href="avformat.h.html#AVFormatContext" title='AVFormatContext' data-type='struct AVFormatContext' data-ref="AVFormatContext">AVFormatContext</a> *<dfn class="local col8 decl" id="8s" title='s' data-type='AVFormatContext *' data-ref="8s">s</dfn>, <em>const</em> <em>char</em> *<dfn class="local col9 decl" id="9magic" title='magic' data-type='const char *' data-ref="9magic">magic</dfn>, <a class="typedef" href="#ID3v2ExtraMeta" title='ID3v2ExtraMeta' data-type='struct ID3v2ExtraMeta' data-ref="ID3v2ExtraMeta">ID3v2ExtraMeta</a> **<dfn class="local col0 decl" id="10extra_meta" title='extra_meta' data-type='ID3v2ExtraMeta **' data-ref="10extra_meta">extra_meta</dfn>,</td></tr>
+<tr><th id="118">118</th><td>                   <em>unsigned</em> <em>int</em> <dfn class="local col1 decl" id="11max_search_size" title='max_search_size' data-type='unsigned int' data-ref="11max_search_size">max_search_size</dfn>);</td></tr>
+<tr><th id="119">119</th><td></td></tr>
+<tr><th id="120">120</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="121">121</th><td><i class="doc"> * Initialize an ID3v2 tag.</i></td></tr>
+<tr><th id="122">122</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="123">123</th><td><em>void</em> <dfn class="decl" id="ff_id3v2_start" title='ff_id3v2_start' data-ref="ff_id3v2_start">ff_id3v2_start</dfn>(<a class="typedef" href="#ID3v2EncContext" title='ID3v2EncContext' data-type='struct ID3v2EncContext' data-ref="ID3v2EncContext">ID3v2EncContext</a> *<dfn class="local col2 decl" id="12id3" title='id3' data-type='ID3v2EncContext *' data-ref="12id3">id3</dfn>, <a class="typedef" href="avio.h.html#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> *<dfn class="local col3 decl" id="13pb" title='pb' data-type='AVIOContext *' data-ref="13pb">pb</dfn>, <em>int</em> <dfn class="local col4 decl" id="14id3v2_version" title='id3v2_version' data-type='int' data-ref="14id3v2_version">id3v2_version</dfn>,</td></tr>
+<tr><th id="124">124</th><td>                    <em>const</em> <em>char</em> *<dfn class="local col5 decl" id="15magic" title='magic' data-type='const char *' data-ref="15magic">magic</dfn>);</td></tr>
+<tr><th id="125">125</th><td></td></tr>
+<tr><th id="126">126</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="127">127</th><td><i class="doc"> * Convert and write all global metadata from s into an ID3v2 tag.</i></td></tr>
+<tr><th id="128">128</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="129">129</th><td><em>int</em> <dfn class="decl" id="ff_id3v2_write_metadata" title='ff_id3v2_write_metadata' data-ref="ff_id3v2_write_metadata">ff_id3v2_write_metadata</dfn>(<a class="typedef" href="avformat.h.html#AVFormatContext" title='AVFormatContext' data-type='struct AVFormatContext' data-ref="AVFormatContext">AVFormatContext</a> *<dfn class="local col6 decl" id="16s" title='s' data-type='AVFormatContext *' data-ref="16s">s</dfn>, <a class="typedef" href="#ID3v2EncContext" title='ID3v2EncContext' data-type='struct ID3v2EncContext' data-ref="ID3v2EncContext">ID3v2EncContext</a> *<dfn class="local col7 decl" id="17id3" title='id3' data-type='ID3v2EncContext *' data-ref="17id3">id3</dfn>);</td></tr>
+<tr><th id="130">130</th><td></td></tr>
+<tr><th id="131">131</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="132">132</th><td><i class="doc"> * Write an attached picture from pkt into an ID3v2 tag.</i></td></tr>
+<tr><th id="133">133</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="134">134</th><td><em>int</em> <dfn class="decl" id="ff_id3v2_write_apic" title='ff_id3v2_write_apic' data-ref="ff_id3v2_write_apic">ff_id3v2_write_apic</dfn>(<a class="typedef" href="avformat.h.html#AVFormatContext" title='AVFormatContext' data-type='struct AVFormatContext' data-ref="AVFormatContext">AVFormatContext</a> *<dfn class="local col8 decl" id="18s" title='s' data-type='AVFormatContext *' data-ref="18s">s</dfn>, <a class="typedef" href="#ID3v2EncContext" title='ID3v2EncContext' data-type='struct ID3v2EncContext' data-ref="ID3v2EncContext">ID3v2EncContext</a> *<dfn class="local col9 decl" id="19id3" title='id3' data-type='ID3v2EncContext *' data-ref="19id3">id3</dfn>, <a class="typedef" href="../libavcodec/avcodec.h.html#AVPacket" title='AVPacket' data-type='struct AVPacket' data-ref="AVPacket">AVPacket</a> *<dfn class="local col0 decl" id="20pkt" title='pkt' data-type='AVPacket *' data-ref="20pkt">pkt</dfn>);</td></tr>
+<tr><th id="135">135</th><td></td></tr>
+<tr><th id="136">136</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="137">137</th><td><i class="doc"> * Finalize an opened ID3v2 tag.</i></td></tr>
+<tr><th id="138">138</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="139">139</th><td><em>void</em> <dfn class="decl" id="ff_id3v2_finish" title='ff_id3v2_finish' data-ref="ff_id3v2_finish">ff_id3v2_finish</dfn>(<a class="typedef" href="#ID3v2EncContext" title='ID3v2EncContext' data-type='struct ID3v2EncContext' data-ref="ID3v2EncContext">ID3v2EncContext</a> *<dfn class="local col1 decl" id="21id3" title='id3' data-type='ID3v2EncContext *' data-ref="21id3">id3</dfn>, <a class="typedef" href="avio.h.html#AVIOContext" title='AVIOContext' data-type='struct AVIOContext' data-ref="AVIOContext">AVIOContext</a> *<dfn class="local col2 decl" id="22pb" title='pb' data-type='AVIOContext *' data-ref="22pb">pb</dfn>, <em>int</em> <dfn class="local col3 decl" id="23padding_bytes" title='padding_bytes' data-type='int' data-ref="23padding_bytes">padding_bytes</dfn>);</td></tr>
+<tr><th id="140">140</th><td></td></tr>
+<tr><th id="141">141</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="142">142</th><td><i class="doc"> * Write an ID3v2 tag containing all global metadata from s.</i></td></tr>
+<tr><th id="143">143</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">id3v2_version</span> Subversion of ID3v2; supported values are 3 and 4</i></td></tr>
+<tr><th id="144">144</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">magic</span> magic bytes to identify the header</i></td></tr>
+<tr><th id="145">145</th><td><i class="doc"> * If in doubt, use ID3v2_DEFAULT_MAGIC.</i></td></tr>
+<tr><th id="146">146</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="147">147</th><td><em>int</em> <dfn class="decl" id="ff_id3v2_write_simple" title='ff_id3v2_write_simple' data-ref="ff_id3v2_write_simple">ff_id3v2_write_simple</dfn>(<b>struct</b> <a class="type" href="avformat.h.html#AVFormatContext" title='AVFormatContext' data-ref="AVFormatContext">AVFormatContext</a> *<dfn class="local col4 decl" id="24s" title='s' data-type='struct AVFormatContext *' data-ref="24s">s</dfn>, <em>int</em> <dfn class="local col5 decl" id="25id3v2_version" title='id3v2_version' data-type='int' data-ref="25id3v2_version">id3v2_version</dfn>, <em>const</em> <em>char</em> *<dfn class="local col6 decl" id="26magic" title='magic' data-type='const char *' data-ref="26magic">magic</dfn>);</td></tr>
+<tr><th id="148">148</th><td></td></tr>
+<tr><th id="149">149</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="150">150</th><td><i class="doc"> * Free memory allocated parsing special (non-text) metadata.</i></td></tr>
+<tr><th id="151">151</th><td><i class="doc"> * <span class="command">@param</span> <span class="arg">extra_meta</span> Pointer to a pointer to the head of a ID3v2ExtraMeta list, *extra_meta is set to NULL.</i></td></tr>
+<tr><th id="152">152</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="153">153</th><td><em>void</em> <dfn class="decl" id="ff_id3v2_free_extra_meta" title='ff_id3v2_free_extra_meta' data-ref="ff_id3v2_free_extra_meta">ff_id3v2_free_extra_meta</dfn>(<a class="typedef" href="#ID3v2ExtraMeta" title='ID3v2ExtraMeta' data-type='struct ID3v2ExtraMeta' data-ref="ID3v2ExtraMeta">ID3v2ExtraMeta</a> **<dfn class="local col7 decl" id="27extra_meta" title='extra_meta' data-type='ID3v2ExtraMeta **' data-ref="27extra_meta">extra_meta</dfn>);</td></tr>
+<tr><th id="154">154</th><td></td></tr>
+<tr><th id="155">155</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="156">156</th><td><i class="doc"> * Create a stream for each APIC (attached picture) extracted from the</i></td></tr>
+<tr><th id="157">157</th><td><i class="doc"> * ID3v2 header.</i></td></tr>
+<tr><th id="158">158</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="159">159</th><td><em>int</em> <dfn class="decl" id="ff_id3v2_parse_apic" title='ff_id3v2_parse_apic' data-ref="ff_id3v2_parse_apic">ff_id3v2_parse_apic</dfn>(<a class="typedef" href="avformat.h.html#AVFormatContext" title='AVFormatContext' data-type='struct AVFormatContext' data-ref="AVFormatContext">AVFormatContext</a> *<dfn class="local col8 decl" id="28s" title='s' data-type='AVFormatContext *' data-ref="28s">s</dfn>, <a class="typedef" href="#ID3v2ExtraMeta" title='ID3v2ExtraMeta' data-type='struct ID3v2ExtraMeta' data-ref="ID3v2ExtraMeta">ID3v2ExtraMeta</a> **<dfn class="local col9 decl" id="29extra_meta" title='extra_meta' data-type='ID3v2ExtraMeta **' data-ref="29extra_meta">extra_meta</dfn>);</td></tr>
+<tr><th id="160">160</th><td></td></tr>
+<tr><th id="161">161</th><td><b>extern</b> <em>const</em> <a class="typedef" href="metadata.h.html#AVMetadataConv" title='AVMetadataConv' data-type='struct AVMetadataConv' data-ref="AVMetadataConv">AVMetadataConv</a> <dfn class="decl" id="ff_id3v2_34_metadata_conv" title='ff_id3v2_34_metadata_conv' data-ref="ff_id3v2_34_metadata_conv">ff_id3v2_34_metadata_conv</dfn>[];</td></tr>
+<tr><th id="162">162</th><td><b>extern</b> <em>const</em> <a class="typedef" href="metadata.h.html#AVMetadataConv" title='AVMetadataConv' data-type='struct AVMetadataConv' data-ref="AVMetadataConv">AVMetadataConv</a> <dfn class="decl" id="ff_id3v2_4_metadata_conv" title='ff_id3v2_4_metadata_conv' data-ref="ff_id3v2_4_metadata_conv">ff_id3v2_4_metadata_conv</dfn>[];</td></tr>
+<tr><th id="163">163</th><td></td></tr>
+<tr><th id="164">164</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="165">165</th><td><i class="doc"> * A list of text information frames allowed in both ID3 v2.3 and v2.4</i></td></tr>
+<tr><th id="166">166</th><td><i class="doc"> * <a href="http://www.id3.org/id3v2.4.0-frames">http://www.id3.org/id3v2.4.0-frames</a></i></td></tr>
+<tr><th id="167">167</th><td><i class="doc"> * <a href="http://www.id3.org/id3v2.4.0-changes">http://www.id3.org/id3v2.4.0-changes</a></i></td></tr>
+<tr><th id="168">168</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="169">169</th><td><b>extern</b> <em>const</em> <em>char</em> <dfn class="decl" id="ff_id3v2_tags" title='ff_id3v2_tags' data-ref="ff_id3v2_tags">ff_id3v2_tags</dfn>[][<var>4</var>];</td></tr>
+<tr><th id="170">170</th><td></td></tr>
+<tr><th id="171">171</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="172">172</th><td><i class="doc"> * ID3v2.4-only text information frames.</i></td></tr>
+<tr><th id="173">173</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="174">174</th><td><b>extern</b> <em>const</em> <em>char</em> <dfn class="decl" id="ff_id3v2_4_tags" title='ff_id3v2_4_tags' data-ref="ff_id3v2_4_tags">ff_id3v2_4_tags</dfn>[][<var>4</var>];</td></tr>
+<tr><th id="175">175</th><td></td></tr>
+<tr><th id="176">176</th><td><i class="doc">/**</i></td></tr>
+<tr><th id="177">177</th><td><i class="doc"> * ID3v2.3-only text information frames.</i></td></tr>
+<tr><th id="178">178</th><td><i class="doc"> */</i></td></tr>
+<tr><th id="179">179</th><td><b>extern</b> <em>const</em> <em>char</em> <dfn class="decl" id="ff_id3v2_3_tags" title='ff_id3v2_3_tags' data-ref="ff_id3v2_3_tags">ff_id3v2_3_tags</dfn>[][<var>4</var>];</td></tr>
+<tr><th id="180">180</th><td></td></tr>
+<tr><th id="181">181</th><td><b>extern</b> <em>const</em> <a class="typedef" href="internal.h.html#CodecMime" title='CodecMime' data-type='struct CodecMime' data-ref="CodecMime">CodecMime</a> <dfn class="decl" id="ff_id3v2_mime_tags" title='ff_id3v2_mime_tags' data-ref="ff_id3v2_mime_tags">ff_id3v2_mime_tags</dfn>[];</td></tr>
+<tr><th id="182">182</th><td></td></tr>
+<tr><th id="183">183</th><td><b>extern</b> <em>const</em> <em>char</em> *<dfn class="decl" id="ff_id3v2_picture_types" title='ff_id3v2_picture_types' data-ref="ff_id3v2_picture_types">ff_id3v2_picture_types</dfn>[<var>21</var>];</td></tr>
+<tr><th id="184">184</th><td></td></tr>
+<tr><th id="185">185</th><td><u>#<span data-ppcond="22">endif</span> /* AVFORMAT_ID3V2_H */</u></td></tr>
+<tr><th id="186">186</th><td></td></tr>
+</table><hr/><p id='footer'>
+Generated while processing <a href='adtsenc.c.html'>ffmpeg/libavformat/adtsenc.c</a><br/>Generated on <em>2016-Oct-25</em> from project ffmpeg revision <em>3.0.git</em><br />Powered by <a href='https://woboq.com'><img alt='Woboq' src='https://code.woboq.org/woboq-16.png' width='41' height='16' /></a> <a href='https://code.woboq.org'>Code Browser</a> 2.0.1
+<br/>Generator usage only permitted with license.</p>
+</div></body></html>
